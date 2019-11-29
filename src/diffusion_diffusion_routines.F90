@@ -52,13 +52,13 @@ MODULE DIFFUSION_DIFFUSION_ROUTINES
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE COORDINATE_ROUTINES  
+  USE CoordinateSystemRoutines  
   USE DIFFUSION_EQUATION_ROUTINES
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsSetConstants
-  USE FIELD_ROUTINES
+  USE FieldRoutines
 !  USE FINITE_ELASTICITY_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
 !   USE FittingRoutines !also in makefiles

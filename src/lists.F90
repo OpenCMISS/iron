@@ -61,15 +61,15 @@ MODULE Lists
   !Module parameters
 
   !> \addtogroup OpenCMISS_ListsConstants OpenCMISS::Iron::Lists::Constants
-  !> \brief Distributed matrix vector constants.
+  !> \brief Lists constants.
   !>@{
-  !> \addtogroup Lists_DataType Lists::DataType
+  !> \addtogroup Lists_DataType Lists::DataTypes
   !> \brief Data type parameters for a list.
   !> \see Lists
   !>@{
   INTEGER(INTG), PARAMETER :: LIST_INTG_TYPE=INTEGER_TYPE !<Integer data type for a list \see Lists_DataType,Lists
-  INTEGER(INTG), PARAMETER :: LIST_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real data type for a list \see Lists_DataType,Lists
-  INTEGER(INTG), PARAMETER :: LIST_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real data type for a list \see Lists_DataType,Lists
+  INTEGER(INTG), PARAMETER :: LIST_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real data type for a list \see Lists_DataTypes,Lists
+  INTEGER(INTG), PARAMETER :: LIST_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real data type for a list \see Lists_DataTypes,Lists
   !>@}
   
   !> \addtogroup Lists_SortingOrder Lists::SortingOrder
@@ -821,7 +821,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(ListType), POINTER, INTENT(IN) :: list !<A pointer to the list 
-    INTEGER(INTG), INTENT(IN) :: dataType !<The data type of the list to set \see Lists_DataType,Lists
+    INTEGER(INTG), INTENT(IN) :: dataType !<The data type of the list to set \see Lists_DataTypes,Lists
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3115,17 +3115,23 @@ CONTAINS
     position=0
     lowLimit=1
     upLimit=SIZE(a,1)
-    DO WHILE(lowLimit<=upLimit)
-      midPoint=(upLimit+lowLimit)/2
-      IF(a(midPoint)==VALUE) THEN
-        position=midPoint
-        EXIT
-      ELSE IF(a(midPoint)>value) THEN
-        upLimit=midPoint
-      ELSE
-        lowLimit=midPoint
-      ENDIF
-    ENDDO
+    IF(a(lowLimit)==VALUE) THEN
+      position=lowLimit
+    ELSE IF(a(upLimit)==VALUE) THEN
+      position=upLimit
+    ELSE
+      DO WHILE(lowLimit<=upLimit)
+        midPoint=(upLimit+lowLimit)/2
+        IF(a(midPoint)==VALUE) THEN
+          position=midPoint
+          EXIT
+        ELSE IF(a(midPoint)>value) THEN
+          upLimit=midPoint
+        ELSE
+          lowLimit=midPoint
+        ENDIF
+      ENDDO
+    ENDIF
      
     EXITS("List_SearchBinaryIntg1Array")
     RETURN
@@ -3168,17 +3174,23 @@ CONTAINS
     position=0
     lowLimit=1
     upLimit=SIZE(a,2)
-    DO WHILE(lowLimit<=upLimit)
-      midPoint=(upLimit+lowLimit)/2
-      IF(a(keyDimension,midPoint)==values(keyDimension)) THEN
-        position=midPoint
-        EXIT
-      ELSE IF(a(keyDimension,midPoint)>values(keyDimension)) THEN
-        upLimit=midPoint
-      ELSE
-        lowLimit=midPoint
-      ENDIF
-    ENDDO
+    IF(a(keyDimension,lowLimit)==values(keyDimension)) THEN
+      position=lowLimit
+    ELSE IF(a(keyDimension,upLimit)==values(keyDimension)) THEN
+      position=upLimit
+    ELSE
+      DO WHILE(lowLimit<=upLimit)
+        midPoint=(upLimit+lowLimit)/2
+        IF(a(keyDimension,midPoint)==values(keyDimension)) THEN
+          position=midPoint
+          EXIT
+        ELSE IF(a(keyDimension,midPoint)>values(keyDimension)) THEN
+          upLimit=midPoint
+        ELSE
+          lowLimit=midPoint
+        ENDIF
+      ENDDO
+    ENDIF
      
     EXITS("List_SearchBinaryIntg2Array")
     RETURN
@@ -3208,17 +3220,23 @@ CONTAINS
     position=0
     lowLimit=1
     upLimit=SIZE(a,1)
-    DO WHILE(lowLimit<=upLimit)
-      midPoint=(upLimit+lowLimit)/2
-      IF(ABS(a(midPoint)-value)<ZERO_TOLERANCE_SP) THEN
-        position=midPoint
-        EXIT
-      ELSE IF(a(midPoint)>value) THEN
-        upLimit=midPoint
-      ELSE
-        lowLimit=midPoint
-      ENDIF
-    ENDDO
+    IF(ABS(a(lowLimit)-VALUE)<ZERO_TOLERANCE_SP) THEN
+      position=lowLimit
+    ELSE IF(ABS(a(upLimit)-VALUE)<ZERO_TOLERANCE_SP) THEN
+      position=upLimit
+    ELSE
+      DO WHILE(lowLimit<=upLimit)
+        midPoint=(upLimit+lowLimit)/2
+        IF(ABS(a(midPoint)-VALUE)<ZERO_TOLERANCE_SP) THEN
+          position=midPoint
+          EXIT
+        ELSE IF(a(midPoint)>value) THEN
+          upLimit=midPoint
+        ELSE
+          lowLimit=midPoint
+        ENDIF
+      ENDDO
+    ENDIF
      
     EXITS("List_SearchBinarySP1Array")
     RETURN
@@ -3261,17 +3279,23 @@ CONTAINS
     position=0
     lowLimit=1
     upLimit=SIZE(a,2)
-    DO WHILE(lowLimit<=upLimit)
-      midPoint=(upLimit+lowLimit)/2
-      IF(ABS(a(keyDimension,midPoint)-values(keyDimension))<ZERO_TOLERANCE_SP) THEN
-        position=midPoint
-        EXIT
-      ELSE IF(a(keyDimension,midPoint)>values(keyDimension)) THEN
-        upLimit=midPoint
-      ELSE
-        lowLimit=midPoint
-      ENDIF
-    ENDDO
+    IF(ABS(a(keyDimension,lowLimit)-values(keyDimension))<ZERO_TOLERANCE_SP) THEN
+      position=lowLimit
+    ELSE IF(ABS(a(keyDimension,upLimit)-values(keyDimension))<ZERO_TOLERANCE_SP) THEN
+      position=upLimit
+    ELSE
+      DO WHILE(lowLimit<=upLimit)
+        midPoint=(upLimit+lowLimit)/2
+        IF(ABS(a(keyDimension,midPoint)-values(keyDimension))<ZERO_TOLERANCE_SP) THEN
+          position=midPoint
+          EXIT
+        ELSE IF(a(keyDimension,midPoint)>values(keyDimension)) THEN
+          upLimit=midPoint
+        ELSE
+          lowLimit=midPoint
+        ENDIF
+      ENDDO
+    ENDIF
      
     EXITS("List_SearchBinarySP2Array")
     RETURN
@@ -3301,18 +3325,24 @@ CONTAINS
     position=0
     lowLimit=1
     upLimit=SIZE(a,1)
-    DO WHILE(lowLimit<=upLimit)
-      midPoint=(upLimit+lowLimit)/2
-      IF(ABS(a(midPoint)-value)<ZERO_TOLERANCE_DP) THEN
-        position=midPoint
-        EXIT
-      ELSE IF(a(midPoint)>value) THEN
-        upLimit=midPoint
-      ELSE
-        lowLimit=midPoint
-      ENDIF
-    ENDDO
-     
+    IF(ABS(a(lowLimit)-VALUE)<ZERO_TOLERANCE_DP) THEN
+      position=lowLimit
+    ELSE IF(ABS(a(upLimit)-VALUE)<ZERO_TOLERANCE_DP) THEN
+      position=upLimit
+    ELSE
+      DO WHILE(lowLimit<=upLimit)
+        midPoint=(upLimit+lowLimit)/2
+        IF(ABS(a(midPoint)-VALUE)<ZERO_TOLERANCE_DP) THEN
+          position=midPoint
+          EXIT
+        ELSE IF(a(midPoint)>value) THEN
+          upLimit=midPoint
+        ELSE
+          lowLimit=midPoint
+        ENDIF
+      ENDDO
+    ENDIF
+      
     EXITS("List_SearchBinaryDP1Array")
     RETURN
 999 ERRORSEXITS("List_SearchBinaryDP1Array",err,error)
@@ -3354,17 +3384,23 @@ CONTAINS
     position=0
     lowLimit=1
     upLimit=SIZE(a,2)
-    DO WHILE(lowLimit<=upLimit)
-      midPoint=(upLimit+lowLimit)/2
-      IF(ABS(a(keyDimension,midPoint)-values(keyDimension))<ZERO_TOLERANCE_DP) THEN
-        position=midPoint
-        EXIT
-      ELSE IF(a(keyDimension,midPoint)>values(keyDimension)) THEN
-        upLimit=midPoint
-      ELSE
-        lowLimit=midPoint
-      ENDIF
-    ENDDO
+    IF(ABS(a(keyDimension,lowLimit)-values(keyDimension))<ZERO_TOLERANCE_DP) THEN
+      position=lowLimit
+    ELSE IF(ABS(a(keyDimension,upLimit)-values(keyDimension))<ZERO_TOLERANCE_DP) THEN
+      position=upLimit
+    ELSE
+      DO WHILE(lowLimit<=upLimit)
+        midPoint=(upLimit+lowLimit)/2
+        IF(ABS(a(keyDimension,midPoint)-values(keyDimension))<ZERO_TOLERANCE_DP) THEN
+          position=midPoint
+          EXIT
+        ELSE IF(a(keyDimension,midPoint)>values(keyDimension)) THEN
+          upLimit=midPoint
+        ELSE
+          lowLimit=midPoint
+        ENDIF
+      ENDDO
+    ENDIF
      
     EXITS("List_SearchBinaryDP2Array")
     RETURN

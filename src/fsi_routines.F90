@@ -55,7 +55,7 @@ MODULE FSIRoutines
   USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
@@ -63,7 +63,7 @@ MODULE FSIRoutines
   USE InterfaceConditionAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-  USE NAVIER_STOKES_EQUATIONS_ROUTINES
+  USE NavierStokesEquationsRoutines
   USE ProblemAccessRoutines
   USE PROBLEM_CONSTANTS
   USE Strings
@@ -579,7 +579,7 @@ CONTAINS
           CALL NavierStokes_PreSolveALEUpdateMesh(solver,err,error,*999)
         ENDIF
         !Pre solve for ALE NavierStokes equations set
-        CALL NAVIER_STOKES_PRE_SOLVE(solver,err,error,*999)
+        CALL NavierStokes_PreSolve(solver,err,error,*999)
         !Pre solve for FiniteElasticity equations set
         !Nothing to be done???
       ENDIF

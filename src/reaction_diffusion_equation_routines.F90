@@ -62,7 +62,7 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE EquationsMatricesRoutines
   USE EquationsSetConstants
   USE EquationsSetAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -180,48 +180,48 @@ CONTAINS
            & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
-              CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
-              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_LabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
+              CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
+              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
-              CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
+              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
                 & geometricField,err,error,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,err,error,*999)
-              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,err,error,*999)
+              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-              !CALL FIELD_VARIABLE_LABEL_SET
-              CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              !CALL Field_VariableLabelSet
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
-              CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
-              CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                 & err,error,*999)
-              CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                 & err,error,*999)
               !Default to the geometric interpolation setup
-              CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,err,error,*999)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                   & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                   & FIELD_DELUDELN_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 !Default the scaling to the geometric field scaling
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -239,23 +239,23 @@ CONTAINS
               END SELECT
             ELSE
               !Check the user specified field
-              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
-              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+              CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
+              CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
+              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
                 & err,error,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-              CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,err,error,*999)
+              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+              CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,err,error,*999)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
@@ -282,7 +282,7 @@ CONTAINS
           END SELECT
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-            CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
+            CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
           ENDIF
         CASE DEFAULT
           localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
@@ -298,23 +298,23 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+                CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                   & MATERIALS_FIELD,err,error,*999)
-                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
-                CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
+                CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
                   & geometricField,err,error,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
-                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
+                CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
                   & err,error,*999)
-                CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions,err,error,*999)
                 IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
                   !Reaction Diffusion. Materials field components are 1 diffusion coeff for each dimension
@@ -328,45 +328,45 @@ CONTAINS
                   DIMENSION_MULTIPLIER=1
                 ENDIF
                 !Set the number of materials components
-                CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & NUMBER_OF_MATERIALS_COMPONENTS,err,error,*999)
                 !Default the first three materials components for diffusivity param to the first component geometric interpolation with const interpolation
                 DO component_idx=1,numberOfDimensions
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 ENDDO !components_idx
                 !Default the storage co-efficient to the first geometric interpolation setup with constant interpolation
                 IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
                   component_idx=NUMBER_OF_MATERIALS_COMPONENTS
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 ENDIF
                 !Default the field scaling to that of the geometric field
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               ELSE
                 !Check the user specified field
-                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                   & err,error,*999)
-                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions,err,error,*999)
                 IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE .OR. &
                  & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
                   !Reaction Diffusion with cellml. Materials field components are 1 for storage coeff plus one for each dimension i.e., k
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1, &
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1, &
                     & err,error,*999)
                 ENDIF
               ENDIF
@@ -381,9 +381,9 @@ CONTAINS
           IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
             IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
               !Finish creating the materials field
-              CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
+              CALL Field_CreateFinish(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
               !Set the default values for the materials field
-              CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfDimensions,err,error,*999)
               IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE .OR. &
                & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
@@ -393,12 +393,12 @@ CONTAINS
               ENDIF
               !set the diffusion coefficients to be 1.0
               DO component_idx=1,numberOfDimensions
-                CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,err,error,*999)
               ENDDO !component_idx
                !Now set storage-coefficient
               component_idx=numberOfDimensions+1
-              CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,err,error,*999)
             ENDIF
           ELSE
@@ -419,43 +419,43 @@ CONTAINS
                 IF(EQUATIONS_SET%SOURCE%SOURCE_FIELD_AUTO_CREATED) THEN
                   !Create the auto created source field
                   !Start field creation with name 'SOURCE_FIELD'
-                  CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
+                  CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
                     & EQUATIONS_SET%SOURCE%SOURCE_FIELD,err,error,*999)
                   !Create a general field
-                  CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+                  CALL Field_TypeSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
                   !Label the field
-                  CALL FIELD_LABEL_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,"Source Field",err,error,*999)
+                  CALL Field_LabelSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,"Source Field",err,error,*999)
                   !Set the dependent type
-                  CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                  CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
                   !Set the field decomposition to be that of the geometric decomposition
-                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,GEOMETRIC_DECOMPOSITION, &
+                  CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                  CALL Field_DecompositionSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,GEOMETRIC_DECOMPOSITION, &
                     & err,error,*999)
                   !Set the geometric field
-                  CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,EQUATIONS_SET% & 
+                  CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,EQUATIONS_SET% & 
                     & GEOMETRY%geometricField,err,error,*999)
                   !Set the field variables.
-                  CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,1,err,error,*999)
-                  CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                  CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,1,err,error,*999)
+                  CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                   !Set the dimension
-                  CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
                   !Set the data type
-                  CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_DP_TYPE,err,error,*999)
                   !Set the number of components to one
-                  CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                     & err,error,*999)
                   !Get the geometric mesh component
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, & 
+                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, & 
                     & 1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                   !Default to the geometric interpolation setup
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                     & GEOMETRIC_MESH_COMPONENT,err,error,*999)            
                   !Specify the interpolation to be same as geometric interpolation
                   SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                   CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                    CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                     CALL FlagError("Not implemented.",err,error,*999)
@@ -473,24 +473,24 @@ CONTAINS
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                   !Set the scaling to be the same as the geometric field
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
+                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
                     & err,error,*999)
-                  CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%SOURCE%SOURCE_FIELD,GEOMETRIC_SCALING_TYPE, &
+                  CALL Field_ScalingTypeSet(EQUATIONS_SET%SOURCE%SOURCE_FIELD,GEOMETRIC_SCALING_TYPE, &
                     & err,error,*999)
                 ELSE
                   !Check the user specified field
-                  CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                  CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-                  CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                  CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
+                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
                     & err,error,*999)
-                  CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
                   
                   SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                   CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                    CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                     CALL FlagError("Not implemented.",err,error,*999)
@@ -520,7 +520,7 @@ CONTAINS
           ENDIF
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           IF(EQUATIONS_SET%SOURCE%SOURCE_FIELD_AUTO_CREATED) THEN
-            CALL FIELD_CREATE_FINISH(EQUATIONS_SET%SOURCE%SOURCE_FIELD,err,error,*999)
+            CALL Field_CreateFinish(EQUATIONS_SET%SOURCE%SOURCE_FIELD,err,error,*999)
           ENDIF
         CASE DEFAULT
           localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
@@ -795,7 +795,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,fibreField,materialsField,sourceField
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
+    TYPE(QuadratureSchemeType), POINTER :: QUADRATURE_SCHEME
     
     ENTERS("ReactionDiffusion_FiniteElementCalculate",err,error,*999)
 
@@ -828,16 +828,16 @@ CONTAINS
         GEOMETRIC_VARIABLE=>geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr
         IF(USE_FIBRES) FIBRE_BASIS=>fibreField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-        QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-        CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+        QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-        CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
           & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-        IF(USE_FIBRES) CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations% &
+        IF(USE_FIBRES) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations% &
           & interpolation%fibreInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
         IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
             & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
-           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
              & sourceInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
         ENDIF                  
         dynamicMatrices=>vectorMatrices%dynamicMatrices
@@ -853,27 +853,27 @@ CONTAINS
         FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
         IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix.OR.rhsVector%updateVector) THEN
           !Loop over gauss points
-          DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+          DO ng=1,QUADRATURE_SCHEME%numberOfGauss
+            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
+            CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
               & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+            CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             IF(USE_FIBRES) THEN
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(FIBRE_BASIS%numberOfXi,equations%interpolation% &
+              CALL Field_InterpolatedPointMetricsCalculate(FIBRE_BASIS%numberOfXi,equations%interpolation% &
                 & fibreInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             ENDIF
             IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
             & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
-              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+              CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             ENDIF
             !Calculate RWG.
             RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
-              & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
+              & QUADRATURE_SCHEME%gaussWeights(ng)
             !Calculate the diffusivity tensor
             DIFFUSIVITY=0.0_DP
             IF(USE_FIBRES) THEN
@@ -894,7 +894,7 @@ CONTAINS
                 DPHIDX(nj,ms)=0.0_DP
                 DO ni=1,DEPENDENT_BASIS%numberOfXi
                   DPHIDX(nj,ms)=DPHIDX(nj,ms)+ &
-                    & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)* &
+                    & QUADRATURE_SCHEME%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)* &
                     & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nj)
                 ENDDO !ni
               ENDDO !ms
@@ -921,8 +921,8 @@ CONTAINS
                     ENDIF
                     IF(dampingMatrix%updateMatrix) THEN
                       dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)+ &
-                        & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
-                        & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)*STORAGE_COEFFICIENT*RWG
+                        & QUADRATURE_SCHEME%gaussBasisFunctions(ms,NO_PART_DERIV,ng)* &
+                        & QUADRATURE_SCHEME%gaussBasisFunctions(ns,NO_PART_DERIV,ng)*STORAGE_COEFFICIENT*RWG
                     ENDIF
                   ENDDO !ns
                 ENDDO !nh
@@ -939,7 +939,7 @@ CONTAINS
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
                     sourceVector%elementVector%vector(mhs)=sourceVector%elementVector%vector(mhs)+ &
-                      & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)*C_PARAM*RWG
+                      & QUADRATURE_SCHEME%gaussBasisFunctions(ms,NO_PART_DERIV,ng)*C_PARAM*RWG
                   ENDDO
                 ENDDO
               ENDIF

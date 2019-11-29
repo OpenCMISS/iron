@@ -48,13 +48,19 @@ MODULE InterfaceOperatorsRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
   USE Constants
-  USE FIELD_ROUTINES
+  USE DecompositionAccessRoutines
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
+  USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsRoutines
+  USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingRoutines
+  USE InterfaceMappingAccessRoutines
   USE InterfaceMatricesRoutines
+  USE InterfaceMatricesAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -95,47 +101,47 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: gaussPointIdx, rowComponentIdx, rowIdx, rowParameterIdx, colComponentIdx, colIdx, colParameterIdx
-    INTEGER(INTG) :: rowMeshComponentNumber,derivativeIdx,derivative,localElementNode,interfaceNode,interfaceDerivative
+    INTEGER(INTG) :: derivativeIdx,derivative,localElementNode,interfaceNode,interfaceDerivative
     INTEGER(INTG) :: coupledElementNumber,coupledMeshIdx,coupledMeshVariableType,lagrangeVariableType
     INTEGER(INTG) :: connectedLineFace,decompositionLineNumber,localLineNodeIdx,decompositionFaceNumber,localFaceNodeIdx
-    INTEGER(INTG) :: meshComponentNumber,numberOfCoupledMeshGeoComp,numberOfInterfaceMeshXi,numberOfCoupledMeshXi, &
-      & numberOfMatrixCoupledElements
+    INTEGER(INTG) :: numberOfCoupledMeshGeoComp,numberOfInterfaceMeshXi,numberOfCoupledMeshXi,numberOfMatrixCoupledElements
     INTEGER(INTG) :: dataPointIdx,localElementNumber,matrixElementIdx
     INTEGER(INTG) :: matrixCoefficients(2),interfaceelementnumber
     REAL(DP) :: xi(3),jacobianGaussWeight,rowBasisFunction,columnBasisFunction,matrixCoefficient
     TYPE(BasisType), POINTER :: coupledMeshBasis,coupledMeshDependentBasis,faceBasis,interfaceDependentBasis, &
       & interfaceGeometricBasis,interfacePenaltyBasis,interfaceConnectivityBasis,lineBasis
-    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,lagrangeDecomposition
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,lagrangeDecomposition,penaltyDecomposition
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData
     TYPE(DecompositionElementsType), POINTER :: dependentDecompositionElements
-    TYPE(DecompositionTopologyType), POINTER :: dependentDecompositionTopology,geometricDecompositionTopology, &
-      & lagrangeDecompositionTopology
-    TYPE(DomainType), POINTER :: dependentDomain,geometricDomain
-    TYPE(DomainElementsType), POINTER :: dependentDomainElements,geometricDomainElements
+    TYPE(DecompositionTopologyType), POINTER :: dependentDecompositionTopology,lagrangeDecompositionTopology
+    TYPE(DomainType), POINTER :: dependentDomain,geometricDomain,penaltyDomain
+    TYPE(DomainElementsType), POINTER :: dependentDomainElements,geometricDomainElements,penaltyDomainElements
     TYPE(DomainFaceType), POINTER :: coupledMeshDomainFace
+    TYPE(DomainFacesType), POINTER :: dependentDomainFaces
     TYPE(DomainLineType), POINTER :: coupledMeshDomainLine
-    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology,geometricDomainTopology
+    TYPE(DomainLinesType), POINTER :: dependentDomainLines
+    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology,geometricDomainTopology,penaltyDomainTopology
     TYPE(FieldType), POINTER :: coupledMeshGeometricField,coupledMeshDependentField,interfaceDependentField, &
       & interfaceGeometricField,interfacePenaltyField,lagrangeField
     TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters,geometricInterpolationParameters, &
       & lagrangeInterpolationParameters,penaltyInterpolationParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpolatedPoint,geometricInterpolatedPoint,penaltyInterpolatedPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: dependentInterpolatedPointMetrics,geometricInterpolatedPointMetrics
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint,penaltyInterpolatedPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpolatedPointMetrics
     TYPE(FieldVariableType), POINTER :: coupledMeshGeometricVariable,interfaceMatrixVariable,lagrangeVariable
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(InterfaceElementConnectivityType), POINTER :: elementConnectivity
     TYPE(InterfaceEquationsDomainInterpolationType), POINTER :: interfaceInterpolation,variableInterpolation
     TYPE(InterfaceEquationsInterpolationType), POINTER :: interfaceEquationsInterpolation
     TYPE(InterfaceEquationsInterpolationSetType), POINTER :: dependentInterpolationSet,geometricInterpolationSet, &
-      & penaltyInterpolationSet
+      & lagrangeInterpolationSet,penaltyInterpolationSet
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity     
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
     TYPE(MeshType), POINTER :: coupledMesh,interfaceMesh     
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: interfaceQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: interfaceQuadratureScheme
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("FieldContinuity_FiniteElementCalculate",err,error,*999)
@@ -175,12 +181,12 @@ CONTAINS
         CALL Field_DecompositionGet(interfaceGeometricField,geometricDecomposition,err,error,*999)
         NULLIFY(geometricDomain)
         CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
-        NULLIFY(geometricTopology)
-        CALL Domain_DomainTopologyGet(geometricDomain,geometricTopology,err,error,*999)
-        NULLIFY(geometricElements)
-        CALL DomainTopology_DomainElementsGet(geometricTopology,geometricElements,err,error,*999)
+        NULLIFY(geometricDomainTopology)
+        CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
+        NULLIFY(geometricDomainElements)
+        CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
         NULLIFY(interfaceGeometricBasis)
-        CALL DomainElements_BasisGet(geometricElements,elementNumber,interfaceGeometricBasis,err,error,*999)
+        CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,interfaceGeometricBasis,err,error,*999)
         NULLIFY(dependentDecomposition)
         CALL Field_DecompositionGet(interfaceDependentField,dependentDecomposition,err,error,*999)
         NULLIFY(dependentDomain)
@@ -277,12 +283,12 @@ CONTAINS
               & dependentInterpolationParameters,err,error,*999)
 
             !Loop over gauss points
-            DO gaussPointIdx=1,interfaceQuadratureScheme%NUMBER_OF_GAUSS
+            DO gaussPointIdx=1,interfaceQuadratureScheme%numberOfGauss
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                 & geometricInterpolatedPoint,err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(interfaceGeometricBasis%numberOfXi,geometricInterpolatedPointMetrics, &
                 & err,error,*999)
-              jacobianGaussWeight=geometricInterpolatedPointMetrics%jacobian*interfaceQuadratureScheme%GAUSS_WEIGHTS(gaussPointIdx)
+              jacobianGaussWeight=geometricInterpolatedPointMetrics%jacobian*interfaceQuadratureScheme%gaussWeights(gaussPointIdx)
               IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD.AND. &
                 & coupledMeshIdx==interfaceMatrices%numberOfInterfaceMatrices) THEN
                 CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
@@ -291,7 +297,7 @@ CONTAINS
                 DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
                   !Loop over the Lagrange variable matrix rows
                   DO rowParameterIdx=1,interfaceDependentBasis%numberOfElementParameters
-                    columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(rowParameterIdx,NO_PART_DERIV,gaussPointIdx)
+                    columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(rowParameterIdx,NO_PART_DERIV,gaussPointIdx)
                     rowIdx=rowIdx+1
                     interfaceMatrix%elementMatrix%matrix(rowIdx,rowIdx)= &
                       & interfaceMatrix%elementMatrix%matrix(rowIdx,rowIdx)- &
@@ -313,7 +319,7 @@ CONTAINS
                   NULLIFY(dependentDomainTopology)
                   CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
                   NULLIFY(dependentDomainElements)
-                  CALL DomainTopology_DomainElementsGet(dependentTopology,dependentDomainElements,err,error,*999)
+                  CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                   NULLIFY(coupledMeshBasis)
                   CALL DomainElements_BasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
 
@@ -339,7 +345,7 @@ CONTAINS
                           DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
                             !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
                             colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
-                            columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV, &
+                            columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(colParameterIdx,NO_PART_DERIV, &
                               & gaussPointIdx)
                             colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
                             !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
@@ -370,7 +376,7 @@ CONTAINS
                             DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
                               !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
                               colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
-                              columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV, &
+                              columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(colParameterIdx,NO_PART_DERIV, &
                                 & gaussPointIdx)
                               colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
                               !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
@@ -404,7 +410,7 @@ CONTAINS
                             DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
                               !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
                               colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
-                              columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV, &
+                              columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(colParameterIdx,NO_PART_DERIV, &
                                 & gaussPointIdx)
                               colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
                               !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
@@ -525,7 +531,7 @@ CONTAINS
         NULLIFY(lagrangeDecompositionTopology)
         CALL Decomposition_DecompositionTopologyGet(lagrangeDecomposition,lagrangeDecompositionTopology,err,error,*999)
         NULLIFY(dataPoints)
-        CALL DecompositionTopology_DataPointsGet(lagrangeDecompositionTopology,dataPoints,err,error,*999)
+        CALL DecompositionTopology_DecompositionDataPointsGet(lagrangeDecompositionTopology,dataPoints,err,error,*999)
         decompositionElementData=>dataPoints%elementDataPoints(interfaceElementNumber)
         
         !Calculate PGSMI, update interface matrices with PGSMI, and update scale factors
@@ -661,10 +667,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshComponentNumber,numberOfCoupledMeshGeoComp,numberOfInterfaceMeshXi,numberOfCoupledMeshXi, &
-      & numberOfMatrixCoupledElements,localDof
-    INTEGER(INTG) :: dataPointIdx,coupledMeshIdx,xiIdx,localElementNumber,localFaceLineNumber,matrixElementIdx,rowComponentIdx, &
-      & rowParameterIdx,rowIdx,colIdx,componentIdx,globalDataPointNumber
+    INTEGER(INTG) :: numberOfCoupledMeshGeoComp,numberOfInterfaceMeshXi,numberOfCoupledMeshXi, &
+      & numberOfMatrixCoupledElements,localDof,elementLineFaceNumber
+    INTEGER(INTG) :: dataPointIdx,coupledMeshIdx,coupledMeshVariableType,xiIdx,localElementNumber,localFaceLineNumber, &
+      & matrixElementIdx,rowComponentIdx,rowParameterIdx,rowIdx,colIdx,componentIdx,globalDataPointNumber
     INTEGER(INTG) :: matrixCoefficients(2)
     REAL(DP) :: rowBasisFunction,contactStiffness
     REAL(DP) :: positionPoint(3),normalPoint(3),tangentsPoint(3,3),xi(3)
@@ -672,28 +678,28 @@ CONTAINS
     REAL(DP), ALLOCATABLE :: gaps(:),gapsComponents(:,:),normals(:,:)
     LOGICAL, ALLOCATABLE :: orthogonallyProjected(:)       
     TYPE(BasisType), POINTER :: coupledMeshDependentBasis
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,lagrangeDecomposition
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(DecompositionElementsType), POINTER :: dependentDecompositionElements
-    TYPE(DecompositionTopologyType), POINTER :: dependentDecompositionTopology
+    TYPE(DecompositionTopologyType), POINTER :: dependentDecompositionTopology,lagrangeDecompositionTopology
     TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData 
+    TYPE(DomainType), POINTER :: dependentDomain
     TYPE(DomainElementsType), POINTER :: dependentDomainElements
     TYPE(DomainTopologyType), POINTER :: dependentDomainTopology
-    TYPE(FieldType), POINTER :: coupledMeshDependentField,penaltyField
-    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters,geometricInterpolationParameters, &
-      & lagrangeInterpolationParameters,penaltyInterpolationParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpolatedPoint,geometricInterpolatedPoint,penaltyInterpolatedPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpolatedPointMetrics
+    TYPE(FieldType), POINTER :: coupledMeshDependentField,coupledMeshGeometricField,lagrangeField,penaltyField
+    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpolatedPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: dependentInterpolatedPointMetrics
     TYPE(FieldVariableType), POINTER :: coupledMeshGeometricVariable,interfaceMatrixVariable,lagrangeVariable,penaltyVariable
     TYPE(InterfaceType), POINTER :: interface 
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations 
-    TYPE(InterfaceEquationsDomainInterpolationType), POINTER :: interfaceInterpolation,variableInterpolation
+    TYPE(InterfaceEquationsDomainInterpolationType), POINTER :: variableInterpolation
     TYPE(InterfaceEquationsInterpolationType), POINTER :: interfaceEquationsInterpolation
-    TYPE(InterfaceEquationsInterpolationSetType), POINTER :: interfaceEquationsInterpolationSet
+    TYPE(InterfaceEquationsInterpolationSetType), POINTER :: dependentInterpolationSet
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix,penaltyMatrix
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity 
-    TYPE(InterfacePenaltyType), POINTER :: interfacePenalty
     TYPE(MeshType), POINTER :: coupledMesh,interfaceMesh     
     TYPE(VARYING_STRING) :: localError
 
@@ -736,7 +742,7 @@ CONTAINS
         NULLIFY(lagrangeDecompositionTopology)
         CALL Decomposition_DecompositionTopologyGet(lagrangeDecomposition,lagrangeDecompositionTopology,err,error,*999)
         NULLIFY(dataPoints)
-        CALL DecompositionTopology_DataPointsGet(lagrangeDecompositionTopology,dataPoints,err,error,*999)
+        CALL DecompositionTopology_DecompositionDataPointsGet(lagrangeDecompositionTopology,dataPoints,err,error,*999)
         decompositionElementData=>dataPoints%elementDataPoints(interfaceElementNumber)
       
         !###################################################################################################################
@@ -864,9 +870,9 @@ CONTAINS
             !Calculate surface normal (use 2nd coupled mesh surface normal)
             !\todo: Allow the user to choose which surface normal to calculate or alternatively allow for a weighted average of the two.  
             IF (coupledMeshIdx==2) THEN
-             CALL Field_InterpolatedPointMetricsCalculate(numberOfCoupledMeshGeoComp,dependentInterpolatedPointsMetrics, &
+             CALL Field_InterpolatedPointMetricsCalculate(numberOfCoupledMeshGeoComp,dependentInterpolatedPointMetrics, &
                 & err,error,*999)
-              CALL Field_PositionNormalTangentsCalculateIntPtMetric(dependentInterpolatedPointsMetrics, &
+              CALL Field_PositionNormalTangentsCalculateIntPtMetric(dependentInterpolatedPointMetrics, &
                 & reverseNormal,positionPoint,normalPoint,tangentsPoint,err,error,*999)
               normals(1:numberOfCoupledMeshGeoComp,dataPointIdx)=normalPoint(1:numberOfCoupledMeshGeoComp)
             ENDIF !coupledMeshIdx==1
@@ -939,7 +945,7 @@ CONTAINS
                 NULLIFY(dependentDomainElements)
                 CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                 NULLIFY(coupledMeshDependentBasis)
-                CALL DomainElements_BasisGet(dependentElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
+                CALL DomainElements_BasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
                 DO rowParameterIdx=1,coupledMeshDependentBasis%numberOfElementParameters
                   rowBasisFunction=Basis_EvaluateXi(coupledMeshDependentBasis,rowParameterIdx,NO_PART_DERIV, &
                     & xi(1:numberOfCoupledMeshXi),err,error)*normals(rowComponentIdx,dataPointIdx)* &
@@ -1045,21 +1051,40 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: gaussPointIdx, rowComponentIdx, rowIdx, rowParameterIdx, colComponentIdx, colIdx, colParameterIdx
-    INTEGER(INTG) :: rowMeshComponentNumber,derivativeIdx,derivative,localElementNode,interfaceNode,interfaceDerivative
+    INTEGER(INTG) :: derivativeIdx,derivative,localElementNode,interfaceNode,interfaceDerivative
     INTEGER(INTG) :: coupledElementNumber,coupledMeshIdx,coupledMeshVariableType,lagrangeVariableType
     INTEGER(INTG) :: connectedLineFace,decompositionLineNumber,localLineNodeIdx,decompositionFaceNumber,localFaceNodeIdx
     REAL(DP) :: xi(3),jacobianGaussWeight,rowBasisFunction,columnBasisFunction,matrixCoefficient
-    TYPE(BasisType), POINTER :: interfaceDependentBasis,coupledMeshBasis,interfaceGeometricBasis, &
-      & interfaceConnectivityBasis
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: interfaceQuadratureScheme
-    TYPE(FieldType), POINTER :: coupledMeshDependentField,interfaceDependentField,interfaceGeometricField
-    TYPE(FieldVariableType), POINTER :: interfaceMatrixVariable,lagrangeVariable
-    TYPE(ElementMatrixType), POINTER :: interfaceElementMatrix
-    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
-    TYPE(InterfaceEquationsDomainInterpolationType), POINTER :: interfaceInterpolation
-    TYPE(InterfaceElementConnectivityType), POINTER :: elementConnectivity
+    TYPE(BasisType), POINTER :: faceBasis,interfaceDependentBasis,coupledMeshBasis,interfaceGeometricBasis, &
+      & interfaceConnectivityBasis,lineBasis
+    TYPE(QuadratureSchemeType), POINTER :: interfaceQuadratureScheme
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
+    TYPE(DecompositionElementsType), POINTER :: dependentDecompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: dependentDecompositionTopology
+    TYPE(DomainType), POINTER :: dependentDomain,geometricDomain
+    TYPE(DomainElementsType), POINTER :: dependentDomainElements,geometricDomainElements
     TYPE(DomainLineType), POINTER :: coupledMeshDomainLine
+    TYPE(DomainLinesType), POINTER :: dependentDomainLines
     TYPE(DomainFaceType), POINTER :: coupledMeshDomainFace
+    TYPE(DomainFacesType), POINTER :: dependentDomainFaces
+    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology,geometricDomainTopology
+    TYPE(FieldType), POINTER :: coupledMeshDependentField,interfaceDependentField,interfaceGeometricField
+    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters,geometricInterpolationParameters, &
+      & lagrangeInterpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpolatedPointMetrics
+    TYPE(FieldVariableType), POINTER :: interfaceMatrixVariable,lagrangeVariable
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
+    TYPE(InterfaceEquationsDomainInterpolationType), POINTER :: interfaceInterpolation,variableInterpolation
+    TYPE(InterfaceEquationsInterpolationType), POINTER :: interfaceEquationsInterpolation
+    TYPE(InterfaceEquationsInterpolationSetType), POINTER :: dependentInterpolationSet,geometricInterpolationSet, &
+      & lagrangeInterpolationSet
+    TYPE(InterfaceElementConnectivityType), POINTER :: elementConnectivity
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolidFluidOperator_FiniteElementCalculate",err,error,*999)
@@ -1089,7 +1114,7 @@ CONTAINS
         CALL InterfaceMeshConnectivity_BasisGet(meshConnectivity,interfaceConnectivityBasis,err,error,*999)
         !Pointers to interface variables (columns of interface element matrix)
         NULLIFY(interfaceEquationsInterpolation)
-        CALL InterfaceEquations_InterpolationGet(interfaceEquations,interfaceEquationsInterpolation,err,error,*999)
+        CALL InterfaceEquations_EquationsInterpolationGet(interfaceEquations,interfaceEquationsInterpolation,err,error,*999)
         NULLIFY(interfaceInterpolation)
         CALL InterfaceEquationsInterpolation_InterfaceInterpGet(interfaceEquationsInterpolation,interfaceInterpolation, &
           & err,error,*999)
@@ -1099,24 +1124,29 @@ CONTAINS
         CALL Field_DecompositionGet(interfaceGeometricField,geometricDecomposition,err,error,*999)
         NULLIFY(geometricDomain)
         CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
-        NULLIFY(geometricTopology)
-        CALL Domain_DomainTopologyGet(geometricDomain,geometricTopology,err,error,*999)
-        NULLIFY(geometricElements)
-        CALL DomainTopology_DomainElementsGet(geometricTopology,geometricElements,err,error,*999)
+        NULLIFY(geometricDomainTopology)
+        CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
+        NULLIFY(geometricDomainElements)
+        CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
         NULLIFY(interfaceGeometricBasis)
-        CALL DomainElements_BasisGet(geometricElements,elementNumber,interfaceGeometricBasis,err,error,*999)
+        CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,interfaceGeometricBasis,err,error,*999)
         NULLIFY(interfaceDependentField)
         CALL InterfaceDomainInterpolation_DependentFieldGet(interfaceInterpolation,interfaceDependentField,err,error,*999)
         NULLIFY(dependentDecomposition)
         CALL Field_DecompositionGet(interfaceDependentField,dependentDecomposition,err,error,*999)
+        NULLIFY(dependentDecompositionTopology)
+        CALL Decomposition_DecompositionTopologyGet(dependentDecomposition,dependentDecompositionTopology,err,error,*999)
+        NULLIFY(dependentDecompositionElements)
+        CALL DecompositionTopology_DecompositionElementsGet(dependentDecompositionTopology,dependentDecompositionElements, &
+          & err,error,*999)
         NULLIFY(dependentDomain)
         CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
-        NULLIFY(dependentTopology)
-        CALL Domain_DomainTopologyGet(dependentDomain,dependentTopology,err,error,*999)
-        NULLIFY(dependentElements)
-        CALL DomainTopology_DomainElementsGet(dependentTopology,dependentElements,err,error,*999)
+        NULLIFY(dependentDomainTopology)
+        CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+        NULLIFY(dependentDomainElements)
+        CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
         NULLIFY(interfaceDependentBasis)
-        CALL DomainElements_BasisGet(dependentElements,elementNumber,interfaceDependentBasis,err,error,*999)
+        CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,interfaceDependentBasis,err,error,*999)
         !Integrate using the interface quadrature scheme
         NULLIFY(interfaceQuadratureScheme)
         CALL Basis_QuadratureSchemeGet(interfaceGeometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,interfaceQuadratureScheme, &
@@ -1179,14 +1209,14 @@ CONTAINS
               & dependentInterpolationParameters,err,error,*999)
  
             !Loop over gauss points
-            DO gaussPointIdx=1,interfaceQuadratureScheme%NUMBER_OF_GAUSS
+            DO gaussPointIdx=1,interfaceQuadratureScheme%numberOfGauss
               !Interpolate the geometric field at given gauss point, includes first partial derivatives
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                 & geometricInterpolatedPoint,err,error,*999)
               !Calculate the interpolated point metrics and the associated interpolated point
               CALL Field_InterpolatedPointMetricsCalculate(interfaceGeometricBasis%numberOfXi,geometricInterpolatedPointMetrics, &
                 & err,error,*999)
-              jacobianGaussWeight=geometricInterpolatedPointMetrics%jacobian*interfaceQuadratureScheme%GAUSS_WEIGHTS(gaussPointIdx)
+              jacobianGaussWeight=geometricInterpolatedPointMetrics%jacobian*interfaceQuadratureScheme%gaussWeights(gaussPointIdx)
               IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD.AND. &
                 & coupledMeshIdx==interfaceMatrices%numberOfInterfaceMatrices) CALL FlagError("Not implemented.",err,error,*999) 
               !\todo defaults to first mesh component, generalise
@@ -1198,41 +1228,75 @@ CONTAINS
               !\todo Currently Lagrange field variable component numbers must match each coupled dependent field variable
               !component numbers. Generalise ordering
               DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
-
+                
                 NULLIFY(dependentDomain)
                 CALL FieldVariable_ComponentDomainGet(interfaceMatrixVariable,rowComponentIdx,dependentDomain,err,error,*999)
-                NULLIFY(dependentTopology)
-                CALL Domain_DomainTopologyGet(dependentDomain,dependentTopology,err,error,*999)
-                NULLIFY(dependentElements)
-                CALL DomainTopology_DomainElementsGet(dependentTopology,dependentElements,err,error,*999)
+                NULLIFY(dependentDomainTopology)
+                CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+                NULLIFY(dependentDomainElements)
+                CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
+                NULLIFY(dependentDomainLines)
+                CALL DomainTopology_DomainLinesGet(dependentDomainTopology,dependentDomainLines,err,error,*999)
                 NULLIFY(interfaceDependentBasis)
-                CALL DomainElements_BasisGet(dependentElements,elementNumber,coupledMeshBasis,err,error,*999)
+                CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,coupledMeshBasis,err,error,*999)
                 
                 SELECT CASE(interfaceDependentBasis%numberOfXi)
                   
-                  CASE(1) !1D interface (line)
-                    NULLIFY(dependentLines)
-                    CALL DomainTopology_DomainLinesGet(dependentTopology,dependentLines,err,error,*999)
-                    connectedLineFace=elementConnectivity%connectedLineFace
-                    decompositionLineNumber=dependentElements%elements(coupledElementNumber)%elementLines(connectedLineFace)
-                    NULLIFY(coupledMeshDomainLine)
-                    CALL DomainLines_LineGet(dependentLines,decompositionLineNumber,coupledMeshDomainLine,err,error,*999)
-                    NULLIFY(lineBasis)
-                    CALL DomainLines_BasisGet(dpendentLines,decompositionLineNumber,lineBasis,err,error,*999)
-                    DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLineFace)
-                      localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
-                      DO derivativeIdx=1,lineBasis%numberOfDerivatives(localLineNodeIdx)                     
-                        derivative=coupledMeshDomainLine%derivativesInLine(1,derivativeIdx,localLineNodeIdx)                    
+                CASE(1) !1D interface (line)
+                  NULLIFY(dependentDomainLines)
+                  CALL DomainTopology_DomainLinesGet(dependentDomainTopology,dependentDomainLines,err,error,*999)
+                  connectedLineFace=elementConnectivity%connectedLineFace
+                  decompositionLineNumber=dependentDecompositionElements%elements(coupledElementNumber)% &
+                    & elementLines(connectedLineFace)                     
+                  NULLIFY(coupledMeshDomainLine)
+                  CALL DomainLines_LineGet(dependentDomainLines,decompositionLineNumber,coupledMeshDomainLine,err,error,*999)
+                  NULLIFY(lineBasis)
+                  CALL DomainLines_BasisGet(dependentDomainLines,decompositionLineNumber,lineBasis,err,error,*999)
+                  DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLineFace)
+                    localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
+                    DO derivativeIdx=1,lineBasis%numberOfDerivatives(localLineNodeIdx)                     
+                      derivative=coupledMeshDomainLine%derivativesInLine(1,derivativeIdx,localLineNodeIdx)                    
+                      rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
+                      !Evaluates the appropriate partial derivative index at position xi for the row basis (solid,fluid)
+                      rowBasisFunction=Basis_EvaluateXi(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,xi(1:2),err,error)
+                      rowIdx=rowParameterIdx+coupledMeshBasis%numberOfElementParameters*(rowComponentIdx-1)
+                      DO interfaceNode=1,interfaceDependentBasis%numberOfNodes
+                        DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
+                          !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
+                          colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
+                          !Evaluates the appropriate partial derivative index at position xi for the row basis (lambda)
+                          columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(colParameterIdx,NO_PART_DERIV, &
+                            & gaussPointIdx)
+                          colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
+                          !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
+                          !multiplying them here
+                          interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)= &
+                            & interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)+ &
+                            & columnBasisFunction*rowBasisFunction*jacobianGaussWeight*matrixCoefficient
+                        ENDDO !interfaceDerivative
+                      ENDDO !interfaceNode
+                    ENDDO !derivativeIdx
+                  ENDDO !localLineNodeIdx
+                  
+                CASE(2) !2D interface (face)
+                  
+                  NULLIFY(dependentDomainFaces)
+                  CALL DomainTopology_DomainFacesGet(dependentDomainTopology,dependentDomainFaces,err,error,*999)
+                  
+                  SELECT CASE(coupledMeshBasis%numberOfXi)
+                    
+                  CASE(2) !Coupled Mesh has 2 xi directions
+                    DO localElementNode=1,coupledMeshBasis%numberOfNodes
+                      DO derivative=1,coupledMeshBasis%numberOfDerivatives(localElementNode)
                         rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
-                        !Evaluates the appropriate partial derivative index at position xi for the row basis (solid,fluid)
-                        rowBasisFunction=Basis_EvaluateXi(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,xi(1:2),err,error)
+                        rowBasisFunction=Basis_EvaluateXi(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV, &
+                          & xi(1:coupledMeshBasis%numberOfXi),err,error)
                         rowIdx=rowParameterIdx+coupledMeshBasis%numberOfElementParameters*(rowComponentIdx-1)
                         DO interfaceNode=1,interfaceDependentBasis%numberOfNodes
                           DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
                             !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
                             colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
-                            !Evaluates the appropriate partial derivative index at position xi for the row basis (lambda)
-                            columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV, &
+                            columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(colParameterIdx,NO_PART_DERIV, &
                               & gaussPointIdx)
                             colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
                             !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
@@ -1242,79 +1306,48 @@ CONTAINS
                               & columnBasisFunction*rowBasisFunction*jacobianGaussWeight*matrixCoefficient
                           ENDDO !interfaceDerivative
                         ENDDO !interfaceNode
-                      ENDDO !derivativeIdx
-                    ENDDO !localLineNodeIdx
-
-                  CASE(2) !2D interface (face)
-
-                    NULLIFY(dependentFaces)
-                    CALL DomainTopology_DomainFacesGet(dependentTopology,dependentFaces,err,error,*999)
+                      ENDDO !derivative
+                    ENDDO !localElementNode
                     
-                    SELECT CASE(coupledMeshBasis%numberOfXi)
+                  CASE(3) !Coupled Mesh has 3 xi directions
+                    connectedLineFace = elementConnectivity%connectedLineFace
+                    decompositionFaceNumber=dependentDecompositionElements%elements(coupledElementNumber)% &
+                      & elementFaces(connectedLineFace)
+                    NULLIFY(coupledMeshDomainFace)
+                    CALL DomainFaces_FaceGet(dependentDomainFaces,decompositionFaceNumber,coupledMeshDomainFace,err,error,*999)
+                    NULLIFY(faceBasis)
+                    CALL DomainFaces_BasisGet(dependentDomainFaces,decompositionFaceNumber,faceBasis,err,error,*999)
+                    DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedLineFace)
+                      localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedLineFace)
+                      DO derivativeIdx=1,faceBasis%numberOfDerivatives(localFaceNodeIdx)
+                        derivative=coupledMeshBasis%derivativeNumbersInLocalFace(derivativeIdx,localFaceNodeIdx, &
+                          & connectedLineFace)
+                        rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
+                        rowBasisFunction=Basis_EvaluateXi(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV, &
+                          & XI(1:coupledMeshBasis%numberOfXi),err,error)
+                        rowIdx=rowParameterIdx+coupledMeshBasis%numberOfElementParameters*(rowComponentIdx-1)
+                        DO interfaceNode=1,interfaceDependentBasis%numberOfNodes
+                          DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
+                            !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
+                            colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
+                            columnBasisFunction=interfaceQuadratureScheme%gaussBasisFunctions(colParameterIdx,NO_PART_DERIV, &
+                              & gaussPointIdx)
+                            colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
+                            !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
+                            !multiplying them here
+                            interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)= &
+                              & interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)+ &
+                              & rowBasisFunction*columnBasisFunction*jacobianGaussWeight*matrixCoefficient
+                          ENDDO !interfaceDerivative
+                        ENDDO !interfaceNode
+                      ENDDO !derivativeIdx
+                    ENDDO !faceNodeIdx
+                    
+                  END SELECT !coupledMeshBasis%numberOfXi
 
-                    CASE(2) !Coupled Mesh has 2 xi directions
-                      DO localElementNode=1,coupledMeshBasis%numberOfNodes
-                        DO derivative=1,coupledMeshBasis%numberOfDerivatives(localElementNode)
-                          rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
-                          rowBasisFunction=Basis_EvaluateXi(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV, &
-                            & xi(1:coupledMeshBasis%numberOfXi),err,error)
-                          rowIdx=rowParameterIdx+coupledMeshBasis%numberOfElementParameters*(rowComponentIdx-1)
-                          DO interfaceNode=1,interfaceDependentBasis%numberOfNodes
-                            DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
-                              !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
-                              colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
-                              columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV, &
-                                & gaussPointIdx)
-                              colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
-                              !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
-                              !multiplying them here
-                              interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)= &
-                                & interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)+ &
-                                & columnBasisFunction*rowBasisFunction*jacobianGaussWeight*matrixCoefficient
-                            ENDDO !interfaceDerivative
-                          ENDDO !interfaceNode
-                        ENDDO !derivative
-                      ENDDO !localElementNode
-
-                    CASE(3) !Coupled Mesh has 3 xi directions
-                      connectedLineFace = elementConnectivity%connectedLineFace
-                      decompositionFaceNumber=domainElements%elements(coupledElementNumber)%elementFaces(connectedLineFace)
-                      NULLIFY(coupledMeshDomainFace)
-                      CALL DomainFaces_FaceGet(dependentFaces,decompositionFaceNumber,coupledMeshDomainFace,err,error,*999)
-                      NULLIFY(faceBasis)
-                      CALL DomainFaces_BasisGet(dpendentFaces,decompositionFaceNumber,faceBasis,err,error,*999)
-                      DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedLineFace)
-                        localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedLineFace)
-                        DO derivativeIdx=1,faceBasis%numberOfDerivatives(localFaceNodeIdx)
-                          derivative=coupledMeshBasis%derivativeNumbersInLocalFace(derivativeIdx,localFaceNodeIdx, &
-                            & connectedLineFace)
-                          rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
-                          rowBasisFunction=Basis_EvaluateXi(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV, &
-                            & XI(1:coupledMeshBasis%numberOfXi),err,error)
-                          rowIdx=rowParameterIdx+coupledMeshBasis%numberOfElementParameters*(rowComponentIdx-1)
-                          DO interfaceNode=1,interfaceDependentBasis%numberOfNodes
-                            DO interfaceDerivative=1,interfaceDependentBasis%numberOfDerivatives(interfaceNode)
-                              !\todo requires equal number of nodes between interface mesh and coupled mesh. Generalize
-                              colParameterIdx=interfaceDependentBasis%elementParameterIndex(interfaceDerivative,interfaceNode)
-                              columnBasisFunction=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV, &
-                                & gaussPointIdx)
-                              colIdx=colParameterIdx+interfaceDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
-                              !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of
-                              !multiplying them here
-                              interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)= &
-                                & interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)+ &
-                                & rowBasisFunction*columnBasisFunction*jacobianGaussWeight*matrixCoefficient
-                            ENDDO !interfaceDerivative
-                          ENDDO !interfaceNode
-                        ENDDO !derivativeIdx
-                      ENDDO !faceNodeIdx
-
-                    END SELECT !coupledMeshBasis%numberOfXi
-
-                  END SELECT !interfaceDependentBasis%numberOfXi
-
-                ENDDO !rowComponentIdx
-              ENDIF
+                END SELECT !interfaceDependentBasis%numberOfXi
+                
+              ENDDO !rowComponentIdx
             ENDDO !gaussPointIdx
 
             !Scale factor adjustment
@@ -1335,12 +1368,12 @@ CONTAINS
               DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
                 NULLIFY(dependentDomain)
                 CALL FieldVariable_ComponentDomainGet(lagrangeVariable,rowComponentIdx,dependentDomain,err,error,*999)
-                NULLIFY(dependentTopology)
-                CALL Domain_DomainTopologyGet(dependentDomain,dependentTopology,err,error,*999)
-                NULLIFY(dependentElements)
-                CALL DomainTopology_DomainElementsGet(dependentTopology,dependentElements,err,error,*999)
+                NULLIFY(dependentDomainTopology)
+                CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+                NULLIFY(dependentDomainElements)
+                CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                 NULLIFY(interfaceDependentBasis)
-                CALL DomainElements_BasisGet(dependentElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
+                CALL DomainElements_BasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
                 !Loop over element rows
                 DO rowParameterIdx=1,coupledMeshBasis%numberOfElementParameters
                   rowIdx=rowIdx+1
@@ -1349,7 +1382,7 @@ CONTAINS
                   DO colComponentIdx=1,lagrangeVariable%numberOfComponents
                     DO colParameterIdx=1,interfaceDependentBasis%numberOfElementParameters
                       colIdx=colIdx+1
-                      interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)=interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx) * &
+                      interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)=interfaceMatrix%elementMatrix%matrix(rowIdx,colIdx)* &
                         & lagrangeInterpolationParameters%scaleFactors(colParameterIdx,colComponentIdx)
                     ENDDO !colParameterIdx
                   ENDDO !colComponentIdx
@@ -1407,7 +1440,8 @@ CONTAINS
   !================================================================================================================================
   !
 
-  FUNCTION InterfaceOperators_InterfToCoupledMeshGaussTransform(elementConnectivity,interfaceConnectivityBasis,gaussPointIdx,err,error)
+  FUNCTION InterfaceOperators_InterfToCoupledMeshGaussTransform(elementConnectivity,interfaceConnectivityBasis,gaussPointIdx, &
+    & err,error)
   
     !Argument variables
     TYPE(InterfaceElementConnectivityType), POINTER :: elementConnectivity !<A pointer to the element connectivity
@@ -1419,7 +1453,7 @@ CONTAINS
     REAL(DP) :: InterfaceOperators_InterfToCoupledMeshGaussTransform(SIZE(elementConnectivity%xi,1))
     !Local Variables
     INTEGER(INTG) :: rowParameterIdx
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
 
     ENTERS("InterfaceOperators_InterfToCoupledMeshGaussTransform",err,error,*999)
     
@@ -1428,7 +1462,8 @@ CONTAINS
     CALL Basis_QuadratureSchemeGet(interfaceConnectivityBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
     DO rowParameterIdx = 1,interfaceConnectivityBasis%numberOfElementParameters
       InterfaceOperators_InterfToCoupledMeshGaussTransform(:)= InterfaceOperators_InterfToCoupledMeshGaussTransform(:) + &
-        & quadratureScheme%GAUSS_BASIS_FNS(rowParameterIdx,NO_PART_DERIV,gaussPointIdx)*elementConnectivity%xi(:,1,rowParameterIdx)
+        & quadratureScheme%gaussBasisFunctions(rowParameterIdx,NO_PART_DERIV,gaussPointIdx)* &
+        & elementConnectivity%xi(:,1,rowParameterIdx)
     ENDDO !rowParameterIdx
      
     EXITS("InterfaceOperators_InterfToCoupledMeshGaussTransform")

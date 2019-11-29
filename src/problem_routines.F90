@@ -46,23 +46,23 @@ MODULE ProblemRoutines
 
   USE BaseRoutines
   USE BIOELECTRIC_ROUTINES
-  USE CLASSICAL_FIELD_ROUTINES
+  USE ClassicalFieldRoutines
   USE ComputationAccessRoutines
   USE ContextAccessRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
-  USE ELASTICITY_ROUTINES
+  USE ElasticityRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsSetConstants
-  USE EQUATIONS_SET_ROUTINES
+  USE EquationsSetRoutines
   USE EquationsSetAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FIELD_IO_ROUTINES
   USE FINITE_ELASTICITY_ROUTINES
   USE FittingRoutines
-  USE FLUID_MECHANICS_ROUTINES
+  USE FluidMechanicsRoutines
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_CONDITIONS_ROUTINES
@@ -1050,15 +1050,15 @@ CONTAINS
     
     SELECT CASE(problem%specification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      CALL ELASTICITY_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+      CALL Elasticity_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-      CALL FLUID_MECHANICS_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+      CALL FluidMechanics_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
       CALL BIOELECTRIC_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
-      CALL CLASSICAL_FIELD_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+      CALL ClassicalField_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_FITTING_CLASS)
       CALL Fitting_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_MODAL_CLASS)
@@ -1279,7 +1279,7 @@ CONTAINS
         SELECT CASE(equations%linearity)
         CASE(EQUATIONS_LINEAR)
           !Assemble the equations for linear equations
-          CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+          CALL EquationsSet_Assemble(equationsSet,err,error,*999)
         CASE(EQUATIONS_NONLINEAR)
           !Evaluate the residual for nonlinear equations
           CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
@@ -1323,7 +1323,7 @@ CONTAINS
         SELECT CASE(equations%linearity)
         CASE(EQUATIONS_LINEAR)
           !Assemble the equations for linear equations
-          CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+          CALL EquationsSet_Assemble(equationsSet,err,error,*999)
         CASE(EQUATIONS_NONLINEAR)
           !Evaluate the residual for nonlinear equations
           CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
@@ -1714,7 +1714,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EQUATIONS_SET_LOAD_INCREMENT_APPLY(equationsSet,solverEquations%BOUNDARY_CONDITIONS,iterationNumber, &
+      CALL EquationsSet_LoadIncrementApply(equationsSet,solverEquations%BOUNDARY_CONDITIONS,iterationNumber, &
         & maximumNumberOfIterations,err,error,*999)
     ENDDO !equationsSetIdx
     
@@ -1756,11 +1756,11 @@ CONTAINS
     IF(SIZE(problem%specification,1)<1) CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
     SELECT CASE(problem%specification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      CALL ELASTICITY_CONTROL_LOOP_PRE_LOOP(controlLoop,err,error,*999)
+      CALL Elasticity_ControlLoopPreLoop(controlLoop,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
       !do nothing
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-      CALL FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP(controlLoop,err,error,*999)
+      CALL FluidMechanics_ControlLoopPreLoop(controlLoop,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
       !do nothing
     CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
@@ -1817,12 +1817,12 @@ CONTAINS
    CASE(PROBLEM_BIOELECTRICS_CLASS)
      CALL BIOELECTRIC_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
    CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-     CALL FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+     CALL FluidMechanics_ControlLoopPostLoop(controlLoop,err,error,*999)
    CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
      !Do nothing
    CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
      IF(SIZE(problem%specification,1)<2) CALL FlagError("Problem specification must have at least two entries.",err,error,*999)
-     CALL CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)        
+     CALL ClassicalField_ControlLoopPostLoop(controlLoop,err,error,*999)        
      SELECT CASE(problem%specification(2))
      CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
        CALL REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
@@ -1883,11 +1883,11 @@ CONTAINS
     
     SELECT CASE(problem%specification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      CALL ELASTICITY_PRE_SOLVE(controlLoop,solver,err,error,*999)
+      CALL Elasticity_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
       CALL BIOELECTRIC_PRE_SOLVE(solver,err,error,*999)
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-      CALL FLUID_MECHANICS_PRE_SOLVE(controlLoop,solver,err,error,*999)
+      CALL FluidMechanics_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
       !Do nothing???
     CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
@@ -1946,11 +1946,11 @@ CONTAINS
     
     SELECT CASE(problem%specification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      CALL ELASTICITY_POST_SOLVE(controlLoop,solver,err,error,*999)
+      CALL Elasticity_PostSolve(solver,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
       CALL BIOELECTRIC_POST_SOLVE(solver,err,error,*999)
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-      CALL FLUID_MECHANICS_POST_SOLVE(controlLoop,solver,err,error,*999)
+      CALL FluidMechanics_PostSolve(solver,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
       !Do nothing???
     CASE(PROBLEM_CLASSICAL_FIELD_CLASS)                
@@ -2083,7 +2083,7 @@ CONTAINS
       !Set the equations set times
       CALL EquationsSet_TimesSet(equationsSet,currentTime,timeIncrement,err,error,*999)
       !Assemble the equations for linear problems
-      CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+      CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
     !Set the solver time
     CALL SOLVER_DYNAMIC_TIMES_SET(solver,currentTime,timeIncrement,err,error,*999)
@@ -2093,7 +2093,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EQUATIONS_SET_BACKSUBSTITUTE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
     ENDDO !equationsSetIdx
    
     EXITS("Problem_SolverEquationsDynamicLinearSolve")
@@ -2152,7 +2152,7 @@ CONTAINS
         SELECT CASE(equations%linearity)
         CASE(EQUATIONS_LINEAR)
           !Assemble the equations
-          CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+          CALL EquationsSet_Assemble(equationsSet,err,error,*999)
         CASE(EQUATIONS_NONLINEAR)
           !Evaluate the residuals
           CALL EquationsSet_ResidualEvaluate(equationsSet,err,error,*999)
@@ -2223,7 +2223,7 @@ CONTAINS
       CALL EquationsSet_TimesSet(equationsSet,currentTime,timeIncrement,err,error,*999)
       !CALL EQUATIONS_SET_FIXED_CONDITIONS_APPLY(equationsSet,err,error,*999)    
       !Assemble the equations for linear problems
-      CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+      CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
     !Solve for the current time
     CALL Solver_Solve(solver,err,error,*999)
@@ -2231,7 +2231,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EQUATIONS_SET_BACKSUBSTITUTE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
     ENDDO !equationsSetIdx
    
     EXITS("Problem_SolverEquationsQuasistaticLinearSolve")
@@ -2283,7 +2283,7 @@ CONTAINS
       CALL EquationsSet_TimesSet(equationsSet,currentTime,timeIncrement,err,error,*999)
       !CALL EQUATIONS_SET_FIXED_CONDITIONS_APPLY(equationsSet,err,error,*999)
       !Assemble the equations for linear problems
-      CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+      CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
     !Solve for the next time i.e., current time + time increment
     CALL Solver_Solve(solver,err,error,*999)
@@ -2296,9 +2296,9 @@ CONTAINS
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-        CALL EQUATIONS_SET_BACKSUBSTITUTE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
       CASE(EQUATIONS_NONLINEAR)
-        CALL EQUATIONS_SET_NONLINEAR_RHS_UPDATE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_NonlinearRHSUpdate(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
       CASE DEFAULT
         localError="The equations linearity type of "// &
           & TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
@@ -2358,7 +2358,7 @@ CONTAINS
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !CALL EQUATIONS_SET_FIXED_CONDITIONS_APPLY(equationsSet,err,error,*999)
       !Assemble the equations for linear problems
-      CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+      CALL EquationsSet_Assemble(equationsSet,err,error,*999)
 #ifdef TAUPROF
       CALL TAU_PHASE_STOP(PHASE)
 #endif
@@ -2382,16 +2382,16 @@ CONTAINS
     CALL Solver_Solve(solver,err,error,*999)
 
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START('EQUATIONS_SET_BACKSUBSTITUTE()')
+    CALL TAU_STATIC_PHASE_START('EquationsSet_Backsubstitute()')
 #endif
     !Back-substitute to find flux values for linear problems
     DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
       NULLIFY(equations)
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-      CALL EQUATIONS_SET_BACKSUBSTITUTE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
     ENDDO !equationsSetIdx
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('EQUATIONS_SET_BACKSUBSTITUTE()')
+    CALL TAU_STATIC_PHASE_STOP('EquationsSet_Backsubstitute()')
 #endif
     
     EXITS("Problem_SolverEquationsStaticLinearSolve")
@@ -2439,7 +2439,7 @@ CONTAINS
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Assemble the equations set
-      CALL EQUATIONS_SET_ASSEMBLE(equationsSet,err,error,*999)
+      CALL EquationsSet_Assemble(equationsSet,err,error,*999)
     ENDDO !equationsSetIdx
     !Make sure the interface matrices are up to date
     DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
@@ -2466,9 +2466,9 @@ CONTAINS
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-        CALL EQUATIONS_SET_BACKSUBSTITUTE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
       CASE(EQUATIONS_NONLINEAR)
-        CALL EQUATIONS_SET_NONLINEAR_RHS_UPDATE(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_NonlinearRHSUpdate(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
       CASE DEFAULT
         localError="The equations linearity type of "// &
           & TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
@@ -2611,7 +2611,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC(equationsSet,boundaryConditions,err,error,*999)
+      CALL EquationsSet_BoundaryConditionsAnalytic(equationsSet,boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
 
     EXITS("Problem_SolverEquationsBoundaryConditionsAnalytic")
@@ -2847,7 +2847,7 @@ CONTAINS
           DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
             DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
               DO componentIdx=1,noGeomComp !Get all component for a nodal derivative
-                CALL FIELD_PARAMETER_SET_GET_NODE(geometricTransformationSolver%field,geometricTransformationSolver% &
+                CALL Field_ParameterSetGetNode(geometricTransformationSolver%field,geometricTransformationSolver% &
                   & fieldVariableType,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber,componentIdx, &
                   & nodalParameters(componentIdx),err,error,*999)
               ENDDO !componentIdx
@@ -2856,20 +2856,20 @@ CONTAINS
               nodalParametersTrans(1:noGeomComp)=MATMUL(transformationMatrix(1:noGeomComp,1:noGeomComp), &
                 & nodalParameters(1:noGeomComp))
               DO componentIdx=1,noGeomComp !Update all component for a nodal derivative
-                CALL FIELD_PARAMETER_SET_UPDATE_NODE(geometricTransformationSolver%field,geometricTransformationSolver% &
+                CALL Field_ParameterSetUpdateNode(geometricTransformationSolver%field,geometricTransformationSolver% &
                   & fieldVariableType,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber,componentIdx, &
                   & nodalParametersTrans(componentIdx),err,error,*999)
                 IF(derivativeIdx==1) THEN ! Translate nodal coordinate
-                  CALL FIELD_PARAMETER_SET_ADD_NODE(geometricTransformationSolver%field,geometricTransformationSolver% &
+                  CALL Field_ParameterSetAddNode(geometricTransformationSolver%field,geometricTransformationSolver% &
                     & fieldVariableType,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber,componentIdx, &
                     & transformationMatrix(componentIdx,1+noGeomComp),err,error,*999)
                 ENDIF !derivativeIdx==1
                 IF(transformBC) THEN
-                  CALL FIELD_PARAMETER_SET_UPDATE_NODE(geometricTransformationSolver%field,geometricTransformationSolver% &
+                  CALL Field_ParameterSetUpdateNode(geometricTransformationSolver%field,geometricTransformationSolver% &
                     & fieldVariableType,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber, &
                     & componentIdx,nodalParametersTrans(componentIdx),err,error,*999)
                   IF(derivativeIdx==1) THEN ! Translate nodal coordinate for BC
-                    CALL FIELD_PARAMETER_SET_ADD_NODE(geometricTransformationSolver%field,geometricTransformationSolver% &
+                    CALL Field_ParameterSetAddNode(geometricTransformationSolver%field,geometricTransformationSolver% &
                       & fieldVariableType,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber, &
                       & componentIdx,transformationMatrix(componentIdx,1+noGeomComp),err,error,*999)
                   ENDIF !derivativeIdx==1
@@ -3183,10 +3183,10 @@ CONTAINS
                 coupledMeshDependentField=>interfaceCondition%DEPENDENT%equationsSets(coupledMeshIdx)%ptr% &
                   & DEPENDENT%DEPENDENT_FIELD
                 NULLIFY(interpolationParameters)
-                CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(coupledMeshDependentField,interpolationParameters,err,error, &
+                CALL Field_InterpolationParametersInitialise(coupledMeshDependentField,interpolationParameters,err,error, &
                   & *999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
                 NULLIFY(interpolatedPoints)
-                CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999, &
+                CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoints,err,error,*999, &
                   & FIELD_GEOMETRIC_COMPONENTS_TYPE)
                 interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%ptr
                 dataProjection=>interfaceDatapoints%dataProjections%dataProjections(coupledMeshIdx+1)%ptr
@@ -3205,9 +3205,9 @@ CONTAINS
                       & ELEMENTS(coupledElementNumber)% &
                       & elementFaces(pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
                       & elementLineFaceNumber)
-                    CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,coupledMeshFaceLineNumber, &
+                    CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,coupledMeshFaceLineNumber, &
                       & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                    CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,pointsConnectivity%pointsConnectivity(globalDataPointNumber, &
+                    CALL Field_InterpolateXi(NO_PART_DERIV,pointsConnectivity%pointsConnectivity(globalDataPointNumber, &
                       & coupledMeshIdx)%reducedXi(:),interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE) !Interpolate contact data points on each surface
                     DO component=1,3
                       WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV) - &
@@ -3219,8 +3219,8 @@ CONTAINS
                     WRITE(IUNIT,'(1X,I2)') dataProjection%dataProjectionResults(globalDataPointNumber)%exitTag
                   ENDDO !dataPointIdx
                 ENDDO !interfaceElementNumber
-                CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(interpolationParameters,err,error,*999)
-                CALL FIELD_INTERPOLATED_POINTS_FINALISE(interpolatedPoints,err,error,*999)
+                CALL Field_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
+                CALL Field_InterpolatedPointsFinalise(interpolatedPoints,err,error,*999)
                 OPEN(UNIT=IUNIT)
               ENDDO !coupledMeshIdx
             ENDIF

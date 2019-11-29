@@ -243,7 +243,6 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("Problem_CellMLEquationsGet1",err,error,*998)
 
@@ -580,7 +579,6 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Problem_SolverEquationsGet1",err,error,*998)
 

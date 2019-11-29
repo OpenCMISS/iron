@@ -49,7 +49,7 @@ MODULE MeshRoutines
   USE BasisAccessRoutines
   USE Constants
   USE ContextAccessRoutines
-  USE COORDINATE_ROUTINES
+  USE CoordinateSystemRoutines
   USE CoordinateSystemAccessRoutines
   USE DataProjectionAccessRoutines
   USE DecompositionRoutines
@@ -3228,7 +3228,7 @@ CONTAINS
 
     DO ne=1,PARENT_MESH%numberOfElements
       NGP = MAX(NGP,PARENT_MESH%TOPOLOGY(1)%ptr%ELEMENTS%elements(ne)%BASIS%QUADRATURE%&
-        & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS)
+        & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%numberOfGauss)
     ENDDO !ne
 
     MESH_EMBEDDING%PARENT_MESH => PARENT_MESH

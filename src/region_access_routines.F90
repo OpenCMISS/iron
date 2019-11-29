@@ -76,6 +76,11 @@ MODULE RegionAccessRoutines
     MODULE PROCEDURE Region_CoordinateSystemGet
   END INTERFACE REGION_COORDINATE_SYSTEM_GET
 
+  INTERFACE Region_LabelGet
+    MODULE PROCEDURE Region_LabelGetC
+    MODULE PROCEDURE Region_LabelGetVS
+  END INTERFACE Region_LabelGet
+  
   INTERFACE REGION_NODES_GET
     MODULE PROCEDURE Region_NodesGet
   END INTERFACE REGION_NODES_GET
@@ -85,7 +90,7 @@ MODULE RegionAccessRoutines
   END INTERFACE REGION_USER_NUMBER_FIND
 
   PUBLIC Region_AssertIsFinished,Region_AssertNotFinished
-  
+
   PUBLIC Region_CellMLGet
 
   PUBLIC Region_ContextGet
@@ -104,6 +109,8 @@ MODULE RegionAccessRoutines
 
   PUBLIC Region_FieldGet
 
+  PUBLIC Region_FieldsGet
+
   PUBLIC Region_GeneratedMeshGet
 
   PUBLIC Region_Get
@@ -111,6 +118,8 @@ MODULE RegionAccessRoutines
   PUBLIC Region_InterfaceGet
 
   PUBLIC Region_IsSubRegion
+
+  PUBLIC Region_LabelGet
 
   PUBLIC Region_MeshGet
 
@@ -499,6 +508,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the fields for a given region.
+  SUBROUTINE Region_FieldsGet(region,fields,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the fields for
+    TYPE(FieldsType), POINTER :: fields !<On exit, a pointer to the fields for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_FieldsGet",err,error,*998)
+
+    IF(ASSOCIATED(fields)) CALL FlagError("Fields is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*998)
+
+    fields=>region%fields
+    IF(.NOT.ASSOCIATED(fields)) THEN
+      localError="The fields for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
+        & " are not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_FieldsGet")
+    RETURN
+999 NULLIFY(fields)
+998 ERRORSEXITS("Region_FieldsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_FieldsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the generated mesh for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_GeneratedMeshGet
   SUBROUTINE Region_GeneratedMeshGet(region,userNumber,generatedMesh,err,error,*)
 
@@ -638,6 +682,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Region_IsSubRegion
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of a region. \see OPENCMISS::Iron::cmfe_Region_LabelGet
+  SUBROUTINE Region_LabelGetC(region,label,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return the region label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: cLength,vsLength
+
+    ENTERS("Region_LabelGetC",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(region%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(region%label,vsLength)
+    ELSE
+      label=CHAR(region%label,cLength)
+    ENDIF
+    
+    EXITS("Region_LabelGetC")
+    RETURN
+999 ERRORSEXITS("Region_LabelGetC",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_LabelGetC
+
+   !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of a region. \see OPENCMISS::Iron::cmfe_Region_LabelGet
+  SUBROUTINE Region_LabelGetVS(region,label,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return the region label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Region_LabelGetVS",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    
+    !CPB 20/2/07 The following line crashes the AIX compiler unless it has a VAR_STR(CHAR()) around it
+    label=VAR_STR(CHAR(region%label))
+     
+    EXITS("Region_LabelGetVS")
+    RETURN
+999 ERRORSEXITS("Region_LabelGetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_LabelGetVS
 
   !
   !================================================================================================================================

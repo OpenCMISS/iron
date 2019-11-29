@@ -46,13 +46,14 @@ MODULE GENERATED_MESH_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
-  USE COORDINATE_ROUTINES
+  USE CoordinateSystemAccessRoutines
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE GeneratedMeshAccessRoutines
   USE INPUT_OUTPUT
@@ -3238,7 +3239,7 @@ CONTAINS
     IF(ASSOCIATED(REGULAR_MESH)) THEN
       IF(ASSOCIATED(FIELD)) THEN
         NULLIFY(COORDINATE_SYSTEM)
-        CALL FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
+        CALL Field_CoordinateSystemGet(FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
         IF(COORDINATE_SYSTEM%TYPE==COORDINATE_RECTANGULAR_CARTESIAN_TYPE) THEN
 
           MY_ORIGIN=0.0_DP
@@ -3325,11 +3326,11 @@ CONTAINS
                         VALUE=VALUE+REAL(node_position_idx(xi_idx)-1,DP)*DELTA_COORD(component_idx,xi_idx)
                       ENDDO !xi_idx
                       VALUE=MY_ORIGIN(component_idx)+VALUE
-                      CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & 1,1,NODE_USER_NUMBER,component_idx,VALUE,ERR,ERROR,*999)
                       !Set derivatives
                       DO derivative_idx=2,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                        CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                        CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & 1,derivative_idx,NODE_USER_NUMBER,component_idx,DERIVATIVE_VALUES(derivative_idx),ERR,ERROR,*999)
                       END DO !derivative_idx
                     ENDIF !node_exists
@@ -3342,8 +3343,8 @@ CONTAINS
                 ENDIF
               ENDDO !component_idx
 !!TODO: do boundary nodes first then start the update to overlap computation and computation.
-              CALL FIELD_PARAMETER_SET_UPDATE_START(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-              CALL FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CALL Field_ParameterSetUpdateStart(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CALL Field_ParameterSetUpdateFinish(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
             ELSE
               LOCAL_ERROR="The standard field variable is not associated for field number "// &
                 & TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))//"."
@@ -3407,7 +3408,7 @@ CONTAINS
       FIELD_VARIABLE=>FIELD%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR
       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
         IF(FIELD_VARIABLE%numberOfComponents==3) THEN
-          CALL FIELD_SCALING_TYPE_GET(FIELD,SCALING_TYPE,ERR,ERROR,*999)
+          CALL Field_ScalingTypeGet(FIELD,SCALING_TYPE,ERR,ERROR,*999)
           IF(SCALING_TYPE/=FIELD_UNIT_SCALING) &
             & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"  Note: If the cylinder looks wonky, set field scaling to&
             & unit scaling type.",ERR,ERROR,*999)
@@ -3456,7 +3457,7 @@ CONTAINS
                 RECT_COORDS=RECT_COORDS+CYLINDER_MESH%ORIGIN
                 !Default to version 1 of each node derivative
                 CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,1,np,component_idx,ny,err,error,*999)
-                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ny, &
+                CALL Field_ParameterSetUpdateLocalDOF(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ny, &
                   & RECT_COORDS(component_idx),ERR,ERROR,*999)
                 ! Do derivatives: if there are derivatives, we can assume it's cubic hermite
                 !   given that quadratic hermites are only used for collapsed hex elements,
@@ -3506,7 +3507,7 @@ CONTAINS
                     ! assign derivative
                     !Default to version 1 of each node derivative
                     CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,nk,np,component_idx,ny,err,error,*999)
-                    CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                    CALL Field_ParameterSetUpdateLocalDOF(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & ny,DERIV,ERR,ERROR,*999)
                   ENDDO !nk
                 ENDIF !derivatives
@@ -3515,8 +3516,8 @@ CONTAINS
           ELSE
             CALL FlagError("All field variable components must have node-based interpolation.",ERR,ERROR,*999)
           ENDIF
-          CALL FIELD_PARAMETER_SET_UPDATE_START(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-          CALL FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+          CALL Field_ParameterSetUpdateStart(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+          CALL Field_ParameterSetUpdateFinish(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
         ELSE
           CALL FlagError("Geometric field must be three dimensional.",ERR,ERROR,*999)
         ENDIF
@@ -3626,7 +3627,7 @@ CONTAINS
              ELSE
                 CALL FlagError("Ellipsoid mesh does not have bases allocated.",ERR,ERROR,*999)
              ENDIF
-             CALL FIELD_SCALING_TYPE_GET(FIELD,SCALING_TYPE,ERR,ERROR,*999)
+             CALL Field_ScalingTypeGet(FIELD,SCALING_TYPE,ERR,ERROR,*999)
              IF(SCALING_TYPE/=FIELD_UNIT_SCALING) &
                   & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"  Note: If the ellipsoid looks wonky, set field scaling to &
                   & unit scaling type.",ERR,ERROR,*999)
@@ -3658,7 +3659,7 @@ CONTAINS
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)
                       DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                          !Default to version 1 of each node derivative
-                         CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                         CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                               & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                          local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                          IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3681,7 +3682,7 @@ CONTAINS
                          CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                          IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                             DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                               CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                               CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                     & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                                IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3704,7 +3705,7 @@ CONTAINS
                       CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                            CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                            CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                             local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                             IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3735,7 +3736,7 @@ CONTAINS
                             CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                                  CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                                  CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                   local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                                   IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3762,7 +3763,7 @@ CONTAINS
                       CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                            CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                            CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                             local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                             IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3785,7 +3786,7 @@ CONTAINS
                             CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                                  CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                                  CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                   local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                                   IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3815,7 +3816,7 @@ CONTAINS
                       RECT_COORDS(2)=0
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)
                       DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                         CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                         CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                               & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                          local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                          IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3838,7 +3839,7 @@ CONTAINS
                          CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                          IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                             DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                               CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                               CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                     & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                                IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3861,7 +3862,7 @@ CONTAINS
                       CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                            CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                            CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                             local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                             IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3892,7 +3893,7 @@ CONTAINS
                             CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                                  CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
+                                  CALL Field_ParameterSetUpdateNode(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                   local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
                                   IF(DOMAIN_NODES%NODES(local_node)%numberOfDerivatives>1) THEN
@@ -3909,8 +3910,8 @@ CONTAINS
              ELSE
                 CALL FlagError("All field variable components must have node-based interpolation.",ERR,ERROR,*999)
              ENDIF
-             CALL FIELD_PARAMETER_SET_UPDATE_START(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-             CALL FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+             CALL Field_ParameterSetUpdateStart(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+             CALL Field_ParameterSetUpdateFinish(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
           ELSE
              CALL FlagError("Geometric field must be three dimensional.",ERR,ERROR,*999)
           ENDIF

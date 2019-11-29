@@ -61,7 +61,7 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE EquationsMatricesRoutines
   USE EquationsSetConstants
   USE FIELD_IO_ROUTINES
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
@@ -785,7 +785,7 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: DEPENDENT_QUADRATURE_SCHEME
+    TYPE(QuadratureSchemeType), POINTER :: DEPENDENT_QUADRATURE_SCHEME
     TYPE(FieldInterpolationParametersType), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS, &
       & FIBRE_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS
     TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT, &
@@ -888,7 +888,7 @@ CONTAINS
 
           IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
             !copy the old fibre stretch to the previous values parameter set
-            CALL FIELD_PARAMETER_SETS_COPY(independentField,FIELD_U1_VARIABLE_TYPE, &
+            CALL Field_ParameterSetsCopy(independentField,FIELD_U1_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
           ENDIF
 
@@ -910,8 +910,8 @@ CONTAINS
           DO element_idx=1,numberOfElements
 
             DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
-            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
+            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%numberOfGauss
             GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
               & TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS
 
@@ -921,26 +921,26 @@ CONTAINS
               DZDNU(idx,idx)=1.0_DP
             ENDDO
 
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
               & GEOMETRIC_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
               & FIBRE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
               & DEPENDENT_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
 
            !Loop over gauss points
             DO gauss_idx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
             
               !Interpolate dependent, geometric, fibre and materials fields
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
+              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & DEPENDENT_INTERPOLATED_POINT,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(DEPENDENT_BASIS%numberOfXi, &
+              CALL Field_InterpolatedPointMetricsCalculate(DEPENDENT_BASIS%numberOfXi, &
                 & DEPENDENT_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
+              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & GEOMETRIC_INTERPOLATED_POINT,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
+              CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi, &
                 & GEOMETRIC_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
+              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & FIBRE_INTERPOLATED_POINT,ERR,ERROR,*999)
 
               !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
@@ -960,8 +960,8 @@ CONTAINS
           ENDDO !element_idx
 
           !now the ghost elements -- get the relevant info from the other computational nodes
-          CALL FIELD_PARAMETER_SET_UPDATE_START(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-          CALL FIELD_PARAMETER_SET_UPDATE_FINISH(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+          CALL Field_ParameterSetUpdateStart(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+          CALL Field_ParameterSetUpdateFinish(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
         CASE DEFAULT
           LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
@@ -1005,7 +1005,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(BasisType), POINTER :: DEPENDENT_BASIS
     TYPE(EquationsType), POINTER :: EQUATIONS
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: DEPENDENT_QUADRATURE_SCHEME
+    TYPE(QuadratureSchemeType), POINTER :: DEPENDENT_QUADRATURE_SCHEME
     TYPE(FieldInterpolationParametersType), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS, &
       & FIBRE_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS
     TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT, &
@@ -1104,11 +1104,11 @@ CONTAINS
           MAXIMUM_NUMBER_OF_ITERATIONS=CONTROL_LOOP%whileLoop%maximumNumberOfIterations
           !in the first iteration store the unaltered homogenized active stress field 
           IF(ITERATION_NUMBER==1) THEN
-            CALL FIELD_PARAMETER_SETS_COPY(independentField,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ParameterSetsCopy(independentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
           ELSE
             !restore the solution of the previous time step
-            CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
           ENDIF
 
@@ -1130,8 +1130,8 @@ CONTAINS
           DO element_idx=1,numberOfElements
 
             DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
-            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
+            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%numberOfGauss
 
             !Loop over gauss points
             DO gauss_idx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
@@ -1293,15 +1293,15 @@ CONTAINS
 !!!          DO element_idx=1,numberOfElements
 
 !!!            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
-!!!            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-!!!            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
+!!!            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+!!!            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%numberOfGauss
 
 !!!            !Loop over gauss points
 !!!            DO gauss_idx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
 
 !!!              !get the ACTIVE_STRESS at the GP
 !!!              dof_idx=FIELD_VAR_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,element_idx)
-!!!              CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+!!!              CALL Field_ParameterSetGetLocalDOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
 !!!                & dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
 
 !!!              !multiply the ACTIVE_STRESS with the scale factor
@@ -1309,7 +1309,7 @@ CONTAINS
 
 !!!              !update the ACTIVE_STRESS at GP
 !!!              dof_idx=FIELD_VAR_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,element_idx)
-!!!              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+!!!              CALL Field_ParameterSetUpdateLocalDOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
 !!!                & dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
 !!!              
 !!!            ENDDO !gauss_idx
@@ -1317,8 +1317,8 @@ CONTAINS
 !tomo end
 
           !now the ghost elements -- get the relevant info from the other computational nodes
-          CALL FIELD_PARAMETER_SET_UPDATE_START(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-          CALL FIELD_PARAMETER_SET_UPDATE_FINISH(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+          CALL Field_ParameterSetUpdateStart(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+          CALL Field_ParameterSetUpdateFinish(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
         CASE DEFAULT
           LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
@@ -1425,7 +1425,7 @@ CONTAINS
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
                       dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                       NULLIFY(DEPENDENT_REGION)
-                      CALL FIELD_REGION_GET(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
+                      CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
                       FILENAME="MainTime_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
                         & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                       METHOD="FORTRAN"
@@ -1465,7 +1465,7 @@ CONTAINS
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         NULLIFY(DEPENDENT_REGION)
-                        CALL FIELD_REGION_GET(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
+                        CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
                         FILENAME="MainTime_M_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
                           & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                         METHOD="FORTRAN"
@@ -1588,19 +1588,19 @@ CONTAINS
 
                 !get the current node position (x) and the node position of the last iteration (y)
                 CALL FieldVariable_LocalNodeDOFGet(FIELD_VAR,1,1,node_idx,1,dof_idx,err,error,*999)
-                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,dof_idx,x1,ERR,ERROR,*999)
-                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dof_idx,y1,ERR,ERROR,*999)
                 CALL FieldVariable_LocalNodeDOFGet(FIELD_VAR,1,1,node_idx,2,dof_idx,err,error,*999)
-                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,dof_idx,x2,ERR,ERROR,*999)
-                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dof_idx,y2,ERR,ERROR,*999)
                 CALL FieldVariable_LocalNodeDOFGet(FIELD_VAR,1,1,node_idx,3,dof_idx,err,error,*999)
-                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,dof_idx,x3,ERR,ERROR,*999)
-                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dof_idx,y3,ERR,ERROR,*999)
 
                 !sum up
@@ -1611,20 +1611,20 @@ CONTAINS
                 CONTROL_LOOP%whileLoop%continueLoop=.FALSE.
                 CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
                 !copy the current solution to the previous solution
-                CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
               ELSEIF(CONTROL_LOOP%whileLoop%iterationNumber==CONTROL_LOOP%whileLoop%maximumNumberOfIterations) THEN
                 CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
                 CALL FLAG_WARNING('----------- Maximum number of iterations in while loop reached. -----------',ERR,ERROR,*999)
                 !copy the current solution to the previous solution
-                CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
               ENDIF
 
             ENDIF
 
             !copy the current solution to the previous iteration solution
-            CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
 
           CASE DEFAULT
@@ -1686,7 +1686,7 @@ CONTAINS
     REAL(DP) :: OLD_DIST_2,OLD_DIST_3,OLD_DIST_4
     REAL(DP) :: XI(3),PREVIOUS_NODE(3),DIST_INIT,SARCO_LENGTH_INIT,TIME_STEP,DIST
     LOGICAL :: OUTSIDE_NODE
-    REAL(DP), POINTER :: GAUSS_POSITIONS(:,:)
+    REAL(DP), POINTER :: gaussPositions(:,:)
 
     ENTERS("BioelectricFiniteElasticity_UpdateGeometricField",ERR,ERROR,*999)
 
@@ -1714,7 +1714,7 @@ CONTAINS
     NULLIFY(FIELD_VAR_IND_FE)
     NULLIFY(FIELD_VAR_IND_M)
     NULLIFY(FIELD_VAR_IND_M_2)
-    NULLIFY(GAUSS_POSITIONS)
+    NULLIFY(gaussPositions)
     
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
@@ -1890,7 +1890,7 @@ CONTAINS
 
 
               !get the maximum contraction velocity 
-              CALL FIELD_PARAMETER_SET_GET_CONSTANT(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+              CALL Field_ParameterSetGetConstant(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,2,VELOCITY_MAX,ERR,ERROR,*999)
               !NOTE: VELOCITY_MAX is the max shortening velocity, and hence negative!!!
               !The max lengthening velocity is assumed to be   abs(VELOCITY_MAX)/2.0
@@ -1935,36 +1935,36 @@ CONTAINS
                       !get the finite elasticity dependent field interpolation parameters of this element
                       INTERPOLATION_PARAMETERS=>EQUATIONS_SET%equations%interpolation%dependentInterpParameters &
                         & (FIELD_U_VARIABLE_TYPE)%ptr
-                      CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ne,INTERPOLATION_PARAMETERS, &
+                      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ne,INTERPOLATION_PARAMETERS, &
                         & ERR,ERROR,*999)
                       INTERPOLATED_POINT=>EQUATIONS_SET%equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
 
-                      !get the positions of the Gauss points of the Finite Elasticity element, GAUSS_POSITIONS(components,number_of_Gauss_points)
-                      GAUSS_POSITIONS=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
-                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%GAUSS_POSITIONS
+                      !get the positions of the Gauss points of the Finite Elasticity element, gaussPositions(components,number_of_Gauss_points)
+                      gaussPositions=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
+                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%quadratureSchemeMap( &
+                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%gaussPositions
                       
                       DO n1=1,nodes_in_Xi_1
                         node_idx=node_idx+1
                         
                         !store the fibre number this bioelectrics node belongs to.
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,fibre_idx,ERR,ERROR,*999) 
 
                         !find the interpolated position of the bioelectric grid node from the FE dependent field
-                        CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI,INTERPOLATED_POINT,ERR,ERROR,*999)
+                        CALL Field_InterpolateXi(NO_PART_DERIV,XI,INTERPOLATED_POINT,ERR,ERROR,*999)
                         !update the bioelectrics dependent field Field_V_Variable_Type
                         !the Field_V_Variable_Type of the monodomain dependent field contains the nodal positions in 3D
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,INTERPOLATED_POINT%VALUES(1,1),ERR,ERROR,*999)
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,2,INTERPOLATED_POINT%VALUES(2,1),ERR,ERROR,*999)
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,INTERPOLATED_POINT%VALUES(3,1),ERR,ERROR,*999)
 
                         IF((n1==1).AND.(ne==START_ELEMENT)) THEN
                           !a new line of bioelectrics grid nodes begins
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,0.0_DP,ERR,ERROR,*999)
                         ELSE
                           !get the position in 3D of the previous node
@@ -2017,52 +2017,52 @@ CONTAINS
                           ENDIF
                           
                           !store the relative contraction velocity in component 3 of the U2 variable of the monodomain independent field
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,VELOCITY/ABS(VELOCITY_MAX),ERR,ERROR,*999)
 
                           !store the node distance for contraction velocity calculation
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,DIST,ERR,ERROR,*999)
 
                           !store the node distance for contraction velocity calculation
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,OLD_DIST,ERR,ERROR,*999)
 			    
                           !store the node distance for contraction velocity calculation
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,OLD_DIST_2,ERR,ERROR,*999)
                           
                           !store the node distance for contraction velocity calculation
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,6,OLD_DIST_3,ERR,ERROR,*999)
 
                           !get the position in 1D of the previous node
                           CALL Field_ParameterSetGetLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,VALUE_LEFT,ERR,ERROR,*999)
                           !update the current 1D node position
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,VALUE_LEFT+DIST,ERR,ERROR,*999)
 
                           !get the initial sarcomere half length and initial node distance
-                          CALL FIELD_PARAMETER_SET_GET_CONSTANT(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetGetConstant(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,2,SARCO_LENGTH_INIT,ERR,ERROR,*999)
                           CALL Field_ParameterSetGetConstant(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,3,DIST_INIT,ERR,ERROR,*999)
                           !update the current sarcomere half length
                           VALUE=SARCO_LENGTH_INIT*DIST/DIST_INIT
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,VALUE,ERR,ERROR,*999)
 
                           !update the first node to the same value as the second node (no better info available)
                           IF((n1==2).AND.(ne==START_ELEMENT)) THEN
                             !current sarcomere half length
-                            CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
+                            CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
                               & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,VALUE,ERR,ERROR,*999)                            
                             !old node distance
-                            CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                               & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,DIST,ERR,ERROR,*999)
                             !relative contraction velocity
-                            CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                               & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,3,VELOCITY/ABS(VELOCITY_MAX),ERR,ERROR,*999)
                           ENDIF
 
@@ -2072,12 +2072,12 @@ CONTAINS
                           !calculate the closest finite elasticity Gauss point of each bioelectrics node
                           DISTANCE=1000000.0_DP
                           GAUSS_POINT=0
-                          DO gauss_idx=1,SIZE(GAUSS_POSITIONS,2)
+                          DO gauss_idx=1,SIZE(gaussPositions,2)
                             !compute the distance between the bioelectrics node and the Gauss point
                             VALUE=SQRT( &
-                              & (Xi(1)-GAUSS_POSITIONS(1,gauss_idx))*(Xi(1)-GAUSS_POSITIONS(1,gauss_idx))+ &
-                              & (Xi(2)-GAUSS_POSITIONS(2,gauss_idx))*(Xi(2)-GAUSS_POSITIONS(2,gauss_idx))+ &
-                              & (Xi(3)-GAUSS_POSITIONS(3,gauss_idx))*(Xi(3)-GAUSS_POSITIONS(3,gauss_idx)))
+                              & (Xi(1)-gaussPositions(1,gauss_idx))*(Xi(1)-gaussPositions(1,gauss_idx))+ &
+                              & (Xi(2)-gaussPositions(2,gauss_idx))*(Xi(2)-gaussPositions(2,gauss_idx))+ &
+                              & (Xi(3)-gaussPositions(3,gauss_idx))*(Xi(3)-gaussPositions(3,gauss_idx)))
                             IF(VALUE<DISTANCE) THEN
                               DISTANCE=VALUE
                               GAUSS_POINT=gauss_idx
@@ -2085,9 +2085,9 @@ CONTAINS
                           ENDDO !gauss_idx
                           IF(GAUSS_POINT==0) CALL FLAG_WARNING("Closest Gauss Point not found",ERR,ERROR,*999)
                           !store the nearest Gauss Point info and the inElement info (local element number!!!)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,GAUSS_POINT,ERR,ERROR,*999)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,ne,ERR,ERROR,*999)
                         ENDIF !CALC_CLOSEST_GAUSS_POINT
                         
@@ -2118,7 +2118,7 @@ CONTAINS
 !                        node_idx_2=node_idx_2+1
 !                        dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                          & DERIVATIVES(1)%VERSIONS(1)
-!                        CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                        CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                          & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                        VELOCITY=VELOCITY+VALUE
 !                      ENDDO
@@ -2127,7 +2127,7 @@ CONTAINS
 !                      node_idx_2=node_idx_2-nodes_in_Xi_1
 !                      DO n1=1,nodes_in_Xi_1
 !                        node_idx_2=node_idx_2+1
-!                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                          & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
 !                      ENDDO
 
@@ -2143,31 +2143,31 @@ CONTAINS
 !                      
 !                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                      VELOCITY=VELOCITY+VALUE
 
 !                      node_idx_2=node_idx_2+1
 !                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                      VELOCITY=VELOCITY+VALUE
 
 !                      node_idx_2=node_idx_2+1
 !                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                      VELOCITY=VELOCITY+VALUE
 !                      
 !                      VELOCITY=VELOCITY/offset
 
-!                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-2,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-1,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
 
 !                      !do the major part as moving average
@@ -2177,12 +2177,12 @@ CONTAINS
 !                        DO n4=node_idx_2-offset,node_idx_2+offset
 !                          dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(n4)% &
 !                            & DERIVATIVES(1)%VERSIONS(1)
-!                          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                          CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                            & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                          VELOCITY=VELOCITY+VALUE
 !                        ENDDO !n4
 !                        VELOCITY=VELOCITY/(2*offset+1)
-!                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                          & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
 !                      ENDDO !n1
 !                      
@@ -2192,31 +2192,31 @@ CONTAINS
 !                      node_idx_2=node_idx_2+1
 !                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                      VELOCITY=VELOCITY+VALUE
 
 !                      node_idx_2=node_idx_2+1
 !                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                      VELOCITY=VELOCITY+VALUE
 
 !                      node_idx_2=node_idx_2+1
 !                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
 !                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
 !                      VELOCITY=VELOCITY+VALUE
 !                      
 !                      VELOCITY=VELOCITY/offset
 
-!                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-2,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-1,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
 !                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
 !!tomo new end                       
 
@@ -2390,36 +2390,36 @@ CONTAINS
                       !get the finite elasticity dependent field interpolation parameters of this element
                       INTERPOLATION_PARAMETERS=>EQUATIONS_SET%equations%interpolation%dependentInterpParameters &
                         & (FIELD_U_VARIABLE_TYPE)%ptr
-                      CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ne,INTERPOLATION_PARAMETERS, &
+                      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ne,INTERPOLATION_PARAMETERS, &
                         & ERR,ERROR,*999)
                       INTERPOLATED_POINT=>EQUATIONS_SET%equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
 
-                      !get the positions of the Gauss points of the Finite Elasticity element, GAUSS_POSITIONS(components,number_of_Gauss_points)
-                      GAUSS_POSITIONS=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
-                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%GAUSS_POSITIONS
+                      !get the positions of the Gauss points of the Finite Elasticity element, gaussPositions(components,number_of_Gauss_points)
+                      gaussPositions=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
+                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%quadratureSchemeMap( &
+                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%gaussPositions
                       
                       DO n1=1,nodes_in_Xi_1
                         node_idx=node_idx+1
                         
                         !store the fibre number this bioelectrics node belongs to.
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,fibre_idx,ERR,ERROR,*999) 
 
                         !find the interpolated position of the bioelectric grid node from the FE dependent field
-                        CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI,INTERPOLATED_POINT,ERR,ERROR,*999)
+                        CALL Field_InterpolateXi(NO_PART_DERIV,XI,INTERPOLATED_POINT,ERR,ERROR,*999)
                         !update the bioelectrics dependent field Field_V_Variable_Type
                         !the Field_V_Variable_Type of the monodomain dependent field contains the nodal positions in 3D
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,INTERPOLATED_POINT%VALUES(1,1),ERR,ERROR,*999)
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,2,INTERPOLATED_POINT%VALUES(2,1),ERR,ERROR,*999)
-                        CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                           & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,INTERPOLATED_POINT%VALUES(3,1),ERR,ERROR,*999)
 
                         IF((n1==1).AND.(ne==START_ELEMENT)) THEN
                           !a new line of bioelectrics grid nodes begins
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,0.0_DP,ERR,ERROR,*999)
                         ELSE
                           !get the position in 3D of the previous node
@@ -2440,7 +2440,7 @@ CONTAINS
                           CALL Field_ParameterSetGetLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,VALUE_LEFT,ERR,ERROR,*999)
                           !update the current 1D node position
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,VALUE_LEFT+DIST,ERR,ERROR,*999)
 
                         ENDIF !((n1==1).AND.(ne==START_ELEMENT))
@@ -2449,12 +2449,12 @@ CONTAINS
                           !calculate the closest finite elasticity Gauss point of each bioelectrics node
                           DISTANCE=1000000.0_DP
                           GAUSS_POINT=0
-                          DO gauss_idx=1,SIZE(GAUSS_POSITIONS,2)
+                          DO gauss_idx=1,SIZE(gaussPositions,2)
                             !compute the distance between the bioelectrics node and the Gauss point
                             VALUE=SQRT( &
-                              & (Xi(1)-GAUSS_POSITIONS(1,gauss_idx))*(Xi(1)-GAUSS_POSITIONS(1,gauss_idx))+ &
-                              & (Xi(2)-GAUSS_POSITIONS(2,gauss_idx))*(Xi(2)-GAUSS_POSITIONS(2,gauss_idx))+ &
-                              & (Xi(3)-GAUSS_POSITIONS(3,gauss_idx))*(Xi(3)-GAUSS_POSITIONS(3,gauss_idx)))
+                              & (Xi(1)-gaussPositions(1,gauss_idx))*(Xi(1)-gaussPositions(1,gauss_idx))+ &
+                              & (Xi(2)-gaussPositions(2,gauss_idx))*(Xi(2)-gaussPositions(2,gauss_idx))+ &
+                              & (Xi(3)-gaussPositions(3,gauss_idx))*(Xi(3)-gaussPositions(3,gauss_idx)))
                             IF(VALUE<DISTANCE) THEN
                               DISTANCE=VALUE
                               GAUSS_POINT=gauss_idx
@@ -2462,9 +2462,9 @@ CONTAINS
                           ENDDO !gauss_idx
                           IF(GAUSS_POINT==0) CALL FLAG_WARNING("Closest Gauss Point not found",ERR,ERROR,*999)
                           !store the nearest Gauss Point info and the inElement info (local element number!!!)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,GAUSS_POINT,ERR,ERROR,*999)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,ne,ERR,ERROR,*999)
                         ENDIF !CALC_CLOSEST_GAUSS_POINT
                         
@@ -2695,8 +2695,8 @@ CONTAINS
               ne=ELEMENTS_MAPPING%domainList(element_idx)
               
               NUMBER_OF_GAUSS_POINTS=INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_ELASTICITY% &
-                & decomposition%meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP &
-                & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
+                & decomposition%meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%quadratureSchemeMap &
+                & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%numberOfGauss
 
               IF(NUMBER_OF_GAUSS_POINTS>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( & 
                 & "NUMBER_OF_GAUSS_POINTS is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
@@ -2865,9 +2865,9 @@ CONTAINS
             ENDDO !element_idx
 
             !now the ghost elements -- get the relevant info from the other computational nodes
-            CALL FIELD_PARAMETER_SET_UPDATE_START(INDEPENDENT_FIELD_ELASTICITY, & 
+            CALL Field_ParameterSetUpdateStart(INDEPENDENT_FIELD_ELASTICITY, & 
               & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-            CALL FIELD_PARAMETER_SET_UPDATE_FINISH(INDEPENDENT_FIELD_ELASTICITY, & 
+            CALL Field_ParameterSetUpdateFinish(INDEPENDENT_FIELD_ELASTICITY, & 
               & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
           ENDIF
@@ -3063,9 +3063,9 @@ CONTAINS
                       !function to approximate the relation between the initial titin length and the initial passive force F0	
                       TITIN_UNBOUND=COEFF_MATRIX(1)*EXP(LENGTH_TITIN)+COEFF_MATRIX(2)*LENGTH_TITIN**3+COEFF_MATRIX(3)* &
                         & LENGTH_TITIN**2+COEFF_MATRIX(4)*LENGTH_TITIN+COEFF_MATRIX(5) 
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,2,TITIN_UNBOUND,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,3,TITIN_UNBOUND,ERR,ERROR,*999)
 
                       ! calculate x-fibre titin stress (trigonometry):                      
@@ -3076,9 +3076,9 @@ CONTAINS
                       ACTIN_MYOSIN_DISTANCE=0.001_DP*(2.0_DP/3.0_DP*d10)  
                       ! calculate x-fibre stress with tangens-function (unbound titin)
                       TITIN_XF_UNBOUND=0.5_DP*TITIN_UNBOUND*ACTIN_MYOSIN_DISTANCE/LENGTH_TITIN
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,4,TITIN_XF_UNBOUND,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,5,TITIN_XF_UNBOUND,ERR,ERROR,*999)
 
                     ELSE  ! Force enhancement  
@@ -3231,22 +3231,22 @@ CONTAINS
                       ! calculate x-fibre stress with tangent (for bound titin filaments)
                       TITIN_XF_BOUND=0.5_DP*TITIN_BOUND*ACTIN_MYOSIN_DISTANCE/LENGTH_DIST_IG  
                       
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,2,TITIN_UNBOUND,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,3,TITIN_BOUND,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,4,TITIN_XF_UNBOUND,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
+                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,5,TITIN_XF_BOUND,ERR,ERROR,*999)
 
                     ENDIF ! Check if elongation is positive or not
                   ENDDO ! Over the nodes
 
                   !now the ghost elements -- get the relevant info from the other computational nodes
-                  CALL FIELD_PARAMETER_SET_UPDATE_START(INDEPENDENT_FIELD_MONODOMAIN, & 
+                  CALL Field_ParameterSetUpdateStart(INDEPENDENT_FIELD_MONODOMAIN, & 
                     & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                  CALL FIELD_PARAMETER_SET_UPDATE_FINISH(INDEPENDENT_FIELD_MONODOMAIN, & 
+                  CALL Field_ParameterSetUpdateFinish(INDEPENDENT_FIELD_MONODOMAIN, & 
                     & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
                 ELSE

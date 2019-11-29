@@ -90,20 +90,46 @@ MODULE EquationsSetAccessRoutines
     MODULE PROCEDURE EquationsSet_UserNumberFind
   END INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
 
-  PUBLIC EquationsSet_AnalyticCreated
-  
   PUBLIC EquationsSet_AnalyticFieldExists
   
   PUBLIC EquationsSet_AnalyticFieldGet
+  
+  PUBLIC EquationsSet_AnalyticFunctionTypeGet
 
   PUBLIC EquationsSet_AnalyticTimeGet,EquationsSet_AnalyticTimeSet
 
   PUBLIC EQUATIONS_SET_ANALYTIC_TIME_GET,EQUATIONS_SET_ANALYTIC_TIME_SET
+
+  PUBLIC EquationsSet_AssertIsFinished,EquationsSet_AssertNotFinished
+  
+  PUBLIC EquationsSet_AssertAnalyticIsCreated,EquationsSet_AssertAnalyticNotCreated
+  
+  PUBLIC EquationsSet_AssertAnalyticIsFinished,EquationsSet_AssertAnalyticNotFinished
+  
+  PUBLIC EquationsSet_AssertDependentIsFinished,EquationsSet_AssertDependentNotFinished
+  
+  PUBLIC EquationsSet_AssertDerivedIsCreated,EquationsSet_AssertDerivedNotCreated
+  
+  PUBLIC EquationsSet_AssertDerivedIsFinished,EquationsSet_AssertDerivedNotFinished
+  
+  PUBLIC EquationsSet_AssertEquationsIsCreated,EquationsSet_AssertEquationsNotCreated
+  
+  PUBLIC EquationsSet_AssertEquationsIsFinished,EquationsSet_AssertEquationsNotFinished
+  
+  PUBLIC EquationsSet_AssertIndependentIsCreated,EquationsSet_AssertIndependentNotCreated
+  
+  PUBLIC EquationsSet_AssertIndependentIsFinished,EquationsSet_AssertIndependentNotFinished
+  
+  PUBLIC EquationsSet_AssertMaterialsIsCreated,EquationsSet_AssertMaterialsNotCreated
+  
+  PUBLIC EquationsSet_AssertMaterialsIsFinished,EquationsSet_AssertMaterialsNotFinished
+  
+  PUBLIC EquationsSet_AssertSourceIsCreated,EquationsSet_AssertSourceNotCreated
+  
+  PUBLIC EquationsSet_AssertSourceIsFinished,EquationsSet_AssertSourceNotFinished
   
   PUBLIC EquationsSet_CoordinateSystemGet
 
-  PUBLIC EquationsSet_DerivedCreated
-  
   PUBLIC EquationsSet_DerivedFieldExists
   
   PUBLIC EquationsSet_DerivedFieldGet
@@ -114,70 +140,47 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EQUATIONS_SET_EQUATIONS_GET
   
+  PUBLIC EquationsSet_EquationsSetsGet
+
   PUBLIC EquationsSet_EquationsSetFieldGet
   
   PUBLIC EquationsSet_FibreFieldExists
   
+  PUBLIC EquationsSet_FibreFieldGet
+  
   PUBLIC EquationsSet_GeometricFieldGet
 
-  PUBLIC EquationsSet_IndependentCreated
-  
   PUBLIC EquationsSet_IndependentFieldExists
   
   PUBLIC EquationsSet_IndependentFieldGet
   
   PUBLIC EquationsSet_LabelGet,EquationsSet_LabelSet
 
-  PUBLIC EquationsSet_MaterialsCreated
-
   PUBLIC EquationsSet_MaterialsFieldExists
 
   PUBLIC EquationsSet_MaterialsFieldGet
 
-  PUBLIC EquationsSet_SourceCreated
+  PUBLIC EquationsSet_OutputTypeGet
+
+  PUBLIC EquationsSet_RegionGet
+
+  PUBLIC EquationsSet_SolutionMethodGet
   
   PUBLIC EquationsSet_SourceFieldExists
   
   PUBLIC EquationsSet_SourceFieldGet
+
+  PUBLIC EquationsSet_SpecificationGet
   
-  PUBLIC EquationsSet_RegionGet
-  
+  PUBLIC EquationsSet_SpecificationSizeGet
+
+  PUBLIC EquationsSet_TimesGet
+
   PUBLIC EquationsSet_UserNumberFind
 
   PUBLIC EQUATIONS_SET_USER_NUMBER_FIND
 
 CONTAINS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Asserts that analytic has been created for an equations set.
-  SUBROUTINE EquationsSet_AnalyticCreated(equationsSet,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the analytic has been created for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("EquationsSet_AnalyticCreated",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
-      localError="Equations set analytic has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-     
-    EXITS("EquationsSet_AnalyticCreated")
-    RETURN
-999 ERRORSEXITS("EquationsSet_AnalyticCreated",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsSet_AnalyticCreated
 
   !
   !================================================================================================================================
@@ -256,6 +259,39 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the analytic function type for an equations set.
+  SUBROUTINE EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic function type for
+    INTEGER(INTG), INTENT(OUT):: analyticFunctionType !<On exit, the analytic function type in the specified equations set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AnalyticFunctionTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Analytic information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    analyticFunctionType=equationsSet%analytic%ANALYTIC_FUNCTION_TYPE
+       
+    EXITS("EquationsSet_AnalyticFunctionTypeGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticFunctionTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticFunctionTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeGet
   SUBROUTINE EquationsSet_AnalyticTimeGet(equationsSet,analyticTime,err,error,*)
 
@@ -309,6 +345,983 @@ CONTAINS
   END SUBROUTINE EquationsSet_AnalyticTimeSet
 
   !
+  !=================================================================================================================================
+  !
+
+  !>Assert that an equations set has been finished.
+  SUBROUTINE EquationsSet_AssertIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) THEN
+      localError="Equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that an equations set has not been finished.
+  SUBROUTINE EquationsSet_AssertNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(equationsSet%EQUATIONS_SET_FINISHED) THEN
+      localError="Equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//" has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the analytic setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertAnalyticIsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Analytic has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertAnalyticIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertAnalyticIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertAnalyticIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the analytic setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertAnalyticIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertAnalyticIsFinished",err,error,*999)
+
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.equationsSet%analytic%ANALYTIC_FINISHED) THEN
+      localError="The analytic setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertAnalyticIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertAnalyticIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertAnalyticIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the analytic setup has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertAnalyticNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertAnalyticNotCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Analytic has alredy been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertAnalyticNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertAnalyticNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertAnalyticNotCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the analytic setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertAnalyticNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertAnalyticNotFinished",err,error,*999)
+
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Analytic is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    IF(equationsSet%analytic%ANALYTIC_FINISHED) THEN
+      localError="The analytic setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertAnalyticNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertAnalyticNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertAnalyticNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the dependent setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the dependent finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertDependentIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.equationsSet%dependent%DEPENDENT_FINISHED) THEN
+      localError="The dependent setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertDependentIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertDependentIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertDependentIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the dependent setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertDependentNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the dependent finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertDependentNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(equationsSet%dependent%DEPENDENT_FINISHED) THEN
+      localError="The dependent setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertDependentNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertDependentNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertDependentNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the derived setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertDerivedIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertDerivedIsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%derived)) THEN
+      localError="Derived has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertDerivedIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertDerivedIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertDerivedIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the derived setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertDerivedIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertDerivedIsFinished",err,error,*999)
+
+    CALL EquationsSet_AssertDerivedIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.equationsSet%derived%derivedFinished) THEN
+      localError="The derived setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertDerivedIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertDerivedIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertDerivedIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the derived setup has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertDerivedNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertDerivedNotCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ASSOCIATED(equationsSet%derived)) THEN
+      localError="Derived has already been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertDerivedNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertDerivedNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertDerivedNotCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the derived setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertDerivedNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertDerivedNotFinished",err,error,*999)
+
+    CALL EquationsSet_AssertDerivedIsCreated(equationsSet,err,error,*999)
+
+    IF(equationsSet%derived%derivedFinished) THEN
+      localError="The derived setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertDerivedNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertDerivedNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertDerivedNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the equations setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertEquationsIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertEquationsIsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%equations)) THEN
+      localError="Equations has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertEquationsIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertEquationsIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertEquationsIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the equations setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertEquationsIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertEquationsIsFinished",err,error,*999)
+
+    CALL EquationsSet_AssertEquationsIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.equationsSet%equations%equationsFinished) THEN
+      localError="The equations setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertEquationsIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertEquationsIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertEquationsIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the equations setup has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertEquationsNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertEquationsNotCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ASSOCIATED(equationsSet%equations)) THEN
+      localError="Equations has already been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertEquationsNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertEquationsNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertEquationsNotCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the equations setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertEquationsNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertEquationsNotFinished",err,error,*999)
+
+    CALL EquationsSet_AssertEquationsIsCreated(equationsSet,err,error,*999)
+
+    IF(equationsSet%equations%equationsFinished) THEN
+      localError="The equations setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertEquationsNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertEquationsNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertEquationsNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the independent setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertIndependentIsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
+      localError="Independent has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertIndependentIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertIndependentIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertIndependentIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the independent setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertIndependentIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertIndependentIsFinished",err,error,*999)
+
+    CALL EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.equationsSet%independent%INDEPENDENT_FINISHED) THEN
+      localError="The independent setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertIndependentIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertIndependentIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertIndependentIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the independent setup has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertIndependentNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertIndependentNotCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ASSOCIATED(equationsSet%independent)) THEN
+      localError="Independent has already been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertIndependentNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertIndependentNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertIndependentNotCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the independent setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertIndependentNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertIndependentNotFinished",err,error,*999)
+
+    CALL EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*999)
+
+    IF(equationsSet%independent%INDEPENDENT_FINISHED) THEN
+      localError="The independent setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertIndependentNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertIndependentNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertIndependentNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the materials setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertMaterialsIsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
+      localError="Materials has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertMaterialsIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertMaterialsIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertMaterialsIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the materials setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertMaterialsIsFinished",err,error,*999)
+
+    CALL EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.equationsSet%materials%MATERIALS_FINISHED) THEN
+      localError="The materials setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertMaterialsIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertMaterialsIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertMaterialsIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the materials setup has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertMaterialsNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertMaterialsNotCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ASSOCIATED(equationsSet%materials)) THEN
+      localError="Materials has already been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertMaterialsNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertMaterialsNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertMaterialsNotCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the materials setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertMaterialsNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertMaterialsNotFinished",err,error,*999)
+
+    CALL EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*999)
+
+    IF(equationsSet%materials%MATERIALS_FINISHED) THEN
+      localError="The materials setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertMaterialsNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertMaterialsNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertMaterialsNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the source setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertSourceIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertSourceIsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
+      localError="Source has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+   
+    EXITS("EquationsSet_AssertSourceIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertSourceIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertSourceIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the source setup has been finished for an equations set
+  SUBROUTINE EquationsSet_AssertSourceIsFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertSourceIsFinished",err,error,*999)
+
+    CALL EquationsSet_AssertSourceIsCreated(equationsSet,err,error,*999)
+
+    IF(.NOT.equationsSet%source%SOURCE_FINISHED) THEN
+      localError="The source setup has not been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertSourceIsFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertSourceIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertSourceIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the source has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertSourceNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertSourceNotCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ASSOCIATED(equationsSet%source)) THEN
+      localError="Source has already been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertSourceNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertSourceNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertSourceNotCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the source setup has not been finished for an equations set
+  SUBROUTINE EquationsSet_AssertSourceNotFinished(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertSourceNotFinished",err,error,*999)
+
+    CALL EquationsSet_AssertSourceIsCreated(equationsSet,err,error,*999)
+
+    IF(equationsSet%source%SOURCE_FINISHED) THEN
+      localError="The source setup has already been finished for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsSet_AssertSourceNotFinished")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertSourceNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertSourceNotFinished
+
+  !
   !================================================================================================================================
   !
 
@@ -350,37 +1363,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_CoordinateSystemGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Asserts that derived has been created for an equations set.
-  SUBROUTINE EquationsSet_DerivedCreated(equationsSet,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the derived has been created for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("EquationsSet_DerivedCreated",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet%derived)) THEN
-      localError="Equations set derived has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-     
-    EXITS("EquationsSet_DerivedCreated")
-    RETURN
-999 ERRORSEXITS("EquationsSet_DerivedCreated",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsSet_DerivedCreated
 
   !
   !================================================================================================================================
@@ -439,7 +1421,11 @@ CONTAINS
     derivedField=>equationsSet%derived%derivedField
     IF(.NOT.ASSOCIATED(derivedField)) THEN
       localError="Derived field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -474,7 +1460,11 @@ CONTAINS
     dependentField=>equationsSet%dependent%DEPENDENT_FIELD
     IF(.NOT.ASSOCIATED(dependentField)) THEN
       localError="Dependent field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -504,13 +1494,16 @@ CONTAINS
     ENTERS("EquationsSet_EquationsGet",err,error,*998)
 
     IF(ASSOCIATED(equations)) CALL FlagError("Equations is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
 
     equations=>equationsSet%equations
     IF(.NOT.ASSOCIATED(equations)) THEN
       localError="Equations is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -521,6 +1514,45 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_EquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equation sets for an equations set.
+  SUBROUTINE EquationsSet_EquationsSetsGet(equationsSet,equationsSets,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the equations sets for
+    TYPE(EQUATIONS_SETS_TYPE), POINTER :: equationsSets !<On exit, a pointer to the equations sets for the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_EquationsSetsGet",err,error,*998)
+
+    IF(ASSOCIATED(equationsSets)) CALL FlagError("Equations sets is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+ 
+    equationsSets=>equationsSet%EQUATIONS_SETS
+    IF(.NOT.ASSOCIATED(equationsSets)) THEN
+      localError="Equations sets is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_EquationsSetsGet")
+    RETURN
+999 NULLIFY(equationsSets)
+998 ERRORSEXITS("EquationsSet_EquationsSetsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_EquationsSetsGet
 
   !
   !================================================================================================================================
@@ -545,7 +1577,11 @@ CONTAINS
     equationsSetField=>equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
     IF(.NOT.ASSOCIATED(equationsSetField)) THEN
       localError="Equations set field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -590,6 +1626,45 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the fibre field for an equations set.
+  SUBROUTINE EquationsSet_FibreFieldGet(equationsSet,fibreField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the fibre field for
+    TYPE(FieldType), POINTER :: fibreField !<On exit, a pointer to the fibre field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_FibreFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    fibreField=>equationsSet%geometry%FIBRE_FIELD
+    IF(.NOT.ASSOCIATED(fibreField)) THEN
+      localError="Fibre field is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("EquationsSet_FibreFieldGet")
+    RETURN
+999 NULLIFY(fibreField)
+998 ERRORSEXITS("EquationsSet_FibreFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_FibreFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the geometric field for an equations set.
   SUBROUTINE EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*)
 
@@ -609,7 +1684,11 @@ CONTAINS
     geometricField=>equationsSet%geometry%geometricField
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -620,37 +1699,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_GeometricFieldGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Asserts that independent has been created for an equations set.
-  SUBROUTINE EquationsSet_IndependentCreated(equationsSet,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the independent has been created for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("EquationsSet_IndependentCreated",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
-      localError="Equations set independent has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-     
-    EXITS("EquationsSet_IndependentCreated")
-    RETURN
-999 ERRORSEXITS("EquationsSet_IndependentCreated",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsSet_IndependentCreated
 
   !
   !================================================================================================================================
@@ -707,13 +1755,21 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
       localError="Independent information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     independentField=>equationsSet%independent%INDEPENDENT_FIELD
     IF(.NOT.ASSOCIATED(independentField)) THEN
       localError="Independent field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -802,9 +1858,8 @@ CONTAINS
 
     ENTERS("EquationsSet_LabelSetC",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has been finished.",err,error,*999)
-    
+    CALL EquationsSet_AssertNotFinished(equationsSet,err,error,*999)
+   
     equationsSet%label=label
         
     EXITS("EquationsSet_LabelSetC")
@@ -830,8 +1885,7 @@ CONTAINS
 
     ENTERS("EquationsSet_LabelSetVS",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has been finished.",err,error,*999)
+    CALL EquationsSet_AssertNotFinished(equationsSet,err,error,*999)
     
     equationsSet%label=label
     
@@ -841,37 +1895,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_LabelSetVS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Asserts that materials has been created for an equations set.
-  SUBROUTINE EquationsSet_MaterialsCreated(equationsSet,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the materials has been created for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("EquationsSet_MaterialsCreated",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
-      localError="Equations set materials has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-     
-    EXITS("EquationsSet_MaterialsCreated")
-    RETURN
-999 ERRORSEXITS("EquationsSet_MaterialsCreated",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsSet_MaterialsCreated
 
   !
   !================================================================================================================================
@@ -928,13 +1951,21 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
       localError="Materials information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     materialsField=>equationsSet%materials%MATERIALS_FIELD
     IF(.NOT.ASSOCIATED(materialsField)) THEN
       localError="Materials field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -946,6 +1977,33 @@ CONTAINS
     
   END SUBROUTINE EquationsSet_MaterialsFieldGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type for an equations set.
+  SUBROUTINE EquationsSet_OutputTypeGet(equationsSet,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsSet_OutputTypeGet",err,error,*999)
+
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+   
+    outputType=equationsSet%outputType
+       
+    EXITS("EquationsSet_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_OutputTypeGet
+  
   !
   !================================================================================================================================
   !
@@ -985,33 +2043,29 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Asserts that source has been created for an equations set.
-  SUBROUTINE EquationsSet_SourceCreated(equationsSet,err,error,*)
+  !>Returns the solution method for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SolutionMethodGet
+  SUBROUTINE EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the source has been created for
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the solution method for
+    INTEGER(INTG), INTENT(OUT) :: solutionMethod !<On return, the equations set solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("EquationsSet_SourceCreated",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    ENTERS("EquationsSet_SolutionMethodGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
-      localError="Equations set source has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+    
+    solutionMethod=equationsSet%SOLUTION_METHOD
      
-    EXITS("EquationsSet_SourceCreated")
+    EXITS("EquationsSet_SolutionMethodGet")
     RETURN
-999 ERRORSEXITS("EquationsSet_SourceCreated",err,error)
+999 ERRORSEXITS("EquationsSet_SolutionMethodGet",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsSet_SourceCreated
-
+  END SUBROUTINE EquationsSet_SolutionMethodGet
+  
   !
   !================================================================================================================================
   !
@@ -1067,14 +2121,22 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
       localError="Source information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     sourceField=>equationsSet%source%SOURCE_FIELD
     IF(.NOT.ASSOCIATED(sourceField)) THEN
       localError="Source field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+     CALL FlagError(localError,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_SourceFieldGet")
@@ -1085,6 +2147,106 @@ CONTAINS
     
   END SUBROUTINE EquationsSet_SourceFieldGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SpecificationGet
+  SUBROUTINE EquationsSet_SpecificationGet(equationsSet,equationsSetSpecification,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the specification for
+    INTEGER(INTG), INTENT(INOUT) :: equationsSetSpecification(:) !<On return, The equations set specifcation array. Must be allocated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: specificationLength,specificationIdx
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_SpecificationGet",err,error,*999)
+   
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification has not been allocated.",err,error,*999)
+    specificationLength=0
+    DO specificationIdx=1,SIZE(equationsSet%specification,1)
+      IF(equationsSet%specification(specificationIdx)>0) THEN
+        specificationLength=specificationIdx
+      ENDIF
+    ENDDO !specificationIdx
+    IF(SIZE(equationsSetSpecification,1)<specificationLength) THEN
+      localError="The equations set specification array size is "//TRIM(NumberToVstring(specificationLength,"*",err,error))// &
+        & " and it needs to be >= "//TRIM(NumberToVstring(SIZE(equationsSetSpecification,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    equationsSetSpecification(1:specificationLength)=equationsSet%specification(1:specificationLength)
+
+    EXITS("EquationsSet_SpecificationGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_SpecificationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SpecificationGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OpenCMISS::Iron::cmfe_EquationsSet_SpecificationSizeGet
+  SUBROUTINE EquationsSet_SpecificationSizeGet(equationsSet,specificationSize,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations Set to get the specification for.
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specifcation array.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_SpecificationSizeGet",err,error,*999)
+
+    specificationSize=0
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    
+    specificationSize=SIZE(equationsSet%specification,1)
+
+    EXITS("EquationsSet_SpecificationSizeGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_SpecificationSizeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SpecificationSizeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current times for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_TimesGet
+  SUBROUTINE EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the times for
+    REAL(DP), INTENT(OUT) :: currentTime !<The current time for the equations set to get.
+    REAL(DP), INTENT(OUT) :: deltaTime !<The current time incremenet for the equations set to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_TimesGet",err,error,*999) 
+
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+
+    currentTime=equationsSet%currentTime
+    deltaTime=equationsSet%deltaTime
+      
+    EXITS("EquationsSet_TimesGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_TimesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_TimesGet
+  
   !
   !================================================================================================================================
   !
@@ -1106,18 +2268,18 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(region%EQUATIONS_SETS)) THEN
+    IF(.NOT.ASSOCIATED(region%equationsSets)) THEN
       localError="The equations sets on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
     NULLIFY(equationsSet)
-    IF(ASSOCIATED(region%EQUATIONS_SETS%EQUATIONS_SETS)) THEN
-      DO equationsSetIdx=1,region%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
-        IF(ASSOCIATED(region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr)) THEN
-          IF(region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr%userNumber==userNumber) THEN
-            equationsSet=>region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr
+    IF(ASSOCIATED(region%equationsSets%EQUATIONS_SETS)) THEN
+      DO equationsSetIdx=1,region%equationsSets%NUMBER_OF_EQUATIONS_SETS
+        IF(ASSOCIATED(region%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr)) THEN
+          IF(region%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr%userNumber==userNumber) THEN
+            equationsSet=>region%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr
             EXIT
           ENDIF
         ELSE

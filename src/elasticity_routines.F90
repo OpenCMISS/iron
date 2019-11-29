@@ -42,18 +42,20 @@
 !>
 
 !> This module handles all elasticity class routines.
-MODULE ELASTICITY_ROUTINES
+MODULE ElasticityRoutines
 
   USE BaseRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
   USE LINEAR_ELASTICITY_ROUTINES
   USE PROBLEM_CONSTANTS
+  USE SolverAccessRoutines
   USE Strings
   USE Types
 
@@ -73,13 +75,13 @@ MODULE ELASTICITY_ROUTINES
 
   PUBLIC Elasticity_EquationsSetSpecificationSet
 
-  PUBLIC ELASTICITY_FINITE_ELEMENT_CALCULATE
+  PUBLIC Elasticity_FiniteElementCalculate
 
-  PUBLIC ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE,ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE
+  PUBLIC Elasticity_FiniteElementJacobianEvaluate,Elasticity_FiniteElementResidualEvaluate
 
   PUBLIC Elasticity_FiniteElementPreResidualEvaluate,Elasticity_FiniteElementPostResidualEvaluate
 
-  PUBLIC ELASTICITY_EQUATIONS_SET_SETUP
+  PUBLIC Elasticity_EquationsSetSetup
 
   PUBLIC Elasticity_EquationsSetSolutionMethodSet
 
@@ -93,13 +95,13 @@ MODULE ELASTICITY_ROUTINES
   
   PUBLIC Elasticity_ProblemSpecificationSet
 
-  PUBLIC ELASTICITY_PROBLEM_SETUP
+  PUBLIC Elasticity_ProblemSetup
 
-  PUBLIC ELASTICITY_PRE_SOLVE,ELASTICITY_POST_SOLVE
+  PUBLIC Elasticity_PreSolve,Elasticity_PostSolve
 
-  PUBLIC ELASTICITY_CONTROL_LOOP_PRE_LOOP,Elasticity_ControlLoopPostLoop
+  PUBLIC Elasticity_ControlLoopPreLoop,Elasticity_ControlLoopPostLoop
 
-  PUBLIC ELASTICITY_LOAD_INCREMENT_APPLY
+  PUBLIC Elasticity_LoadIncrementApply
 
 CONTAINS
 
@@ -120,25 +122,22 @@ CONTAINS
 
     ENTERS("Elasticity_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(specification(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL LinearElasticity_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE DEFAULT
-        localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
-          & " is not valid for an elasticity equations set."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
-
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(SIZE(specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LinearElasticity_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE DEFAULT
+      localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+ 
     EXITS("Elasticity_EquationsSetSpecificationSet")
     RETURN
 999 ERRORS("Elasticity_EquationsSetSpecificationSet",err,error)
@@ -152,173 +151,164 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matries and rhs vector for the given element number for an elasticity class finite element equation set.
-  SUBROUTINE ELASTICITY_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE Elasticity_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calcualate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calcualate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("Elasticity_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_FINITE_ELEMENT_CALCULATE")
+    EXITS("Elasticity_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("ELASTICITY_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_FiniteElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_FINITE_ELEMENT_CALCULATE
+    
+  END SUBROUTINE Elasticity_FiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Evaluates the Jacobian for the given element number for an elasticity class finite element equation set.
-  SUBROUTINE ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE Elasticity_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calcualate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calcualate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE",ERR,ERROR,*999)
+    ENTERS("Elasticity_FiniteElementJacobianEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+     
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE")
+    EXITS("Elasticity_FiniteElementJacobianEvaluate")
     RETURN
-999 ERRORSEXITS("ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_FiniteElementJacobianEvaluate",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE
+    
+  END SUBROUTINE Elasticity_FiniteElementJacobianEvaluate
 
   !
   !================================================================================================================================
   !
 
   !>Evaluates the residual and rhs vector for the given element number for an elasticity class finite element equation set.
-  SUBROUTINE ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE Elasticity_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calcualate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calcualate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE",ERR,ERROR,*999)
+    ENTERS("Elasticity_FiniteElementResidualEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE")
+    EXITS("Elasticity_FiniteElementResidualEvaluate")
     RETURN
-999 ERRORSEXITS("ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_FiniteElementResidualEvaluate",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE
+    
+  END SUBROUTINE Elasticity_FiniteElementResidualEvaluate
 
   !
   !================================================================================================================================
   !
 
   !>Pre-evaluates the residual for an elasticity class finite element equation set.
-  SUBROUTINE Elasticity_FiniteElementPreResidualEvaluate(EQUATIONS_SET,ERR,ERROR,*)
+  SUBROUTINE Elasticity_FiniteElementPreResidualEvaluate(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Elasticity_FiniteElementPreResidualEvaluate",ERR,ERROR,*999)
+    ENTERS("Elasticity_FiniteElementPreResidualEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL FlagError("Cannot pre-evaluate the residual for a linear equations set.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_FiniteElementPreResidualEvaluate(EQUATIONS_SET,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))      
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL FlagError("Cannot pre-evaluate the residual for a linear equations set.",err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_FiniteElementPreResidualEvaluate(equationsSet,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
           & " is not valid for an elasticity equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("Elasticity_FiniteElementPreResidualEvaluate")
     RETURN
-999 ERRORSEXITS("Elasticity_FiniteElementPreResidualEvaluate",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_FiniteElementPreResidualEvaluate",err,error)
     RETURN 1
     
   END SUBROUTINE Elasticity_FiniteElementPreResidualEvaluate
@@ -328,41 +318,38 @@ CONTAINS
   !
 
   !>Post-evaluates the residual for an elasticity class finite element equation set.
-  SUBROUTINE Elasticity_FiniteElementPostResidualEvaluate(EQUATIONS_SET,ERR,ERROR,*)
+  SUBROUTINE Elasticity_FiniteElementPostResidualEvaluate(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Elasticity_FiniteElementPostResidualEvaluate",ERR,ERROR,*999)
+    ENTERS("Elasticity_FiniteElementPostResidualEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL FlagError("Cannot post-evaluate the residual for a linear equations set.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_FiniteElementPostResidualEvaluate(EQUATIONS_SET,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+     
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL FlagError("Cannot post-evaluate the residual for a linear equations set.",err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_FiniteElementPostResidualEvaluate(equationsSet,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("Elasticity_FiniteElementPostResidualEvaluate")
     RETURN
-999 ERRORS("Elasticity_FiniteElementPostResidualEvaluate",ERR,ERROR)
+999 ERRORS("Elasticity_FiniteElementPostResidualEvaluate",err,error)
     EXITS("Elasticity_FiniteElementPostResidualEvaluate")
     RETURN 1
     
@@ -373,86 +360,81 @@ CONTAINS
   !
 
   !>Sets up the equations set for an elasticity equations set class.
-  SUBROUTINE ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE Elasticity_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_EQUATIONS_SET_SETUP",ERR,ERROR,*999)
+    ENTERS("Elasticity_EquationsSetSetup",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL LINEAR_ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FINITE_ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equation set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LINEAR_ELASTICITY_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FINITE_ELASTICITY_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE DEFAULT
+      localError="Equation set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_EQUATIONS_SET_SETUP")
+    EXITS("Elasticity_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("ELASTICITY_EQUATIONS_SET_SETUP",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_EquationsSetSetup",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_EQUATIONS_SET_SETUP
+    
+  END SUBROUTINE Elasticity_EquationsSetSetup
 
   !
   !================================================================================================================================
   !
   
   !>Sets/changes the solution method for an elasticity equation set class.
-  SUBROUTINE Elasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE Elasticity_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("Elasticity_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
+    ENTERS("Elasticity_EquationsSetSolutionMethodSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL LinearElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set equation type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LinearElasticity_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("Elasticity_EquationsSetSolutionMethodSet")
     RETURN
-999 ERRORSEXITS("Elasticity_EquationsSetSolutionMethodSet",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_EquationsSetSolutionMethodSet",err,error)
     RETURN 1
     
   END SUBROUTINE Elasticity_EquationsSetSolutionMethodSet
@@ -461,7 +443,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates a derived value for the elasticity equations set. \see OPENCMISS::CMISSEquationsSet_DerivedCalculate
+  !>Calculates a derived value for the elasticity equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedCalculate
   SUBROUTINE Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables
@@ -472,25 +454,24 @@ CONTAINS
 
     ENTERS("Elasticity_EquationsSetDerivedVariableCalculate",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) THEN
-        CALL FlagError("Equations set has not been finished.",err,error,*999)
-      ELSE
-        SELECT CASE(equationsSet%specification(2))
-        CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-          CALL FiniteElasticityEquationsSet_DerivedVariableCalculate(equationsSet,derivedType, &
-            & err,error,*999)
-        CASE DEFAULT
-          CALL FlagError("The second equations set specification of "// &
-            & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(2),"*",err,error))// &
-            & " is not valid for an elasticity equations set.",err,error,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticityEquationsSet_DerivedVariableCalculate(equationsSet,derivedType, &
+        & err,error,*999)
+    CASE DEFAULT
+      CALL FlagError("The second equations set specification of "// &
+        & TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set.",err,error,*999)
+    END SELECT
 
     EXITS("Elasticity_EquationsSetDerivedVariableCalculate")
     RETURN
@@ -521,7 +502,7 @@ CONTAINS
 
     ENTERS("Elasticity_TensorInterpolateGaussPoint",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
     IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
     IF(SIZE(equationsSet%specification,1)<2) CALL FlagError("Equations set specification must have at least two entries.", &
       & err,error,*999)
@@ -557,15 +538,20 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
-    REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
+    REAL(DP), INTENT(IN) :: xi(:) !<xi(xiIdx). The element xi to interpolate the field at.
     REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("Elasticity_TensorInterpolateXi",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+ 
     SELECT CASE(equationsSet%specification(2))
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -589,42 +575,39 @@ CONTAINS
   !
 
   !>Sets the analytic boundary conditions for an elasticity equation set class.
-  SUBROUTINE Elasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*)
+  SUBROUTINE Elasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditionsn to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Elasticity_BoundaryConditionsAnalyticCalculate",ERR,ERROR,*999)
+    ENTERS("Elasticity_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        CALL LinearElasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set equation type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+     
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LinearElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Elasticity_BoundaryConditionsAnalyticCalculate")
     RETURN
-999 ERRORS("Elasticity_BoundaryConditionsAnalyticCalculate",ERR,ERROR)
+999 ERRORS("Elasticity_BoundaryConditionsAnalyticCalculate",err,error)
     EXITS("Elasticity_BoundaryConditionsAnalyticCalculate")
     RETURN 1
     
@@ -643,34 +626,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemType
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Elasticity_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)>=2) THEN
-        problemType=problemSpecification(2)
-        SELECT CASE(problemType)
-        CASE(PROBLEM_LINEAR_ELASTICITY_TYPE)
-          CALL LinearElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_FINITE_ELASTICITY_TYPE)
-          CALL FiniteElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
-          CALL FLAG_ERROR("Not implemented yet.",err,error,*999)
-        CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
-          CALL FiniteElasticity_ContactProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE DEFAULT
-          localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
-            & " is not valid for an elasticity problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Elasticity problem specification requires a type.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<2) CALL FlagError("Elasticity problem specification requires a type.",err,error,*999)
+    
+    problemType=problemSpecification(2)
+    SELECT CASE(problemType)
+    CASE(PROBLEM_LINEAR_ELASTICITY_TYPE)
+      CALL LinearElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
+      CALL FLAG_ERROR("Not implemented yet.",err,error,*999)
+    CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
+      CALL FiniteElasticity_ContactProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE DEFAULT
+      localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
+        & " is not valid for an elasticity problem."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Elasticity_ProblemSpecificationSet")
     RETURN
@@ -685,190 +663,190 @@ CONTAINS
   !
 
   !>Sets up the problem for an elasticity problem class.
-  SUBROUTINE ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE Elasticity_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem
+    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_PROBLEM_SETUP",ERR,ERROR,*999)
+    ENTERS("Elasticity_ProblemSetup",err,error,*999)
 
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(2))
-      CASE(PROBLEM_LINEAR_ELASTICITY_TYPE)
-        CALL LINEAR_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE(PROBLEM_FINITE_ELASTICITY_TYPE)
-        CALL FINITE_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
-        CALL FlagError("Not implemented yet.",ERR,ERROR,*999)
-      CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
-        CALL FiniteElasticity_ContactProblemSetup(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
+      
+    SELECT CASE(problem%specification(2))
+    CASE(PROBLEM_LINEAR_ELASTICITY_TYPE)
+      CALL LINEAR_ELASTICITY_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_FINITE_ELASTICITY_TYPE)
+      CALL FINITE_ELASTICITY_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
+      CALL FlagError("Not implemented yet.",err,error,*999)
+    CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
+      CALL FiniteElasticity_ContactProblemSetup(problem,problemSetup,err,error,*999)
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_PROBLEM_SETUP")
+    EXITS("Elasticity_ProblemSetup")
     RETURN
-999 ERRORSEXITS("ELASTICITY_PROBLEM_SETUP",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_ProblemSetup",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_PROBLEM_SETUP
+    
+  END SUBROUTINE Elasticity_ProblemSetup
 
   !
   !================================================================================================================================
   !
   
   !>Performs pre-solve actions for an elasticity problem class.
-  SUBROUTINE ELASTICITY_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE Elasticity_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_PRE_SOLVE",ERR,ERROR,*999)
+    ENTERS("Elasticity_PreSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
-      END IF
-      SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        !Do Nothing
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_PreSolve(solver,err,error,*999)
-      CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
-        !Do Nothing
-      CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
-        !Do Nothing
-      CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      !Do Nothing
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_PreSolve(solver,err,error,*999)
+    CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
+      !Do Nothing
+    CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
+      !Do Nothing
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_PRE_SOLVE")
+    EXITS("Elasticity_PreSolve")
     RETURN
-999 ERRORSEXITS("ELASTICITY_PRE_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_PreSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE ELASTICITY_PRE_SOLVE
+  END SUBROUTINE Elasticity_PreSolve
 
   !
   !================================================================================================================================
   !
   
   !>Sets up the output type for an elasticity problem class.
-  SUBROUTINE ELASTICITY_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE Elasticity_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("ELASTICITY_POST_SOLVE",ERR,ERROR,*999)
+    ENTERS("Elasticity_PostSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
-      END IF
-      SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-        !Do Nothing
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FiniteElasticity_PostSolve(solver,err,error,*999)
-      CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
-        !Do Nothing
-      CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
-        !Do Nothing
-      CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for an elasticity problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(controlLoop%PROBLEM%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      !Do Nothing
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
+      !Do Nothing
+    CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
+      !Do Nothing
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(controlLoop%PROBLEM%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("ELASTICITY_POST_SOLVE")
+    EXITS("Elasticity_PostSolve")
     RETURN
-999 ERRORSEXITS("ELASTICITY_POST_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_POST_SOLVE
+    
+  END SUBROUTINE Elasticity_PostSolve
 
   !
   !================================================================================================================================
   !
 
   !>Executes before each loop of a control loop, ie before each time step for a time loop
-  SUBROUTINE ELASTICITY_CONTROL_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE Elasticity_ControlLoopPreLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ELASTICITY_CONTROL_LOOP_PRE_LOOP",ERR,ERROR,*999)
+    ENTERS("Elasticity_ControlLoopPreLoop",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      SELECT CASE(CONTROL_LOOP%loopType)
-      CASE(CONTROL_TIME_LOOP_TYPE)
-        IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-          CALL FlagError("Problem specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<2) THEN
-          CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
-        END IF
-        SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-        CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-            !do nothing for now
-        CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-            CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-            & " is not valid for an elasticity problem class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    SELECT CASE(controlLoop%loopType)
+    CASE(CONTROL_TIME_LOOP_TYPE)
+      IF(.NOT.ALLOCATED(problem%specification)) &
+        & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+      IF(SIZE(controlLoop%PROBLEM%specification,1)<2) &
+        & CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
+        
+      SELECT CASE(problem%specification(2))
+      CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+        !Do nothing for now
+      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+        CALL FiniteElasticity_ControlTimeLoopPreLoop(controlLoop,err,error,*999)
       CASE DEFAULT
-        !do nothing
+        localError="Problem type "//TRIM(NumberToVString(controlLoop%PROBLEM%specification(2),"*",err,error))// &
+          & " is not valid for an elasticity problem class."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      !Do nothing
+    END SELECT
 
-    EXITS("ELASTICITY_CONTROL_LOOP_PRE_LOOP")
+    EXITS("Elasticity_ControlLoopPreLoop")
     RETURN
-999 ERRORSEXITS("ELASTICITY_CONTROL_LOOP_PRE_LOOP",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_ControlLoopPreLoop",err,error)
     RETURN 1
-  END SUBROUTINE ELASTICITY_CONTROL_LOOP_PRE_LOOP
+    
+  END SUBROUTINE Elasticity_ControlLoopPreLoop
   
   !
   !================================================================================================================================
@@ -879,15 +857,13 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Elasticity_ControlLoopPostLoop",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
 
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
@@ -918,44 +894,41 @@ CONTAINS
   !
 
   !> Apply load increments for equations sets
-  SUBROUTINE ELASTICITY_LOAD_INCREMENT_APPLY(EQUATIONS_SET,ITERATION_NUMBER,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*)
+  SUBROUTINE Elasticity_LoadIncrementApply(equationsSet,iterationNumber,maximumNumberOfIterations,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    INTEGER(INTG), INTENT(IN) :: ITERATION_NUMBER !<The current load increment iteration index
-    INTEGER(INTG), INTENT(IN) :: MAXIMUM_NUMBER_OF_ITERATIONS !<Final index for load increment loop
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    INTEGER(INTG), INTENT(IN) :: iterationNumber !<The current load increment iteration index
+    INTEGER(INTG), INTENT(IN) :: maximumNumberOfIterations !<Final index for load increment loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
-    ENTERS("ELASTICITY_LOAD_INCREMENT_APPLY",ERR,ERROR,*999)
+    ENTERS("Elasticity_LoadIncrementApply",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FINITE_ELASTICITY_LOAD_INCREMENT_APPLY(EQUATIONS_SET,ITERATION_NUMBER,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*999)
-      CASE DEFAULT
-        !Do nothing
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for an elasticity class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FINITE_ELASTICITY_LOAD_INCREMENT_APPLY(equationsSet,iterationNumber,maximumNumberOfIterations,err,error,*999)
+    CASE DEFAULT
+      !Do nothing
+    END SELECT
 
-    EXITS("ELASTICITY_LOAD_INCREMENT_APPLY")
+    EXITS("Elasticity_LoadIncrementApply")
     RETURN
-999 ERRORSEXITS("ELASTICITY_LOAD_INCREMENT_APPLY",ERR,ERROR)
+999 ERRORSEXITS("Elasticity_LoadIncrementApply",err,error)
     RETURN 1
 
-  END SUBROUTINE ELASTICITY_LOAD_INCREMENT_APPLY
+  END SUBROUTINE Elasticity_LoadIncrementApply
 
   !
   !================================================================================================================================
   !
 
-END MODULE ELASTICITY_ROUTINES
+END MODULE ElasticityRoutines
 

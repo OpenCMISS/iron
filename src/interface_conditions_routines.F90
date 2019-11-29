@@ -47,7 +47,7 @@ MODULE INTERFACE_CONDITIONS_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE CoordinateSystemAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE InterfaceAccessRoutines
@@ -662,7 +662,7 @@ CONTAINS
     TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to add the dependent variable to
     INTEGER(INTG), INTENT(IN) :: MESH_INDEX !<The mesh index in the interface conditions interface that the dependent variable corresponds to
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set containing the dependent field to add the variable from.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The variable type of the dependent field to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The variable type of the dependent field to add \see FieldRoutines_VariableTypes,FieldRoutines
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1323,13 +1323,13 @@ CONTAINS
         ELSE
           !Finish the Lagrange field creation
           IF(INTERFACE_CONDITION%lagrange%lagrangeFieldAutoCreated) THEN
-            CALL FIELD_CREATE_FINISH(INTERFACE_CONDITION%lagrange%lagrangeField,err,error,*999)
+            CALL Field_CreateFinish(INTERFACE_CONDITION%lagrange%lagrangeField,err,error,*999)
           ENDIF
           INTERFACE_CONDITION%lagrange%lagrangeFinished=.TRUE.
-          !\todo test following condition using some other method since FIELD_NUMBER_OF_COMPONENTS_GET requires the field to be finished which is what occurs above, but below condition needs to be checked before this.
-          CALL FIELD_NUMBER_OF_COMPONENTS_GET(INTERFACE_CONDITION%lagrange%lagrangeField,FIELD_U_VARIABLE_TYPE, &
+          !\todo test following condition using some other method since Field_NumberOfComponentsGet requires the field to be finished which is what occurs above, but below condition needs to be checked before this.
+          CALL Field_NumberOfComponentsGet(INTERFACE_CONDITION%lagrange%lagrangeField,FIELD_U_VARIABLE_TYPE, &
             & LagrangeFieldUVariableNumberOfComponents,err,error,*999)
-          CALL FIELD_NUMBER_OF_COMPONENTS_GET(INTERFACE_CONDITION%lagrange%lagrangeField,FIELD_DELUDELN_VARIABLE_TYPE, &
+          CALL Field_NumberOfComponentsGet(INTERFACE_CONDITION%lagrange%lagrangeField,FIELD_DELUDELN_VARIABLE_TYPE, &
             & LagrangeFieldDelUDelNVariableNumberOfComponents,err,error,*999)
           IF (LagrangeFieldUVariableNumberOfComponents /= LagrangeFieldDelUDelNVariableNumberOfComponents) THEN
             CALL FlagError("Interface Lagrange field U and DelUDelN variable components do not match.",err,error,*999)
@@ -1593,7 +1593,7 @@ CONTAINS
         ELSE
           !Finish the penalty field creation
           IF(INTERFACE_CONDITION%PENALTY%penaltyFieldAutoCreated) THEN
-            CALL FIELD_CREATE_FINISH(INTERFACE_CONDITION%PENALTY%penaltyField,err,error,*999)
+            CALL Field_CreateFinish(INTERFACE_CONDITION%PENALTY%penaltyField,err,error,*999)
           ENDIF
           INTERFACE_CONDITION%PENALTY%penaltyFinished=.TRUE.
         ENDIF
@@ -1674,7 +1674,7 @@ CONTAINS
               ELSE
                 !Check the user number has not already been used for a field in this region.
                 NULLIFY(FIELD)
-                CALL FIELD_USER_NUMBER_FIND(PENALTY_FIELD_USER_NUMBER,INTERFACE,FIELD,err,error,*999)
+                CALL Field_UserNumberFind(PENALTY_FIELD_USER_NUMBER,INTERFACE,FIELD,err,error,*999)
                 IF(ASSOCIATED(FIELD)) THEN
                   LOCAL_ERROR="The specified penalty field user number of "// &
                     & TRIM(NumberToVString(PENALTY_FIELD_USER_NUMBER,"*",err,error))// &
@@ -1721,7 +1721,7 @@ CONTAINS
                   CALL Field_NumberOfComponentsSet(INTERFACE_CONDITION%PENALTY%penaltyField,FIELD_U_VARIABLE_TYPE, &
                     & INTERFACE_DEPENDENT%fieldVariables(1)%PTR%numberOfComponents,err,error,*999)
                   DO componentIdx=1,INTERFACE_DEPENDENT%fieldVariables(1)%PTR%numberOfComponents
-                    CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%penaltyField, &
+                    CALL Field_ComponentInterpolationSetAndLock(INTERFACE_CONDITION%PENALTY%penaltyField, &
                       & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                   ENDDO !componentIdx
                 ENDIF

@@ -42,7 +42,7 @@
 !>
 
 !>This module handles all analytic analysis routines.
-MODULE ANALYTIC_ANALYSIS_ROUTINES
+MODULE AnalyticAnalysisRoutines
 
   USE BasisRoutines
   USE BasisAccessRoutines
@@ -51,7 +51,7 @@ MODULE ANALYTIC_ANALYSIS_ROUTINES
   USE ComputationAccessRoutines
   USE Constants
   USE DecompositionAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -77,13 +77,13 @@ MODULE ANALYTIC_ANALYSIS_ROUTINES
 
   !Module parameters
 
-  !> \addtogroup ANALYTIC_ANALYSIS_ROUTINES_ErrorTypes ANALYTIC_ANALYSIS_ROUTINES::ErrorTypes
+  !> \addtogroup AnalyticAnalysisRoutines_ErrorTypes AnalyticAnalysisRoutines::ErrorTypes
   !> \brief errors definition type parameters
-  !> \see ANALYTIC_ANALYSIS_ROUTINES,OPENCMISS_ErrorTypes
+  !> \see AnalyticAnalysisRoutines,OPENCMISS_ErrorTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: ABSOLUTE_ERROR_TYPE=1 !<The absolute type \see ANALYTIC_ANALYSIS_ROUTINES_ErrorTypes,ANALYTIC_ANALYSIS_ROUTINES
-  INTEGER(INTG), PARAMETER :: PERCENTAGE_ERROR_TYPE=2 !<The percentage type \see ANALYTIC_ANALYSIS_ROUTINES_ErrorTypes,ANALYTIC_ANALYSIS_ROUTINES
-  INTEGER(INTG), PARAMETER :: RELATIVE_ERROR_TYPE=3 !<The relative type \see ANALYTIC_ANALYSIS_ROUTINES_ErrorTypes,ANALYTIC_ANALYSIS_ROUTINES
+  INTEGER(INTG), PARAMETER :: ABSOLUTE_ERROR_TYPE=1 !<The absolute type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
+  INTEGER(INTG), PARAMETER :: PERCENTAGE_ERROR_TYPE=2 !<The percentage type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
+  INTEGER(INTG), PARAMETER :: RELATIVE_ERROR_TYPE=3 !<The relative type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
   !>@}
 
   !Module types
@@ -114,590 +114,517 @@ CONTAINS
   !=================================================================================================================================
   !  
 
-  !>Output the analytic error analysis for a dependent field compared to the analytic values parameter set. \see OPENCMISS::CMISSAnalyticAnalytisOutput
-  SUBROUTINE AnalyticAnalysis_Output(FIELD,FILENAME,ERR,ERROR,*)
+  !>Output the analytic error analysis for a dependent field compared to the analytic values parameter set. \see OpenCMISS::Iron::cmfe_AnalyticAnalytisOutput
+  SUBROUTINE AnalyticAnalysis_Output(field,filename,err,error,*)
   
     !Argument variables 
-    TYPE(FieldType), INTENT(IN), POINTER :: FIELD !<A pointer to the dependent field to calculate the analytic error analysis for
-    CHARACTER(LEN=*) :: FILENAME !<If not empty, the filename to output the analytic analysis to. If empty, the analysis will be output to the standard output
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), INTENT(IN), POINTER :: field !<A pointer to the dependent field to calculate the analytic error analysis for
+    CHARACTER(LEN=*) :: filename !<If not empty, the filename to output the analytic analysis to. If empty, the analysis will be output to the standard output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,deriv_idx,element_idx,GHOST_NUMBER(8),local_ny,MESH_COMPONENT,MPI_IERROR,node_idx, &
-      & NUMBER(8),OUTPUT_ID,var_idx,variable_type,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
-    REAL(DP) :: GHOST_RMS_ERROR_PER(8),GHOST_RMS_ERROR_ABS(8),GHOST_RMS_ERROR_REL(8),RMS_ERROR_PER(8),RMS_ERROR_ABS(8), &
-      & RMS_ERROR_REL(8),VALUES(5)
-    REAL(DP), POINTER :: ANALYTIC_VALUES(:),NUMERICAL_VALUES(:)
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:),GHOST_INTEGRAL_ERRORS(:,:)
-    CHARACTER(LEN=40) :: FIRST_FORMAT
-    CHARACTER(LEN=MAXSTRLEN) :: FILE_NAME
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(DecompositionElementsType), POINTER :: ELEMENTS_DECOMPOSITION
-    TYPE(DecompositionTopologyType), POINTER :: DECOMPOSITION_TOPOLOGY
-    TYPE(DomainType), POINTER :: DOMAIN
-    TYPE(DomainElementsType), POINTER :: ELEMENTS_DOMAIN
-    TYPE(DomainNodesType), POINTER :: NODES_DOMAIN
-    TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR,LOCAL_STRING
+    INTEGER(INTG) :: componentIdx,derivativeIdx,elementIdx,ghostNumber(8),interpolationType,localDOF,mpiIerror,nodeIdx, &
+      & number(8),outputID,variableIdx,variableType,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
+    REAL(DP) :: ghostRMSErrorPer(8),ghostRMSErrorAbs(8),ghostRMSErrorRel(8),rmsErrorPer(8),rmsErrorAbs(8), &
+      & rmsErrorRel(8),values(5)
+    REAL(DP), POINTER :: analyticValues(:),numericalValues(:)
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:),ghostIntegralErrors(:,:)
+    CHARACTER(LEN=40) :: firstFormat
+    CHARACTER(LEN=MAXSTRLEN) :: fName
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: componentLabel,localError,localString
     TYPE(WorkGroupType), POINTER :: workGroup
 
-    NULLIFY(ANALYTIC_VALUES)
-    NULLIFY(NUMERICAL_VALUES)
+    NULLIFY(analyticValues)
+    NULLIFY(numericalValues)
     
-    ENTERS("AnalyticAnalysis_Output",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_Output",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    IF(FIELD%DEPENDENT_TYPE==FIELD_DEPENDENT_TYPE) THEN
-      DECOMPOSITION=>FIELD%DECOMPOSITION
-      IF(ASSOCIATED(DECOMPOSITION)) THEN
-        NULLIFY(workGroup)
-        CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
-        CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
-        CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
-        CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-        DECOMPOSITION_TOPOLOGY=>DECOMPOSITION%TOPOLOGY
-        IF(ASSOCIATED(DECOMPOSITION_TOPOLOGY)) THEN
-          IF(LEN_TRIM(FILENAME)>=1) THEN
-!!TODO \todo have more general ascii file mechanism
-            IF(numberOfGroupComputationNodes>1) THEN
-              WRITE(FILE_NAME,'(A,".opanal.",I0)') FILENAME(1:LEN_TRIM(FILENAME)),myGroupComputationNodeNumber
-            ELSE
-              FILE_NAME=FILENAME(1:LEN_TRIM(FILENAME))//".opanal"
-            ENDIF
-            OUTPUT_ID=IO1_FILE_UNIT
-            OPEN(UNIT=OUTPUT_ID,FILE=FILE_NAME(1:LEN_TRIM(FILE_NAME)),STATUS="REPLACE",FORM="FORMATTED",IOSTAT=ERR)
-            IF(ERR/=0) CALL FlagError("Error opening analysis output file.",ERR,ERROR,*999)            
-          ELSE
-            OUTPUT_ID=GENERAL_OUTPUT_TYPE
-          ENDIF
-          CALL WRITE_STRING(OUTPUT_ID,"Analytic error analysis:",ERR,ERROR,*999)
-          CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-          LOCAL_STRING="Field "//TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))//" : "//FIELD%LABEL
-          IF(ERR/=0) GOTO 999
-          CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-          NULLIFY(NUMERICAL_VALUES)
-          NULLIFY(ANALYTIC_VALUES)
-          !Loop over the variables
-          DO var_idx=1,FIELD%numberOfVariables
-            variable_type=FIELD%VARIABLES(var_idx)%variableType
-            FIELD_VARIABLE=>FIELD%variableTypeMap(variable_type)%PTR
-            IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-              CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-              LOCAL_STRING="Variable "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" : "// &
-                & FIELD_VARIABLE%variableLabel
-              IF(ERR/=0) GOTO 999
-              CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-              CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-              !Get the dependent and analytic parameter sets
-              CALL FIELD_PARAMETER_SET_DATA_GET(FIELD,variable_type,FIELD_VALUES_SET_TYPE,NUMERICAL_VALUES,ERR,ERROR,*999)
-              CALL FIELD_PARAMETER_SET_DATA_GET(FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,ANALYTIC_VALUES, &
-                & ERR,ERROR,*999)
-              !Loop over the components
-              DO component_idx=1,FIELD%VARIABLES(var_idx)%numberOfComponents
-                MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(component_idx)%meshComponentNumber
-                DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
-                IF(ASSOCIATED(DOMAIN)) THEN
-                  DOMAIN_TOPOLOGY=>DOMAIN%TOPOLOGY
-                  IF(ASSOCIATED(DOMAIN_TOPOLOGY)) THEN
-                    LOCAL_STRING="Component "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))//" : "// &
-                      & FIELD_VARIABLE%COMPONENTS(component_idx)%componentLabel
-                    IF(ERR/=0) GOTO 999
-                    CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-                    SELECT CASE(FIELD%VARIABLES(var_idx)%COMPONENTS(component_idx)%interpolationType)
-                    CASE(FIELD_CONSTANT_INTERPOLATION)
-                      CALL WRITE_STRING(OUTPUT_ID,"Constant errors:",ERR,ERROR,*999)
-                      LOCAL_STRING="                       Numerical      Analytic       % error  Absolute err  Relative err"
-                      CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                      local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%paramToDOFMap%constantParam2DOFMap
-                      VALUES(1)=NUMERICAL_VALUES(local_ny)
-                      VALUES(2)=ANALYTIC_VALUES(local_ny)
-                      VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                      VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                      VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                      CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,"(20X,5(2X,E12.5))","(20X,5(2X,E12.5))", &
-                        & ERR,ERROR,*999)
-                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                      ELEMENTS_DOMAIN=>DOMAIN_TOPOLOGY%ELEMENTS
-                      IF(ASSOCIATED(ELEMENTS_DOMAIN)) THEN
-                        DECOMPOSITION=>DOMAIN%DECOMPOSITION
-                        IF(ASSOCIATED(DECOMPOSITION)) THEN
-                          DECOMPOSITION_TOPOLOGY=>DECOMPOSITION%TOPOLOGY
-                          IF(ASSOCIATED(DECOMPOSITION_TOPOLOGY)) THEN
-                            ELEMENTS_DECOMPOSITION=>DECOMPOSITION_TOPOLOGY%ELEMENTS
-                            IF(ASSOCIATED(ELEMENTS_DECOMPOSITION)) THEN
-                              NUMBER=0
-                              RMS_ERROR_PER=0.0_DP
-                              RMS_ERROR_ABS=0.0_DP
-                              RMS_ERROR_REL=0.0_DP
-                              GHOST_NUMBER=0
-                              GHOST_RMS_ERROR_PER=0.0_DP
-                              GHOST_RMS_ERROR_ABS=0.0_DP
-                              GHOST_RMS_ERROR_REL=0.0_DP
-                              CALL WRITE_STRING(OUTPUT_ID,"Element errors:",ERR,ERROR,*999)
-                              LOCAL_STRING= &
-                                & "  Element#             Numerical      Analytic       % error  Absolute err  Relative err"
-                              CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                              DO element_idx=1,ELEMENTS_DOMAIN%numberOfElements
-                                local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%paramToDOFMap% &
-                                  & elementParam2DOFMap%elements(element_idx)
-                                VALUES(1)=NUMERICAL_VALUES(local_ny)
-                                VALUES(2)=ANALYTIC_VALUES(local_ny)
-                                VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                                VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                                VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                                !Accumlate the RMS errors
-                                NUMBER(1)=NUMBER(1)+1
-                                RMS_ERROR_PER(1)=RMS_ERROR_PER(1)+VALUES(3)*VALUES(3)
-                                RMS_ERROR_ABS(1)=RMS_ERROR_ABS(1)+VALUES(4)*VALUES(4)
-                                RMS_ERROR_REL(1)=RMS_ERROR_REL(1)+VALUES(5)*VALUES(5)
-                                WRITE(FIRST_FORMAT,"(A,I10,A)") "('",ELEMENTS_DECOMPOSITION%elements(element_idx)%userNumber, &
-                                  & "',20X,3(2X,E12.5))"
-                                CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))", &
-                                  & ERR,ERROR,*999)
-                              ENDDO !element_idx
-                              DO element_idx=ELEMENTS_DOMAIN%numberOfElements+1,ELEMENTS_DOMAIN%totalNumberOfElements
-                                local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%paramToDOFMap% &
-                                  & elementParam2DOFMap%elements(element_idx)
-                                VALUES(1)=NUMERICAL_VALUES(local_ny)
-                                VALUES(2)=ANALYTIC_VALUES(local_ny)
-                                VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                                VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                                VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                                !Accumlate the RMS errors
-                                GHOST_NUMBER(1)=GHOST_NUMBER(1)+1
-                                GHOST_RMS_ERROR_PER(1)=GHOST_RMS_ERROR_PER(1)+VALUES(3)*VALUES(3)
-                                GHOST_RMS_ERROR_ABS(1)=GHOST_RMS_ERROR_ABS(1)+VALUES(4)*VALUES(4)
-                                GHOST_RMS_ERROR_REL(1)=GHOST_RMS_ERROR_REL(1)+VALUES(5)*VALUES(5)
-                                WRITE(FIRST_FORMAT,"(A,I10,A)") "('",ELEMENTS_DECOMPOSITION%elements(element_idx)%userNumber, &
-                                  & "',20X,3(2X,E12.5))"
-                                CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))", &
-                                  & ERR,ERROR,*999)
-                              ENDDO !node_idx
-                              !Output RMS errors                  
-                              CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-                              IF(NUMBER(1)>0) THEN
-                                IF(numberOfGroupComputationNodes>1) THEN
-                                  !Local elements only
-                                  CALL WRITE_STRING(OUTPUT_ID,"Local RMS errors:",ERR,ERROR,*999)
-                                  LOCAL_STRING= &
-                                    & "                                                     % error  Absolute err  Relative err"
-                                  CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                                  VALUES(1)=SQRT(RMS_ERROR_PER(deriv_idx)/NUMBER(deriv_idx))
-                                  VALUES(2)=SQRT(RMS_ERROR_ABS(deriv_idx)/NUMBER(deriv_idx))
-                                  VALUES(3)=SQRT(RMS_ERROR_REL(deriv_idx)/NUMBER(deriv_idx))
-                                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))", &
-                                    & ERR,ERROR,*999)
-                                  !Local and ghost nodes
-                                  CALL WRITE_STRING(OUTPUT_ID,"Local + Ghost RMS errors:",ERR,ERROR,*999)
-                                  LOCAL_STRING= &
-                                    & "                                                     % error  Absolute err  Relative err"
-                                  CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                                  VALUES(1)=SQRT((RMS_ERROR_PER(1)+GHOST_RMS_ERROR_PER(1))/(NUMBER(1)+GHOST_NUMBER(1)))
-                                  VALUES(2)=SQRT((RMS_ERROR_ABS(1)+GHOST_RMS_ERROR_ABS(1))/(NUMBER(1)+GHOST_NUMBER(1)))
-                                  VALUES(3)=SQRT((RMS_ERROR_REL(1)+GHOST_RMS_ERROR_REL(1))/(NUMBER(1)+GHOST_NUMBER(1)))
-                                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))", &
-                                    & ERR,ERROR,*999)
-                                  !Global RMS values
-                                  !Collect the values across the ranks
-                                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,groupCommunicator,MPI_IERROR)
-                                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_PER,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                    & groupCommunicator,MPI_IERROR)
-                                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_ABS,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                    & groupCommunicator,MPI_IERROR)
-                                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_REL,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                    & groupCommunicator,MPI_IERROR)
-                                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                                  CALL WRITE_STRING(OUTPUT_ID,"Global RMS errors:",ERR,ERROR,*999)
-                                  LOCAL_STRING= &
-                                    & "                                                     % error  Absolute err  Relative err"
-                                  CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                                  VALUES(1)=SQRT(RMS_ERROR_PER(1)/NUMBER(1))
-                                  VALUES(2)=SQRT(RMS_ERROR_ABS(1)/NUMBER(1))
-                                  VALUES(3)=SQRT(RMS_ERROR_REL(1)/NUMBER(1))
-                                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))", &
-                                    & ERR,ERROR,*999)
-                                ELSE
-                                  CALL WRITE_STRING(OUTPUT_ID,"RMS errors:",ERR,ERROR,*999)
-                                  LOCAL_STRING= &
-                                    & "                                                     % error  Absolute err  Relative err"
-                                  CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                                  VALUES(1)=SQRT(RMS_ERROR_PER(deriv_idx)/NUMBER(deriv_idx))
-                                  VALUES(2)=SQRT(RMS_ERROR_ABS(deriv_idx)/NUMBER(deriv_idx))
-                                  VALUES(3)=SQRT(RMS_ERROR_REL(deriv_idx)/NUMBER(deriv_idx))
-                                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))", &
-                                    & ERR,ERROR,*999)
-                                ENDIF
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Decomposition topology elements is not associated.",ERR,ERROR,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Decomposition topology is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Domain decomposition is not associated.",ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Elements domain topology is not associated.",ERR,ERROR,*999)
-                      ENDIF
-                    CASE(FIELD_NODE_BASED_INTERPOLATION)
-                      NODES_DOMAIN=>DOMAIN_TOPOLOGY%NODES
-                      IF(ASSOCIATED(NODES_DOMAIN)) THEN
-                        NUMBER=0
-                        RMS_ERROR_PER=0.0_DP
-                        RMS_ERROR_ABS=0.0_DP
-                        RMS_ERROR_REL=0.0_DP
-                        GHOST_NUMBER=0
-                        GHOST_RMS_ERROR_PER=0.0_DP
-                        GHOST_RMS_ERROR_ABS=0.0_DP
-                        GHOST_RMS_ERROR_REL=0.0_DP
-                        CALL WRITE_STRING(OUTPUT_ID,"Nodal errors:",ERR,ERROR,*999)
-                        LOCAL_STRING="     Node#  Deriv#     Numerical      Analytic       % error  Absolute err  Relative err"
-                        CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                        DO node_idx=1,NODES_DOMAIN%numberOfNodes
-                          DO deriv_idx=1,NODES_DOMAIN%nodes(node_idx)%numberOfDerivatives
-                            local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%paramToDOFMap% &
-                              & nodeParam2DOFMap%nodes(node_idx)%derivatives(deriv_idx)%VERSIONS(1)
-                            VALUES(1)=NUMERICAL_VALUES(local_ny)
-                            VALUES(2)=ANALYTIC_VALUES(local_ny)
-                            VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                            VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                            VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                            !Accumlate the RMS errors
-                            NUMBER(deriv_idx)=NUMBER(deriv_idx)+1
-                            RMS_ERROR_PER(deriv_idx)=RMS_ERROR_PER(deriv_idx)+VALUES(3)*VALUES(3)
-                            RMS_ERROR_ABS(deriv_idx)=RMS_ERROR_ABS(deriv_idx)+VALUES(4)*VALUES(4)
-                            RMS_ERROR_REL(deriv_idx)=RMS_ERROR_REL(deriv_idx)+VALUES(5)*VALUES(5)
-                            IF(deriv_idx==1) THEN
-                              WRITE(FIRST_FORMAT,"(A,I10,A,I6,A)") "('",NODES_DOMAIN%nodes(node_idx)%userNumber,"',2X,'", &
-                                & deriv_idx,"',5(2X,E12.5))"
-                            ELSE
-                              WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',5(2X,E12.5))"
-                            ENDIF
-                            CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                          ENDDO !deriv_idx
-                        ENDDO !node_idx
-                        DO node_idx=NODES_DOMAIN%numberOfNodes+1,NODES_DOMAIN%totalNumberOfNodes
-                          DO deriv_idx=1,NODES_DOMAIN%nodes(node_idx)%numberOfDerivatives
-                            local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%paramToDOFMap% &
-                              & nodeParam2DOFMap%nodes(node_idx)%derivatives(deriv_idx)%VERSIONS(1)
-                            VALUES(1)=NUMERICAL_VALUES(local_ny)
-                            VALUES(2)=ANALYTIC_VALUES(local_ny)
-                            VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                            VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                            VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                            !Accumlate the RMS errors
-                            GHOST_NUMBER(deriv_idx)=GHOST_NUMBER(deriv_idx)+1
-                            GHOST_RMS_ERROR_PER(deriv_idx)=GHOST_RMS_ERROR_PER(deriv_idx)+VALUES(3)*VALUES(3)
-                            GHOST_RMS_ERROR_ABS(deriv_idx)=GHOST_RMS_ERROR_ABS(deriv_idx)+VALUES(4)*VALUES(4)
-                            GHOST_RMS_ERROR_REL(deriv_idx)=GHOST_RMS_ERROR_REL(deriv_idx)+VALUES(5)*VALUES(5)
-                            IF(deriv_idx==1) THEN
-                              WRITE(FIRST_FORMAT,"(A,I10,A,I6,A)") "('",NODES_DOMAIN%nodes(node_idx)%userNumber, &
-                                & "',2X,'",deriv_idx,"',5(2X,E12.5))"
-                            ELSE
-                              WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',5(2X,E12.5))"
-                            ENDIF
-                            CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                          ENDDO !deriv_idx
-                        ENDDO !node_idx
-                        !Output RMS errors                  
-                        CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-                        IF(numberOfGroupComputationNodes>1) THEN
-                          IF(ANY(NUMBER>0)) THEN
-                            !Local nodes only
-                            CALL WRITE_STRING(OUTPUT_ID,"Local RMS errors:",ERR,ERROR,*999)
-                            LOCAL_STRING= &
-                              & "            Deriv#                                   % error  Absolute err  Relative err"
-                            CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                            DO deriv_idx=1,8
-                              IF(NUMBER(deriv_idx)>0) THEN
-                                VALUES(1)=SQRT(RMS_ERROR_PER(deriv_idx)/NUMBER(deriv_idx))
-                                VALUES(2)=SQRT(RMS_ERROR_ABS(deriv_idx)/NUMBER(deriv_idx))
-                                VALUES(3)=SQRT(RMS_ERROR_REL(deriv_idx)/NUMBER(deriv_idx))
-                                WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',28X,3(2X,E12.5))"
-                                CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,FIRST_FORMAT,"(46X,3(2X,E12.5))", &
-                                  & ERR,ERROR,*999)
-                              ENDIF
-                            ENDDO !deriv_idx
-                            !Local and ghost nodes
-                            CALL WRITE_STRING(OUTPUT_ID,"Local + Ghost RMS errors:",ERR,ERROR,*999)
-                            LOCAL_STRING= &
-                              & "            Deriv#                                   % error  Absolute err  Relative err"
-                            CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                            DO deriv_idx=1,8
-                              IF(NUMBER(deriv_idx)>0) THEN
-                                VALUES(1)=SQRT((RMS_ERROR_PER(deriv_idx)+GHOST_RMS_ERROR_PER(deriv_idx))/ &
-                                  & (NUMBER(deriv_idx)+GHOST_NUMBER(deriv_idx)))
-                                VALUES(2)=SQRT((RMS_ERROR_ABS(deriv_idx)+GHOST_RMS_ERROR_ABS(deriv_idx))/ &
-                                  & (NUMBER(deriv_idx)+GHOST_NUMBER(deriv_idx)))
-                                VALUES(3)=SQRT((RMS_ERROR_REL(deriv_idx)+GHOST_RMS_ERROR_REL(deriv_idx))/ &
-                                  & (NUMBER(deriv_idx)+GHOST_NUMBER(deriv_idx)))
-                                WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',28X,3(2X,E12.5))"
-                                CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,FIRST_FORMAT,"(46X,3(2X,E12.5))", &
-                                  & ERR,ERROR,*999)
-                              ENDIF
-                            ENDDO !deriv_idx
-                            !Global RMS values
-                            !Collect the values across the ranks
-                            CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,groupCommunicator,MPI_IERROR)
-                            CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_PER,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                              & groupCommunicator,MPI_IERROR)
-                            CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_ABS,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                              & groupCommunicator,MPI_IERROR)
-                            CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_REL,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                              & groupCommunicator,MPI_IERROR)
-                            CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                            CALL WRITE_STRING(OUTPUT_ID,"Global RMS errors:",ERR,ERROR,*999)
-                            LOCAL_STRING= &
-                              & "            Deriv#                                   % error  Absolute err  Relative err"
-                            CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                            DO deriv_idx=1,8
-                              IF(NUMBER(deriv_idx)>0) THEN
-                                VALUES(1)=SQRT(RMS_ERROR_PER(deriv_idx)/NUMBER(deriv_idx))
-                                VALUES(2)=SQRT(RMS_ERROR_ABS(deriv_idx)/NUMBER(deriv_idx))
-                                VALUES(3)=SQRT(RMS_ERROR_REL(deriv_idx)/NUMBER(deriv_idx))
-                                WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',28X,3(2X,E12.5))"
-                                CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,FIRST_FORMAT,"(46X,3(2X,E12.5))", &
-                                  & ERR,ERROR,*999)
-                              ENDIF
-                            ENDDO !deriv_idx
-                          ENDIF
-                        ELSE
-                          IF(ANY(NUMBER>0)) THEN
-                            CALL WRITE_STRING(OUTPUT_ID,"RMS errors:",ERR,ERROR,*999)
-                            LOCAL_STRING= &
-                              & "            Deriv#                                   % error  Absolute err  Relative err"
-                            CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                            DO deriv_idx=1,8
-                              IF(NUMBER(deriv_idx)>0) THEN
-                                VALUES(1)=SQRT(RMS_ERROR_PER(deriv_idx)/NUMBER(deriv_idx))
-                                VALUES(2)=SQRT(RMS_ERROR_ABS(deriv_idx)/NUMBER(deriv_idx))
-                                VALUES(3)=SQRT(RMS_ERROR_REL(deriv_idx)/NUMBER(deriv_idx))
-                                WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',28X,3(2X,E12.5))"
-                                CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,3,3,3,VALUES,FIRST_FORMAT,"(46X,3(2X,E12.5))", &
-                                  & ERR,ERROR,*999)
-                              ENDIF
-                            ENDDO !deriv_idx
-                          ENDIF
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Nodes domain topology is not associated.",ERR,ERROR,*999)
-                      ENDIF
-                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    CASE DEFAULT
-                      LOCAL_ERROR="The interpolation type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(FIELD%VARIABLES(var_idx)%COMPONENTS(component_idx)% &
-                        & interpolationType,"*",ERR,ERROR))//" for component number "// &
-                        & TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))//" of variable type "// &
-                        & TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" of field number "// &
-                        & TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))//" is invalid."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    END SELECT
-                  ELSE
-                    CALL FlagError("Domain topology is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Domain is not associated.",ERR,ERROR,*999)
-                ENDIF
-                CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-              ENDDO !component_idx
-              !Restore the dependent and analytic parameter sets
-              CALL FIELD_PARAMETER_SET_DATA_RESTORE(FIELD,variable_type,FIELD_VALUES_SET_TYPE,NUMERICAL_VALUES, &
-                & ERR,ERROR,*999)
-              CALL FIELD_PARAMETER_SET_DATA_RESTORE(FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,ANALYTIC_VALUES, &
-                & ERR,ERROR,*999)
-              !Allocated the integral errors
-              ALLOCATE(INTEGRAL_ERRORS(6,FIELD_VARIABLE%numberOfComponents),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate integral errors.",ERR,ERROR,*999)
-              ALLOCATE(GHOST_INTEGRAL_ERRORS(6,FIELD_VARIABLE%numberOfComponents),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate ghost integral errors.",ERR,ERROR,*999)
-              CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-              IF(numberOfGroupComputationNodes>1) THEN
-                CALL WRITE_STRING(OUTPUT_ID,"Local Integral errors:",ERR,ERROR,*999)
-                LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(1,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Intg  ',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(2,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-                LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(5,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Diff  ',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(6,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-                CALL WRITE_STRING(OUTPUT_ID,"Local + Ghost Integral errors:",ERR,ERROR,*999)
-                LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(1,component_idx)+GHOST_INTEGRAL_ERRORS(1,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)+GHOST_INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Intg  ',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(2,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-                LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(5,component_idx)+GHOST_INTEGRAL_ERRORS(5,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)+GHOST_INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Diff  ',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(6,component_idx)+GHOST_INTEGRAL_ERRORS(6,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)+GHOST_INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-                !Collect the values across the ranks
-                CALL MPI_ALLREDUCE(MPI_IN_PLACE,INTEGRAL_ERRORS,6*FIELD_VARIABLE%numberOfComponents,MPI_DOUBLE_PRECISION, &
-                  & MPI_SUM,groupCommunicator,MPI_IERROR)
-                CALL WRITE_STRING(OUTPUT_ID,"Global Integral errors:",ERR,ERROR,*999)
-                LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(1,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Intg  ',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(2,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999) 
-                ENDDO !component_idx
-                LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(5,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Diff  ',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(6,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-              ELSE
-                CALL WRITE_STRING(OUTPUT_ID,"Integral errors:",ERR,ERROR,*999)
-                LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(1,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Intg  ',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(2,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(VALUES(1),VALUES(2))
-                  VALUES(5)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(VALUES(1),VALUES(2))
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-                LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
-                CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  VALUES(1)=INTEGRAL_ERRORS(5,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A,I10,A)") "('",component_idx,"',2X,'Diff  ',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                  VALUES(1)=INTEGRAL_ERRORS(6,component_idx)
-                  VALUES(2)=INTEGRAL_ERRORS(4,component_idx)
-                  VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
-                  VALUES(4)=VALUES(3)*100.0_DP
-                  WRITE(FIRST_FORMAT,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
-                  CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
-                ENDDO !component_idx
-                CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-              ENDIF
-              IF(ALLOCATED(INTEGRAL_ERRORS)) DEALLOCATE(INTEGRAL_ERRORS)
-              IF(ALLOCATED(GHOST_INTEGRAL_ERRORS)) DEALLOCATE(GHOST_INTEGRAL_ERRORS)
-            ELSE
-              CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !var_idx
-        ELSE
-          CALL FlagError("Decomposition topology is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Field decomposition is not associated.",ERR,ERROR,*999)
-      ENDIF
-      IF(LEN_TRIM(FILENAME)>=1) THEN
-        CLOSE(UNIT=OUTPUT_ID,IOSTAT=ERR)
-        IF(ERR/=0) CALL FlagError("Error closing analysis output file.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))// &
-        & " is not a dependent field."
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    IF(field%dependentType/=FIELD_DEPENDENT_TYPE) THEN
+      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" is not a dependent field."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-         
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    IF(LEN_TRIM(filename)>=1) THEN
+!!TODO \todo have more general ascii file mechanism
+      IF(numberOfGroupComputationNodes>1) THEN
+        WRITE(fName,'(A,".opanal.",I0)') filename(1:LEN_TRIM(filename)),myGroupComputationNodeNumber
+      ELSE
+        fName=filename(1:LEN_TRIM(filename))//".opanal"
+      ENDIF
+      outputID=IO1_FILE_UNIT
+      OPEN(UNIT=outputID,FILE=fName(1:LEN_TRIM(fName)),STATUS="REPLACE",FORM="FORMATTED",IOSTAT=err)
+      IF(err/=0) CALL FlagError("Error opening analysis output file.",err,error,*999)            
+    ELSE
+      outputID=GENERAL_OUTPUT_TYPE
+    ENDIF
+    CALL WriteString(outputID,"Analytic error analysis:",err,error,*999)
+    CALL WriteString(outputID,"",err,error,*999)
+    localString="Field "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" : "//FIELD%LABEL
+    IF(err/=0) GOTO 999
+    CALL WriteString(outputID,localString,err,error,*999)
+    !Loop over the variables
+    DO variableIdx=1,field%numberOfVariables
+      NULLIFY(fieldVariable)
+      CALL Field_VariableIndexGet(field,variableIdx,fieldVariable,variableType,err,error,*999)
+      CALL WriteString(outputID,"",err,error,*999)
+      localString="Variable "//TRIM(NumberToVString(variableType,"*",err,error))//" : "//fieldVariable%variableLabel
+      IF(err/=0) GOTO 999
+      CALL WriteString(outputID,localString,err,error,*999)
+      CALL WriteString(outputID,"",err,error,*999)
+      !Get the dependent and analytic parameter sets
+      NULLIFY(numericalValues)
+      CALL Field_ParameterSetDataGet(field,variableType,FIELD_VALUES_SET_TYPE,numericalValues,err,error,*999)
+      NULLIFY(analyticValues)
+      CALL Field_ParameterSetDataGet(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,analyticValues,err,error,*999)
+      !Loop over the components
+      DO componentIdx=1,fieldVariable%numberOfComponents
+        NULLIFY(domain)
+        CALL FieldVariable_ComponentDomainGet(fieldVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        CALL FieldVariable_ComponentLabelGet(fieldVariable,componentIdx,componentLabel,err,error,*999)
+        localString="Component "//TRIM(NumberToVString(componentIdx,"*",err,error))//" : "//componentLabel
+        IF(err/=0) GOTO 999
+        CALL WriteString(outputID,localString,err,error,*999)
+        CALL WriteString(outputID,"",err,error,*999)
+        CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentIdx,interpolationType,err,error,*999)
+        SELECT CASE(interpolationType)
+        CASE(FIELD_CONSTANT_INTERPOLATION)
+          CALL WriteString(outputID,"Constant errors:",err,error,*999)
+          localString="                       Numerical      Analytic       % error  Absolute err  Relative err"
+          CALL WriteString(outputID,localString,err,error,*999)
+          CALL FieldVariable_ConstantDOFGet(fieldVariable,componentIdx,localDOF,err,error,*999)
+          values(1)=numericalValues(localDOF)
+          values(2)=analyticValues(localDOF)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          CALL WriteStringVector(outputID,1,1,5,5,5,values,"(20X,5(2X,E12.5))","(20X,5(2X,E12.5))",err,error,*999)
+        CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+          NULLIFY(decompositionElements)
+          CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+          number=0
+          rmsErrorPer=0.0_DP
+          rmsErrorAbs=0.0_DP
+          rmsErrorRel=0.0_DP
+          ghostNumber=0
+          ghostRMSErrorPer=0.0_DP
+          ghostRMSErrorAbs=0.0_DP
+          ghostRMSErrorRel=0.0_DP
+          CALL WriteString(outputID,"Element errors:",err,error,*999)
+          localString="  Element#             Numerical      Analytic       % error  Absolute err  Relative err"
+          CALL WriteString(outputID,localString,err,error,*999)
+          DO elementIdx=1,domainElements%numberOfElements
+            CALL FieldVariable_LocalElementDOFGet(fieldVariable,elementIdx,componentIdx,localDOF,err,error,*999)
+            values(1)=numericalValues(localDOF)
+            values(2)=analyticValues(localDOF)
+            values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+            values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+            values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+            !Accumlate the RMS errors
+            number(1)=number(1)+1
+            rmsErrorPer(1)=rmsErrorPer(1)+values(3)*values(3)
+            rmsErrorAbs(1)=rmsErrorAbs(1)+values(4)*values(4)
+            rmsErrorRel(1)=rmsErrorRel(1)+values(5)*values(5)
+            WRITE(firstFormat,"(A,I10,A)") "('",decompositionElements%elements(elementIdx)%userNumber,"',20X,3(2X,E12.5))"
+            CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+          ENDDO !elementIdx
+          DO elementIdx=domainElements%numberOfElements+1,domainElements%totalNumberOfElements
+            CALL FieldVariable_LocalElementDOFGet(fieldVariable,elementIdx,componentIdx,localDOF,err,error,*999)
+            values(1)=numericalValues(localDOF)
+            values(2)=analyticValues(localDOF)
+            values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+            values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+            values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+            !Accumlate the RMS errors
+            ghostNumber(1)=ghostNumber(1)+1
+            ghostRMSErrorPer(1)=ghostRMSErrorPer(1)+values(3)*values(3)
+            ghostRMSErrorAbs(1)=ghostRMSErrorAbs(1)+values(4)*values(4)
+            ghostRMSErrorRel(1)=ghostRMSErrorRel(1)+values(5)*values(5)
+            WRITE(firstFormat,"(A,I10,A)") "('",decompositionElements%elements(elementIdx)%userNumber,"',20X,3(2X,E12.5))"
+            CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+          ENDDO !elementIdx
+          !Output RMS errors                  
+          CALL WriteString(outputID,"",err,error,*999)
+          IF(number(1)>0) THEN
+            IF(numberOfGroupComputationNodes>1) THEN
+              !Local elements only
+              CALL WriteString(outputID,"Local RMS errors:",err,error,*999)
+              localString="                                                     % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              values(1)=SQRT(rmsErrorPer(derivativeIdx)/number(derivativeIdx))
+              values(2)=SQRT(rmsErrorAbs(derivativeIdx)/number(derivativeIdx))
+              values(3)=SQRT(rmsErrorRel(derivativeIdx)/number(derivativeIdx))
+              CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))",err,error,*999)
+              !Local and ghost nodes
+              CALL WriteString(outputID,"Local + Ghost RMS errors:",err,error,*999)
+              localString="                                                     % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              values(1)=SQRT((rmsErrorPer(1)+ghostRMSErrorPer(1))/(number(1)+ghostNumber(1)))
+              values(2)=SQRT((rmsErrorAbs(1)+ghostRMSErrorAbs(1))/(number(1)+ghostNumber(1)))
+              values(3)=SQRT((rmsErrorRel(1)+ghostRMSErrorRel(1))/(number(1)+ghostNumber(1)))
+              CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))",err,error,*999)
+              !Global RMS values
+              !Collect the values across the ranks
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorPer,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorAbs,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorRel,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL WriteString(outputID,"Global RMS errors:",err,error,*999)
+              localString="                                                     % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              values(1)=SQRT(rmsErrorPer(1)/number(1))
+              values(2)=SQRT(rmsErrorAbs(1)/number(1))
+              values(3)=SQRT(rmsErrorRel(1)/number(1))
+              CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))",err,error,*999)
+            ELSE
+              CALL WriteString(outputID,"RMS errors:",err,error,*999)
+              localString="                                                     % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              values(1)=SQRT(rmsErrorPer(derivativeIdx)/number(derivativeIdx))
+              values(2)=SQRT(rmsErrorAbs(derivativeIdx)/number(derivativeIdx))
+              values(3)=SQRT(rmsErrorRel(derivativeIdx)/number(derivativeIdx))
+              CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))",err,error,*999)
+            ENDIF
+          ENDIF
+        CASE(FIELD_NODE_BASED_INTERPOLATION)
+          NULLIFY(domainNodes)
+          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+          number=0
+          rmsErrorPer=0.0_DP
+          rmsErrorAbs=0.0_DP
+          rmsErrorRel=0.0_DP
+          ghostNumber=0
+          ghostRMSErrorPer=0.0_DP
+          ghostRMSErrorAbs=0.0_DP
+          ghostRMSErrorRel=0.0_DP
+          CALL WriteString(outputID,"Nodal errors:",err,error,*999)
+          localString="     Node#  Deriv#     Numerical      Analytic       % error  Absolute err  Relative err"
+          CALL WriteString(outputID,localString,err,error,*999)
+          DO nodeIdx=1,domainNodes%numberOfNodes
+            DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+              CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOF,err,error,*999)
+              values(1)=numericalValues(localDOF)
+              values(2)=analyticValues(localDOF)
+              values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+              values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+              values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+              !Accumlate the RMS errors
+              number(derivativeIdx)=number(derivativeIdx)+1
+              rmsErrorPer(derivativeIdx)=rmsErrorPer(derivativeIdx)+values(3)*values(3)
+              rmsErrorAbs(derivativeIdx)=rmsErrorAbs(derivativeIdx)+values(4)*values(4)
+              rmsErrorRel(derivativeIdx)=rmsErrorRel(derivativeIdx)+values(5)*values(5)
+              IF(derivativeIdx==1) THEN
+                WRITE(firstFormat,"(A,I10,A,I6,A)") "('",domainNodes%nodes(nodeIdx)%userNumber,"',2X,'", &
+                  & derivativeIdx,"',5(2X,E12.5))"
+              ELSE
+                WRITE(firstFormat,"(A,I6,A)") "(12X,'",derivativeIdx,"',5(2X,E12.5))"
+              ENDIF
+              CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+            ENDDO !derivativeIdx
+          ENDDO !nodeIdx
+          DO nodeIdx=domainNodes%numberOfNodes+1,domainNodes%totalNumberOfNodes
+            DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+              CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOF,err,error,*999)
+              values(1)=numericalValues(localDOF)
+              values(2)=analyticValues(localDOF)
+              values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+              values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+              values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+              !Accumlate the RMS errors
+              ghostNumber(derivativeIdx)=ghostNumber(derivativeIdx)+1
+              ghostRMSErrorPer(derivativeIdx)=ghostRMSErrorPer(derivativeIdx)+values(3)*values(3)
+              ghostRMSErrorAbs(derivativeIdx)=ghostRMSErrorAbs(derivativeIdx)+values(4)*values(4)
+              ghostRMSErrorRel(derivativeIdx)=ghostRMSErrorRel(derivativeIdx)+values(5)*values(5)
+              IF(derivativeIdx==1) THEN
+                WRITE(firstFormat,"(A,I10,A,I6,A)") "('",domainNodes%nodes(nodeIdx)%userNumber, &
+                  & "',2X,'",derivativeIdx,"',5(2X,E12.5))"
+              ELSE
+                WRITE(firstFormat,"(A,I6,A)") "(12X,'",derivativeIdx,"',5(2X,E12.5))"
+              ENDIF
+              CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+            ENDDO !derivativeIdx
+          ENDDO !nodeIdx
+          !Output RMS errors                  
+          CALL WriteString(outputID,"",err,error,*999)
+          IF(numberOfGroupComputationNodes>1) THEN
+            IF(ANY(number>0)) THEN
+              !Local nodes only
+              CALL WriteString(outputID,"Local RMS errors:",err,error,*999)
+              localString="            Deriv#                                   % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              DO derivativeIdx=1,8
+                IF(number(derivativeIdx)>0) THEN
+                  values(1)=SQRT(rmsErrorPer(derivativeIdx)/number(derivativeIdx))
+                  values(2)=SQRT(rmsErrorAbs(derivativeIdx)/number(derivativeIdx))
+                  values(3)=SQRT(rmsErrorRel(derivativeIdx)/number(derivativeIdx))
+                  WRITE(firstFormat,"(A,I6,A)") "(12X,'",derivativeIdx,"',28X,3(2X,E12.5))"
+                  CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,firstFormat,"(46X,3(2X,E12.5))",err,error,*999)
+                ENDIF
+              ENDDO !derivativeIdx
+              !Local and ghost nodes
+              CALL WriteString(outputID,"Local + Ghost RMS errors:",err,error,*999)
+              localString="            Deriv#                                   % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              DO derivativeIdx=1,8
+                IF(number(derivativeIdx)>0) THEN
+                  values(1)=SQRT((rmsErrorPer(derivativeIdx)+ghostRMSErrorPer(derivativeIdx))/ &
+                    & (number(derivativeIdx)+ghostNumber(derivativeIdx)))
+                  values(2)=SQRT((rmsErrorAbs(derivativeIdx)+ghostRMSErrorAbs(derivativeIdx))/ &
+                    & (number(derivativeIdx)+ghostNumber(derivativeIdx)))
+                  values(3)=SQRT((rmsErrorRel(derivativeIdx)+ghostRMSErrorRel(derivativeIdx))/ &
+                    & (number(derivativeIdx)+ghostNumber(derivativeIdx)))
+                  WRITE(firstFormat,"(A,I6,A)") "(12X,'",derivativeIdx,"',28X,3(2X,E12.5))"
+                  CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,firstFormat,"(46X,3(2X,E12.5))",err,error,*999)
+                ENDIF
+              ENDDO !derivativeIdx
+              !Global RMS values
+              !Collect the values across the ranks
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorPer,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorAbs,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorRel,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL WriteString(outputID,"Global RMS errors:",err,error,*999)
+              localString="            Deriv#                                   % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              DO derivativeIdx=1,8
+                IF(number(derivativeIdx)>0) THEN
+                  values(1)=SQRT(rmsErrorPer(derivativeIdx)/number(derivativeIdx))
+                  values(2)=SQRT(rmsErrorAbs(derivativeIdx)/number(derivativeIdx))
+                  values(3)=SQRT(rmsErrorRel(derivativeIdx)/number(derivativeIdx))
+                  WRITE(firstFormat,"(A,I6,A)") "(12X,'",derivativeIdx,"',28X,3(2X,E12.5))"
+                  CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,firstFormat,"(46X,3(2X,E12.5))",err,error,*999)
+                ENDIF
+              ENDDO !derivativeIdx
+            ENDIF
+          ELSE
+            IF(ANY(number>0)) THEN
+              CALL WriteString(outputID,"RMS errors:",err,error,*999)
+              localString="            Deriv#                                   % error  Absolute err  Relative err"
+              CALL WriteString(outputID,localString,err,error,*999)
+              DO derivativeIdx=1,8
+                IF(number(derivativeIdx)>0) THEN
+                  values(1)=SQRT(rmsErrorPer(derivativeIdx)/number(derivativeIdx))
+                  values(2)=SQRT(rmsErrorAbs(derivativeIdx)/number(derivativeIdx))
+                  values(3)=SQRT(rmsErrorRel(derivativeIdx)/number(derivativeIdx))
+                  WRITE(firstFormat,"(A,I6,A)") "(12X,'",derivativeIdx,"',28X,3(2X,E12.5))"
+                  CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,firstFormat,"(46X,3(2X,E12.5))",err,error,*999)
+                ENDIF
+              ENDDO !derivativeIdx
+            ENDIF
+          ENDIF
+        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The interpolation type of "// &
+            & TRIM(NumberToVString(interpolationType,"*",err,error))//" for component number "// &
+            & TRIM(NumberToVString(componentIdx,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+            & TRIM(NumberToVString(field%userNumber,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL WriteString(outputID,"",err,error,*999)
+      ENDDO !componentIdx
+      !Restore the dependent and analytic parameter sets
+      CALL Field_ParameterSetDataRestore(FIELD,variableType,FIELD_VALUES_SET_TYPE,numericalValues,err,error,*999)
+      CALL Field_ParameterSetDataRestore(FIELD,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,analyticValues,err,error,*999)
+      !Allocated the integral errors
+      ALLOCATE(integralErrors(6,fieldVariable%numberOfComponents),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate integral errors.",err,error,*999)
+      ALLOCATE(ghostIntegralErrors(6,fieldVariable%numberOfComponents),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate ghost integral errors.",err,error,*999)
+      CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+      IF(numberOfGroupComputationNodes>1) THEN
+        CALL WriteString(outputID,"Local Integral errors:",err,error,*999)
+        localString="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(1,componentIdx)
+          values(2)=integralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Intg  ',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(2,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+        localString="Component#             Numerical      Analytic           NID        NID(%)"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(5,componentIdx)
+          values(2)=integralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Diff  ',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(6,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+        CALL WriteString(outputID,"Local + Ghost Integral errors:",err,error,*999)
+        localString="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(1,componentIdx)+ghostIntegralErrors(1,componentIdx)
+          values(2)=integralErrors(3,componentIdx)+ghostIntegralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Intg  ',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(2,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+        localString="Component#             Numerical      Analytic           NID        NID(%)"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(5,componentIdx)+ghostIntegralErrors(5,componentIdx)
+          values(2)=integralErrors(3,componentIdx)+ghostIntegralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Diff  ',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(6,componentIdx)+ghostIntegralErrors(6,componentIdx)
+          values(2)=integralErrors(4,componentIdx)+ghostIntegralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+        !Collect the values across the ranks
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,integralErrors,6*fieldVariable%numberOfComponents,MPI_DOUBLE_PRECISION, &
+          & MPI_SUM,groupCommunicator,mpiIerror)
+        CALL WriteString(outputID,"Global Integral errors:",err,error,*999)
+        localString="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+          values(1)=integralErrors(1,componentIdx)
+          values(2)=integralErrors(3,componentIdx)
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Intg  ',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(2,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999) 
+        ENDDO !componentIdx
+        localString="Component#             Numerical      Analytic           NID        NID(%)"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(5,componentIdx)
+          values(2)=integralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Diff  ',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(6,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+      ELSE
+        CALL WriteString(outputID,"Integral errors:",err,error,*999)
+        localString="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(1,componentIdx)
+          values(2)=integralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Intg  ',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(2,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_PercentageError(values(1),values(2))
+          values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
+          values(5)=AnalyticAnalysis_RelativeError(values(1),values(2))
+          WRITE(firstFormat,"(A)") "(12X,'Intg^2',5(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,5,5,5,VALUES,firstFormat,"(20X,5(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+        localString="Component#             Numerical      Analytic           NID        NID(%)"
+        CALL WriteString(outputID,localString,err,error,*999)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          values(1)=integralErrors(5,componentIdx)
+          values(2)=integralErrors(3,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A,I10,A)") "('",componentIdx,"',2X,'Diff  ',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+          values(1)=integralErrors(6,componentIdx)
+          values(2)=integralErrors(4,componentIdx)
+          values(3)=AnalyticAnalysis_NIDError(values(1),values(2))
+          values(4)=values(3)*100.0_DP
+          WRITE(firstFormat,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
+          CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
+        ENDDO !componentIdx
+        CALL WriteString(outputID,"",err,error,*999)
+      ENDIF
+      IF(ALLOCATED(integralErrors)) DEALLOCATE(integralErrors)
+      IF(ALLOCATED(ghostIntegralErrors)) DEALLOCATE(ghostIntegralErrors)
+    ENDDO !variableIdx
+    IF(LEN_TRIM(filename)>=1) THEN
+      CLOSE(UNIT=outputID,IOSTAT=err)
+      IF(err/=0) CALL FlagError("Error closing analysis output file.",err,error,*999)
+    ENDIF
+        
     EXITS("AnalyticAnalysis_Output")
     RETURN
-999 IF(ALLOCATED(INTEGRAL_ERRORS)) DEALLOCATE(INTEGRAL_ERRORS)
-    IF(ALLOCATED(GHOST_INTEGRAL_ERRORS)) DEALLOCATE(GHOST_INTEGRAL_ERRORS)
-    ERRORSEXITS("AnalyticAnalysis_Output",ERR,ERROR)
+999 IF(ALLOCATED(integralErrors)) DEALLOCATE(integralErrors)
+    IF(ALLOCATED(ghostIntegralErrors)) DEALLOCATE(ghostIntegralErrors)
+    ERRORSEXITS("AnalyticAnalysis_Output",err,error)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_Output
 
   !
@@ -705,327 +632,348 @@ CONTAINS
   !  
 
   !>Calculates the absolute error between a numeric value and an analytic value.
-  PURE FUNCTION ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(NUMERIC_VALUE,ANALYTIC_VALUE)
+  PURE FUNCTION AnalyticAnalysis_AbsoluteError(numericValue,analyticValue)
 
     !Argument variables
-    REAL(DP), INTENT(IN) :: NUMERIC_VALUE !<The numerical value for the error calculation
-    REAL(DP), INTENT(IN) :: ANALYTIC_VALUE !<The analytic value for the error calculation
+    REAL(DP), INTENT(IN) :: numericValue !<The numerical value for the error calculation
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value for the error calculation
     !Function result
-    REAL(DP) :: ANALYTIC_ANALYSIS_ABSOLUTE_ERROR
+    REAL(DP) :: AnalyticAnalysis_AbsoluteError
 
-    ANALYTIC_ANALYSIS_ABSOLUTE_ERROR=ABS(ANALYTIC_VALUE-NUMERIC_VALUE)
+    AnalyticAnalysis_AbsoluteError=ABS(analyticValue-numericValue)
 
-  END FUNCTION ANALYTIC_ANALYSIS_ABSOLUTE_ERROR
+  END FUNCTION AnalyticAnalysis_AbsoluteError
   
   !
   !================================================================================================================================
   !  
 
   !>Calculates the percentage error between a numeric value and an analytic value.
-  PURE FUNCTION ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(NUMERIC_VALUE,ANALYTIC_VALUE)
+  PURE FUNCTION AnalyticAnalysis_PercentageError(numericValue,analyticValue)
 
     !Argument variables
-    REAL(DP), INTENT(IN) :: NUMERIC_VALUE !<The numerical value for the error calculation
-    REAL(DP), INTENT(IN) :: ANALYTIC_VALUE !<The analytic value for the error calculation
+    REAL(DP), INTENT(IN) :: numericValue !<The numerical value for the error calculation
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value for the error calculation
     !Function result
-    REAL(DP) :: ANALYTIC_ANALYSIS_PERCENTAGE_ERROR
+    REAL(DP) :: AnalyticAnalysis_PercentageError
 
-    IF(ABS(ANALYTIC_VALUE)>ZERO_TOLERANCE) THEN
-      ANALYTIC_ANALYSIS_PERCENTAGE_ERROR=(ANALYTIC_VALUE-NUMERIC_VALUE)/ANALYTIC_VALUE*100.0_DP
+    IF(ABS(analyticValue)>ZERO_TOLERANCE) THEN
+      AnalyticAnalysis_PercentageError=(analyticValue-numericValue)/analyticValue*100.0_DP
     ELSE
-      ANALYTIC_ANALYSIS_PERCENTAGE_ERROR=0.0_DP
+      AnalyticAnalysis_PercentageError=0.0_DP
     ENDIF
 
-  END FUNCTION ANALYTIC_ANALYSIS_PERCENTAGE_ERROR
+  END FUNCTION AnalyticAnalysis_PercentageError
   
   !
   !================================================================================================================================
   !  
 
   !>Calculates the relative error between a numeric value and an analytic value.
-  PURE FUNCTION ANALYTIC_ANALYSIS_RELATIVE_ERROR(NUMERIC_VALUE,ANALYTIC_VALUE)
+  PURE FUNCTION AnalyticAnalysis_RelativeError(numericValue,analyticValue)
 
     !Argument variables
-    REAL(DP), INTENT(IN) :: NUMERIC_VALUE !<The numerical value for the error calculation
-    REAL(DP), INTENT(IN) :: ANALYTIC_VALUE !<The analytic value for the error calculation
+    REAL(DP), INTENT(IN) :: numericValue !<The numerical value for the error calculation
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value for the error calculation
     !Function result
-    REAL(DP) :: ANALYTIC_ANALYSIS_RELATIVE_ERROR
+    REAL(DP) :: AnalyticAnalysis_RelativeError
 
-    IF(ABS(1.0_DP+ANALYTIC_VALUE)>ZERO_TOLERANCE) THEN
-      ANALYTIC_ANALYSIS_RELATIVE_ERROR=(ANALYTIC_VALUE-NUMERIC_VALUE)/(1.0_DP+ANALYTIC_VALUE)
+    IF(ABS(1.0_DP+analyticValue)>ZERO_TOLERANCE) THEN
+      AnalyticAnalysis_RelativeError=(analyticValue-numericValue)/(1.0_DP+analyticValue)
     ELSE
-      ANALYTIC_ANALYSIS_RELATIVE_ERROR=0.0_DP
+      AnalyticAnalysis_RelativeError=0.0_DP
     ENDIF
 
-  END FUNCTION ANALYTIC_ANALYSIS_RELATIVE_ERROR
+  END FUNCTION AnalyticAnalysis_RelativeError
   
   !
   !================================================================================================================================
   !  
 
   !>Calculates the Normalised Integral Difference (NID) error with a numeric value and an analytic value.
-  PURE FUNCTION ANALYTIC_ANALYSIS_NID_ERROR(NUMERIC_VALUE,ANALYTIC_VALUE)
+  PURE FUNCTION AnalyticAnalysis_NIDError(numericValue,analyticValue)
 
     !Argument variables
-    REAL(DP), INTENT(IN) :: NUMERIC_VALUE !<The numerical value for the error calculation
-    REAL(DP), INTENT(IN) :: ANALYTIC_VALUE !<The analytic value for the error calculation
+    REAL(DP), INTENT(IN) :: numericValue !<The numerical value for the error calculation
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value for the error calculation
     !Function result
-    REAL(DP) :: ANALYTIC_ANALYSIS_NID_ERROR
+    REAL(DP) :: AnalyticAnalysis_NIDError
 
-    IF(ABS(ANALYTIC_VALUE)>ZERO_TOLERANCE) THEN
-      ANALYTIC_ANALYSIS_NID_ERROR=(ANALYTIC_VALUE-NUMERIC_VALUE)/ANALYTIC_VALUE
+    IF(ABS(analyticValue)>ZERO_TOLERANCE) THEN
+      AnalyticAnalysis_NIDError=(analyticValue-numericValue)/analyticValue
     ELSE
-      ANALYTIC_ANALYSIS_NID_ERROR=(ANALYTIC_VALUE-NUMERIC_VALUE)/(1.0_DP+ANALYTIC_VALUE)
+      AnalyticAnalysis_NIDError=(analyticValue-numericValue)/(1.0_DP+analyticValue)
     ENDIF
 
-  END FUNCTION ANALYTIC_ANALYSIS_NID_ERROR
+  END FUNCTION AnalyticAnalysis_NIDError
   
   !
   !================================================================================================================================
   !  
 
   !>Calculates the relative error between a numeric value and an analytic value.
-  SUBROUTINE ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*)
 
     !Argument variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE !<A pointer to the field variable to calculate the integral errors for
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERRORS(:,:) !<On exit, the integral errors for the local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERRORS(:,:) !<On exit, the integral errors for the ghost elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to calculate the integral errors for
+    REAL(DP), INTENT(OUT) :: integralErrors(:,:) !<On exit, the integral errors for the local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralErrors(:,:) !<On exit, the integral errors for the ghost elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: element_idx,component_idx,gauss_idx,parameter_idx,variable_type
-    REAL(DP) :: ANALYTIC_INT,NUMERICAL_INT,RWG
-    TYPE(BasisType), POINTER :: BASIS,DEPENDENT_BASIS,GEOMETRIC_BASIS
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS1,DOMAIN_ELEMENTS2,DOMAIN_ELEMENTS3
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
-    TYPE(FieldInterpolatedPointPtrType), POINTER :: GEOMETRIC_INTERP_POINT(:)
-    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: GEOMETRIC_INTERP_POINT_METRICS(:)
-    TYPE(FieldInterpolationParametersPtrType), POINTER :: ANALYTIC_INTERP_PARAMETERS(:),GEOMETRIC_INTERP_PARAMETERS(:), &
-      & NUMERICAL_INTERP_PARAMETERS(:)
-    TYPE(FieldVariableType), POINTER :: GEOMETRIC_VARIABLE
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: elementIdx,componentIdx,gaussIdx,elementParameterIdx,variableType
+    REAL(DP) :: analyticIntegral,numericalIntegral,jacobianGaussWeight
+    TYPE(BasisType), POINTER :: basis,dependentBasis,geometricBasis
+    TYPE(DecompositionType), POINTER :: decomposition,dependentDecomposition,geometricDecomposition
+    TYPE(DomainType), POINTER :: domain,dependentDomain,geometricDomain
+    TYPE(DomainElementsType), POINTER :: domainElements,dependentDomainElements,geometricDomainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology,dependentDomainTopology,geometricDomainTopology
+    TYPE(FieldType), POINTER :: dependentField,geometricField
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: geometricInterpPoint(:)
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: geometricInterpPointMetrics(:)
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: analyticInterpParameters(:),geometricInterpParameters(:), &
+      & numericalInterpParameters(:)
+    TYPE(FieldVariableType), POINTER :: geometricVariable
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
+    TYPE(VARYING_STRING) :: localError
 
-    NULLIFY(GEOMETRIC_INTERP_POINT)
-    NULLIFY(GEOMETRIC_INTERP_POINT_METRICS)
-    NULLIFY(ANALYTIC_INTERP_PARAMETERS)
-    NULLIFY(GEOMETRIC_INTERP_PARAMETERS)
-    NULLIFY(NUMERICAL_INTERP_PARAMETERS)
-
-    ENTERS("ANALYTIC_ANALYSIS_INTEGRAL_ERRORS",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_IntegralErrors",err,error,*999)
     
-    INTEGRAL_ERRORS=0.0_DP
-    GHOST_INTEGRAL_ERRORS=0.0_DP
-    IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-      IF(SIZE(INTEGRAL_ERRORS,1)>=6.AND.SIZE(INTEGRAL_ERRORS,2)>=FIELD_VARIABLE%numberOfComponents) THEN
-        IF(SIZE(GHOST_INTEGRAL_ERRORS,1)>=6.AND.SIZE(GHOST_INTEGRAL_ERRORS,2)>=FIELD_VARIABLE%numberOfComponents) THEN
-          variable_type=FIELD_VARIABLE%variableType
-          DEPENDENT_FIELD=>FIELD_VARIABLE%FIELD
-          IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-            DECOMPOSITION=>DEPENDENT_FIELD%DECOMPOSITION
-            IF(ASSOCIATED(DECOMPOSITION)) THEN
-              GEOMETRIC_FIELD=>DEPENDENT_FIELD%geometricField
-              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                GEOMETRIC_VARIABLE=>GEOMETRIC_FIELD%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR
-                IF(ASSOCIATED(GEOMETRIC_VARIABLE)) THEN
-                  CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(GEOMETRIC_FIELD,GEOMETRIC_INTERP_PARAMETERS,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DEPENDENT_FIELD,NUMERICAL_INTERP_PARAMETERS,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DEPENDENT_FIELD,ANALYTIC_INTERP_PARAMETERS,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATED_POINTS_INITIALISE(GEOMETRIC_INTERP_PARAMETERS,GEOMETRIC_INTERP_POINT,ERR,ERROR,*999)
-                  CALL Field_InterpolatedPointsMetricsInitialise(GEOMETRIC_INTERP_POINT,GEOMETRIC_INTERP_POINT_METRICS, &
-                    & ERR,ERROR,*999)
-                  DOMAIN_ELEMENTS1=>FIELD_VARIABLE%COMPONENTS(decomposition%meshComponentNumber)%DOMAIN%TOPOLOGY%ELEMENTS
-                  DOMAIN_ELEMENTS2=>GEOMETRIC_VARIABLE%COMPONENTS(decomposition%meshComponentNumber)%DOMAIN%TOPOLOGY%ELEMENTS
-                  DO element_idx=1,DOMAIN_ELEMENTS1%numberOfElements
-                    DEPENDENT_BASIS=>DOMAIN_ELEMENTS1%elements(element_idx)%BASIS
-                    GEOMETRIC_BASIS=>DOMAIN_ELEMENTS2%elements(element_idx)%BASIS
-                    QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-                    CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
-                      & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                    CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
-                      & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR,ERR,ERROR,*999)
-                    CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_ANALYTIC_VALUES_SET_TYPE,element_idx, &
-                      & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR,ERR,ERROR,*999)
-                    DO gauss_idx=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-                      CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-                        & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
-                        & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                      RWG=GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%jacobian* &
-                        & QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
-                      DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                        DOMAIN_ELEMENTS3=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
-                        BASIS=>DOMAIN_ELEMENTS3%elements(element_idx)%BASIS
-                        NUMERICAL_INT=0.0_DP
-                        ANALYTIC_INT=0.0_DP
-                        SELECT CASE(DEPENDENT_FIELD%SCALINGS%scalingType)
-                        CASE(FIELD_NO_SCALING)
-                          DO parameter_idx=1,BASIS%numberOfElementParameters
-                            NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
-                            ANALYTIC_INT=ANALYTIC_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
-                          ENDDO !parameter_idx
-                        CASE(FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-                          DO parameter_idx=1,BASIS%numberOfElementParameters
-                            NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)* &
-                              & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%scaleFactors(parameter_idx,component_idx)
-                            ANALYTIC_INT=ANALYTIC_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)* &
-                              & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%scaleFactors(parameter_idx,component_idx)
-                          ENDDO !parameter_idx
-                        CASE DEFAULT
-                          LOCAL_ERROR="The dependent field scaling type of "// &
-                            & TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD%SCALINGS%scalingType,"*",ERR,ERROR))//" is invalid."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT
-                        INTEGRAL_ERRORS(1,component_idx)=INTEGRAL_ERRORS(1,component_idx)+NUMERICAL_INT*RWG
-                        INTEGRAL_ERRORS(2,component_idx)=INTEGRAL_ERRORS(2,component_idx)+NUMERICAL_INT**2*RWG
-                        INTEGRAL_ERRORS(3,component_idx)=INTEGRAL_ERRORS(3,component_idx)+ANALYTIC_INT*RWG
-                        INTEGRAL_ERRORS(4,component_idx)=INTEGRAL_ERRORS(4,component_idx)+ANALYTIC_INT**2*RWG
-                        INTEGRAL_ERRORS(5,component_idx)=INTEGRAL_ERRORS(5,component_idx)+(ANALYTIC_INT-NUMERICAL_INT)*RWG
-                        INTEGRAL_ERRORS(6,component_idx)=INTEGRAL_ERRORS(6,component_idx)+(ANALYTIC_INT-NUMERICAL_INT)**2*RWG
-                      ENDDO !component_idx
-                    ENDDO !gauss_idx
-                  ENDDO !element_idx
-                  DO element_idx=DOMAIN_ELEMENTS1%numberOfElements+1,DOMAIN_ELEMENTS1%totalNumberOfElements
-                    DEPENDENT_BASIS=>DOMAIN_ELEMENTS1%elements(element_idx)%BASIS
-                    GEOMETRIC_BASIS=>DOMAIN_ELEMENTS2%elements(element_idx)%BASIS
-                    QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-                    CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
-                      & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                    CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
-                      & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR,ERR,ERROR,*999)
-                    CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_ANALYTIC_VALUES_SET_TYPE,element_idx, &
-                      & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR,ERR,ERROR,*999)
-                    DO gauss_idx=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-                      CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-                        & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
-                        & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                      RWG=GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%jacobian* &
-                        & QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
-                      DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                        DOMAIN_ELEMENTS3=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
-                        BASIS=>DOMAIN_ELEMENTS3%elements(element_idx)%BASIS
-                        NUMERICAL_INT=0.0_DP
-                        ANALYTIC_INT=0.0_DP
-                        SELECT CASE(DEPENDENT_FIELD%SCALINGS%scalingType)
-                        CASE(FIELD_NO_SCALING)
-                          DO parameter_idx=1,BASIS%numberOfElementParameters
-                            NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
-                            ANALYTIC_INT=ANALYTIC_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
-                          ENDDO !parameter_idx
-                        CASE(FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-                          DO parameter_idx=1,BASIS%numberOfElementParameters
-                            NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)* &
-                              & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%scaleFactors(parameter_idx,component_idx)
-                            ANALYTIC_INT=ANALYTIC_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
-                              & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)* &
-                              & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%scaleFactors(parameter_idx,component_idx)
-                          ENDDO !parameter_idx
-                        CASE DEFAULT
-                          LOCAL_ERROR="The dependent field scaling type of "// &
-                            & TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD%SCALINGS%scalingType,"*",ERR,ERROR))//" is invalid."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT
-                        GHOST_INTEGRAL_ERRORS(1,component_idx)=GHOST_INTEGRAL_ERRORS(1,component_idx)+NUMERICAL_INT*RWG
-                        GHOST_INTEGRAL_ERRORS(2,component_idx)=GHOST_INTEGRAL_ERRORS(2,component_idx)+NUMERICAL_INT**2*RWG
-                        GHOST_INTEGRAL_ERRORS(3,component_idx)=GHOST_INTEGRAL_ERRORS(3,component_idx)+ANALYTIC_INT*RWG
-                        GHOST_INTEGRAL_ERRORS(4,component_idx)=GHOST_INTEGRAL_ERRORS(4,component_idx)+ANALYTIC_INT**2*RWG
-                        GHOST_INTEGRAL_ERRORS(5,component_idx)=GHOST_INTEGRAL_ERRORS(5,component_idx)+ &
-                          & (ANALYTIC_INT-NUMERICAL_INT)*RWG
-                        GHOST_INTEGRAL_ERRORS(6,component_idx)=GHOST_INTEGRAL_ERRORS(6,component_idx)+ &
-                          & (ANALYTIC_INT-NUMERICAL_INT)**2*RWG
-                      ENDDO !component_idx
-                    ENDDO !gauss_idx
-                  ENDDO !element_idx
-                  CALL Field_InterpolatedPointsMetricsFinalise(GEOMETRIC_INTERP_POINT_METRICS,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATED_POINTS_FINALISE(GEOMETRIC_INTERP_POINT,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(ANALYTIC_INTERP_PARAMETERS,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(NUMERICAL_INTERP_PARAMETERS,ERR,ERROR,*999)
-                  CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(GEOMETRIC_INTERP_PARAMETERS,ERR,ERROR,*999)
-                ELSE
-                  CALL FlagError("Geometric field variable is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Field geometric field is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Field decomposition is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Field variable field is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="Invalid size for GHOST_INTEGRAL_ERRORS. The size is ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(GHOST_INTEGRAL_ERRORS,1),"*",ERR,ERROR))//","// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(GHOST_INTEGRAL_ERRORS,2),"*",ERR,ERROR))//") and it needs to be at least (6,"// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%numberOfComponents,"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="Invalid size for INTEGRAL_ERRORS. The size is ("// &
-          & TRIM(NUMBER_TO_VSTRING(SIZE(INTEGRAL_ERRORS,1),"*",ERR,ERROR))//","// &
-          & TRIM(NUMBER_TO_VSTRING(SIZE(INTEGRAL_ERRORS,2),"*",ERR,ERROR))//") and it needs to be at least (6,"// &
-          & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%numberOfComponents,"*",ERR,ERROR))//")."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
+    integralErrors=0.0_DP
+    ghostIntegralErrors=0.0_DP
+     
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(SIZE(integralErrors,1)<6.OR.SIZE(integralErrors,2)<fieldVariable%numberOfComponents) THEN
+      localError="Invalid size for integralErrors. The size is ("// &
+        & TRIM(NumberToVString(SIZE(integralErrors,1),"*",err,error))//","// &
+        & TRIM(NumberToVString(SIZE(integralErrors,2),"*",err,error))//") and it needs to be at least (6,"// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(ghostIntegralErrors,1)<6.OR.SIZE(ghostIntegralErrors,2)<fieldVariable%numberOfComponents) THEN
+      localError="Invalid size for ghostIntegralErrors. The size is ("// &
+        & TRIM(NumberToVString(SIZE(ghostIntegralErrors,1),"*",err,error))//","// &
+        & TRIM(NumberToVString(SIZE(ghostIntegralErrors,2),"*",err,error))//") and it needs to be at least (6,"// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    variableType=fieldVariable%variableType
+    NULLIFY(dependentField)
+    CALL FieldVariable_FieldGet(fieldVariable,dependentField,err,error,*999)
+    NULLIFY(dependentDecomposition)
+    CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+    NULLIFY(geometricField)
+    CALL Field_GeometricFieldGet(dependentField,geometricField,err,error,*999)
+    NULLIFY(geometricDecomposition)
+    CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    NULLIFY(geometricInterpParameters)
+    CALL Field_InterpolationParametersInitialise(geometricField,geometricInterpParameters,err,error,*999)
+    NULLIFY(numericalInterpParameters)
+    CALL Field_InterpolationParametersInitialise(dependentField,numericalInterpParameters,err,error,*999)
+    NULLIFY(analyticInterpParameters)    
+    CALL Field_InterpolationParametersInitialise(dependentField,analyticInterpParameters,err,error,*999)
+    NULLIFY(geometricInterpPoint)
+    CALL Field_InterpolatedPointsInitialise(geometricInterpParameters,geometricInterpPoint,err,error,*999)
+    NULLIFY(geometricInterpPointMetrics)
+    CALL Field_InterpolatedPointsMetricsInitialise(geometricInterpPoint,geometricInterpPointMetrics,err,error,*999)
+    NULLIFY(dependentDomain)
+    CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+    NULLIFY(dependentDomainTopology)
+    CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+    NULLIFY(dependentDomainElements)
+    CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
+    NULLIFY(geometricDomain)
+    CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
+    NULLIFY(geometricDomainTopology)
+    CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
+    NULLIFY(geometricDomainElements)
+    CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
+    DO elementIdx=1,dependentDomainElements%numberOfElements
+      NULLIFY(dependentBasis)
+      CALL DomainElements_BasisGet(dependentDomainElements,elementIdx,dependentBasis,err,error,*999)
+      NULLIFY(geometricBasis)
+      CALL DomainElements_BasisGet(geometricDomainElements,elementIdx,geometricBasis,err,error,*999)
+      NULLIFY(quadratureScheme)
+      CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
+        & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
+        & numericalInterpParameters(variableType)%ptr,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_ANALYTIC_VALUES_SET_TYPE,elementIdx, &
+        & analyticInterpParameters(variableType)%ptr,err,error,*999)
+      DO gaussIdx=1,quadratureScheme%numberOfGauss
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+          & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi, &
+          & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        jacobianGaussWeight=geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian*quadratureScheme%gaussWeights(gaussIdx)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          NULLIFY(domain)
+          CALL FieldVariable_ComponentDomainGet(fieldVariable,componentIdx,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+          NULLIFY(basis)
+          CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+          numericalIntegral=0.0_DP
+          analyticIntegral=0.0_DP
+          SELECT CASE(dependentField%scalings%scalingType)
+          CASE(FIELD_NO_SCALING)
+            DO elementParameterIdx=1,basis%numberOfElementParameters
+              numericalIntegral=numericalIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & numericalInterpParameters(variableType)%ptr%parameters(elementParameterIdx,componentIdx)
+              analyticIntegral=analyticIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & analyticInterpParameters(variableType)%ptr%parameters(elementParameterIdx,componentIdx)
+            ENDDO !elementParameterIdx
+          CASE(FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
+            DO elementParameterIdx=1,basis%numberOfElementParameters
+              numericalIntegral=numericalIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & numericalInterpParameters(variableType)%ptr%parameters(elementParameterIdx,componentIdx)* &
+                & numericalInterpParameters(variableType)%ptr%scaleFactors(elementParameterIdx,componentIdx)
+              analyticIntegral=analyticIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & analyticInterpParameters(variableType)%ptr%parameters(elementParameterIdx,componentIdx)* &
+                & analyticInterpParameters(variableType)%ptr%scaleFactors(elementParameterIdx,componentIdx)
+            ENDDO !elementParameterIdx
+          CASE DEFAULT
+            localError="The dependent field scaling type of "// &
+              & TRIM(NumberToVString(dependentField%scalings%scalingType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          integralErrors(1,componentIdx)=integralErrors(1,componentIdx)+numericalIntegral*jacobianGaussWeight
+          integralErrors(2,componentIdx)=integralErrors(2,componentIdx)+numericalIntegral**2*jacobianGaussWeight
+          integralErrors(3,componentIdx)=integralErrors(3,componentIdx)+analyticIntegral*jacobianGaussWeight
+          integralErrors(4,componentIdx)=integralErrors(4,componentIdx)+analyticIntegral**2*jacobianGaussWeight
+          integralErrors(5,componentIdx)=integralErrors(5,componentIdx)+(analyticIntegral-numericalIntegral)*jacobianGaussWeight
+          integralErrors(6,componentIdx)=integralErrors(6,componentIdx)+(analyticIntegral-numericalIntegral)**2*jacobianGaussWeight
+        ENDDO !componentIdx
+      ENDDO !gaussIdx
+    ENDDO !elementIdx
+    DO elementIdx=dependentDomainElements%numberOfElements+1,dependentDomainElements%totalNumberOfElements
+      NULLIFY(dependentBasis)
+      CALL DomainElements_BasisGet(dependentDomainElements,elementIdx,dependentBasis,err,error,*999)
+      NULLIFY(geometricBasis)
+      CALL DomainElements_BasisGet(geometricDomainElements,elementIdx,geometricBasis,err,error,*999)
+      NULLIFY(quadratureScheme)
+      CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
+        & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
+        & numericalInterpParameters(variableType)%ptr,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_ANALYTIC_VALUES_SET_TYPE,elementIdx, &
+        & analyticInterpParameters(variableType)%ptr,err,error,*999)
+      DO gaussIdx=1,quadratureScheme%numberOfGauss
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+          & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi, &
+          & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        jacobianGaussWeight=geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian*quadratureScheme%gaussWeights(gaussIdx)
+        DO componentIdx=1,fieldVariable%numberOfComponents
+          NULLIFY(domain)
+          CALL FieldVariable_ComponentDomainGet(fieldVariable,componentIdx,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+          NULLIFY(basis)
+          CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+          numericalIntegral=0.0_DP
+          analyticIntegral=0.0_DP
+          SELECT CASE(dependentField%scalings%scalingType)
+          CASE(FIELD_NO_SCALING)
+            DO elementParameterIdx=1,basis%numberOfElementParameters
+              numericalIntegral=numericalIntegral+&
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & numericalInterpParameters(variableType)%ptr%PARAMETERS(elementParameterIdx,componentIdx)
+              analyticIntegral=analyticIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & analyticInterpParameters(variableType)%ptr%PARAMETERS(elementParameterIdx,componentIdx)
+            ENDDO !elementParameterIdx
+          CASE(FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
+            DO elementParameterIdx=1,basis%numberOfElementParameters
+              numericalIntegral=numericalIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & numericalInterpParameters(variableType)%ptr%PARAMETERS(elementParameterIdx,componentIdx)* &
+                & numericalInterpParameters(variableType)%ptr%scaleFactors(elementParameterIdx,componentIdx)
+              analyticIntegral=analyticIntegral+ &
+                & quadratureScheme%gaussBasisFunctions(elementParameterIdx,NO_PART_DERIV,gaussIdx)* &
+                & analyticInterpParameters(variableType)%ptr%PARAMETERS(elementParameterIdx,componentIdx)* &
+                & analyticInterpParameters(variableType)%ptr%scaleFactors(elementParameterIdx,componentIdx)
+            ENDDO !elementParameterIdx
+          CASE DEFAULT
+            localError="The dependent field scaling type of "// &
+              & TRIM(NumberToVString(dependentField%scalings%scalingType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          ghostIntegralErrors(1,componentIdx)=ghostIntegralErrors(1,componentIdx)+numericalIntegral*jacobianGaussWeight
+          ghostIntegralErrors(2,componentIdx)=ghostIntegralErrors(2,componentIdx)+numericalIntegral**2*jacobianGaussWeight
+          ghostIntegralErrors(3,componentIdx)=ghostIntegralErrors(3,componentIdx)+analyticIntegral*jacobianGaussWeight
+          ghostIntegralErrors(4,componentIdx)=ghostIntegralErrors(4,componentIdx)+analyticIntegral**2*jacobianGaussWeight
+          ghostIntegralErrors(5,componentIdx)=ghostIntegralErrors(5,componentIdx)+ &
+            & (analyticIntegral-numericalIntegral)*jacobianGaussWeight
+          ghostIntegralErrors(6,componentIdx)=ghostIntegralErrors(6,componentIdx)+ &
+            & (analyticIntegral-numericalIntegral)**2*jacobianGaussWeight
+        ENDDO !componentIdx
+      ENDDO !gaussIdx
+    ENDDO !elementIdx
+    CALL Field_InterpolatedPointsMetricsFinalise(geometricInterpPointMetrics,err,error,*999)
+    CALL Field_InterpolatedPointsFinalise(geometricInterpPoint,err,error,*999)
+    CALL Field_InterpolationParametersFinalise(analyticInterpParameters,err,error,*999)
+    CALL Field_InterpolationParametersFinalise(numericalInterpParameters,err,error,*999)
+    CALL Field_InterpolationParametersFinalise(geometricInterpParameters,err,error,*999)
 
-    EXITS("ANALYTIC_ANALYSIS_INTEGRAL_ERRORS")
+    EXITS("AnalyticAnalysis_IntegralErrors")
     RETURN
-999 ERRORSEXITS("ANALYTIC_ANALYSIS_INTEGRAL_ERRORS",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralErrors",err,error)
     RETURN 1
-  END SUBROUTINE ANALYTIC_ANALYSIS_INTEGRAL_ERRORS
+    
+  END SUBROUTINE AnalyticAnalysis_IntegralErrors
 
   !
   !================================================================================================================================
   !
 
   !>Get integral absolute error value for the field
-  SUBROUTINE AnalyticAnalysis_IntegralAbsoluteErrorGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralAbsoluteErrorGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
 
     !Argument variables   
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+ 
+    ENTERS("AnalyticAnalysis_IntegralAbsoluteErrorGet",err,error,*999)
 
-    ENTERS("AnalyticAnalysis_IntegralAbsoluteErrorGet",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(INTEGRAL_ERRORS(1,COMPONENT_NUMBER),INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(INTEGRAL_ERRORS(2,COMPONENT_NUMBER),INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(GHOST_INTEGRAL_ERRORS(1,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(GHOST_INTEGRAL_ERRORS(2,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF 
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=AnalyticAnalysis_AbsoluteError(integralErrors(1,componentNumber),integralErrors(3,componentNumber))
+    integralError(2)=AnalyticAnalysis_AbsoluteError(integralErrors(2,componentNumber),integralErrors(4,componentNumber))
+    ghostIntegralError(1)=AnalyticAnalysis_AbsoluteError(ghostIntegralErrors(1,componentNumber), &
+      & ghostIntegralErrors(3,componentNumber))
+    ghostIntegralError(2)=AnalyticAnalysis_AbsoluteError(ghostIntegralErrors(2,componentNumber), &
+      & ghostIntegralErrors(4,componentNumber))
     
     EXITS("AnalyticAnalysis_IntegralAbsoluteErrorGet")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_IntegralAbsoluteErrorGet",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralAbsoluteErrorGet",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_IntegralAbsoluteErrorGet
@@ -1035,38 +983,37 @@ CONTAINS
   !
 
   !>Get integral analytic value for the field TODO should we use analytical formula to calculate the integration?
-  SUBROUTINE AnalyticAnalysis_IntegralAnalyticValueGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralAnalyticValueGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
   
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("AnalyticAnalysis_IntegralAnalyticValueGet",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_IntegralAnalyticValueGet",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=INTEGRAL_ERRORS(3,COMPONENT_NUMBER)
-      INTEGRAL_ERROR(2)=INTEGRAL_ERRORS(4,COMPONENT_NUMBER)
-      GHOST_INTEGRAL_ERROR(1)=GHOST_INTEGRAL_ERRORS(3,COMPONENT_NUMBER)
-      GHOST_INTEGRAL_ERROR(2)=GHOST_INTEGRAL_ERRORS(4,COMPONENT_NUMBER)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF 
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=integralErrors(3,componentNumber)
+    integralError(2)=integralErrors(4,componentNumber)
+    ghostIntegralError(1)=ghostIntegralErrors(3,componentNumber)
+    ghostIntegralError(2)=ghostIntegralErrors(4,componentNumber)
     
     EXITS("AnalyticAnalysis_IntegralAnalyticValueGet")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_IntegralAnalyticValueGet",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralAnalyticValueGet",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_IntegralAnalyticValueGet
@@ -1076,38 +1023,38 @@ CONTAINS
   !
 
   !>Get integral numerical value for the field, TODO check integral calculation
-  SUBROUTINE AnalyticAnalysis_IntegralNumericalValueGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralNumericalValueGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
   
     !Argument variables   
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("AnalyticAnalysis_IntegralNumericalValueGet",ERR,ERROR,*999)       
+    ENTERS("AnalyticAnalysis_IntegralNumericalValueGet",err,error,*999)       
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=INTEGRAL_ERRORS(1,COMPONENT_NUMBER)
-      INTEGRAL_ERROR(2)=INTEGRAL_ERRORS(2,COMPONENT_NUMBER)
-      GHOST_INTEGRAL_ERROR(1)=GHOST_INTEGRAL_ERRORS(1,COMPONENT_NUMBER)
-      GHOST_INTEGRAL_ERROR(2)=GHOST_INTEGRAL_ERRORS(2,COMPONENT_NUMBER)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF 
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=integralErrors(1,componentNumber)
+    integralError(2)=integralErrors(2,componentNumber)
+    ghostIntegralError(1)=ghostIntegralErrors(1,componentNumber)
+    ghostIntegralError(2)=ghostIntegralErrors(2,componentNumber)
     
     EXITS("AnalyticAnalysis_IntegralNumericalValueGet")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_IntegralNumericalValueGet",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralNumericalValueGet",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_IntegralNumericalValueGet
@@ -1117,38 +1064,37 @@ CONTAINS
   !
 
   !>Get integral nid numerical value for the field, TODO check integral calculation
-  SUBROUTINE AnalyticAnalysis_IntegralNIDNumericalValueGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralNIDNumericalValueGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("AnalyticAnalysis_IntegralNIDNumericalValueGet",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_IntegralNIDNumericalValueGet",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=INTEGRAL_ERRORS(5,COMPONENT_NUMBER)
-      INTEGRAL_ERROR(2)=INTEGRAL_ERRORS(6,COMPONENT_NUMBER)
-      GHOST_INTEGRAL_ERROR(1)=GHOST_INTEGRAL_ERRORS(5,COMPONENT_NUMBER)
-      GHOST_INTEGRAL_ERROR(2)=GHOST_INTEGRAL_ERRORS(6,COMPONENT_NUMBER)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=integralErrors(5,componentNumber)
+    integralError(2)=integralErrors(6,componentNumber)
+    ghostIntegralError(1)=ghostIntegralErrors(5,componentNumber)
+    ghostIntegralError(2)=ghostIntegralErrors(6,componentNumber)
 
     EXITS("AnalyticAnalysis_IntegralNIDNumericalValueGet")
     RETURN
-999 ERRORS("AnalyticAnalysis_IntegralNIDNumericalValueGet",ERR,ERROR)
+999 ERRORS("AnalyticAnalysis_IntegralNIDNumericalValueGet",err,error)
     EXITS("AnalyticAnalysis_IntegralNIDNumericalValueGet")
     RETURN 1
     
@@ -1159,41 +1105,41 @@ CONTAINS
   !
 
   !>Get integral nid error value for the field
-  SUBROUTINE AnalyticAnalysis_IntegralNIDErrorGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralNIDErrorGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("AnalyticAnalysis_IntegralNIDErrorGet",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_IntegralNIDErrorGet",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_NID_ERROR(INTEGRAL_ERRORS(5,COMPONENT_NUMBER),INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_NID_ERROR(INTEGRAL_ERRORS(6,COMPONENT_NUMBER),INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_NID_ERROR(GHOST_INTEGRAL_ERRORS(5,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_NID_ERROR(GHOST_INTEGRAL_ERRORS(6,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
 
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=AnalyticAnalysis_NIDError(integralErrors(5,componentNumber),integralErrors(3,componentNumber))
+    integralError(2)=AnalyticAnalysis_NIDError(integralErrors(6,componentNumber),integralErrors(4,componentNumber))
+    ghostIntegralError(1)=AnalyticAnalysis_NIDError(ghostIntegralErrors(5,componentNumber), &
+      & ghostIntegralErrors(3,componentNumber))
+    ghostIntegralError(2)=AnalyticAnalysis_NIDError(ghostIntegralErrors(6,componentNumber), &
+      & ghostIntegralErrors(4,componentNumber))
+ 
     EXITS("AnalyticAnalysis_IntegralNIDErrorGet")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_IntegralNIDErrorGet",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralNIDErrorGet",err,error)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_IntegralNIDErrorGet
 
   !
@@ -1201,40 +1147,39 @@ CONTAINS
   !
 
   !>Get integral percentage error value for the field
-  SUBROUTINE AnalyticAnalysis_IntegralPercentageErrorGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralPercentageErrorGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
 
     !Argument variables   
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("AnalyticAnalysis_IntegralPercentageErrorGet",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_IntegralPercentageErrorGet",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(INTEGRAL_ERRORS(1,COMPONENT_NUMBER),INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(INTEGRAL_ERRORS(2,COMPONENT_NUMBER),INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(GHOST_INTEGRAL_ERRORS(1,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(GHOST_INTEGRAL_ERRORS(2,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF 
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=AnalyticAnalysis_PercentageError(integralErrors(1,componentNumber),integralErrors(3,componentNumber))
+    integralError(2)=AnalyticAnalysis_PercentageError(integralErrors(2,componentNumber),integralErrors(4,componentNumber))
+    ghostIntegralError(1)=AnalyticAnalysis_PercentageError(ghostIntegralErrors(1,componentNumber), &
+      & ghostIntegralErrors(3,componentNumber))
+    ghostIntegralError(2)=AnalyticAnalysis_PercentageError(ghostIntegralErrors(2,componentNumber), &
+      & ghostIntegralErrors(4,componentNumber))
     
     EXITS("AnalyticAnalysis_IntegralPercentageErrorGet")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_IntegralPercentageErrorGet",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralPercentageErrorGet",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_IntegralPercentageErrorGet
@@ -1244,40 +1189,39 @@ CONTAINS
   !
 
   !>Get integral relative error value for the field.
-  SUBROUTINE AnalyticAnalysis_IntegralRelativeErrorGet(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTEGRAL_ERROR, &
-    & GHOST_INTEGRAL_ERROR,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_IntegralRelativeErrorGet(field,variableType,componentNumber,integralError, &
+    & ghostIntegralError,err,error,*)
   
     !Argument variables   
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    REAL(DP), INTENT(OUT) :: INTEGRAL_ERROR(2) !<On return, the integral numerical value for local elements
-    REAL(DP), INTENT(OUT) :: GHOST_INTEGRAL_ERROR(2) !<On return, the integral numerical for global elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    REAL(DP), INTENT(OUT) :: integralError(2) !<On return, the integral numerical value for local elements
+    REAL(DP), INTENT(OUT) :: ghostIntegralError(2) !<On return, the integral numerical for global elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:) !<the integral errors for the local elements
-    REAL(DP), ALLOCATABLE :: GHOST_INTEGRAL_ERRORS(:,:) !<the integral errors for the ghost elements
+    REAL(DP), ALLOCATABLE :: integralErrors(:,:) !<the integral errors for the local elements
+    REAL(DP), ALLOCATABLE :: ghostIntegralErrors(:,:) !<the integral errors for the ghost elements
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("AnalyticAnalysis_IntegralRelativeErrorGet",ERR,ERROR,*999)       
+    ENTERS("AnalyticAnalysis_IntegralRelativeErrorGet",err,error,*999)       
 
-    IF(ASSOCIATED(FIELD)) THEN
-      FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
-      CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-      INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(INTEGRAL_ERRORS(1,COMPONENT_NUMBER),INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(INTEGRAL_ERRORS(2,COMPONENT_NUMBER),INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(1)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(GHOST_INTEGRAL_ERRORS(1,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(3,COMPONENT_NUMBER))
-      GHOST_INTEGRAL_ERROR(2)=ANALYTIC_ANALYSIS_RELATIVE_ERROR(GHOST_INTEGRAL_ERRORS(2,COMPONENT_NUMBER), &
-        & GHOST_INTEGRAL_ERRORS(4,COMPONENT_NUMBER))
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF 
-    
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL AnalyticAnalysis_IntegralErrors(fieldVariable,integralErrors,ghostIntegralErrors,err,error,*999)
+    integralError(1)=AnalyticAnalysis_RelativeError(integralErrors(1,componentNumber),integralErrors(3,componentNumber))
+    integralError(2)=AnalyticAnalysis_RelativeError(integralErrors(2,componentNumber),integralErrors(4,componentNumber))
+    ghostIntegralError(1)=AnalyticAnalysis_RelativeError(ghostIntegralErrors(1,componentNumber), &
+      & ghostIntegralErrors(3,componentNumber))
+    ghostIntegralError(2)=AnalyticAnalysis_RelativeError(ghostIntegralErrors(2,componentNumber), &
+      & ghostIntegralErrors(4,componentNumber))
+   
     EXITS("AnalyticAnalysis_IntegralRelativeErrorGet")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_IntegralRelativeErrorGet",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_IntegralRelativeErrorGet",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_IntegralRelativeErrorGet
@@ -1287,38 +1231,37 @@ CONTAINS
   !
 
   !>Get absolute error value for the node
-  SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetNode(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER,USER_NODE_NUMBER, &
-    & COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetNode(field,variableType,versionNumber,derivativeNumber,userNodeNumber, &
+    & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<derivative version number
-    INTEGER(INTG), INTENT(IN) :: DERIVATIVE_NUMBER !<derivative number
-    INTEGER(INTG), INTENT(IN) :: USER_NODE_NUMBER !<node number
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<derivative version number
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<derivative number
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<node number
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
     REAL(DP), INTENT(OUT) :: VALUE !<On return, the absolute error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_AbsoluteErrorGetNode",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_AbsoluteErrorGetNode",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_NODE(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
-        & USER_NODE_NUMBER,COMPONENT_NUMBER,NUMERICAL_VALUE,ERR,ERROR,*999)
-      CALL FIELD_PARAMETER_SET_GET_NODE(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
-        & USER_NODE_NUMBER,COMPONENT_NUMBER,ANALYTIC_VALUE,ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(NUMERICAL_VALUE,ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
 
+    CALL Field_ParameterSetGetNode(field,variableType,FIELD_VALUES_SET_TYPE,versionNumber,derivativeNumber, &
+        & userNodeNumber,componentNumber,numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetNode(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,versionNumber,derivativeNumber, &
+      & userNodeNumber,componentNumber,analyticValue,err,error,*999)
+    value=AnalyticAnalysis_AbsoluteError(numericalValue,analyticValue)
+ 
     EXITS("AnalyticAnalysis_AbsoluteErrorGetNode")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_AbsoluteErrorGetNode",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_AbsoluteErrorGetNode",err,error)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetNode
 
   !
@@ -1326,38 +1269,37 @@ CONTAINS
   !
 
   !>Get percentage error value for the node
-  SUBROUTINE AnalyticAnalysis_PercentageErrorGetNode(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER,USER_NODE_NUMBER, &
-    & COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_PercentageErrorGetNode(field,variableType,versionNumber,derivativeNumber,userNodeNumber, &
+    & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<derivative version number
-    INTEGER(INTG), INTENT(IN) :: DERIVATIVE_NUMBER !<derivative number
-    INTEGER(INTG), INTENT(IN) :: USER_NODE_NUMBER !<node number
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<derivative version number
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<derivative number
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<node number
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
     REAL(DP), INTENT(OUT) :: VALUE !<On return, the percentage error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue, analyticValue
 
-    ENTERS("AnalyticAnalysis_PercentageErrorGetNode",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_PercentageErrorGetNode",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_NODE(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
-        & USER_NODE_NUMBER,COMPONENT_NUMBER,NUMERICAL_VALUE,ERR,ERROR,*999)
-      CALL FIELD_PARAMETER_SET_GET_NODE(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
-        & USER_NODE_NUMBER,COMPONENT_NUMBER,ANALYTIC_VALUE,ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(NUMERICAL_VALUE, ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetNode(field,variableType,FIELD_VALUES_SET_TYPE,versionNumber,derivativeNumber, &
+      & userNodeNumber,componentNumber,numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetNode(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,versionNumber,derivativeNumber, &
+      & userNodeNumber,componentNumber,analyticValue,err,error,*999)
+    value=AnalyticAnalysis_PercentageError(numericalValue,analyticValue)
 
     EXITS("AnalyticAnalysis_PercentageErrorGetNode")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_PercentageErrorGetNode",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_PercentageErrorGetNode",err,error)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_PercentageErrorGetNode
 
 
@@ -1367,38 +1309,37 @@ CONTAINS
   !
 
   !>Get relative error value for the node
-  SUBROUTINE AnalyticAnalysis_RelativeErrorGetNode(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER,USER_NODE_NUMBER, &
-    & COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_RelativeErrorGetNode(field,variableType,versionNumber,derivativeNumber,userNodeNumber, &
+    & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<derivative version number
-    INTEGER(INTG), INTENT(IN) :: DERIVATIVE_NUMBER !<derivative number
-    INTEGER(INTG), INTENT(IN) :: USER_NODE_NUMBER !<node number
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<derivative version number
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<derivative number
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<node number
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
     REAL(DP), INTENT(OUT) :: VALUE !<On return, the relative error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_RelativeErrorGetNode",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_RelativeErrorGetNode",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_NODE(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
-        & USER_NODE_NUMBER,COMPONENT_NUMBER,NUMERICAL_VALUE,ERR,ERROR,*999)
-      CALL FIELD_PARAMETER_SET_GET_NODE(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
-        & USER_NODE_NUMBER,COMPONENT_NUMBER,ANALYTIC_VALUE,ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_RELATIVE_ERROR(NUMERICAL_VALUE, ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetNode(field,variableType,FIELD_VALUES_SET_TYPE,versionNumber,derivativeNumber, &
+      & userNodeNumber,componentNumber,numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetNode(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,versionNumber,derivativeNumber, &
+      & userNodeNumber,componentNumber,analyticValue,err,error,*999)
+    value=AnalyticAnalysis_RelativeError(numericalValue,analyticValue)
 
     EXITS("AnalyticAnalysis_RelativeErrorGetNode")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_RelativeErrorGetNode",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_RelativeErrorGetNode",err,error)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_RelativeErrorGetNode
 
   !
@@ -1406,35 +1347,32 @@ CONTAINS
   !
 
   !>Get absolute error value for an element
-  SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetElement(FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER,VALUE,ERR, &
-    & ERROR,*)
+  SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetElement(field,variableType,userElementNumber,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<node number
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the absolute error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<node number
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    REAL(DP), INTENT(OUT) :: value !<On return, the absolute error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_AbsoluteErrorGetElement",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_AbsoluteErrorGetElement",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_ELEMENT(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
-        & NUMERICAL_VALUE,ERR,ERROR,*999)
-      CALL FIELD_PARAMETER_SET_GET_ELEMENT(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,USER_ELEMENT_NUMBER, &
-        & COMPONENT_NUMBER,ANALYTIC_VALUE,ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(NUMERICAL_VALUE,ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetElement(field,variableType,FIELD_VALUES_SET_TYPE,userElementNumber,componentNumber, &
+      & numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,userElementNumber, &
+      & componentNumber,analyticValue,err,error,*999)
+    value=AnalyticAnalysis_AbsoluteError(numericalValue,analyticValue)
 
     EXITS("AnalyticAnalysis_AbsoluteErrorGetElement")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_AbsoluteErrorGetElement",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_AbsoluteErrorGetElement",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetElement
@@ -1444,36 +1382,34 @@ CONTAINS
   !
 
   !>Get percentage error value for the node
-  SUBROUTINE AnalyticAnalysis_PercentageErrorGetElement(FIELD,VARIABLE_TYPE, &
-    & USER_ELEMENT_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_PercentageErrorGetElement(field,variableType,userElementNumber,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<node number
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the percentage error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<node number
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    REAL(DP), INTENT(OUT) :: value !<On return, the percentage error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_PercentageErrorGetElement",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_PercentageErrorGetElement",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_ELEMENT(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
-        & NUMERICAL_VALUE,ERR,ERROR,*999)
-      CALL FIELD_PARAMETER_SET_GET_ELEMENT(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,USER_ELEMENT_NUMBER, &
-        & COMPONENT_NUMBER,ANALYTIC_VALUE,ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(NUMERICAL_VALUE, ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetElement(field,variableType,FIELD_VALUES_SET_TYPE,userElementNumber,componentNumber, &
+      & numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,userElementNumber, &
+      & componentNumber,analyticValue,err,error,*999)
+    value=AnalyticAnalysis_PercentageError(numericalValue,analyticValue)
 
     EXITS("AnalyticAnalysis_PercentageErrorGetElement")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_PercentageErrorGetElement",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_PercentageErrorGetElement",err,error)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_PercentageErrorGetElement
 
 
@@ -1482,72 +1418,66 @@ CONTAINS
   !
 
   !>Get relative error value for an element
-  SUBROUTINE AnalyticAnalysis_RelativeErrorGetElement(FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER,VALUE,ERR, &
-    & ERROR,*)
+  SUBROUTINE AnalyticAnalysis_RelativeErrorGetElement(field,variableType,userElementNumber,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<node number
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the relative error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<node number
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    REAL(DP), INTENT(OUT) :: value !<On return, the relative error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_RelativeErrorGetElement",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_RelativeErrorGetElement",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_ELEMENT(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
-        & NUMERICAL_VALUE,ERR,ERROR,*999)
-      CALL FIELD_PARAMETER_SET_GET_ELEMENT(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,USER_ELEMENT_NUMBER, &
-        & COMPONENT_NUMBER,ANALYTIC_VALUE,ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_RELATIVE_ERROR(NUMERICAL_VALUE, ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
-
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetElement(field,variableType,FIELD_VALUES_SET_TYPE,userElementNumber,componentNumber, &
+      & numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,userElementNumber, &
+      & componentNumber,analyticValue,err,error,*999)
+    value=AnalyticAnalysis_RelativeError(numericalValue,analyticValue)
+ 
     EXITS("AnalyticAnalysis_RelativeErrorGetElement")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_RelativeErrorGetElement",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_RelativeErrorGetElement",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_RelativeErrorGetElement
 
-    !
+  !
   !================================================================================================================================
   !
 
   !>Get absolute error value for the node
-  SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetConstant(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,VALUE,ERR, &
-    & ERROR,*)
+  SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetConstant(field,variableType,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the absolute error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    REAL(DP), INTENT(OUT) :: value !<On return, the absolute error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_AbsoluteErrorGetConstant",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_AbsoluteErrorGetConstant",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_CONSTANT(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,COMPONENT_NUMBER,NUMERICAL_VALUE,ERR,ERROR, &
-        & *999)
-      CALL FIELD_PARAMETER_SET_GET_CONSTANT(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,COMPONENT_NUMBER,ANALYTIC_VALUE, &
-        & ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_ABSOLUTE_ERROR(NUMERICAL_VALUE,ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetConstant(field,variableType,FIELD_VALUES_SET_TYPE,componentNumber,numericalValue,err,error, &
+      & *999)
+    CALL Field_ParameterSetGetConstant(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,componentNumber,analyticValue, &
+      & err,error,*999)
+    value=AnalyticAnalysis_AbsoluteError(numericalValue,analyticValue)
 
     EXITS("AnalyticAnalysis_AbsoluteErrorGetConstant")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_AbsoluteErrorGetConstant",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_AbsoluteErrorGetConstant",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_AbsoluteErrorGetConstant
@@ -1557,33 +1487,30 @@ CONTAINS
   !
 
   !>Get percentage error value for a constant
-  SUBROUTINE AnalyticAnalysis_PercentageErrorGetConstant(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_PercentageErrorGetConstant(field,variableType,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the percentage error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    REAL(DP), INTENT(OUT) :: value !<On return, the percentage error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_PercentageErrorGetConstant",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_PercentageErrorGetConstant",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_CONSTANT(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,COMPONENT_NUMBER,NUMERICAL_VALUE,ERR,ERROR, &
-        & *999)
-      CALL FIELD_PARAMETER_SET_GET_CONSTANT(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,COMPONENT_NUMBER,ANALYTIC_VALUE, &
-        & ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(NUMERICAL_VALUE, ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
-
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetConstant(field,variableType,FIELD_VALUES_SET_TYPE,componentNumber,numericalValue,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,componentNumber,analyticValue, &
+      & err,error,*999)
+    value=AnalyticAnalysis_PercentageError(numericalValue,analyticValue)
+ 
     EXITS("AnalyticAnalysis_PercentageErrorGetConstant")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_PercentageErrorGetConstant",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_PercentageErrorGetConstant",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_PercentageErrorGetConstant
@@ -1594,34 +1521,31 @@ CONTAINS
   !
 
   !>Get relative error value for a constant
-  SUBROUTINE AnalyticAnalysis_RelativeErrorGetConstant(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,VALUE,ERR, &
-    & ERROR,*)
+  SUBROUTINE AnalyticAnalysis_RelativeErrorGetConstant(field,variableType,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component number
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the relative error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component number
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    REAL(DP), INTENT(OUT) :: value !<On return, the relative error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: NUMERICAL_VALUE, ANALYTIC_VALUE
+    REAL(DP) :: numericalValue,analyticValue
 
-    ENTERS("AnalyticAnalysis_RelativeErrorGetConstant",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_RelativeErrorGetConstant",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      CALL FIELD_PARAMETER_SET_GET_CONSTANT(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,COMPONENT_NUMBER,NUMERICAL_VALUE,ERR,ERROR, &
-        & *999)
-      CALL FIELD_PARAMETER_SET_GET_CONSTANT(FIELD,VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,COMPONENT_NUMBER,ANALYTIC_VALUE, &
-        & ERR,ERROR,*999)
-      VALUE=ANALYTIC_ANALYSIS_RELATIVE_ERROR(NUMERICAL_VALUE, ANALYTIC_VALUE)
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    CALL Field_ParameterSetGetConstant(field,variableType,FIELD_VALUES_SET_TYPE,componentNumber,numericalValue,err,error, &
+      & *999)
+    CALL Field_ParameterSetGetConstant(field,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,componentNumber,analyticValue, &
+      & err,error,*999)
+    value=AnalyticAnalysis_RelativeError(numericalValue,analyticValue)
 
     EXITS("AnalyticAnalysis_RelativeErrorGetConstant")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_RelativeErrorGetConstant",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_RelativeErrorGetConstant",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_RelativeErrorGetConstant
@@ -1631,137 +1555,138 @@ CONTAINS
   !
 
   !>Get rms error value for the field
-  SUBROUTINE AnalyticAnalysis_RMSErrorGetNode(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,ERROR_TYPE,LOCAL_RMS,LOCAL_GHOST_RMS, &
-    & GLOBAL_RMS,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_RMSErrorGetNode(field,variableType,componentNumber,errorType,localRMS,localGhostRMS, &
+    & globalRMS,err,error,*)
   
     !Argument variables   
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component index
-    INTEGER(INTG), INTENT(IN) :: ERROR_TYPE !<error type
-    REAL(DP), INTENT(OUT) :: LOCAL_RMS(8) !<On return, the local rms percentage error
-    REAL(DP), INTENT(OUT) :: LOCAL_GHOST_RMS(8) !<On return, the local + ghost rms percentage error
-    REAL(DP), INTENT(OUT) :: GLOBAL_RMS(8) !<On return, the global rms percentage error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component index
+    INTEGER(INTG), INTENT(IN) :: errorType !<error type
+    REAL(DP), INTENT(OUT) :: localRMS(8) !<On return, the local rms percentage error
+    REAL(DP), INTENT(OUT) :: localGhostRMS(8) !<On return, the local + ghost rms percentage error
+    REAL(DP), INTENT(OUT) :: globalRMS(8) !<On return, the global rms percentage error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: node_idx,deriv_idx
-    REAL(DP) :: ERROR_VALUE
-    INTEGER(INTG) :: GHOST_NUMBER(8),NUMBER(8),MPI_IERROR,numberOfGroupComputationNodes,myGroupComputationNodeNumber, &
+    INTEGER(INTG) :: nodeIdx,derivativeIdx
+    REAL(DP) :: errorValue
+    INTEGER(INTG) :: ghostNumber(8),number(8),mpiIerror,numberOfGroupComputationNodes,myGroupComputationNodeNumber, &
       & groupCommunicator
-    REAL(DP) :: RMS_ERROR(8),GHOST_RMS_ERROR(8)
+    REAL(DP) :: rmsError(8),ghostRMSError(8)
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DomainNodesType), POINTER :: NODES_DOMAIN
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
         
-    ENTERS("AnalyticAnalysis_RMSErrorGetNode",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_RMSErrorGetNode",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      NULLIFY(decomposition)
-      CALL Field_DecompositionGet(field,decomposition,err,error,*999)
-      NULLIFY(workGroup)
-      CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
-      CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
-      CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
-      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-      NODES_DOMAIN=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR%COMPONENTS(COMPONENT_NUMBER)%DOMAIN%TOPOLOGY%NODES
-      IF(ASSOCIATED(NODES_DOMAIN)) THEN
-        NUMBER=0
-        RMS_ERROR=0.0_DP
-        GHOST_NUMBER=0
-        GHOST_RMS_ERROR=0.0_DP
-        DO node_idx=1,NODES_DOMAIN%numberOfNodes
-          DO deriv_idx=1,NODES_DOMAIN%nodes(node_idx)%numberOfDerivatives
-            SELECT CASE(ERROR_TYPE)
-            CASE(ABSOLUTE_ERROR_TYPE)
-              !Default to version 1 of each node derivative
-              CALL AnalyticAnalysis_AbsoluteErrorGetNode(FIELD,VARIABLE_TYPE,1,deriv_idx,node_idx,COMPONENT_NUMBER, &
-                & ERROR_VALUE,ERR,ERROR,*999)
-            CASE(PERCENTAGE_ERROR_TYPE)
-              !Default to version 1 of each node derivative
-              CALL AnalyticAnalysis_PercentageErrorGetNode(FIELD,VARIABLE_TYPE,1,deriv_idx,node_idx,COMPONENT_NUMBER, &
-                & ERROR_VALUE,ERR,ERROR,*999)
-            CASE(RELATIVE_ERROR_TYPE)
-              !Default to version 1 of each node derivative
-              CALL AnalyticAnalysis_RelativeErrorGetNode(FIELD,VARIABLE_TYPE,1,deriv_idx,node_idx,COMPONENT_NUMBER, &
-                & ERROR_VALUE,ERR,ERROR,*999)
-            CASE DEFAULT
-              CALL FlagError("The error type is not valid!",ERR,ERROR,*999)
-            END SELECT
-            !Accumlate the RMS errors
-            NUMBER(deriv_idx)=NUMBER(deriv_idx)+1
-            RMS_ERROR(deriv_idx)=RMS_ERROR(deriv_idx)+ERROR_VALUE*ERROR_VALUE
-          ENDDO !deriv_idx
-        ENDDO !node_idx
-        DO node_idx=NODES_DOMAIN%numberOfNodes+1,NODES_DOMAIN%totalNumberOfNodes
-          DO deriv_idx=1,NODES_DOMAIN%nodes(node_idx)%numberOfDerivatives
-            SELECT CASE(ERROR_TYPE)
-            CASE(ABSOLUTE_ERROR_TYPE)
-              !Default to version 1 of each node derivative
-              CALL AnalyticAnalysis_AbsoluteErrorGetNode(FIELD,VARIABLE_TYPE,1,deriv_idx,node_idx,COMPONENT_NUMBER, &
-                & ERROR_VALUE,ERR,ERROR,*999)
-            CASE(PERCENTAGE_ERROR_TYPE)
-              !Default to version 1 of each node derivative
-              CALL AnalyticAnalysis_PercentageErrorGetNode(FIELD,VARIABLE_TYPE,1,deriv_idx,node_idx,COMPONENT_NUMBER, &
-                & ERROR_VALUE,ERR,ERROR,*999)
-            CASE(RELATIVE_ERROR_TYPE)
-              !Default to version 1 of each node derivative
-              CALL AnalyticAnalysis_RelativeErrorGetNode(FIELD,VARIABLE_TYPE,1,deriv_idx,node_idx,COMPONENT_NUMBER, &
-                & ERROR_VALUE,ERR,ERROR,*999)
-            CASE DEFAULT
-              CALL FlagError("The error type is not valid!",ERR,ERROR,*999)
-            END SELECT
-            !Accumlate the RMS errors
-            GHOST_NUMBER(deriv_idx)=GHOST_NUMBER(deriv_idx)+1
-            GHOST_RMS_ERROR(deriv_idx)=GHOST_RMS_ERROR(deriv_idx)+ERROR_VALUE*ERROR_VALUE
-          ENDDO !deriv_idx
-        ENDDO !node_idx
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    NULLIFY(domain)
+    CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainNodes)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    number=0
+    rmsError=0.0_DP
+    ghostNumber=0
+    ghostRMSError=0.0_DP
+    DO nodeIdx=1,domainNodes%numberOfNodes
+      DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+        SELECT CASE(errorType)
+        CASE(ABSOLUTE_ERROR_TYPE)
+          !Default to version 1 of each node derivative
+          CALL AnalyticAnalysis_AbsoluteErrorGetNode(field,variableType,1,derivativeIdx,nodeIdx,componentNumber, &
+            & errorValue,err,error,*999)
+        CASE(PERCENTAGE_ERROR_TYPE)
+          !Default to version 1 of each node derivative
+          CALL AnalyticAnalysis_PercentageErrorGetNode(field,variableType,1,derivativeIdx,nodeIdx,componentNumber, &
+            & errorValue,err,error,*999)
+        CASE(RELATIVE_ERROR_TYPE)
+          !Default to version 1 of each node derivative
+          CALL AnalyticAnalysis_RelativeErrorGetNode(field,variableType,1,derivativeIdx,nodeIdx,componentNumber, &
+            & errorValue,err,error,*999)
+        CASE DEFAULT
+          localError="The specified error type of "//TRIM(NumberToVString(errorType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        !Accumlate the RMS errors
+        number(derivativeIdx)=number(derivativeIdx)+1
+        rmsError(derivativeIdx)=rmsError(derivativeIdx)+errorValue*errorValue
+      ENDDO !derivativeIdx
+    ENDDO !nodeIdx
+    DO nodeIdx=domainNodes%numberOfNodes+1,domainNodes%totalNumberOfNodes
+      DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+        SELECT CASE(errorType)
+        CASE(ABSOLUTE_ERROR_TYPE)
+          !Default to version 1 of each node derivative
+          CALL AnalyticAnalysis_AbsoluteErrorGetNode(field,variableType,1,derivativeIdx,nodeIdx,componentNumber, &
+            & errorValue,err,error,*999)
+        CASE(PERCENTAGE_ERROR_TYPE)
+          !Default to version 1 of each node derivative
+          CALL AnalyticAnalysis_PercentageErrorGetNode(field,variableType,1,derivativeIdx,nodeIdx,componentNumber, &
+            & errorValue,err,error,*999)
+        CASE(RELATIVE_ERROR_TYPE)
+          !Default to version 1 of each node derivative
+          CALL AnalyticAnalysis_RelativeErrorGetNode(field,variableType,1,derivativeIdx,nodeIdx,componentNumber, &
+            & errorValue,err,error,*999)
+        CASE DEFAULT
+          localError="The specified error type of "//TRIM(NumberToVString(errorType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        !Accumlate the RMS errors
+        ghostNumber(derivativeIdx)=ghostNumber(derivativeIdx)+1
+        ghostRMSError(derivativeIdx)=ghostRMSError(derivativeIdx)+errorValue*errorValue
+      ENDDO !derivativeIdx
+    ENDDO !nodeIdx
 
-        IF(numberOfGroupComputationNodes>1) THEN
-          IF(ANY(NUMBER>0)) THEN
-            DO deriv_idx=1,8
-              IF(NUMBER(deriv_idx)>0) THEN
-                LOCAL_RMS(deriv_idx)=SQRT(RMS_ERROR(deriv_idx)/NUMBER(deriv_idx))
-              ENDIF
-            ENDDO !deriv_idx
-            DO deriv_idx=1,8
-              IF(NUMBER(deriv_idx)>0) THEN
-                LOCAL_GHOST_RMS(deriv_idx)=SQRT((RMS_ERROR(deriv_idx)+GHOST_RMS_ERROR(deriv_idx))/(NUMBER(deriv_idx) &
-                  & +GHOST_NUMBER(deriv_idx)))
-              ENDIF
-            ENDDO !deriv_idx
-            !Global RMS values
-            !Collect the values across the ranks
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,groupCommunicator,MPI_IERROR)
-            CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,MPI_IERROR)
-            CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-            DO deriv_idx=1,8
-              IF(NUMBER(deriv_idx)>0) THEN
-                GLOBAL_RMS(deriv_idx)=SQRT(RMS_ERROR(deriv_idx)/NUMBER(deriv_idx))
-              ENDIF
-            ENDDO !deriv_idx
-          ENDIF
-        ELSE
-          IF(ANY(NUMBER>0)) THEN
-            DO deriv_idx=1,8
-              IF(NUMBER(deriv_idx)>0) THEN
-                LOCAL_RMS(deriv_idx)=SQRT(RMS_ERROR(deriv_idx)/NUMBER(deriv_idx))
-                GLOBAL_RMS(deriv_idx)=LOCAL_RMS(deriv_idx)
-              ENDIF
-            ENDDO !deriv_idx
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Nodes domain topology is not associated.",ERR,ERROR,*999)
+    IF(numberOfGroupComputationNodes>1) THEN
+      IF(ANY(number>0)) THEN
+        DO derivativeIdx=1,8
+          IF(number(derivativeIdx)>0) localRMS(derivativeIdx)=SQRT(rmsError(derivativeIdx)/number(derivativeIdx))
+        ENDDO !derivativeIdx
+        DO derivativeIdx=1,8
+          IF(number(derivativeIdx)>0) localGhostRMS(derivativeIdx)= &
+            & SQRT((rmsError(derivativeIdx)+ghostRMSError(derivativeIdx))/(number(derivativeIdx)+ghostNumber(derivativeIdx)))
+        ENDDO !derivativeIdx
+        !Global RMS values
+        !Collect the values across the ranks
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,number,8,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsError,8,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        DO derivativeIdx=1,8
+          IF(number(derivativeIdx)>0) globalRMS(derivativeIdx)=SQRT(rmsError(derivativeIdx)/number(derivativeIdx))
+        ENDDO !derivativeIdx
       ENDIF
     ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
-    ENDIF 
+      IF(ANY(number>0)) THEN
+        DO derivativeIdx=1,8
+          IF(number(derivativeIdx)>0) THEN
+            localRMS(derivativeIdx)=SQRT(rmsError(derivativeIdx)/number(derivativeIdx))
+            globalRMS(derivativeIdx)=localRMS(derivativeIdx)
+          ENDIF
+        ENDDO !derivativeIdx
+      ENDIF
+    ENDIF
     
     EXITS("AnalyticAnalysis_RMSErrorGetNode")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_RMSErrorGetNode",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_RMSErrorGetNode",err,error)
     RETURN 1
     
   END SUBROUTINE AnalyticAnalysis_RMSErrorGetNode
@@ -1771,127 +1696,120 @@ CONTAINS
   !
 
   !>Get rms error value for the field
-  SUBROUTINE AnalyticAnalysis_RMSErrorGetElement(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,ERROR_TYPE,LOCAL_RMS,LOCAL_GHOST_RMS, &
-    & GLOBAL_RMS,ERR,ERROR,*)
+  SUBROUTINE AnalyticAnalysis_RMSErrorGetElement(field,variableType,componentNumber,errorType,localRMS,localGhostRMS, &
+    & globalRMS,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<the field.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<variable type
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<component index
-    INTEGER(INTG), INTENT(IN) :: ERROR_TYPE !<error type
-    REAL(DP), INTENT(OUT) :: LOCAL_RMS !<On return, the local rms percentage error
-    REAL(DP), INTENT(OUT) :: LOCAL_GHOST_RMS !<On return, the local + ghost rms percentage error
-    REAL(DP), INTENT(OUT) :: GLOBAL_RMS !<On return, the global rms percentage error
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FieldType), POINTER :: field !<the field.
+    INTEGER(INTG), INTENT(IN) :: variableType !<variable type
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<component index
+    INTEGER(INTG), INTENT(IN) :: errorType !<error type
+    REAL(DP), INTENT(OUT) :: localRMS !<On return, the local rms percentage error
+    REAL(DP), INTENT(OUT) :: localGhostRMS !<On return, the local + ghost rms percentage error
+    REAL(DP), INTENT(OUT) :: globalRMS !<On return, the global rms percentage error
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: element_idx
-    INTEGER(INTG) :: GHOST_NUMBER,NUMBER,MPI_IERROR,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
-    REAL(DP) :: ERROR_VALUE,RMS_ERROR,GHOST_RMS_ERROR
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(DecompositionElementsType), POINTER :: ELEMENTS_DECOMPOSITION
-    TYPE(DecompositionTopologyType), POINTER :: DECOMPOSITION_TOPOLOGY
-    TYPE(DomainType), POINTER :: DOMAIN
-    TYPE(DomainElementsType), POINTER :: ELEMENTS_DOMAIN
+    INTEGER(INTG) :: elementIdx
+    INTEGER(INTG) :: ghostNumber,number,mpiIerror,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
+    REAL(DP) :: errorValue,rmsError,ghostRMSError
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
 
-    ENTERS("AnalyticAnalysis_RMSErrorGetElement",ERR,ERROR,*999)
+    ENTERS("AnalyticAnalysis_RMSErrorGetElement",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      NULLIFY(decomposition)
-      CALL Field_DecompositionGet(field,decomposition,err,error,*999)
-      NULLIFY(workGroup)
-      CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
-      CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
-      CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
-      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-      DOMAIN=>FIELD%variableTypeMap(VARIABLE_TYPE)%PTR%COMPONENTS(COMPONENT_NUMBER)%DOMAIN
-      ELEMENTS_DOMAIN=>DOMAIN%TOPOLOGY%ELEMENTS
-      IF(ASSOCIATED(ELEMENTS_DOMAIN)) THEN
-        DECOMPOSITION=>DOMAIN%DECOMPOSITION
-        IF(ASSOCIATED(DECOMPOSITION)) THEN
-          DECOMPOSITION_TOPOLOGY=>DECOMPOSITION%TOPOLOGY
-          IF(ASSOCIATED(DECOMPOSITION_TOPOLOGY)) THEN
-            ELEMENTS_DECOMPOSITION=>DECOMPOSITION_TOPOLOGY%ELEMENTS
-            IF(ASSOCIATED(ELEMENTS_DECOMPOSITION)) THEN
-              NUMBER=0
-              RMS_ERROR=0.0_DP
-              GHOST_NUMBER=0
-              GHOST_RMS_ERROR=0.0_DP
-              DO element_idx=1,ELEMENTS_DOMAIN%numberOfElements
-                SELECT CASE(ERROR_TYPE)
-                CASE(ABSOLUTE_ERROR_TYPE)
-                  CALL AnalyticAnalysis_AbsoluteErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER,ERROR_VALUE, &
-                    & ERR,ERROR,*999)
-                CASE(PERCENTAGE_ERROR_TYPE)
-                  CALL AnalyticAnalysis_PercentageErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER, &
-                    & ERROR_VALUE,ERR,ERROR,*999)
-                CASE(RELATIVE_ERROR_TYPE)
-                  CALL AnalyticAnalysis_RelativeErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER,ERROR_VALUE, &
-                    & ERR,ERROR,*999)
-                CASE DEFAULT
-                  CALL FlagError("The error type is not valid!",ERR,ERROR,*999)
-                END SELECT
-                NUMBER=NUMBER+1
-                RMS_ERROR=RMS_ERROR+ERROR_VALUE*ERROR_VALUE
-              ENDDO !element_idx
-              DO element_idx=ELEMENTS_DOMAIN%numberOfElements+1,ELEMENTS_DOMAIN%totalNumberOfElements
-                SELECT CASE(ERROR_TYPE)
-                CASE(ABSOLUTE_ERROR_TYPE)
-                  CALL AnalyticAnalysis_AbsoluteErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER,ERROR_VALUE, &
-                    & ERR,ERROR,*999)
-                CASE(PERCENTAGE_ERROR_TYPE)
-                  CALL AnalyticAnalysis_PercentageErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER, &
-                    & ERROR_VALUE,ERR,ERROR,*999)
-                CASE(RELATIVE_ERROR_TYPE)
-                  CALL AnalyticAnalysis_RelativeErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER,ERROR_VALUE, &
-                    & ERR,ERROR,*999)
-                CASE DEFAULT
-                  CALL FlagError("The error type is not valid!",ERR,ERROR,*999)
-                END SELECT
-                GHOST_NUMBER=GHOST_NUMBER+1
-                GHOST_RMS_ERROR=GHOST_RMS_ERROR+ERROR_VALUE*ERROR_VALUE
-              ENDDO !element_idx
-              IF(NUMBER>0) THEN
-                IF(numberOfGroupComputationNodes>1) THEN
-                  !Local elements only
-                  LOCAL_RMS=SQRT(RMS_ERROR/NUMBER)
-                  !Local and ghost elements
-                  LOCAL_GHOST_RMS=SQRT((RMS_ERROR+GHOST_RMS_ERROR)/(NUMBER+GHOST_NUMBER))
-                  !Global RMS values
-                  !Collect the values across the ranks
-                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,groupCommunicator,MPI_IERROR)
-                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,MPI_IERROR)
-                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                  GLOBAL_RMS=SQRT(RMS_ERROR/NUMBER)
-                ENDIF
-              ENDIF
-            ELSE
-              CALL FlagError("Decomposition topology elements is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Decomposition topology is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Domain decomposition is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Elements domain topology is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    NULLIFY(domain)
+    CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainElements)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    number=0
+    rmsError=0.0_DP
+    ghostNumber=0
+    ghostRMSError=0.0_DP
+    DO elementIdx=1,domainElements%numberOfElements
+      SELECT CASE(errorType)
+      CASE(ABSOLUTE_ERROR_TYPE)
+        CALL AnalyticAnalysis_AbsoluteErrorGetElement(field,variableType,elementIdx,componentNumber,errorValue, &
+          & err,error,*999)
+      CASE(PERCENTAGE_ERROR_TYPE)
+        CALL AnalyticAnalysis_PercentageErrorGetElement(field,variableType,elementIdx,componentNumber, &
+          & errorValue,err,error,*999)
+      CASE(RELATIVE_ERROR_TYPE)
+        CALL AnalyticAnalysis_RelativeErrorGetElement(field,variableType,elementIdx,componentNumber,errorValue, &
+          & err,error,*999)
+      CASE DEFAULT
+        localError="The specified error type of "//TRIM(NumberToVString(errorType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      number=number+1
+      rmsError=rmsError+errorValue*errorValue
+    ENDDO !elementIdx
+    DO elementIdx=domainElements%numberOfElements+1,domainElements%totalNumberOfElements
+      SELECT CASE(errorType)
+      CASE(ABSOLUTE_ERROR_TYPE)
+        CALL AnalyticAnalysis_AbsoluteErrorGetElement(field,variableType,elementIdx,componentNumber,errorValue, &
+          & err,error,*999)
+      CASE(PERCENTAGE_ERROR_TYPE)
+        CALL AnalyticAnalysis_PercentageErrorGetElement(field,variableType,elementIdx,componentNumber, &
+          & errorValue,err,error,*999)
+      CASE(RELATIVE_ERROR_TYPE)
+        CALL AnalyticAnalysis_RelativeErrorGetElement(field,variableType,elementIdx,componentNumber,errorValue, &
+          & err,error,*999)
+      CASE DEFAULT
+        localError="The specified error type of "//TRIM(NumberToVString(errorType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      ghostNumber=ghostNumber+1
+      ghostRMSError=ghostRMSError+errorValue*errorValue
+    ENDDO !elementIdx
+    IF(number>0) THEN
+      IF(numberOfGroupComputationNodes>1) THEN
+        !Local elements only
+        localRMS=SQRT(rmsError/number)
+        !Local and ghost elements
+        localGhostRMS=SQRT((rmsError+ghostRMSError)/(number+ghostNumber))
+        !Global RMS values
+        !Collect the values across the ranks
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,number,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsError,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+        globalRMS=SQRT(rmsError/number)
       ENDIF
-    ELSE
-      CALL FlagError("Field is not associated",ERR,ERROR,*999)
     ENDIF
 
     EXITS("AnalyticAnalysis_RMSErrorGetElement")
     RETURN
-999 ERRORSEXITS("AnalyticAnalysis_RMSErrorGetElement",ERR,ERROR)
+999 ERRORSEXITS("AnalyticAnalysis_RMSErrorGetElement",err,error)
     RETURN 1
   END SUBROUTINE AnalyticAnalysis_RMSErrorGetElement
 
   !
   !================================================================================================================================
-  !  
-  
+  !    
  
-END MODULE ANALYTIC_ANALYSIS_ROUTINES
+END MODULE AnalyticAnalysisRoutines

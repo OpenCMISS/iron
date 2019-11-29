@@ -63,7 +63,7 @@ MODULE SOLVER_ROUTINES
   USE EquationsMatricesAccessRoutines
   use EquationsSetAccessRoutines
   USE EquationsSetConstants
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE Kinds
   USE INPUT_OUTPUT
@@ -129,6 +129,10 @@ MODULE SOLVER_ROUTINES
     
   END INTERFACE
 
+  INTERFACE CellMLEquations_CellMLAdd
+    MODULE PROCEDURE CELLML_EQUATIONS_CELLML_ADD
+  END INTERFACE CellMLEquations_CellMLAdd
+  
   INTERFACE CellMLEquations_CreateFinish
     MODULE PROCEDURE CELLML_EQUATIONS_CREATE_FINISH
   END INTERFACE CellMLEquations_CreateFinish
@@ -137,13 +141,37 @@ MODULE SOLVER_ROUTINES
     MODULE PROCEDURE CELLML_EQUATIONS_CREATE_START
   END INTERFACE CellMLEquations_CreateStart
 
+  INTERFACE CellMLEquations_Destroy
+    MODULE PROCEDURE CELLML_EQUATIONS_DESTROY
+  END INTERFACE CellMLEquations_Destroy
+
+  INTERFACE Solver_DAESolverTypeGet
+    MODULE PROCEDURE SOLVER_DAE_SOLVER_TYPE_GET
+  END INTERFACE Solver_DAESolverTypeGet
+
+  INTERFACE Solver_DAESolverTypeSet
+    MODULE PROCEDURE SOLVER_DAE_SOLVER_TYPE_SET
+  END INTERFACE Solver_DAESolverTypeSet
+
   INTERFACE Solver_DAETimesSet
     MODULE PROCEDURE SOLVER_DAE_TIMES_SET
   END INTERFACE Solver_DAETimesSet
 
-   INTERFACE Solver_DAETimeStepSet
+  INTERFACE Solver_DAETimeStepSet
     MODULE PROCEDURE SOLVER_DAE_TIME_STEP_SET
   END INTERFACE Solver_DAETimeStepSet
+
+  INTERFACE Solver_DAEEulerSolverTypeGet
+    MODULE PROCEDURE SOLVER_DAE_EULER_SOLVER_TYPE_GET
+  END INTERFACE Solver_DAEEulerSolverTypeGet
+
+  INTERFACE Solver_DAEEulerSolverTypeSet
+    MODULE PROCEDURE SOLVER_DAE_EULER_SOLVER_TYPE_SET
+  END INTERFACE Solver_DAEEulerSolverTypeSet
+
+  INTERFACE Solver_DynamicDegreeGet
+    MODULE PROCEDURE SOLVER_DYNAMIC_DEGREE_GET
+  END INTERFACE Solver_DynamicDegreeGet
 
   INTERFACE Solver_DynamicDegreeSet
     MODULE PROCEDURE SOLVER_DYNAMIC_DEGREE_SET
@@ -251,13 +279,33 @@ MODULE SOLVER_ROUTINES
     MODULE PROCEDURE SOLVERS_NUMBER_SET
   END INTERFACE Solvers_NumberSet
   
+  INTERFACE Solver_NewtonCellmlEvaluatorCreate
+    MODULE PROCEDURE SOLVER_NEWTON_CELLML_EVALUATOR_CREATE
+  END INTERFACE Solver_NewtonCellmlEvaluatorCreate
+  
+   INTERFACE Solver_NewtonCellmlSolverGet
+    MODULE PROCEDURE SOLVER_NEWTON_CELLML_SOLVER_GET
+  END INTERFACE Solver_NewtonCellmlSolverGet
+  
+  INTERFACE Solver_LinkedSolverAdd
+    MODULE PROCEDURE SOLVER_LINKED_SOLVER_ADD
+  END INTERFACE Solver_LinkedSolverAdd
+  
+   INTERFACE Solver_LinkedSolverRemove
+    MODULE PROCEDURE SOLVER_LINKED_SOLVER_REMOVE
+  END INTERFACE Solver_LinkedSolverRemove
+  
   PUBLIC CELLML_EQUATIONS_CELLML_ADD
+
+  PUBLIC CellMLEquations_CellMLAdd
 
   PUBLIC CELLML_EQUATIONS_CREATE_FINISH,CELLML_EQUATIONS_CREATE_START
 
   PUBLIC CellMLEquations_CreateStart,CellMLEquations_CreateFinish
 
   PUBLIC CELLML_EQUATIONS_DESTROY
+
+  PUBLIC CellMLEquations_Destroy
   
   PUBLIC CellMLEquations_LinearityTypeGet,CellMLEquations_LinearityTypeSet
 
@@ -267,11 +315,15 @@ MODULE SOLVER_ROUTINES
   
   PUBLIC SOLVER_DAE_SOLVER_TYPE_GET,SOLVER_DAE_SOLVER_TYPE_SET
 
-  PUBLIC Solver_DAETimesSet,Solver_DAETimeStepSet
+  PUBLIC Solver_DAESolverTypeGet,Solver_DAESolverTypeSet
 
   PUBLIC SOLVER_DAE_TIMES_SET,SOLVER_DAE_TIME_STEP_SET
   
+  PUBLIC Solver_DAETimesSet,Solver_DAETimeStepSet
+
   PUBLIC SOLVER_DAE_EULER_SOLVER_TYPE_GET,SOLVER_DAE_EULER_SOLVER_TYPE_SET
+
+  PUBLIC Solver_DAEEulerSolverTypeGet,Solver_DAEEulerSolverTypeSet
 
   PUBLIC Solver_DAECellMLRHSEvaluate
   
@@ -279,7 +331,7 @@ MODULE SOLVER_ROUTINES
   
   PUBLIC SOLVER_DYNAMIC_DEGREE_GET,SOLVER_DYNAMIC_DEGREE_SET
 
-  PUBLIC Solver_DynamicDegreeSet
+  PUBLIC Solver_DynamicDegreeGet,Solver_DynamicDegreeSet
 
   PUBLIC SOLVER_DYNAMIC_LINEAR_SOLVER_GET,SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET
 
@@ -451,6 +503,8 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC SOLVER_NEWTON_CELLML_SOLVER_GET
 
+  PUBLIC Solver_NewtonCellmlSolverGet
+
   PUBLIC Solver_NewtonConvergenceTestTypeSet
 
   PUBLIC SOLVER_NEWTON_LINESEARCH_MAXSTEP_SET
@@ -515,7 +569,11 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC SOLVER_NEWTON_CELLML_EVALUATOR_CREATE,SOLVER_CELLML_EVALUATOR_FINALISE
 
+  PUBLIC Solver_NewtonCellMLEvaluatorCreate
+
   PUBLIC SOLVER_LINKED_SOLVER_ADD,SOLVER_LINKED_SOLVER_REMOVE
+
+  PUBLIC Solver_LinkedSolverAdd,Solver_LinkedSolverRemove
   
   PUBLIC SOLVER_SOLUTION_UPDATE
 
@@ -1275,7 +1333,7 @@ CONTAINS
     IF(ASSOCIATED(CELLML_EVALUATOR_SOLVER)) THEN
       IF(ASSOCIATED(CELLML)) THEN
         IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
-          CALL FIELD_DOF_ORDER_TYPE_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
+          CALL Field_DOFOrderTypeGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
           IF(DOF_ORDER_TYPE==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
             !Dof components are separated. Will need to copy data to temporary arrays.
             IF(ONLY_ONE_MODEL_INDEX/=0) THEN
@@ -2011,7 +2069,7 @@ CONTAINS
     IF(ASSOCIATED(FORWARD_EULER_SOLVER)) THEN
       IF(ASSOCIATED(CELLML)) THEN
         IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
-          CALL FIELD_DOF_ORDER_TYPE_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
+          CALL Field_DOFOrderTypeGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
           IF(DOF_ORDER_TYPE==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
             !Dof components are separated. Will need to copy data to temporary arrays.
             IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
@@ -3545,7 +3603,7 @@ CONTAINS
         IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
           SELECT CASE(BDF_SOLVER%SOLVER_LIBRARY)   
           CASE(SOLVER_PETSC_LIBRARY)
-            CALL FIELD_DOF_ORDER_TYPE_GET(CELLML%MODELS_FIELD%MODELS_FIELD, & 
+            CALL Field_DOFOrderTypeGet(CELLML%MODELS_FIELD%MODELS_FIELD, & 
               & FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
             IF(DOF_ORDER_TYPE==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
               
@@ -4739,7 +4797,7 @@ CONTAINS
                  CELLML_STATE_FIELD=>CELLML%STATE_FIELD
                  IF(ASSOCIATED(CELLML_STATE_FIELD)) THEN
                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"CellML index : ",cellml_idx,err,error,*999)
-                   CALL FIELD_PARAMETER_SET_OUTPUT(GENERAL_OUTPUT_TYPE,CELLML_STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                   CALL Field_ParameterSetOutput(GENERAL_OUTPUT_TYPE,CELLML_STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_VALUES_SET_TYPE,err,error,*999)
                  ELSE
                    CALL FlagError("CellML environment state field is not associated.",err,error,*999)
@@ -5038,7 +5096,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dependentVariableType,dynamicVariableType,equationsSetIdx,interfaceConditionIdx, &
-      & lagrangeVariableType,linearLibraryType,linearMatrixIdx,nonlinearLibraryTYpe,rhsVariableType,variableType
+      & lagrangeVariableType,linearLibraryType,linearMatrixIdx,nonlinearLibraryTYpe,rhsVariableType
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -5920,10 +5978,10 @@ CONTAINS
                               !!that the current dependent field values are not equal to the current previous values that were set
                               !!at the beginning of the control loop. 
                               !!Copy the current field values to the previous values
-                              !CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                              !CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                               !  & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
                               IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                                CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP, &
                                   & err,error,*999)
                               ENDIF
@@ -5931,27 +5989,27 @@ CONTAINS
                               SELECT CASE(DYNAMIC_SOLVER%DEGREE)
                               CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
                                 !The mean predicited displacement is the current displacement
-                                CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, & 
                                   & err,error,*999)
                                 IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   !The predicted displacement is just the current displacement
-                                  CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, &
                                     & err,error,*999)
                                 ENDIF
                               CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
                                 !The mean predicted displacement comes from the previous displacement and the previous velocity
-                                CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & [FIRST_MEAN_PREDICTION_FACTOR,SECOND_MEAN_PREDICTION_FACTOR], &
                                   & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                                   & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                                 !The mean predicted velocity is the current velocity
-                                CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                                 IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   !The predicted displacement comes from the previous displacement and the previous velocity
-                                  CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & [FIRST_PREDICTION_FACTOR,SECOND_PREDICTION_FACTOR], &
                                     & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                                     & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
@@ -5959,24 +6017,24 @@ CONTAINS
                               CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
                                 !The mean predicted displacement comes from the previous displacement and the previous
                                 !velocity and acceleration
-                                CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & [FIRST_MEAN_PREDICTION_FACTOR,SECOND_MEAN_PREDICTION_FACTOR, &
                                   & THIRD_MEAN_PREDICTION_FACTOR],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
                                   & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                                   & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                                 !The mean predicted velocity comes from the previous velocity and acceleration
-                                CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & [FIRST_MEAN_PREDICTION_FACTOR,SECOND_MEAN_PREDICTION_FACTOR], &
                                   & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                                   & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
                                 !The mean predicted acceleration is the current acceleration
-                                CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP, &
                                   & err,error,*999)
                                 IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   !The predicted displacement comes from the previous displacement and the previous
                                   !velocity and acceleration
-                                  CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & [FIRST_PREDICTION_FACTOR,SECOND_PREDICTION_FACTOR, &
                                     & THIRD_PREDICTION_FACTOR],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
                                     & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
@@ -5998,10 +6056,10 @@ CONTAINS
                                 !that the current dependent field values are not equal to the current previous values that were set
                                 !at the beginning of the control loop. 
                                 !Copy the current field values to the previous values
-                                CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                                CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
                                 IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                                  CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP, &
                                     & err,error,*999)
                                 ENDIF
@@ -6009,27 +6067,27 @@ CONTAINS
                                 SELECT CASE(DYNAMIC_SOLVER%DEGREE)
                                 CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
                                   !The mean predicited displacement is the current displacement
-                                  CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, & 
                                     & err,error,*999)
                                   IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                     !The predicted displacement is just the current displacement
-                                    CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                    CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                       & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, &
                                       & err,error,*999)
                                   ENDIF
                                 CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
                                   !The mean predicted displacement comes from the previous displacement and the previous velocity
-                                  CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & [FIRST_MEAN_PREDICTION_FACTOR,SECOND_MEAN_PREDICTION_FACTOR], &
                                     & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                                     & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                                   !The mean predicted velocity is the current velocity
-                                  CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                                   IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                     !The predicted displacement comes from the previous displacement and the previous velocity
-                                    CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                    CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                       & [FIRST_PREDICTION_FACTOR,SECOND_PREDICTION_FACTOR], &
                                       & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                                       & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
@@ -6037,24 +6095,24 @@ CONTAINS
                                 CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
                                   !The mean predicted displacement comes from the previous displacement and the previous
                                   !velocity and acceleration
-                                  CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & [FIRST_MEAN_PREDICTION_FACTOR,SECOND_MEAN_PREDICTION_FACTOR, &
                                     & THIRD_MEAN_PREDICTION_FACTOR],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
                                     & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                                     & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                                   !The mean predicted velocity comes from the previous velocity and acceleration
-                                  CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & [FIRST_MEAN_PREDICTION_FACTOR,SECOND_MEAN_PREDICTION_FACTOR], &
                                     & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                                     & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
                                   !The mean predicted acceleration is the current acceleration
-                                  CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                  CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP, &
                                     & err,error,*999)
                                   IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
                                     !The predicted displacement comes from the previous displacement and the previous
                                     !velocity and acceleration
-                                    CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
+                                    CALL Field_ParameterSetsAdd(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                       & [FIRST_PREDICTION_FACTOR,SECOND_PREDICTION_FACTOR, &
                                       & THIRD_PREDICTION_FACTOR],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
                                       & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
@@ -11917,19 +11975,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dependentIdx,dynamicVariableType,equationsMatrixIdx,equationsRowNumber,equationsSetIdx,linearVariableType, &
+    INTEGER(INTG) :: dynamicVariableType,equationsMatrixIdx,equationsRowNumber,equationsSetIdx,linearVariableType, &
       & rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,solverRowIdx,solverRowNumber, &
       & solverMatrixIdx,residualVariableDOF,variableBoundaryCondition,variableType,equationsMatrixIdx2, &
-      & variableIdx,variableGlobalDOF,variableDOF,equationsRowNumber2,equationsMatrixNumber,dependentVariableType, &
-      & equationsColumnNumber,dirichletRow,dirichletIdx, &
-      & interfaceConditionIdx,interfaceMatrixIdx,interfaceColumnNumber,interfaceRowNumber, &
+      & variableGlobalDOF,variableDOF,equationsMatrixNumber,dependentVariableType, &
+      & equationsColumnNumber,dirichletIdx, &
+      & interfaceConditionIdx,interfaceMatrixIdx,interfaceColumnNumber, &
       & interfaceVariableType,numberOfInterfaceMatrices
     INTEGER(INTG) :: currentIteration,outputIteration
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: dampingMatrixCoefficient,deltaT,dofValue,dynamicValue,firstUpdateFactor,residualValue, &
-      & linearValue,linearValueSum,massMatrixCoefficient,nonlinearValue,rhsValue,rowCouplingCoefficient,previousResidualValue, &
+      & linearValue,linearValueSum,massMatrixCoefficient,nonlinearValue,rhsValue,rowCouplingCoefficient, &
       & secondUpdateFactor,sourceValue,stiffnessMatrixCoefficient,VALUE,jacobianMatrixCoefficient,alphaValue, &
-      & matrixValue,dynamicDisplacementFactor,dynamicVelocityFactor,dynamicAccelerationFactor,rhsIntegratedValue, &
+      & dynamicDisplacementFactor,dynamicVelocityFactor,dynamicAccelerationFactor, &
       & currentFunctionFactor,previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     REAL(DP) :: matrixCoefficients(2)=[0.0_DP,0.0_DP]
@@ -11939,7 +11997,6 @@ CONTAINS
       & rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
     LOGICAL :: hasIntegratedValues,interfaceMatrixDynamic
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: sparsityIndices
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: rhsBoundaryConditions,dependentBoundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedMatrixType), POINTER :: previousSolverDistributedMatrix,solverDistributedMatrix
@@ -11965,12 +12022,10 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix,equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,interfaceEquationsSet
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,linearVariable,rhsVariable,interfaceDependentVariable, &
-      & interfaceVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,linearVariable,rhsVariable,interfaceVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
-    TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
@@ -13191,13 +13246,13 @@ CONTAINS
             CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
               !Do nothing. Increment will be added after the solve.
             CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-              CALL FIELD_PARAMETER_SETS_ADD(dependentField,dynamicVariableType,firstUpdateFactor, &
+              CALL Field_ParameterSetsAdd(dependentField,dynamicVariableType,firstUpdateFactor, &
                 & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
             CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-              CALL FIELD_PARAMETER_SETS_ADD(dependentField,dynamicVariableType,[firstUpdateFactor, &
+              CALL Field_ParameterSetsAdd(dependentField,dynamicVariableType,[firstUpdateFactor, &
                 & secondUpdateFactor],[FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE], &
                 & FIELD_VALUES_SET_TYPE,err,error,*999)
-              CALL FIELD_PARAMETER_SETS_ADD(dependentField,dynamicVariableType,firstUpdateFactor, &
+              CALL Field_ParameterSetsAdd(dependentField,dynamicVariableType,firstUpdateFactor, &
                 & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
             CASE DEFAULT
               localError="The dynamic solver degree of "// &
@@ -13235,14 +13290,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dependent_variable_type,interface_variable_type,equations_column_number,equations_matrix_idx, &
-      & equationsMatrixNumber,interface_row_number,equations_row_number,equations_row_number2,equations_set_idx, & 
-      & interface_column_number,interface_condition_idx,interface_matrix_idx,linearVariableType,rhs_boundary_condition, &
+      & equationsMatrixNumber,equations_row_number,equations_set_idx, & 
+      & interface_condition_idx,interface_matrix_idx,linearVariableType,rhs_boundary_condition, &
       & rhs_global_dof,equations_matrix_idx2,rhs_variable_dof,rhsVariableType,variable_boundary_condition,solver_matrix_idx, &
-      & solver_row_idx,solver_row_number,variable_dof,variable_global_dof,variable_idx,variable_type,&
-      & dirichlet_idx,dirichlet_row,numberOfInterfaceMatrices
+      & solver_row_number,variable_dof,variable_global_dof,variable_idx,variable_type,&
+      & dirichlet_idx,numberOfInterfaceMatrices
     REAL(SP) :: systemElapsed,SYSTEM_TIME1(1),SYSTEM_TIME2(1),userElapsed,USER_TIME1(1),USER_TIME2(1)
-    REAL(DP) :: DEPENDENT_VALUE,LINEAR_VALUE,LINEAR_VALUE_SUM,MATRIX_VALUE,RESIDUAL_VALUE,rhsValue,rowCouplingCoefficient, &
-      & sourceValue,VALUE,RHS_INTEGRATED_VALUE
+    REAL(DP) :: DEPENDENT_VALUE,LINEAR_VALUE,LINEAR_VALUE_SUM,RESIDUAL_VALUE,rhsValue, &
+      & sourceValue,RHS_INTEGRATED_VALUE
     REAL(DP), POINTER :: RHS_PARAMETERS(:),CHECK_DATA(:),CHECK_DATA2(:),CHECK_DATA3(:),CHECK_DATA4(:)
     LOGICAL :: SUBTRACT_FIXED_BCS_FROM_RESIDUAL,HAS_INTEGRATED_VALUES
     TYPE(REAL_DP_PTR_TYPE), ALLOCATABLE :: DEPENDENT_PARAMETERS(:)
@@ -13285,7 +13340,6 @@ CONTAINS
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
     TYPE(VARYING_STRING) :: localError
-    TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: SPARSITY_INDICES
   
     ENTERS("Solver_StaticAssemble",err,error,*999)
   
@@ -20609,7 +20663,7 @@ CONTAINS
                           variable_type=lagrangeVariable%variableType
                           LAGRANGE_FIELD=>lagrangeVariable%FIELD
                           NULLIFY(VARIABLE_DATA)
-                          CALL FIELD_PARAMETER_SET_DATA_GET(LAGRANGE_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
+                          CALL Field_ParameterSetDataGet(LAGRANGE_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
                             & ERR,ERROR,*999)
                           DO variable_dof_idx=1,lagrangeVariable%numberOfDofs
                             column_number=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
@@ -21283,15 +21337,15 @@ CONTAINS
                       VARIABLE_TYPE=FIELD_VARIABLE%variableType
                       FIELD=>FIELD_VARIABLE%FIELD
                       !Copy the displacements
-                      CALL FIELD_PARAMETER_SETS_COPY(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetsCopy(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
                       IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                         !Copy velocity
-                        CALL FIELD_PARAMETER_SETS_COPY(FIELD,VARIABLE_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE, &
+                        CALL Field_ParameterSetsCopy(FIELD,VARIABLE_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE, &
                           & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                         IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
                           !Copy acceleration
-                          CALL FIELD_PARAMETER_SETS_COPY(FIELD,VARIABLE_TYPE,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetsCopy(FIELD,VARIABLE_TYPE,FIELD_ACCELERATION_VALUES_SET_TYPE, &
                             & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
                         ENDIF
                       ENDIF
@@ -21318,7 +21372,7 @@ CONTAINS
                                 DO residual_variable_idx=1,nonlinearMapping%numberOfResidualVariables
                                   RESIDUAL_VARIABLE=>nonlinearMapping%residualVariables(residual_variable_idx)%ptr
                                   IF(ASSOCIATED(RESIDUAL_VARIABLE)) THEN
-                                    CALL FIELD_PARAMETER_SETS_COPY(RESIDUAL_VARIABLE%FIELD,RESIDUAL_VARIABLE%variableType, &
+                                    CALL Field_ParameterSetsCopy(RESIDUAL_VARIABLE%FIELD,RESIDUAL_VARIABLE%variableType, &
                                       & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,ERR,ERROR,*999)
                                   ELSE
                                     localError="Nonlinear mapping residual variable is not associated for "// &
@@ -21386,10 +21440,8 @@ CONTAINS
 
     !Local Variables
     INTEGER(INTG) :: dummyErr,dynamicVariableType,equationsDOFIdx,equationsSetIdx,solverDOFIdx,solverMatrixIdx,variableDOF
-    REAL(DP) :: additiveConstant,deltaT,value,variableCoefficient
-    REAL(DP) :: alphaValue,alphaDOFValue,currentDisplacement,dynamicAlphaFactor,dynamicDisplacementFactor, &
-      & dynamicVelocityFactor,dynamicAccelerationFactor,predictedDisplacement,previousDisplacement, &
-      & previousVelocity,previousAcceleration
+    REAL(DP) :: additiveConstant,alphaValue,alphaDOFValue,currentDisplacement,deltaT,previousDisplacement, &
+      & previousVelocity,previousAcceleration,variableCoefficient
     INTEGER(INTG) :: variableIdx,variableType,interfaceConditionIdx
     REAL(DP), POINTER :: solverData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
@@ -21791,7 +21843,7 @@ CONTAINS
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                           VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                             & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%variableTypes(variable_idx)
-                          CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+                          CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                         ENDDO !variable_idx
                       ELSE
                         CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -21805,7 +21857,7 @@ CONTAINS
                         & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                         VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%variableTypes(variable_idx)
-                        CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+                        CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                       ENDDO !variable_idx
                     ENDDO !equations_set_idx
                   ELSE

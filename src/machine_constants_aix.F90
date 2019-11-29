@@ -42,10 +42,10 @@
 !>
 
 !> This module contains all machine dependent constants for AIX systems.
-MODULE MACHINE_CONSTANTS
+MODULE MachineConstants
 
-  USE CONSTANTS
-  USE KINDS
+  USE Constants
+  USE Kinds
   
   IMPLICIT NONE
 
@@ -71,4 +71,4 @@ MODULE MACHINE_CONSTANTS
 
   CHARACTER(LEN=1), PARAMETER :: ERROR_SEPARATOR_CONSTANT=CHAR(6)
   
-END MODULE MACHINE_CONSTANTS
+END MODULE MachineConstants

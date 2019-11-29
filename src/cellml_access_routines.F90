@@ -95,14 +95,14 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(region%CELLML_ENVIRONMENTS)) CALL FlagError("Region CellML environments is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(region%cellMLEnvironments)) CALL FlagError("Region CellML environments is not associated.",err,error,*999)
 
     NULLIFY(cellml)
-    IF(ALLOCATED(region%CELLML_ENVIRONMENTS%environments)) THEN
-      DO cellmlIdx=1,region%CELLML_ENVIRONMENTS%NUMBER_OF_ENVIRONMENTS
-        IF(ASSOCIATED(region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr)) THEN
-          IF(region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr%userNumber==userNumber) THEN
-            cellml=>region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr
+    IF(ALLOCATED(region%cellMLEnvironments%environments)) THEN
+      DO cellmlIdx=1,region%cellMLEnvironments%NUMBER_OF_ENVIRONMENTS
+        IF(ASSOCIATED(region%cellMLEnvironments%environments(cellmlIdx)%ptr)) THEN
+          IF(region%cellMLEnvironments%environments(cellmlIdx)%ptr%userNumber==userNumber) THEN
+            cellml=>region%cellMLEnvironments%environments(cellmlIdx)%ptr
             EXIT
           ENDIF
         ELSE

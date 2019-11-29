@@ -47,7 +47,7 @@ MODULE ControlLoopRoutines
   USE BaseRoutines
   USE Constants
   USE ControlLoopAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -154,6 +154,10 @@ MODULE ControlLoopRoutines
     MODULE PROCEDURE ControlLoop_TimeOutputSet
   END INTERFACE CONTROL_LOOP_TIME_OUTPUT_SET
 
+  PUBLIC ControlLoop_AbsoluteToleranceSet
+  
+  PUBLIC ControlLoop_ContinueLoopSet
+  
   PUBLIC CONTROL_LOOP_CREATE_FINISH,CONTROL_LOOP_CREATE_START
 
   PUBLIC ControlLoop_CreateFinish,ControlLoop_CreateStart
@@ -170,17 +174,13 @@ MODULE ControlLoopRoutines
 
   PUBLIC ControlLoop_LabelGet,ControlLoop_LabelSet
 
-  PUBLIC CONTROL_LOOP_MAXIMUM_ITERATIONS_SET
-
-  PUBLIC ControlLoop_MaximumIterationsSet
-
   PUBLIC CONTROL_LOOP_LOAD_OUTPUT_SET
 
   PUBLIC ControlLoop_LoadOutputSet
 
-  PUBLIC ControlLoop_AbsoluteToleranceSet
-  
-  PUBLIC ControlLoop_RelativeToleranceSet
+  PUBLIC CONTROL_LOOP_MAXIMUM_ITERATIONS_SET
+
+  PUBLIC ControlLoop_MaximumIterationsSet
 
   PUBLIC ControlLoop_NumberOfIterationsSet
 
@@ -193,6 +193,8 @@ MODULE ControlLoopRoutines
   PUBLIC ControlLoop_OutputTypeSet
 
   PUBLIC ControlLoop_PreviousValuesUpdate
+
+  PUBLIC ControlLoop_RelativeToleranceSet
 
   PUBLIC CONTROL_LOOP_SOLVERS_DESTROY
 
@@ -219,6 +221,34 @@ MODULE ControlLoopRoutines
   PUBLIC ControlLoop_TimeOutputSet
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the continue loop status for a while control loop
+  SUBROUTINE ControlLoop_ContinueLoopSet(controlLoop,continueLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to set the continue loop status.
+    LOGICAL, INTENT(IN) :: continueLoop !<The continue loop status to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ControlLoop_ContinueLoopSet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+    CALL ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*999)
+    
+    controlLoop%whileLoop%continueLoop = continueLoop
+       
+    EXITS("ControlLoop_ContinueLoopSet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_ContinueLoopSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_ContinueLoopSet
 
   !
   !================================================================================================================================
@@ -1153,7 +1183,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS_cmfe_ControlLoopRelativeToleranceSet
+  !>Sets the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoopRelativeToleranceSet
   SUBROUTINE ControlLoop_RelativeToleranceSet(controlLoop,relativeTolerance,err,error,*)
 
     !Argument variables

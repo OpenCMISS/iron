@@ -48,11 +48,11 @@ MODULE ContextRoutines
   USE BasisRoutines
   USE ComputationRoutines
   USE ContextAccessRoutines
-  USE COORDINATE_ROUTINES
+  USE CoordinateSystemRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
-  USE REGION_ROUTINES
+  USE RegionRoutines
   USE Strings
   USE Types
 

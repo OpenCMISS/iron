@@ -43,7 +43,7 @@
 
 module electrophysiology_cell_routines
   USE BaseRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   use Kinds
@@ -91,7 +91,7 @@ contains
 
     ENTERS('bueno_orovio_init',err,error,*999)
     DO I=1,4
-      CALL FIELD_COMPONENT_VALUES_INITIALISE(field,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,y0(I),Err,ERROR,*999)
+      CALL Field_ComponentValuesInitialise(field,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,y0(I),Err,ERROR,*999)
     END DO
 
     EXITS('bueno_orovio_init')
@@ -179,8 +179,8 @@ contains
     CELLS_VARIABLE=>cells%variableTypeMap(field_u_variable_type)%PTR
     ACTIV_VARIABLE=>materials%variableTypeMap(field_u_variable_type)%PTR
 
-    CALL FIELD_PARAMETER_SET_DATA_GET(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
-    CALL FIELD_PARAMETER_SET_DATA_GET(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataGet(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataGet(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
 
     do i=1,ncells
       !   field ->   y
@@ -204,13 +204,13 @@ contains
       end do
       !   y -> field  
       do d=1,celldim
- !       call field_parameter_set_update_local_node(cells,field_u_variable_type,field_values_set_type,1,i,d,y(d), err,error,*999)
+ !       call Field_ParameterSetUpdateLocalNode(cells,field_u_variable_type,field_values_set_type,1,i,d,y(d), err,error,*999)
         !Default to version 1 of each node derivative
         celldata(CELLS_VARIABLE%COMPONENTS(d)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1)) = y(d)
       end do
     end do
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataRestore(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataRestore(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
 
 
     EXITS('bueno_orovio_integrate')
@@ -235,7 +235,7 @@ contains
 
     ENTERS('tentusscher06_init',err,error,*999)
     DO I=1,19
-      CALL FIELD_COMPONENT_VALUES_INITIALISE(field,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,y0(I),Err,ERROR,*999)
+      CALL Field_ComponentValuesInitialise(field,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,y0(I),Err,ERROR,*999)
     END DO
 
     EXITS('tentusscher06_init')
@@ -390,8 +390,8 @@ contains
     CELLS_VARIABLE=>cells%variableTypeMap(field_u_variable_type)%PTR
     ACTIV_VARIABLE=>materials%variableTypeMap(field_u_variable_type)%PTR
 
-    CALL FIELD_PARAMETER_SET_DATA_GET(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
-    CALL FIELD_PARAMETER_SET_DATA_GET(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataGet(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataGet(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
 
     do i=1,ncells
       !Default to version 1 of each node derivative
@@ -436,8 +436,8 @@ contains
         activdata(ACTIV_VARIABLE%COMPONENTS(7)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1))=t1
       end if
     end do ! for cells
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataRestore(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
+    CALL Field_ParameterSetDataRestore(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
 
     EXITS('tentusscher06_integrate')
     return

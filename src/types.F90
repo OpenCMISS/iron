@@ -150,38 +150,38 @@ MODULE Types
   !
 
   !>Contains information for a particular quadrature scheme. \see OpenCMISS::Iron::cmfe_QuadratureSchemeType \todo Also evaluate the product of the basis functions at gauss points for speed???
-  TYPE QUADRATURE_SCHEME_TYPE
+  TYPE QuadratureSchemeType
     INTEGER(INTG) :: globalNumber !<The global number of the quadrature scheme in the list of quadrature schemes for a particular quadrature.
-    TYPE(QUADRATURE_TYPE), POINTER :: QUADRATURE !<The pointer back to the quadrature for a particular quadrature scheme
-    INTEGER(INTG) :: NUMBER_OF_GAUSS !<The number of gauss points for the quadrature scheme.
-    REAL(DP), ALLOCATABLE :: GAUSS_POSITIONS(:,:) !<GAUSS_POSITIONS(nic,ng). The positions in the nic'th xi coordinate of Gauss point ng. Old CMISS name XIG(ni,ng,nb).
-    REAL(DP), ALLOCATABLE :: GAUSS_WEIGHTS(:) !<GAUSS_WEIGHTS(ng). The weight applied to Gauss point ng. Old CMISS name WG(ng,nb).
-    REAL(DP), ALLOCATABLE :: GAUSS_BASIS_FNS(:,:,:) !<GAUSS_BASIS_FNS(ns,nu,ng). The value of the basis functions evaluated at Gauss point ng for the nu'th derivative of the basis function associated with the ns'th element parameter. Old CMISS name PG(ns,nu,ng,nb)
+    TYPE(QuadratureType), POINTER :: quadrature !<The pointer back to the quadrature for a particular quadrature scheme
+    INTEGER(INTG) :: numberOfGauss !<The number of gauss points for the quadrature scheme.
+    REAL(DP), ALLOCATABLE :: gaussPositions(:,:) !<gaussPositions(xiCoordIdx,gaussPointIdx). The positions in the xiCoordIdx'th xi coordinate of Gauss point gaussPointIdx. Old CMISS name XIG(ni,ng,nb).
+    REAL(DP), ALLOCATABLE :: gaussWeights(:) !<gaussWeights(gaussPointIdx). The weight applied to Gauss point ng. Old CMISS name WG(ng,nb).
+    REAL(DP), ALLOCATABLE :: gaussBasisFunctions(:,:,:) !<gaussBasisFunctions(elementParameterIdx,partialDerivativeIdx,gaussPointIdx). The value of the basis functions evaluated at Gauss point ng for the nu'th derivative of the basis function associated with the ns'th element parameter. Old CMISS name PG(ns,nu,ng,nb)
     !Quadrature information at faces
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_FACE_GAUSS(:) !<NUMBER_OF_FACE_GAUSS(:) number of gauss points in each local face of the element
-    REAL(DP), ALLOCATABLE :: FACE_GAUSS_BASIS_FNS(:,:,:,:) !<FACE_GAUSS_BASIS_FNS(ns,nu,ng,naf)
-    REAL(DP), ALLOCATABLE :: FACE_GAUSS_POSITIONS(:,:,:) !<FACE_GAUSS_POSITIONS(nic,ng,naf)
-    REAL(DP), ALLOCATABLE :: FACE_GAUSS_WEIGHTS(:,:) !<FACE_GAUSS_WEIGHTS(ng,naf)
-  END TYPE QUADRATURE_SCHEME_TYPE
+    INTEGER(INTG), ALLOCATABLE :: numberOfFaceGauss(:) !<numberOfFaceGauss(localFaceIdx) number of gauss points in each local face of the element
+    REAL(DP), ALLOCATABLE :: faceGaussBasisFunctions(:,:,:,:) !<faceGaussBasisFunctions(elementParameterIdx,partialDerivativeIdx,gaussPointIdx,localFaceIdx)
+    REAL(DP), ALLOCATABLE :: faceGaussPositions(:,:,:) !<faceGaussPositions(xiCoordIdx,gaussPointIdx,localFaceIdx)
+    REAL(DP), ALLOCATABLE :: faceGaussWeights(:,:) !<faceGaussWeights(gaussPointIdx,localFaceIdx)
+  END TYPE QuadratureSchemeType
 
-  !>A buffer type to allow for an array of pointers to a QUADRATURE_SCHEME_TYPE \see Types::QUADRATURE_SCHEME_TYPE
-  TYPE QUADRATURE_SCHEME_PTR_TYPE
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: ptr !<A pointer to the quadrature scheme
-  END TYPE QUADRATURE_SCHEME_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a QuadratureSchemeType \see Types::QuadratureSchemeType
+  TYPE QuadratureSchemePtrType
+    TYPE(QuadratureSchemeType), POINTER :: ptr !<A pointer to the quadrature scheme
+  END TYPE QuadratureSchemePtrType
 
   !>Contains information on the quadrature to be used for integrating a basis. \see OpenCMISS::Iron::cmfe_QuadratureType
-  TYPE QUADRATURE_TYPE
-    INTEGER(INTG) :: TYPE !<The type of the quadrature \see BASIS_ROUTINES_QuadratureTypes
-    TYPE(BasisType), POINTER :: BASIS !<The pointer back to the basis
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_GAUSS_XI(:) !<NUMBER_OF_GAUSS_XI(ni). For standard Gauss schemes the number of Gauss points to be used in the ni'th xi direction.
-    INTEGER(INTG) :: GAUSS_ORDER !<For simplex Gauss schemes the order of the Quadrature scheme i.e., the order/dimension of the polynomial that can be integrated.
-    TYPE(QUADRATURE_SCHEME_PTR_TYPE), ALLOCATABLE :: QUADRATURE_SCHEME_MAP(:) !<QUADRATURE_SCHEME_MAP(scheme_idx). The pointer map to the defined quadrature schemes. The size of array is given by BASIS_ROUTINES::BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES. If the quadrature scheme is not defined for the particular type then the array element is NULL. \see BASIS_ROUTINES_QuadratureSchemes.
-    INTEGER(INTG) :: NUMBER_OF_SCHEMES !<The number of quadrature schemes defined for this quadrature
-    TYPE(QUADRATURE_SCHEME_PTR_TYPE), POINTER :: SCHEMES(:) !<SCHEMES(scheme_idx). The array of pointers to the quadrature schemes defined for the basis. scheme_idx must be between 1 and QUADRATURE_TYPE::NUMBER_OF_SCHEMES.
-    LOGICAL :: EVALUATE_FACE_GAUSS=.FALSE. !! \todo should this be here??
-  END TYPE QUADRATURE_TYPE
+  TYPE QuadratureType
+    INTEGER(INTG) :: type !<The type of the quadrature \see BasisRoutines_QuadratureTypes
+    TYPE(BasisType), POINTER :: basis !<The pointer back to the basis
+    INTEGER(INTG), ALLOCATABLE :: numberOfGaussXi(:) !<numberOfGaussXi(xiIdx). For standard Gauss schemes the number of Gauss points to be used in the xiIdx'th xi direction.
+    INTEGER(INTG) :: gaussOrder !<For simplex Gauss schemes the order of the Quadrature scheme i.e., the order/dimension of the polynomial that can be integrated.
+    TYPE(QuadratureSchemePtrType), ALLOCATABLE :: quadratureSchemeMap(:) !<quadratureSchemeMap(schemeIdx). The pointer map to the defined quadrature schemes. The size of array is given by BasisRoutines::BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES. If the quadrature scheme is not defined for the particular type then the array element is NULL. \see BasisRoutines_QuadratureSchemes.
+    INTEGER(INTG) :: numberOfSchemes !<The number of quadrature schemes defined for this quadrature
+    TYPE(QuadratureSchemePtrType), POINTER :: schemes(:) !<schemes(schemeIdx). The array of pointers to the quadrature schemes defined for the basis. scheme_idx must be between 1 and QuadratureType::NUMBER_OF_SCHEMES.
+    LOGICAL :: evaluateFaceGauss=.FALSE. !! \todo should this be here??
+  END TYPE QuadratureType
 
-  PUBLIC QUADRATURE_SCHEME_TYPE,QUADRATURE_SCHEME_PTR_TYPE,QUADRATURE_TYPE
+  PUBLIC QuadratureSchemeType,QuadratureSchemePtrType,QuadratureType
 
   !
   !================================================================================================================================
@@ -203,19 +203,19 @@ MODULE Types
     TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer back to the basis functions for the basis.
     LOGICAL :: basisFinished !<Is .TRUE. if the basis has finished being created, .FALSE. if not.
     LOGICAL :: hermite !<Is .TRUE. if the basis is a hermite basis, .FALSE. if not.
-    INTEGER(INTG) :: type !< The type of basis \see BASIS_ROUTINES_BasisTypes 
+    INTEGER(INTG) :: type !< The type of basis \see BasisRoutines_BasisTypes 
     INTEGER(INTG) :: numberOfXi !<The number of xi directions for the basis.
     INTEGER(INTG) :: numberOfXiCoordinates !<The number of xi coordinate directions for the basis. For Lagrange Hermite tensor product basis functions this is equal to the number of Xi directions. For simplex basis functions this is equal to the number of Xi directions + 1
-    INTEGER(INTG), ALLOCATABLE :: interpolationXi(:) !<interpolationXi(xiIdx). The interpolation specification used in the xiIdx'th Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
-    INTEGER(INTG), ALLOCATABLE :: interpolationType(:) !<interpolationType(xicIdx). The interpolation type in the xiIdx'th Xi coordinate direction. Old CMISS name IBT(1,xiIdx,basisIdx) \see BASIS_ROUTINES_InterpolationTypes
-    INTEGER(INTG), ALLOCATABLE :: interpolationOrder(:)!<interpolationOrder(xicIdx). The interpolation order in the xiIdx'th Xi coordinate direction. Old CMISS name IBT(2,xiIdx,basisIdx) \see BASIS_ROUTINES_InterpolationOrder 
+    INTEGER(INTG), ALLOCATABLE :: interpolationXi(:) !<interpolationXi(xiIdx). The interpolation specification used in the xiIdx'th Xi direction \see BasisRoutines_InterpolationSpecifications
+    INTEGER(INTG), ALLOCATABLE :: interpolationType(:) !<interpolationType(xicIdx). The interpolation type in the xiIdx'th Xi coordinate direction. Old CMISS name IBT(1,xiIdx,basisIdx) \see BasisRoutines_InterpolationTypes
+    INTEGER(INTG), ALLOCATABLE :: interpolationOrder(:)!<interpolationOrder(xicIdx). The interpolation order in the xiIdx'th Xi coordinate direction. Old CMISS name IBT(2,xiIdx,basisIdx) \see BasisRoutines_InterpolationOrder 
     !Degenerate information
     LOGICAL :: degenerate !<Is .TRUE. if the basis is a degenerate basis (i.e., has collapsed nodes), .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: collapsedXi(:) !<collapsedXi(xiIdx). The collapsed state of the xiIdx'th direction. collapsedXi can be either XI_COLLAPSED, COLLAPSED_AT_XI0, COLLAPSED_AT_XI1 or NOT_COLLAPSED depending on whether or not the xiIdx'th direction is collapsed, has a perpendicular Xi collapsed at the xi=0 end of the xiIdx'th direction, has a perpendicular xi collapsed at the xi=1 of the xiIdx'th direction or is not collapsed. NOTE: in old cmiss the value IBT(1,xiIdx) = 5 or 6 was set for the xiIdx that was collapsed. The perpendicular line/face was then stored in IBT(3,xiIdx). For this the quadratic1 and quadratic2 type interpolation types are set on the perpendicular xi direction and the xiIdx direction that is collapsed will have collapsedXi(xiIdx) set to XI_COLLAPSED. BE CAREFUL WITH THIS WHEN TRANSLATING OLD CMISS CODE. Old CMISS name IBT(1,xiIdx) ???? \see BASIS_ROUTINES_XiCollapse
+    INTEGER(INTG), ALLOCATABLE :: collapsedXi(:) !<collapsedXi(xiIdx). The collapsed state of the xiIdx'th direction. collapsedXi can be either XI_COLLAPSED, COLLAPSED_AT_XI0, COLLAPSED_AT_XI1 or NOT_COLLAPSED depending on whether or not the xiIdx'th direction is collapsed, has a perpendicular Xi collapsed at the xi=0 end of the xiIdx'th direction, has a perpendicular xi collapsed at the xi=1 of the xiIdx'th direction or is not collapsed. NOTE: in old cmiss the value IBT(1,xiIdx) = 5 or 6 was set for the xiIdx that was collapsed. The perpendicular line/face was then stored in IBT(3,xiIdx). For this the quadratic1 and quadratic2 type interpolation types are set on the perpendicular xi direction and the xiIdx direction that is collapsed will have collapsedXi(xiIdx) set to XI_COLLAPSED. BE CAREFUL WITH THIS WHEN TRANSLATING OLD CMISS CODE. Old CMISS name IBT(1,xiIdx) ???? \see BasisRoutines_XiCollapse
     INTEGER(INTG) :: numberOfCollapsedXi !<The number of xi directions in the basis that are collapsed.
     LOGICAL, ALLOCATABLE :: nodeAtCollapse(:) !<nodeAtCollapse(localNodeIdx). Is .TRUE. if the localNodeIdx'th node of the basis is at a collapse, .FALSE. if not.
     !Quadrature
-    TYPE(QUADRATURE_TYPE) :: quadrature !<The quadrature schemes for the basis.
+    TYPE(QuadratureType) :: quadrature !<The quadrature schemes for the basis.
     INTEGER(INTG) :: numberOfPartialDerivatives !<The number of partial derivatives for the basis. Old CMISS name NUT(basisFamilyIdx)
     INTEGER(INTG) :: numberOfNodes !<The number of local nodes in the basis. Old CMISS name NNT(basisFamilyIdx)
     !\todo
@@ -279,7 +279,7 @@ MODULE Types
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer back to the coordinate systems for the coordinate system
     LOGICAL :: coordinateSystemFinished !<Is .TRUE. if the coordinate system has finished being created, .FALSE. if not.
     INTEGER(INTG) :: type !<The type of coordinate system. Old CMISS name ITYP10(nr). \see COORINDATE_ROUTINES_CoordinateSystemTypes
-    INTEGER(INTG) :: radialInterpolationType !<The type of radial interpolation type for non-rectangular cartesian systems. Old CMISS name JTYP10(nr). \see COORDINATE_ROUTINES_RadialInterpolations
+    INTEGER(INTG) :: radialInterpolationType !<The type of radial interpolation type for non-rectangular cartesian systems. Old CMISS name JTYP10(nr). \see CoordinateRoutines_RadialInterpolations
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions for the coordinate system. Old CMISS name NJT.
     REAL(DP) :: focus !<The focus of the coordinate system for a prolate-spheriodal coordinate system.
     REAL(DP) :: origin(3) !<origin(coordinateIdx). The coordinateIdx'th component of the origin of the coordinate system wrt the global coordinate system. NOTE: maybe this should be wrt to the parent regions coordinate system - this would then go into the REGION type.
@@ -1380,7 +1380,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     REAL(DP), ALLOCATABLE :: dXdXi(:,:) !<dXdXi(coordinateIdx,xiIdx). Rate of change of the X coordinate system wrt the Xi coordinate system.
     REAL(DP), ALLOCATABLE :: dXidX(:,:) !<dXidX(xiIdx,coordinateIdx). Rate of change of the Xi coordinate system wrt the X coordinate system. 
     REAL(DP) :: jacobian !<The Jacobian of the Xi to X coordinate system transformation. Old CMISS name RG.
-    INTEGER(INTG) :: jacobianType !<The type of Jacobian. \see COORDINATE_ROUTINES_JacobianType
+    INTEGER(INTG) :: jacobianType !<The type of Jacobian. \see CoordinateRoutines_JacobianType
   END TYPE FieldInterpolatedPointMetricsType
 
   TYPE FieldInterpolatedPointMetricsPtrType
@@ -1436,7 +1436,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A type to hold the field scalings for the field.
   TYPE FieldScalingsType
-    INTEGER(INTG) :: scalingType !<The type of scaling that is applied to the field. \see FIELD_ROUTINES_ScalingTypes
+    INTEGER(INTG) :: scalingType !<The type of scaling that is applied to the field. \see FieldRoutines_ScalingTypes
     INTEGER(INTG) :: numberOfScalingIndices !<The number of scaling indices (or sets of scale factors) for the field. In general there will be a set of scale factors (or a scaling index) for each different mesh component that is used by the field variable components.
     TYPE(FieldScalingType), ALLOCATABLE :: scalings(:) !<scalings(scalingIdx). The scaling factors for the scalingIdx'th set of scaling factors. 
   END TYPE FieldScalingsType
@@ -1518,7 +1518,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: componentNumber !<The number of the field variable component.
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable for this component.
     TYPE(VARYING_STRING) :: componentLabel !<The label for the field variable component
-    INTEGER(INTG) :: interpolationType !<The interpolation type of the field variable component \see FIELD_ROUTINES_InterpolationTypes
+    INTEGER(INTG) :: interpolationType !<The interpolation type of the field variable component \see FieldRoutines_InterpolationTypes
     INTEGER(INTG) :: meshComponentNumber !<The mesh component of the field decomposition for this field variable component.
     INTEGER(INTG) :: scalingIndex !<The index into the defined field scalings for this field variable component.
     TYPE(DomainType), POINTER :: domain !<A pointer to the domain of the field decomposition for this field variable component.
@@ -1530,7 +1530,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>A type to hold the parameter sets for a field.
   TYPE FieldParameterSetType
     INTEGER(INTG) :: setIndex !<The global set index (from 1 to the Types::FieldParameterSetsType::numberOfParameterSets) that this parameter set corresponds to.
-    INTEGER(INTG) :: setType !<The user set type (index) (from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES) that this parameter set \see FIELD_ROUTINES_ParameterSetTypes
+    INTEGER(INTG) :: setType !<The user set type (index) (from 1 to FieldRoutines::FIELD_NUMBER_OF_SET_TYPES) that this parameter set \see FieldRoutines_ParameterSetTypes
   !###      corresponds to.
     TYPE(DistributedVectorType), POINTER :: parameters !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
   END TYPE FieldParameterSetType
@@ -1544,20 +1544,20 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE FieldParameterSetsType    
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable that these parameter sets are defined on.
     INTEGER(INTG) :: numberOfParameterSets !<The number of parameter sets that are currently defined on the field.
-    TYPE(FieldParameterSetPtrType), POINTER :: setType(:) !<setType(setTypeIdx). A pointer to an array of pointers to the field set types. setType(setTypeIdx)%ptr is a pointer to the parameter set type for the setTypeIdx'th parameter set. setTypeIdx can vary from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES. The value of the pointer will be NULL if the parameter set corresponding to the setTypeIdx'th parameter set has not yet been created for the field.
+    TYPE(FieldParameterSetPtrType), POINTER :: setType(:) !<setType(setTypeIdx). A pointer to an array of pointers to the field set types. setType(setTypeIdx)%ptr is a pointer to the parameter set type for the setTypeIdx'th parameter set. setTypeIdx can vary from 1 to FieldRoutines::FIELD_NUMBER_OF_SET_TYPES. The value of the pointer will be NULL if the parameter set corresponding to the setTypeIdx'th parameter set has not yet been created for the field.
     TYPE(FieldParameterSetPtrType), POINTER :: parameterSets(:) !<parameterSets(setTypeIdx). \todo change to allocatable. A pointer to an array of pointers to the parameter sets that have been created on the field. parameterSets(setTypeIdx)%ptr is a pointer to the parameter set type for the setTypeIdx'th parameter set that has been created. setTypeIdx can vary from 1 to the number of parameter set types that have currently been created for the field i.e., Types::FieldParameterSetsType::numberOfParameterSets.
   END TYPE FieldParameterSetsType
 
   !>Contains information for a field variable defined on a field.
   TYPE FieldVariableType
     INTEGER(INTG) :: variableNumber !<The number of the field variable
-    INTEGER(INTG) :: variableType !<The type of the field variable. \see FIELD_ROUTINES_VariableTypes
+    INTEGER(INTG) :: variableType !<The type of the field variable. \see FieldRoutines_VariableTypes
     TYPE(VARYING_STRING) :: variableLabel !<The label for the variable
     TYPE(FieldType), POINTER :: field !<A pointer to the field for this field variable.
     TYPE(RegionType), POINTER :: region !<A pointer to the region for this field variable.
-    INTEGER(INTG) :: dimension !<The dimension of the field variable. \see FIELD_ROUTINES_DimensionTypes
-    INTEGER(INTG) :: dataType !<The data type of the field variable.  \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
-    INTEGER(INTG) :: dofOrderType !<The order of the DOF's in the field variable \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
+    INTEGER(INTG) :: dimension !<The dimension of the field variable. \see FieldRoutines_DimensionTypes
+    INTEGER(INTG) :: dataType !<The data type of the field variable.  \see FieldRoutines_DataTypes,FieldRoutines
+    INTEGER(INTG) :: dofOrderType !<The order of the DOF's in the field variable \see FieldRoutines_DOFOrderTypes,FieldRoutines
     INTEGER(INTG) :: maxNumberElementInterpolationParameters !<The maximum number of interpolation parameters in an element for a field variable. 
     INTEGER(INTG) :: maxNumberNodeInterpolationParameters !<The maximum number of interpolation parameters in an element for a field variable. 
     INTEGER(INTG) :: numberOfDofs !<Number of local degress of freedom for this field variable (excluding ghosted dofs). Old CMISS name NYNR(0,0,nc,nr,nx).
@@ -1577,29 +1577,29 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A type to temporarily hold (cache) the user modifiable values which are used to create a field. 
   TYPE FieldCreateValuesCacheType
-    LOGICAL :: LABEL_LOCKED !<Is .TRUE. if the field label has been locked, .FALSE. if not.
-    LOGICAL :: DECOMPOSITION_LOCKED !<Is .TRUE. if the field decomposition has been locked, .FALSE. if not.
+    LOGICAL :: labelLocked !<Is .TRUE. if the field label has been locked, .FALSE. if not.
+    LOGICAL :: decompositionLocked !<Is .TRUE. if the field decomposition has been locked, .FALSE. if not.
     LOGICAL :: DataProjectionLocked !<Is .TRUE. if the field data projection has been locked, .FALSE. if not.
-    LOGICAL :: DEPENDENT_TYPE_LOCKED !<Is .TRUE. if the field dependent type has been locked, .FALSE. if not.
+    LOGICAL :: dependentTypeLocked !<Is .TRUE. if the field dependent type has been locked, .FALSE. if not.
     LOGICAL :: numberOfVariablesLocked !<Is .TRUE. if the number of field variables has been locked, .FALSE. if not.
     LOGICAL :: geometricFieldLocked !<Is .TRUE. if the geometric field has been locked, .FALSE. if not.
     LOGICAL :: scalingTypeLocked !<Is .TRUE. if the scaling type has been locked, .FALSE. if not.        
-    LOGICAL :: TYPE_LOCKED !<Is .TRUE. if the field type has been locked, .FALSE. if not.        
-    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variableIdx). The cache of the variable type for the given variableIdx of the field. \see FIELD_ROUTINES_VariableTypes
+    LOGICAL :: typeLocked !<Is .TRUE. if the field type has been locked, .FALSE. if not.        
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variableIdx). The cache of the variable type for the given variableIdx of the field. \see FieldRoutines_VariableTypes
     LOGICAL :: variableTypesLocked !<Is .TRUE. if the variable types have been locked, .FALSE. if not.
     TYPE(VARYING_STRING), ALLOCATABLE :: variableLabels(:) !<variableLabels(variableTypeIdx). The variable label for the variableTypeIdx'th variable type of the field.
     LOGICAL, ALLOCATABLE :: variableLabelsLocked(:) !<variableLabelsLocked(variableTypeIdx). Is .TRUE. if the variable label for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: DIMENSION(:) !<DIMENSION(variableTypeIdx). The cache of the variable dimension for the variableTypeIdx'th variable type of the field. \see FIELD_ROUTINES_DimensionTypes
-    LOGICAL, ALLOCATABLE :: DIMENSION_LOCKED(:) !<DIMENSION_LOCKED(variableTypeIdx). Is .TRUE. if the dimension for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: dataTypes(:) !<dataTypes(variableTypeIdx). The cache of the variable data type for the variableTypeIdx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
+    INTEGER(INTG), ALLOCATABLE :: dimension(:) !<dimension(variableTypeIdx). The cache of the variable dimension for the variableTypeIdx'th variable type of the field. \see FieldRoutines_DimensionTypes
+    LOGICAL, ALLOCATABLE :: dimensionLocked(:) !<dimensionLocked(variableTypeIdx). Is .TRUE. if the dimension for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: dataTypes(:) !<dataTypes(variableTypeIdx). The cache of the variable data type for the variableTypeIdx'th variable type of the field. \see FieldRoutines_DataTypes
     LOGICAL, ALLOCATABLE :: dataTypesLocked(:) !<dataTypesLocked(variableTypeIdx). Is .TRUE. if the data type for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: dofOrderTypes(:) !<dofOrderTypes(variableTypeIdx). The cache of the variable dof order type for the variableTypeIdx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
+    INTEGER(INTG), ALLOCATABLE :: dofOrderTypes(:) !<dofOrderTypes(variableTypeIdx). The cache of the variable dof order type for the variableTypeIdx'th variable type of the field. \see FieldRoutines_DataTypes
     LOGICAL, ALLOCATABLE :: dofOrderTypesLocked(:) !<dofOrderTypesLocked(variableTypeIdx). Is .TRUE. if the dof order type for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
     INTEGER(INTG), ALLOCATABLE :: numberOfComponents(:) !<numberOfComponents(variableTypeIdx). The number of components in the field for the variableTypeIdx'th field variable type.
     LOGICAL, ALLOCATABLE :: numberOfComponentsLocked(:) !<numberOfComponentsLocked(variableTypeIdx). Is .TRUE. if the number of components has been locked for the variableTypeIdx'th variable type, .FALSE. if not.
     TYPE(VARYING_STRING), ALLOCATABLE :: componentLabels(:,:) !<componentLabels(componentIdx,variableTypeIdx). The cache of the component label for the given component and variable type of the field.
     LOGICAL, ALLOCATABLE :: componentLabelsLocked(:,:) !<componentLabelsLocked(componentIdx,variableTypeIdx). Is .TRUE. if the component label of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: interpolationTypes(:,:) !<interpolationTypes(componentIdx,variableTypeIdx). The cache of the interpolation type for the given component and variable type of the field. \see FIELD_ROUTINES_InterpolationTypes
+    INTEGER(INTG), ALLOCATABLE :: interpolationTypes(:,:) !<interpolationTypes(componentIdx,variableTypeIdx). The cache of the interpolation type for the given component and variable type of the field. \see FieldRoutines_InterpolationTypes
     LOGICAL, ALLOCATABLE :: interpolationTypesLocked(:,:) !<interpolationTypesLocked(componentIdx,variableTypeIdx). Is .TRUE. if the interpolation type of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
     INTEGER(INTG), ALLOCATABLE :: meshComponentNumber(:,:) !<meshComponentNumber(componentIdx,varaible_type_idx). The cache of the mesh component number for the given component and variable type of the field.
     LOGICAL, ALLOCATABLE :: meshComponentNumberLocked(:,:) !<meshComponentNumberLocked(componentIdx,variableTypeIdx). Is .TRUE. if the mesh component number of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
@@ -1614,11 +1614,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FieldsType), POINTER :: fields !<A pointer to the fields for this region.
     TYPE(RegionType), POINTER :: region !<A pointer to the region containing the field. If the field are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(InterfaceType), POINTER :: interface!<A pointer to the interface containing the field. If the field are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
-    INTEGER(INTG) :: type !<The type of the field. NOTE: this should be a field variable attribute as you may have a, say, geometric field variable and a general field variable bundled together in the same field. \see FIELD_ROUTINES_FieldTypes
-    INTEGER(INTG) :: DEPENDENT_TYPE !<The dependent type of the field. \see FIELD_ROUTINES_DependentTypes
+    INTEGER(INTG) :: type !<The type of the field. NOTE: this should be a field variable attribute as you may have a, say, geometric field variable and a general field variable bundled together in the same field. \see FieldRoutines_FieldTypes
+    INTEGER(INTG) :: dependentType !<The dependent type of the field. \see FieldRoutines_DependentTypes
     TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition of the mesh for which the field is defined on.
     INTEGER(INTG) :: numberOfVariables !<The number of variable types in the field. Old CMISS name NCT(nr,nx)
-    TYPE(FieldVariablePtrType), ALLOCATABLE :: variableTypeMap(:) !<variableTypeMap(variableIdx). The map from the available field variable types to the field variable types that are defined for the field. variableIdx varies from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_variableTypes. If the particular field variable type has not been defined on the field then the variableTypeMap will be NULL. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: variableTypeMap(:) !<variableTypeMap(variableIdx). The map from the available field variable types to the field variable types that are defined for the field. variableIdx varies from 1 to FieldRoutines::FIELD_NUMBER_OF_VARIABLE_TYPES. If the particular field variable type has not been defined on the field then the variableTypeMap will be NULL. \see FieldRoutines_VariableTypes
     TYPE(FieldVariableType), ALLOCATABLE :: variables(:) !<variables(variableIdx). The array of field variables. 
     TYPE(FieldScalingsType) :: scalings !<The scaling parameters for the field
     TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field that this field uses. If the field itself is a geometric field then this will be a pointer back to itself.
@@ -2516,20 +2516,20 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: EQUATIONS_SET_FINISHED !<Is .TRUE. if the equations set have finished being created, .FALSE. if not.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer back to the equations sets
     TYPE(VARYING_STRING) :: label !<A user defined label for the equations set.
-    TYPE(RegionType), POINTER :: REGION !<A pointer back to the region containing the equations set.
-    INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
+    TYPE(RegionType), POINTER :: region !<A pointer back to the region containing the equations set.
+    INTEGER(INTG), ALLOCATABLE :: specification(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     REAL(DP) :: currentTime !<The current time for the equations set
     REAL(DP) :: deltaTime !<The current time increment for the equations set
     INTEGER(INTG) :: outputType !<The output type for the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EquationsRoutines_SolutionMethods 
-    TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: GEOMETRY !<The geometry information for the equations set.
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: MATERIALS !<A pointer to the materials information for the equations set.
-    TYPE(EQUATIONS_SET_SOURCE_TYPE), POINTER :: SOURCE !<A pointer to the source information for the equations set.
-    TYPE(EQUATIONS_SET_DEPENDENT_TYPE) :: DEPENDENT !<The depedent variable information for the equations set.
-    TYPE(EQUATIONS_SET_INDEPENDENT_TYPE), POINTER :: INDEPENDENT !<A pointer to the indepedent field information for the equations set.
-    TYPE(EQUATIONS_SET_ANALYTIC_TYPE), POINTER :: ANALYTIC !<A pointer to the analytic setup information for the equations set.
+    TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: geometry !<The geometry information for the equations set.
+    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: materials !<A pointer to the materials information for the equations set.
+    TYPE(EQUATIONS_SET_SOURCE_TYPE), POINTER :: source !<A pointer to the source information for the equations set.
+    TYPE(EQUATIONS_SET_DEPENDENT_TYPE) :: dependent !<The depedent variable information for the equations set.
+    TYPE(EQUATIONS_SET_INDEPENDENT_TYPE), POINTER :: independent !<A pointer to the indepedent field information for the equations set.
+    TYPE(EQUATIONS_SET_ANALYTIC_TYPE), POINTER :: analytic !<A pointer to the analytic setup information for the equations set.
     TYPE(EquationsSetDerivedType), POINTER :: derived !<A pointer to the derived field information.
-    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations information for the equations set
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations information for the equations set
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary condition information for the equations set.
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE) :: EQUATIONS_SET_FIELD !<A pointer to the equations set field for the equations set.
   END TYPE EQUATIONS_SET_TYPE
@@ -4023,8 +4023,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
     TYPE(DecomposersType), POINTER :: decomposers !<A pointer to the decomposers defined on the region.
     TYPE(FieldsType), POINTER :: fields !<A pointer to the fields defined on the region.
-    TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer to the equation sets defined on the region.
-    TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS !<A pointer to the CellML environments for the region.
+    TYPE(EQUATIONS_SETS_TYPE), POINTER :: equationsSets !<A pointer to the equation sets defined on the region.
+    TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: cellMLEnvironments !<A pointer to the CellML environments for the region.
     TYPE(RegionType), POINTER :: parentRegion !<A pointer to the parent region for the region. If the region has no parent region then it is the global (world) region and parentRegion is NULL.
     INTEGER(INTG) :: numberOfSubRegions !<The number of sub-regions defined for the region.
     TYPE(RegionPtrType), POINTER :: subRegions(:) !<An array of pointers to the sub-regions defined on the region. \todo make this allocatable

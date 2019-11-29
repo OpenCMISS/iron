@@ -80,16 +80,26 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVector_CreateValuesCacheGet
 
+  PUBLIC EquationsMappingVector_DynamicMappingExists
+  
   PUBLIC EquationsMappingVector_DynamicMappingGet
   
   PUBLIC EquationsMappingVector_LHSMappingGet
   
+  PUBLIC EquationsMappingVector_LinearMappingExists
+  
   PUBLIC EquationsMappingVector_LinearMappingGet
+  
+  PUBLIC EquationsMappingVector_NonlinearMappingExists
   
   PUBLIC EquationsMappingVector_NonlinearMappingGet
   
+  PUBLIC EquationsMappingVector_RHSMappingExists
+  
   PUBLIC EquationsMappingVector_RHSMappingGet
   
+  PUBLIC EquationsMappingVector_SourceMappingExists
+
   PUBLIC EquationsMappingVector_SourceMappingGet
 
   PUBLIC EquationsMappingVector_VectorEquationsGet
@@ -384,6 +394,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if the dynamic vector mapping for an vector mapping exists.
+  SUBROUTINE EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to get the dynamic mapping for
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<On exit, a pointer to the dynamic Mapping in the specified vector equations mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVector_DynamicMappingExists",err,error,*998)
+
+    IF(ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
+
+    dynamicMapping=>vectorMapping%dynamicMapping
+       
+    EXITS("EquationsMappingVector_DynamicMappingExists")
+    RETURN
+999 NULLIFY(dynamicMapping)
+998 ERRORSEXITS("EquationsMappingVector_DynamicMappingExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVector_DynamicMappingExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the dynamic vector mapping for an vector mapping.
   SUBROUTINE EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*)
 
@@ -444,6 +483,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if the linear vector mapping for an vector mapping exists.
+  SUBROUTINE EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to get the linear mapping for
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<On exit, a pointer to the linear Mapping in the specified vector equations mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVector_LinearMappingExists",err,error,*998)
+
+    IF(ASSOCIATED(linearMapping)) CALL FlagError("Linear mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
+
+    linearMapping=>vectorMapping%linearMapping
+       
+    EXITS("EquationsMappingVector_LinearMappingExists")
+    RETURN
+999 NULLIFY(linearMapping)
+998 ERRORSEXITS("EquationsMappingVector_LinearMappingExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVector_LinearMappingExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the linear vector mapping for an vector mapping.
   SUBROUTINE EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*)
 
@@ -469,6 +537,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingVector_LinearMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the nonlinear vector mapping for an vector mapping exists.
+  SUBROUTINE EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to get the nonlinear mapping for
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping !<On exit, a pointer to the nonlinear Mapping in the specified vector equations mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVector_NonlinearMappingExists",err,error,*998)
+
+    IF(ASSOCIATED(nonlinearMapping)) CALL FlagError("Nonlinear mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
+
+    nonlinearMapping=>vectorMapping%nonlinearMapping
+       
+    EXITS("EquationsMappingVector_NonlinearMappingExists")
+    RETURN
+999 NULLIFY(nonlinearMapping)
+998 ERRORS("EquationsMappingVector_NonlinearMappingExists",err,error)
+    EXITS("EquationsMappingVector_NonlinearMappingExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVector_NonlinearMappingExists
 
   !
   !================================================================================================================================
@@ -505,6 +603,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if the rhs vector mapping for an vector mapping exists.
+  SUBROUTINE EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to get the rhs mapping for
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<On exit, a pointer to the rhs Mapping in the specified vector equations mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVector_RHSMappingExists",err,error,*998)
+
+    IF(ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
+
+    rhsMapping=>vectorMapping%rhsMapping
+       
+    EXITS("EquationsMappingVector_RHSMappingExists")
+    RETURN
+999 NULLIFY(rhsMapping)
+998 ERRORSEXITS("EquationsMappingVector_RHSMappingExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVector_RHSMappingExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the rhs vector mapping for an vector mapping.
   SUBROUTINE EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*)
 
@@ -530,6 +657,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingVector_RHSMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the source vector mapping for an vector mapping exists.
+  SUBROUTINE EquationsMappingVector_SourceMappingExists(vectorMapping,sourceMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to get the source mapping for
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<On exit, a pointer to the source Mapping in the specified vector equations mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVector_SourceMappingExists",err,error,*998)
+
+    IF(ASSOCIATED(sourceMapping)) CALL FlagError("Source mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
+
+    sourceMapping=>vectorMapping%sourceMapping
+       
+    EXITS("EquationsMappingVector_SourceMappingExists")
+    RETURN
+999 NULLIFY(sourceMapping)
+998 ERRORSEXITS("EquationsMappingVector_SourceMappingExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVector_SourceMappingExists
 
   !
   !================================================================================================================================

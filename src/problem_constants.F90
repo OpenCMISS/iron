@@ -174,10 +174,7 @@ MODULE PROBLEM_CONSTANTS
   !Electromagnetics class
   !Classical field class
   !  Laplace equation
-!!TODO: We don't really have two problem types here? Maybe a different type with nonlinear boundary conditions???
   INTEGER(INTG), PARAMETER :: PROBLEM_STANDARD_LAPLACE_SUBTYPE=1
-  INTEGER(INTG), PARAMETER :: PROBLEM_GENERALISED_LAPLACE_SUBTYPE=2
-  INTEGER(INTG), PARAMETER :: PROBLEM_MOVING_MESH_LAPLACE_SUBTYPE=3
   !  Hamilton-Jacobi equation
   INTEGER(INTG), PARAMETER :: PROBLEM_STANDARD_HJ_SUBTYPE=1
   INTEGER(INTG), PARAMETER :: PROBLEM_GENERALISED_HJ_SUBTYPE=2

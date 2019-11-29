@@ -59,7 +59,94 @@ MODULE BasisAccessRoutines
   !Module parameters
 
 
-  !> \addtogroup Basis_QuadratureSchemes Basis::QuadratureSchemes
+  !> \addtogroup BasisRoutines_BasisTypes BasisRoutines::BasisTypes
+  !> \brief Basis definition type parameters
+  !> \todo Combine simplex and serendipity elements???
+  !> \see BasisRoutines,OPENCMISS_BasisTypes
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: BASIS_LAGRANGE_HERMITE_TP_TYPE=1 !<Lagrange-Hermite tensor product basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_SIMPLEX_TYPE=2 !<Simplex basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_SERENDIPITY_TYPE=3 !<Serendipity basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_AUXILLIARY_TYPE=4 !<Auxillary basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_B_SPLINE_TP_TYPE=5 !<B-spline basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE=6 !<Fourier-Lagrange tensor product basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_EXTENDED_LAGRANGE_TP_TYPE=7 !< Extendend Lagrange tensor product basis type \see BasisRoutines_BasisTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_RADIAL_TYPE=7 !< Radial basis typee \see BasisRoutines_BasisTypes,BasisRoutines
+  !>@}
+
+  !> \addtogroup BasisRoutines_InterpolationSpecifications BasisRoutines::InterpolationSpecifications
+  !> \brief Interpolation specification parameters
+  !> \see BasisRoutines,OPENCMISS_InterpolationSpecifications
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: BASIS_LINEAR_LAGRANGE_INTERPOLATION=1 !<Linear Lagrange interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC_LAGRANGE_INTERPOLATION=2 !<Quadratic Lagrange interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_CUBIC_LAGRANGE_INTERPOLATION=3 !<Cubic Lagrange interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_CUBIC_HERMITE_INTERPOLATION=4 !<Cubic Hermite interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC1_HERMITE_INTERPOLATION=5 !<Quadratic Hermite (no derivative at xi=0) interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC2_HERMITE_INTERPOLATION=6 !<Quadratic Hermite (no derivative at xi=1) interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_LINEAR_SIMPLEX_INTERPOLATION=7 !<Linear Simplex interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC_SIMPLEX_INTERPOLATION=8 !<Quadratic Simplex interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_CUBIC_SIMPLEX_INTERPOLATION=9 !<Cubic Simplex interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_GAUSSIAN_RADIAL_INTERPOLATION=10 !<Gaussian Radial interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_MULTIQUARTIC_RADIAL_INTERPOLATION=11 !<Multiquartic Radial interpolation specification \see BasisRoutines_InterpolationSpecifications,BasisRoutines
+  !>@}
+
+  !> \addtogroup BasisRoutines_InterpolationTypes BasisRoutines::InterpolationTypes
+  !> \brief Interpolation type parameters for a Xi direction
+  !> \see BasisRoutines
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: BASIS_LAGRANGE_INTERPOLATION=1 !<Lagrange interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_HERMITE_INTERPOLATION=2 !<Hermite interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_SIMPLEX_INTERPOLATION=3 !<Simplex interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_SERENDIPITY_INTERPOLATION=4 !<Serendipity interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_TRANSITION_INTERPOLATION=5 !<Transition interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_SINGULAR_INTERPOLATION=6 !<Singular interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_FOURIER_INTERPOLATION=7 !<Fourier interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_RADIAL_INTERPOLATION=8 !<Radial interpolation \see BasisRoutines_InterpolationTypes,BasisRoutines
+  !>@}
+  
+  !> \addtogroup BasisRoutines_InterpolationOrder BasisRoutines::InterpolationOrder
+  !> \brief Interpolation order for a Xi direction
+  !> \see BasisRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_LINEAR_INTERPOLATION_ORDER=1 !<Linear interpolation order \see BasisRoutines_InterpolationOrder,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC_INTERPOLATION_ORDER=2 !<Quadratic interpolation order \see BasisRoutines_InterpolationOrder,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_CUBIC_INTERPOLATION_ORDER=3 !<Cubic interpolation order \see BasisRoutines_InterpolationOrder,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC1_INTERPOLATION_ORDER=4 !<Quadratic (no derivative at xi=0) interpolation order \see BasisRoutines_InterpolationOrder,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_QUADRATIC2_INTERPOLATION_ORDER=5 !<Quadratic (no derivative at xi=1) interpolation order \see BasisRoutines_InterpolationOrder,BasisRoutines
+  !>@}
+  
+  !> \addtogroup BasisRoutines_QuadratureTypes BasisRoutines::QuadratureTypes
+  !> \brief Quadrature type parameters
+  !> \see BasisRoutines,OPENCMISS_QuadratureTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_GAUSS_LEGENDRE_QUADRATURE=1 !<Gauss-Legendre quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_GAUSS_LAGUERRE_QUADRATURE=2 !<Gauss-Laguerre quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_GUASS_HERMITE_QUADRATURE=3 !<Gauss-Hermite quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE=4 !<Adaptive Gauss-Legendre quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_GAUSS_SIMPLEX_QUADRATURE=5 !<Gauss-Legendre for Simplex elements quadrature  \see BasisRoutines_QuadratureTypes,BasisRoutines
+  !>@}
+
+  !> \addtogroup BasisRoutines_XiCollapse BasisRoutines::XiCollapse
+  !> \brief Xi collapse parameters
+  !> \see BasisRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_XI_COLLAPSED=1 !<The Xi direction is collapsed \see BasisRoutines_XiCollapse,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_COLLAPSED_AT_XI0=2 !<The Xi direction at the xi=0 end of this Xi direction is collapsed \see BasisRoutines_XiCollapse,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_COLLAPSED_AT_XI1=3 !<The Xi direction at the xi=1 end of this Xi direction is collapsed \see BasisRoutines_XiCollapse,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_NOT_COLLAPSED=4 !<The Xi direction is not collapsed \see BasisRoutines_XiCollapse,BasisRoutines
+  !>@}
+  
+  !> \addtogroup BasisRoutines_BoundaryXiType BasisRoutines::BoundaryXiType
+  !> \brief The boundary xi types
+  !> \see BasisRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_NO_BOUNDARY_XI=0 !<The xi is not on a boundary \see BasisRoutines_XiBoundaryType,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_LINE_BOUNDARY_XI=1 !<The xi is on a boundary line \see BasisRoutines_XiBoundaryType,BasisRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_FACE_BOUNDARY_XI=2 !<The xi is on a boundary face \see BasisRoutines_XiBoundaryType,BasisRoutines
+  !>@}
+  
+  !> \addtogroup Basis_QuadratureSchemes Basis::QuadratureSchemes  
   !> \brief Quadrature scheme parameters. NOTE: Quadratures schemes have not been implemented yet. For now you should just use the BASIS_DEFAULT_QUADRATURE_SCHEME.
   !> \see BasisRoutines,BasisAccessRoutines
   !>@{
@@ -76,38 +163,72 @@ MODULE BasisAccessRoutines
 
   !Interfaces
 
-  INTERFACE BASIS_FAMILY_NUMBER_FIND
-    MODULE PROCEDURE Basis_FamilyNumberFind
-  END INTERFACE BASIS_FAMILY_NUMBER_FIND
+  INTERFACE Basis_QuadratureGaussXiGet
+    MODULE PROCEDURE Basis_QuadratureGaussXiGet0
+    MODULE PROCEDURE Basis_QuadratureGaussXiGet1
+  END INTERFACE Basis_QuadratureGaussXiGet
+  
+  PUBLIC BASIS_LAGRANGE_HERMITE_TP_TYPE,BASIS_SIMPLEX_TYPE,BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+    & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE, BASIS_RADIAL_TYPE
 
-  INTERFACE BASIS_USER_NUMBER_FIND
-    MODULE PROCEDURE Basis_UserNumberFind
-  END INTERFACE BASIS_USER_NUMBER_FIND
+  PUBLIC BASIS_LINEAR_LAGRANGE_INTERPOLATION,BASIS_QUADRATIC_LAGRANGE_INTERPOLATION,BASIS_CUBIC_LAGRANGE_INTERPOLATION, &
+    & BASIS_CUBIC_HERMITE_INTERPOLATION,BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION, &
+    & BASIS_LINEAR_SIMPLEX_INTERPOLATION,BASIS_QUADRATIC_SIMPLEX_INTERPOLATION,BASIS_CUBIC_SIMPLEX_INTERPOLATION, &
+    & BASIS_GAUSSIAN_RADIAL_INTERPOLATION, BASIS_MULTIQUARTIC_RADIAL_INTERPOLATION
+
+  PUBLIC BASIS_LAGRANGE_INTERPOLATION,BASIS_HERMITE_INTERPOLATION,BASIS_SIMPLEX_INTERPOLATION,BASIS_SERENDIPITY_INTERPOLATION, &
+    & BASIS_TRANSITION_INTERPOLATION,BASIS_SINGULAR_INTERPOLATION,BASIS_FOURIER_INTERPOLATION,BASIS_RADIAL_INTERPOLATION
+
+  PUBLIC BASIS_LINEAR_INTERPOLATION_ORDER,BASIS_QUADRATIC_INTERPOLATION_ORDER,BASIS_CUBIC_INTERPOLATION_ORDER, &
+    & BASIS_QUADRATIC1_INTERPOLATION_ORDER,BASIS_QUADRATIC2_INTERPOLATION_ORDER
+  
+  PUBLIC BASIS_GAUSS_LEGENDRE_QUADRATURE,BASIS_GAUSS_LAGUERRE_QUADRATURE,BASIS_GUASS_HERMITE_QUADRATURE,&
+    & BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE,BASIS_GAUSS_SIMPLEX_QUADRATURE
+
+  PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED
+
+  PUBLIC BASIS_NO_BOUNDARY_XI,BASIS_LINE_BOUNDARY_XI,BASIS_FACE_BOUNDARY_XI
 
   PUBLIC BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,BASIS_DEFAULT_QUADRATURE_SCHEME,BASIS_LOW_QUADRATURE_SCHEME, &
     & BASIS_MID_QUADRATURE_SCHEME,BASIS_HIGH_QUADRATURE_SCHEME
 
   PUBLIC Basis_AssertIsFinished,Basis_AssertNotFinished
 
+  PUBLIC Basis_AssertIsLHTPBasis,Basis_AssertIsSimplexBasis
+
   PUBLIC Basis_BasisFunctionsGet
+
+  PUBLIC Basis_CollapsedXiGet
 
   PUBLIC Basis_ContextGet
   
   PUBLIC Basis_FamilyNumberFind
 
-  PUBLIC BASIS_FAMILY_NUMBER_FIND
-
   PUBLIC Basis_Get
+
+  PUBLIC Basis_InterpolationXiGet
 
   PUBLIC Basis_LocalFaceNumberGet
 
   PUBLIC Basis_LocalLineNumberGet
 
+  PUBLIC Basis_NumberOfLocalNodesGet
+
+  PUBLIC Basis_NumberOfXiGet
+
+  PUBLIC Basis_QuadratureGaussXiGet
+
+  PUBLIC Basis_QuadratureNumberOfGaussXiGet
+
+  PUBLIC Basis_QuadratureOrderGet
+
   PUBLIC Basis_QuadratureSchemeGet
 
-  PUBLIC Basis_UserNumberFind
+  PUBLIC Basis_QuadratureTypeGet
 
-  PUBLIC BASIS_USER_NUMBER_FIND
+  PUBLIC Basis_TypeGet
+
+  PUBLIC Basis_UserNumberFind
 
   PUBLIC Basis_UserNumberGet
 
@@ -178,6 +299,68 @@ CONTAINS
   END SUBROUTINE Basis_AssertNotFinished
 
   !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a basis is a LHTP basis
+  SUBROUTINE Basis_AssertIsLHTPBasis(basis,err,error,*)
+
+    !Argument Variables
+    TYPE(BasisType), POINTER, INTENT(INOUT) :: basis !<The basis to assert the LHTP status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Basis_AssertIsLHTPBasis",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+
+    IF(basis%TYPE/=BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
+      localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & " is not a LHTP basis."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Basis_AssertIsLHTPBasis")
+    RETURN
+999 ERRORSEXITS("Basis_AssertIsLHTPBasis",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_AssertIsLHTPBasis
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a basis is a simplex basis
+  SUBROUTINE Basis_AssertIsSimplexBasis(basis,err,error,*)
+
+    !Argument Variables
+    TYPE(BasisType), POINTER, INTENT(INOUT) :: basis !<The basis to assert the simplex status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Basis_AssertIsSimplexBasis",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+
+    IF(basis%TYPE/=BASIS_SIMPLEX_TYPE) THEN
+      localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & " is not a simplex basis."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Basis_AssertIsSimplexBasis")
+    RETURN
+999 ERRORSEXITS("Basis_AssertIsSimplexBasis",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_AssertIsSimplexBasis
+
+  !
   !================================================================================================================================
   !
 
@@ -211,6 +394,40 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_BasisFunctionsGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_Basis_CollapsedXiGet
+  SUBROUTINE Basis_CollapsedXiGet(basis,collapsedXi,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(OUT) :: collapsedXi(:) !<collapsedXi(xiIdx). On return, the collapse parameter for each Xi direction. \see BasisRoutines_XiCollapse
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_CollapsedXiGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(SIZE(collapsedXi,1)<SIZE(basis%collapsedXi)) THEN
+      localError="The size of collapsed xi is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(collapsedXi,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%collapsedXi,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    collapsedXi=basis%collapsedXi
+    
+    EXITS("Basis_CollapsedXiGet")
+    RETURN
+999 ERRORSEXITS("Basis_CollapsedXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_CollapsedXiGet
 
   !
   !================================================================================================================================
@@ -352,6 +569,40 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
+  !>Gets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_InterpolationXiGet
+  SUBROUTINE Basis_InterpolationXiGet(basis,interpolationXi,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the interpolation xi
+    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<On return, the interpolation xi parameters for each Xi direction \see BasisRoutines_InterpolationSpecifications
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_InterpolationXiGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(SIZE(interpolationXi,1)<SIZE(basis%interpolationXi,1)) THEN
+      localError="The size of interpolation xi is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(interpolationXi,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%interpolationXi,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    interpolationXi(1:SIZE(basis%interpolationXi,1))=basis%interpolationXi(1:SIZE(basis%interpolationXi,1))
+    
+    EXITS("Basis_InterpolationXiGet")
+    RETURN
+999 ERRORSEXITS("Basis_InterpolationXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_InterpolationXiGet  
+
+  !
+  !================================================================================================================================
+  !
 
   !>Finds the local face number that corresponds to a normal xi direction for the basis. 
   SUBROUTINE Basis_LocalFaceNumberGet(basis,normalXiDirection,localFaceNumber,err,error,*)
@@ -452,13 +703,231 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the number of local nodes in the specified basis \see OpenCMISS::Iron::cmfe_Basis_NumberOfLocalNodesGet
+  SUBROUTINE Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of nodes
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalNodes !<On return, the number of local nodes in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_NumberOfLocalNodesGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+   
+    numberOfLocalNodes=basis%numberOfNodes
+    
+    EXITS("Basis_NumberOfLocalNodesGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfLocalNodesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfLocalNodesGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_Basis_NumberOfXiGet
+  SUBROUTINE Basis_NumberOfXiGet(basis,numberOfXi,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis function to get the number of xi for
+    INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On return, the number of Xi directions for the specified basis.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_NumberOfXiGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    
+    numberOfXi=basis%numberOfXi
+   
+    EXITS("Basis_NumberOfXiGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfXiGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the xi positions of a Gauss point on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureGaussXiGet
+  SUBROUTINE Basis_QuadratureGaussXiGet0(basis,quadratureSchemeIdx,gaussPointNumber,gaussXi,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(IN) :: quadratureSchemeIdx !<The quadrature scheme to return the Gauss points for
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point to return the element xi position for.
+    REAL(DP), INTENT(OUT) :: gaussXi(:) !<On return, gaussXi(xiIdx) the xi position of the specified Gauss point for the specified quadrature scheme.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: gaussPointNumberArray(1)
+    REAL(DP) :: gaussXiArray(SIZE(gaussXi,1),1)
+    
+    ENTERS("Basis_QuadratureGaussXiGet0",err,error,*999)
+
+    gaussPointNumberArray(1)=gaussPointNumber
+    CALL Basis_QuadratureGaussXiGet1(basis,quadratureSchemeIdx,gaussPointNumberArray,gaussXiArray,err,error,*999)
+    gaussXi(:)=gaussXiArray(:,1)
+      
+    EXITS("Basis_QuadratureGaussXiGet0")
+    RETURN
+999 ERRORSEXITS("Basis_QuadratureGaussXiGet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_QuadratureGaussXiGet0
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the xi positions of Gauss points on a basis quadrature identified by a pointer. If no Gauss points are specified then xi positions of all Gauss points are returned. \see OpenCMISS::Iron::cmfe_Basis_QuadratureGaussXiGet
+  SUBROUTINE Basis_QuadratureGaussXiGet1(basis,quadratureSchemeIdx,gaussPointNumbers,gaussXi,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(IN) :: quadratureSchemeIdx !<The quadrature scheme to return the Gauss points for
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumbers(:) !<gaussPointNumbers(gaussPointIdx). The Gauss points to return the element xi positions for.
+    REAL(DP), INTENT(OUT) :: gaussXi(:,:) !<On return, gaussXi(xiIdx,gaussPointIdx) the Gauss xi positions for the specified quadrature scheme.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: gaussPointIdx
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_QuadratureGaussXiGet1",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+    NULLIFY(quadratureScheme)
+    CALL Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*999)
+    IF(SIZE(gaussXi,1)<basis%numberOfXi) THEN
+      localError="The number of xi values to return of "//TRIM(NumberToVString(SIZE(gaussXi,1),"*",err,error))// &
+        & " is invalid and needs to be >= "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" for the specified basis."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    IF(SIZE(gaussPointNumbers,1)==0) THEN !Return all Gauss point xi locations.
+      IF(SIZE(gaussXi,2)<quadratureScheme%numberOfGauss) THEN
+        localError="The number of Gauss Points to return the xi values for of "// &
+          & TRIM(NumberToVString(SIZE(gaussXi,2),"*",err,error))//" is invalid and needs to be >= "// &
+          & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      gaussXi(1:basis%numberOfXi,quadratureScheme%numberOfGauss)= &
+        & quadratureScheme%gaussPositions(1:basis%numberOfXi,quadratureScheme%numberOfGauss)
+    ELSE !Return only specified Gauss point xi locations.
+      IF(SIZE(gaussXi,2)<SIZE(gaussPointNumbers,1)) THEN
+        localError="The number of Gauss Points to return the xi values for of "// &
+          & TRIM(NumberToVString(SIZE(gaussXi,2),"*",err,error))//" is invalid and needs to be >= "// &
+          & TRIM(NumberToVString(SIZE(gaussPointNumbers,1),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO gaussPointIdx=1,SIZE(gaussPointNumbers)
+        IF(gaussPointNumbers(gaussPointIdx)<1.OR.gaussPointNumbers(gaussPointIdx)>quadratureScheme%numberOfGauss) THEN
+          localError="The specified Gauss point number of "// &
+            & TRIM(NumberToVString(gaussPointNumbers(gaussPointIdx),"*",err,error))// &
+            & " at position index "//TRIM(NumberToVString(gaussPointIdx,"*",err,error))// &
+            & " is invalid for quadrature scheme index "// &
+            & TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))//" of basis number "// &
+            & TRIM(NumberToVString(basis%userNumber,"*",err,error))//". The Gauss point number should be >=1 and <= "// &
+            & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        gaussXi(1:basis%numberOfXi,gaussPointIdx)= &
+          & quadratureScheme%gaussPositions(1:basis%numberOfXi,gaussPointNumbers(gaussPointIdx))
+      ENDDO !gaussPointIdx
+    ENDIF
+      
+    EXITS("Basis_QuadratureGaussXiGet1")
+    RETURN
+999 ERRORSEXITS("Basis_QuadratureGaussXiGet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_QuadratureGaussXiGet1
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Get the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureNumberOfGaussXiGet
+  SUBROUTINE Basis_QuadratureNumberOfGaussXiGet(basis,quadratureNumberOfGaussXi,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(OUT) :: quadratureNumberOfGaussXi(:) !<On return, the number of Gauss in each Xi direction
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_QuadratureNumberOfGaussXiGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)    
+    IF(SIZE(quadratureNumberOfGaussXi,1)<SIZE(basis%quadrature%numberOfGaussXi,1)) THEN
+      localError="The size of quadratureNumberOfGaussXi is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(quadratureNumberOfGaussXi,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%quadrature%numberOfGaussXi,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    quadratureNumberOfGaussXi=basis%quadrature%numberOfGaussXi
+     
+    EXITS("Basis_QuadratureNumberOfGaussXiGet")
+    RETURN
+999 ERRORSEXITS("Basis_QuadratureNumberOfGaussXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_QuadratureNumberOfGaussXiGet
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureOrderGet
+  SUBROUTINE Basis_QuadratureOrderGet(basis,quadratureOrder,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(OUT) :: quadratureOrder !<On return, the quadrature order for the specified basis.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_QuadratureOrderGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+    
+    quadratureOrder=basis%quadrature%gaussOrder
+      
+    EXITS("Basis_QuadratureOrderGet")
+    RETURN
+999 ERRORSEXITS("Basis_QuadratureOrderGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_QuadratureOrderGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a quadrature scheme for the basis. 
   SUBROUTINE Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*)
 
     !Argument variables
     TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
     INTEGER(INTG), INTENT(IN) :: quadratureSchemeIdx !<The index of the quadrature scheme to get. \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme !<On exit, the basis quadrature scheme corresponding to the quadrature index. Must not be associated on entry.
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme !<On exit, the basis quadrature scheme corresponding to the quadrature index. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -474,10 +943,10 @@ CONTAINS
         & TRIM(NumberToVString(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END IF
-    IF(.NOT.ALLOCATED(basis%quadrature%QUADRATURE_SCHEME_MAP)) &
+    IF(.NOT.ALLOCATED(basis%quadrature%quadratureSchemeMap)) &
       & CALL FlagError("Basis quadrature scheme map has not been allocated.",err,error,*999)
 
-    quadratureScheme=>basis%quadrature%QUADRATURE_SCHEME_MAP(quadratureSchemeIdx)%ptr
+    quadratureScheme=>basis%quadrature%quadratureSchemeMap(quadratureSchemeIdx)%ptr
     IF(.NOT.ASSOCIATED(quadratureScheme)) THEN
       localError="The quadrature scheme for the quadrature scheme index of "// &
         & TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))//" is not associated."
@@ -491,6 +960,66 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_QuadratureSchemeGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>get the quadrature type on a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureTypeGet
+  SUBROUTINE Basis_QuadratureTypeGet(basis,quadratureType,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(OUT) :: quadratureType !<On return, the quadrature type to be get \see BasisRoutines_QuadratureTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_QuadratureTypeGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ASSOCIATED(basis%quadrature%basis)) THEN
+      localError="The basis quadrature basis is not associated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    quadratureType=basis%quadrature%type
+   
+    EXITS("Basis_QuadratureTypeGet")
+    RETURN
+999 ERRORSEXITS("Basis_QuadratureTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_QuadratureTypeGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>get the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_Basis_TypeGet
+  SUBROUTINE Basis_TypeGet(basis,type,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get
+    INTEGER(INTG), INTENT(OUT) :: type !<On return, the type of the specified basis. \see BasisRoutines_BasisTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_TypeGet",err,error,*999)
+
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    
+    type=basis%type
+    
+    EXITS("Basis_TypeGet")
+    RETURN
+999 ERRORSEXITS("Basis_TypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_TypeGet
 
   !
   !================================================================================================================================
@@ -553,7 +1082,7 @@ CONTAINS
   SUBROUTINE BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*)
 
     !Argument variables
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme !<The basis quadrature scheme to get the number of Gauss points for.
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme !<The basis quadrature scheme to get the number of Gauss points for.
     INTEGER(INTG), INTENT(OUT) :: numberOfGauss !<On exit, the number of Gauss points in the quadrature scheme.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -563,7 +1092,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
 
-    numberOfGauss=quadratureScheme%NUMBER_OF_GAUSS
+    numberOfGauss=quadratureScheme%numberOfGauss
     
     EXITS("BasisQuadratureScheme_NumberOfGaussGet")
     RETURN

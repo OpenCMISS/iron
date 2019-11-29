@@ -57,7 +57,7 @@ MODULE DataProjectionRoutines
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DomainMappings
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -619,7 +619,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection
     TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points in which to create data projection
     TYPE(FieldType), POINTER :: projectionField !<A pointer to the field for the data projection
-    INTEGER(INTG), INTENT(IN) :: projectionVariableType !<The field variable type of the projection field for the data projection \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: projectionVariableType !<The field variable type of the projection field for the data projection \see FieldRoutines_VariableTypes,FieldRoutines
     TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the created data projection. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

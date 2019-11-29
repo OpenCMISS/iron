@@ -42,10 +42,10 @@
 !>
 
 !> This module contains all machine dependent constants for IRIX systems.
-MODULE MACHINE_CONSTANTS
+MODULE MachineConstants
 
-  USE CONSTANTS
-  USE KINDS
+  USE Constants
+  USE Kinds
   
   IMPLICIT NONE
 
@@ -69,4 +69,4 @@ MODULE MACHINE_CONSTANTS
   INTEGER(INTG), PARAMETER :: SINGLE_COMPLEX_SIZE=8
   INTEGER(INTG), PARAMETER :: DOUBLE_COMPLEX_SIZE=16
 
-END MODULE MACHINE_CONSTANTS
+END MODULE MachineConstants

@@ -222,9 +222,9 @@
 !>This module handles the reading and writing of binary files.
 MODULE BINARY_FILE
 
-  USE KINDS
-  USE CONSTANTS
-  USE MACHINE_CONSTANTS
+  USE Kinds
+  USE Constants
+  USE MachineConstants
   USE BaseRoutines
   USE F90C
   USE ISO_VARYING_STRING

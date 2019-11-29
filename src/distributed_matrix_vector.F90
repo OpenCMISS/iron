@@ -9693,9 +9693,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: aRow,aRowIdx,bRow
+    INTEGER(INTG) :: aRow,aRowIdx
     REAL(DP) :: aValue,rowCouplingCoefficient
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_VectorRowCoupleAdd",err,error,*999)
 

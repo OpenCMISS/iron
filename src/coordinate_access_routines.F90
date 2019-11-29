@@ -58,9 +58,47 @@ MODULE CoordinateSystemAccessRoutines
 
   !Module parameters
 
+  !> \addtogroup COORINDATE_ROUTINES_CoordinateSystemTypes CoordinateRoutines::CoordinateSystemTypes
+  !> \see CoordinateRoutines
+  !> Coordinate system type parameters
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: COORDINATE_RECTANGULAR_CARTESIAN_TYPE=1 !<Rectangular Cartesian coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_CYLINDRICAL_POLAR_TYPE=2 !<Cylindrical polar coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_SPHERICAL_POLAR_TYPE=3 !<Spherical polar coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_PROLATE_SPHEROIDAL_TYPE=4 !<Prolate spheroidal coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_OBLATE_SPHEROIDAL_TYPE=5 !<Oblate spheroidal coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
+  !>@}
+
+  !> \addtogroup CoordinateRoutines_RadialInterpolations CoordinateRoutines::RadialInterpolations
+  !> \see CoordinateRoutines
+  !> \brief The type of radial interpolation for polar coordinate systems
+  !>@{
+  INTEGER(INTG), PARAMETER :: COORDINATE_NO_RADIAL_INTERPOLATION_TYPE=0 !<No radial interpolation \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_RADIAL_INTERPOLATION_TYPE=1 !<r radial interpolation \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE=2 !<r^2 radial interpolation \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE=3 !<r^3 radial interpolation \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
+  !>@}
+  
+  !> \addtogroup CoordinateRoutines_JacobianType CoordinateRoutines::JacobianType
+  !> \see CoordinateRoutines
+  !> \brief The type of Jacobian to return when coordinate metrics are calculated.
+  !>@{
+  INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_NO_TYPE=0 !<No Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_LINE_TYPE=1 !<Line type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_AREA_TYPE=2 !<Area type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
+  INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_VOLUME_TYPE=3 !<Volume type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
+  !>@}
+  
   !Module types
 
   !Module variables
+  
+  CHARACTER(LEN=21) :: COORDINATE_SYSTEM_TYPE_STRING(5) = &
+    & [ "Rectangular Cartesian", &
+    &    "Cylindrical Polar    ", &
+    &    "Spherical Polar      ", &
+    &    "Prolate Spheroidal   ", &
+    &    "Oblate Spheroidal    " ]
 
   !Interfaces
 
@@ -72,6 +110,16 @@ MODULE CoordinateSystemAccessRoutines
     MODULE PROCEDURE CoordinateSystem_UserNumberFind
   END INTERFACE COORDINATE_SYSTEM_USER_NUMBER_FIND
 
+  PUBLIC COORDINATE_RECTANGULAR_CARTESIAN_TYPE,COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE, &
+    & COORDINATE_PROLATE_SPHEROIDAL_TYPE,COORDINATE_OBLATE_SPHEROIDAL_TYPE
+
+  PUBLIC COORDINATE_NO_RADIAL_INTERPOLATION_TYPE,COORDINATE_RADIAL_INTERPOLATION_TYPE, &
+    & COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE,COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE
+  
+  PUBLIC COORDINATE_JACOBIAN_NO_TYPE,COORDINATE_JACOBIAN_LINE_TYPE,COORDINATE_JACOBIAN_AREA_TYPE,COORDINATE_JACOBIAN_VOLUME_TYPE
+  
+  PUBLIC COORDINATE_SYSTEM_TYPE_STRING
+  
   PUBLIC CoordinateSystem_AssertIsFinished,CoordinateSystem_AssertNotFinished
 
   PUBLIC CoordinateSystem_CoordinateSystemsGet
@@ -80,9 +128,19 @@ MODULE CoordinateSystemAccessRoutines
 
   PUBLIC COORDINATE_SYSTEM_DIMENSION_GET
 
+  PUBLIC CoordinateSystem_FocusGet
+
   PUBLIC CoordinateSystem_Get
 
-  PUBLIC CoordinateSystem_UserNumberFind
+  PUBLIC CoordinateSystem_OriginGet
+
+  PUBLIC CoordinateSystem_OrientationGet
+
+  PUBLIC CoordinateSystem_RadialInterpolationTypeGet
+
+  PUBLIC CoordinateSystem_TypeGet
+  
+  PUBLIC CoordinateSystem_UserNumberFind  
 
   PUBLIC COORDINATE_SYSTEM_USER_NUMBER_FIND
 
@@ -220,6 +278,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the coordinate system focus. 
+  SUBROUTINE CoordinateSystem_FocusGet(coordinateSystem,focus,err,error,*)
+
+    !Argument variables
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<A pointer to the coordinate system to get the focus for
+    REAL(DP), INTENT(OUT) :: focus !<On return, the focus of the coordinate system.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_FocusGet",err,error,*999)
+
+    CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
+    
+    SELECT CASE(coordinateSystem%type)
+    CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE,COORDINATE_OBLATE_SPHEROIDAL_TYPE)
+      focus=coordinateSystem%focus
+    CASE DEFAULT
+      localError="Focus is not defined for coordinate system type "// &
+        & TRIM(NumberToVString(coordinateSystem%TYPE,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("CoordinateSystem_FocusGet")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_FocusGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_FocusGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finds and returns a pointer to the coordinate system with the given user number. 
   SUBROUTINE CoordinateSystem_Get(coordinateSystems,userNumber,coordinateSystem,err,error,*)
 
@@ -246,6 +339,135 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CoordinateSystem_Get
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the origin of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_OriginGet
+  SUBROUTINE CoordinateSystem_OriginGet(coordinateSystem,origin,err,error,*)
+
+    !Argument variables
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<A pointer to the coordinate system to get the origin for
+    REAL(DP), INTENT(OUT) :: origin(:) !<On return, the origin of the coordinate system.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_OriginGet",err,error,*999)
+
+    CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
+    
+    IF(SIZE(origin,1)<3) THEN
+      localError="The size of the specified origin array is "// &
+        & TRIM(NumberToVString(SIZE(origin,1),"*",err,error))//" is invalid. The size must be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    origin(1:3)=coordinateSystem%origin
+     
+    EXITS("CoordinateSystem_OriginGet")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_OriginGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_OriginGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the orientation of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_OrientationGet
+  SUBROUTINE CoordinateSystem_OrientationGet(coordinateSystem,orientation,err,error,*)
+
+    !Argument variables
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<A pointer to the coordinate system to get the orientation for
+    REAL(DP), INTENT(OUT) :: orientation(:,:) !<On return, the orientation of the coordinate system
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_OrientationGet",err,error,*999)
+
+    CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
+    IF(SIZE(orientation,1)<3.OR.SIZE(orientation,2)<3) THEN
+      localError="The size of the specified orientation array is "//TRIM(NumberToVString(SIZE(orientation,1),"*",err,error))// &
+        & "x"//TRIM(NumberToVString(SIZE(orientation,2),"*",err,error))//" and it must be >= 3x3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    orientation(1:3,1:3)=coordinateSystem%orientation
+   
+    EXITS("CoordinateSystem_OrientationGet")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_OrientationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_OrientationGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the coordinate system radial interpolation type. 
+  SUBROUTINE CoordinateSystem_RadialInterpolationTypeGet(coordinateSystem,radialInterpolationType,err,error,*)
+
+    !Argument variables
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<The coordinate system to get the radial interpolation for
+    INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type for the coordinate system \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("CoordinateSystem_RadialInterpolationTypeGet",err,error,*999)
+
+    CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
+    
+    SELECT CASE(coordinateSystem%TYPE)
+    CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE)
+      radialInterpolationType=coordinateSystem%radialInterpolationType
+    CASE DEFAULT
+      localError="The radial interpolation type is not defined for coordinate system type "// &
+        & TRIM(NumberToVString(coordinateSystem%TYPE,"*",err,error))
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("CoordinateSystem_RadialInterpolationTypeGet")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_RadialInterpolationTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_RadialInterpolationTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the coordinate system type. 
+  SUBROUTINE CoordinateSystem_TypeGet(coordinateSystem,systemType,err,error,*)
+
+    !Argument variables
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<A pointer to the coordinate system to get the type for
+    INTEGER(INTG), INTENT(OUT) :: systemType !<On return, the type for the coordinate system.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CoordinateSystem_TypeGet",err,error,*999)
+
+    CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
+    
+    systemType=coordinateSystem%type
+     
+    EXITS("CoordinateSystem_TypeGet")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_TypeGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE CoordinateSystem_TypeGet
 
   !
   !================================================================================================================================

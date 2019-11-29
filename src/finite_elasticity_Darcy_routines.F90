@@ -52,13 +52,13 @@ MODULE FINITE_ELASTICITY_DARCY_ROUTINES
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE COORDINATE_ROUTINES  
+  USE CoordinateSystemRoutines  
   USE DARCY_EQUATIONS_ROUTINES
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsSetConstants
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
 !   USE FittingRoutines !also in makefiles
@@ -927,7 +927,7 @@ CONTAINS
                     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now working on Darcy",ERR,ERROR,*999)
                   ENDIF
                 ENDIF
-                CALL DARCY_EQUATION_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+                CALL Darcy_PreSolve(SOLVER,ERR,ERROR,*999)
               ENDIF
 
 
@@ -945,7 +945,7 @@ CONTAINS
                     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now working on Darcy",ERR,ERROR,*999)
                   ENDIF
                 ENDIF
-                CALL DARCY_EQUATION_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+                CALL Darcy_PreSolve(SOLVER,ERR,ERROR,*999)
               ENDIF
 
 
@@ -1003,7 +1003,7 @@ CONTAINS
               & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
 !               CALL ELASTICITY_DARCY_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
               CALL FiniteElasticity_PostSolve(solver,err,error,*999)
-              CALL DARCY_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+              CALL Darcy_PostSolve(SOLVER,ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a finite elasticity Darcy type of a multi physics problem class."

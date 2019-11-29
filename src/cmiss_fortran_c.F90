@@ -45,7 +45,7 @@
 
 #include "dllexport.h"
 
-MODULE CMISS_FORTRAN_C
+MODULE CMISSFortranC
 
   USE ISO_C_BINDING
  
@@ -167,4 +167,4 @@ CONTAINS
   !=================================================================================================================================
   !
 
-END MODULE CMISS_FORTRAN_C
+END MODULE CMISSFortranC

@@ -52,7 +52,7 @@ MODULE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE EquationsSetConstants
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds

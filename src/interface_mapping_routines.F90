@@ -45,7 +45,7 @@
 MODULE InterfaceMappingRoutines
 
   USE BaseRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS

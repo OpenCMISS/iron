@@ -619,6 +619,8 @@ MODULE SolverAccessRoutines
 
   PUBLIC Solvers_ControlLoopGet
 
+  PUBLIC Solvers_NumberOfSolversGet
+
   PUBLIC Solvers_SolverGet
 
   PUBLIC SOLVERS_SOLVER_GET
@@ -1215,6 +1217,33 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Solvers_ControlLoopGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of solvers for a solvers.
+  SUBROUTINE Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVERS_TYPE), POINTER :: solvers !<A pointer to the solvers to get the number of solvers for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfSolvers !<On exit, the number of solvers for the solvers.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solvers_NumberOfSolversGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solvers is not associated.",err,error,*999)
+      
+    numberOfSolvers=solvers%NUMBER_OF_SOLVERS
+       
+    EXITS("Solvers_NumberOfSolverspGet")
+    RETURN
+999 ERRORSEXITS("Solvers_NumberOfSolversGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solvers_NumberOfSolversGet
 
   !
   !================================================================================================================================

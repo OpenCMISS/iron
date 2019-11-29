@@ -2192,7 +2192,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), INTENT(IN), OPTIONAL :: transposeRowsColumns(:) !<transposeRowsColumns(i). The list of transpose rows/columns to calculate. If this parameter is not present then all rows/columns are included in the transpose
     !Local Variables
-    INTEGER(INTG) :: columnIdx,dummyErr,listItem(2),location,nonZeroIdx,numberOfColumns,numberOfNonZeros,numberOfRowsColumns, &
+    INTEGER(INTG) :: columnIdx,dummyErr,listItem(2),location,nonZeroIdx,numberOfNonZeros,numberOfRowsColumns, &
       & numberOfRows,rowColumnIdx,rowIdx
     INTEGER(INTG), ALLOCATABLE :: newColumnIndicesT(:),newRowIndicesT(:),newTransposeDataSwivel(:),newTransposeRowsColumns(:)
     INTEGER(INTG), ALLOCATABLE :: rowColumnData(:,:)

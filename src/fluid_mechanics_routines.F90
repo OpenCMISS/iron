@@ -47,7 +47,7 @@
 !>
 
 !> This module handles all fluid mechanics class routines.
-MODULE FLUID_MECHANICS_ROUTINES
+MODULE FluidMechanicsRoutines
 
   USE ADVECTION_EQUATION_ROUTINES
   USE BaseRoutines
@@ -62,7 +62,7 @@ MODULE FLUID_MECHANICS_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE STOKES_EQUATIONS_ROUTINES
-  USE NAVIER_STOKES_EQUATIONS_ROUTINES
+  USE NavierStokesEquationsRoutines
   USE POISEUILLE_EQUATIONS_ROUTINES
   USE PROBLEM_CONSTANTS
   USE Strings
@@ -84,19 +84,19 @@ MODULE FLUID_MECHANICS_ROUTINES
 
   !Interfaces
 
-  PUBLIC FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE
+  PUBLIC FluidMechanics_AnalyticFunctionsEvaluate
 
   PUBLIC FluidMechanics_BoundaryConditionsAnalyticCalculate
 
-  PUBLIC FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP,FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP
+  PUBLIC FluidMechanics_ControlLoopPreLoop,FluidMechanics_ControlLoopPostLoop
   
   PUBLIC FluidMechanics_EquationsSetSolutionMethodSet
 
-  PUBLIC FLUID_MECHANICS_EQUATIONS_SET_SETUP
+  PUBLIC FluidMechanics_EquationsSetSetup
 
   PUBLIC FluidMechanics_EquationsSetSpecificationSet
 
-  PUBLIC FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE
+  PUBLIC FluidMechanics_FiniteElementCalculate
 
   PUBLIC FluidMechanics_FiniteElementJacobianEvaluate,FluidMechanics_FiniteElementResidualEvaluate
   
@@ -104,9 +104,9 @@ MODULE FLUID_MECHANICS_ROUTINES
 
   PUBLIC FluidMechanics_NodalJacobianEvaluate,FluidMechanics_NodalResidualEvaluate
   
-  PUBLIC FLUID_MECHANICS_PROBLEM_SETUP
+  PUBLIC FluidMechanics_ProblemSetup
    
-  PUBLIC FLUID_MECHANICS_POST_SOLVE,FLUID_MECHANICS_PRE_SOLVE
+  PUBLIC FluidMechanics_PostSolve,FluidMechanics_PreSolve
 
   PUBLIC FluidMechanics_ProblemSpecificationSet
  
@@ -117,63 +117,66 @@ CONTAINS
   !
 
   !>Evaluate the analytic solution for a fluid mechanics equations set.
-  SUBROUTINE FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE(EQUATIONS_SET,ANALYTIC_FUNCTION_TYPE,POSITION,TANGENTS, &
-    & NORMAL,TIME,VARIABLE_TYPE,GLOBAL_DERIVATIVE,COMPONENT_NUMBER,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS,VALUE,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents, &
+    & normal,time,variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters,value,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to evaluate the analytic for
-    INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: POSITION(:) !<POSITION(dimention_idx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: TANGENTS(:,:) !<TANGENTS(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: NORMAL(:) !<NORMAL(dimension_idx). The normal vector at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: TIME !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_DERIVATIVE !<The global derivative direction to evaluate at
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The dependent field component number to evaluate
-    REAL(DP), INTENT(IN) :: ANALYTIC_PARAMETERS(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: MATERIALS_PARAMETERS(:) !<A pointer to any materials field parameters
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the analtyic function value.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
+    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
+    REAL(DP), INTENT(IN) :: position(:) !<position(dimentionIdx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimentionIdx,xiIdx). The geometric tangents at the point to evaluate at.
+    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimensionIdx). The normal vector at the point to evaluate at.
+    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
+    INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
+    REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
+    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
+    REAL(DP), INTENT(OUT) :: value !<On return, the analtyic function value.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_AnalyticFunctionsEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      SELECT CASE(EQUATIONS_SET%specification(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL Burgers_AnalyticFunctionsEvaluate(EQUATIONS_SET,ANALYTIC_FUNCTION_TYPE,POSITION, &
-          & TANGENTS,NORMAL,TIME,VARIABLE_TYPE,GLOBAL_DERIVATIVE,COMPONENT_NUMBER,ANALYTIC_PARAMETERS, &
-          & MATERIALS_PARAMETERS,VALUE,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="The second equations set specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equations set."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE")
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification has not been allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position, &
+        & tangents,normal,time,variableType,globalDerivative,componentNumber,analyticParameters, &
+        & materialsParameters,value,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The second equations set specification of "// &
+        & TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("FluidMechanics_AnalyticFunctionsEvaluate")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_AnalyticFunctionsEvaluate",err,error)
     RETURN 1
     
-  END SUBROUTINE FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE
+  END SUBROUTINE FluidMechanics_AnalyticFunctionsEvaluate
 
    !
   !================================================================================================================================
@@ -192,36 +195,33 @@ CONTAINS
 
     ENTERS("FluidMechanics_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(specification(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL Stokes_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL Darcy_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL DarcyPressure_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL Poiseuille_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL Burgers_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL Characteristic_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
-        CALL Stree_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE DEFAULT
-        localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
-          & " is not valid for a fluid mechanics equations set."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(SIZE(specification,1)<2) &
+       & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics equations set.", &
+       & err,error,*999)
+      
+    SELECT CASE(specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL Stokes_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL Darcy_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL DarcyPressure_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL Characteristic_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
+      CALL Stree_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE DEFAULT
+      localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("FluidMechanics_EquationsSetSpecificationSet")
     RETURN
@@ -236,108 +236,103 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matries and rhs vector for the given element number for a fluid mechanics class finite element equation set.
-  SUBROUTINE FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calcualate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calcualate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL STOKES_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL FlagError("There are no finite element matrices to be calculated for Navier-Stokes equation.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL DARCY_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL FlagError("There is no element stiffness matrix to be calculated for Darcy pressure.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL Poiseuille_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL FlagError("There are no finite element matrices to be calculated for Burgers equation.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL FlagError("There are no finite element matrices to be calculated for Characteristic equations.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
-        CALL STREE_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+       & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL Stokes_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL FlagError("There are no finite element matrices to be calculated for Navier-Stokes equation.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL DARCY_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("There is no element stiffness matrix to be calculated for Darcy pressure.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL FlagError("There are no finite element matrices to be calculated for Burgers equation.",err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("There are no finite element matrices to be calculated for Characteristic equations.",err,error,*999)
+    CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
+      CALL Stree_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE")
+    EXITS("FluidMechanics_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_FiniteElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE
+    
+  END SUBROUTINE FluidMechanics_FiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Evaluates the element Jacobian matrix for the given element number for a fluid mechanics class finite element equation set.
-  SUBROUTINE FluidMechanics_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the Jacobian for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the Jacobian for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FluidMechanics_FiniteElementJacobianEvaluate",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_FiniteElementJacobianEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL FlagError("There is no Jacobian to be evaluated for Stokes.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL FlagError("There is no Jacobian to be evaluated for Poiseuille.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL Burgers_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL FlagError("There is no Jacobian to be evaluated for Stokes.",err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL FlagError("There is no Jacobian to be evaluated for Poiseuille.",err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("FluidMechanics_FiniteElementJacobianEvaluate")
     RETURN
-999 ERRORS("FluidMechanics_FiniteElementJacobianEvaluate",ERR,ERROR)
+999 ERRORS("FluidMechanics_FiniteElementJacobianEvaluate",err,error)
     EXITS("FluidMechanics_FiniteElementJacobianEvaluate")
     RETURN 1
     
@@ -348,52 +343,49 @@ CONTAINS
   !
 
   !>Evaluates the element residual and rhs vectors for the given element number for a fluid mechanics class finite element equation set.
-  SUBROUTINE FluidMechanics_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the residual for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the residual for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FluidMechanics_FiniteElementResidualEvaluate",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_FiniteElementResidualEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL FlagError("There is no residual to be evaluated for Stokes.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL DarcyPressure_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL FlagError("There is no residual to be evaluated for Poiseuille.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL Burgers_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+     
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL FlagError("There is no residual to be evaluated for Stokes.",err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL DarcyPressure_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL FlagError("There is no residual to be evaluated for Poiseuille.",err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("FluidMechanics_FiniteElementResidualEvaluate")
     RETURN
-999 ERRORS("FluidMechanics_FiniteElementResidualEvaluate",ERR,ERROR)
+999 ERRORS("FluidMechanics_FiniteElementResidualEvaluate",err,error)
     EXITS("FluidMechanics_FiniteElementResidualEvaluate")
     RETURN 1
     
@@ -416,41 +408,39 @@ CONTAINS
     
     ENTERS("FluidMechanics_NodalJacobianEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(equationsSet%specification,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(equationsSet%specification(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL Characteristic_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
-      CASE DEFAULT
-        localError="Equations set type "//TRIM(NUMBER_TO_VSTRING(equationsSet%specification(2),"*",err,error))// &
-          & " is not valid for a fluid mechanics equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL Characteristic_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("FluidMechanics_NodalJacobianEvaluate")
     RETURN
 999 ERRORSEXITS("FluidMechanics_NodalJacobianEvaluate",err,error)
     RETURN 1
+    
   END SUBROUTINE FluidMechanics_NodalJacobianEvaluate
 
   !
@@ -470,41 +460,39 @@ CONTAINS
     
     ENTERS("FluidMechanics_NodalResidualEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(equationsSet%specification,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(equationsSet%specification(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL Characteristic_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
-      CASE DEFAULT
-        localError="Equations set type "//TRIM(NUMBER_TO_VSTRING(equationsSet%specification(2),"*",err,error))// &
-          & " is not valid for a fluid mechanics equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL Characteristic_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("FluidMechanics_NodalResidualEvaluate")
     RETURN
 999 ERRORSEXITS("FluidMechanics_NodalResidualEvaluate",err,error)
     RETURN 1
+    
   END SUBROUTINE FluidMechanics_NodalResidualEvaluate
 
   !
@@ -512,56 +500,54 @@ CONTAINS
   !
 
   !>Sets up the equations set for a fluid mechanics equations set class.
-  SUBROUTINE FLUID_MECHANICS_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FLUID_MECHANICS_EQUATIONS_SET_SETUP",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_EquationsSetSetup",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL STOKES_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL DARCY_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL DarcyPressure_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL POISEUILLE_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL BURGERS_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL Characteristic_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
-        CALL Stree_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equation set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL STOKES_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL DARCY_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL DarcyPressure_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL POISEUILLE_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL BURGERS_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL Characteristic_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
+      CALL Stree_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE DEFAULT
+      localError="Equation set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("FLUID_MECHANICS_EQUATIONS_SET_SETUP")
+    EXITS("FluidMechanics_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_EQUATIONS_SET_SETUP",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_EquationsSetSetup",err,error)
     RETURN 1
-  END SUBROUTINE FLUID_MECHANICS_EQUATIONS_SET_SETUP
+    
+  END SUBROUTINE FluidMechanics_EquationsSetSetup
   
 
   !
@@ -569,52 +555,49 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a fluid mechanics equation set class.
-  SUBROUTINE FluidMechanics_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FluidMechanics_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_EquationsSetSolutionMethodSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL Stokes_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL DarcyPressure_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL DarcyPressure_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL Poiseuille_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL Burgers_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL Characteristic_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set equation type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechancis equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL Stokes_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL DarcyPressure_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL DarcyPressure_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL Characteristic_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechancis equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("FluidMechanics_EquationsSetSolutionMethodSet")
     RETURN
-999 ERRORS("FluidMechanics_EquationsSetSolutionMethodSet",ERR,ERROR)
+999 ERRORS("FluidMechanics_EquationsSetSolutionMethodSet",err,error)
     EXITS("FluidMechanics_EquationsSetSolutionMethodSet")
     RETURN 1
     
@@ -625,52 +608,49 @@ CONTAINS
   !
 
   !>Sets the analytic boundary conditions for a fluid mechanics equation set class.
-  SUBROUTINE FluidMechanics_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditionsn to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FluidMechanics_BoundaryConditionsAnalyticCalculate",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        CALL Burgers_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        CALL Stokes_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        CALL Darcy_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        CALL Poiseuille_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set equation type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL Stokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL Darcy_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("FluidMechanics_BoundaryConditionsAnalyticCalculate")
     RETURN
-999 ERRORS("FluidMechanics_BoundaryConditionsAnalyticCalculate",ERR,ERROR)
+999 ERRORS("FluidMechanics_BoundaryConditionsAnalyticCalculate",err,error)
     EXITS("FluidMechanics_BoundaryConditionsAnalyticCalculate")
     RETURN 1
     
@@ -694,31 +674,27 @@ CONTAINS
 
     ENTERS("FluidMechanics_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)>=2) THEN
-        problemType=problemSpecification(2)
-        SELECT CASE(problemType)
-        CASE(PROBLEM_STOKES_EQUATION_TYPE)
-          CALL Stokes_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-          CALL NavierStokes_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_DARCY_EQUATION_TYPE)
-          CALL Darcy_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-          CALL Poiseuille_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-          CALL Burgers_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE DEFAULT
-          localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
-            & " is not valid for a fluid mechanics problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Fluid mechanics problem specification must have a type set.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<2) &
+      & CALL FlagError("Fluid mechanics problem specification must have a type set.",err,error,*999)
+
+    problemType=problemSpecification(2)
+    SELECT CASE(problemType)
+    CASE(PROBLEM_STOKES_EQUATION_TYPE)
+      CALL Stokes_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_DARCY_EQUATION_TYPE)
+      CALL Darcy_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_BURGERS_EQUATION_TYPE)
+      CALL Burgers_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE DEFAULT
+      localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
+        & " is not valid for a fluid mechanics problem."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("FluidMechanics_ProblemSpecificationSet")
     RETURN
@@ -733,255 +709,262 @@ CONTAINS
   !
 
   !>Sets up the problem for a fluid mechanics problem class.
-  SUBROUTINE FLUID_MECHANICS_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem
+    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FLUID_MECHANICS_PROBLEM_SETUP",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_ProblemSetup",err,error,*999)
 
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(problem%specification)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(problem%specification,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(2))
-      CASE(PROBLEM_STOKES_EQUATION_TYPE)
-        CALL STOKES_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE(PROBLEM_DARCY_EQUATION_TYPE)
-        CALL DARCY_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-        CALL POISEUILLE_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-        CALL BURGERS_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+      
+    SELECT CASE(problem%specification(2))
+    CASE(PROBLEM_STOKES_EQUATION_TYPE)
+      CALL STOKES_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_ProblemSetup(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_DARCY_EQUATION_TYPE)
+      CALL DARCY_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
+      CALL POISEUILLE_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_BURGERS_EQUATION_TYPE)
+      CALL BURGERS_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("FLUID_MECHANICS_PROBLEM_SETUP")
+    EXITS("FluidMechanics_ProblemSetup")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_PROBLEM_SETUP",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_ProblemSetup",err,error)
     RETURN 1
-  END SUBROUTINE FLUID_MECHANICS_PROBLEM_SETUP
+    
+  END SUBROUTINE FluidMechanics_ProblemSetup
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the output type for a fluid mechanics problem class.
-  SUBROUTINE FLUID_MECHANICS_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FLUID_MECHANICS_POST_SOLVE",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_PostSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(control_loop%problem%specification,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
-      END IF
-      SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-      CASE(PROBLEM_STOKES_EQUATION_TYPE)
-        CALL STOKES_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_POST_SOLVE(SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_DARCY_EQUATION_TYPE)
-        CALL DARCY_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-        CALL POISEUILLE_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-        CALL BURGERS_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("FLUID_MECHANICS_POST_SOLVE")
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)    
+    IF(.NOT.ALLOCATED(problem%specification)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+      
+    SELECT CASE(problem%specification(2))
+    CASE(PROBLEM_STOKES_EQUATION_TYPE)
+      CALL Stokes_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_DARCY_EQUATION_TYPE)
+      CALL Darcy_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_BURGERS_EQUATION_TYPE)
+      CALL Burgers_PostSolve(solver,err,error,*999)
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+      
+    EXITS("FluidMechanics_PostSolve")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_POST_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE FLUID_MECHANICS_POST_SOLVE
+    
+  END SUBROUTINE FluidMechanics_PostSolve
 
   !
   !================================================================================================================================
 
 
   !>Sets up the output type for a fluid mechanics problem class.
-  SUBROUTINE FLUID_MECHANICS_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FLUID_MECHANICS_PRE_SOLVE",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_PreSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(control_loop%problem%specification,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
-      END IF
-      SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-      CASE(PROBLEM_STOKES_EQUATION_TYPE)
-        CALL STOKES_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_DARCY_EQUATION_TYPE)
-        CALL DARCY_EQUATION_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-        CALL POISEUILLE_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-      CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-        CALL BURGERS_EQUATION_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)    
+    IF(.NOT.ALLOCATED(problem%specification)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(2))
+    CASE(PROBLEM_STOKES_EQUATION_TYPE)
+      CALL Stokes_PreSolve(solver,err,error,*999)
+    CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_PreSolve(SOLVER,err,error,*999)
+    CASE(PROBLEM_DARCY_EQUATION_TYPE)
+      CALL Darcy_PreSolve(solver,err,error,*999)
+    CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_PreSolve(solver,err,error,*999)
+    CASE(PROBLEM_BURGERS_EQUATION_TYPE)
+      CALL Burgers_PreSolve(SOLVER,err,error,*999)
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("FLUID_MECHANICS_PRE_SOLVE")
+    EXITS("FluidMechanics_PreSolve")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_PRE_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_PreSolve",err,error)
     RETURN 1
-  END SUBROUTINE FLUID_MECHANICS_PRE_SOLVE
+    
+  END SUBROUTINE FluidMechanics_PreSolve
 
   !
   !================================================================================================================================
   !
 
   !>Executes before each loop of a control loop, ie before each time step for a time loop
-  SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_ControlLoopPreLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_ControlLoopPreLoop",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      SELECT CASE(CONTROL_LOOP%loopType)
-      CASE(CONTROL_TIME_LOOP_TYPE)
-        IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-          CALL FlagError("Problem specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(control_loop%problem%specification,1)<2) THEN
-          CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
-        END IF
-        SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-        CASE(PROBLEM_STOKES_EQUATION_TYPE)
-          !do nothing
-        CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-          !do nothing
-        CASE(PROBLEM_DARCY_EQUATION_TYPE)
-          CALL DARCY_CONTROL_TIME_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
-        CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-          !do nothing
-        CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-          !do nothing
-        CASE DEFAULT
-          LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-            & " is not valid for a fluid mechanics problem class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      CASE DEFAULT
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("ControlLoop is not associated.",err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    SELECT CASE(controlLoop%loopType)
+    CASE(CONTROL_TIME_LOOP_TYPE)
+      IF(.NOT.ALLOCATED(problem%specification)) &
+        & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+      IF(SIZE(problem%specification,1)<2) &
+        & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+      
+      SELECT CASE(problem%specification(2))
+      CASE(PROBLEM_STOKES_EQUATION_TYPE)
         !do nothing
+      CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
+        !do nothing
+      CASE(PROBLEM_DARCY_EQUATION_TYPE)
+        CALL DARCY_CONTROL_TIME_LOOP_PRE_LOOP(controlLoop,err,error,*999)
+      CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
+        !do nothing
+      CASE(PROBLEM_BURGERS_EQUATION_TYPE)
+        !do nothing
+      CASE DEFAULT
+        localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+          & " is not valid for a fluid mechanics problem class."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      !do nothing
+    END SELECT
 
-    EXITS("FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP")
+    EXITS("FluidMechanics_ControlLoopPreLoop")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_ControlLoopPreLoop",err,error)
     RETURN 1
-  END SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP
+    
+  END SUBROUTINE FluidMechanics_ControlLoopPreLoop
 
   !
   !================================================================================================================================
   !
 
   !>Executes after each loop of a control loop, ie after each time step for a time loop
-  SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE FluidMechanics_ControlLoopPostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP",ERR,ERROR,*999)
+    ENTERS("FluidMechanics_ControlLoopPostLoop",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      SELECT CASE(CONTROL_LOOP%loopType)
-      CASE(CONTROL_TIME_LOOP_TYPE,CONTROL_SIMPLE_TYPE,CONTROL_WHILE_LOOP_TYPE)
-        IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-          CALL FlagError("Problem specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(control_loop%problem%specification,1)<2) THEN
-          CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
-        END IF
-        SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
-        CASE(PROBLEM_STOKES_EQUATION_TYPE)
-          !do nothing
-        CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-          CALL NavierStokes_ControlLoopPostLoop(CONTROL_LOOP,ERR,ERROR,*999)
-        CASE(PROBLEM_DARCY_EQUATION_TYPE)
-          !do nothing
-        CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-          !do nothing
-        CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-          !do nothing
-        CASE DEFAULT
-          LOCAL_ERROR="The second problem specification of "// &
-            & TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-            & " is not valid for a fluid mechanics problem."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      CASE DEFAULT
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("ControlLoop is not associated.",err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    SELECT CASE(controlLoop%loopType)
+    CASE(CONTROL_TIME_LOOP_TYPE)
+      IF(.NOT.ALLOCATED(problem%specification)) &
+        & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+      IF(SIZE(problem%specification,1)<2) &
+        & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+      
+      SELECT CASE(problem%specification(2))
+      CASE(PROBLEM_STOKES_EQUATION_TYPE)
         !do nothing
+      CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
+        CALL NavierStokes_ControlLoopPostLoop(controlLoop,err,error,*999)
+      CASE(PROBLEM_DARCY_EQUATION_TYPE)
+        !do nothing
+      CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
+        !do nothing
+      CASE(PROBLEM_BURGERS_EQUATION_TYPE)
+        !do nothing
+      CASE DEFAULT
+        localError="The second problem specification of "// &
+          & TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+          & " is not valid for a fluid mechanics problem."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      !do nothing
+    END SELECT
 
-    EXITS("FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP")
+    EXITS("FluidMechanics_ControlLoopPostLoop")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP",ERR,ERROR)
+999 ERRORSEXITS("FluidMechanics_ControlLoopPostLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP
+  END SUBROUTINE FluidMechanics_ControlLoopPostLoop
 
   !
   !================================================================================================================================
@@ -999,31 +982,34 @@ CONTAINS
 
     ENTERS("FluidMechanics_FiniteElementPreResidualEvaluate",err,error,*999)
     
-    IF(ASSOCIATED(equationsSet)) THEN
-      SELECT CASE(equationsSet%specification(2))
-      CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-        ! Do nothing
-      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_FiniteElementPreResidualEvaluate(equationsSet,err,error,*999)
-      CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-        ! Do nothing
-      CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-        ! Do nothing
-      CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-        ! Do nothing
-      CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-        ! Do nothing
-      CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-        ! Do nothing
-      CASE DEFAULT
-        localError="The second equations set specificaiton of "// &
-          & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(2),"*",ERR,ERROR))// &
-          & " is not valid for a fluid mechanics equation set."
-        CALL FlagError(localError,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      ! Do nothing
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_FiniteElementPreResidualEvaluate(equationsSet,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      ! Do nothing
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      ! Do nothing
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      ! Do nothing
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      ! Do nothing
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      ! Do nothing
+    CASE DEFAULT
+      localError="The second equations set specificaiton of "// &
+        & TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equation set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("FluidMechanics_FiniteElementPreResidualEvaluate")
     RETURN
@@ -1037,5 +1023,5 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE FLUID_MECHANICS_ROUTINES
+END MODULE FluidMechanicsRoutines
 

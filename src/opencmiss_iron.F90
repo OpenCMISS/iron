@@ -58,7 +58,7 @@
 
 MODULE OpenCMISS_Iron
 
- USE ANALYTIC_ANALYSIS_ROUTINES
+ USE AnalyticAnalysisRoutines
  USE BaseRoutines
  USE BasisRoutines
  USE BasisAccessRoutines
@@ -74,7 +74,7 @@ MODULE OpenCMISS_Iron
  USE ContextAccessRoutines
  USE ControlLoopRoutines
  USE ControlLoopAccessRoutines
- USE COORDINATE_ROUTINES
+ USE CoordinateSystemRoutines
  USE CoordinateSystemAccessRoutines
  USE DataPointRoutines
  USE DataPointAccessRoutines
@@ -86,9 +86,9 @@ MODULE OpenCMISS_Iron
  USE DistributedMatrixVectorAccessRoutines
  USE EquationsRoutines
  USE EquationsSetConstants
- USE EQUATIONS_SET_ROUTINES
+ USE EquationsSetRoutines
  USE EquationsSetAccessRoutines
- USE FIELD_ROUTINES
+ USE FieldRoutines
  USE FieldAccessRoutines
 #ifdef WITH_FIELDML
  USE FIELDML_TYPES
@@ -119,7 +119,7 @@ MODULE OpenCMISS_Iron
  USE PROBLEM_CONSTANTS
  USE ProblemRoutines
  USE ProblemAccessRoutines
- USE REGION_ROUTINES
+ USE RegionRoutines
  USE RegionAccessRoutines
  USE SOLVER_ROUTINES
  USE SolverAccessRoutines
@@ -327,10 +327,10 @@ MODULE OpenCMISS_Iron
  !>Contains information for a particular quadrature scheme for a basis.
  TYPE cmfe_QuadratureType
    PRIVATE
-   TYPE(QUADRATURE_TYPE), POINTER :: quadrature
+   TYPE(QuadratureType), POINTER :: quadrature
  END TYPE cmfe_QuadratureType
 
-!>Contains information for a region.
+ !>Contains information for a region.
  TYPE cmfe_RegionType
    PRIVATE
    TYPE(RegionType), POINTER :: region
@@ -474,7 +474,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! ANALYTIC_ANALYSIS_ROUTINES
+! AnalyticAnalysisRoutines
 !
 !==================================================================================================================================
 
@@ -810,10 +810,10 @@ MODULE OpenCMISS_Iron
 
  !>Returns the xi positions of Gauss points on a basis quadrature.
  INTERFACE cmfe_Basis_QuadratureGaussXiGet
-   MODULE PROCEDURE cmfe_Basis_QuadratureSingleGaussXiGetNumber
-   MODULE PROCEDURE cmfe_Basis_QuadratureSingleGaussXiGetObj
-   MODULE PROCEDURE cmfe_Basis_QuadratureMultipleGaussXiGetNumber
-   MODULE PROCEDURE cmfe_Basis_QuadratureMultipleGaussXiGetObj
+   MODULE PROCEDURE cmfe_Basis_QuadratureGaussXiGetNumber0
+   MODULE PROCEDURE cmfe_Basis_QuadratureGaussXiGetObj0
+   MODULE PROCEDURE cmfe_Basis_QuadratureGaussXiGetNumber1
+   MODULE PROCEDURE cmfe_Basis_QuadratureGaussXiGetObj1
  END INTERFACE cmfe_Basis_QuadratureGaussXiGet
 
  !>Returns the order of quadrature for a basis quadrature.
@@ -1616,6 +1616,27 @@ MODULE OpenCMISS_Iron
 
  !Interfaces
 
+ !>Returns the absolute convergence tolerance for a while control loop. 
+ INTERFACE cmfe_ControlLoop_AbsoluteToleranceGet
+   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceGetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceGetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceGetObj
+ END INTERFACE cmfe_ControlLoop_AbsoluteToleranceGet
+
+ !>Sets/changes the absolute tolerance for a while control loop.
+ INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
+   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetObj
+ END INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
+
+ !>Returns the continue loop status for a while control loop.
+ INTERFACE cmfe_ControlLoop_ContinueLoopGet
+   MODULE PROCEDURE cmfe_ControlLoop_ContinueLoopGetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_ContinueLoopGetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_ContinueLoopGetObj
+ END INTERFACE cmfe_ControlLoop_ContinueLoopGet
+
  !>Returns the current time parameters for a time control loop.
  INTERFACE cmfe_ControlLoop_CurrentTimesGet
    MODULE PROCEDURE cmfe_ControlLoop_CurrentTimesGetNumber0
@@ -1647,6 +1668,13 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_ControlLoop_IterationsSetObj
  END INTERFACE cmfe_ControlLoop_IterationsSet
 
+ !>Returnss the iteration number for a control loop.
+ INTERFACE cmfe_ControlLoop_IterationNumberGet
+   MODULE PROCEDURE cmfe_ControlLoop_IterationNumberGetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_IterationNumberGetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_IterationNumberGetObj
+ END INTERFACE cmfe_ControlLoop_IterationNumberGet
+
  !>Returns the label of a control loop.
  INTERFACE cmfe_ControlLoop_LabelGet
    MODULE PROCEDURE cmfe_ControlLoop_LabelGetCNumber0
@@ -1673,13 +1701,6 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_ControlLoop_MaximumIterationsSetNumber1
    MODULE PROCEDURE cmfe_ControlLoop_MaximumIterationsSetObj
  END INTERFACE cmfe_ControlLoop_MaximumIterationsSet
-
- !>Sets/changes the convergence tolerance for a while control loop. \todo need a get method
- INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
-   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetNumber0
-   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetNumber1
-   MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetObj
- END INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
 
  !>Returns the number of iterations for a time control loop. If the returned value is 0, that means that the number has not yet been computed. 
  INTERFACE cmfe_ControlLoop_NumberOfIterationsGet
@@ -1708,6 +1729,20 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_ControlLoop_NumberOfSubLoopsSetNumber1
    MODULE PROCEDURE cmfe_ControlLoop_NumberOfSubLoopsSetObj
  END INTERFACE cmfe_ControlLoop_NumberOfSubLoopsSet
+
+ !>Returns the relative convergence tolerance for a while control loop. 
+ INTERFACE cmfe_ControlLoop_RelativeToleranceGet
+   MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceGetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceGetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceGetObj
+ END INTERFACE cmfe_ControlLoop_RelativeToleranceGet
+
+ !>Sets/changes the relative tolerance for a while control loop.
+ INTERFACE cmfe_ControlLoop_RelativeToleranceSet
+   MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceSetNumber0
+   MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceSetNumber1
+   MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceSetObj
+ END INTERFACE cmfe_ControlLoop_RelativeToleranceSet
 
  !>Sets/changes the output parameters for a time control loop.
  INTERFACE cmfe_ControlLoop_TimeOutputSet
@@ -1769,21 +1804,27 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_ControlLoop_Destroy
 
+ PUBLIC cmfe_ControlLoop_ContinueLoopGet
+
  PUBLIC cmfe_ControlLoop_ControlLoopGet
 
  PUBLIC cmfe_ControlLoop_IterationsSet
+
+ PUBLIC cmfe_ControlLoop_IterationNumberGet
 
  PUBLIC cmfe_ControlLoop_LabelGet,cmfe_ControlLoop_LabelSet
 
  PUBLIC cmfe_ControlLoop_MaximumIterationsSet
 
- PUBLIC cmfe_ControlLoop_AbsoluteToleranceSet
+ PUBLIC cmfe_ControlLoop_AbsoluteToleranceGet,cmfe_ControlLoop_AbsoluteToleranceSet
 
  PUBLIC cmfe_ControlLoop_NumberOfIterationsGet, cmfe_ControlLoop_NumberOfIterationsSet
  
  PUBLIC cmfe_ControlLoop_NumberOfSubLoopsGet,cmfe_ControlLoop_NumberOfSubLoopsSet
 
  PUBLIC cmfe_ControlLoop_OutputTypeGet,cmfe_ControlLoop_OutputTypeSet
+
+ PUBLIC cmfe_ControlLoop_RelativeToleranceGet,cmfe_ControlLoop_RelativeToleranceSet
 
  PUBLIC cmfe_ControlLoop_TimeOutputSet,cmfe_ControlLoop_TimeInputSet
 
@@ -1794,7 +1835,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! COORDINATE_ROUTINES
+! CoordinateRoutines
 !
 !==================================================================================================================================
 
@@ -3521,7 +3562,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! EQUATIONS_SET_ROUTINES
+! EquationsSetRoutines
 !
 !==================================================================================================================================
 
@@ -3852,7 +3893,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! FIELD_ROUTINES
+! FieldRoutines
 !
 !==================================================================================================================================
 
@@ -4144,13 +4185,15 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Field_GeometricFieldSetObj
  END INTERFACE cmfe_Field_GeometricFieldSet
 
- !>Gets line lengths from a geometric field given an element number and element basis line number.
+ !>Gets line lengths from a geometric field given an user element number and line xi normal directions.
  INTERFACE cmfe_Field_GeometricParametersElementLineLengthGet
-   MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetNumber
-   MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetObj
+   MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetNumber0
+   MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetNumber1
+   MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetObj0
+   MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetObj1
  END INTERFACE cmfe_Field_GeometricParametersElementLineLengthGet
 
- !>Gets volumes from a geometric field given an element number.
+ !>Gets volumes from a geometric field given an user element number.
  INTERFACE cmfe_Field_GeometricParametersElementVolumeGet
    MODULE PROCEDURE cmfe_Field_GeometricParametersElementVolumeGetNumber
    MODULE PROCEDURE cmfe_Field_GeometricParametersElementVolumeGetObj
@@ -4449,12 +4492,6 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetObj
  END INTERFACE cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGet
 
- !>Updates the given parameter set with the given values for all local dofs of the field variable.
- INTERFACE cmfe_Field_ParameterSetUpdateLocalDofs
-   MODULE PROCEDURE cmfe_Field_ParameterSetUpdateLocalDofsDPObj
-   !\todo: add Intg/SP/L routines, both indexed by Number and Obj
- END INTERFACE cmfe_Field_ParameterSetUpdateLocalDofs
-
  !>Updates the given parameter set with the given value for a particular Gauss point of a field variable component.
  INTERFACE cmfe_Field_ParameterSetUpdateGaussPoint
    MODULE PROCEDURE cmfe_Field_ParameterSetUpdateGaussPointIntgNumber
@@ -4669,8 +4706,6 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGet
  
- PUBLIC cmfe_Field_ParameterSetUpdateLocalDofs
-
  PUBLIC cmfe_Field_ParameterSetUpdateGaussPoint,cmfe_Field_ParameterSetGetGaussPoint
 
  PUBLIC cmfe_Field_ParameterSetInterpolateXi
@@ -6282,7 +6317,6 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_DARCY_SUBTYPE = PROBLEM_PGM_DARCY_SUBTYPE !<PGM Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE = PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE !<PGM Transient Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE = PROBLEM_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_LAPLACE_SUBTYPE = PROBLEM_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_POISEUILLE_SUBTYPE = PROBLEM_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE = PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
@@ -6479,8 +6513,7 @@ MODULE OpenCMISS_Iron
 
  PUBLIC CMFE_PROBLEM_STATIC_BURGERS_SUBTYPE,CMFE_PROBLEM_DYNAMIC_BURGERS_SUBTYPE
 
- PUBLIC CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE,CMFE_PROBLEM_GENERALISED_LAPLACE_SUBTYPE, &
-   & CMFE_PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE
+ PUBLIC CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE,CMFE_PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE
 
  PUBLIC CMFE_PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE,CMFE_PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE, &
    & CMFE_PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,CMFE_PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
@@ -6737,7 +6770,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! REGION_ROUTINES
+! RegionRoutines
 !
 !==================================================================================================================================
 
@@ -8698,7 +8731,7 @@ CONTAINS
     ENTERS("cmfe_CoordinateSystem_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_CoordinateSystem%coordinateSystem))  &
-      & CALL COORDINATE_SYSTEM_DESTROY(cmfe_CoordinateSystem%coordinateSystem,err,error,*999)
+      & CALL CoordinateSystem_Destroy(cmfe_CoordinateSystem%coordinateSystem,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_Finalise")
     RETURN
@@ -9052,7 +9085,7 @@ CONTAINS
     ENTERS("cmfe_EquationsSet_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_EquationsSet%equationsSet))  &
-      & CALL EQUATIONS_SET_DESTROY(cmfe_EquationsSet%equationsSet,err,error,*999)
+      & CALL EquationsSet_Destroy(cmfe_EquationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_Finalise")
     RETURN
@@ -9888,7 +9921,7 @@ CONTAINS
     ENTERS("cmfe_Quadrature_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_Quadrature%quadrature))  &
-      & CALL BASIS_QUADRATURE_DESTROY(cmfe_Quadrature%quadrature,err,error,*999)
+      & CALL Basis_QuadratureDestroy(cmfe_Quadrature%quadrature,err,error,*999)
 
     EXITS("cmfe_Quadrature_Finalise")
     RETURN
@@ -10127,7 +10160,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! ANALYTIC_ANALYSIS_ROUTINES
+!! AnalyticAnalysisRoutines
 !!
 !!==================================================================================================================================
 
@@ -12553,8 +12586,8 @@ CONTAINS
   !================================================================================================================================
   !
   !>Returns the xi position of a Gauss point on a basis quadrature identified by a user number.
-  SUBROUTINE cmfe_Basis_QuadratureSingleGaussXiGetNumber(contextUserNumber,basisUserNumber,quadratureScheme,gaussPoint,gaussXi,err)
-    !DLLEXPORT(cmfe_Basis_QuadratureSingleGaussXiGetNumber)
+  SUBROUTINE cmfe_Basis_QuadratureGaussXiGetNumber0(contextUserNumber,basisUserNumber,quadratureScheme,gaussPoint,gaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureGaussXiGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
@@ -12568,7 +12601,7 @@ CONTAINS
     TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
-    ENTERS("cmfe_Basis_QuadratureSingleGaussXiGetNumber",err,error,*999)
+    ENTERS("cmfe_Basis_QuadratureGaussXiGetNumber0",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(basisFunctions)
@@ -12576,23 +12609,23 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
-    CALL Basis_QuadratureSingleGaussXiGet(basis,quadratureScheme,gaussPoint,gaussXi,err,error,*999)
+    CALL Basis_QuadratureGaussXiGet(basis,quadratureScheme,gaussPoint,gaussXi,err,error,*999)
 
-    EXITS("cmfe_Basis_QuadratureSingleGaussXiGetNumber")
+    EXITS("cmfe_Basis_QuadratureGaussXiGetNumber0")
     RETURN
-999 ERRORSEXITS("cmfe_Basis_QuadratureSingleGaussXiGetNumber",err,error)
+999 ERRORSEXITS("cmfe_Basis_QuadratureGaussXiGetNumber0",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Basis_QuadratureSingleGaussXiGetNumber
+  END SUBROUTINE cmfe_Basis_QuadratureGaussXiGetNumber0
 
   !
   !================================================================================================================================
   !
 
   !>Returns the xi position of a Gauss point on a basis quadrature identified by an object.
-  SUBROUTINE cmfe_Basis_QuadratureSingleGaussXiGetObj(basis,quadratureScheme,gaussPoint,gaussXi,err)
-    !DLLEXPORT(cmfe_Basis_QuadratureSingleGaussXiGetObj)
+  SUBROUTINE cmfe_Basis_QuadratureGaussXiGetObj0(basis,quadratureScheme,gaussPoint,gaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureGaussXiGetObj0)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the Gauss Xi positions for.
@@ -12602,26 +12635,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Basis_QuadratureSingleGaussXiGetObj",err,error,*999)
+    ENTERS("cmfe_Basis_QuadratureGaussXiGetObj0",err,error,*999)
 
-    CALL Basis_QuadratureSingleGaussXiGet(basis%basis,quadratureScheme,gaussPoint,gaussXi,err,error,*999)
+    CALL Basis_QuadratureGaussXiGet(basis%basis,quadratureScheme,gaussPoint,gaussXi,err,error,*999)
 
-    EXITS("cmfe_Basis_QuadratureSingleGaussXiGetObj")
+    EXITS("cmfe_Basis_QuadratureGaussXiGetObj0")
     RETURN
-999 ERRORSEXITS("cmfe_Basis_QuadratureSingleGaussXiGetObj",err,error)
+999 ERRORSEXITS("cmfe_Basis_QuadratureGaussXiGetObj0",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Basis_QuadratureSingleGaussXiGetObj
+  END SUBROUTINE cmfe_Basis_QuadratureGaussXiGetObj0
 
   !
   !================================================================================================================================
   !
 
   !>Returns the xi positions of Gauss points on a basis quadrature identified by a user number.
-  SUBROUTINE cmfe_Basis_QuadratureMultipleGaussXiGetNumber(contextUserNumber,basisUserNumber,quadratureScheme,gaussPoints,gaussXi, &
+  SUBROUTINE cmfe_Basis_QuadratureGaussXiGetNumber1(contextUserNumber,basisUserNumber,quadratureScheme,gaussPoints,gaussXi, &
     & err)
-    !DLLEXPORT(cmfe_Basis_QuadratureMultipleGaussXiGetNumber)
+    !DLLEXPORT(cmfe_Basis_QuadratureGaussXiGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
@@ -12635,7 +12668,7 @@ CONTAINS
     TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
-    ENTERS("cmfe_Basis_QuadratureMultipleGaussXiGetNumber",err,error,*999)
+    ENTERS("cmfe_Basis_QuadratureGaussXiGetNumber1",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(basisFunctions)
@@ -12643,24 +12676,24 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
-    CALL Basis_QuadratureMultipleGaussXiGet(basis,quadratureScheme,gaussPoints,gaussXi,err,error,*999)
+    CALL Basis_QuadratureGaussXiGet(basis,quadratureScheme,gaussPoints,gaussXi,err,error,*999)
 
-    EXITS("cmfe_Basis_QuadratureMultipleGaussXiGetNumber")
+    EXITS("cmfe_Basis_QuadratureGaussXiGetNumbe1r")
     RETURN
-999 ERRORS("cmfe_Basis_QuadratureMultipleGaussXiGetNumber",err,error)
-    EXITS("cmfe_Basis_QuadratureMultipleGaussXiGetNumber")
+999 ERRORS("cmfe_Basis_QuadratureGaussXiGetNumber1",err,error)
+    EXITS("cmfe_Basis_QuadratureGaussXiGetNumber1")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Basis_QuadratureMultipleGaussXiGetNumber
+  END SUBROUTINE cmfe_Basis_QuadratureGaussXiGetNumber1
 
   !
   !================================================================================================================================
   !
 
   !>Returns the xi positions of Gauss points on a basis quadrature identified by an object.
-  SUBROUTINE cmfe_Basis_QuadratureMultipleGaussXiGetObj(basis,quadratureScheme,gaussPoints,gaussXi,err)
-    !DLLEXPORT(cmfe_Basis_QuadratureMultipleGaussXiGetObj)
+  SUBROUTINE cmfe_Basis_QuadratureGaussXiGetObj1(basis,quadratureScheme,gaussPoints,gaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureGaussXiGetObj1)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the Gauss Xi positions for.
@@ -12670,17 +12703,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Basis_QuadratureMultipleGaussXiGetObj",err,error,*999)
+    ENTERS("cmfe_Basis_QuadratureGaussXiGetObj1",err,error,*999)
 
-    CALL Basis_QuadratureMultipleGaussXiGet(basis%basis,quadratureScheme,gaussPoints,gaussXi,err,error,*999)
+    CALL Basis_QuadratureGaussXiGet(basis%basis,quadratureScheme,gaussPoints,gaussXi,err,error,*999)
 
-    EXITS("cmfe_Basis_QuadratureMultipleGaussXiGetObj")
+    EXITS("cmfe_Basis_QuadratureGaussXiGetObj1")
     RETURN
-999 ERRORSEXITS("cmfe_Basis_QuadratureMultipleGaussXiGetObj",err,error)
+999 ERRORSEXITS("cmfe_Basis_QuadratureGaussXiGetObj1",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Basis_QuadratureMultipleGaussXiGetObj
+  END SUBROUTINE cmfe_Basis_QuadratureGaussXiGetObj1
 
   !
   !================================================================================================================================
@@ -18087,6 +18120,112 @@ CONTAINS
 !!
 !!==================================================================================================================================
 
+  !>Gets the continue loop status for a while control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_ContinueLoopGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,continueLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ContinueLoopGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    LOGICAL, INTENT(OUT) :: continueLoop !<On return, the continue loop status of the while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+ 
+    ENTERS("cmfe_ControlLoop_ContinueLoopGetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_ContinueLoopGet(controlLoop,continueLoop,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_ContinueLoopGetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_ContinueLoopGetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_ContinueLoopGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the continue loop status for a while control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_ContinueLoopGetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,continueLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ContinueLoopGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the control loop for.
+    LOGICAL, INTENT(OUT) :: continueLoop !<On return, the continue loop status of the while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+ 
+    ENTERS("cmfe_ControlLoop_ContinueLoopGetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_ContinueLoopGet(controlLoop,continueLoop,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_ContinueLoopGetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_ContinueLoopGetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_ContinueLoopGetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the continue loop status for a while control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_ContinueLoopGetObj(controlLoop,continueLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ContinueLoopGetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the continue loop status for
+    LOGICAL, INTENT(OUT) :: continueLoop !<On return, the continue loop status of the while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_ContinueLoopGetObj",err,error,*999)
+
+    CALL ControlLoop_ContinueLoopGet(controlLoop%controlLoop,continueLoop,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_ContinueLoopGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_ContinueLoopGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_ContinueLoopGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the current time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_CurrentTimesGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,currentTime, &
     & timeIncrement,err)
@@ -18631,6 +18770,113 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ControlLoop_IterationsSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the iteration number for control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_IterationNumberGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
+    & iterationNumber,err)
+    !DLLEXPORT(cmfe_ControlLoop_IterationNumberGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the iteration number for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    INTEGER(INTG), INTENT(OUT) :: iterationNumber !<On exit, the iteration number of the control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_IterationNumberGetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_IterationNumberGetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_IterationNumberGetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_IterationNumberGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the iteration number for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_IterationNumberGetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers, &
+    & iterationNumber,err)
+    !DLLEXPORT(cmfe_ControlLoop_IterationNumberGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the iteration number for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers.
+    INTEGER(INTG), INTENT(OUT) :: iterationNumber !<On return, the iteration number of the control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_IterationNumberGetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_IterationNumberGetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_IterationNumberGetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_IterationNumberGetNumber1
+
+  !================================================================================================================================
+  !
+
+  !>Returns the iteration number for a control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_IterationNumberGetObj(controlLoop,iterationNumber,err)
+    !DLLEXPORT(cmfe_ControlLoop_IterationNumberGetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to get the iteration number for.
+    INTEGER(INTG), INTENT(OUT) :: iterationNumber !<On return, the iteration number for the control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_IterationNumberGetObj",err,error,*999)
+
+    CALL ControlLoop_IterationNumberGet(controlLoop%controlLoop,iterationNumber,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_IterationNumberGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_IterationNumberGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_IterationNumberGetObj
 
   !
   !================================================================================================================================
@@ -19191,6 +19437,116 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ControlLoop_LoadOutputSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the absolute tolerance for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
+    & absoluteTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_AbsoluteToleranceGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the absolute tolerance for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    REAL(DP), INTENT(OUT) :: absoluteTolerance !<On return, the absolute tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_AbsoluteToleranceGetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_AbsoluteToleranceGet(controlLoop,absoluteTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_AbsoluteToleranceGetNumber0")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_AbsoluteToleranceGetNumber0",err,error)
+    EXITS("cmfe_ControlLoop_AbsoluteToleranceGetNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the absolute tolerance for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceGetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers, &
+    & absoluteTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_AbsoluteToleranceGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the absolute tolerance for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers.
+    REAL(DP), INTENT(OUT) :: absoluteTolerance !<On return, the absolute tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_AbsoluteToleranceGetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_AbsoluteToleranceGet(controlLoop,absoluteTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_AbsoluteToleranceGetNumber1")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_AbsoluteToleranceGetNumber1",err,error)
+    EXITS("cmfe_ControlLoop_AbsoluteToleranceGetNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceGetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the absolute tolerance for a control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceGetObj(controlLoop,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_AbsoluteToleranceGetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to get the absolute tolerance for.
+    REAL(DP), INTENT(OUT) :: absoluteTolerance !<On return, the absolute tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_AbsoluteToleranceGetObj",err,error,*999)
+
+    CALL ControlLoop_AbsoluteToleranceGet(controlLoop%controlLoop,absoluteTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_AbsoluteToleranceGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_AbsoluteToleranceGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceGetObj
 
   !
   !================================================================================================================================
@@ -19954,6 +20310,226 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the relative tolerance for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceGetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
+    & relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the relative tolerance for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    REAL(DP), INTENT(OUT) :: relativeTolerance !<On return, the relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceGetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_RelativeToleranceGet(controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceGetNumber0")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_RelativeToleranceGetNumber0",err,error)
+    EXITS("cmfe_ControlLoop_RelativeToleranceGetNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the relative tolerance for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceGetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers, &
+    & relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the relative tolerance for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers.
+    REAL(DP), INTENT(OUT) :: relativeTolerance !<On return, the relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceGetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_RelativeToleranceGet(controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceGetNumber1")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_RelativeToleranceGetNumber1",err,error)
+    EXITS("cmfe_ControlLoop_RelativeToleranceGetNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceGetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the relative tolerance for a control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceGetObj(controlLoop,relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceGetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to get the relative tolerance for.
+    REAL(DP), INTENT(OUT) :: relativeTolerance !<On return, the relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceGetObj",err,error,*999)
+
+    CALL ControlLoop_RelativeToleranceGet(controlLoop%controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_RelativeToleranceGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the relative tolerance for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
+    & relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceSetNumber0",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
+    CALL ControlLoop_RelativeToleranceSet(controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber0")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_RelativeToleranceSetNumber0",err,error)
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the relative tolerance for a control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers, &
+    & relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem.
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers.
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(ProblemsType), POINTER :: problems
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceSetNumber1",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(problems)
+    NULLIFY(problem)
+    NULLIFY(controlLoop)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ProblemsGet(context,problems,err,error,*999)
+    CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
+    CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_RelativeToleranceSet(controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber1")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_RelativeToleranceSetNumber1",err,error)
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the relative tolerance for a control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetObj(controlLoop,relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceSetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the maximum iterations for.
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceSetObj",err,error,*999)
+
+    CALL ControlLoop_RelativeToleranceSet(controlLoop%controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_RelativeToleranceSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets/changes the output parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimeOutputSetNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,outputFrequency,err)
     !DLLEXPORT(cmfe_ControlLoop_TimeOutputSetNumber0)
@@ -20537,7 +21113,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_CREATE_FINISH(coordinateSystem,err,error,*999)
+    CALL CoordinateSystem_CreateFinish(coordinateSystem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Coordinate System Create')
@@ -20566,7 +21142,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_CreateFinishObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_CREATE_FINISH(coordinateSystem%coordinateSystem,err,error,*999)
+    CALL CoordinateSystem_CreateFinish(coordinateSystem%coordinateSystem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Coordinate System Create')
@@ -20608,7 +21184,7 @@ CONTAINS
     NULLIFY(coordinateSystem)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
-    CALL COORDINATE_SYSTEM_CREATE_START(coordinateSystemUserNumber,coordinateSystems,coordinateSystem,err,error,*999)
+    CALL CoordinateSystem_CreateStart(coordinateSystemUserNumber,coordinateSystems,coordinateSystem,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_CreateStartNumber")
     RETURN
@@ -20642,7 +21218,7 @@ CONTAINS
 
     NULLIFY(coordinateSystems)
     CALL Context_CoordinateSystemsGet(context%context,coordinateSystems,err,error,*999)
-    CALL COORDINATE_SYSTEM_CREATE_START(coordinateSystemUserNumber,coordinateSystems,coordinateSystem%coordinateSystem, &
+    CALL CoordinateSystem_CreateStart(coordinateSystemUserNumber,coordinateSystems,coordinateSystem%coordinateSystem, &
       & err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_CreateStartObj")
@@ -20678,7 +21254,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_DESTROY(coordinateSystem,err,error,*999)
+    CALL CoordinateSystem_Destroy(coordinateSystem,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_DestroyNumber")
     RETURN
@@ -20703,7 +21279,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_DestroyObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_DESTROY(coordinateSystem%coordinateSystem,err,error,*999)
+    CALL CoordinateSystem_Destroy(coordinateSystem%coordinateSystem,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_DestroyObj")
     RETURN
@@ -20801,7 +21377,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_DIMENSION_SET(coordinateSystem,coordinateSystemDimension,err,error,*999)
+    CALL CoordinateSystem_DimensionSet(coordinateSystem,coordinateSystemDimension,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_DimensionSetNumber")
     RETURN
@@ -20827,7 +21403,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_DimensionSetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_DIMENSION_SET(coordinateSystem%coordinateSystem,coordinateSystemDimension,err,error,*999)
+    CALL CoordinateSystem_DimensionSet(coordinateSystem%coordinateSystem,coordinateSystemDimension,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_DimensionSetObj")
     RETURN
@@ -20863,7 +21439,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_FOCUS_GET(coordinateSystem,focus,err,error,*999)
+    CALL CoordinateSystem_FocusGet(coordinateSystem,focus,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_FocusGetNumber")
     RETURN
@@ -20889,7 +21465,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_FocusGetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_FOCUS_GET(coordinateSystem%coordinateSystem,focus,err,error,*999)
+    CALL CoordinateSystem_FocusGet(coordinateSystem%coordinateSystem,focus,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_FocusGetObj")
     RETURN
@@ -20925,7 +21501,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_FOCUS_SET(coordinateSystem,focus,err,error,*999)
+    CALL CoordinateSystem_FocusSet(coordinateSystem,focus,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_FocusSetNumber")
     RETURN
@@ -20951,7 +21527,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_FocusSetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_FOCUS_SET(coordinateSystem%coordinateSystem,focus,err,error,*999)
+    CALL CoordinateSystem_FocusSet(coordinateSystem%coordinateSystem,focus,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_FocusSetObj")
     RETURN
@@ -20988,7 +21564,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL Coordinates_RadialInterpolationTypeGet(coordinateSystem,radialInterpolationType,err,error,*999)
+    CALL CoordinateSystem_RadialInterpolationTypeGet(coordinateSystem,radialInterpolationType,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_RadialInterpolationGetNumber")
     RETURN
@@ -21015,7 +21591,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_RadialInterpolationGetObj",err,error,*999)
 
-    CALL Coordinates_RadialInterpolationTypeGet(coordinateSystem%coordinateSystem,radialInterpolationType,err,error,*999)
+    CALL CoordinateSystem_RadialInterpolationTypeGet(coordinateSystem%coordinateSystem,radialInterpolationType,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_RadialInterpolationGetObj")
     RETURN
@@ -21053,7 +21629,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL Coordinates_RadialInterpolationTypeSet(coordinateSystem,radialInterpolationType,err,error,*999)
+    CALL CoordinateSystem_RadialInterpolationTypeSet(coordinateSystem,radialInterpolationType,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_RadialInterpolationSetNumber")
     RETURN
@@ -21080,7 +21656,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_RadialInterpolationSetObj",err,error,*999)
 
-    CALL Coordinates_RadialInterpolationTypeSet(coordinateSystem%coordinateSystem,radialInterpolationType,err,error,*999)
+    CALL CoordinateSystem_RadialInterpolationTypeSet(coordinateSystem%coordinateSystem,radialInterpolationType,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_RadialInterpolationSetObj")
     RETURN
@@ -21117,7 +21693,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_TYPE_GET(coordinateSystem,coordinateSystemType_,err,error,*999)
+    CALL CoordinateSystem_TypeGet(coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeGetNumber")
     RETURN
@@ -21143,7 +21719,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_TypeGetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_TYPE_GET(coordinateSystem%coordinateSystem,coordinateSystemType_,err,error,*999)
+    CALL CoordinateSystem_TypeGet(coordinateSystem%coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeGetObj")
     RETURN
@@ -21179,7 +21755,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_TYPE_SET(coordinateSystem,coordinateSystemType_,err,error,*999)
+    CALL CoordinateSystem_TypeSet(coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeSetNumber")
     RETURN
@@ -21205,7 +21781,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_TypeSetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_TYPE_SET(coordinateSystem%coordinateSystem,coordinateSystemType_,err,error,*999)
+    CALL CoordinateSystem_TypeSet(coordinateSystem%coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeSetObj")
     RETURN
@@ -21241,7 +21817,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_ORIGIN_GET(coordinateSystem,origin,err,error,*999)
+    CALL CoordinateSystem_OriginGet(coordinateSystem,origin,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OriginGetNumber")
     RETURN
@@ -21267,7 +21843,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_OriginGetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_ORIGIN_GET(coordinateSystem%coordinateSystem,origin,err,error,*999)
+    CALL CoordinateSystem_OriginGet(coordinateSystem%coordinateSystem,origin,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OriginGetObj")
     RETURN
@@ -21303,7 +21879,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_ORIGIN_SET(coordinateSystem,origin,err,error,*999)
+    CALL CoordinateSystem_OriginSet(coordinateSystem,origin,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OriginSetNumber")
     RETURN
@@ -21329,7 +21905,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_OriginSetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_ORIGIN_SET(coordinateSystem%coordinateSystem,origin,err,error,*999)
+    CALL CoordinateSystem_OriginSet(coordinateSystem%coordinateSystem,origin,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OriginSetObj")
     RETURN
@@ -21365,7 +21941,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_ORIENTATION_GET(coordinateSystem,orientation,err,error,*999)
+    CALL CoordinateSystem_OrientationGet(coordinateSystem,orientation,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OrientationGetNumber")
     RETURN
@@ -21391,7 +21967,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_OrientationGetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_ORIENTATION_GET(coordinateSystem%coordinateSystem,orientation,err,error,*999)
+    CALL CoordinateSystem_OrientationGet(coordinateSystem%coordinateSystem,orientation,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OrientationGetObj")
     RETURN
@@ -21427,7 +22003,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_ORIENTATION_SET(coordinateSystem,orientation,err,error,*999)
+    CALL CoordinateSystem_OrientationSet(coordinateSystem,orientation,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OrientationSetNumber")
     RETURN
@@ -21453,7 +22029,7 @@ CONTAINS
 
     ENTERS("cmfe_CoordinateSystem_OrientationSetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_ORIENTATION_SET(coordinateSystem%coordinateSystem,orientation,err,error,*999)
+    CALL CoordinateSystem_OrientationSet(coordinateSystem%coordinateSystem,orientation,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_OrientationSetObj")
     RETURN
@@ -28772,7 +29348,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! EQUATIONS_SET_ROUTINES
+!! EquationsSetRoutines
 !!
 !!==================================================================================================================================
 
@@ -28801,7 +29377,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticCreateFinish(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticCreateFinishNumber")
     RETURN
@@ -28827,7 +29403,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticCreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticCreateFinish(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticCreateFinishObj")
     RETURN
@@ -28873,7 +29449,7 @@ CONTAINS
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(analyticFieldUserNumber,region,analyticField,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_CREATE_START(equationsSet,analyticFunctionType,analyticFieldUserNumber,analyticField, &
+    CALL EquationsSet_AnalyticCreateStart(equationsSet,analyticFunctionType,analyticFieldUserNumber,analyticField, &
       & err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticCreateStartNumber")
@@ -28902,7 +29478,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticCreateStartObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_CREATE_START(equationsSet%equationsSet,analyticFunctionType,analyticFieldUserNumber, &
+    CALL EquationsSet_AnalyticCreateStart(equationsSet%equationsSet,analyticFunctionType,analyticFieldUserNumber, &
       & analyticField%field,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticCreateStartObj")
@@ -28942,7 +29518,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticDestroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticDestroyNumber")
     RETURN
@@ -28967,7 +29543,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticDestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticDestroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticDestroyObj")
     RETURN
@@ -29007,7 +29583,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_EVALUATE(equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticEvaluate(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticEvaluateNumber")
     RETURN
@@ -29032,7 +29608,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticEvaluateObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_EVALUATE(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticEvaluate(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticEvaluateObj")
     RETURN
@@ -29205,7 +29781,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_USER_PARAM_SET(equationsSet,paramIdx,param,err,error,*999)
+    CALL EquationsSet_AnalyticUserParamSet(equationsSet,paramIdx,param,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticUserParamSetNumber")
     RETURN
@@ -29232,7 +29808,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticUserParamSetObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_USER_PARAM_SET(equationsSet%equationsSet,paramIdx,param,err,error,*999)
+    CALL EquationsSet_AnalyticUserParamSet(equationsSet%equationsSet,paramIdx,param,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticUserParamSetObj")
     RETURN
@@ -29273,7 +29849,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_ANALYTIC_USER_PARAM_GET(equationsSet,paramIdx,param,err,error,*999)
+    CALL EquationsSet_AnalyticUserParamGet(equationsSet,paramIdx,param,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticUserParamGetNumber")
     RETURN
@@ -29300,7 +29876,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_AnalyticUserParamGetObj",err,error,*999)
 
-    CALL EQUATIONS_SET_ANALYTIC_USER_PARAM_GET(equationsSet%equationsSet,paramIdx,param,err,error,*999)
+    CALL EquationsSet_AnalyticUserParamGet(equationsSet%equationsSet,paramIdx,param,err,error,*999)
 
     EXITS("cmfe_EquationsSet_AnalyticUserParamGetObj")
     RETURN
@@ -29339,7 +29915,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_CreateFinish(equationsSet,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Equations Set Create')
@@ -29368,7 +29944,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_CreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_CreateFinish(equationsSet%equationsSet,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Equations Set Create')
@@ -29424,7 +30000,7 @@ CONTAINS
     CALL Region_FieldGet(region,geomFibreFieldUserNumber,geometryFibreField,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(equationsSetFieldUserNumber,region,equationsSetField,err,error,*999)
-    CALL EQUATIONS_SET_CREATE_START(equationsSetUserNumber,region,geometryFibreField,&
+    CALL EquationsSet_CreateStart(equationsSetUserNumber,region,geometryFibreField,&
       & equationsSetSpecification,equationsSetFieldUserNumber,&
       & equationsSetField,equationsSet,err,error,*999)
 
@@ -29459,13 +30035,9 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_CreateStartObj",err,error,*999)
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START('Equations Set Create')
-#endif
-
-    CALL EQUATIONS_SET_CREATE_START(equationsSetUserNumber,region%region,geomFibreField%field, &
-      & equationsSetSpecification,equationsSetFieldUserNumber,equationsSetFieldField%field,equationsSet%equationsSet, &
-      & err,error,*999)
+    CALL EquationsSet_CreateStart(equationsSetUserNumber,region%region,geomFibreField%field, &
+      & equationsSetSpecification,equationsSetFieldUserNumber,equationsSetFieldField%field, &
+      & equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_CreateStartObj")
     RETURN
@@ -29841,7 +30413,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_Destroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DestroyNumber")
     RETURN
@@ -29866,7 +30438,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_DestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_Destroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DestroyObj")
     RETURN
@@ -29905,7 +30477,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_DEPENDENT_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_DependentCreateFinish(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentCreateFinishNumber")
     RETURN
@@ -29931,7 +30503,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_DependentCreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_DEPENDENT_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_DependentCreateFinish(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentCreateFinishObj")
     RETURN
@@ -29976,7 +30548,7 @@ CONTAINS
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(dependentFieldUserNumber,region,dependentField,err,error,*999)
-    CALL EQUATIONS_SET_DEPENDENT_CREATE_START(equationsSet,dependentFieldUserNumber,dependentField,err,error,*999)
+    CALL EquationsSet_DependentCreateStart(equationsSet,dependentFieldUserNumber,dependentField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentCreateStartNumber")
     RETURN
@@ -30004,7 +30576,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_DependentCreateStartObj",err,error,*999)
 
-    CALL EQUATIONS_SET_DEPENDENT_CREATE_START(equationsSet%equationsSet,dependentFieldUserNumber,dependentField%field, &
+    CALL EquationsSet_DependentCreateStart(equationsSet%equationsSet,dependentFieldUserNumber,dependentField%field, &
       & err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentCreateStartObj")
@@ -30044,7 +30616,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_DEPENDENT_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_DependentDestroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentDestroyNumber")
     RETURN
@@ -30069,7 +30641,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_DependentDestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_DEPENDENT_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_DependentDestroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentDestroyObj")
     RETURN
@@ -30108,7 +30680,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_EQUATIONS_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsCreateFinish(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_EquationsCreateFinishNumber")
     RETURN
@@ -30134,7 +30706,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_EquationsCreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_EQUATIONS_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsCreateFinish(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_EquationsCreateFinishObj")
     RETURN
@@ -30175,7 +30747,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_EQUATIONS_CREATE_START(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_EquationsCreateStart(equationsSet,equations,err,error,*999)
 
     EXITS("cmfe_EquationsSet_EquationsCreateStartNumber")
     RETURN
@@ -30202,7 +30774,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_EquationsCreateStartObj",err,error,*999)
 
-    CALL EQUATIONS_SET_EQUATIONS_CREATE_START(equationsSet%equationsSet,equations%equations,err,error,*999)
+    CALL EquationsSet_EquationsCreateStart(equationsSet%equationsSet,equations%equations,err,error,*999)
 
     EXITS("cmfe_EquationsSet_EquationsCreateStartObj")
     RETURN
@@ -30241,7 +30813,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_EQUATIONS_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsDestroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_EquationsDestroyNumber")
     RETURN
@@ -30266,7 +30838,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_EquationsDestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_EQUATIONS_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsDestroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_EquationsDestroyObj")
     RETURN
@@ -30305,7 +30877,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_INDEPENDENT_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_IndependentCreateFinish(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateFinishNumber")
     RETURN
@@ -30331,7 +30903,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_IndependentCreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_INDEPENDENT_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_IndependentCreateFinish(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateFinishObj")
     RETURN
@@ -30377,7 +30949,7 @@ CONTAINS
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(independentFieldUserNumber,region,independentField,err,error,*999)
-    CALL EQUATIONS_SET_DEPENDENT_CREATE_START(equationsSet,independentFieldUserNumber,independentField,err,error,*999)
+    CALL EquationSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateStartNumber")
     RETURN
@@ -30405,7 +30977,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_IndependentCreateStartObj",err,error,*999)
 
-    CALL EQUATIONS_SET_INDEPENDENT_CREATE_START(equationsSet%equationsSet,independentFieldUserNumber,independentField%field, &
+    CALL EquationSet_IndependentCreateStart(equationsSet%equationsSet,independentFieldUserNumber,independentField%field, &
       & err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateStartObj")
@@ -30445,7 +31017,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_INDEPENDENT_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_IndependentDestroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentDestroyNumber")
     RETURN
@@ -30470,7 +31042,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_IndependentDestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_INDEPENDENT_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_IndependentDestroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentDestroyObj")
     RETURN
@@ -30773,7 +31345,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_MATERIALS_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_MaterialsCreateFinish(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsCreateFinishNumber")
     RETURN
@@ -30799,7 +31371,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_MaterialsCreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_MATERIALS_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_MaterialsCreateFinish(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsCreateFinishObj")
     RETURN
@@ -30844,7 +31416,7 @@ CONTAINS
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(materialsFieldUserNumber,region,materialsField,err,error,*999)
-    CALL EQUATIONS_SET_MATERIALS_CREATE_START(equationsSet,materialsFieldUserNumber,materialsField,err,error,*999)
+    CALL EquationsSet_MaterialsCreateStart(equationsSet,materialsFieldUserNumber,materialsField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsCreateStartNumber")
     RETURN
@@ -30872,7 +31444,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_MaterialsCreateStartObj",err,error,*999)
 
-    CALL EQUATIONS_SET_MATERIALS_CREATE_START(equationsSet%equationsSet,materialsFieldUserNumber,materialsField%field, &
+    CALL EquationsSet_MaterialsCreateStart(equationsSet%equationsSet,materialsFieldUserNumber,materialsField%field, &
       & err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsCreateStartObj")
@@ -30912,7 +31484,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_MATERIALS_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_MaterialsDestroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsDestroyNumber")
     RETURN
@@ -30937,7 +31509,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_MaterialsDestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_MATERIALS_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_MaterialsDestroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsDestroyObj")
     RETURN
@@ -31110,7 +31682,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_SOLUTION_METHOD_GET(equationsSet,solutionMethod,err,error,*999)
+    CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SolutionMethodGetNumber")
     RETURN
@@ -31136,7 +31708,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_SolutionMethodGetObj",err,error,*999)
 
-    CALL EQUATIONS_SET_SOLUTION_METHOD_GET(equationsSet%equationsSet,solutionMethod,err,error,*999)
+    CALL EquationsSet_SolutionMethodGet(equationsSet%equationsSet,solutionMethod,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SolutionMethodGetObj")
     RETURN
@@ -31177,7 +31749,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_SOLUTION_METHOD_SET(equationsSet,solutionMethod,err,error,*999)
+    CALL EquationsSet_SolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SolutionMethodSetNumber")
     RETURN
@@ -31203,7 +31775,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_SolutionMethodSetObj",err,error,*999)
 
-    CALL EQUATIONS_SET_SOLUTION_METHOD_SET(equationsSet%equationsSet,solutionMethod,err,error,*999)
+    CALL EquationsSet_SolutionMethodSet(equationsSet%equationsSet,solutionMethod,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SolutionMethodSetObj")
     RETURN
@@ -31242,7 +31814,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_SOURCE_CREATE_FINISH(equationsSet,err,error,*999)
+    CALL EquationsSet_SourceCreateFinish(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceCreateFinishNumber")
     RETURN
@@ -31267,7 +31839,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_SourceCreateFinishObj",err,error,*999)
 
-    CALL EQUATIONS_SET_SOURCE_CREATE_FINISH(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_SourceCreateFinish(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceCreateFinishObj")
     RETURN
@@ -31312,7 +31884,7 @@ CONTAINS
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     !Find the field so that non-auto created fields can be used by number
     CALL Field_UserNumberFind(sourceFieldUserNumber,region,sourceField,err,error,*999)
-    CALL EQUATIONS_SET_SOURCE_CREATE_START(equationsSet,sourceFieldUserNumber,sourceField,err,error,*999)
+    CALL EquationsSet_SourceCreateStart(equationsSet,sourceFieldUserNumber,sourceField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceCreateStartNumber")
     RETURN
@@ -31339,7 +31911,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_SourceCreateStartObj",err,error,*999)
 
-    CALL EQUATIONS_SET_SOURCE_CREATE_START(equationsSet%equationsSet,sourceFieldUserNumber,sourceField%field,err,error,*999)
+    CALL EquationsSet_SourceCreateStart(equationsSet%equationsSet,sourceFieldUserNumber,sourceField%field,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceCreateStartObj")
     RETURN
@@ -31378,7 +31950,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EQUATIONS_SET_SOURCE_DESTROY(equationsSet,err,error,*999)
+    CALL EquationsSet_SourceDestroy(equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceDestroyNumber")
     RETURN
@@ -31403,7 +31975,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_SourceDestroyObj",err,error,*999)
 
-    CALL EQUATIONS_SET_SOURCE_DESTROY(equationsSet%equationsSet,err,error,*999)
+    CALL EquationsSet_SourceDestroy(equationsSet%equationsSet,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceDestroyObj")
     RETURN
@@ -31843,7 +32415,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! FIELD_ROUTINES
+!! FieldRoutines
 !!
 !!==================================================================================================================================
 
@@ -31947,7 +32519,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_INTERPOLATION_SET(field,variableType,componentNumber,interpolationType,err,error,*999)
+    CALL Field_ComponentInterpolationSet(field,variableType,componentNumber,interpolationType,err,error,*999)
 
     EXITS("cmfe_Field_ComponentInterpolationSetNumber")
     RETURN
@@ -31975,7 +32547,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentInterpolationSetObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_INTERPOLATION_SET(field%field,variableType,componentNumber,interpolationType,err,error,*999)
+    CALL Field_ComponentInterpolationSet(field%field,variableType,componentNumber,interpolationType,err,error,*999)
 
     EXITS("cmfe_Field_ComponentInterpolationSetObj")
     RETURN
@@ -32018,7 +32590,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_LABEL_GET(field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelGet(field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelGetCNumber")
     RETURN
@@ -32046,7 +32618,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentLabelGetCObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_LABEL_GET(field%field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelGet(field%field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelGetCObj")
     RETURN
@@ -32089,7 +32661,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_LABEL_GET(field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelGet(field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelGetVSNumber")
     RETURN
@@ -32117,7 +32689,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentLabelGetVSObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_LABEL_GET(field%field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelGet(field%field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelGetVSObj")
     RETURN
@@ -32160,7 +32732,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_LABEL_SET(field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelSet(field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelSetCNumber")
     RETURN
@@ -32188,7 +32760,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentLabelSetCObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_LABEL_SET(field%field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelSet(field%field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelSetCObj")
     RETURN
@@ -32231,7 +32803,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_LABEL_SET(field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelSet(field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelSetVSNumber")
     RETURN
@@ -32259,7 +32831,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentLabelSetVSObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_LABEL_SET(field%field,variableType,componentNumber,label,err,error,*999)
+    CALL Field_ComponentLabelSet(field%field,variableType,componentNumber,label,err,error,*999)
 
     EXITS("cmfe_Field_ComponentLabelSetVSObj")
     RETURN
@@ -32302,7 +32874,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_MESH_COMPONENT_GET(field,variableType,componentNumber,meshComponent,err,error,*999)
+    CALL Field_ComponentMeshComponentGet(field,variableType,componentNumber,meshComponent,err,error,*999)
 
     EXITS("cmfe_Field_ComponentMeshComponentGetNumber")
     RETURN
@@ -32330,7 +32902,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentMeshComponentGetObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_MESH_COMPONENT_GET(field%field,variableType,componentNumber,meshComponent,err,error,*999)
+    CALL Field_ComponentMeshComponentGet(field%field,variableType,componentNumber,meshComponent,err,error,*999)
 
     EXITS("cmfe_Field_ComponentMeshComponentGetObj")
     RETURN
@@ -32373,7 +32945,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_MESH_COMPONENT_SET(field,variableType,componentNumber,meshComponent,err,error,*999)
+    CALL Field_ComponentMeshComponentSet(field,variableType,componentNumber,meshComponent,err,error,*999)
 
     EXITS("cmfe_Field_ComponentMeshComponentSetNumber")
     RETURN
@@ -32401,7 +32973,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentMeshComponentSetObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_MESH_COMPONENT_SET(field%field,variableType,componentNumber,meshComponent,err,error,*999)
+    CALL Field_ComponentMeshComponentSet(field%field,variableType,componentNumber,meshComponent,err,error,*999)
 
     EXITS("cmfe_Field_ComponentMeshComponentSetObj")
     RETURN
@@ -32445,7 +33017,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseIntgNumber")
     RETURN
@@ -32475,7 +33047,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseIntgObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseIntgObj")
     RETURN
@@ -32518,7 +33090,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseSPNumber")
     RETURN
@@ -32548,7 +33120,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseSPObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseSPObj")
     RETURN
@@ -32591,7 +33163,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseDPNumber")
     RETURN
@@ -32621,7 +33193,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseDPObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseDPObj")
     RETURN
@@ -32664,7 +33236,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseLNumber")
     RETURN
@@ -32693,7 +33265,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseLObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_VALUES_INITIALISE(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ComponentValuesInitialise(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ComponentValuesInitialiseLObj")
     RETURN
@@ -32734,7 +33306,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DATA_TYPE_GET(field,variableType,dataType,err,error,*999)
+    CALL Field_DataTypeGet(field,variableType,dataType,err,error,*999)
 
     EXITS("cmfe_Field_DataTypeGetNumber")
     RETURN
@@ -32761,7 +33333,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DataTypeGetObj",err,error,*999)
 
-    CALL FIELD_DATA_TYPE_GET(field%field,variableType,dataType,err,error,*999)
+    CALL Field_DataTypeGet(field%field,variableType,dataType,err,error,*999)
 
     EXITS("cmfe_Field_DataTypeGetObj")
     RETURN
@@ -32802,7 +33374,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DATA_TYPE_SET(field,variableType,dataType,err,error,*999)
+    CALL Field_DataTypeSet(field,variableType,dataType,err,error,*999)
 
     EXITS("cmfe_Field_DataTypeSetNumber")
     RETURN
@@ -32829,7 +33401,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DataTypeSetObj",err,error,*999)
 
-    CALL FIELD_DATA_TYPE_SET(field%field,variableType,dataType,err,error,*999)
+    CALL Field_DataTypeSet(field%field,variableType,dataType,err,error,*999)
 
     EXITS("cmfe_Field_DataTypeSetObj")
     RETURN
@@ -32870,7 +33442,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DOF_ORDER_TYPE_GET(field,variableType,DOFOrderType,err,error,*999)
+    CALL Field_DOFOrderTypeGet(field,variableType,DOFOrderType,err,error,*999)
 
     EXITS("cmfe_Field_DOFOrderTypeGetNumber")
     RETURN
@@ -32897,7 +33469,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DOFOrderTypeGetObj",err,error,*999)
 
-    CALL FIELD_DOF_ORDER_TYPE_GET(field%field,variableType,DOFOrderType,err,error,*999)
+    CALL Field_DOFOrderTypeGet(field%field,variableType,DOFOrderType,err,error,*999)
 
     EXITS("cmfe_Field_DOFOrderTypeGetObj")
     RETURN
@@ -32938,7 +33510,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DOF_ORDER_TYPE_SET(field,variableType,DOFOrderType,err,error,*999)
+    CALL Field_DOFOrderTypeSet(field,variableType,DOFOrderType,err,error,*999)
 
     EXITS("cmfe_Field_DOFOrderTypeSetNumber")
     RETURN
@@ -32965,7 +33537,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DOFOrderTypeSetObj",err,error,*999)
 
-    CALL FIELD_DOF_ORDER_TYPE_SET(field%field,variableType,DOFOrderType,err,error,*999)
+    CALL Field_DOFOrderTypeSet(field%field,variableType,DOFOrderType,err,error,*999)
 
     EXITS("cmfe_Field_DOFOrderTypeSetObj")
     RETURN
@@ -33004,7 +33576,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_CREATE_FINISH(field,err,error,*999)
+    CALL Field_CreateFinish(field,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Field Create')
@@ -33033,7 +33605,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_CreateFinishObj",err,error,*999)
 
-    CALL FIELD_CREATE_FINISH(field%field,err,error,*999)
+    CALL Field_CreateFinish(field%field,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('field Create')
@@ -33079,7 +33651,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL FIELD_CREATE_START(fieldUserNumber,region,field,err,error,*999)
+    CALL Field_CreateStart(fieldUserNumber,region,field,err,error,*999)
 
     EXITS("cmfe_Field_CreateStartNumber")
     RETURN
@@ -33106,7 +33678,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_CreateStartInterfaceObj",err,error,*999)
 
-    CALL FIELD_CREATE_START(fieldUserNumber,interface%interface,field%field,err,error,*999)
+    CALL Field_CreateStart(fieldUserNumber,interface%interface,field%field,err,error,*999)
 
     EXITS("cmfe_Field_CreateStartInterfaceObj")
     RETURN
@@ -33137,7 +33709,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('field Create')
 #endif
 
-    CALL FIELD_CREATE_START(fieldUserNumber,region%region,field%field,err,error,*999)
+    CALL Field_CreateStart(fieldUserNumber,region%region,field%field,err,error,*999)
 
     EXITS("cmfe_Field_CreateStartRegionObj")
     RETURN
@@ -33177,7 +33749,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DEPENDENT_TYPE_GET(field,dependentType,err,error,*999)
+    CALL Field_DependentTypeGet(field,dependentType,err,error,*999)
 
     EXITS("cmfe_Field_DependentTypeGetNumber")
     RETURN
@@ -33203,7 +33775,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DependentTypeGetObj",err,error,*999)
 
-    CALL FIELD_DEPENDENT_TYPE_GET(field%field,dependentType,err,error,*999)
+    CALL Field_DependentTypeGet(field%field,dependentType,err,error,*999)
 
     EXITS("cmfe_Field_DependentTypeGetObj")
     RETURN
@@ -33243,7 +33815,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DEPENDENT_TYPE_SET(field,dependentType,err,error,*999)
+    CALL Field_DependentTypeSet(field,dependentType,err,error,*999)
 
     EXITS("cmfe_Field_DependentTypeSetNumber")
     RETURN
@@ -33269,7 +33841,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DependentTypeSetObj",err,error,*999)
 
-    CALL FIELD_DEPENDENT_TYPE_SET(field%field,dependentType,err,error,*999)
+    CALL Field_DependentTypeSet(field%field,dependentType,err,error,*999)
 
     EXITS("cmfe_Field_DependentTypeSetObj")
     RETURN
@@ -33374,7 +33946,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DIMENSION_GET(field,variableType,DIMENSION,err,error,*999)
+    CALL Field_DimensionGet(field,variableType,DIMENSION,err,error,*999)
 
     EXITS("cmfe_Field_DimensionGetNumber")
     RETURN
@@ -33401,7 +33973,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DimensionGetObj",err,error,*999)
 
-    CALL FIELD_DIMENSION_GET(field%field,variableType,dimension,err,error,*999)
+    CALL Field_DimensionGet(field%field,variableType,dimension,err,error,*999)
 
     EXITS("cmfe_Field_DimensionGetObj")
     RETURN
@@ -33442,7 +34014,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_DIMENSION_SET(field,variableType,DIMENSION,err,error,*999)
+    CALL Field_DimensionSet(field,variableType,DIMENSION,err,error,*999)
 
     EXITS("cmfe_Field_DimensionSetNumber")
     RETURN
@@ -33469,7 +34041,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DimensionSetObj",err,error,*999)
 
-    CALL FIELD_DIMENSION_SET(field%field,variableType,DIMENSION,err,error,*999)
+    CALL Field_DimensionSet(field%field,variableType,DIMENSION,err,error,*999)
 
     EXITS("cmfe_Field_DimensionSetObj")
     RETURN
@@ -33510,7 +34082,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_GEOMETRIC_FIELD_GET(field,geometricField,err,error,*999)
+    CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
     geometricFieldUserNumber=geometricField%userNumber
 
     EXITS("cmfe_Field_GeometricFieldGetNumber")
@@ -33537,7 +34109,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_GeometricFieldGetObj",err,error,*999)
 
-    CALL FIELD_GEOMETRIC_FIELD_GET(field%field,geometricField%field,err,error,*999)
+    CALL Field_GeometricFieldGet(field%field,geometricField%field,err,error,*999)
 
     EXITS("cmfe_Field_GeometricFieldGetObj")
     RETURN
@@ -33579,7 +34151,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_FieldGet(region,geometricFieldUserNumber,geometricField,err,error,*999)
-    CALL FIELD_GEOMETRIC_FIELD_SET(field,geometricField,err,error,*999)
+    CALL Field_GeometricFieldSet(field,geometricField,err,error,*999)
 
     EXITS("cmfe_Field_GeometricFieldSetNumber")
     RETURN
@@ -33605,7 +34177,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_GeometricFieldSetObj",err,error,*999)
 
-    CALL FIELD_GEOMETRIC_FIELD_SET(field%field,geometricField%field,err,error,*999)
+    CALL Field_GeometricFieldSet(field%field,geometricField%field,err,error,*999)
 
     EXITS("cmfe_Field_GeometricFieldSetObj")
     RETURN
@@ -33619,18 +34191,18 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the line length between nodes of a geometric field for a given element number and element basis line number by a user number.
-  SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber(contextUserNumber,regionUserNumber, &
-    & geometricFieldUserNumber,elementNumber,elementLineNumber,lineLength,err)
-    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetNumber)
+  !>Gets the line length between nodes of a geometric field for a given user element number and line xi normal directions by a user number.
+  SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber0(contextUserNumber,regionUserNumber, &
+    & geometricFieldUserNumber,userElementNumber,xiNormalDirection,lineLength,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to obtain the line length from
     INTEGER(INTG), INTENT(IN) :: geometricFieldUserNumber !<The geometric field user number to obtain the line length from
-    INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the line length for
-    INTEGER(INTG), INTENT(IN) :: elementLineNumber !<The element basis line to get the length for
-    REAL(DP), INTENT(OUT) :: lineLength !<The line length of the chosen element line number
+    INTEGER(INTG),  INTENT(IN) :: userElementNumber !<The element to get the line length for
+    INTEGER(INTG), INTENT(IN) :: xiNormalDirection !<The xi normal direction to specify the line
+    REAL(DP), INTENT(OUT) :: lineLength !<On return, the line length of the chosen line 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -33638,7 +34210,44 @@ CONTAINS
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
-    ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetNumber",err,error,*999)
+    ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetNumber0",err,error,*999)
+    
+    CALL cmfe_Field_GeometricParametersElementLineLengthGetNumber1(contextUserNumber,regionUserNumber, &
+      & geometricFieldUserNumber,userElementNumber,[xiNormalDirection],lineLength,err)
+    
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetNumber0")
+    RETURN
+999 ERRORS("cmfe_Field_GeometricParametersElementLineLengthGetNumber0",err,error)
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber0
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the line length between nodes of a geometric field for a given element number and element basis line number by a user number.
+  SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber1(contextUserNumber,regionUserNumber, &
+    & geometricFieldUserNumber,userElementNumber,xiNormalDirections,lineLength,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to obtain the line length from
+    INTEGER(INTG), INTENT(IN) :: geometricFieldUserNumber !<The geometric field user number to obtain the line length from
+    INTEGER(INTG),  INTENT(IN) :: userElementNumber !<The element to get the line length for
+    INTEGER(INTG), INTENT(IN) :: xiNormalDirections(:) !<xiNormalDirections(xiIdx). The xi normal directions to specify the line
+    REAL(DP), INTENT(OUT) :: lineLength !<On return, the line length of the chosen line 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(FieldType), POINTER :: geometricField
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetNumber1",err,error,*999)
     
     NULLIFY(context)
     NULLIFY(regions)
@@ -33648,63 +34257,95 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,geometricFieldUserNumber,geometricField,err,error,*999)
-    CALL Field_GeometricParametersElementLineLengthGet(geometricField,elementNumber,elementLineNumber,lineLength, &
+    CALL Field_GeometricParametersElementLineLengthGet(geometricField,userElementNumber,xiNormalDirections,lineLength, &
       & err,error,*999)
 
-    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetNumber")
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetNumber1")
     RETURN
-999 ERRORS("cmfe_Field_GeometricParametersElementLineLengthGetNumber",err,error)
-    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetNumber")
+999 ERRORS("cmfe_Field_GeometricParametersElementLineLengthGetNumber1",err,error)
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetNumber1")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber
+  END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber1
   
   !
   !================================================================================================================================
   !
 
-  !>Gets the line length between nodes of a geometric field for a given element number and element basis line number by an object.
-  SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj(geometricField,elementNumber,elementLineNumber,lineLength,err)
-    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetObj)
+  !>Gets the line length between nodes of a geometric field for a given user element number and line xi normal direction by an object.
+  SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj0(geometricField,userElementNumber,xiNormalDirection, &
+    & lineLength,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetObj0)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField !<The geometric field to obtain the line length from
-    INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the line length for
-    INTEGER(INTG), INTENT(IN) :: elementLineNumber !<The element basis line to get the length for
+    INTEGER(INTG),  INTENT(IN) :: userElementNumber !<The user element to get the line length for
+    INTEGER(INTG), INTENT(IN) :: xiNormalDirection !<The line xi normal direction to get the length for
     REAL(DP), INTENT(OUT) :: lineLength !<The line length of the chosen element line number
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetObj",err,error,*999)
+    ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetObj0",err,error,*999)
 
-    CALL Field_GeometricParametersElementLineLengthGet(geometricField%field,elementNumber,elementLineNumber,lineLength, &
-      & err,error,*999)
+    CALL cmfe_Field_GeometricParametersElementLineLengthGetObj1(geometricField,userElementNumber,[xiNormalDirection], &
+      & lineLength,err)
 
-    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetObj")
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetObj0")
     RETURN
-999 ERRORS("cmfe_Field_GeometricParametersElementLineLengthGetObj",err,error)
-    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetObj")
+999 ERRORS("cmfe_Field_GeometricParametersElementLineLengthGetObj0",err,error)
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetObj0")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj
+  END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj0
 
   !
   !================================================================================================================================
   !
 
-  !>Gets the volume for a given element number by a user number.
+  !>Gets the line length between nodes of a geometric field for a given user element number and line xi normal directions  by an object.
+  SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj1(geometricField,userElementNumber,xiNormalDirections, &
+    & lineLength,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetObj1)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: geometricField !<The geometric field to obtain the line length from
+    INTEGER(INTG),  INTENT(IN) :: userElementNumber !<The user element to get the line length for
+    INTEGER(INTG), INTENT(IN) :: xiNormalDirections(:) !<xiNormalDirections(xiIdx). The element basis line to get the length for
+    REAL(DP), INTENT(OUT) :: lineLength !<The line length of the chosen element line number
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetObj1",err,error,*999)
+
+    CALL Field_GeometricParametersElementLineLengthGet(geometricField%field,userElementNumber,xiNormalDirections,lineLength, &
+      & err,error,*999)
+
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetObj1")
+    RETURN
+999 ERRORS("cmfe_Field_GeometricParametersElementLineLengthGetObj1",err,error)
+    EXITS("cmfe_Field_GeometricParametersElementLineLengthGetObj1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the volume for a given user element number by a user number.
   SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetNumber(contextUserNumber,regionUserNumber,geometricFieldUserNumber, &
-    & elementNumber,elementVolume,err)
+    & userElementNumber,elementVolume,err)
     !DLLEXPORT(cmfe_Field_GeometricParametersElementVolumeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to obtain the volume from
     INTEGER(INTG), INTENT(IN) :: geometricFieldUserNumber !<The geometric field user number to obtain the volume from
-    INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the volume for
-    REAL(DP), INTENT(OUT) :: elementVolume !<The volume of the chosen element number
+    INTEGER(INTG),  INTENT(IN) :: userElementNumber !<The user element number to get the volume for
+    REAL(DP), INTENT(OUT) :: elementVolume !<On return, the volume of the chosen element number
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -33722,7 +34363,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,geometricFieldUserNumber,geometricField,err,error,*999)
-    CALL Field_GeometricParametersElementVolumeGet(geometricField,elementNumber,elementVolume,err,error,*999)
+    CALL Field_GeometricParametersElementVolumeGet(geometricField,userElementNumber,elementVolume,err,error,*999)
 
     EXITS("cmfe_Field_GeometricParametersElementVolumeGetNumber")
     RETURN
@@ -33737,20 +34378,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the volume for a given element number by an object.
-  SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetObj(geometricField,elementNumber,elementVolume,err)
+  !>Gets the volume for a given user element number by an object.
+  SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetObj(geometricField,userElementNumber,elementVolume,err)
     !DLLEXPORT(cmfe_Field_GeometricParametersElementVolumeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField !<The geometric field to obtain the volume from
-    INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the volume for
-    REAL(DP), INTENT(OUT) :: elementVolume !<The volume of the chosen element 
+    INTEGER(INTG),  INTENT(IN) :: userElementNumber !<The user element to get the volume for
+    REAL(DP), INTENT(OUT) :: elementVolume !<On return, the volume of the chosen element 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Field_GeometricParametersElementVolumeGetObj",err,error,*999)
 
-    CALL Field_GeometricParametersElementVolumeGet(geometricField%field,elementNumber,elementVolume, &
+    CALL Field_GeometricParametersElementVolumeGet(geometricField%field,userElementNumber,elementVolume, &
       & err,error,*999)
 
     EXITS("cmfe_Field_GeometricParametersElementVolumeGetObj")
@@ -34178,7 +34819,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_LABEL_GET(field,label,err,error,*999)
+    CALL Field_LabelGet(field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelGetCNumber")
     RETURN
@@ -34204,7 +34845,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_LabelGetCObj",err,error,*999)
 
-    CALL FIELD_LABEL_GET(field%field,label,err,error,*999)
+    CALL Field_LabelGet(field%field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelGetCObj")
     RETURN
@@ -34244,7 +34885,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_LABEL_GET(field,label,err,error,*999)
+    CALL Field_LabelGet(field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelGetVSNumber")
     RETURN
@@ -34270,7 +34911,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_LabelGetVSObj",err,error,*999)
 
-    CALL FIELD_LABEL_GET(field%field,label,err,error,*999)
+    CALL Field_LabelGet(field%field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelGetVSObj")
     RETURN
@@ -34310,7 +34951,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_LABEL_SET(field,label,err,error,*999)
+    CALL Field_LabelSet(field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelSetCNumber")
     RETURN
@@ -34336,7 +34977,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_LabelSetCObj",err,error,*999)
 
-    CALL FIELD_LABEL_SET(field%field,label,err,error,*999)
+    CALL Field_LabelSet(field%field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelSetCObj")
     RETURN
@@ -34376,7 +35017,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_LABEL_SET(field,label,err,error,*999)
+    CALL Field_LabelSet(field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelSetVSNumber")
     RETURN
@@ -34402,7 +35043,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_LabelSetVSObj",err,error,*999)
 
-    CALL FIELD_LABEL_SET(field%field,label,err,error,*999)
+    CALL Field_LabelSet(field%field,label,err,error,*999)
 
     EXITS("cmfe_Field_LabelSetVSObj")
     RETURN
@@ -34597,7 +35238,7 @@ CONTAINS
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL FIELD_MESH_DECOMPOSITION_SET(field,decomposition,err,error,*999)
+    CALL Field_DecompositionSet(field,decomposition,err,error,*999)
 
     EXITS("cmfe_Field_DecompositionSetNumber")
     RETURN
@@ -34623,7 +35264,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_DecompositionSetObj",err,error,*999)
 
-    CALL FIELD_MESH_DECOMPOSITION_SET(field%field,meshDecomposition%decomposition,err,error,*999)
+    CALL Field_DecompositionSet(field%field,meshDecomposition%decomposition,err,error,*999)
 
     EXITS("cmfe_Field_DecompositionSetObj")
     RETURN
@@ -34739,7 +35380,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_NUMBER_OF_COMPONENTS_GET(field,variableType,numberOfComponents,err,error,*999)
+    CALL Field_NumberOfComponentsGet(field,variableType,numberOfComponents,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfComponentsGetNumber")
     RETURN
@@ -34766,7 +35407,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_NumberOfComponentsGetObj",err,error,*999)
 
-    CALL FIELD_NUMBER_OF_COMPONENTS_GET(field%field,variableType,numberOfComponents,err,error,*999)
+    CALL Field_NumberOfComponentsGet(field%field,variableType,numberOfComponents,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfComponentsGetObj")
     RETURN
@@ -34808,7 +35449,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_NUMBER_OF_COMPONENTS_SET(field,variableType,numberOfComponents,err,error,*999)
+    CALL Field_NumberOfComponentsSet(field,variableType,numberOfComponents,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfComponentsSetNumber")
     RETURN
@@ -34835,7 +35476,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_NumberOfComponentsSetObj",err,error,*999)
 
-    CALL FIELD_NUMBER_OF_COMPONENTS_SET(field%field,variableType,numberOfComponents,err,error,*999)
+    CALL Field_NumberOfComponentsSet(field%field,variableType,numberOfComponents,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfComponentsSetObj")
     RETURN
@@ -34875,7 +35516,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_NUMBER_OF_VARIABLES_GET(field,numberOfVariables,err,error,*999)
+    CALL Field_NumberOfVariablesGet(field,numberOfVariables,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfVariablesGetNumber")
     RETURN
@@ -34901,7 +35542,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_NumberOfVariablesGetObj",err,error,*999)
 
-    CALL FIELD_NUMBER_OF_VARIABLES_GET(field%field,numberOfVariables,err,error,*999)
+    CALL Field_NumberOfVariablesGet(field%field,numberOfVariables,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfVariablesGetObj")
     RETURN
@@ -34941,7 +35582,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_NUMBER_OF_VARIABLES_SET(field,numberOfVariables,err,error,*999)
+    CALL Field_NumberOfVariablesSet(field,numberOfVariables,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfVariablesSetNumber")
     RETURN
@@ -34967,7 +35608,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_NumberOfVariablesSetObj",err,error,*999)
 
-    CALL FIELD_NUMBER_OF_VARIABLES_SET(field%field,numberOfVariables,err,error,*999)
+    CALL Field_NumberOfVariablesSet(field%field,numberOfVariables,err,error,*999)
 
     EXITS("cmfe_Field_NumberOfVariablesSetObj")
     RETURN
@@ -35011,7 +35652,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantIntgNumber")
     RETURN
@@ -35041,7 +35682,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddConstantIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantIntgObj")
     RETURN
@@ -35085,7 +35726,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantSPNumber")
     RETURN
@@ -35114,7 +35755,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddConstantSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantSPObj")
     RETURN
@@ -35158,7 +35799,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantDPNumber")
     RETURN
@@ -35187,7 +35828,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddConstantDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantDPObj")
     RETURN
@@ -35231,7 +35872,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantLNumber")
     RETURN
@@ -35260,7 +35901,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddConstantLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetAddConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddConstantLObj")
     RETURN
@@ -35305,7 +35946,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementIntgNumber")
     RETURN
@@ -35335,7 +35976,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddElementIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field%field,variableType,fieldSetType,UserElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetAddElement(field%field,variableType,fieldSetType,UserElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementIntgObj")
@@ -35381,7 +36022,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementSPNumber")
     RETURN
@@ -35411,7 +36052,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddElementSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetAddElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementSPObj")
@@ -35457,7 +36098,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementDPNumber")
     RETURN
@@ -35487,7 +36128,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddElementDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetAddElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementDPObj")
@@ -35533,7 +36174,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetAddElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementLNumber")
     RETURN
@@ -35563,7 +36204,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddElementLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetAddElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddElementLObj")
@@ -35939,7 +36580,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeIntgNumber")
@@ -35973,7 +36614,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddNodeIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeIntgObj")
@@ -36021,7 +36662,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeSPNumber")
@@ -36055,7 +36696,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddNodeSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeSPObj")
@@ -36103,7 +36744,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeDPNumber")
@@ -36137,7 +36778,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddNodeDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeDPObj")
@@ -36185,7 +36826,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeLNumber")
@@ -36219,7 +36860,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetAddNodeLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_ADD_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetAddNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber, value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetAddNodeLObj")
@@ -36261,7 +36902,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_CREATE(field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetCreate(field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetCreateNumber")
     RETURN
@@ -36288,7 +36929,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetCreateObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_CREATE(field%field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetCreate(field%field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetCreateObj")
     RETURN
@@ -36329,7 +36970,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DESTROY(field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetDestroy(field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDestroyNumber")
     RETURN
@@ -36356,7 +36997,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDestroyObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DESTROY(field%field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetDestroy(field%field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDestroyObj")
     RETURN
@@ -36399,7 +37040,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_GET(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetIntgNumber")
     RETURN
@@ -36427,7 +37068,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataGetIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_GET(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetIntgObj")
     RETURN
@@ -36470,7 +37111,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_GET(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetSPNumber")
     RETURN
@@ -36498,7 +37139,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataGetSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_GET(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetSPObj")
     RETURN
@@ -36541,7 +37182,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_GET(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetDPNumber")
     RETURN
@@ -36569,7 +37210,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataGetDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_GET(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetDPObj")
     RETURN
@@ -36612,7 +37253,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_GET(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetLNumber")
     RETURN
@@ -36640,7 +37281,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataGetLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_GET(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataGet(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataGetLObj")
     RETURN
@@ -36683,7 +37324,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreIntgNumber")
     RETURN
@@ -36712,7 +37353,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreIntgObj")
     RETURN
@@ -36755,7 +37396,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreSPNumber")
     RETURN
@@ -36783,7 +37424,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreSPObj")
     RETURN
@@ -36826,7 +37467,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreDPNumber")
     RETURN
@@ -36854,7 +37495,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreDPObj")
     RETURN
@@ -36897,7 +37538,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreLNumber")
     RETURN
@@ -36925,7 +37566,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_DATA_RESTORE(field%field,variableType,fieldSetType,parameters,err,error,*999)
+    CALL Field_ParameterSetDataRestore(field%field,variableType,fieldSetType,parameters,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetDataRestoreLObj")
     RETURN
@@ -36969,7 +37610,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantIntgNumber")
     RETURN
@@ -36999,7 +37640,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetConstantIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantIntgObj")
     RETURN
@@ -37043,7 +37684,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantSPNumber")
     RETURN
@@ -37072,7 +37713,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetConstantSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantSPObj")
     RETURN
@@ -37116,7 +37757,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantDPNumber")
     RETURN
@@ -37145,7 +37786,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetConstantDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantDPObj")
     RETURN
@@ -37189,7 +37830,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantLNumber")
     RETURN
@@ -37218,7 +37859,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetConstantLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetGetConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetConstantLObj")
     RETURN
@@ -37778,7 +38419,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementIntgNumber")
     RETURN
@@ -37808,7 +38449,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetElementIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetGetElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementIntgObj")
@@ -37854,7 +38495,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementSPNumber")
     RETURN
@@ -37884,7 +38525,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetElementSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
+    CALL Field_ParameterSetGetElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementSPObj")
@@ -37930,7 +38571,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementDPNumber")
     RETURN
@@ -37960,7 +38601,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetElementDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetGetElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementDPObj")
@@ -38006,7 +38647,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetGetElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementLNumber")
     RETURN
@@ -38036,7 +38677,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetElementLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
+    CALL Field_ParameterSetGetElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetElementLObj")
@@ -38084,7 +38725,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeIntgNumber")
@@ -38118,7 +38759,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetNodeIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeIntgObj")
@@ -38166,7 +38807,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeSPNumber")
@@ -38200,7 +38841,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetNodeSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeSPObj")
@@ -38248,7 +38889,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeDPNumber")
@@ -38282,7 +38923,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetNodeDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber, value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeDPObj")
@@ -38330,7 +38971,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_GET_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber, VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeLNumber")
@@ -38364,7 +39005,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetNodeLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetGetNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetNodeLObj")
@@ -38442,7 +39083,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantIntgNumber")
     RETURN
@@ -38472,7 +39113,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantIntgObj")
     RETURN
@@ -38517,7 +39158,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantSPNumber")
     RETURN
@@ -38547,7 +39188,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field%field,variableType,fieldSetType,componentNumber,Value,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field%field,variableType,fieldSetType,componentNumber,Value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantSPObj")
     RETURN
@@ -38591,7 +39232,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantDPNumber")
     RETURN
@@ -38621,7 +39262,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantDPObj")
     RETURN
@@ -38665,7 +39306,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantLNumber")
     RETURN
@@ -38695,7 +39336,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
+    CALL Field_ParameterSetUpdateConstant(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateConstantLObj")
     RETURN
@@ -39261,7 +39902,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
+    CALL Field_ParameterSetUpdateElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementIntgNumber")
@@ -39294,7 +39935,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetUpdateElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementIntgObj")
@@ -39340,7 +39981,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
+    CALL Field_ParameterSetUpdateElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementSPNumber")
@@ -39373,7 +40014,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetUpdateElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementSPObj")
@@ -39419,7 +40060,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
+    CALL Field_ParameterSetUpdateElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementDPNumber")
@@ -39452,7 +40093,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetUpdateElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementDPObj")
@@ -39498,7 +40139,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
+    CALL Field_ParameterSetUpdateElement(field,variableType,fieldSetType,userElementNumber,componentNumber,VALUE, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementLNumber")
@@ -39530,7 +40171,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
+    CALL Field_ParameterSetUpdateElement(field%field,variableType,fieldSetType,userElementNumber,componentNumber,value, &
       & err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateElementLObj")
@@ -39607,7 +40248,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_FINISH(field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetUpdateFinish(field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateFinishNumber")
     RETURN
@@ -39634,7 +40275,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateFinishObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_FINISH(field%field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetUpdateFinish(field%field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateFinishObj")
     RETURN
@@ -39681,7 +40322,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetUpdateNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeIntgNumber")
@@ -39716,7 +40357,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeIntgObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
+    CALL Field_ParameterSetUpdateNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber, value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeIntgObj")
@@ -39764,7 +40405,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
+    CALL Field_ParameterSetUpdateNode(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
       & componentNumber, VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeSPNumber")
@@ -39799,7 +40440,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeSPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
+    CALL Field_ParameterSetUpdateNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber, value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeSPObj")
@@ -39847,7 +40488,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
+    CALL Field_ParameterSetUpdateNode(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeDPNumber")
@@ -39882,7 +40523,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeDPObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
+    CALL Field_ParameterSetUpdateNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber,value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeDPObj")
@@ -39930,7 +40571,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
+    CALL Field_ParameterSetUpdateNode(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber,VALUE,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeLNumber")
@@ -39965,7 +40606,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeLObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_NODE(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
+    CALL Field_ParameterSetUpdateNode(field%field,variableType,fieldSetType,versionNumber,derivativeNumber, &
       & userNodeNumber,componentNumber, value,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateNodeLObj")
@@ -39975,34 +40616,6 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateNodeLObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Updates the given parameter set with the given values for all local dofs of the field variable identified by an object..
-  SUBROUTINE cmfe_Field_ParameterSetUpdateLocalDofsDPObj(field,variableType,fieldSetType,values,err)
-    !DLLEXPORT(cmfe_Field_ParameterSetUpdateLocalDofsDPObj)
-
-    !Argument variables
-    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the values for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update values for the field parameter set. \see OpenCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update values for. \see OpenCMISS_FieldParameterSetTypes
-    REAL(DP), INTENT(IN) :: values(:) !<The values to update the field parameter set to.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_Field_ParameterSetUpdateLocalDofsDPObj",err,error,*999)
-
-    CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOFS(field%field,variableType,fieldSetType,values,err,error,*999)
-
-    EXITS("cmfe_Field_ParameterSetUpdateLocalDofsDPObj")
-    RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetUpdateLocalDofsDPObj",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Field_ParameterSetUpdateLocalDofsDPObj
 
   !
   !================================================================================================================================
@@ -40703,7 +41316,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_PARAMETER_SET_UPDATE_START(field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetUpdateStart(field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateStartNumber")
     RETURN
@@ -40730,7 +41343,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetUpdateStartObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_UPDATE_START(field%field,variableType,fieldSetType,err,error,*999)
+    CALL Field_ParameterSetUpdateStart(field%field,variableType,fieldSetType,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetUpdateStartObj")
     RETURN
@@ -40862,7 +41475,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_SCALING_TYPE_GET(field,scalingType,err,error,*999)
+    CALL Field_ScalingTypeGet(field,scalingType,err,error,*999)
 
     EXITS("cmfe_Field_ScalingTypeGetNumber")
     RETURN
@@ -40888,7 +41501,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ScalingTypeGetObj",err,error,*999)
 
-    CALL FIELD_SCALING_TYPE_GET(field%field,scalingType,err,error,*999)
+    CALL Field_ScalingTypeGet(field%field,scalingType,err,error,*999)
 
     EXITS("cmfe_Field_ScalingTypeGetObj")
     RETURN
@@ -40928,7 +41541,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_SCALING_TYPE_SET(field,scalingType,err,error,*999)
+    CALL Field_ScalingTypeSet(field,scalingType,err,error,*999)
 
     EXITS("cmfe_Field_ScalingTypeSetNumber")
     RETURN
@@ -40954,7 +41567,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ScalingTypeSetObj",err,error,*999)
 
-    CALL FIELD_SCALING_TYPE_SET(field%field,scalingType,err,error,*999)
+    CALL Field_ScalingTypeSet(field%field,scalingType,err,error,*999)
 
     EXITS("cmfe_Field_ScalingTypeSetObj")
     RETURN
@@ -40994,7 +41607,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_TYPE_GET(field,fieldType_,err,error,*999)
+    CALL Field_TypeGet(field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeGetNumber")
     RETURN
@@ -41020,7 +41633,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_TypeGetObj",err,error,*999)
 
-    CALL FIELD_TYPE_GET(field%field,fieldType_,err,error,*999)
+    CALL Field_TypeGet(field%field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeGetObj")
     RETURN
@@ -41060,7 +41673,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_TYPE_SET(field,fieldType_,err,error,*999)
+    CALL Field_TypeSet(field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeSetNumber")
     RETURN
@@ -41086,7 +41699,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_TypeSetObj",err,error,*999)
 
-    CALL FIELD_TYPE_SET(field%field,fieldType_,err,error,*999)
+    CALL Field_TypeSet(field%field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeSetObj")
     RETURN
@@ -41127,7 +41740,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_VARIABLE_LABEL_GET(field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelGet(field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelGetCNumber")
     RETURN
@@ -41154,7 +41767,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_VariableLabelGetCObj",err,error,*999)
 
-    CALL FIELD_VARIABLE_LABEL_GET(field%field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelGet(field%field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelGetCObj")
     RETURN
@@ -41195,7 +41808,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_VARIABLE_LABEL_GET(field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelGet(field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelGetVSNumber")
     RETURN
@@ -41222,7 +41835,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_VariableLabelGetVSObj",err,error,*999)
 
-    CALL FIELD_VARIABLE_LABEL_GET(field%field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelGet(field%field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelGetVSObj")
     RETURN
@@ -41263,7 +41876,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_VARIABLE_LABEL_SET(field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelSet(field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelSetCNumber")
     RETURN
@@ -41290,7 +41903,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_VariableLabelSetCObj",err,error,*999)
 
-    CALL FIELD_VARIABLE_LABEL_SET(field%field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelSet(field%field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelSetCObj")
     RETURN
@@ -41331,7 +41944,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_VARIABLE_LABEL_SET(field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelSet(field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelSetVSNumber")
     RETURN
@@ -41358,7 +41971,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_VariableLabelSetVSObj",err,error,*999)
 
-    CALL FIELD_VARIABLE_LABEL_SET(field%field,variableType,label,err,error,*999)
+    CALL Field_VariableLabelSet(field%field,variableType,label,err,error,*999)
 
     EXITS("cmfe_Field_VariableLabelSetVSObj")
     RETURN
@@ -41380,7 +41993,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the field variable types for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the field variable types for.
-    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variable_idx). On return, the field variable types for the variable_idx'th field variable. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variableIdx). On return, the field variable types for the variableIdx'th field variable. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -41398,7 +42011,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_VARIABLE_TYPES_GET(field,variableTypes,err,error,*999)
+    CALL Field_VariableTypesGet(field,variableTypes,err,error,*999)
 
     EXITS("cmfe_Field_VariableTypesGetNumber")
     RETURN
@@ -41418,13 +42031,13 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field variable types for.
-    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variable_idx). On return, the field variable types for the variable_idx'th field variable. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variableIdx). On return, the field variable types for the variableIdx'th field variable. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Field_VariableTypesGetObj",err,error,*999)
 
-    CALL FIELD_VARIABLE_TYPES_GET(field%field,variableTypes,err,error,*999)
+    CALL Field_VariableTypesGet(field%field,variableTypes,err,error,*999)
 
     EXITS("cmfe_Field_VariableTypesGetObj")
     RETURN
@@ -41446,7 +42059,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the field variable types for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the field variable types for.
-    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variable_idx). The field variable types for the variable_idx'th field variable to set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variableIdx). The field variable types for the variableIdx'th field variable to set. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -41464,7 +42077,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_VARIABLE_TYPES_SET(field,variableTypes,err,error,*999)
+    CALL Field_VariableTypesSet(field,variableTypes,err,error,*999)
 
     EXITS("cmfe_Field_VariableTypesSetNumber")
     RETURN
@@ -41484,13 +42097,13 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the field variable types for.
-    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variable_idx). The field variable types for the variable_idx'th field variable to set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variableIdx). The field variable types for the variableIdx'th field variable to set. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Field_VariableTypesSetObj",err,error,*999)
 
-    CALL FIELD_VARIABLE_TYPES_SET(field%field,variableTypes,err,error,*999)
+    CALL Field_VariableTypesSet(field%field,variableTypes,err,error,*999)
 
     EXITS("cmfe_Field_VariableTypesSetObj")
     RETURN
@@ -43532,7 +44145,7 @@ CONTAINS
 
     ENTERS("cmfe_MeshEmbedding_PushDataObj",err,error,*999)
 
-    CALL MESH_EMBEDDING_PUSH_DATA(meshEmbedding%meshEmbedding,parentField%field, parentComponent, childField%field, &
+    CALL MeshEmbedding_PushData(meshEmbedding%meshEmbedding,parentField%field, parentComponent, childField%field, &
       & childComponent, err, error, *999)
 
     EXITS("cmfe_MeshEmbedding_PushDataObj")
@@ -43584,7 +44197,7 @@ CONTAINS
 
     ENTERS("cmfe_MeshEmbedding_PullGaussPointDataObj",err,error,*999)
 
-     CALL MESH_EMBEDDING_PULL_GAUSS_POINT_DATA(meshEmbedding%meshEmbedding,parentField%field, parentComponent, &
+     CALL MeshEmbedding_PullGaussPointData(meshEmbedding%meshEmbedding,parentField%field, parentComponent, &
       &  childField%field,childComponent, err, error, *999)
 
      EXITS("cmfe_MeshEmbedding_PullGaussPointDataObj")
@@ -43611,7 +44224,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ParameterSetGetGaussPointCoordObj",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD(meshEmbedding%meshEmbedding,componentNumber, &
+    CALL Field_ParameterSetGetGaussPointCoord(meshEmbedding%meshEmbedding,componentNumber, &
       & NumberofGaussPoints,COORDS,err,error,*999)
 
     EXITS("cmfe_Field_ParameterSetGetGaussPointCoordObj")
@@ -54986,7 +55599,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! REGION_ROUTINES
+!! RegionRoutines
 !!
 !!==================================================================================================================================
 
@@ -55083,7 +55696,7 @@ CONTAINS
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL REGION_COORDINATE_SYSTEM_SET(region,coordinateSystem,err,error,*999)
+    CALL Region_CoordinateSystemSet(region,coordinateSystem,err,error,*999)
 
     EXITS("cmfe_Region_CoordinateSystemSetNumber")
     RETURN
@@ -55109,7 +55722,7 @@ CONTAINS
 
     ENTERS("cmfe_Region_CoordinateSystemSetObj",err,error,*999)
 
-    CALL REGION_COORDINATE_SYSTEM_SET(region%region,coordinateSystem%coordinateSystem,err,error,*999)
+    CALL Region_CoordinateSystemSet(region%region,coordinateSystem%coordinateSystem,err,error,*999)
 
     EXITS("cmfe_Region_CoordinateSystemSetObj")
     RETURN
@@ -55144,7 +55757,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL REGION_CREATE_FINISH(region,err,error,*999)
+    CALL Region_CreateFinish(region,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Region Create')
@@ -55173,7 +55786,7 @@ CONTAINS
 
     ENTERS("cmfe_Region_CreateFinishObj",err,error,*999)
 
-    CALL REGION_CREATE_FINISH(region%region,err,error,*999)
+    CALL Region_CreateFinish(region%region,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('region Create')
@@ -55218,7 +55831,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
-    CALL REGION_CREATE_START(regionUserNumber,parentRegion,region,err,error,*999)
+    CALL Region_CreateStart(regionUserNumber,parentRegion,region,err,error,*999)
 
     EXITS("cmfe_Region_CreateStartNumber")
     RETURN
@@ -55249,7 +55862,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('region Create')
 #endif
 
-    CALL REGION_CREATE_START(regionUserNumber,parentRegion%region,region%region,err,error,*999)
+    CALL Region_CreateStart(regionUserNumber,parentRegion%region,region%region,err,error,*999)
 
     EXITS("cmfe_Region_CreateStartObj")
     RETURN
@@ -55372,7 +55985,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL REGION_LABEL_GET(region,label,err,error,*999)
+    CALL Region_LabelGet(region,label,err,error,*999)
 
     EXITS("cmfe_Region_LabelGetCNumber")
     RETURN
@@ -55398,7 +56011,7 @@ CONTAINS
 
     ENTERS("cmfe_Region_LabelGetCObj",err,error,*999)
 
-    CALL REGION_LABEL_GET(region%region,label,err,error,*999)
+    CALL Region_LabelGet(region%region,label,err,error,*999)
 
     EXITS("cmfe_Region_LabelGetCObj")
     RETURN
@@ -55434,7 +56047,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL REGION_LABEL_GET(region,label,err,error,*999)
+    CALL Region_LabelGet(region,label,err,error,*999)
 
     EXITS("cmfe_Region_LabelGetVSNumber")
     RETURN
@@ -55460,7 +56073,7 @@ CONTAINS
 
     ENTERS("cmfe_Region_LabelGetVSObj",err,error,*999)
 
-    CALL REGION_LABEL_GET(region%region,label,err,error,*999)
+    CALL Region_LabelGet(region%region,label,err,error,*999)
 
     EXITS("cmfe_Region_LabelGetVSObj")
     RETURN
@@ -55496,7 +56109,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL REGION_LABEL_SET(region,label,err,error,*999)
+    CALL Region_LabelSet(region,label,err,error,*999)
 
     EXITS("cmfe_Region_LabelSetCNumber")
     RETURN
@@ -55522,7 +56135,7 @@ CONTAINS
 
     ENTERS("cmfe_Region_LabelSetCObj",err,error,*999)
 
-    CALL REGION_LABEL_SET(region%region,label,err,error,*999)
+    CALL Region_LabelSet(region%region,label,err,error,*999)
 
     EXITS("cmfe_Region_LabelSetCObj")
     RETURN
@@ -55558,7 +56171,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL REGION_LABEL_SET(region,CHAR(label),err,error,*999)
+    CALL Region_LabelSet(region,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Region_LabelSetVSNumber")
     RETURN
@@ -55584,7 +56197,7 @@ CONTAINS
 
     ENTERS("cmfe_Region_LabelSetVSObj",err,error,*999)
 
-    CALL REGION_LABEL_SET(region%region,CHAR(label),err,error,*999)
+    CALL Region_LabelSet(region%region,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Region_LabelSetVSObj")
     RETURN

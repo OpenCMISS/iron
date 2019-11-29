@@ -176,6 +176,7 @@ MODULE Constants
   !> \brief Partial derivative constant identifiers
   !> \see Constants
   !>@{ 
+  INTEGER(INTG), PARAMETER :: MAXIMUM_PARTIAL_DERIV_NUMBER=23 !<The maximum partial derivative number
   INTEGER(INTG), PARAMETER :: NO_PART_DERIV=1 !<No partial derivative i.e., u \see Constants_PartialDerivativeConstants,Constants
   INTEGER(INTG), PARAMETER :: FIRST_PART_DERIV=2 !<First partial derivative i.e., du/ds \see Constants_PartialDerivativeConstants,Constants
   INTEGER(INTG), PARAMETER :: SECOND_PART_DERIV=3 !<Second partial derivative i.e., d^2u/ds^2 \see Constants_PartialDerivativeConstants,Constants

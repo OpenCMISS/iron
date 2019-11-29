@@ -49,7 +49,7 @@ MODULE InterfaceMatricesRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE EquationsMatricesRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE InterfaceAccessRoutines

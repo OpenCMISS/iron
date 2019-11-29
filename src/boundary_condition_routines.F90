@@ -52,7 +52,8 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
-  USE COORDINATE_ROUTINES
+  USE CoordinateSystemRoutines
+  USE CoordinateSystemAccessRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
@@ -65,7 +66,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -294,7 +295,6 @@ CONTAINS
     INTEGER(INTG) :: variable_idx,dof_idx, equ_matrix_idx, dirichlet_idx, row_idx, DUMMY, LAST, DIRICHLET_DOF
     INTEGER(INTG) :: col_idx,equations_set_idx,parameterSetIdx
     INTEGER(INTG) :: pressureIdx,neumannIdx,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
-    INTEGER(INTG), POINTER :: ROW_INDICES(:), COLUMN_INDICES(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITION_VARIABLE
     TYPE(DomainMappingType), POINTER :: VARIABLE_DOMAIN_MAPPING
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,matrixVariable
@@ -388,7 +388,7 @@ CONTAINS
                       IF(BOUNDARY_CONDITION_VARIABLE%parameterSetRequired(parameterSetIdx)) THEN
                         CALL Field_ParameterSetEnsureCreated(FIELD_VARIABLE%FIELD,FIELD_VARIABLE%variableType, &
                           & parameterSetIdx,ERR,ERROR,*999)
-                        CALL FIELD_PARAMETER_SET_UPDATE_START(FIELD_VARIABLE%FIELD,FIELD_VARIABLE%variableType, &
+                        CALL Field_ParameterSetUpdateStart(FIELD_VARIABLE%FIELD,FIELD_VARIABLE%variableType, &
                           & parameterSetIdx,ERR,ERROR,*999)
                       END IF
                     END DO
@@ -750,7 +750,7 @@ CONTAINS
                   ! Finish field update
                   DO parameterSetIdx=1,FIELD_NUMBER_OF_SET_TYPES
                     IF(BOUNDARY_CONDITION_VARIABLE%parameterSetRequired(parameterSetIdx)) THEN
-                      CALL FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD_VARIABLE%FIELD,FIELD_VARIABLE%variableType, &
+                      CALL Field_ParameterSetUpdateFinish(FIELD_VARIABLE%FIELD,FIELD_VARIABLE%variableType, &
                         & parameterSetIdx,ERR,ERROR,*999)
                     END IF
                   END DO
@@ -1161,7 +1161,7 @@ CONTAINS
         CALL FlagError("Boundary conditions have been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(FIELD)) THEN
-          CALL FIELD_COMPONENT_DOF_GET_CONSTANT(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,local_ny,global_ny, &
+          CALL Field_ComponentDOFGetConstant(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,local_ny,global_ny, &
             & ERR,ERROR,*999)
           CALL Field_VariableGet(FIELD,VARIABLE_TYPE,DEPENDENT_FIELD_VARIABLE,ERR,ERROR,*999)
           CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_FIELD_VARIABLE,BOUNDARY_CONDITIONS_VARIABLE, &
@@ -1219,7 +1219,7 @@ CONTAINS
         CALL FlagError("Boundary conditions have been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(FIELD)) THEN
-          CALL FIELD_COMPONENT_DOF_GET_CONSTANT(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,local_ny,global_ny, &
+          CALL Field_ComponentDOFGetConstant(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,local_ny,global_ny, &
             & ERR,ERROR,*999)
           CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
           CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
@@ -1330,64 +1330,64 @@ CONTAINS
                         CASE(BOUNDARY_CONDITION_FREE)
                           ! No field update
                         CASE(BOUNDARY_CONDITION_FIXED)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_INLET)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_OUTLET)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_WALL)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_MOVED_WALL)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FREE_WALL)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny,VALUES(i), &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny,VALUES(i), &
                             & ERR,ERROR,*999)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_INCREMENTED)
                           ! For increment loops, we need to set the full BC parameter set value by
                           ! getting the current value from the values parameter set
-                          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetGetLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,INITIAL_VALUE,ERR,ERROR,*999)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,INITIAL_VALUE+VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_PRESSURE)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
                           ! For pressure incremented, adding to the values_set parameter value doesn't make sense,
                           ! so just increment the value in the pressure values parameter set
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE)
                           ! No field update
                         CASE(BOUNDARY_CONDITION_IMPERMEABLE_WALL)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_NEUMANN_POINT)
                           ! Point value is stored in boundary conditions field set, and is then integrated to
                           ! get the RHS variable value
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_NEUMANN_INTEGRATED,BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY)
                           ! For integrated Neumann condition, integration is already done, so set the RHS
                           ! dof value directly
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_FITTED,BOUNDARY_CONDITION_FIXED_NONREFLECTING, &
                           &  BOUNDARY_CONDITION_FIXED_CELLML,BOUNDARY_CONDITION_FIXED_STREE)
-                          CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetAddLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE DEFAULT
                           LOCAL_ERROR="The specified boundary condition type for dof index "// &
@@ -1523,57 +1523,57 @@ CONTAINS
                         CASE(BOUNDARY_CONDITION_FREE)
                           ! No field update
                         CASE(BOUNDARY_CONDITION_FIXED)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_INLET)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_OUTLET)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_WALL)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_MOVED_WALL)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FREE_WALL)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny,VALUES(i), &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny,VALUES(i), &
                             & ERR,ERROR,*999)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_INCREMENTED) !For load increment loops
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_PRESSURE)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_PRESSURE)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE)
                           ! No field update
                         CASE(BOUNDARY_CONDITION_NEUMANN_POINT)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_NEUMANN_INTEGRATED,BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_IMPERMEABLE_WALL)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE(BOUNDARY_CONDITION_FIXED_FITTED,BOUNDARY_CONDITION_FIXED_NONREFLECTING, &
                             & BOUNDARY_CONDITION_FIXED_CELLML,BOUNDARY_CONDITION_FIXED_STREE)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                          CALL Field_ParameterSetUpdateLocalDOF(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & local_ny,VALUES(i),ERR,ERROR,*999)
                         CASE DEFAULT
                           LOCAL_ERROR="The specified boundary condition type for dof index "// &
@@ -1794,7 +1794,7 @@ CONTAINS
         CALL FlagError("Boundary conditions have been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(FIELD)) THEN
-          CALL FIELD_COMPONENT_DOF_GET_USER_ELEMENT(FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
+          CALL Field_ComponentDOFGetUserElement(FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
             & local_ny,global_ny,ERR,ERROR,*999)
           NULLIFY(FIELD_VARIABLE)
           NULLIFY(BOUNDARY_CONDITIONS_VARIABLE)
@@ -2086,7 +2086,7 @@ CONTAINS
         CALL FlagError("Boundary conditions have been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(FIELD)) THEN
-          CALL FIELD_COMPONENT_DOF_GET_USER_ELEMENT(FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
+          CALL Field_ComponentDOFGetUserElement(FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
             & local_ny,global_ny,ERR,ERROR,*999)
           NULLIFY(FIELD_VARIABLE)
           NULLIFY(BOUNDARY_CONDITIONS_VARIABLE)
@@ -2155,7 +2155,7 @@ CONTAINS
         CALL FlagError("Boundary conditions have been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(FIELD)) THEN
-          CALL FIELD_COMPONENT_DOF_GET_USER_NODE(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
+          CALL Field_ComponentDOFGetUserNode(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
             & USER_NODE_NUMBER,COMPONENT_NUMBER,local_ny,global_ny,ERR,ERROR,*999)
           CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
           IF(ASSOCIATED(FIELD_VARIABLE)) THEN
@@ -2567,7 +2567,7 @@ CONTAINS
             localDof=rhsVariable%domainMapping%globalToLocalMap(globalDof)%localNumber(1)
             ! Set point DOF vector value
             localNeumannConditionIdx=boundaryConditionsNeumann%pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(1)
-            CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(rhsVariable%FIELD,rhsVariable%variableType, &
+            CALL Field_ParameterSetGetLocalDOF(rhsVariable%FIELD,rhsVariable%variableType, &
               & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,localDof,pointValue,err,error,*999)
             CALL DistributedVector_ValuesSet(boundaryConditionsNeumann%pointValues, &
               & localNeumannConditionIdx,pointValue,err,error,*999)
@@ -2707,7 +2707,7 @@ CONTAINS
     TYPE(DomainFaceType), POINTER :: face
     TYPE(DomainLineType), POINTER :: line
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("BoundaryConditions_NeumannIntegrate",err,error,*999)
@@ -2742,9 +2742,9 @@ CONTAINS
 
       ! Initialise field interpolation parameters for the geometric field, which are required for the
       ! face/line Jacobian and scale factors
-      CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(geometricField,interpolationParameters,err,error,*999)
-      CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(rhsVariable%field,scalingParameters,err,error,*999)
-      CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999)
+      CALL Field_InterpolationParametersInitialise(geometricField,interpolationParameters,err,error,*999)
+      CALL Field_InterpolationParametersInitialise(rhsVariable%field,scalingParameters,err,error,*999)
+      CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoints,err,error,*999)
       CALL Field_InterpolatedPointsMetricsInitialise(interpolatedPoints,interpolatedPointMetrics,err,error,*999)
 
       ! Loop over all Neumann point DOFs, finding the boundary lines or faces they are on
@@ -2813,11 +2813,11 @@ CONTAINS
                 END IF
 
                 ! Now perform actual integration
-                quadratureScheme=>basis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+                quadratureScheme=>basis%quadrature%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
                 IF(.NOT.ASSOCIATED(quadratureScheme)) THEN
                   CALL FlagError("Line basis default quadrature scheme is not associated.",err,error,*999)
                 END IF
-                CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,lineNumber, &
+                CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,lineNumber, &
                   & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
                 IF(rhsVariable%FIELD%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
                   CALL Field_InterpolationParametersScaleFactorsLineGet(lineNumber, &
@@ -2837,19 +2837,19 @@ CONTAINS
 
                     integratedValue=0.0_DP
                     ! Loop over line gauss points, adding gauss weighted terms to the integral
-                    DO gaussIdx=1,quadratureScheme%NUMBER_OF_GAUSS
-                      CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+                    DO gaussIdx=1,quadratureScheme%numberOfGauss
+                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
                         & interpolatedPoints(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_LINE_TYPE, &
+                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_LINE_TYPE, &
                         & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
 
                       !Get basis function values at guass points
-                      phim=quadratureScheme%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussIdx)
-                      phio=quadratureScheme%GAUSS_BASIS_FNS(os,NO_PART_DERIV,gaussIdx)
+                      phim=quadratureScheme%gaussBasisFunctions(ms,NO_PART_DERIV,gaussIdx)
+                      phio=quadratureScheme%gaussBasisFunctions(os,NO_PART_DERIV,gaussIdx)
 
                       !Add gauss point value to total line integral
                       integratedValue=integratedValue+phim*phio* &
-                        & quadratureScheme%GAUSS_WEIGHTS(gaussIdx)* &
+                        & quadratureScheme%gaussWeights(gaussIdx)* &
                         & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian
                     END DO
 
@@ -2908,11 +2908,11 @@ CONTAINS
                 END IF
 
                 ! Now perform actual integration
-                quadratureScheme=>basis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+                quadratureScheme=>basis%quadrature%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
                 IF(.NOT.ASSOCIATED(quadratureScheme)) THEN
                   CALL FlagError("Face basis default quadrature scheme is not associated.",err,error,*999)
                 END IF
-                CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,faceNumber, &
+                CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber, &
                   & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
                 IF(rhsVariable%FIELD%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
                   CALL Field_InterpolationParametersScaleFactorsFaceGet(faceNumber, &
@@ -2932,19 +2932,19 @@ CONTAINS
 
                     integratedValue=0.0_DP
                     ! Loop over line gauss points, adding gauss weighted terms to the integral
-                    DO gaussIdx=1,quadratureScheme%NUMBER_OF_GAUSS
-                      CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+                    DO gaussIdx=1,quadratureScheme%numberOfGauss
+                      CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
                         & interpolatedPoints(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_AREA_TYPE, &
+                      CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_AREA_TYPE, &
                         & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
 
                       !Get basis function values at guass points
-                      phim=quadratureScheme%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussIdx)
-                      phio=quadratureScheme%GAUSS_BASIS_FNS(os,NO_PART_DERIV,gaussIdx)
+                      phim=quadratureScheme%gaussBasisFunctions(ms,NO_PART_DERIV,gaussIdx)
+                      phio=quadratureScheme%gaussBasisFunctions(os,NO_PART_DERIV,gaussIdx)
 
                       !Add gauss point value to total line integral
                       integratedValue=integratedValue+phim*phio* &
-                        & quadratureScheme%GAUSS_WEIGHTS(gaussIdx)* &
+                        & quadratureScheme%gaussWeights(gaussIdx)* &
                         & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian
                     END DO
 
@@ -2985,7 +2985,7 @@ CONTAINS
       CALL DistributedMatrix_UpdateStart(neumannConditions%integrationMatrix,err,error,*999)
       CALL DistributedMatrix_UpdateFinish(neumannConditions%integrationMatrix,err,error,*999)
 
-      CALL FIELD_PARAMETER_SET_VECTOR_GET(rhsVariable%field,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
+      CALL Field_ParameterSetVectorGet(rhsVariable%field,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
         & integratedValues,err,error,*999)
       CALL DistributedVector_AllValuesSet(integratedValues,0.0_DP,err,error,*999)
       ! Perform matrix multiplication, f = N q, to calculate force vector from integration matrix and point values
@@ -2993,7 +2993,7 @@ CONTAINS
         & neumannConditions%integrationMatrix,.FALSE.,neumannConditions%pointValues,integratedValues, &
         & err,error,*999)
 
-      CALL FIELD_PARAMETER_SET_UPDATE_START(rhsVariable%FIELD,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
+      CALL Field_ParameterSetUpdateStart(rhsVariable%FIELD,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
         & err,error,*999)
       IF(DIAGNOSTICS1) THEN
         IF(dependentGeometry) THEN
@@ -3010,7 +3010,7 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Integrated values",err,error,*999)
         CALL DistributedVector_Output(DIAGNOSTIC_OUTPUT_TYPE,integratedValues,err,error,*999)
       END IF
-      CALL FIELD_PARAMETER_SET_UPDATE_FINISH(rhsVariable%FIELD,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
+      CALL Field_ParameterSetUpdateFinish(rhsVariable%FIELD,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
         & err,error,*999)
 
     END IF !Neumann conditions associated
@@ -3094,7 +3094,7 @@ CONTAINS
         CALL FlagError("Boundary conditions have been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(FIELD)) THEN
-          CALL FIELD_COMPONENT_DOF_GET_USER_NODE(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
+          CALL Field_ComponentDOFGetUserNode(FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
             & USER_NODE_NUMBER,COMPONENT_NUMBER,local_ny,global_ny,ERR,ERROR,*999)
           CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
           IF(ASSOCIATED(FIELD_VARIABLE)) THEN
@@ -3211,7 +3211,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate equal global DOFs array.",err,error,*998)
     !Get field DOFs for nodes
     DO nodeIdx=1,numberOfNodes
-      CALL FIELD_COMPONENT_DOF_GET_USER_NODE(field,variableType,versionNumber,derivativeNumber,nodes(nodeIdx), &
+      CALL Field_ComponentDOFGetUserNode(field,variableType,versionNumber,derivativeNumber,nodes(nodeIdx), &
         & component,dof,globalDofs(nodeIdx),err,error,*999)
     END DO
     !Get the field variable and boundary conditions variable for the field

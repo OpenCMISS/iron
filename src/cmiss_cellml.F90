@@ -59,13 +59,13 @@ MODULE CMISS_CELLML
   ! This fixes problems with the CMAKE FORTRAN parser. Its not detecting
   ! the file (=module) dependency correctly and hence breaks the build
   ! on some platforms.
-  USE CMISS_FORTRAN_C
+  USE CMISSFortranC
   USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
   USE DecompositionAccessRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   USE INPUT_OUTPUT
@@ -331,7 +331,7 @@ CONTAINS
                 NULLIFY(MODELS_VARIABLE)
                 CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                 NULLIFY(MODELS_DATA)
-                CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                CALL Field_ParameterSetDataGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & MODELS_DATA,ERR,ERROR,*999)
                 IF(DIAGNOSTICS1) THEN
                   CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"CellML to field update:",ERR,ERROR,*999)
@@ -403,10 +403,10 @@ CONTAINS
                             IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
                               SELECT CASE(dofType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetGetConstant(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                   & MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetGetElement(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                   & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
                                   & ERR,ERROR,*999)
                               CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -431,11 +431,11 @@ CONTAINS
                             IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
                               SELECT CASE(dofType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                CALL Field_ParameterSetGetConstant(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
                                   & dofValue,ERR,ERROR,*999)
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                CALL Field_ParameterSetGetElement(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
                                   & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -460,11 +460,11 @@ CONTAINS
                             IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
                               SELECT CASE(dofType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                CALL Field_ParameterSetGetConstant(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
                                   & dofValue,ERR,ERROR,*999)
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                CALL Field_ParameterSetGetElement(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
                                   & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -497,14 +497,14 @@ CONTAINS
                           !Update the OpenCMISS mapped field DOF value
                           SELECT CASE(dofType)
                           CASE(FIELD_CONSTANT_INTERPOLATION)
-                            CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
+                            CALL Field_ParameterSetUpdateConstant(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
                               & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%componentNumber,dofValue,ERR,ERROR,*999)
                           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                            CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
+                            CALL Field_ParameterSetUpdateElement(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
                               & MODEL_MAP%FIELD_PARAMETER_SET,elementNumber,MODEL_MAP%componentNumber,dofValue, &
                               & ERR,ERROR,*999)
                           CASE(FIELD_NODE_BASED_INTERPOLATION)
-                            CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
+                            CALL Field_ParameterSetUpdateLocalNode(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
                               & MODEL_MAP%FIELD_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
                               & MODEL_MAP%componentNumber,dofValue,ERR,ERROR,*999)
                           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -551,7 +551,7 @@ CONTAINS
                     ENDIF
                   ENDIF !modelIdx>0
                 ENDDO !dofIdx              
-                CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                CALL Field_ParameterSetDataRestore(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & MODELS_DATA,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("CellML environment models field models field is not associated.",ERR,ERROR,*999)
@@ -610,7 +610,7 @@ CONTAINS
             & " has already been created on region number "//TRIM(NUMBER_TO_VSTRING(REGION%userNumber,"*",ERR,ERROR))//"."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ELSE
-          CELLML_ENVIRONMENTS=>REGION%CELLML_ENVIRONMENTS
+          CELLML_ENVIRONMENTS=>region%cellMLEnvironments
           IF(ASSOCIATED(CELLML_ENVIRONMENTS)) THEN
             !Allocate new cellml
             NULLIFY(NEW_CELLML)
@@ -885,7 +885,7 @@ CONTAINS
                 NULLIFY(MODELS_VARIABLE)
                 CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                 NULLIFY(MODELS_DATA)
-                CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                CALL Field_ParameterSetDataGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & MODELS_DATA,ERR,ERROR,*999)
                 IF(DIAGNOSTICS1) THEN
                   CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field to CellML update:",ERR,ERROR,*999)
@@ -952,10 +952,10 @@ CONTAINS
                           !Get the OpenCMISS mapped field DOF value
                           SELECT CASE(dofType)
                           CASE(FIELD_CONSTANT_INTERPOLATION)
-                            CALL FIELD_PARAMETER_SET_GET_CONSTANT(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
+                            CALL Field_ParameterSetGetConstant(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
                               & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%componentNumber,dofValue,ERR,ERROR,*999)
                           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                            CALL FIELD_PARAMETER_SET_GET_ELEMENT(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
+                            CALL Field_ParameterSetGetElement(MODEL_MAP%FIELD,MODEL_MAP%variableType, &
                               & MODEL_MAP%FIELD_PARAMETER_SET,elementNumber,MODEL_MAP%componentNumber,dofValue, &
                               & ERR,ERROR,*999)
                           CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -981,14 +981,14 @@ CONTAINS
                             IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
                               SELECT CASE(dofType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetUpdateConstant(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                   & MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetUpdateElement(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                   & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
                                   & ERR,ERROR,*999)
                               CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                CALL Field_ParameterSetUpdateLocalNode(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                   & MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
                                   & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -1009,15 +1009,15 @@ CONTAINS
                             IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
                               SELECT CASE(dofType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                CALL Field_ParameterSetUpdateConstant(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
                                   & dofValue,ERR,ERROR,*999)
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                CALL Field_ParameterSetUpdateElement(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
                                   & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                CALL Field_ParameterSetUpdateLocalNode(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber, &
                                   & nodeNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -1038,15 +1038,15 @@ CONTAINS
                             IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
                               SELECT CASE(dofType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                CALL Field_ParameterSetUpdateConstant(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
                                   & dofValue,ERR,ERROR,*999)
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                CALL Field_ParameterSetUpdateElement(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
                                   & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                CALL Field_ParameterSetUpdateLocalNode(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                                   & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber, &
                                   & nodeNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
                               CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -1105,7 +1105,7 @@ CONTAINS
                     ENDIF
                   ENDIF !modelIdx>0
                 ENDDO !dofIdx              
-                CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                CALL Field_ParameterSetDataRestore(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & MODELS_DATA,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("CellML environment models field models field is not associated.",ERR,ERROR,*999)
@@ -2014,7 +2014,7 @@ CONTAINS
             NULLIFY(FIELD_VARIABLE)
             CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
             NULLIFY(PARAMETER_SET)
-            CALL FIELD_PARAMETER_SET_GET(FIELD,VARIABLE_TYPE,FIELD_PARAMETER_SET,PARAMETER_SET,ERR,ERROR,*999)
+            CALL Field_ParameterSetGet(FIELD,VARIABLE_TYPE,FIELD_PARAMETER_SET,PARAMETER_SET,ERR,ERROR,*999)
             IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
               IF(MODEL_INDEX>0.AND.MODEL_INDEX<=CELLML%NUMBER_OF_MODELS) THEN
                 CELLML_MODEL=>CELLML%MODELS(MODEL_INDEX)%PTR
@@ -2262,7 +2262,7 @@ CONTAINS
             NULLIFY(FIELD_VARIABLE)
             CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
             NULLIFY(PARAMETER_SET)
-            CALL FIELD_PARAMETER_SET_GET(FIELD,VARIABLE_TYPE,FIELD_PARAMETER_SET,PARAMETER_SET,ERR,ERROR,*999)
+            CALL Field_ParameterSetGet(FIELD,VARIABLE_TYPE,FIELD_PARAMETER_SET,PARAMETER_SET,ERR,ERROR,*999)
             IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
               IF(MODEL_INDEX>0.AND.MODEL_INDEX<=CELLML%NUMBER_OF_MODELS) THEN
                 CELLML_MODEL=>CELLML%MODELS(MODEL_INDEX)%PTR
@@ -2479,16 +2479,16 @@ CONTAINS
         dofParamIdx=modelVariable%dofToParamMap%DOFType(2,modelDofIdx)
         SELECT CASE(dofType)
         CASE(FIELD_CONSTANT_DOF_TYPE)
-          CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(field,variableType,parameterSetIdx,componentIdx,VALUE,err,error,*999)
+          CALL Field_ParameterSetUpdateConstant(field,variableType,parameterSetIdx,componentIdx,VALUE,err,error,*999)
         CASE(FIELD_ELEMENT_DOF_TYPE)
           elementNumber=modelVariable%dofToParamMap%elementDOF2ParamMap(1,dofParamIdx)
-          CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(field,variableType,parameterSetIdx,elementNumber,componentIdx,value, &
+          CALL Field_ParameterSetUpdateElement(field,variableType,parameterSetIdx,elementNumber,componentIdx,value, &
             & err,error,*999)
         CASE(FIELD_NODE_DOF_TYPE)
           versionNumber=modelVariable%dofToParamMap%nodeDOF2ParamMap(1,dofParamIdx)
           derivativeNumber=modelVariable%dofToParamMap%nodeDOF2ParamMap(2,dofParamIdx)
           nodeNumber=modelVariable%dofToParamMap%nodeDOF2ParamMap(3,dofParamIdx)
-          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(field,variableType,parameterSetIdx,versionNumber,derivativeNumber,NodeNumber, &
+          CALL Field_ParameterSetUpdateLocalNode(field,variableType,parameterSetIdx,versionNumber,derivativeNumber,NodeNumber, &
             & componentIdx,VALUE,err,error,*999)
         CASE(FIELD_GRID_POINT_DOF_TYPE)
           gridNumber=modelVariable%dofToParamMap%gridPointDOF2ParamMap(1,dofParamIdx)
@@ -2564,7 +2564,7 @@ CONTAINS
             CALL Field_VariableGet(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
             IF(MODELS_VARIABLE%numberOfDofs>0) THEN
               NULLIFY(MODELS_DATA)
-              CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              CALL Field_ParameterSetDataGet(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & MODELS_DATA,ERR,ERROR,*999)
               !check for the first non-zero model index
               source_dof_idx=0
@@ -2614,7 +2614,7 @@ CONTAINS
               ENDIF
 !!TODO: Do we need to make sure it is the same model number on different ranks? The only one model optimisation is to ensure
 !!that we don't have to reference the models field inside dof loops on the rank??? 
-              CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              CALL Field_ParameterSetDataRestore(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & MODELS_DATA,ERR,ERROR,*999)
             ELSE
               CALL FlagError("CellML models field variable does not have any DOFs.",ERR,ERROR,*999)
@@ -2712,7 +2712,7 @@ CONTAINS
                   ELSE
                     !Check the user number has not already been used for a field in this region.
                     NULLIFY(FIELD)
-                    CALL FIELD_USER_NUMBER_FIND(MODEL_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
+                    CALL Field_UserNumberFind(MODEL_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
                     IF(ASSOCIATED(FIELD)) THEN
                       LOCAL_ERROR="The specified models field user number of "// &
                         & TRIM(NUMBER_TO_VSTRING(MODEL_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
@@ -2724,39 +2724,39 @@ CONTAINS
                   CALL CELLML_MODELS_FIELD_INITIALISE(CELLML,ERR,ERROR,*999)
                   IF(ASSOCIATED(MODELS_FIELD)) THEN
                     !Now check the supplied field.
-                    CALL FIELD_DATA_TYPE_CHECK(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_TYPE_CHECK(MODELS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_CHECK(MODELS_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_CHECK(MODELS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1,ERR,ERROR,*999)
-                    CALL FIELD_COMPONENT_MESH_COMPONENT_CHECK(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_DataTypeCheck(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE,ERR,ERROR,*999)
+                    CALL Field_TypeCheck(MODELS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_NumberOfVariablesCheck(MODELS_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesCheck(MODELS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                    CALL Field_NumberOfComponentsCheck(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1,ERR,ERROR,*999)
+                    CALL Field_ComponentMeshComponentCheck(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber,ERR,ERROR,*999)
-                    CALL FIELD_COMPONENT_INTERPOLATION_CHECK(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_ComponentInterpolationCheck(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                   ELSE
                     CELLML%MODELS_FIELD%MODELS_FIELD_AUTO_CREATED=.TRUE.
                     !Create the CellML environment models field
-                    CALL FIELD_CREATE_START(MODEL_FIELD_USER_NUMBER,REGION,CELLML%MODELS_FIELD%MODELS_FIELD,ERR,ERROR,*999)
-                    CALL FIELD_DATA_TYPE_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE, &
+                    CALL Field_CreateStart(MODEL_FIELD_USER_NUMBER,REGION,CELLML%MODELS_FIELD%MODELS_FIELD,ERR,ERROR,*999)
+                    CALL Field_DataTypeSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE, &
                       & ERR,ERROR,*999)
-                    CALL FIELD_LABEL_SET(CELLML%MODELS_FIELD%MODELS_FIELD,"CellMLModelsField",ERR,ERROR,*999)
-                    CALL FIELD_TYPE_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD, &
+                    CALL Field_LabelSet(CELLML%MODELS_FIELD%MODELS_FIELD,"CellMLModelsField",ERR,ERROR,*999)
+                    CALL Field_TypeSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_DecompositionSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%DECOMPOSITION,ERR,ERROR,*999)
-                    CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,CELLML_FIELD_MAPS% &
+                    CALL Field_GeometricFieldSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,CELLML_FIELD_MAPS% &
                       & SOURCE_GEOMETRIC_FIELD,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_LABEL_SET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,"ModelMap",ERR,ERROR,*999)
-                    CALL FIELD_DOF_ORDER_TYPE_SET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_NumberOfVariablesSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                    CALL Field_VariableLabelSet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,"ModelMap",ERR,ERROR,*999)
+                    CALL Field_DOFOrderTypeSet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_NumberOfComponentsSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & ERR,ERROR,*999)
-                    CALL FIELD_COMPONENT_LABEL_SET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1,"ModelUserNumber", &
+                    CALL Field_ComponentLabelSet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1,"ModelUserNumber", &
                       & ERR,ERROR,*999)
-                    CALL FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_ComponentMeshComponentSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber,ERR,ERROR,*999)
-                    CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    CALL Field_ComponentInterpolationSetAndLock(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                   ENDIF
                   !Set pointers
@@ -2821,12 +2821,12 @@ CONTAINS
         ELSE
           !Finish the models field creation
           IF(CELLML%MODELS_FIELD%MODELS_FIELD_AUTO_CREATED) &
-            & CALL FIELD_CREATE_FINISH(CELLML%MODELS_FIELD%MODELS_FIELD,ERR,ERROR,*999)
+            & CALL Field_CreateFinish(CELLML%MODELS_FIELD%MODELS_FIELD,ERR,ERROR,*999)
           CELLML%MODELS_FIELD%MODELS_FIELD_FINISHED=.TRUE.
 !          CALL FIELD_DOF_ORDER_TYPE_CHECK(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
 !            & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
           !Default the models field to the first model
-          CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+          CALL Field_ComponentValuesInitialise(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
             & FIELD_VALUES_SET_TYPE,1,1,ERR,ERROR,*999)
         ENDIF
       ELSE
@@ -3046,7 +3046,7 @@ CONTAINS
                   ELSE
                     !Check the user number has not already been used for a field in this region.
                     NULLIFY(FIELD)
-                    CALL FIELD_USER_NUMBER_FIND(STATE_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
+                    CALL Field_UserNumberFind(STATE_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
                     IF(ASSOCIATED(FIELD)) THEN
                       LOCAL_ERROR="The specified state field user number of "// &
                         & TRIM(NUMBER_TO_VSTRING(STATE_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
@@ -3058,42 +3058,42 @@ CONTAINS
                   CALL CELLML_STATE_FIELD_INITIALISE(CELLML,ERR,ERROR,*999)
                   IF(ASSOCIATED(STATE_FIELD)) THEN
                     !Now check the supplied field.
-                    CALL FIELD_DATA_TYPE_CHECK(STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_TYPE_CHECK(STATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_CHECK(STATE_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_CHECK(STATE_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(STATE_FIELD,FIELD_U_VARIABLE_TYPE,CELLML%MAXIMUM_NUMBER_OF_STATE, &
+                    CALL Field_DataTypeCheck(STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                    CALL Field_TypeCheck(STATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_NumberOfVariablesCheck(STATE_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesCheck(STATE_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                    CALL Field_NumberOfComponentsCheck(STATE_FIELD,FIELD_U_VARIABLE_TYPE,CELLML%MAXIMUM_NUMBER_OF_STATE, &
                       & ERR,ERROR,*999)
                     DO component_idx=1,CELLML%MAXIMUM_NUMBER_OF_STATE
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_CHECK(STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL Field_ComponentMeshComponentCheck(STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber,ERR,ERROR,*999)
-                      CALL FIELD_COMPONENT_INTERPOLATION_CHECK(STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL Field_ComponentInterpolationCheck(STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                     ENDDO !component_idx
                   ELSE
                     CELLML%STATE_FIELD%STATE_FIELD_AUTO_CREATED=.TRUE.
                     !Create the CellML environment models field
-                    CALL FIELD_CREATE_START(STATE_FIELD_USER_NUMBER,REGION,CELLML%STATE_FIELD%STATE_FIELD,ERR,ERROR,*999)
-                    CALL FIELD_DATA_TYPE_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
+                    CALL Field_CreateStart(STATE_FIELD_USER_NUMBER,REGION,CELLML%STATE_FIELD%STATE_FIELD,ERR,ERROR,*999)
+                    CALL Field_DataTypeSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
                       & ERR,ERROR,*999)
-                    CALL FIELD_LABEL_SET(CELLML%STATE_FIELD%STATE_FIELD,"CellMLStateField",ERR,ERROR,*999)
-                    CALL FIELD_TYPE_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD, &
+                    CALL Field_LabelSet(CELLML%STATE_FIELD%STATE_FIELD,"CellMLStateField",ERR,ERROR,*999)
+                    CALL Field_TypeSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_DecompositionSetAndLock(CELLML%STATE_FIELD%STATE_FIELD, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%DECOMPOSITION,ERR,ERROR,*999)
-                    CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,CELLML_FIELD_MAPS% &
+                    CALL Field_GeometricFieldSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,CELLML_FIELD_MAPS% &
                       & SOURCE_GEOMETRIC_FIELD,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_LABEL_SET(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE,"StateVariable", &
+                    CALL Field_NumberOfVariablesSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                    CALL Field_VariableLabelSet(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE,"StateVariable", &
                       & ERR,ERROR,*999)
-                    CALL FIELD_DOF_ORDER_TYPE_SET(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DOFOrderTypeSet(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE,&
+                    CALL Field_NumberOfComponentsSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE,&
                       & CELLML%MAXIMUM_NUMBER_OF_STATE,ERR,ERROR,*999)
                     DO component_idx=1,CELLML%MAXIMUM_NUMBER_OF_STATE
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL Field_ComponentMeshComponentSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber,ERR,ERROR,*999)
-                      CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL Field_ComponentInterpolationSetAndLock(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                     ENDDO !component_idx
                   ENDIF
@@ -3170,7 +3170,7 @@ CONTAINS
               CALL CELLML_MODELS_FIELD_CHECK(CELLML%MODELS_FIELD,ERR,ERROR,*999)
               !Finish the state field creation
               IF(CELLML%STATE_FIELD%STATE_FIELD_AUTO_CREATED) &
-                & CALL FIELD_CREATE_FINISH(CELLML%STATE_FIELD%STATE_FIELD,ERR,ERROR,*999)              
+                & CALL Field_CreateFinish(CELLML%STATE_FIELD%STATE_FIELD,ERR,ERROR,*999)              
 !              CALL FIELD_DOF_ORDER_TYPE_CHECK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
               !Set the default field values to the initial CellML values.
@@ -3192,7 +3192,7 @@ CONTAINS
                       ENDIF
                       !WRITE(*,*) '(single model) Initial value for state variable: ',state_component_idx,'; type: ',&
                       !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
-                      CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL Field_ComponentValuesInitialise(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,state_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
                     ENDDO !state_component_idx
                   ELSE
@@ -3206,7 +3206,7 @@ CONTAINS
                     NULLIFY(MODELS_VARIABLE)
                     CALL Field_VariableGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                     NULLIFY(MODELS_DATA)
-                    CALL FIELD_PARAMETER_SET_DATA_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ParameterSetDataGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
                     DO models_dof_idx=1,MODELS_VARIABLE%numberOfDofs
                       model_idx=MODELS_DATA(models_dof_idx)
@@ -3236,7 +3236,7 @@ CONTAINS
                         ENDIF
                       ENDIF
                     ENDDO !dofIdx
-                    CALL FIELD_PARAMETER_SET_DATA_RESTORE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ParameterSetDataRestore(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
                   ELSE
                     CALL FlagError("CellML environment field maps is not associated.",ERR,ERROR,*999)
@@ -3562,7 +3562,7 @@ CONTAINS
                   ELSE
                     !Check the user number has not already been used for a field in this region.
                     NULLIFY(FIELD)
-                    CALL FIELD_USER_NUMBER_FIND(INTERMEDIATE_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
+                    CALL Field_UserNumberFind(INTERMEDIATE_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
                     IF(ASSOCIATED(FIELD)) THEN
                       LOCAL_ERROR="The specified intermediate field user number of "// &
                         & TRIM(NUMBER_TO_VSTRING(INTERMEDIATE_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
@@ -3574,45 +3574,45 @@ CONTAINS
                   CALL CELLML_INTERMEDIATE_FIELD_INITIALISE(CELLML,ERR,ERROR,*999)
                   IF(ASSOCIATED(INTERMEDIATE_FIELD)) THEN
                     !Now check the supplied field.
-                    CALL FIELD_DATA_TYPE_CHECK(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_TYPE_CHECK(INTERMEDIATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_CHECK(INTERMEDIATE_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_CHECK(INTERMEDIATE_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DataTypeCheck(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                    CALL Field_TypeCheck(INTERMEDIATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_NumberOfVariablesCheck(INTERMEDIATE_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesCheck(INTERMEDIATE_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                    CALL Field_NumberOfComponentsCheck(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & CELLML%MAXIMUM_NUMBER_OF_INTERMEDIATE,ERR,ERROR,*999)
                     DO component_idx=1,CELLML%MAXIMUM_NUMBER_OF_INTERMEDIATE
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_CHECK(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
+                      CALL Field_ComponentMeshComponentCheck(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
                         & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber,ERR,ERROR,*999)
-                      CALL FIELD_COMPONENT_INTERPOLATION_CHECK(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
+                      CALL Field_ComponentInterpolationCheck(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
                         & CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                     ENDDO !component_idx
                   ELSE
                     CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD_AUTO_CREATED=.TRUE.
                     !Create the CellML environment intermediate field
-                    CALL FIELD_CREATE_START(INTERMEDIATE_FIELD_USER_NUMBER,REGION,CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                    CALL Field_CreateStart(INTERMEDIATE_FIELD_USER_NUMBER,REGION,CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                       & ERR,ERROR,*999)
-                    CALL FIELD_DATA_TYPE_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DataTypeSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_DP_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_LABEL_SET(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,"CellMLIntermediateField",ERR,ERROR,*999)
-                    CALL FIELD_TYPE_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                    CALL Field_LabelSet(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,"CellMLIntermediateField",ERR,ERROR,*999)
+                    CALL Field_TypeSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_DecompositionSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%DECOMPOSITION,ERR,ERROR,*999)
-                    CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,CELLML_FIELD_MAPS% &
+                    CALL Field_GeometricFieldSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,CELLML_FIELD_MAPS% &
                       & SOURCE_GEOMETRIC_FIELD,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                    CALL Field_NumberOfVariablesSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,[FIELD_U_VARIABLE_TYPE], &
                       & ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_LABEL_SET(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_VariableLabelSet(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & "IntermediateVariable",ERR,ERROR,*999)
-                    CALL FIELD_DOF_ORDER_TYPE_SET(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DOFOrderTypeSet(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                    CALL Field_NumberOfComponentsSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,CELLML%MAXIMUM_NUMBER_OF_INTERMEDIATE,ERR,ERROR,*999)
                     DO component_idx=1,CELLML%MAXIMUM_NUMBER_OF_INTERMEDIATE
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                      CALL Field_ComponentMeshComponentSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                         & FIELD_U_VARIABLE_TYPE,component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber, &
                         & ERR,ERROR,*999)
-                      CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                      CALL Field_ComponentInterpolationSetAndLock(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
                         & FIELD_U_VARIABLE_TYPE,component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                     ENDDO !component_idx
                   ENDIF
@@ -3686,7 +3686,7 @@ CONTAINS
 !                & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
               !Finish the intermediate field creation
               IF(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD_AUTO_CREATED) &
-                & CALL FIELD_CREATE_FINISH(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,ERR,ERROR,*999)
+                & CALL Field_CreateFinish(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD,ERR,ERROR,*999)
               !As the intermediate field is strictly output do not initialise the values.
               CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD_FINISHED=.TRUE.
             ELSE
@@ -3912,7 +3912,7 @@ CONTAINS
                   ELSE
                     !Check the user number has not already been used for a field in this region.
                     NULLIFY(FIELD)
-                    CALL FIELD_USER_NUMBER_FIND(PARAMETERS_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
+                    CALL Field_UserNumberFind(PARAMETERS_FIELD_USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
                     IF(ASSOCIATED(FIELD)) THEN
                       LOCAL_ERROR="The specified parameters field user number of "// &
                         & TRIM(NUMBER_TO_VSTRING(PARAMETERS_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
@@ -3924,45 +3924,45 @@ CONTAINS
                   CALL CELLML_PARAMETERS_FIELD_INITIALISE(CELLML,ERR,ERROR,*999)
                   IF(ASSOCIATED(PARAMETERS_FIELD)) THEN
                     !Now check the supplied field.
-                    CALL FIELD_DATA_TYPE_CHECK(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_TYPE_CHECK(PARAMETERS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_CHECK(PARAMETERS_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_CHECK(PARAMETERS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DataTypeCheck(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                    CALL Field_TypeCheck(PARAMETERS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_NumberOfVariablesCheck(PARAMETERS_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesCheck(PARAMETERS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                    CALL Field_NumberOfComponentsCheck(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & CELLML%maximumNumberOfParameters,ERR,ERROR,*999)
                     DO component_idx=1,CELLML%maximumNumberOfParameters
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_CHECK(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
+                      CALL Field_ComponentMeshComponentCheck(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
                         & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber,ERR,ERROR,*999)
-                      CALL FIELD_COMPONENT_INTERPOLATION_CHECK(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
+                      CALL Field_ComponentInterpolationCheck(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
                         & CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                     ENDDO !component_idx
                   ELSE
                     CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD_AUTO_CREATED=.TRUE.
                     !Create the CellML environment parameters field
-                    CALL FIELD_CREATE_START(PARAMETERS_FIELD_USER_NUMBER,REGION,CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                    CALL Field_CreateStart(PARAMETERS_FIELD_USER_NUMBER,REGION,CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                       & ERR,ERROR,*999)
-                    CALL FIELD_DATA_TYPE_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DataTypeSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_DP_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_LABEL_SET(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,"CellMLParametersField",ERR,ERROR,*999)
-                    CALL FIELD_TYPE_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-                    CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                    CALL Field_LabelSet(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,"CellMLParametersField",ERR,ERROR,*999)
+                    CALL Field_TypeSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                    CALL Field_DecompositionSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                       & CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%DECOMPOSITION,ERR,ERROR,*999)
-                    CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                    CALL Field_GeometricFieldSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                       & CELLML_FIELD_MAPS%SOURCE_GEOMETRIC_FIELD,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,1,ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                    CALL Field_NumberOfVariablesSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,1,ERR,ERROR,*999)
+                    CALL Field_VariableTypesSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,[FIELD_U_VARIABLE_TYPE], &
                       & ERR,ERROR,*999)
-                    CALL FIELD_VARIABLE_LABEL_SET(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_VariableLabelSet(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & "ParametersVariable",ERR,ERROR,*999)
-                    CALL FIELD_DOF_ORDER_TYPE_SET(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_DOFOrderTypeSet(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
-                    CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_NumberOfComponentsSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & CELLML%maximumNumberOfParameters,ERR,ERROR,*999)
                     DO component_idx=1,CELLML%maximumNumberOfParameters
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                      CALL Field_ComponentMeshComponentSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                         & FIELD_U_VARIABLE_TYPE,component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_DOMAIN%meshComponentNumber, &
                         & ERR,ERROR,*999)
-                      CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                      CALL Field_ComponentInterpolationSetAndLock(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
                         & FIELD_U_VARIABLE_TYPE,component_idx,CELLML_FIELD_MAPS%SOURCE_FIELD_INTERPOLATION_TYPE,ERR,ERROR,*999)
                     ENDDO !component_idx
                   ENDIF
@@ -4037,7 +4037,7 @@ CONTAINS
               CALL CELLML_MODELS_FIELD_CHECK(CELLML%MODELS_FIELD,ERR,ERROR,*999)
               !Finish the parameters field creation
               IF(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD_AUTO_CREATED) &
-                & CALL FIELD_CREATE_FINISH(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,ERR,ERROR,*999)
+                & CALL Field_CreateFinish(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,ERR,ERROR,*999)
 !              CALL FIELD_DOF_ORDER_TYPE_CHECK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
               IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=0) THEN
@@ -4058,7 +4058,7 @@ CONTAINS
                       ENDIF
                       !WRITE(*,*) '(single model) Initial value for parameter variable: ',parameter_component_idx,'; type: ',&
                       !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
-                      CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL Field_ComponentValuesInitialise(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,parameter_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
                     ENDDO !parameter_component_idx
                   ELSE
@@ -4073,7 +4073,7 @@ CONTAINS
                     CALL Field_VariableGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE, &
                       & ERR,ERROR,*999)
                     NULLIFY(MODELS_DATA)
-                    CALL FIELD_PARAMETER_SET_DATA_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ParameterSetDataGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
                     DO models_dof_idx=1,MODELS_VARIABLE%numberOfDofs
                       model_idx=MODELS_DATA(models_dof_idx)
@@ -4109,7 +4109,7 @@ CONTAINS
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ENDDO !models_dof_idx
-                    CALL FIELD_PARAMETER_SET_DATA_RESTORE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ParameterSetDataRestore(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
                   ELSE
                     CALL FlagError("CellML environment field maps is not associated.",ERR,ERROR,*999)
@@ -4362,13 +4362,13 @@ CONTAINS
     ENTERS("CELLML_ENVIRONMENTS_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(REGION%CELLML_ENVIRONMENTS)) THEN
+      IF(ASSOCIATED(region%cellMLEnvironments)) THEN
         CALL FlagError("Region CellML environments is already associated.",ERR,ERROR,*998)
       ELSE
-        ALLOCATE(REGION%CELLML_ENVIRONMENTS,STAT=ERR)
+        ALLOCATE(region%cellMLEnvironments,STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate region CellML environments.",ERR,ERROR,*999)
-        REGION%CELLML_ENVIRONMENTS%REGION=>REGION
-        REGION%CELLML_ENVIRONMENTS%NUMBER_OF_ENVIRONMENTS=0
+        region%cellMLEnvironments%REGION=>REGION
+        region%cellMLEnvironments%NUMBER_OF_ENVIRONMENTS=0
       ENDIF
     ELSE
       CALL FlagError("Region is not associated.",ERR,ERROR,*998)
@@ -4376,7 +4376,7 @@ CONTAINS
 
     EXITS("CELLML_ENVIRONMENTS_INITIALISE")
     RETURN
-999 CALL CELLML_ENVIRONMENTS_FINALISE(REGION%CELLML_ENVIRONMENTS,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL CELLML_ENVIRONMENTS_FINALISE(region%cellMLEnvironments,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("CELLML_ENVIRONMENTS_INITIALISE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE CELLML_ENVIRONMENTS_INITIALISE

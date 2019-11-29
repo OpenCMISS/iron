@@ -46,7 +46,7 @@ MODULE InterfaceEquationsRoutines
 
   USE BaseRoutines
   USE EquationsRoutines
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines

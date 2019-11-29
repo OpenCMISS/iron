@@ -48,7 +48,7 @@ MODULE DataPointRoutines
   USE BaseRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
-  USE COORDINATE_ROUTINES
+  USE CoordinateSystemRoutines
   USE DataPointAccessRoutines
   USE DataProjectionRoutines
   USE INPUT_OUTPUT

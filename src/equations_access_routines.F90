@@ -74,31 +74,51 @@ MODULE EquationsAccessRoutines
   PUBLIC Equations_ScalarEquationsGet
   
   PUBLIC Equations_VectorEquationsGet
+
+  PUBLIC EquationsInterpolation_DependentFieldCheck
   
+  PUBLIC EquationsInterpolation_DependentFieldGet
+
   PUBLIC EquationsInterpolation_DependentParametersGet
   
   PUBLIC EquationsInterpolation_DependentPointGet
   
   PUBLIC EquationsInterpolation_DependentPointMetricsGet
   
+  PUBLIC EquationsInterpolation_FibreFieldCheck
+  
+  PUBLIC EquationsInterpolation_FibreFieldGet
+
   PUBLIC EquationsInterpolation_FibreParametersGet
   
   PUBLIC EquationsInterpolation_FibrePointGet
   
   PUBLIC EquationsInterpolation_FibrePointMetricsGet
   
+  PUBLIC EquationsInterpolation_GeometricFieldCheck
+  
+  PUBLIC EquationsInterpolation_GeometricFieldGet
+
   PUBLIC EquationsInterpolation_GeometricParametersGet
   
   PUBLIC EquationsInterpolation_GeometricPointGet
   
   PUBLIC EquationsInterpolation_GeometricPointMetricsGet
   
+  PUBLIC EquationsInterpolation_IndependentFieldCheck
+  
+  PUBLIC EquationsInterpolation_IndependentFieldGet
+
   PUBLIC EquationsInterpolation_IndependentParametersGet
   
   PUBLIC EquationsInterpolation_IndependentPointGet
   
   PUBLIC EquationsInterpolation_IndependentPointMetricsGet
   
+  PUBLIC EquationsInterpolation_MaterialsFieldCheck
+  
+  PUBLIC EquationsInterpolation_MaterialsFieldGet
+
   PUBLIC EquationsInterpolation_MaterialsParametersGet
   
   PUBLIC EquationsInterpolation_MaterialsPointGet
@@ -109,6 +129,10 @@ MODULE EquationsAccessRoutines
   
   PUBLIC EquationsInterpolation_PreviousDependentPointMetricsGet
   
+  PUBLIC EquationsInterpolation_SourceFieldCheck
+  
+  PUBLIC EquationsInterpolation_SourceFieldGet
+
   PUBLIC EquationsInterpolation_SourceParametersGet
   
   PUBLIC EquationsInterpolation_SourcePointGet
@@ -348,6 +372,68 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks the dependent field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_DependentFieldCheck(equationsInterpolation,dependentField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the dependent field for
+    TYPE(FieldType), POINTER :: dependentField !<On exit, a pointer to the dependent field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_DependentFieldCheck",err,error,*998)
+
+    IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    dependentField=>equationsInterpolation%dependentField
+       
+    EXITS("EquationsInterpolation_DependentFieldCheck")
+    RETURN
+999 NULLIFY(dependentField)
+998 ERRORS("EquationsInterpolation_DependentFieldCheck",err,error)
+    EXITS("EquationsInterpolation_DependentFieldCheck")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_DependentFieldCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dependent field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_DependentFieldGet(equationsInterpolation,dependentField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the dependent field for
+    TYPE(FieldType), POINTER :: dependentField !<On exit, a pointer to the dependent field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_DependentFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    dependentField=>equationsInterpolation%dependentField
+    IF(.NOT.ASSOCIATED(dependentField)) &
+      & CALL FlagError("Dependent field is not assocaited for the equations interpolation.",err,error,*999)
+       
+    EXITS("EquationsInterpolation_DependentFieldGet")
+    RETURN
+999 NULLIFY(dependentField)
+998 ERRORS("EquationsInterpolation_DependentFieldGet",err,error)
+    EXITS("EquationsInterpolation_DependentFieldGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_DependentFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the dependent interpolated point for an equations interpolation.
   SUBROUTINE EquationsInterpolation_DependentPointGet(equationsInterpolation,variableType,dependentPoint,err,error,*)
 
@@ -433,6 +519,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsInterpolation_DependentPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the fibre field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_FibreFieldCheck(equationsInterpolation,fibreField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the fibre field for
+    TYPE(FieldType), POINTER :: fibreField !<On exit, a pointer to the fibre field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_FibreFieldCheck",err,error,*998)
+
+    IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    fibreField=>equationsInterpolation%fibreField
+       
+    EXITS("EquationsInterpolation_FibreFieldCheck")
+    RETURN
+999 NULLIFY(fibreField)
+998 ERRORS("EquationsInterpolation_FibreFieldCheck",err,error)
+    EXITS("EquationsInterpolation_FibreFieldCheck")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_FibreFieldCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the fibre field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_FibreFieldGet(equationsInterpolation,fibreField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the fibre field for
+    TYPE(FieldType), POINTER :: fibreField !<On exit, a pointer to the fibre field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_FibreFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    fibreField=>equationsInterpolation%fibreField
+    IF(.NOT.ASSOCIATED(fibreField)) &
+      & CALL FlagError("Fibre field is not assocaited for the equations interpolation.",err,error,*999)
+       
+    EXITS("EquationsInterpolation_FibreFieldGet")
+    RETURN
+999 NULLIFY(fibreField)
+998 ERRORS("EquationsInterpolation_FibreFieldGet",err,error)
+    EXITS("EquationsInterpolation_FibreFieldGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_FibreFieldGet
 
   !
   !================================================================================================================================
@@ -573,6 +721,68 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks the geometric field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_GeometricFieldCheck(equationsInterpolation,geometricField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the geometric field for
+    TYPE(FieldType), POINTER :: geometricField !<On exit, a pointer to the geometric field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsInterpolation_GeometricFieldCheck",err,error,*998)
+
+    IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    geometricField=>equationsInterpolation%geometricField
+       
+    EXITS("EquationsInterpolation_GeometricFieldCheck")
+    RETURN
+999 NULLIFY(geometricField)
+998 ERRORS("EquationsInterpolation_GeometricFieldCheck",err,error)
+    EXITS("EquationsInterpolation_GeometricFieldCheck")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_GeometricFieldCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the geometric field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_GeometricFieldGet(equationsInterpolation,geometricField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the geometric field for
+    TYPE(FieldType), POINTER :: geometricField !<On exit, a pointer to the geometric field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_GeometricFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    geometricField=>equationsInterpolation%geometricField
+    IF(.NOT.ASSOCIATED(geometricField)) &
+      & CALL FlagError("Geometric field is not assocaited for the equations interpolation.",err,error,*999)
+       
+    EXITS("EquationsInterpolation_GeometricFieldGet")
+    RETURN
+999 NULLIFY(geometricField)
+998 ERRORS("EquationsInterpolation_GeometricFieldGet",err,error)
+    EXITS("EquationsInterpolation_GeometricFieldGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_GeometricFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the geometric interpolation parameters for an equations interpolation.
   SUBROUTINE EquationsInterpolation_GeometricParametersGet(equationsInterpolation,variableType,geometricParameters,err,error,*)
 
@@ -703,6 +913,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsInterpolation_GeometricPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the independent field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_IndependentFieldCheck(equationsInterpolation,independentField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the independent field for
+    TYPE(FieldType), POINTER :: independentField !<On exit, a pointer to the independent field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_IndependentFieldCheck",err,error,*998)
+
+    IF(ASSOCIATED(independentField)) CALL FlagError("Independent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    independentField=>equationsInterpolation%independentField
+       
+    EXITS("EquationsInterpolation_IndependentFieldCheck")
+    RETURN
+999 NULLIFY(independentField)
+998 ERRORS("EquationsInterpolation_IndependentFieldCheck",err,error)
+    EXITS("EquationsInterpolation_IndependentFieldCheck")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_IndependentFieldCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the independent field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_IndependentFieldGet(equationsInterpolation,independentField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the independent field for
+    TYPE(FieldType), POINTER :: independentField !<On exit, a pointer to the independent field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_IndependentFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(independentField)) CALL FlagError("Independent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    independentField=>equationsInterpolation%independentField
+    IF(.NOT.ASSOCIATED(independentField)) &
+      & CALL FlagError("Independent field is not assocaited for the equations interpolation.",err,error,*999)
+       
+    EXITS("EquationsInterpolation_IndependentFieldGet")
+    RETURN
+999 NULLIFY(independentField)
+998 ERRORS("EquationsInterpolation_IndependentFieldGet",err,error)
+    EXITS("EquationsInterpolation_IndependentFieldGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_IndependentFieldGet
 
   !
   !================================================================================================================================
@@ -839,6 +1111,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsInterpolation_IndependentPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the materials field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_MaterialsFieldCheck(equationsInterpolation,materialsField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the materials field for
+    TYPE(FieldType), POINTER :: materialsField !<On exit, a pointer to the materials field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_MaterialsFieldCheck",err,error,*998)
+
+    IF(ASSOCIATED(materialsField)) CALL FlagError("Materials field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    materialsField=>equationsInterpolation%materialsField
+       
+    EXITS("EquationsInterpolation_MaterialsFieldCheck")
+    RETURN
+999 NULLIFY(materialsField)
+998 ERRORS("EquationsInterpolation_MaterialsFieldCheck",err,error)
+    EXITS("EquationsInterpolation_MaterialsFieldCheck")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_MaterialsFieldCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the materials field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_MaterialsFieldGet(equationsInterpolation,materialsField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the materials field for
+    TYPE(FieldType), POINTER :: materialsField !<On exit, a pointer to the materials field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_MaterialsFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(materialsField)) CALL FlagError("Materials field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    materialsField=>equationsInterpolation%materialsField
+    IF(.NOT.ASSOCIATED(materialsField)) &
+      & CALL FlagError("Materials field is not assocaited for the equations interpolation.",err,error,*999)
+       
+    EXITS("EquationsInterpolation_MaterialsFieldGet")
+    RETURN
+999 NULLIFY(materialsField)
+998 ERRORS("EquationsInterpolation_MaterialsFieldGet",err,error)
+    EXITS("EquationsInterpolation_MaterialsFieldGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_MaterialsFieldGet
 
   !
   !================================================================================================================================
@@ -1067,6 +1401,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsInterpolation_PreviousDependentPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the source field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_SourceFieldCheck(equationsInterpolation,sourceField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the source field for
+    TYPE(FieldType), POINTER :: sourceField !<On exit, a pointer to the source field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_SourceFieldCheck",err,error,*998)
+
+    IF(ASSOCIATED(sourceField)) CALL FlagError("Source field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    sourceField=>equationsInterpolation%sourceField
+       
+    EXITS("EquationsInterpolation_SourceFieldCheck")
+    RETURN
+999 NULLIFY(sourceField)
+998 ERRORS("EquationsInterpolation_SourceFieldCheck",err,error)
+    EXITS("EquationsInterpolation_SourceFieldCheck")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_SourceFieldCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the source field for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_SourceFieldGet(equationsInterpolation,sourceField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the source field for
+    TYPE(FieldType), POINTER :: sourceField !<On exit, a pointer to the source field for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsInterpolation_SourceFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(sourceField)) CALL FlagError("Source field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+
+    sourceField=>equationsInterpolation%sourceField
+    IF(.NOT.ASSOCIATED(sourceField)) &
+      & CALL FlagError("Source field is not assocaited for the equations interpolation.",err,error,*999)
+       
+    EXITS("EquationsInterpolation_SourceFieldGet")
+    RETURN
+999 NULLIFY(sourceField)
+998 ERRORS("EquationsInterpolation_SourceFieldGet",err,error)
+    EXITS("EquationsInterpolation_SourceFieldGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_SourceFieldGet
 
   !
   !================================================================================================================================

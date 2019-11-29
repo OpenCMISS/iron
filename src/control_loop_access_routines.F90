@@ -143,6 +143,8 @@ MODULE ControlLoopAccessRoutines
   PUBLIC CONTROL_LOOP_FIELD_VARIABLE_STATIC,CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC, &
     & CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC,CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC
 
+  PUBLIC ControlLoop_AbsoluteToleranceGet
+  
   PUBLIC ControlLoop_AssertIsFinished,ControlLoop_AssertNotFinished
 
   PUBLIC ControlLoop_AssertIsFixedLoop
@@ -159,13 +161,19 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC CONTROL_LOOP_GET
 
+  PUBLIC ControlLoop_ContinueLoopGet
+
   PUBLIC CONTROL_LOOP_CURRENT_TIMES_GET
 
   PUBLIC ControlLoop_CurrentTimesGet
 
   PUBLIC ControlLoop_CurrentTimeInformationGet
 
+  PUBLIC ControlLoop_CurrentWhileInformationGet
+
   PUBLIC ControlLoop_FixedLoopGet
+
+  PUBLIC ControlLoop_IterationNumberGet
 
   PUBLIC ControlLoop_LoadIncrementLoopGet
 
@@ -175,8 +183,14 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_OutputTypeGet
 
+  PUBLIC ControlLoop_ParentLoopCheck
+
+  PUBLIC ControlLoop_ParentLoopGet
+
   PUBLIC ControlLoop_ProblemGet
 
+  PUBLIC ControlLoop_RelativeToleranceGet
+  
   PUBLIC ControlLoop_SimpleLoopGet
 
   PUBLIC ControlLoop_SolversGet
@@ -190,6 +204,33 @@ MODULE ControlLoopAccessRoutines
   PUBLIC ControlLoop_WhileLoopGet
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_AbsoluteToleranceSet
+  SUBROUTINE ControlLoop_AbsoluteToleranceGet(controlLoop,absoluteTolerance,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to while control loop to get the absolution tolerance for
+    REAL(DP), INTENT(OUT) :: absoluteTolerance !<On return, the absolute tolerance value for a while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("ControlLoop_AbsoluteToleranceGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*999)
+
+    absoluteTolerance=controlLoop%whileLoop%absoluteTolerance
+       
+    EXITS("ControlLoop_AbsoluteToleranceGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AbsoluteToleranceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AbsoluteToleranceGet
 
   !
   !================================================================================================================================
@@ -472,7 +513,37 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::cmfe_ControlLoop_CurrentTimesGet
+  !>Gets the continue loop status for a while control loop  \see OpenCMISS::Iron::cmfe_ControlLoop_ContinueLoopGet
+  SUBROUTINE ControlLoop_ContinueLoopGet(controlLoop,continueLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The while control loop to get the continue loop for
+    LOGICAL, INTENT(OUT) :: continueLoop !<On exit, the continue loop status of the while control loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop
+
+    ENTERS("ControlLoop_ContinueLoopGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*999)
+    NULLIFY(whileLoop)
+    CALL ControlLoop_WhileLoopGet(controlLoop,whileLoop,err,error,*999)
+
+    continueLoop=whileLoop%continueLoop
+    
+    EXITS("ControlLoop_ContinueLoopGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_ControlLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_ContinueLoopGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::Iron::cmfe_ControlLoop_CurrentTimesGet
   SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
 
     !Argument variables
@@ -562,6 +633,65 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the current loop information for a while control loop. If the specified loop is not a while loop the next while loop up the chain will be used.
+  SUBROUTINE ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumIterations,absoluteTolerance, &
+    & relativeTolerance,continueLoop,err,error,*)
+    
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the while information for
+    INTEGER(INTG), INTENT(OUT) :: currentIteration !<On exit, the current iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: maximumIterations !<On exit, the maximum iteration number for the loop
+    REAL(DP), INTENT(OUT) :: absoluteTolerance !<On exit, the absolute tolerance for the loop
+    REAL(DP), INTENT(OUT) :: relativeTolerance !<On exit, the relative tolerance for the loop
+    LOGICAL, INTENT(OUT) :: continueLoop !<On exit, the continue loop condition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables    
+    INTEGER(INTG) :: controlLoopLevel,levelIdx
+    TYPE(ControlLoopType), POINTER :: parentLoop
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop
+
+    ENTERS("ControlLoop_CurrentWhileInformationGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+    IF(.NOT.controlLoop%controlLoopFinished) CALL FlagError("Control loop has not been finished.",err,error,*999)
+
+    !Find a while loop from either the specified control loop or the next while loop up the chain.
+    controlLoopLevel=controlLoop%controlLoopLevel
+    parentLoop=>controlLoop
+    DO levelIdx=controlLoopLevel,1,-1
+      IF(controlLoopLevel==0) THEN
+        CALL FlagError("Could not find a while loop for the specified control loop.",err,error,*999)
+      ELSE
+        IF(parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
+          whileLoop=>parentLoop%whileLoop
+          IF(ASSOCIATED(whileLoop)) THEN
+            currentIteration=whileLoop%iterationNumber
+            maximumIterations=whileLoop%maximumNumberOfIterations
+            absoluteTolerance=whileLoop%absoluteTolerance
+            relativeTolerance=whileLoop%relativeTolerance
+            continueLoop=whileLoop%continueLoop
+          ELSE
+            CALL FlagError("Control loop while loop is not associated.",err,error,*999)
+          ENDIF
+          EXIT
+        ELSE
+          parentLoop=>parentLoop%parentLoop
+        ENDIF
+      ENDIF
+    ENDDO !levelIdx
+       
+    EXITS("ControlLoop_CurrentWhileInformationGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_CurrentWhileInformationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_CurrentWhileInformationGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the fixed loop for a control loop.
   SUBROUTINE ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*)
 
@@ -588,6 +718,61 @@ CONTAINS
     
   END SUBROUTINE ControlLoop_FixedLoopGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the iteration number for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_IterationNumberGet
+  SUBROUTINE ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to time control loop to get the iteration number for
+    INTEGER(INTG), INTENT(OUT) :: iterationNumber !<On exit, the iteration number for the control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(ControlLoopFixedType), POINTER :: fixedLoop
+    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("ControlLoop_IterationNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    SELECT CASE(controlLoop%loopType)
+    CASE(CONTROL_SIMPLE_TYPE)
+      CALL FlagError("Can not get the iteration number for a simple control loop.",err,error,*999)
+    CASE(CONTROL_FIXED_LOOP_TYPE)
+      NULLIFY(fixedLoop)
+      CALL ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*999)
+      iterationNumber=fixedLoop%iterationNumber
+    CASE(CONTROL_TIME_LOOP_TYPE)
+      NULLIFY(timeLoop)
+      CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
+      iterationNumber=timeLoop%iterationNumber       
+    CASE(CONTROL_WHILE_LOOP_TYPE)
+      NULLIFY(whileLoop)
+      CALL ControlLoop_WhileLoopGet(controlLoop,whileLoop,err,error,*999)
+      iterationNumber=whileLoop%iterationNumber
+    CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+      NULLIFY(loadIncrementLoop)
+      CALL ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*999)
+      iterationNumber=loadIncrementLoop%iterationNumber
+    CASE DEFAULT
+      localError="The control loop type of "//TRIM(NumberToVString(controlLoop%loopType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("ControlLoop_IterationNumberGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_IterationNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_IterationNumberGet
+  
   !
   !================================================================================================================================
   !
@@ -636,12 +821,13 @@ CONTAINS
     ENTERS("ControlLoop_NumberOfIterationsGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
     CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
     NULLIFY(timeLoop)
     CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
     
-    numberOfIterations=timeLoop%numberOfIterations
-       
+    numberOfIterations=timeLoop%numberOfIterations       
+    
     EXITS("ControlLoop_NumberOfIterationsGet")
     RETURN
 999 ERRORSEXITS("ControlLoop_NumberOfIterationsGet",err,error)
@@ -707,6 +893,65 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks a pointer to the parent loop for a control loop.
+  SUBROUTINE ControlLoop_ParentLoopCheck(controlLoop,parentLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to check the parent loop for.
+    TYPE(ControlLoopType), POINTER :: parentLoop !<On exit, a pointer to the control loop parent loop if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_ParentLoopCheck",err,error,*998)
+
+    IF(ASSOCIATED(parentLoop)) CALL FlagError("Parent loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    parentLoop=>controlLoop%parentLoop
+       
+    EXITS("ControlLoop_ParentLoopCheck")
+    RETURN
+998 NULLIFY(parentLoop)
+999 ERRORSEXITS("ControlLoop_ParentLoopCheck",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_ParentLoopCheck
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the parent loop for a control loop.
+  SUBROUTINE ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the parent loop for.
+    TYPE(ControlLoopType), POINTER :: parentLoop !<On exit, a pointer to the control loop parent loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_ParentLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(parentLoop)) CALL FlagError("Parent loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    parentLoop=>controlLoop%parentLoop
+    IF(.NOT.ASSOCIATED(parentLoop)) CALL FlagError("Control loop parent loop is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_ParentLoopGet")
+    RETURN
+998 NULLIFY(parentLoop)
+999 ERRORSEXITS("ControlLoop_ParentLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_ParentLoopGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the problem for a control loop.
   SUBROUTINE ControlLoop_ProblemGet(controlLoop,problem,err,error,*)
 
@@ -732,6 +977,33 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_ProblemGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoopRelativeToleranceGet
+  SUBROUTINE ControlLoop_RelativeToleranceGet(controlLoop,relativeTolerance,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to while control loop to set the relative tolerance for
+    REAL(DP), INTENT(OUT) :: relativeTolerance !<On return, the relative tolerance value for a while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_RelativeToleranceGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*999)
+    
+    relativeTolerance=controlLoop%whileLoop%relativeTolerance
+       
+    EXITS("ControlLoop_RelativeToleranceGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_RelativeToleranceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_RelativeToleranceGet
 
   !
   !================================================================================================================================

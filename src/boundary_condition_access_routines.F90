@@ -65,7 +65,12 @@ MODULE BoundaryConditionAccessRoutines
   !Interfaces
 
   PUBLIC BoundaryConditions_SolverEquationsGet
+  
+  PUBLIC BoundaryConditionsVariable_DirichletConditionsGet
 
+  PUBLIC BoundaryConditionsVariable_NeumannConditionsGet
+
+  PUBLIC BoundaryConditionsVariable_PressureIncConditionsGet  
  
 CONTAINS
 
@@ -99,6 +104,112 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE BoundaryConditions_SolverEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dirichlet boundary conditions for a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_DirichletConditionsGet(boundaryConditionsVariable,dirichletBoundaryConditions, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
+    TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: dirichletBoundaryCOnditions !<On exit, a pointer to the dirichlet boundary conditions in the specified boundary conditions variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_DirichletConditionsGet",err,error,*998)
+
+    IF(ASSOCIATED(dirichletBoundaryConditions)) &
+      & CALL FlagError("Dirichlet boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+
+    dirichletBoundaryConditions=>boundaryConditionsVariable%DIRICHLET_BOUNDARY_CONDITIONS
+    IF(.NOT.ASSOCIATED(dirichletBoundaryConditions)) &
+      & CALL FlagError("Dirichlet boundary conditions is not associated for the boundary conditions variable.",err,error,*999)
+       
+    EXITS("BoundaryConditionsVariable_DirichletConditionsGet")
+    RETURN
+999 NULLIFY(dirichletBoundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_DirichletConditionsGet",err,error)
+    EXITS("BoundaryConditionsVariable_DirichletConditionsGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_DirichletConditionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the neumann boundary conditions for a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,neumannBoundaryConditions, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the neumann boundary conditions for
+    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryCOnditions !<On exit, a pointer to the neumann boundary conditions in the specified boundary conditions variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_NeumannConditionsGet",err,error,*998)
+
+    IF(ASSOCIATED(neumannBoundaryConditions)) &
+      & CALL FlagError("Neumann boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+
+    neumannBoundaryConditions=>boundaryConditionsVariable%neumannBoundaryConditions
+    IF(.NOT.ASSOCIATED(neumannBoundaryConditions)) &
+      & CALL FlagError("Neumann boundary conditions is not associated for the boundary conditions variable.",err,error,*999)
+       
+    EXITS("BoundaryConditionsVariable_NeumannConditionsGet")
+    RETURN
+999 NULLIFY(neumannBoundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_NeumannConditionsGet",err,error)
+    EXITS("BoundaryConditionsVariable_NeumannConditionsGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_NeumannConditionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the pressure incremented boundary conditions for a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_PressureIncConditionsGet(boundaryConditionsVariable, &
+    & pressureIncrementedBoundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the pressure incremented boundary conditions for
+    TYPE(BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE), POINTER :: pressureIncrementedBoundaryConditions !<On exit, a pointer to the pressure incremented boundary conditions in the specified boundary conditions variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_PressureIncConditionsGet",err,error,*998)
+
+    IF(ASSOCIATED(pressureIncrementedBoundaryConditions)) &
+      & CALL FlagError("Pressure incremented boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+
+    pressureIncrementedBoundaryConditions=>boundaryConditionsVariable%PRESSURE_INCREMENTED_BOUNDARY_CONDITIONS
+    IF(.NOT.ASSOCIATED(pressureIncrementedBoundaryConditions)) &
+      & CALL FlagError("Pressure incremented boundary conditions is not associated for the boundary conditions variable.", &
+      & err,error,*999)
+       
+    EXITS("BoundaryConditionsVariable_PressureIncConditionsGet")
+    RETURN
+999 NULLIFY(pressureIncrementedBoundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_PressureIncConditionsGet",err,error)
+    EXITS("BoundaryConditionsVariable_PressureIncConditionsGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_PressureIncConditionsGet
 
   !
   !================================================================================================================================

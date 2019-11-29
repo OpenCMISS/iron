@@ -87,7 +87,7 @@ def write_c_f90(library, output):
         '  USE ISO_C_BINDING\n'
         '  USE ISO_VARYING_STRING\n'
         '  USE OpenCMISS_Iron\n'
-        '  USE CMISS_FORTRAN_C\n\n'
+        '  USE CMISSFortranC\n\n'
         '  IMPLICIT NONE\n\n'
         '  PRIVATE\n\n'
         '  INTEGER(C_INT), PARAMETER :: cmfe_True = 1\n'

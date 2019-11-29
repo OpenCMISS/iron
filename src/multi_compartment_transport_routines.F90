@@ -53,13 +53,13 @@ MODULE MULTI_COMPARTMENT_TRANSPORT_ROUTINES
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE COORDINATE_ROUTINES  
+  USE CoordinateSystemRoutines  
   USE DIFFUSION_EQUATION_ROUTINES
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsSetConstants
-  USE FIELD_ROUTINES
+  USE FieldRoutines
   USE FieldAccessRoutines
 !  USE FINITE_ELASTICITY_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
@@ -491,11 +491,11 @@ CONTAINS
     REAL(DP) :: NORMAL(3),TANGENTS(3,3),VALUE,X(3),VALUE_SOURCE !<The value to add
 !     REAL(DP) :: k_xx, k_yy, k_zz
     INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,eqnset_idx
-    INTEGER(INTG) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG) :: VARIABLE_TYPE !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
     INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE
     INTEGER(INTG) :: GLOBAL_DERIV_INDEX
     REAL(DP) :: A1,A2,A3,A4,D1,D2,D3,D4,LAMBDA_12,LAMBDA_13,LAMBDA_23
-!    INTEGER(INTG) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+!    INTEGER(INTG) :: FIELD_SET_TYPE !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
 !    INTEGER(INTG) :: DERIVATIVE_NUMBER !<The node derivative number
 !    INTEGER(INTG) :: COMPONENT_NUMBER !<The field variable component number
 !    INTEGER(INTG) :: totalNumberOfNodes !<The total number of (geometry) nodes
@@ -549,18 +549,18 @@ CONTAINS
                           GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
                             ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
-                            CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
+                            CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
                               & numberOfDimensions,ERR,ERROR,*999)
                             NULLIFY(GEOMETRIC_VARIABLE)
                             NULLIFY(GEOMETRIC_PARAMETERS)
                             CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
-                            CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,& 
+                            CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,& 
                               & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
                              NULLIFY(ANALYTIC_VARIABLE)
                              NULLIFY(ANALYTIC_PARAMETERS)
                              IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
                                CALL Field_VariableGet(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,ANALYTIC_VARIABLE,ERR,ERROR,*999)
-                               CALL FIELD_PARAMETER_SET_DATA_GET(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                               CALL Field_ParameterSetDataGet(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                  & ANALYTIC_PARAMETERS,ERR,ERROR,*999)           
                              ENDIF
                              NULLIFY(MATERIALS_FIELD)
@@ -569,7 +569,7 @@ CONTAINS
                              IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
                                MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                CALL Field_VariableGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,ERR,ERROR,*999)
-                               CALL FIELD_PARAMETER_SET_DATA_GET(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                               CALL Field_ParameterSetDataGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                  & MATERIALS_PARAMETERS,ERR,ERROR,*999)           
                              ENDIF
                              EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)=CURRENT_TIME
@@ -609,12 +609,12 @@ CONTAINS
                                                 !Default to version 1 of each node derivative
                                                 CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
                                                   & component_idx,local_ny,err,error,*999)
-                                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
                                                 BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
                                                   & CONDITION_TYPES(local_ny)
                                                 IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
-                                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD, & 
+                                                 CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD, & 
                                                    & variable_type,FIELD_VALUES_SET_TYPE,local_ny, & 
                                                    & VALUE,ERR,ERROR,*999)
                                                 ENDIF
@@ -644,20 +644,20 @@ CONTAINS
                                     CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
                                   ENDIF
                                 ENDDO !component_idx
-                                CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type, &
                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
-                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type, &
                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
-                                CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type, &
                                  & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type, &
                                  & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                               ELSE
                                 CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
                               ENDIF
 
 !                              ENDDO !variable_idx
-                             CALL FIELD_PARAMETER_SET_DATA_RESTORE(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,& 
+                             CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,& 
                               & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
                           ELSE
                             CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
@@ -677,13 +677,13 @@ CONTAINS
 !                 ELSE
 !                   CALL FlagError("Solver equations are not associated.",ERR,ERROR,*999)
 !                 END IF  
-                CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
             !>Set the source field to a specified analytical function
@@ -693,10 +693,10 @@ CONTAINS
                 IF(ASSOCIATED(SOURCE_FIELD)) THEN
                   GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                   IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-                    CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
+                    CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
                     NULLIFY(GEOMETRIC_VARIABLE)
                     CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
-                    CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                    CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
                       variable_type=FIELD_U_VARIABLE_TYPE
                       FIELD_VARIABLE=>SOURCE_FIELD%variableTypeMap(variable_type)%PTR
@@ -753,7 +753,7 @@ CONTAINS
                                       !Default to version 1 of each node derivative
                                       CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
                                         & component_idx,local_ny,err,error,*999)
-                                      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                      CALL Field_ParameterSetUpdateLocalDOF(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                         & FIELD_VALUES_SET_TYPE,local_ny,VALUE_SOURCE,ERR,ERROR,*999)
                                     ENDDO !deriv_idx
                                   ENDDO !node_idx
@@ -770,14 +770,14 @@ CONTAINS
                             CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
                           ENDIF
                         ENDDO !component_idx
-                        CALL FIELD_PARAMETER_SET_UPDATE_START(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                        CALL Field_ParameterSetUpdateStart(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & ERR,ERROR,*999)
-                        CALL FIELD_PARAMETER_SET_UPDATE_FINISH(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                        CALL Field_ParameterSetUpdateFinish(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & ERR,ERROR,*999)
                       ELSE
                         CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
                       ENDIF
-                    CALL FIELD_PARAMETER_SET_DATA_RESTORE(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                    CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
@@ -864,24 +864,24 @@ CONTAINS
                      EQUATIONS_SET=>equations%equationsSet
                      IF(ASSOCIATED(EQUATIONS_SET)) THEN
 
-!                      CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA1,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA1
-!                      CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA2,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA2
-!                      CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA3,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA3
-!                      CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA4,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA4
 ! 
-!                      CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U3_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U3_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA5,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA5

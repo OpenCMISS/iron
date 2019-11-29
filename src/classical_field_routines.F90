@@ -42,7 +42,7 @@
 !>
 
 !> This module handles all classical field class routines.
-MODULE CLASSICAL_FIELD_ROUTINES
+MODULE ClassicalFieldRoutines
 
   USE ADVECTION_EQUATION_ROUTINES
   USE ADVECTION_DIFFUSION_EQUATION_ROUTINES
@@ -54,7 +54,7 @@ MODULE CLASSICAL_FIELD_ROUTINES
   USE ISO_VARYING_STRING
   USE KINDS
   USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
-  USE LAPLACE_EQUATIONS_ROUTINES
+  USE LaplaceEquationsRoutines
   USE POISSON_EQUATIONS_ROUTINES
   USE PROBLEM_CONSTANTS
   USE REACTION_DIFFUSION_EQUATION_ROUTINES
@@ -75,23 +75,23 @@ MODULE CLASSICAL_FIELD_ROUTINES
 
   !Interfaces
 
-  PUBLIC CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE
+  PUBLIC ClassicalField_AnalyticFunctionsEvaluate
   
-  PUBLIC CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP
+  PUBLIC ClassicalField_ControlLoopPostLoop
 
   PUBLIC ClassicalField_FiniteElementJacobianEvaluate,ClassicalField_FiniteElementResidualEvaluate
   
   PUBLIC ClassicalField_EquationsSetSpecificationSet
 
-  PUBLIC CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE
+  PUBLIC ClassicalField_FiniteElementCalculate
   
-  PUBLIC CLASSICAL_FIELD_EQUATIONS_SET_SETUP
+  PUBLIC ClassicalField_EquationsSetSetup
 
   PUBLIC ClassicalField_EquationsSetSolutionMethodSet
 
   PUBLIC ClassicalField_ProblemSpecificationSet
 
-  PUBLIC CLASSICAL_FIELD_PROBLEM_SETUP
+  PUBLIC ClassicalField_ProblemSetup
 
   PUBLIC ClassicalField_PreSolve,ClassicalField_PostSolve
 
@@ -104,118 +104,112 @@ CONTAINS
   !
 
   !>Evaluate the analytic solution for a classical field equations set.
-  SUBROUTINE CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE(EQUATIONS_SET,EQUATIONS_TYPE,ANALYTIC_FUNCTION_TYPE,POSITION,TANGENTS, &
-    & NORMAL,TIME,VARIABLE_TYPE,GLOBAL_DERIVATIVE,COMPONENT_NUMBER,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS,VALUE,err,error,*)
+  SUBROUTINE ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsType,analyticFunctionType,position,tangents, &
+    & normal,time,variableType,globalDerivative,computerNumber,analyticParameters,materialsParameters,value,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to evaluate the analytic for
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_TYPE !<The type of equation to evaluate
-    INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: POSITION(:) !<POSITION(dimention_idx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: TANGENTS(:,:) !<TANGENTS(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: NORMAL(:) !<NORMAL(dimension_idx). The normal vector at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: TIME !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_DERIVATIVE !<The global derivative direction to evaluate at
-    INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The dependent field component number to evaluate
-    REAL(DP), INTENT(IN) :: ANALYTIC_PARAMETERS(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: MATERIALS_PARAMETERS(:) !<A pointer to any materials field parameters
-    REAL(DP), INTENT(OUT) :: VALUE !<On return, the analtyic function value.
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
+    INTEGER(INTG), INTENT(IN) :: equationsType !<The type of equation to evaluate
+    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
+    REAL(DP), INTENT(IN) :: position(:) !<position(dimention_idx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
+    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimension_idx). The normal vector at the point to evaluate at.
+    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
+    INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
+    INTEGER(INTG), INTENT(IN) :: computerNumber !<The dependent field component number to evaluate
+    REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
+    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
+    REAL(DP), INTENT(OUT) :: value !<On return, the analtyic function value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE",err,error,*999)
+    ENTERS("ClassicalField_AnalyticFunctionsEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-     SELECT CASE(EQUATIONS_TYPE)
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL Diffusion_AnalyticFunctionsEvaluate(EQUATIONS_SET,ANALYTIC_FUNCTION_TYPE,POSITION, &
-          & TANGENTS,NORMAL,TIME,VARIABLE_TYPE,GLOBAL_DERIVATIVE,COMPONENT_NUMBER,ANALYTIC_PARAMETERS, &
-          & MATERIALS_PARAMETERS,VALUE,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equations set equation type "//TRIM(NumberToVString(EQUATIONS_TYPE,"*",err,error))// &
-          & " is not valid for a classical field equations set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    
+    SELECT CASE(equationsType)
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position, &
+        & tangents,normal,time,variableType,globalDerivative,computerNumber,analyticParameters, &
+        & materialsParameters,value,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type "//TRIM(NumberToVString(equationsType,"*",err,error))// &
+        & " is not valid for a classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE")
+    EXITS("ClassicalField_AnalyticFunctionsEvaluate")
     RETURN
-999 ERRORSEXITS("CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE",err,error)
+999 ERRORSEXITS("ClassicalField_AnalyticFunctionsEvaluate",err,error)
     RETURN 1
-  END SUBROUTINE CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE
+    
+  END SUBROUTINE ClassicalField_AnalyticFunctionsEvaluate
 
   !
   !================================================================================================================================
   !
 
   !>Executes after each loop of a control loop for bioelectric problems, i.e., after each time step for a time loop
-  SUBROUTINE CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*)
+  SUBROUTINE ClassicalField_ControlLoopPostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ProblemType), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP",err,error,*999)
+    ENTERS("ClassicalField_ControlLoopPostLoop",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      PROBLEM=>CONTROL_LOOP%PROBLEM
-      IF(ASSOCIATED(PROBLEM)) THEN
-        SELECT CASE(CONTROL_LOOP%loopType)
-        CASE(CONTROL_TIME_LOOP_TYPE)
-          SELECT CASE(PROBLEM%specification(2))
-          CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
-            CALL DIFFUSION_EQUATION_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*999)
-          CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
-            CALL REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*999)
-          CASE DEFAULT
-            localError="The second problem specification of "// &
-              & TRIM(NumberToVString(PROBLEM%specification(2),"*",err,error))// &
-              & " is not valid for a classical field problem."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          !do nothing
-        END SELECT
-      ELSE
-        CALL FlagError("Control loop problem is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
 
-    EXITS("CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP")
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    SELECT CASE(controlLoop%loopType)
+    CASE(CONTROL_TIME_LOOP_TYPE)
+      SELECT CASE(problem%specification(2))
+      CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
+        CALL DIFFUSION_EQUATION_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+      CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
+        CALL REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+      CASE DEFAULT
+        localError="The second problem specification of "// &
+          & TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+          & " is not valid for a classical field problem."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      !do nothing
+    END SELECT
+
+    EXITS("ClassicalField_ControlLoopPostLoop")
     RETURN
-999 ERRORSEXITS("CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP",err,error)
+999 ERRORSEXITS("ClassicalField_ControlLoopPostLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP
+  END SUBROUTINE ClassicalField_ControlLoopPostLoop
 
   !
   !================================================================================================================================
@@ -234,40 +228,37 @@ CONTAINS
 
     ENTERS("ClassicalField_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(specification(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL Laplace_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL HJEquation_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL Poisson_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL Helmholtz_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL Diffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL Advection_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL AdvectionDiffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL ReactionDiffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
-          & " is not valid for a classical field equations set."
-       CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(SIZE(specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(specification(2))
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL Laplace_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL HJEquation_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL Poisson_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL Helmholtz_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL Diffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+      CALL Advection_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL AdvectionDiffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL ReactionDiffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
+        & " is not valid for a classical field equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("ClassicalField_EquationsSetSpecificationSet")
     RETURN
@@ -282,71 +273,69 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matries and rhs vector for the given element number for a clasical field class finite element equation set.
-  SUBROUTINE CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE ClassicalField_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calcualate
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calcualate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE",err,error,*999)
+    ENTERS("ClassicalField_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL LaplaceEquation_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL HJ_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL POISSON_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL DIFFUSION_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL AdvectionDiffusion_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL ReactionDiffusion_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equations set type "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL Laplace_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL HJ_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL POISSON_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL DIFFUSION_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL AdvectionDiffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+      CALL ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL ReactionDiffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a classical field equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE")
+    EXITS("ClassicalField_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE",err,error)
+999 ERRORSEXITS("ClassicalField_FiniteElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE
+    
+  END SUBROUTINE ClassicalField_FiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Evaluates the element Jacobian matrix for the given element number for a clasical field class finite element equation set.
-  SUBROUTINE ClassicalField_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE ClassicalField_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the Jacobian for
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -354,42 +343,39 @@ CONTAINS
     
     ENTERS("ClassicalField_FiniteElementJacobianEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL Poisson_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL Diffusion_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equations set type "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL Poisson_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL Diffusion_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a classical field equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("ClassicalField_FiniteElementJacobianEvaluate")
     RETURN
@@ -404,11 +390,11 @@ CONTAINS
   !
 
   !>Evaluates the element residual and rhs vectors for the given element number for a clasical field class finite element equation set.
-  SUBROUTINE ClassicalField_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE ClassicalField_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the residual for
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -416,42 +402,39 @@ CONTAINS
     
     ENTERS("ClassicalField_FiniteElementResidualEvaluate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL Poisson_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL Diffusion_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equations set type "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL Poisson_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL Diffusion_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+      CALL ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a classical field equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("ClassicalField_FiniteElementResidualEvaluate")
     RETURN
@@ -466,71 +449,69 @@ CONTAINS
   !
 
   !>Sets up the equations set for a classical field equations set class.
-  SUBROUTINE CLASSICAL_FIELD_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
+  SUBROUTINE ClassicalField_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("CLASSICAL_FIELD_EQUATIONS_SET_SETUP",err,error,*999)
+    ENTERS("ClassicalField_EquationsSetSetup",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL LAPLACE_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL HJ_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL POISSON_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL DIFFUSION_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL AdvectionDiffusion_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL Advection_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL ReactionDiffusion_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equation set type "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("CLASSICAL_FIELD_EQUATIONS_SET_SETUP")
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL Laplace_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL HJ_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL POISSON_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL DIFFUSION_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL AdvectionDiffusion_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+      CALL Advection_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL ReactionDiffusion_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equation set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a classical field equation set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("ClassicalField_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("CLASSICAL_FIELD_EQUATIONS_SET_SETUP",err,error)
+999 ERRORSEXITS("ClassicalField_EquationsSetSetup",err,error)
     RETURN 1
-  END SUBROUTINE CLASSICAL_FIELD_EQUATIONS_SET_SETUP
+    
+  END SUBROUTINE ClassicalField_EquationsSetSetup
   
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the solution method for a classical field equation set class.
-  SUBROUTINE ClassicalField_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
+  SUBROUTINE ClassicalField_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -538,42 +519,39 @@ CONTAINS
     
     ENTERS("ClassicalField_EquationsSetSolutionMethodSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL Laplace_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL HJEquation_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL Poisson_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL Helmholtz_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL Diffusion_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL AdvectionDiffusion_EquationsSetSolnMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-        CALL Advection_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL ReactionDiffusion_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equations set equation type of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field equations set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+    
+     SELECT CASE(equationsSet%specification(2))
+     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+       CALL Laplace_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+       CALL HJEquation_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+       CALL Poisson_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+       CALL Helmholtz_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+       CALL FlagError("Not implemented.",err,error,*999)
+     CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+       CALL Diffusion_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+       CALL AdvectionDiffusion_EquationsSetSolnMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
+       CALL Advection_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+       CALL ReactionDiffusion_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+       CALL FlagError("Not implemented.",err,error,*999)
+     CASE DEFAULT
+       localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+         & " is not valid for a classical field equations set class."
+       CALL FlagError(localError,err,error,*999)
+     END SELECT
        
     EXITS("ClassicalField_EquationsSetSolutionMethodSet")
     RETURN
@@ -588,11 +566,11 @@ CONTAINS
   !
 
   !>Sets the analytic boundary conditions for a classical field equation set class.
-  SUBROUTINE ClassicalField_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*)
+  SUBROUTINE ClassicalField_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditionsn to set
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -600,40 +578,37 @@ CONTAINS
 
     ENTERS("ClassicalField_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
-      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-        CALL Laplace_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-        CALL HJ_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-        CALL Poisson_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-        CALL Helmholtz_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-      CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-        CALL Diffusion_BoundaryConditionAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-      CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL AdvectionDiffusion_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-      CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Equations set equation type of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field equations set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
+      CALL Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL HJ_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
+      CALL Poisson_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
+      CALL Helmholtz_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
+      CALL Diffusion_BoundaryConditionAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL AdvectionDiffusion_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("ClassicalField_BoundaryConditionsAnalyticCalculate")
     RETURN
@@ -661,41 +636,37 @@ CONTAINS
 
     ENTERS("ClassicalField_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)>=2) THEN
-        problemType=problemSpecification(2)
-        SELECT CASE(problemType)
-        CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
-          CALL Laplace_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_HJ_EQUATION_TYPE)
-          CALL HJEquation_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_POISSON_EQUATION_TYPE)
-          CALL Poisson_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
-          CALL Helmholtz_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_WAVE_EQUATION_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
-          CALL Diffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_ADVECTION_EQUATION_TYPE)
-          CALL Advection_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE)
-          CALL AdvectionDiffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
-          CALL ReactionDiffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
-        CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
-            & " is not valid for a classical field problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Classical field problem specification must have a type set.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(problem))  CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<2) &
+      & CALL FlagError("Classical field problem specification must have a type set.",err,error,*999)
+    
+    problemType=problemSpecification(2)
+    SELECT CASE(problemType)
+    CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
+      CALL Laplace_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_HJ_EQUATION_TYPE)
+      CALL HJEquation_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_POISSON_EQUATION_TYPE)
+      CALL Poisson_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
+      CALL Helmholtz_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
+      CALL Diffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_ADVECTION_EQUATION_TYPE)
+      CALL Advection_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL AdvectionDiffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL ReactionDiffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+    CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
+        & " is not valid for a classical field problem."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("ClassicalField_ProblemSpecificationSet")
     RETURN
@@ -710,59 +681,56 @@ CONTAINS
   !
 
   !>Sets up the problem for a classical field problem class.
-  SUBROUTINE CLASSICAL_FIELD_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
+  SUBROUTINE ClassicalField_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem
+    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("CLASSICAL_FIELD_PROBLEM_SETUP",err,error,*999)
+    ENTERS("ClassicalField_ProblemSetup",err,error,*999)
 
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<2) THEN
-        CALL FlagError("Problem specification must have at least two entries for a classical field problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(2))
-      CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
-        CALL LAPLACE_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_HJ_EQUATION_TYPE)
-        CALL HJ_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_POISSON_EQUATION_TYPE)
-        CALL POISSON_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
-        CALL HELMHOLTZ_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_WAVE_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
-        CALL DIFFUSION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_ADVECTION_EQUATION_TYPE)
-        CALL ADVECTION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE)
-        CALL ADVECTION_DIFFUSION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))// &
-          & " is not valid for a classical field problem class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("CLASSICAL_FIELD_PROBLEM_SETUP")
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(problem%SPECIFICATION)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for a classical field problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(2))
+    CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
+      CALL Laplace_ProblemSetup(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_HJ_EQUATION_TYPE)
+      CALL HJ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_POISSON_EQUATION_TYPE)
+      CALL POISSON_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
+      CALL HELMHOLTZ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_WAVE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
+      CALL DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_ADVECTION_EQUATION_TYPE)
+      CALL ADVECTION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE)
+      CALL ADVECTION_DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
+      CALL REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+    CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for a classical field problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("ClassicalField_ProblemSetup")
     RETURN
-999 ERRORSEXITS("CLASSICAL_FIELD_PROBLEM_SETUP",err,error)
+999 ERRORSEXITS("ClassicalField_ProblemSetup",err,error)
     RETURN 1
-  END SUBROUTINE CLASSICAL_FIELD_PROBLEM_SETUP
+    
+  END SUBROUTINE ClassicalField_ProblemSetup
 
   !
   !================================================================================================================================
@@ -783,6 +751,7 @@ CONTAINS
     ENTERS("ClassicalField_PreSolve",err,error,*999)
 
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
@@ -844,6 +813,7 @@ CONTAINS
     ENTERS("ClassicalField_PostSolve",err,error,*999)
 
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
@@ -886,9 +856,9 @@ CONTAINS
     
   END SUBROUTINE ClassicalField_PostSolve
 
-
   !
   !================================================================================================================================
+  !
 
-END MODULE CLASSICAL_FIELD_ROUTINES
+END MODULE ClassicalFieldRoutines
 
