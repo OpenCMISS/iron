@@ -54,7 +54,7 @@ MODULE ComputationRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Sorting
   USE Strings

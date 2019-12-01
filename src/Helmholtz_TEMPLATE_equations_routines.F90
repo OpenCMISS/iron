@@ -48,7 +48,7 @@ MODULE HELMHOLTZ_EQUATIONS_ROUTINES
   USE BasisRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
@@ -56,7 +56,7 @@ MODULE HELMHOLTZ_EQUATIONS_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EquationsSetConstants
   USE FieldRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -95,7 +95,7 @@ CONTAINS
   SUBROUTINE HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -139,8 +139,8 @@ CONTAINS
   SUBROUTINE HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Helmholtz equation on.
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Helmholtz equation on.
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -175,7 +175,7 @@ CONTAINS
   SUBROUTINE HELMHOLTZ_EQUATION_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -189,7 +189,7 @@ CONTAINS
       CASE(EQUATIONS_SET_NO_SUBTYPE)        
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
           CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -227,7 +227,7 @@ CONTAINS
   SUBROUTINE HelmholtzEquation_EquationsSetSpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
     INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations set specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -279,8 +279,8 @@ CONTAINS
   SUBROUTINE HELMHOLTZ_EQUATION_EQUATIONS_SET_LINEAR_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -290,7 +290,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(EQUATIONS_SET%SUBTYPE==EQUATIONS_SET_NO_SOURCE_HELMHOLTZ_SUBTYPE) THEN
-        SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
+        SELECT CASE(EQUATIONS_SET_SETUP%setupType)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
         CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
@@ -299,7 +299,7 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
         CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a standard Helmholtz equation."
           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -327,7 +327,7 @@ CONTAINS
     
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the solutions set to setup a Helmholtz equation on.
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -401,7 +401,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -411,13 +411,13 @@ CONTAINS
 
     IF(ASSOCIATED(PROBLEM)) THEN
       IF(PROBLEM%SUBTYPE==PROBLEM_NO_SOURCE_HELMHOLTZ_SUBTYPE) THEN
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+        SELECT CASE(PROBLEM_SETUP%setupType)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a linear Helmholtz equation."
           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT

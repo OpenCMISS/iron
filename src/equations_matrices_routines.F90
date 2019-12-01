@@ -4349,7 +4349,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
@@ -4722,7 +4722,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: NONlinearMatrices
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping,rowDofsParamMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable,rowVariable

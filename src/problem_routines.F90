@@ -63,7 +63,7 @@ MODULE ProblemRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE FittingRoutines
   USE FluidMechanicsRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_CONDITIONS_ROUTINES
   USE InterfaceRoutines
@@ -144,7 +144,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: PROBLEM_SETUP_INFO
+    TYPE(ProblemSetupType) :: PROBLEM_SETUP_INFO
 
     ENTERS("Problem_CellMLEquationsCreateFinish",err,error,*999)
 
@@ -152,8 +152,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(PROBLEM_SETUP_INFO,err,error,*999)
-    PROBLEM_SETUP_INFO%SETUP_TYPE=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
-    PROBLEM_SETUP_INFO%ACTION_TYPE=PROBLEM_SETUP_FINISH_ACTION
+    PROBLEM_SETUP_INFO%setupType=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
+    PROBLEM_SETUP_INFO%actionType=PROBLEM_SETUP_FINISH_ACTION
     !Finish problem specific startup
     CALL Problem_Setup(problem,PROBLEM_SETUP_INFO,err,error,*999)
     !Finalise the problem setup information
@@ -178,7 +178,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: PROBLEM_SETUP_INFO
+    TYPE(ProblemSetupType) :: PROBLEM_SETUP_INFO
 
     ENTERS("Problem_CellMLEquationsCreateStart",err,error,*999)
 
@@ -186,8 +186,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(PROBLEM_SETUP_INFO,err,error,*999)
-    PROBLEM_SETUP_INFO%SETUP_TYPE=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
-    PROBLEM_SETUP_INFO%ACTION_TYPE=PROBLEM_SETUP_START_ACTION
+    PROBLEM_SETUP_INFO%setupType=PROBLEM_SETUP_CELLML_EQUATIONS_TYPE
+    PROBLEM_SETUP_INFO%actionType=PROBLEM_SETUP_START_ACTION
     !Start the problem specific control setup
     CALL Problem_Setup(problem,PROBLEM_SETUP_INFO,err,error,*999)
     !Finalise the problem setup information
@@ -625,7 +625,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: problemIdx
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
     TYPE(ProblemType), POINTER :: problem2
     TYPE(ProblemsType), POINTER :: problems
 
@@ -635,8 +635,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_INITIAL_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_FINISH_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_INITIAL_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_FINISH_ACTION
     !Finish the problem specific setup
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -687,7 +687,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: newProblem
     TYPE(ProblemPtrType), POINTER :: newProblems(:)
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: worldWorkGroup
  
@@ -726,8 +726,8 @@ CONTAINS
     newProblem%problemFinished=.FALSE.
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_INITIAL_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_START_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_INITIAL_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_START_ACTION
     !Start problem specific setup
     CALL Problem_Setup(newProblem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -818,15 +818,15 @@ CONTAINS
   SUBROUTINE Problem_SetupFinalise(problemSetupInfo,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(OUT) :: problemSetupInfo !<The problem setup to finalise.
+    TYPE(ProblemSetupType), INTENT(OUT) :: problemSetupInfo !<The problem setup to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Problem_SetupFinalise",err,error,*999)
 
-    problemSetupInfo%SETUP_TYPE=0
-    problemSetupInfo%ACTION_TYPE=0
+    problemSetupInfo%setupType=0
+    problemSetupInfo%actionType=0
        
     EXITS("Problem_SetupFinalise")
     RETURN
@@ -843,15 +843,15 @@ CONTAINS
   SUBROUTINE Problem_SetupInitialise(problemSetupInfo,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(OUT) :: problemSetupInfo !<The problem setup to intialise.
+    TYPE(ProblemSetupType), INTENT(OUT) :: problemSetupInfo !<The problem setup to intialise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Problem_SetupInitialise",err,error,*999)
 
-    problemSetupInfo%SETUP_TYPE=0
-    problemSetupInfo%ACTION_TYPE=0
+    problemSetupInfo%setupType=0
+    problemSetupInfo%actionType=0
         
     EXITS("Problem_SetupInitialise")
     RETURN
@@ -932,7 +932,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_ControlLoopCreateFinish",err,error,*999)
 
@@ -943,8 +943,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_CONTROL_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_FINISH_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_CONTROL_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_FINISH_ACTION
     !Finish problem specific startup
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -975,7 +975,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_ControlLoopCreateStart",err,error,*999)
 
@@ -984,8 +984,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_CONTROL_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_START_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_CONTROL_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_START_ACTION
     !Start the problem specific control setup
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -1036,7 +1036,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetupInfo !<The problem setup information.
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetupInfo !<The problem setup information.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1091,7 +1091,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,solverMatrixIdx
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(SOLVER_TYPE), POINTER :: cellMLSolver,linkingSolver
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
@@ -1150,7 +1150,7 @@ CONTAINS
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Calculate the Jacobian
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         !Assemble the equations for dynamic problems
@@ -1169,7 +1169,7 @@ CONTAINS
       cellMLSolver=>newtonSolver%CELLML_EVALUATOR_SOLVER
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Calculate the Jacobian
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         !Assemble the equations for linear problems
@@ -1207,7 +1207,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,solverMatrixIdx
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
@@ -1271,7 +1271,7 @@ CONTAINS
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Calculate the residual for each element (M, C, K and g)
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(equations)
@@ -1315,7 +1315,7 @@ CONTAINS
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Make sure the equations sets are up to date
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(equations)
@@ -1365,7 +1365,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -1383,7 +1383,7 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       NULLIFY(equations)
@@ -1398,7 +1398,7 @@ CONTAINS
           & EQUATIONS_QUASISTATIC, &
           & EQUATIONS_FIRST_ORDER_DYNAMIC, &
           & EQUATIONS_SECOND_ORDER_DYNAMIC)                        
-          SELECT CASE(equationsSet%SOLUTION_METHOD)
+          SELECT CASE(equationsSet%solutionMethod)
           CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
             IF(.NOT.ALLOCATED(equationsSet%specification)) &
               & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
@@ -1445,9 +1445,9 @@ CONTAINS
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The equations set solution method  of "// &
-              & TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))//" is invalid."
+              & TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
-          END SELECT !equationsSet%SOLUTION_METHOD
+          END SELECT !equationsSet%solutionMethod
         CASE(EQUATIONS_TIME_STEPPING)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
@@ -1483,7 +1483,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -1501,7 +1501,7 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       NULLIFY(equations)
@@ -1513,7 +1513,7 @@ CONTAINS
       CASE(EQUATIONS_NONLINEAR)
         SELECT CASE(equations%timeDependence)
         CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-          SELECT CASE(equationsSet%SOLUTION_METHOD)
+          SELECT CASE(equationsSet%solutionMethod)
           CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
             IF(.NOT.ALLOCATED(equationsSet%specification)) &
               & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
@@ -1561,10 +1561,10 @@ CONTAINS
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The equations set solution method  of "// &
-              & TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+              & TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
-          END SELECT !equationsSet%SOLUTION_METHOD
+          END SELECT !equationsSet%solutionMethod
         CASE(EQUATIONS_TIME_STEPPING)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
@@ -1600,7 +1600,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
      
     ENTERS("Problem_SolversCreateFinish",err,error,*999)
 
@@ -1608,8 +1608,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_SOLVERS_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_FINISH_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_SOLVERS_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_FINISH_ACTION
     !Finish the problem specific solvers setup.
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -1634,7 +1634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_SolversCreateStart",err,error,*999)
     
@@ -1642,8 +1642,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_SOLVERS_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_START_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_SOLVERS_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_START_ACTION
     !Start the problem specific solvers setup
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -1701,7 +1701,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     INTEGER(INTG) :: equationsSetIdx
 
     ENTERS("Problem_SolverLoadIncrementApply",err,error,*999)
@@ -1711,7 +1711,7 @@ CONTAINS
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       CALL EquationsSet_LoadIncrementApply(equationsSet,solverEquations%BOUNDARY_CONDITIONS,iterationNumber, &
@@ -2060,7 +2060,7 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     
@@ -2077,7 +2077,7 @@ CONTAINS
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
@@ -2090,7 +2090,7 @@ CONTAINS
     !Solve for the next time i.e., current time + time increment
     CALL Solver_Solve(solver,err,error,*999)
     !Back-substitute to find flux values for linear problems
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
@@ -2119,7 +2119,7 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
@@ -2140,7 +2140,7 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
@@ -2199,7 +2199,7 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
      
@@ -2216,7 +2216,7 @@ CONTAINS
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the current times
@@ -2228,7 +2228,7 @@ CONTAINS
     !Solve for the current time
     CALL Solver_Solve(solver,err,error,*999)
     !Back-substitute to find flux values for linear problems
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
@@ -2258,7 +2258,7 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
@@ -2276,7 +2276,7 @@ CONTAINS
     !Get current control loop times
     CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
@@ -2289,7 +2289,7 @@ CONTAINS
     CALL Solver_Solve(solver,err,error,*999)
     !Update the rhs field variable with residuals or backsubstitute for any linear
     !equations sets
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       NULLIFY(equations)
@@ -2328,7 +2328,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -2348,7 +2348,7 @@ CONTAINS
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     !Make sure the equations sets are up to date
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
 #ifdef TAUPROF
       WRITE (CVAR,'(a8,i2)') 'Assemble',equationsSetIdx
       CALL TAU_PHASE_CREATE_DYNAMIC(PHASE,CVAR)
@@ -2385,7 +2385,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('EquationsSet_Backsubstitute()')
 #endif
     !Back-substitute to find flux values for linear problems
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equations)
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
@@ -2414,7 +2414,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SOLVER_TYPE), POINTER :: solver
@@ -2435,7 +2435,7 @@ CONTAINS
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     !Apply boundary conditition
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Assemble the equations set
@@ -2459,7 +2459,7 @@ CONTAINS
     CALL Solver_Solve(solver,err,error,*999)
     !Update the rhs field variable with residuals or backsubstitute for any linear
     !equations sets
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       NULLIFY(equations)
@@ -2598,7 +2598,7 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
 
     ENTERS("Problem_SolverEquationsBoundaryConditionsAnalytic",err,error,*999)
 
@@ -2608,7 +2608,7 @@ CONTAINS
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       CALL EquationsSet_BoundaryConditionsAnalytic(equationsSet,boundaryConditions,err,error,*999)
@@ -2634,7 +2634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_SolverEquationsCreateFinish",err,error,*999)
 
@@ -2642,8 +2642,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_FINISH_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_FINISH_ACTION
     !Finish problem specific startup
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -2672,7 +2672,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_SETUP_TYPE) :: problemSetupInfo
+    TYPE(ProblemSetupType) :: problemSetupInfo
 
     ENTERS("Problem_SolverEquationsCreateStart",err,error,*999)
 
@@ -2680,8 +2680,8 @@ CONTAINS
     
     !Initialise the problem setup information
     CALL Problem_SetupInitialise(problemSetupInfo,err,error,*999)
-    problemSetupInfo%SETUP_TYPE=PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE
-    problemSetupInfo%ACTION_TYPE=PROBLEM_SETUP_START_ACTION
+    problemSetupInfo%setupType=PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE
+    problemSetupInfo%actionType=PROBLEM_SETUP_START_ACTION
     !Start the problem specific control setup
     CALL Problem_Setup(problem,problemSetupInfo,err,error,*999)
     !Finalise the problem setup information
@@ -3108,8 +3108,8 @@ CONTAINS
         !   WRITE(*,'(1X,''  LoadStep: '',I4)') load_step
         !   WRITE(*,'(1X,''    Iteration: '',I4)') iterationNumber
         
-        !   DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
-        !     region=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr%REGION
+        !   DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+        !     region=>solverMapping%equationsSets(equationsSetIdx)%ptr%REGION
         !     IF(ASSOCIATED(region))THEN
         !       NULLIFY(fields)
         !       fields=>region%FIELDS
@@ -3180,8 +3180,8 @@ CONTAINS
                 WRITE(IUNIT,'(1X,''  z.  Value index= 9, #Derivatives=0'')')
                 WRITE(IUNIT,'(1X,''4) exitTag, field, rectangular cartesian, #Components=1'')')
                 WRITE(IUNIT,'(1X,''  tag.  Value index= 10, #Derivatives=0'')')
-                coupledMeshDependentField=>interfaceCondition%DEPENDENT%equationsSets(coupledMeshIdx)%ptr% &
-                  & DEPENDENT%DEPENDENT_FIELD
+                coupledMeshDependentField=>interfaceCondition%dependent%equationsSets(coupledMeshIdx)%ptr% &
+                  & dependent%dependentField
                 NULLIFY(interpolationParameters)
                 CALL Field_InterpolationParametersInitialise(coupledMeshDependentField,interpolationParameters,err,error, &
                   & *999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
@@ -3892,7 +3892,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   USE CmissPetscTypes
   USE Constants
   USE DistributedMatrixVector
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines

@@ -134,7 +134,7 @@ CONTAINS
     !Argument variables
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping to get the equations set for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index in the solver mapping to get the equations set for
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the specified equations set. Must not be associated on entry.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On exit, a pointer to the specified equations set. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -144,16 +144,16 @@ CONTAINS
 
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
-    IF(equationsSetIdx<0.OR.equationsSetIdx>solverMapping%NUMBER_OF_EQUATIONS_SETS) THEN
+    IF(equationsSetIdx<0.OR.equationsSetIdx>solverMapping%numberOfEquationsSets) THEN
       localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " is invalid. The index must be > 0 and <= "// &
-          & TRIM(NumberToVString(SolverMapping%NUMBER_OF_EQUATIONS_SETS,"*",err,error))//"."      
+          & TRIM(NumberToVString(SolverMapping%numberOfEquationsSets,"*",err,error))//"."      
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(solverMapping%EQUATIONS_SETS)) &
+    IF(.NOT.ALLOCATED(solverMapping%equationsSets)) &
       & CALL FlagError("Solver mapping equations sets is not allocated.",err,error,*999)
 
-    equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr
+    equationsSet=>solverMapping%equationsSets(equationsSetIdx)%ptr
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       localError="The equations set for the specified equations set index of "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//" is not associated."      

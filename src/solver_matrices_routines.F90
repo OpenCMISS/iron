@@ -405,7 +405,7 @@ CONTAINS
           DO matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
             NULLIFY(SOLVER_EQUATIONS%SOLVER_MATRICES%MATRICES(matrix_idx)%PTR)
             CALL SOLVER_MATRIX_INITIALISE(SOLVER_EQUATIONS%SOLVER_MATRICES,matrix_idx,ERR,ERROR,*999)
-            DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
               IF(ALLOCATED(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM( &
                 & matrix_idx)%DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS)) THEN
                 DO equations_matrix_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
@@ -835,7 +835,7 @@ CONTAINS
                   ENDIF
                   IF(ASSOCIATED(vectorMatrices)) THEN
                     IF(vectorMatrices%vectorMatricesFinished) THEN
-                      IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
+                      IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%numberOfEquationsSets) THEN
                         EQUATIONS_TO_SOLVER_MAP=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM(equationsMatrix%matrixNumber)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS(SOLVER_MATRIX%matrixNumber)%PTR
@@ -861,7 +861,7 @@ CONTAINS
                         LOCAL_ERROR="The specified equations set index of "// &
                           & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
                           & " is invalid. The equations set index needs to be between 1 and "// &
-                          & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,"*",ERR,ERROR))//"."
+                          & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfEquationsSets,"*",ERR,ERROR))//"."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ELSE
@@ -1054,7 +1054,7 @@ CONTAINS
                   vectorMatrices=>nonlinearMatrices%vectorMatrices
                   IF(ASSOCIATED(vectorMatrices)) THEN
                     IF(vectorMatrices%vectorMatricesFinished) THEN
-                      IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
+                      IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%numberOfEquationsSets) THEN
                         JACOBIAN_TO_SOLVER_MAP=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(SOLVER_MATRIX%matrixNumber)%JACOBIAN_TO_SOLVER_MATRIX_MAPS( &
                           & jacobianMatrix%jacobianNumber)%PTR
@@ -1080,7 +1080,7 @@ CONTAINS
                         LOCAL_ERROR="The specified equations set index of "// &
                           & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
                           & " is invalid. The equations set index needs to be between 1 and "// &
-                          & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,"*",ERR,ERROR))//"."
+                          & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfEquationsSets,"*",ERR,ERROR))//"."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ELSE
@@ -1183,7 +1183,7 @@ CONTAINS
                     solver_matrix_idx=SOLVER_MATRIX%matrixNumber
                     !Find the maximum number of column indices
                     MAX_COLUMN_INDICES=0
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                       !Loop over dynamic matrices mapped to the solver matrix
                       DO equations_matrix_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                         & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
@@ -1355,7 +1355,7 @@ CONTAINS
                       CALL LIST_CREATE_FINISH(COLUMN_INDICES_LISTS(solver_row_number)%PTR,ERR,ERROR,*999)
                     ENDDO !solver_row_number
                     !Loop over the equations sets
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                       !Loop over the dynamic equations matrices mapped to the solver matrix and calculate the col indices by row.
                       DO equations_matrix_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                         & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES

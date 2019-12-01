@@ -51,7 +51,7 @@ MODULE InterfaceMatricesRoutines
   USE EquationsMatricesRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines

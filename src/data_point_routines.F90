@@ -51,7 +51,7 @@ MODULE DataPointRoutines
   USE CoordinateSystemRoutines
   USE DataPointAccessRoutines
   USE DataProjectionRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings

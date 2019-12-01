@@ -190,7 +190,7 @@ MODULE MatrixVector
 
   USE BaseRoutines
   USE Constants
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists

@@ -64,7 +64,7 @@ MODULE BURGERS_EQUATION_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -123,7 +123,7 @@ CONTAINS
   SUBROUTINE Burgers_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -144,12 +144,12 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+        dependentField=>EQUATIONS_SET%dependent%dependentField
         IF(ASSOCIATED(dependentField)) THEN
           geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
           IF(ASSOCIATED(geometricField)) THEN
-            ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
-            ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
+            ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
+            ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%analyticField
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
             NULLIFY(GEOMETRIC_PARAMETERS)
@@ -167,13 +167,13 @@ CONTAINS
             NULLIFY(MATERIALS_VARIABLE)
             NULLIFY(MATERIALS_PARAMETERS)
             IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
-              materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
+              materialsField=>EQUATIONS_SET%MATERIALS%materialsField
               CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,err,error,*999)
               CALL Field_ParameterSetDataGet(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & MATERIALS_PARAMETERS,err,error,*999)
             ENDIF
-            ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
-            TIME=EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME
+            ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
+            TIME=EQUATIONS_SET%ANALYTIC%analyticTime
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
               DO variable_idx=1,dependentField%numberOfVariables
                 variable_type=dependentField%VARIABLES(variable_idx)%variableType
@@ -284,7 +284,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: EQUATIONS_SET !<The equations set to evaluate
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: EQUATIONS_SET !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The type of analytic function to evaluate
     REAL(DP), INTENT(IN) :: X(:) !<X(dimention_idx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: TANGENTS(:,:) !<TANGENTS(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
@@ -463,7 +463,7 @@ CONTAINS
   SUBROUTINE Burgers_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -484,7 +484,7 @@ CONTAINS
         & EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -524,7 +524,7 @@ CONTAINS
   SUBROUTINE Burgers_EquationsSetSpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
     INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations set specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -579,8 +579,8 @@ CONTAINS
   SUBROUTINE BURGERS_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a BURGERS equation on.
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a BURGERS equation on.
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -591,8 +591,8 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_ANALYTIC_TYPE), POINTER :: EQUATIONS_ANALYTIC
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
+    TYPE(EquationsSetAnalyticType), POINTER :: EQUATIONS_ANALYTIC
+    TYPE(EquationsSetMaterialsType), POINTER :: EQUATIONS_MATERIALS
     TYPE(FieldType), POINTER :: ANALYTIC_FIELD,dependentField,geometricField
     TYPE(VARYING_STRING) :: localError
 
@@ -613,17 +613,17 @@ CONTAINS
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
       CASE(EQUATIONS_SET_BURGERS_SUBTYPE,EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE,EQUATIONS_SET_STATIC_BURGERS_SUBTYPE, &
         EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
+        SELECT CASE(EQUATIONS_SET_SETUP%setupType)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             CALL Burgers_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD, &
               & err,error,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a nonlinear burgers equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -633,34 +633,34 @@ CONTAINS
         ! D e p e n d e n t   f i e l d
         !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
+            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
               !Create the auto created dependent field
               CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & DEPENDENT_FIELD,err,error,*999)
-              CALL Field_LabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
-              CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+                & dependentField,err,error,*999)
+              CALL Field_LabelSet(EQUATIONS_SET%dependent%dependentField,"Dependent Field",err,error,*999)
+              CALL Field_TypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
               CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
-              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
+              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%dependent%dependentField,EQUATIONS_SET%GEOMETRY% &
                 & geometricField,err,error,*999)
-              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,err,error,*999)
-              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%dependent%dependentField,2,err,error,*999)
+              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-              CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_VariableLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & "U",err,error,*999)
-              CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & "del U/del n",err,error,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
               IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE) THEN
                 CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
@@ -669,30 +669,30 @@ CONTAINS
               ELSE
                 NUMBER_OF_DEPENDENT_COMPONENTS=1
               ENDIF
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField, &
                 & FIELD_U_VARIABLE_TYPE,NUMBER_OF_DEPENDENT_COMPONENTS,err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField, &
                 & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DEPENDENT_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
               DO component_idx=1,NUMBER_OF_DEPENDENT_COMPONENTS
                 CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
               ENDDO !component_idx
-              SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+              SELECT CASE(EQUATIONS_SET%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 DO component_idx=1,NUMBER_OF_DEPENDENT_COMPONENTS
-                  CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                  CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
                     & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                  CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
                     & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the scaling to the geometric field scaling
                 CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_SCALING_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -704,7 +704,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -739,7 +739,7 @@ CONTAINS
                 & NUMBER_OF_DEPENDENT_COMPONENTS,err,error,*999)
               CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & NUMBER_OF_DEPENDENT_COMPONENTS,err,error,*999)
-              SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+              SELECT CASE(EQUATIONS_SET%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 DO component_idx=1,NUMBER_OF_DEPENDENT_COMPONENTS
                   CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -758,18 +758,18 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
+            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
+              CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a nonlinear Burgers equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -777,32 +777,32 @@ CONTAINS
         ! M a t e r i a l s   f i e l d
         !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_SET%SPECIFICATION(3)/=EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE) THEN
                 !Not an inviscid Burgers equation
-                IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
+                IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
                   !Create the auto created materials field
                   CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                    & MATERIALS_FIELD,err,error,*999)
-                  CALL Field_LabelSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,"Materials Field",err,error,*999)
-                  CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                    & materialsField,err,error,*999)
+                  CALL Field_LabelSet(EQUATIONS_MATERIALS%materialsField,"Materials Field",err,error,*999)
+                  CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
+                  CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
                   CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
+                  CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_DECOMPOSITION, &
                     & err,error,*999)
-                  CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
+                  CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%materialsField,EQUATIONS_SET%GEOMETRY% &
                     & geometricField,err,error,*999)
-                  CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
-                  CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                  CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_MATERIALS%materialsField,1,err,error,*999)
+                  CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%materialsField,[FIELD_U_VARIABLE_TYPE], &
                     & err,error,*999)
-                  CALL Field_VariableLabelSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_VariableLabelSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & "Materials",err,error,*999)
-                  CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_DP_TYPE,err,error,*999)
                   SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                   CASE(EQUATIONS_SET_BURGERS_SUBTYPE,EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
@@ -814,26 +814,26 @@ CONTAINS
                     !i.e., a.du/dt + b.(d^2u/dx^2) + c.u*(du/dx)  = 0
                     NUMBER_OF_MATERIALS_COMPONENTS=3
                   CASE DEFAULT
-                    localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                      & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+                    localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+                      & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
                       & " is invalid for a nonlinear Burgers equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                   !Set the number of materials components
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & NUMBER_OF_MATERIALS_COMPONENTS,err,error,*999)
                   !Default the materials components to the 1st geometric component interpolation setup with constant interpolation
                   CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                   DO component_idx=1,NUMBER_OF_MATERIALS_COMPONENTS
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                    CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                   ENDDO !component_idx
                   !Default the field scaling to that of the geometric field
                   CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 ELSE
                   !Check the user specified field
                   CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
@@ -855,8 +855,8 @@ CONTAINS
                     CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                       & err,error,*999)
                   CASE DEFAULT
-                    localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                      & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+                    localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+                      & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
                       & " is invalid for a nonlinear Burgers equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -872,28 +872,28 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_SET%SPECIFICATION(3)/=EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE) THEN
                 !Not an inviscid Burgers equation
-                IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
+                IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
                   !Finish creating the materials field
-                  CALL Field_CreateFinish(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
+                  CALL Field_CreateFinish(EQUATIONS_MATERIALS%materialsField,err,error,*999)
                   !Set the default values for the materials field
                   SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                   CASE(EQUATIONS_SET_BURGERS_SUBTYPE,EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
                     !1 materials field component. Default to
                     !du/dt - d^2u/dx^2 + u*(du/dx) = 0
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,1,-1.0_DP,err,error,*999)
                   CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
                     !3 materials field components. Default to
                     !du/dt - d^2u/dx^2 + u*(du/dx) = 0
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,2,-1.0_DP,err,error,*999)
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,3,1.0_DP,err,error,*999)
                   CASE DEFAULT
-                    localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                      & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+                    localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+                      & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
                       & " is invalid for a nonlinear Burgers equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -903,8 +903,8 @@ CONTAINS
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a nonlinear Burgers equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -912,14 +912,14 @@ CONTAINS
         ! S o u r c e   f i e l d
         !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             !Do nothing
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a nonlinear Burgers equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -927,158 +927,138 @@ CONTAINS
         ! A n a l y t i c   t y p e
         !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             EQUATIONS_ANALYTIC=>EQUATIONS_SET%ANALYTIC
             IF(ASSOCIATED(EQUATIONS_ANALYTIC)) THEN
-              IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-                dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                IF(ASSOCIATED(dependentField)) THEN
-                  EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-                  IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-                    IF(EQUATIONS_MATERIALS%MATERIALS_FINISHED) THEN
-                      geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-                      IF(ASSOCIATED(geometricField)) THEN
-                        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE, &
-                          & NUMBER_OF_GEOMETRIC_COMPONENTS,err,error,*999)
-                        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                        CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
-                          SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
-                          CASE(EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1)
-                            !Check that domain is 1D
-                            IF(NUMBER_OF_GEOMETRIC_COMPONENTS/=1) THEN
-                              localError="The number of geometric dimensions of "// &
-                                & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_COMPONENTS,"*",err,error))// &
-                                & " is invalid. The analytic function type of "// &
-                                & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
-                                & " requires that there be 1 geometric dimension."
-                              CALL FlagError(localError,err,error,*999)
-                            ENDIF
-                            !Check the materials values are constant
-                            CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                            !Set analytic function type
-                            EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1
-                            NUMBER_OF_ANALYTIC_COMPONENTS=1
-                          CASE DEFAULT
-                            localError="The specified analytic function type of "// &
-                              & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
-                              & " is invalid for a Burgers equation."
-                            CALL FlagError(localError,err,error,*999)
-                          END SELECT
-                        CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
-                          SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
-                          CASE(EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1, &
-                            & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2)
-                            !Check that domain is 1D
-                            IF(NUMBER_OF_GEOMETRIC_COMPONENTS/=1) THEN
-                              localError="The number of geometric dimensions of "// &
-                                & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_COMPONENTS,"*",err,error))// &
-                                & " is invalid. The analytic function type of "// &
-                                & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
-                                & " requires that there be 1 geometric dimension."
-                              CALL FlagError(localError,err,error,*999)
-                            ENDIF
-                            !Check the materials values are constant
-                            CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                            CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & 2,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                            CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & 3,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                            !Set analytic function type
-                            EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE
-                            NUMBER_OF_ANALYTIC_COMPONENTS=2
-                          CASE DEFAULT
-                            localError="The specified analytic function type of "// &
-                              & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
-                              & " is invalid for a generalised Burgers equation."
-                            CALL FlagError(localError,err,error,*999)
-                          END SELECT
-                        CASE(EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
-                          CALL FlagError("Not implemented.",err,error,*999)
-                        CASE(EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
-                          CALL FlagError("Not implemented.",err,error,*999)
-                        CASE DEFAULT
-                          localError="The equation set subtype of "// &
-                            & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                            & " is invalid for an analytical nonlinear Burgers equation."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                        !Create analytic field if required
-                        IF(NUMBER_OF_ANALYTIC_COMPONENTS>=1) THEN
-                          IF(EQUATIONS_ANALYTIC%ANALYTIC_FIELD_AUTO_CREATED) THEN
-                            !Create the auto created source field
-                            CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
-                              & EQUATIONS_ANALYTIC%ANALYTIC_FIELD,err,error,*999)
-                            CALL Field_LabelSet(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,"Analytic Field",err,error,*999)
-                            CALL Field_TypeSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                            CALL Field_DependentTypeSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_INDEPENDENT_TYPE, &
-                              & err,error,*999)
-                            CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION, &
-                              & err,error,*999)
-                            CALL Field_DecompositionSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD, &
-                              & GEOMETRIC_DECOMPOSITION,err,error,*999)
-                            CALL Field_GeometricFieldSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,EQUATIONS_SET%GEOMETRY% &
-                              & geometricField,err,error,*999)
-                            CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,1,err,error,*999)
-                            CALL Field_VariableTypesSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,[FIELD_U_VARIABLE_TYPE], &
-                              & err,error,*999)
-                            CALL Field_VariableLabelSet(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & "Analytic",err,error,*999)
-                            CALL Field_DimensionSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                            CALL Field_DataTypeSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_DP_TYPE,err,error,*999)
-                            !Set the number of analytic components
-                            CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & NUMBER_OF_ANALYTIC_COMPONENTS,err,error,*999)
-                            !Default the analytic components to the 1st geometric interpolation setup with constant interpolation
-                            CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField, &
-                              & FIELD_U_VARIABLE_TYPE,1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                            DO component_idx=1,NUMBER_OF_ANALYTIC_COMPONENTS
-                              CALL Field_ComponentMeshComponentSet(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                              CALL Field_ComponentInterpolationSet(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                            ENDDO !component_idx
-                            !Default the field scaling to that of the geometric field
-                            CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
-                              & err,error,*999)
-                            CALL Field_ScalingTypeSet(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                          ELSE
-                            !Check the user specified field
-                            CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                            CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                            CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-                            CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                            IF(NUMBER_OF_ANALYTIC_COMPONENTS==1) THEN
-                              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-                            ELSE
-                              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                            ENDIF
-                            CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
-                              & err,error,*999)
-                            CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & NUMBER_OF_ANALYTIC_COMPONENTS,err,error,*999)
-                          ENDIF
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Equations set materials is not finished.",err,error,*999)
-                      ENDIF
-                    ELSE
-                      CALL FlagError("Equations set materials is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
+              CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
+              CALL EquationsSet_AssertMaterialsIsFinished(EQUATIONS_SET,err,error,*999)
+              geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
+              CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE, &
+                & NUMBER_OF_GEOMETRIC_COMPONENTS,err,error,*999)
+              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+              CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
+                SELECT CASE(EQUATIONS_SET_SETUP%analyticFunctionType)
+                CASE(EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1)
+                  !Check that domain is 1D
+                  IF(NUMBER_OF_GEOMETRIC_COMPONENTS/=1) THEN
+                    localError="The number of geometric dimensions of "// &
+                      & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_COMPONENTS,"*",err,error))// &
+                      & " is invalid. The analytic function type of "// &
+                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                      & " requires that there be 1 geometric dimension."
+                    CALL FlagError(localError,err,error,*999)
                   ENDIF
+                  !Check the materials values are constant
+                  CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
+                    & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                  !Set analytic function type
+                  EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1
+                  NUMBER_OF_ANALYTIC_COMPONENTS=1
+                CASE DEFAULT
+                  localError="The specified analytic function type of "// &
+                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                    & " is invalid for a Burgers equation."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
+                SELECT CASE(EQUATIONS_SET_SETUP%analyticFunctionType)
+                CASE(EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1, &
+                  & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2)
+                  !Check that domain is 1D
+                  IF(NUMBER_OF_GEOMETRIC_COMPONENTS/=1) THEN
+                    localError="The number of geometric dimensions of "// &
+                      & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_COMPONENTS,"*",err,error))// &
+                      & " is invalid. The analytic function type of "// &
+                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                      & " requires that there be 1 geometric dimension."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                  !Check the materials values are constant
+                  CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
+                    & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                  CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
+                    & 2,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                  CALL Field_ComponentInterpolationCheck(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
+                    & 3,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                  !Set analytic function type
+                  EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_SETUP%analyticFunctionType
+                  NUMBER_OF_ANALYTIC_COMPONENTS=2
+                CASE DEFAULT
+                  localError="The specified analytic function type of "// &
+                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                    & " is invalid for a generalised Burgers equation."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE(EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The equation set subtype of "// &
+                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                  & " is invalid for an analytical nonlinear Burgers equation."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+              !Create analytic field if required
+              IF(NUMBER_OF_ANALYTIC_COMPONENTS>=1) THEN
+                IF(EQUATIONS_ANALYTIC%analyticFieldAutoCreated) THEN
+                  !Create the auto created source field
+                  CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
+                    & EQUATIONS_ANALYTIC%analyticField,err,error,*999)
+                  CALL Field_LabelSet(EQUATIONS_ANALYTIC%analyticField,"Analytic Field",err,error,*999)
+                  CALL Field_TypeSetAndLock(EQUATIONS_ANALYTIC%analyticField,FIELD_GENERAL_TYPE,err,error,*999)
+                  CALL Field_DependentTypeSetAndLock(EQUATIONS_ANALYTIC%analyticField,FIELD_INDEPENDENT_TYPE, &
+                    & err,error,*999)
+                  CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION, &
+                    & err,error,*999)
+                  CALL Field_DecompositionSetAndLock(EQUATIONS_ANALYTIC%analyticField, &
+                    & GEOMETRIC_DECOMPOSITION,err,error,*999)
+                  CALL Field_GeometricFieldSetAndLock(EQUATIONS_ANALYTIC%analyticField,EQUATIONS_SET%GEOMETRY% &
+                    & geometricField,err,error,*999)
+                  CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_ANALYTIC%analyticField,1,err,error,*999)
+                  CALL Field_VariableTypesSetAndLock(EQUATIONS_ANALYTIC%analyticField,[FIELD_U_VARIABLE_TYPE], &
+                    & err,error,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & "Analytic",err,error,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,err,error,*999)
+                  !Set the number of analytic components
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
+                    & NUMBER_OF_ANALYTIC_COMPONENTS,err,error,*999)
+                  !Default the analytic components to the 1st geometric interpolation setup with constant interpolation
+                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField, &
+                    & FIELD_U_VARIABLE_TYPE,1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
+                  DO component_idx=1,NUMBER_OF_ANALYTIC_COMPONENTS
+                    CALL Field_ComponentMeshComponentSet(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
+                      & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
+                      & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                  ENDDO !component_idx
+                  !Default the field scaling to that of the geometric field
+                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
+                    & err,error,*999)
+                  CALL Field_ScalingTypeSet(EQUATIONS_ANALYTIC%analyticField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 ELSE
-                  CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
+                  !Check the user specified field
+                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                  IF(NUMBER_OF_ANALYTIC_COMPONENTS==1) THEN
+                    CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+                  ELSE
+                    CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+                  ENDIF
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
+                    & err,error,*999)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & NUMBER_OF_ANALYTIC_COMPONENTS,err,error,*999)
                 ENDIF
-              ELSE
-                CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
               ENDIF
             ELSE
               CALL FlagError("Equations analytic is not associated.",err,error,*999)
@@ -1086,22 +1066,22 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             EQUATIONS_ANALYTIC=>EQUATIONS_SET%ANALYTIC
             IF(ASSOCIATED(EQUATIONS_ANALYTIC)) THEN
-              ANALYTIC_FIELD=>EQUATIONS_ANALYTIC%ANALYTIC_FIELD
+              ANALYTIC_FIELD=>EQUATIONS_ANALYTIC%analyticField
               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                IF(EQUATIONS_ANALYTIC%ANALYTIC_FIELD_AUTO_CREATED) THEN
+                IF(EQUATIONS_ANALYTIC%analyticFieldAutoCreated) THEN
                   !Finish creating the analytic field
-                  CALL Field_CreateFinish(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,err,error,*999)
+                  CALL Field_CreateFinish(EQUATIONS_ANALYTIC%analyticField,err,error,*999)
                   !Set the default values for the analytic field
                   SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                   CASE(EQUATIONS_SET_BURGERS_SUBTYPE)
                     !Default the analytic parameter value to 0.0
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,1,0.0_DP,err,error,*999)
                   CASE(EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE)
                     !Default the analytic parameter values to 1.0
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_ANALYTIC%ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_ANALYTIC%analyticField,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_VALUES_SET_TYPE,2,1.0_DP,err,error,*999)
                   CASE(EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
                     CALL FlagError("Not implemented.",err,error,*999)
@@ -1119,8 +1099,8 @@ CONTAINS
               CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a nonlinear Burgers equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1130,17 +1110,14 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
           SELECT CASE (EQUATIONS_SET%SPECIFICATION(3))
           CASE(EQUATIONS_SET_BURGERS_SUBTYPE,EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE,EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-                CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-                CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
-                CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-              ELSE
-                CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
-              ENDIF
+              CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+              SELECT CASE(EQUATIONS_SET%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 !Finish the equations
                 CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
@@ -1257,28 +1234,25 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
                 & " is invalid for a nonlinear Burgers equation."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE(EQUATIONS_SET_STATIC_BURGERS_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-                CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-                CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
-                CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
-              ELSE
-                CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
-              ENDIF
+              CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+              SELECT CASE(EQUATIONS_SET%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 !Finish the equations
                 CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
@@ -1328,13 +1302,13 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
                 & " is invalid for a nonlinear Burgers equation."
               CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -1345,7 +1319,7 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a nonlinear Burgers equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -1448,7 +1422,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: ANALYTIC_VARIABLE,FIELD_VARIABLE,GEOMETRIC_VARIABLE,MATERIALS_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(DomainType), POINTER :: DOMAIN
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
@@ -1481,18 +1455,18 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               !Loop over all the equation sets and set the appropriate field variable type BCs and
               !the source field associated with each equation set
-              DO eqnset_idx=1,SOLVER_equations%solverMapping%NUMBER_OF_EQUATIONS_SETS
+              DO eqnset_idx=1,SOLVER_equations%solverMapping%numberOfEquationsSets
                 SOLVER_MAPPING=>SOLVER_equations%solverMapping
                 EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(eqnset_idx)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
                   EQUATIONS_SET=>equations%equationsSet
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                      dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                      dependentField=>EQUATIONS_SET%dependent%dependentField
                       IF(ASSOCIATED(dependentField)) THEN
                         geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                         IF(ASSOCIATED(geometricField)) THEN
-                          ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
+                          ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%analyticField
                           CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,&
                             & numberOfDimensions,err,error,*999)
                           NULLIFY(GEOMETRIC_VARIABLE)
@@ -1500,7 +1474,6 @@ CONTAINS
                           CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
                           CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,&
                             & GEOMETRIC_PARAMETERS,err,error,*999)
-                          EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)=CURRENT_TIME
                           NULLIFY(ANALYTIC_VARIABLE)
                           NULLIFY(ANALYTIC_PARAMETERS)
                           IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
@@ -1512,7 +1485,7 @@ CONTAINS
                           NULLIFY(MATERIALS_VARIABLE)
                           NULLIFY(MATERIALS_PARAMETERS)
                           IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
-                            materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
+                            materialsField=>EQUATIONS_SET%MATERIALS%materialsField
                             CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,err,error,*999)
                             CALL Field_ParameterSetDataGet(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                               & MATERIALS_PARAMETERS,err,error,*999)
@@ -1540,7 +1513,7 @@ CONTAINS
                                         ENDDO !dim_idx
                                         !Loop over the derivatives
                                         DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                          ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
+                                          ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
                                           GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
                                             & globalDerivativeIndex
                                           CALL Burgers_AnalyticFunctionsEvaluate(EQUATIONS_SET, &
@@ -1608,9 +1581,9 @@ CONTAINS
                 ELSE
                   CALL FlagError("Equations are not associated.",err,error,*999)
                 END IF
-                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,err,error,*999)
-                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,err,error,*999)
               ENDDO !eqnset_idx
             ELSE
@@ -1757,7 +1730,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(FieldsType), POINTER :: Fields
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
@@ -1791,8 +1764,8 @@ CONTAINS
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                     FILENAME="./output/"//"STATIC_SOLUTION"
                     METHOD="FORTRAN"
                     IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
@@ -1814,8 +1787,8 @@ CONTAINS
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                     IF(OUTPUT_ITERATION_NUMBER/=0) THEN
                       IF(CURRENT_TIME<=STOP_TIME) THEN
                         IF(CURRENT_LOOP_ITERATION<10) THEN
@@ -1845,7 +1818,7 @@ CONTAINS
                           ENDIF
                         END IF
                         IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                          CALL AnalyticAnalysis_Output(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FILE,err,error,*999)
+                          CALL AnalyticAnalysis_Output(EQUATIONS_SET%dependent%dependentField,FILE,err,error,*999)
                         ENDIF
                       ENDIF
                     ENDIF
@@ -1938,7 +1911,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a Burgers problem on.
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1963,21 +1936,21 @@ CONTAINS
       END IF
       SELECT CASE(PROBLEM%SPECIFICATION(3))
       CASE(PROBLEM_STATIC_BURGERS_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+        SELECT CASE(PROBLEM_SETUP%setupType)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Do nothing????
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a Burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
             CASE(PROBLEM_SETUP_START_ACTION)
               !Set up a simple control loop
               CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
@@ -1987,8 +1960,8 @@ CONTAINS
               CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
               CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
                 & " is invalid for a Burgers problem."
               CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1996,7 +1969,7 @@ CONTAINS
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -2012,13 +1985,13 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a Burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -2042,32 +2015,32 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a Burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a Burgers problem."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(PROBLEM_DYNAMIC_BURGERS_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+        SELECT CASE(PROBLEM_SETUP%setupType)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Do nothing????
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a Burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
@@ -2078,8 +2051,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a Burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2087,7 +2060,7 @@ CONTAINS
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -2108,13 +2081,13 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a nonlinear burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -2139,13 +2112,13 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a Burgers problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a Burgers problem."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -2173,7 +2146,7 @@ CONTAINS
   SUBROUTINE Burgers_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -2321,7 +2294,7 @@ CONTAINS
   SUBROUTINE Burgers_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string

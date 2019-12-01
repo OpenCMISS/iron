@@ -58,7 +58,7 @@ MODULE FIELD_IO_ROUTINES
   USE DistributedMatrixVector
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   !USE, INTRINSIC :: ISO_C_BINDING
   USE ISO_VARYING_STRING
   USE Kinds

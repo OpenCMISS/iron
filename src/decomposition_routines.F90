@@ -55,7 +55,7 @@ MODULE DecompositionRoutines
   USE ContextAccessRoutines
   USE DecompositionAccessRoutines
   USE DomainMappings
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE InterfaceAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds

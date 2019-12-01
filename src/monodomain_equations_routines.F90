@@ -64,7 +64,7 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -123,7 +123,7 @@ CONTAINS
     INTEGER(INTG) :: equations_set_idx
     TYPE(ControlLoopTimeType), POINTER :: TIME_LOOP,TIME_LOOP_PARENT
     TYPE(ControlLoopType), POINTER :: PARENT_LOOP
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
@@ -159,10 +159,10 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                      DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
                       NULLIFY(DEPENDENT_REGION)
                       CALL Field_RegionGet(DEPENDENT_FIELD,DEPENDENT_REGION,ERR,ERROR,*999)
                       NULLIFY(PARENT_LOOP)
@@ -241,7 +241,7 @@ CONTAINS
   SUBROUTINE Monodomain_EquationsSetSpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -360,7 +360,7 @@ CONTAINS
   SUBROUTINE Monodomain_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -377,7 +377,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,materialsField
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(QuadratureSchemeType), POINTER :: QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -398,7 +398,7 @@ CONTAINS
 
           DEPENDENT_FIELD=>equations%interpolation%dependentField
           GEOMETRIC_FIELD=>equations%interpolation%geometricField
-          MATERIALS_FIELD=>equations%interpolation%materialsField
+          materialsField=>equations%interpolation%materialsField
           vectorEquations=>equations%vectorEquations
           vectorMatrices=>vectorEquations%vectorMatrices
           dynamicMatrices=>vectorMatrices%dynamicMatrices
@@ -578,8 +578,8 @@ CONTAINS
   SUBROUTINE MONODOMAIN_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Monodomain equation on.
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Monodomain equation on.
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -620,7 +620,7 @@ CONTAINS
   SUBROUTINE Monodomain_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -640,7 +640,7 @@ CONTAINS
       CASE(EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE,EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE)        
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -680,8 +680,8 @@ CONTAINS
   SUBROUTINE Monodomain_EquationsSetSubtypeSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -692,7 +692,7 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
+    TYPE(EquationsSetMaterialsType), POINTER :: EQUATIONS_MATERIALS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("Monodomain_EquationsSetSubtypeSetup",ERR,ERROR,*999)
@@ -712,73 +712,73 @@ CONTAINS
       END IF
       IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE .OR. &
           & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE) THEN
-        SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
+        SELECT CASE(EQUATIONS_SET_SETUP%setupType)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             CALL Monodomain_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD, &
               & ERR,ERROR,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing
         CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
+            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
               !Create the auto created dependent field
               CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & DEPENDENT_FIELD,ERR,ERROR,*999)
-              CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
+                & dependentField,ERR,ERROR,*999)
+              CALL Field_TypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
               CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
-              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_DECOMPOSITION, &
                 & ERR,ERROR,*999)
-              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
+              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%dependent%dependentField,EQUATIONS_SET%GEOMETRY% &
                 & geometricField,ERR,ERROR,*999)
-              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,ERR,ERROR,*999)
-              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%dependent%dependentField,2,ERR,ERROR,*999)
+              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DELUDELN_VARIABLE_TYPE],ERR,ERROR,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_SCALAR_DIMENSION_TYPE,ERR,ERROR,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_SCALAR_DIMENSION_TYPE,ERR,ERROR,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,ERR,ERROR,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,ERR,ERROR,*999) 
 
           
 
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,&
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1,&
                 & ERR,ERROR,*999)
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,&
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,&
                 & 1 ,ERR,ERROR,*999)
 
               !Default to the geometric interpolation setup
               CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-              SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+              SELECT CASE(EQUATIONS_SET%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
                   & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
                   & FIELD_DELUDELN_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                 !Default the scaling to the geometric field scaling
                 CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",ERR,ERROR))// &
                   & " is invalid or not implemented"
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
@@ -787,20 +787,20 @@ CONTAINS
               CALL FlagError("No user specified field supported!",ERR,ERROR,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
+              CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation"
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
+            IF(EQUATIONS_SET%INDEPENDENT%independentFieldAutoCreated) THEN
               SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
               CASE(EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE)
                  NUM_COMP = 4
@@ -811,41 +811,41 @@ CONTAINS
               END SELECT    
 
               CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
-                & INDEPENDENT_FIELD,ERR,ERROR,*999)
-              CALL Field_TypeSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,&
+                & independentField,ERR,ERROR,*999)
+              CALL Field_TypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,&
                    & FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
               CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
-              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,GEOMETRIC_DECOMPOSITION, &
                 & ERR,ERROR,*999)
-              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
+              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,EQUATIONS_SET%GEOMETRY% &
                 & geometricField,ERR,ERROR,*999)
-              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,1,ERR,ERROR,*999)
-              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,&
+              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,1,ERR,ERROR,*999)
+              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,&
                    &[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,ERR,ERROR,*999)
          
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,&
+              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE,&
                    &NUM_COMP,ERR,ERROR,*999)
-              CALL Field_DOFOrderTypeSet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,&
+              CALL Field_DOFOrderTypeSet(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE,&
               &  FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999) ! dofs continuous, so first + (x-1) is x'th component index
 
               !Default to the geometric interpolation setup
               CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE,1, &
                 & GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
 
-              SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+              SELECT CASE(EQUATIONS_SET%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
+                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, &
                   & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                 !Default the scaling to the geometric field scaling
                 CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_SET%INDEPENDENT%independentField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
               END SELECT
             ELSE
               ! user specified field
@@ -853,46 +853,46 @@ CONTAINS
             ENDIF
 
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL Field_CreateFinish(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,ERR,ERROR,*999)
+            IF(EQUATIONS_SET%INDEPENDENT%independentFieldAutoCreated) THEN
+              CALL Field_CreateFinish(EQUATIONS_SET%INDEPENDENT%independentField,ERR,ERROR,*999)
               SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
               CASE(EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE)
-                CALL BUENO_OROVIO_INITIALIZE(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,ERR,ERROR,*999) ! initialize to y0
+                CALL BUENO_OROVIO_INITIALIZE(EQUATIONS_SET%INDEPENDENT%independentField,ERR,ERROR,*999) ! initialize to y0
               CASE(EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE)
-                CALL TENTUSSCHER06_INITIALIZE(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,ERR,ERROR,*999) ! initialize to y0 
+                CALL TENTUSSCHER06_INITIALIZE(EQUATIONS_SET%INDEPENDENT%independentField,ERR,ERROR,*999) ! initialize to y0 
               CASE DEFAULT
                 CALL FlagError("Invalid cell model equations set subtype",ERR,ERROR,*999)
               END SELECT              
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation"
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
            CASE(EQUATIONS_SET_SETUP_START_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
              IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
+               IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
                 !Create the auto created materials field
                 CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                  & MATERIALS_FIELD,ERR,ERROR,*999)
-                CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
+                  & materialsField,ERR,ERROR,*999)
+                CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
+                CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
                 CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
-                CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_DECOMPOSITION, &
                   & ERR,ERROR,*999)
-                CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
+                CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%materialsField,EQUATIONS_SET%GEOMETRY% &
                   & geometricField,ERR,ERROR,*999)
-                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,ERR,ERROR,*999)
-                CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_MATERIALS%materialsField,1,ERR,ERROR,*999)
+                CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%materialsField,[FIELD_U_VARIABLE_TYPE], &
                   & ERR,ERROR,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,ERR,ERROR,*999)
                 CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions,ERR,ERROR,*999)
@@ -903,32 +903,32 @@ CONTAINS
                   ! 7: out - activation times
                 NUMBER_OF_MATERIALS_COMPONENTS= 7 !numberOfDimensions + 3
                  !Set the number of materials components
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                   & NUMBER_OF_MATERIALS_COMPONENTS,ERR,ERROR,*999)
 
                 ! 1st = activation = node based, 2 3 diffusion constants
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                   & 1,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                   & 2,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                   & 3,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
                 ! 4 5 (6) fiber unit vector
                 DO component_idx=1,3 !numberOfDimensions
                   CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & component_idx+3,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & component_idx+3,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                 ENDDO !component_idx
 
-                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & NUMBER_OF_MATERIALS_COMPONENTS,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
 
                   !Default the field scaling to that of the geometric field
                 CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
               ELSE
                 ! user specified field
                 CALL FlagError("No user specified field supported!",ERR,ERROR,*999)
@@ -940,9 +940,9 @@ CONTAINS
            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-              IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
+              IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
                 !Finish creating the materials field
-                CALL Field_CreateFinish(EQUATIONS_MATERIALS%MATERIALS_FIELD,ERR,ERROR,*999)
+                CALL Field_CreateFinish(EQUATIONS_MATERIALS%materialsField,ERR,ERROR,*999)
                 !Set the default values for the materials field
                 CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions,ERR,ERROR,*999)
@@ -951,7 +951,7 @@ CONTAINS
                 NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions                             
                 !First set the k values to 1.0
                 DO component_idx=1,numberOfDimensions
-                  CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,ERR,ERROR,*999)
                 ENDDO !component_idx
               ENDIF
@@ -960,35 +960,32 @@ CONTAINS
             ENDIF
 ! ! ! Upto here
            CASE DEFAULT
-             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
                & " is invalid for a Monodomain equation."
              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             !Do nothing
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
+          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,ERR,ERROR,*999)
-              CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
-            ELSE
-              CALL FlagError("Equations set dependent field has not been finished.",ERR,ERROR,*999)
-            ENDIF
+            CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
+            CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
+            CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,ERR,ERROR,*999)
+            CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+            SELECT CASE(EQUATIONS_SET%solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the equations creation
               CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
@@ -1029,18 +1026,18 @@ CONTAINS
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,ERR,ERROR,*999)
             CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",ERR,ERROR))// &
                 & " is invalid or not implemented."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a Monodomain equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -1069,7 +1066,7 @@ CONTAINS
     
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the solutions set to setup a Monodomain equation on.
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1110,7 +1107,7 @@ CONTAINS
     
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the solutions set to setup a Monodomain equation on.
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1153,7 +1150,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1178,21 +1175,21 @@ CONTAINS
       END IF
       IF(PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE.OR. &
           & PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE)THEN
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+        SELECT CASE(PROBLEM_SETUP%setupType)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Do nothing????
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a simple control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
@@ -1203,8 +1200,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -1212,7 +1209,7 @@ CONTAINS
            !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
@@ -1231,13 +1228,13 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -1261,13 +1258,13 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a Monodomain equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -1300,7 +1297,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD, INDEPENDENT_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD, independentField
 
     ENTERS("MONODOMAIN_PRE_SOLVE",ERR,ERROR,*999)
 
@@ -1313,13 +1310,13 @@ CONTAINS
       SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
       CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
         DEPENDENT_FIELD=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
-          & EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
-        INDEPENDENT_FIELD=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
-          & EQUATIONS_SETS(1)%ptr%INDEPENDENT%INDEPENDENT_FIELD
+          & equationsSets(1)%ptr%dependent%dependentField
+        independentField=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+          & equationsSets(1)%ptr%INDEPENDENT%independentField
 
-        CALL Field_ParametersToFieldParametersCopy(INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+        CALL Field_ParametersToFieldParametersCopy(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & 1,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,ERR,ERROR,*999)
-        CALL Field_ParametersToFieldParametersCopy(INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+        CALL Field_ParametersToFieldParametersCopy(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & 1,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1,ERR,ERROR,*999) ! also to prev.
 
       CASE DEFAULT
@@ -1353,7 +1350,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     REAL(DP) :: TMPV, TMPA
     INTEGER(INTG) :: I
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD, MATERIAL_FIELD,  INDEPENDENT_FIELD, GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD, MATERIAL_FIELD,  independentField, GEOMETRIC_FIELD
 
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -1375,7 +1372,7 @@ CONTAINS
 
 
        ! Don't update in next step
-        EQUATIONS=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%ptr%EQUATIONS
+        EQUATIONS=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping%equationsSets(1)%ptr%EQUATIONS
         vectorEquations=>equations%vectorEquations
         vectorMatrices=>vectorEquations%vectorMatrices
         dynamicMatrices=>vectorMatrices%dynamicMatrices
@@ -1388,33 +1385,33 @@ CONTAINS
 
        ! integrate   cell models
         GEOMETRIC_FIELD => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
-                           & EQUATIONS_SETS(1)%ptr%GEOMETRY%geometricField
+                           & equationsSets(1)%ptr%GEOMETRY%geometricField
         DEPENDENT_FIELD => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
-                           & EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                           & equationsSets(1)%ptr%dependent%dependentField
         MATERIAL_FIELD  => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
-                           & EQUATIONS_SETS(1)%ptr%MATERIALS%MATERIALS_FIELD
-        INDEPENDENT_FIELD => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
-                           & EQUATIONS_SETS(1)%ptr%INDEPENDENT%INDEPENDENT_FIELD
+                           & equationsSets(1)%ptr%MATERIALS%materialsField
+        independentField => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+                           & equationsSets(1)%ptr%INDEPENDENT%independentField
 
         CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-         & 1, INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, 1,ERR,ERROR,*999) ! dependent -> independent
+         & 1, independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, 1,ERR,ERROR,*999) ! dependent -> independent
 
         SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE)
-          CALL BUENO_OROVIO_INTEGRATE(INDEPENDENT_FIELD,MATERIAL_FIELD,&
+          CALL BUENO_OROVIO_INTEGRATE(independentField,MATERIAL_FIELD,&
           &  CONTROL_LOOP%timeLoop%currentTime-CONTROL_LOOP%timeLoop%timeIncrement, CONTROL_LOOP%timeLoop%currentTime&  ! from t-dt to t
           & ,ERR,ERROR,*999)
         CASE(PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE)
-           CALL TENTUSSCHER06_INTEGRATE(INDEPENDENT_FIELD,MATERIAL_FIELD,&
+           CALL TENTUSSCHER06_INTEGRATE(independentField,MATERIAL_FIELD,&
           &  CONTROL_LOOP%timeLoop%currentTime-CONTROL_LOOP%timeLoop%timeIncrement, CONTROL_LOOP%timeLoop%currentTime&  ! from t-dt to t
           & ,ERR,ERROR,*999)
         CASE DEFAULT
           CALL FlagError("Invalid cell model subtype",ERR,ERROR,*999)
         END SELECT
 
-        DO I=1,INDEPENDENT_FIELD%DECOMPOSITION%DOMAIN(1)%ptr%TOPOLOGY%NODES%numberOfNodes
+        DO I=1,independentField%DECOMPOSITION%DOMAIN(1)%ptr%TOPOLOGY%NODES%numberOfNodes
           !Default to version 1 of each derivative
-          CALL Field_ParameterSetGetNode(INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,I,1,TMPV,&  ! get local node?
+          CALL Field_ParameterSetGetNode(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,I,1,TMPV,&  ! get local node?
                & ERR,ERROR,*999)
           IF (TMPV > 0) THEN
            !Default to version 1 of each derivative

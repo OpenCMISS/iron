@@ -53,7 +53,7 @@ MODULE REACTION_DIFFUSION_IO_ROUTINES
  USE EquationsSetConstants
  USE FieldRoutines
  USE FieldAccessRoutines
- USE INPUT_OUTPUT
+ USE InputOutput
  USE ISO_VARYING_STRING
  USE Kinds
  USE MeshRoutines
@@ -95,7 +95,7 @@ CONTAINS
     !Local Variables
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(DomainType), POINTER :: COMPUTATION_DOMAIN
     TYPE(FieldType), POINTER :: SOURCE_FIELD
     REAL(DP) :: NodeXValue,NodeYValue,NodeZValue,NodeUValue
@@ -120,7 +120,7 @@ CONTAINS
     CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
     CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
 
-    EQUATIONS_SET => region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
+    EQUATIONS_SET => region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
     NULLIFY(SOURCE_FIELD)
     COMPUTATION_DOMAIN=>REGION%MESHES%MESHES(1) & 
       & %ptr%DECOMPOSITIONS%DECOMPOSITIONS(1)%ptr%DOMAIN(1)%ptr
@@ -129,7 +129,7 @@ CONTAINS
     NumberOfNodes = COMPUTATION_DOMAIN%TOPOLOGY%NODES%numberOfNodes
     NodesInMeshComponent = REGION%meshes%meshes(1)%ptr%topology(1)%ptr%nodes%numberOfNodes
     NumberOfElements = COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%numberOfElements
-    NumberOfVariableComponents=region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
+    NumberOfVariableComponents=region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependentField% &
       & variables(1)%numberOfComponents
     NumberOfOutputFields=2
     !determine if there is a source field
@@ -137,12 +137,12 @@ CONTAINS
     IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) &
       & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) )THEN
-          SOURCE_FIELD=>region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field
+          SOURCE_FIELD=>region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%sourceField
           IF( ASSOCIATED(SOURCE_FIELD) ) OUTPUT_SOURCE = .FALSE. !currently set to false to rethink how source is accessed for output
      END IF
 
     IF( OUTPUT_SOURCE ) THEN
-      NumberOfSourceComponents=region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
+      NumberOfSourceComponents=region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%sourceField% &
         & variables(1)%numberOfComponents
       NumberOfOutputFields = NumberOfOutputFields + 1
     !  CALL Field_InterpolationParametersInitialise(SOURCE_FIELD,SOURCE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
@@ -205,17 +205,17 @@ CONTAINS
     !WRITE OUT NODE VALUES
     DO I = 1,NumberOfNodes
       NODE_GLOBAL_NUMBER = COMPUTATION_DOMAIN%TOPOLOGY%NODES%NODES(I)%globalNumber
-      NodeXValue = region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
+      NodeXValue = region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
         & %parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I)
       IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3) THEN
-        NodeYValue = region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
+        NodeYValue = region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
           & %parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I+NumberOfNodes)
       ENDIF
       IF(NumberOfDimensions==3) THEN
-        NodeZValue = region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
+        NodeZValue = region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
           & %parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I+(2*NumberOfNodes))
       ENDIF
-      NodeUValue=region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
+      NodeUValue=region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependentField% &
         & variables(1)%parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I)
 
       WRITE(myWorldComputationNodeNumber,*) ' Node: ',NODE_GLOBAL_NUMBER
@@ -252,7 +252,7 @@ CONTAINS
         BasisType=2
       ENDIF
     ELSEIF(NumberOfDimensions==3) THEN
-      BasisType=region%equationsSets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations% &
+      BasisType=region%equationsSets%equationsSets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations% &
         & interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
     ENDIF
 

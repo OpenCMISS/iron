@@ -70,7 +70,7 @@ MODULE Stree_EQUATION_ROUTINES
   USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths
@@ -108,7 +108,7 @@ CONTAINS
   SUBROUTINE Stree_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     INTEGER(INTG), INTENT(IN) :: solutionMethod
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
@@ -128,7 +128,7 @@ CONTAINS
       CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
         SELECT CASE(solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          equationsSet%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+          equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
           CALL FLAG_ERROR("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -171,7 +171,7 @@ CONTAINS
   SUBROUTINE Stree_EquationsSetSpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
     INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations set specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -222,8 +222,8 @@ CONTAINS
   SUBROUTINE Stree_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: equationsSetSetup
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -232,8 +232,8 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsMaterials
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
+    TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
+    TYPE(EquationsSetEquationsSetFieldType), POINTER :: equationsEquationsSetField
     TYPE(FieldType), POINTER :: equationsSetField
     INTEGER(INTG) :: I,geometricScalingType,geometricMeshComponent,geometricComponentNumber
     INTEGER(INTG) :: dependentFieldNumberOfVariables,dependentFieldNumberOfComponents
@@ -257,24 +257,24 @@ CONTAINS
       END IF
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
-        SELECT CASE(equationsSetSetup%SETUP_TYPE)
+        SELECT CASE(equationsSetSetup%setupType)
         !-----------------------------------------------------------------
         ! I n i t i a l   s e t u p
         !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
           SELECT CASE(equationsSet%specification(3))
           CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
-            SELECT CASE(equationsSetSetup%ACTION_TYPE)
+            SELECT CASE(equationsSetSetup%actionType)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
               CALL Stree_EquationsSetSolutionMethodSet(equationsSet, &
                 & EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
-              equationsSet%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
-              equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
-              IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
+              equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
+              equationsEquationsSetField=>equationsSet%equationsSetField
+              IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
                 !Create the auto created equations set field field for SUPG element metrics
                 CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
-                  & equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD,err,error,*999)
-                equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
+                  & equationsEquationsSetField%equationsSetFieldField,err,error,*999)
+                equationsSetField=>equationsEquationsSetField%equationsSetFieldField
                 CALL Field_LabelSet(equationsSetField,"Equations Set Field",err,error,*999)
                 CALL Field_TypeSetAndLock(equationsSetField,FIELD_GENERAL_TYPE,&
                   & err,error,*999)
@@ -285,15 +285,15 @@ CONTAINS
                 CALL Field_NumberOfComponentsSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
-                CALL Field_CreateFinish(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD,err,error,*999)
-                CALL Field_ComponentValuesInitialise(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
+              IF(equationsSet%equationsSetField%equationsSetFieldAutoCreated) THEN
+                CALL Field_CreateFinish(equationsSet%equationsSetField%equationsSetFieldField,err,error,*999)
+                CALL Field_ComponentValuesInitialise(equationsSet%equationsSetField%equationsSetFieldField, &
                  & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
               ENDIF
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE, &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%actionType, &
                 & "*",err,error))// " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup% &
-                & SETUP_TYPE,"*",err,error))// " is not implemented for a Stree equations set."
+                & setupType,"*",err,error))// " is not implemented for a Stree equations set."
               CALL FLAG_ERROR(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
@@ -308,11 +308,11 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           SELECT CASE(equationsSet%specification(3))
           CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
-            SELECT CASE(equationsSetSetup%ACTION_TYPE)
+            SELECT CASE(equationsSetSetup%actionType)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
-              equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
-              IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
+              equationsEquationsSetField=>equationsSet%equationsSetField
+              equationsSetField=>equationsEquationsSetField%equationsSetFieldField
+              IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
                 CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition,err,error,*999)
                 CALL Field_DecompositionSetAndLock(equationsSetField,geometricDecomposition,err,error,*999)
                 CALL Field_GeometricFieldSetAndLock(equationsSetField,equationsSet%GEOMETRY%geometricField,err,error,*999)
@@ -324,7 +324,7 @@ CONTAINS
                   & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 !Default the field scaling to that of the geometric field
                 CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,err,error,*999)
-                CALL Field_ScalingTypeSet(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
+                CALL Field_ScalingTypeSet(equationsSet%equationsSetField%equationsSetFieldField, &
                   & geometricScalingType,err,error,*999)
               ELSE
                 !Do nothing
@@ -332,8 +332,8 @@ CONTAINS
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               ! do nothing
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%actionType,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%setupType,"*",err,error))// &
                 & " is invalid for a Stree equation."
               CALL FLAG_ERROR(localError,err,error,*999)
             END SELECT
@@ -351,73 +351,73 @@ CONTAINS
           CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
             dependentFieldNumberOfVariables=2
             dependentFieldNumberOfComponents=1
-            SELECT CASE(equationsSetSetup%ACTION_TYPE)
+            SELECT CASE(equationsSetSetup%actionType)
             !Set start action
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
+              IF(equationsSet%DEPENDENT%dependentFieldAutoCreated) THEN
                 !Create the auto created dependent field
                 !start field creation with name 'DEPENDENT_FIELD'
                 CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
-                  & equationsSet%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
+                  & equationsSet%DEPENDENT%dependentField,err,error,*999)
                 !start creation of a new field
-                CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+                CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
                 !label the field
-                CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
+                CALL Field_LabelSet(equationsSet%DEPENDENT%dependentField,"Dependent Field",err,error,*999)
                 !define new created field to be dependent
-                CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%dependentField, &
                   & FIELD_DEPENDENT_TYPE,err,error,*999)
                 !look for decomposition rule already defined
                 CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition, &
                   & err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_DecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_DecompositionSetAndLock(equationsSet%DEPENDENT%dependentField, &
                   & geometricDecomposition,err,error,*999)
                 !point new field to geometric field
-                CALL Field_GeometricFieldSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet%GEOMETRY% &
+                CALL Field_GeometricFieldSetAndLock(equationsSet%DEPENDENT%dependentField,equationsSet%GEOMETRY% &
                   & geometricField,err,error,*999)
                 !set number of variables
-                CALL Field_NumberOfVariablesSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_NumberOfVariablesSetAndLock(equationsSet%DEPENDENT%dependentField, &
                   & dependentFieldNumberOfVariables,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                CALL Field_VariableTypesSetAndLock(equationsSet%DEPENDENT%dependentField,[FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
                 !set dimension
-                CALL Field_DimensionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DimensionSetAndLock(equationsSet%DEPENDENT%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_DimensionSetAndLock(equationsSet%DEPENDENT%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 !set data type
-                CALL Field_DataTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_DataTypeSetAndLock(equationsSet%DEPENDENT%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_DataTypeSetAndLock(equationsSet%DEPENDENT%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
                 ! number of components for 1
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_NumberOfComponentsSetAndLock(equationsSet%DEPENDENT%dependentField, &
                   & FIELD_U_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                CALL Field_NumberOfComponentsSetAndLock(equationsSet%DEPENDENT%dependentField, &
                   & FIELD_DELUDELN_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
                 CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                   & 1,geometricMeshComponent,err,error,*999)
                 !Default to the geometric interpolation setup for U,dUdN
                 DO I=1,dependentFieldNumberOfComponents
-                  CALL Field_ComponentMeshComponentSet(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                  CALL Field_ComponentMeshComponentSet(equationsSet%DEPENDENT%dependentField, &
                     & FIELD_U_VARIABLE_TYPE,I,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                  CALL Field_ComponentMeshComponentSet(equationsSet%DEPENDENT%dependentField, &
                     & FIELD_DELUDELN_VARIABLE_TYPE,I,geometricMeshComponent,err,error,*999)
                 ENDDO
-                SELECT CASE(equationsSet%SOLUTION_METHOD)
+                SELECT CASE(equationsSet%solutionMethod)
                 !Specify fem solution method
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   DO I=1,dependentFieldNumberOfComponents
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%DEPENDENT%dependentField, &
                       & FIELD_U_VARIABLE_TYPE,I,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%DEPENDENT%dependentField, &
                       & FIELD_DELUDELN_VARIABLE_TYPE,I,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   ENDDO
                   CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,err,error,*999)
-                  CALL Field_ScalingTypeSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,geometricScalingType,err,error,*999)
+                  CALL Field_ScalingTypeSet(equationsSet%DEPENDENT%dependentField,geometricScalingType,err,error,*999)
                 CASE DEFAULT
                   localError="The solution method of " &
-                    & //TRIM(NUMBER_TO_VSTRING(equationsSet%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                    & //TRIM(NUMBER_TO_VSTRING(equationsSet%solutionMethod,"*",err,error))// " is invalid."
                   CALL FLAG_ERROR(localError,err,error,*999)
                 END SELECT
               ELSE
@@ -437,22 +437,22 @@ CONTAINS
                   & dependentFieldNumberOfComponents,err,error,*999)
                 CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & dependentFieldNumberOfComponents,err,error,*999)
-                SELECT CASE(equationsSet%SOLUTION_METHOD)
+                SELECT CASE(equationsSet%solutionMethod)
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,1, &
                     & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                     & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CASE DEFAULT
-                  localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(equationsSet%SOLUTION_METHOD, &
+                  localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(equationsSet%solutionMethod, &
                     & "*",err,error))//" is invalid."
                   CALL FLAG_ERROR(localError,err,error,*999)
                 END SELECT
               ENDIF
             !Specify finish action
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-                CALL Field_CreateFinish(equationsSet%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
+              IF(equationsSet%DEPENDENT%dependentFieldAutoCreated) THEN
+                CALL Field_CreateFinish(equationsSet%DEPENDENT%dependentField,err,error,*999)
               ENDIF
             CASE DEFAULT
               localError="The third equations set specification of "// &
@@ -474,62 +474,62 @@ CONTAINS
           CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
             materialsFieldNumberOfVariables=2
             materialsFieldNumberOfComponents=27
-            SELECT CASE(equationsSetSetup%ACTION_TYPE)
+            SELECT CASE(equationsSetSetup%actionType)
             !Specify start action
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
               equationsMaterials=>equationsSet%MATERIALS
               IF(ASSOCIATED(equationsMaterials)) THEN
-                IF(equationsMaterials%MATERIALS_FIELD_AUTO_CREATED) THEN
+                IF(equationsMaterials%materialsFieldAutoCreated) THEN
                   !Create the auto created materials field
                   !start field creation with name 'MATERIAL_FIELD'
                   CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
-                    & equationsSet%MATERIALS%MATERIALS_FIELD,err,error,*999)
-                  CALL Field_TypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                    & equationsSet%MATERIALS%materialsField,err,error,*999)
+                  CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
                   !label the field
-                  CALL Field_LabelSet(equationsMaterials%MATERIALS_FIELD,"Materials Field",err,error,*999)
-                  CALL Field_DependentTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
+                  CALL Field_LabelSet(equationsMaterials%materialsField,"Materials Field",err,error,*999)
+                  CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE, &
                     & err,error,*999)
                   CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition, &
                     & err,error,*999)
                   !apply decomposition rule found on new created field
-                  CALL Field_DecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
+                  CALL Field_DecompositionSetAndLock(equationsSet%MATERIALS%materialsField, &
                     & geometricDecomposition,err,error,*999)
                   !point new field to geometric field
-                  CALL Field_GeometricFieldSetAndLock(equationsMaterials%MATERIALS_FIELD,equationsSet%GEOMETRY% &
+                  CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,equationsSet%GEOMETRY% &
                     & geometricField,err,error,*999)
-                  CALL Field_NumberOfVariablesSet(equationsMaterials%MATERIALS_FIELD, &
+                  CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField, &
                     & materialsFieldNumberOfVariables,err,error,*999)
-                  CALL Field_VariableTypesSetAndLock(equationsMaterials%MATERIALS_FIELD, &
+                  CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField, &
                     & [FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DimensionSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
+                  CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
                     & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
+                  CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
                     & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
                     & materialsFieldNumberOfComponents,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
+                  CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
                     & materialsFieldNumberOfComponents,err,error,*999)
                   CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,geometricComponentNumber,err,error,*999)
                   DO I=1,materialsFieldNumberOfComponents
-                    CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & I,geometricComponentNumber,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
+                    CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
                       & I,geometricComponentNumber,err,error,*999)
                   ENDDO
                   DO I=1,materialsFieldNumberOfComponents
-                    CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
                       & I,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
+                    CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
                       & I,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   ENDDO
                   !Default the field scaling to that of the geometric field
                   CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,err,error,*999)
-                  CALL Field_ScalingTypeSet(equationsMaterials%MATERIALS_FIELD,geometricScalingType,err,error,*999)
+                  CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
                 ELSE
                   !Check the user specified field
                   CALL Field_TypeCheck(equationsSetSetup%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
@@ -555,15 +555,15 @@ CONTAINS
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               equationsMaterials=>equationsSet%MATERIALS
               IF(ASSOCIATED(equationsMaterials)) THEN
-                IF(equationsMaterials%MATERIALS_FIELD_AUTO_CREATED) THEN
-                  CALL Field_CreateFinish(equationsMaterials%MATERIALS_FIELD,err,error,*999)
+                IF(equationsMaterials%materialsFieldAutoCreated) THEN
+                  CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
                 ENDIF
               ELSE
                 CALL FLAG_ERROR("Equations set materials is not associated.",err,error,*999)
               ENDIF
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE,"*", &
-                & err,error))//" for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%SETUP_TYPE,"*", &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%actionType,"*", &
+                & err,error))//" for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%setupType,"*", &
                 & err,error))//" is invalid for Stree equation."
               CALL FLAG_ERROR(localError,err,error,*999)
             END SELECT
@@ -579,22 +579,14 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
           SELECT CASE(equationsSet%specification(3))
           CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
-            SELECT CASE(equationsSetSetup%ACTION_TYPE)
+            SELECT CASE(equationsSetSetup%actionType)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              equationsMaterials=>equationsSet%MATERIALS
-              IF(ASSOCIATED(equationsMaterials)) THEN
-                IF(equationsMaterials%MATERIALS_FINISHED) THEN
-                  CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
-                  CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-                  CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
-                ELSE
-                  CALL FLAG_ERROR("Equations set materials has not been finished.",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FLAG_ERROR("Equations materials is not associated.",err,error,*999)
-              ENDIF
+              CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
+              CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              SELECT CASE(equationsSet%SOLUTION_METHOD)
+              SELECT CASE(equationsSet%solutionMethod)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 !Finish the creation of the equations
                 CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
@@ -632,13 +624,13 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FLAG_ERROR("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(equationsSet%SOLUTION_METHOD, &
+                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(equationsSet%solutionMethod, &
                   & "*",err,error))//" is invalid."
                 CALL FLAG_ERROR(localError,err,error,*999)
               END SELECT
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%actionType,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%setupType,"*",err,error))// &
                 & " is invalid for a Strees equation."
               CALL FLAG_ERROR(localError,err,error,*999)
             END SELECT
@@ -649,7 +641,7 @@ CONTAINS
             CALL FLAG_ERROR(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%setupType,"*",err,error))// &
             & " is invalid for a Strees equation set."
           CALL FLAG_ERROR(localError,err,error,*999)
         END SELECT
@@ -678,7 +670,7 @@ CONTAINS
   SUBROUTINE Stree_FiniteElementCalculate(equationsSet,nodeNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     INTEGER(INTG), INTENT(IN) :: nodeNumber
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
@@ -718,7 +710,7 @@ CONTAINS
       IF(ASSOCIATED(equations)) THEN
         NULLIFY(vectorEquations)
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
+        dependentField=>equations%equationsSet%DEPENDENT%dependentField
         IF(ASSOCIATED(dependentField)) THEN
           domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%ptr
           IF(ASSOCIATED(domain)) THEN
@@ -777,7 +769,7 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop,parentLoop,navierstokesLoop
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainType), POINTER :: domain
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,navierstokesEquationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet,navierstokesEquationsSet
     TYPE(EquationsType), POINTER :: equations,navierstokesEquations
     TYPE(FieldType), POINTER :: materialsField,navierstokesDependentField
     TYPE(FieldVariableType), POINTER :: dependentFieldVariable
@@ -811,14 +803,14 @@ CONTAINS
               solverMapping=>solverEquations%solverMapping
               navierstokesSolverMapping=>navierstokesSolverEquations%solverMapping
               IF(ASSOCIATED(solverMapping)) THEN
-                equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
-                navierstokesEquationsSet=>navierstokesSolverMapping%EQUATIONS_SETS(1)%ptr
+                equationsSet=>solverMapping%equationsSets(1)%ptr
+                navierstokesEquationsSet=>navierstokesSolverMapping%equationsSets(1)%ptr
                 IF(ASSOCIATED(equationsSet)) THEN
                   equations=>equationsSet%EQUATIONS
                   navierstokesEquations=>navierstokesEquationsSet%EQUATIONS
                   IF(ASSOCIATED(equations)) THEN
-                    materialsField=>equationsSet%MATERIALS%MATERIALS_FIELD
-                    navierstokesDependentField=>navierstokesEquationsSet%DEPENDENT%DEPENDENT_FIELD
+                    materialsField=>equationsSet%MATERIALS%materialsField
+                    navierstokesDependentField=>navierstokesEquationsSet%DEPENDENT%dependentField
                     IF(.NOT.ASSOCIATED(materialsField)) THEN
                       CALL FLAG_ERROR("Dependent field is not associated.",err,error,*999)
                     END IF

@@ -190,7 +190,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
     TYPE(FieldType), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -202,7 +202,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
     IF(ASSOCIATED(equationsSet%analytic)) THEN
-      analyticField=>equationsSet%analytic%ANALYTIC_FIELD
+      analyticField=>equationsSet%analytic%analyticField
     ELSE
       NULLIFY(analyticField)
     ENDIF
@@ -223,7 +223,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticFieldGet(equationsSet,analyticField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
     TYPE(FieldType), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -240,7 +240,7 @@ CONTAINS
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    analyticField=>equationsSet%analytic%ANALYTIC_FIELD
+    analyticField=>equationsSet%analytic%analyticField
     IF(.NOT.ASSOCIATED(analyticField)) THEN
       localError="Analytic field is not associated for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
@@ -263,7 +263,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic function type for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the analytic function type for
     INTEGER(INTG), INTENT(OUT):: analyticFunctionType !<On exit, the analytic function type in the specified equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -279,7 +279,7 @@ CONTAINS
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    analyticFunctionType=equationsSet%analytic%ANALYTIC_FUNCTION_TYPE
+    analyticFunctionType=equationsSet%analytic%analyticFunctionType
        
     EXITS("EquationsSet_AnalyticFunctionTypeGet")
     RETURN
@@ -296,7 +296,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticTimeGet(equationsSet,analyticTime,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the time for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the time for.
     REAL(DP), INTENT(OUT) :: analyticTime !<On return, the analytic time value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -307,7 +307,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)    
     IF(.NOT.ASSOCIATED(equationsSet%analytic)) CALL FlagError("Equations set analytic is not associated.",err,error,*999)
 
-    analyticTime=equationsSet%analytic%ANALYTIC_TIME
+    analyticTime=equationsSet%analytic%analyticTime
       
     EXITS("EquationsSet_AnalyticTimeGet")
     RETURN
@@ -324,7 +324,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticTimeSet(equationsSet,analyticTime,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the time for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the time for.
     REAL(DP), INTENT(IN) :: analyticTime !<The analytic time value to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -335,7 +335,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)    
     IF(.NOT.ASSOCIATED(equationsSet%analytic)) CALL FlagError("Equations set analytic is not associated.",err,error,*999)
 
-    equationsSet%analytic%ANALYTIC_TIME=analyticTime
+    equationsSet%analytic%analyticTime=analyticTime
       
     EXITS("EquationsSet_AnalyticTimeSet")
     RETURN
@@ -352,7 +352,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -361,7 +361,7 @@ CONTAINS
     ENTERS("EquationsSet_AssertIsFinished",err,error,*999)
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) THEN
+    IF(.NOT.equationsSet%equationsSetFinished) THEN
       localError="Equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -386,7 +386,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -395,7 +395,7 @@ CONTAINS
     ENTERS("EquationsSet_AssertNotFinished",err,error,*999)
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(equationsSet%EQUATIONS_SET_FINISHED) THEN
+    IF(equationsSet%equationsSetFinished) THEN
       localError="Equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -420,7 +420,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -454,7 +454,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertAnalyticIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -464,7 +464,7 @@ CONTAINS
 
     CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
 
-    IF(.NOT.equationsSet%analytic%ANALYTIC_FINISHED) THEN
+    IF(.NOT.equationsSet%analytic%analyticFinished) THEN
       localError="The analytic setup has not been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -489,7 +489,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertAnalyticNotCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -523,7 +523,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertAnalyticNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the analytic finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -544,7 +544,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    IF(equationsSet%analytic%ANALYTIC_FINISHED) THEN
+    IF(equationsSet%analytic%analyticFinished) THEN
       localError="The analytic setup has already been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -569,7 +569,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the dependent finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the dependent finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -579,7 +579,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    IF(.NOT.equationsSet%dependent%DEPENDENT_FINISHED) THEN
+    IF(.NOT.equationsSet%dependent%dependentFinished) THEN
       localError="The dependent setup has not been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -604,7 +604,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertDependentNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the dependent finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the dependent finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -614,7 +614,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    IF(equationsSet%dependent%DEPENDENT_FINISHED) THEN
+    IF(equationsSet%dependent%dependentFinished) THEN
       localError="The dependent setup has already been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -639,7 +639,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertDerivedIsCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -673,7 +673,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertDerivedIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -708,7 +708,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertDerivedNotCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -742,7 +742,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertDerivedNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the derived finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -777,7 +777,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertEquationsIsCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -811,7 +811,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertEquationsIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -846,7 +846,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertEquationsNotCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -880,7 +880,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertEquationsNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -915,7 +915,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -949,7 +949,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertIndependentIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -959,7 +959,7 @@ CONTAINS
 
     CALL EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*999)
 
-    IF(.NOT.equationsSet%independent%INDEPENDENT_FINISHED) THEN
+    IF(.NOT.equationsSet%independent%independentFinished) THEN
       localError="The independent setup has not been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -984,7 +984,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertIndependentNotCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1018,7 +1018,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertIndependentNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the independent finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1028,7 +1028,7 @@ CONTAINS
 
     CALL EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*999)
 
-    IF(equationsSet%independent%INDEPENDENT_FINISHED) THEN
+    IF(equationsSet%independent%independentFinished) THEN
       localError="The independent setup has already been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -1053,7 +1053,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1087,7 +1087,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1097,7 +1097,7 @@ CONTAINS
 
     CALL EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*999)
 
-    IF(.NOT.equationsSet%materials%MATERIALS_FINISHED) THEN
+    IF(.NOT.equationsSet%materials%materialsFinished) THEN
       localError="The materials setup has not been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -1122,7 +1122,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertMaterialsNotCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1156,7 +1156,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertMaterialsNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the materials finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1166,7 +1166,7 @@ CONTAINS
 
     CALL EquationsSet_AssertMaterialsIsCreated(equationsSet,err,error,*999)
 
-    IF(equationsSet%materials%MATERIALS_FINISHED) THEN
+    IF(equationsSet%materials%materialsFinished) THEN
       localError="The materials setup has already been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -1191,7 +1191,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertSourceIsCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1225,7 +1225,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertSourceIsFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1235,7 +1235,7 @@ CONTAINS
 
     CALL EquationsSet_AssertSourceIsCreated(equationsSet,err,error,*999)
 
-    IF(.NOT.equationsSet%source%SOURCE_FINISHED) THEN
+    IF(.NOT.equationsSet%source%sourceFinished) THEN
       localError="The source setup has not been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -1260,7 +1260,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertSourceNotCreated(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source created status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source created status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1294,7 +1294,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssertSourceNotFinished(equationsSet,err,error,*)
 
     !Argument Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source finished status for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the source finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1304,7 +1304,7 @@ CONTAINS
 
     CALL EquationsSet_AssertSourceIsCreated(equationsSet,err,error,*999)
 
-    IF(equationsSet%source%SOURCE_FINISHED) THEN
+    IF(equationsSet%source%sourceFinished) THEN
       localError="The source setup has already been finished for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) THEN
@@ -1329,7 +1329,7 @@ CONTAINS
   SUBROUTINE EquationsSet_CoordinateSystemGet(equationsSet,coordinateSystem,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the coordinate system for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the coordinate system for
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system for the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1372,7 +1372,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedFieldExists(equationsSet,derivedField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the derived field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the derived field for
     TYPE(FieldType), POINTER :: derivedField !<On exit, a pointer to the derived field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1405,7 +1405,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedFieldGet(equationsSet,derivedField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the derived field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the derived field for
     TYPE(FieldType), POINTER :: derivedField !<On exit, a pointer to the derived field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1445,7 +1445,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the dependent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the dependent field for
     TYPE(FieldType), POINTER :: dependentField !<On exit, a pointer to the dependent field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1457,7 +1457,7 @@ CONTAINS
     IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    dependentField=>equationsSet%dependent%DEPENDENT_FIELD
+    dependentField=>equationsSet%dependent%dependentField
     IF(.NOT.ASSOCIATED(dependentField)) THEN
       localError="Dependent field is not associated for equations set number "// &
       & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -1484,7 +1484,7 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsGet(equationsSet,equations,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the equations for
     TYPE(EquationsType), POINTER :: equations !<On exit, a pointer to the equations in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1523,8 +1523,8 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsSetsGet(equationsSet,equationsSets,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the equations sets for
-    TYPE(EQUATIONS_SETS_TYPE), POINTER :: equationsSets !<On exit, a pointer to the equations sets for the specified equations set. Must not be associated on entry
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the equations sets for
+    TYPE(EquationsSetsType), POINTER :: equationsSets !<On exit, a pointer to the equations sets for the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1535,7 +1535,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSets)) CALL FlagError("Equations sets is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
  
-    equationsSets=>equationsSet%EQUATIONS_SETS
+    equationsSets=>equationsSet%equationsSets
     IF(.NOT.ASSOCIATED(equationsSets)) THEN
       localError="Equations sets is not associated for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -1562,7 +1562,7 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the equations set field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the equations set field for
     TYPE(FieldType), POINTER :: equationsSetField !<On exit, a pointer to the equations set field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1574,7 +1574,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSetField)) CALL FlagError("Equations set field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    equationsSetField=>equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
+    equationsSetField=>equationsSet%equationsSetField%equationsSetFieldField
     IF(.NOT.ASSOCIATED(equationsSetField)) THEN
       localError="Equations set field is not associated for equations set number "// &
       & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -1601,7 +1601,7 @@ CONTAINS
   SUBROUTINE EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the fibre field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the fibre field for
     TYPE(FieldType), POINTER :: fibreField !<On exit, a pointer to the fibre field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1612,7 +1612,7 @@ CONTAINS
     IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    fibreField=>equationsSet%geometry%FIBRE_FIELD
+    fibreField=>equationsSet%geometry%fibreField
       
     EXITS("EquationsSet_FibreFieldExists")
     RETURN
@@ -1630,7 +1630,7 @@ CONTAINS
   SUBROUTINE EquationsSet_FibreFieldGet(equationsSet,fibreField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the fibre field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the fibre field for
     TYPE(FieldType), POINTER :: fibreField !<On exit, a pointer to the fibre field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1642,7 +1642,7 @@ CONTAINS
     IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    fibreField=>equationsSet%geometry%FIBRE_FIELD
+    fibreField=>equationsSet%geometry%fibreField
     IF(.NOT.ASSOCIATED(fibreField)) THEN
       localError="Fibre field is not associated for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -1669,7 +1669,7 @@ CONTAINS
   SUBROUTINE EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the geometric field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the geometric field for
     TYPE(FieldType), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1708,7 +1708,7 @@ CONTAINS
   SUBROUTINE EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
     TYPE(FieldType), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1720,7 +1720,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
     IF(ASSOCIATED(equationsSet%independent)) THEN
-      independentField=>equationsSet%INDEPENDENT%INDEPENDENT_FIELD
+      independentField=>equationsSet%INDEPENDENT%independentField
     ELSE
       NULLIFY(independentField)
     ENDIF
@@ -1741,7 +1741,7 @@ CONTAINS
   SUBROUTINE EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
     TYPE(FieldType), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1762,7 +1762,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    independentField=>equationsSet%independent%INDEPENDENT_FIELD
+    independentField=>equationsSet%independent%independentField
     IF(.NOT.ASSOCIATED(independentField)) THEN
       localError="Independent field is not associated for equations set number "// &
       & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -1789,7 +1789,7 @@ CONTAINS
   SUBROUTINE EquationsSet_LabelGetC(equationsSet,label,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the label for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the label for
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the equations set label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1823,7 +1823,7 @@ CONTAINS
   SUBROUTINE EquationsSet_LabelGetVS(equationsSet,label,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the label for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the label for
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the equations set label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1850,7 +1850,7 @@ CONTAINS
   SUBROUTINE EquationsSet_LabelSetC(equationsSet,label,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the label for 
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the label for 
     CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1877,7 +1877,7 @@ CONTAINS
   SUBROUTINE EquationsSet_LabelSetVS(equationsSet,label,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the label for 
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the label for 
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1904,7 +1904,7 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
     TYPE(FieldType), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1916,7 +1916,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
     IF(ASSOCIATED(equationsSet%materials)) THEN
-      materialsField=>equationsSet%materials%MATERIALS_FIELD
+      materialsField=>equationsSet%materials%materialsField
     ELSE
       NULLIFY(materialsField)
     ENDIF
@@ -1937,7 +1937,7 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
     TYPE(FieldType), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1958,7 +1958,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    materialsField=>equationsSet%materials%MATERIALS_FIELD
+    materialsField=>equationsSet%materials%materialsField
     IF(.NOT.ASSOCIATED(materialsField)) THEN
       localError="Materials field is not associated for equations set number "// &
       & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -1985,7 +1985,7 @@ CONTAINS
   SUBROUTINE EquationsSet_OutputTypeGet(equationsSet,outputType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the output type for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the output type for
     INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2012,7 +2012,7 @@ CONTAINS
   SUBROUTINE EquationsSet_RegionGet(equationsSet,region,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the region for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the region for
     TYPE(RegionType), POINTER :: region !<On exit, a pointer to the region for the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2047,7 +2047,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the solution method for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the solution method for
     INTEGER(INTG), INTENT(OUT) :: solutionMethod !<On return, the equations set solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2057,7 +2057,7 @@ CONTAINS
 
     CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
     
-    solutionMethod=equationsSet%SOLUTION_METHOD
+    solutionMethod=equationsSet%solutionMethod
      
     EXITS("EquationsSet_SolutionMethodGet")
     RETURN
@@ -2074,7 +2074,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
     TYPE(FieldType), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2086,7 +2086,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
     IF(ASSOCIATED(equationsSet%source)) THEN
-      sourceField=>equationsSet%source%SOURCE_FIELD
+      sourceField=>equationsSet%source%sourceField
     ELSE
       NULLIFY(sourceField)
     ENDIF
@@ -2107,7 +2107,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
     TYPE(FieldType), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2128,7 +2128,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    sourceField=>equationsSet%source%SOURCE_FIELD
+    sourceField=>equationsSet%source%sourceField
     IF(.NOT.ASSOCIATED(sourceField)) THEN
       localError="Source field is not associated for equations set number "// &
       & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
@@ -2155,7 +2155,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SpecificationGet(equationsSet,equationsSetSpecification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the specification for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the specification for
     INTEGER(INTG), INTENT(INOUT) :: equationsSetSpecification(:) !<On return, The equations set specifcation array. Must be allocated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2197,7 +2197,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SpecificationSizeGet(equationsSet,specificationSize,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations Set to get the specification for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations Set to get the specification for.
     INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specifcation array.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2226,7 +2226,7 @@ CONTAINS
   SUBROUTINE EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the times for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the times for
     REAL(DP), INTENT(OUT) :: currentTime !<The current time for the equations set to get.
     REAL(DP), INTENT(OUT) :: deltaTime !<The current time incremenet for the equations set to get
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2257,7 +2257,7 @@ CONTAINS
     !Argument variables 
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the equation set to find.
     TYPE(RegionType), POINTER :: region !<The region to find the equations set in
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On return, a pointer to the equations set if an equations set with the specified user number exists in the given region. If no equation set with the specified number exists a NULL pointer is returned. The pointer must not be associated on entry.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On return, a pointer to the equations set if an equations set with the specified user number exists in the given region. If no equation set with the specified number exists a NULL pointer is returned. The pointer must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2275,11 +2275,11 @@ CONTAINS
     ENDIF
 
     NULLIFY(equationsSet)
-    IF(ASSOCIATED(region%equationsSets%EQUATIONS_SETS)) THEN
-      DO equationsSetIdx=1,region%equationsSets%NUMBER_OF_EQUATIONS_SETS
-        IF(ASSOCIATED(region%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr)) THEN
-          IF(region%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr%userNumber==userNumber) THEN
-            equationsSet=>region%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr
+    IF(ASSOCIATED(region%equationsSets%equationsSets)) THEN
+      DO equationsSetIdx=1,region%equationsSets%numberOfEquationsSets
+        IF(ASSOCIATED(region%equationsSets%equationsSets(equationsSetIdx)%ptr)) THEN
+          IF(region%equationsSets%equationsSets(equationsSetIdx)%ptr%userNumber==userNumber) THEN
+            equationsSet=>region%equationsSets%equationsSets(equationsSetIdx)%ptr
             EXIT
           ENDIF
         ELSE

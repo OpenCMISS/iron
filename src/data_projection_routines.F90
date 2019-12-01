@@ -59,7 +59,7 @@ MODULE DataProjectionRoutines
   USE DomainMappings
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
 #ifndef NOMPIMOD

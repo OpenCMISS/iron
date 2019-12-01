@@ -47,7 +47,7 @@ MODULE DomainMappings
   USE BaseRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists

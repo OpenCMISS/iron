@@ -64,7 +64,7 @@ MODULE MULTI_COMPARTMENT_TRANSPORT_ROUTINES
 !  USE FINITE_ELASTICITY_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
 !   USE FittingRoutines !also in makefiles
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths  
@@ -104,7 +104,7 @@ CONTAINS
   SUBROUTINE MultiCompartmentTransport_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -130,8 +130,8 @@ CONTAINS
   SUBROUTINE MultiCompartmentTransport_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -156,7 +156,7 @@ CONTAINS
   SUBROUTINE MultiCompartmentTransport_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -235,7 +235,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -265,21 +265,21 @@ CONTAINS
       !   monolithic coupled source diffusion-diffusion problem
       !--------------------------------------------------------------------
       CASE(PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+        SELECT CASE(PROBLEM_SETUP%setupType)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Do nothing????
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
@@ -290,8 +290,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -299,7 +299,7 @@ CONTAINS
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
@@ -319,13 +319,13 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -350,13 +350,13 @@ CONTAINS
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_DIFFUSION,ERR,ERROR,*999)             
             !
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a multi-compartment transport equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -396,7 +396,7 @@ CONTAINS
     !Local Variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -475,7 +475,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: ANALYTIC_VARIABLE,FIELD_VARIABLE,GEOMETRIC_VARIABLE,MATERIALS_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(DomainType), POINTER :: DOMAIN
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
@@ -537,18 +537,18 @@ CONTAINS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 !loop over all the equation sets and set the appropriate field variable type BCs and
                 !the source field associated with each equation set
-                DO eqnset_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
+                DO eqnset_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets
                   SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(eqnset_idx)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
                      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                           GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-                            ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
+                            ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%analyticField
                             CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
                               & numberOfDimensions,ERR,ERROR,*999)
                             NULLIFY(GEOMETRIC_VARIABLE)
@@ -567,12 +567,11 @@ CONTAINS
                              NULLIFY(MATERIALS_VARIABLE)
                              NULLIFY(MATERIALS_PARAMETERS)
                              IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
-                               MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
+                               MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%materialsField
                                CALL Field_VariableGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,ERR,ERROR,*999)
                                CALL Field_ParameterSetDataGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                  & MATERIALS_PARAMETERS,ERR,ERROR,*999)           
                              ENDIF
-                             EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)=CURRENT_TIME
 !                              DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
                               variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%variableType
                               FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%PTR
@@ -599,7 +598,7 @@ CONTAINS
                                               ENDDO !dim_idx
                                               !Loop over the derivatives
                                               DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                                ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
+                                                ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
                                                 GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
                                                   & globalDerivativeIndex
                                                 CALL Diffusion_AnalyticFunctionsEvaluate(EQUATIONS_SET, &
@@ -677,19 +676,19 @@ CONTAINS
 !                 ELSE
 !                   CALL FlagError("Solver equations are not associated.",ERR,ERROR,*999)
 !                 END IF  
-                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%dependent%dependentField,FIELD_V_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
+                CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%dependent%dependentField,FIELD_V_VARIABLE_TYPE, & 
                   & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
             !>Set the source field to a specified analytical function
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                SOURCE_FIELD=>EQUATIONS_SET%SOURCE%SOURCE_FIELD
+                SOURCE_FIELD=>EQUATIONS_SET%SOURCE%sourceField
                 IF(ASSOCIATED(SOURCE_FIELD)) THEN
                   GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                   IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
@@ -719,7 +718,7 @@ CONTAINS
                                     ENDDO !dim_idx
                                     !Loop over the derivatives
                                     DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                      SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
+                                      SELECT CASE(EQUATIONS_SET%ANALYTIC%analyticFunctionType)
                                       CASE(EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM)
                                         SELECT CASE(eqnset_idx)
                                         CASE(1)
@@ -746,7 +745,7 @@ CONTAINS
                                         END SELECT
                                       CASE DEFAULT
                                         LOCAL_ERROR="The analytic function type of "// &
-                                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))//&
+                                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",ERR,ERROR))//&
                                           & " is invalid."
                                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                       END SELECT
@@ -832,7 +831,7 @@ CONTAINS
     !Local Variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     REAL(DP), POINTER :: OUTPUT_DATA1(:),OUTPUT_DATA2(:),OUTPUT_DATA3(:),OUTPUT_DATA4(:),OUTPUT_DATA5(:)
@@ -864,24 +863,24 @@ CONTAINS
                      EQUATIONS_SET=>equations%equationsSet
                      IF(ASSOCIATED(EQUATIONS_SET)) THEN
 
-!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA1,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA1
-!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%dependent%dependentField,FIELD_V_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA2,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA2
-!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA3,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA3
-!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA4,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA4
 ! 
-!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U3_VARIABLE_TYPE, & 
+!                      CALL Field_ParameterSetDataGet(EQUATIONS_SET%dependent%dependentField,FIELD_U3_VARIABLE_TYPE, & 
 !                         & FIELD_VALUES_SET_TYPE,OUTPUT_DATA5,ERR,ERROR,*999)
 ! 
 !                        WRITE (*,*) OUTPUT_DATA5

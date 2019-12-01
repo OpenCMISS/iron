@@ -45,7 +45,7 @@
 MODULE NodeRoutines
 
   USE BaseRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE NodeAccessRoutines

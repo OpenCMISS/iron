@@ -440,7 +440,7 @@ CONTAINS
     !Argument variables
     TYPE(RegionType), POINTER :: region !<A pointer to the region to get the equationsSet for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the equations set to get.
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the equations set for the region. Must not be associated on entry.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On exit, a pointer to the equations set for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

@@ -56,7 +56,7 @@ MODULE GENERATED_MESH_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
   USE GeneratedMeshAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths

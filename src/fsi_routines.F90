@@ -58,7 +58,7 @@ MODULE FSIRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE InterfaceAccessRoutines
   USE InterfaceConditionAccessRoutines
   USE ISO_VARYING_STRING
@@ -147,7 +147,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -173,21 +173,21 @@ CONTAINS
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
       !Finite Elasticity with Navier Stokes ALE
-      SELECT CASE(problemSetup%SETUP_TYPE)
+      SELECT CASE(problemSetup%setupType)
       CASE(PROBLEM_SETUP_INITIAL_TYPE)
-        SELECT CASE(problemSetup%ACTION_TYPE)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Do nothing
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Do nothing
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
             & " is invalid for an finite elasticity ALE navier stokes equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(PROBLEM_SETUP_CONTROL_TYPE)
-        SELECT CASE(problemSetup%ACTION_TYPE)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Set up a time control loop as parent loop
           NULLIFY(controlLoop)
@@ -200,8 +200,8 @@ CONTAINS
           CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
             & " is invalid for a finite elasticity navier stokes equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -209,7 +209,7 @@ CONTAINS
         !Get the control loop
         NULLIFY(controlLoop)
         CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-        SELECT CASE(problemSetup%ACTION_TYPE)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Start the solvers creation
           NULLIFY(solvers)
@@ -322,13 +322,13 @@ CONTAINS
           !Finish the solvers creation
           CALL Solvers_CreateFinish(solvers,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
             & " is invalid for a finite elasticity navier stokes equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-        SELECT CASE(problemSetup%ACTION_TYPE)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the control loop
           NULLIFY(controlLoop)
@@ -448,8 +448,8 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
             & " is invalid for a finite elasticity navier stokes equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -459,7 +459,7 @@ CONTAINS
         CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-        SELECT CASE(problemSetup%ACTION_TYPE)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the fluid CellML BC evaluation solver
           NULLIFY(solver)
@@ -517,13 +517,13 @@ CONTAINS
             CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
           ENDIF
         CASE DEFAULT            
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
             & " is invalid for a finite elasticity equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
           & " is invalid for a finite elasticity ALE navier stokes equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -612,7 +612,7 @@ CONTAINS
     LOGICAL :: fluidEquationsSetFound
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: dynamicSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -663,7 +663,7 @@ CONTAINS
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         equationsSetIdx=1
         fluidEquationsSetFound=.FALSE.
-        DO WHILE(.NOT.fluidEquationsSetFound.AND.equationsSetIdx<=solverMapping%NUMBER_OF_EQUATIONS_SETS)
+        DO WHILE(.NOT.fluidEquationsSetFound.AND.equationsSetIdx<=solverMapping%numberOfEquationsSets)
           equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(equationsSetIdx)%equations
           NULLIFY(equationsSet)
           CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
@@ -737,7 +737,7 @@ CONTAINS
     LOGICAL :: fluidEquationsSetFound=.FALSE.,solidEquationsSetFound=.FALSE.
     REAL(DP) :: startTime,currentTime,stopTime,timeIncrement,VALUE
     TYPE(DomainType), POINTER :: domain
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: solidEquationsSet,fluidEquationsSet,equationsSet
+    TYPE(EquationsSetType), POINTER :: solidEquationsSet,fluidEquationsSet,equationsSet
     TYPE(FieldType), POINTER :: solidGeometricField,interfaceGeometricField,solidDependentField
     TYPE(FieldVariableType), POINTER :: geometricVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
@@ -797,9 +797,9 @@ CONTAINS
     equationsSetIndex=1
     fluidEquationsSetFound=.FALSE.
     solidEquationsSetFound=.FALSE.
-    DO WHILE((equationsSetIndex<=dynamicSolverMapping%NUMBER_OF_EQUATIONS_SETS.AND..NOT.solidEquationsSetFound) &
-      & .OR.(equationsSetIndex<=dynamicSolverMapping%NUMBER_OF_EQUATIONS_SETS.AND..NOT.fluidEquationsSetFound))
-      equationsSet=>dynamicSolverMapping%EQUATIONS_SETS(equationsSetIndex)%ptr
+    DO WHILE((equationsSetIndex<=dynamicSolverMapping%numberOfEquationsSets.AND..NOT.solidEquationsSetFound) &
+      & .OR.(equationsSetIndex<=dynamicSolverMapping%numberOfEquationsSets.AND..NOT.fluidEquationsSetFound))
+      equationsSet=>dynamicSolverMapping%equationsSets(equationsSetIndex)%ptr
       IF(equationsSet%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS &
         & .AND.equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE &
         & .AND.((equationsSet%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE).OR. &

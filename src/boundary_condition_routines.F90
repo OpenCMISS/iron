@@ -68,7 +68,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE InterfaceMappingAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE MeshAccessRoutines
@@ -303,7 +303,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
@@ -444,8 +444,8 @@ CONTAINS
                       SOLVER_EQUATIONS=>BOUNDARY_CONDITIONS%SOLVER_EQUATIONS
                       IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                         IF(ASSOCIATED(SOLVER_EQUATIONS%solverMapping)) THEN
-                          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
-                            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equations_set_idx)%PTR
+                          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets
+                            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%equationsSets(equations_set_idx)%PTR
                             IF(ASSOCIATED(EQUATIONS_SET)) THEN
                               NULLIFY(equations)
                               CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -935,7 +935,7 @@ CONTAINS
     INTEGER(INTG) :: DUMMY_ERR,variable_idx,variable_type,equations_set_idx,interface_condition_idx
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -960,8 +960,8 @@ CONTAINS
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES=0
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%SOLVER_EQUATIONS=>SOLVER_EQUATIONS
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%neumannMatrixSparsity=BOUNDARY_CONDITION_SPARSE_MATRICES
-          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
-            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equations_set_idx)%PTR
+          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets
+            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%equationsSets(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
@@ -971,7 +971,7 @@ CONTAINS
                   NULLIFY(vectorMapping)
                   CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
                   IF(vectorMapping%vectorMappingFinished) THEN
-                    EQUATIONS_SET%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
+                    EQUATIONS_SET%boundaryConditions=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                     SELECT CASE(EQUATIONS%timeDependence)
                     CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
                       SELECT CASE(EQUATIONS%linearity)
@@ -1925,7 +1925,7 @@ CONTAINS
     INTEGER(INTG) :: boundaryConditionType,equationsSetIdx,specificationSize
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     LOGICAL :: validEquationsSetFound
 
     ENTERS("BoundaryConditions_CheckEquations",err,error,*999)
@@ -1944,8 +1944,8 @@ CONTAINS
       !Check if any DOFs have been set to this BC type
       IF(boundaryConditionsVariable%DOF_COUNTS(boundaryConditionType)>0) THEN
         validEquationsSetFound=.FALSE.
-        DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
-          equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%PTR
+        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+          equationsSet=>solverMapping%equationsSets(equationsSetIdx)%PTR
           IF(.NOT.ASSOCIATED(equationsSet)) THEN
             CALL FlagError("Solver equations equations set is not associated.",err,error,*999)
           END IF
@@ -3850,7 +3850,7 @@ CONTAINS
       & MAX_NUMBER_LINEAR_MATRICES,MAX_NUMBER_DYNAMIC_MATRICES,equations_set_idx
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: BOUNDARY_CONDITIONS_DIRICHLET
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -3875,8 +3875,8 @@ CONTAINS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           MAX_NUMBER_LINEAR_MATRICES=0
           MAX_NUMBER_DYNAMIC_MATRICES=0
-          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
-            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equations_set_idx)%PTR
+          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets
+            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%equationsSets(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               NULLIFY(equations)
               CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -3900,13 +3900,13 @@ CONTAINS
               CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
             ENDIF
           ENDDO
-          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES(SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS, &
+          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES(SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets, &
                 & MAX_NUMBER_LINEAR_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate Dirichlet linear sparsity indices array",ERR,ERROR,*999)
-          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%DYNAMIC_SPARSITY_INDICES(SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS,&
+          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%DYNAMIC_SPARSITY_INDICES(SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets,&
                 & MAX_NUMBER_DYNAMIC_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate Dirichlet dynamic sparsity indices array",ERR,ERROR,*999)
-          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
+          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets
             DO matrix_idx=1,MAX_NUMBER_LINEAR_MATRICES
               NULLIFY(BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES(equations_set_idx,matrix_idx)%PTR)
             ENDDO

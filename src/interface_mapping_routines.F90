@@ -47,7 +47,7 @@ MODULE InterfaceMappingRoutines
   USE BaseRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
@@ -103,7 +103,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,dofIdx,matrixIdx,meshIdx,variableIdx,numberOfInterfaceMatrices
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: lagrangeField
     TYPE(FieldVariableType), POINTER :: fieldVariable,lagrangeVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition

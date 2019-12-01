@@ -66,7 +66,7 @@ MODULE SOLVER_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
   USE Kinds
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
@@ -5108,7 +5108,7 @@ CONTAINS
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,linearVariable,residualVariable, &
       & rhsVariable
@@ -5136,7 +5136,7 @@ CONTAINS
       !Initialise for explicit solve
       dynamicSolver%explicit=ABS(dynamicSolver%theta(dynamicSolver%degree))<ZERO_TOLERANCE
       !Loop over the equations set in the solver equations
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(dependentVariable)
         dependentVariableType=0
         NULLIFY(equationsSet)
@@ -5908,7 +5908,7 @@ CONTAINS
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -5955,10 +5955,10 @@ CONTAINS
                 & (DYNAMIC_SOLVER%ORDER==SOLVER_DYNAMIC_SECOND_ORDER.AND.DYNAMIC_SOLVER%DEGREE>SOLVER_DYNAMIC_SECOND_DEGREE)))) &
                 & THEN
                 !Loop over the equations sets
-                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                    DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                     EQUATIONS=>EQUATIONS_SET%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                       NULLIFY(vectorEquations)
@@ -7216,7 +7216,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer the solver equations to add the equations set to.
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to add
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to add
     INTEGER(INTG), INTENT(OUT) :: EQUATIONS_SET_INDEX !<On exit, the index of the equations set that has been added
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -12022,7 +12022,7 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix,equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,linearVariable,rhsVariable,interfaceVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
@@ -12142,7 +12142,7 @@ CONTAINS
           NULLIFY(matrixCheckData)
           CALL DistributedMatrix_DataGet(solverDistributedMatrix,matrixCheckData,err,error,*999)
           !Loop over the equations sets
-          DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+          DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
             NULLIFY(equationsSet)
             CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
             NULLIFY(equations)
@@ -12324,7 +12324,7 @@ CONTAINS
         NULLIFY(solverRHSCheckData)
         CALL DistributedVector_DataGet(solverRHSVector,solverRHSCheckData,err,error,*999)             
         !Loop over the equations sets
-        DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           NULLIFY(dependentField)
@@ -12911,7 +12911,7 @@ CONTAINS
           NULLIFY(solverResidualCheckData)
           CALL DistributedVector_DataGet(solverResidualVector,solverResidualCheckData,err,error,*999)
           !Loop over the equations sets
-          DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+          DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
             NULLIFY(equationsSet)
             CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
             NULLIFY(dependentField)
@@ -13228,7 +13228,7 @@ CONTAINS
       !already there from when we copied the values to the previous time step.
       !Loop over the equations sets
       IF(dynamicSolver%DEGREE>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-        DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           NULLIFY(dependentField)
@@ -13321,7 +13321,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix,LINEAR_MATRIX
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: EQUATIONS_TO_SOLVER_MAP
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FieldVariableType), POINTER :: rhsVariable,INTERFACE_VARIABLE,DEPENDENT_VARIABLE,LINEAR_VARIABLE
@@ -13371,7 +13371,7 @@ CONTAINS
                       !Initialise matrix to zero
                       CALL DistributedMatrix_AllValuesSet(SOLVER_DISTRIBUTED_MATRIX,0.0_DP,err,error,*999)
                       !Loop over the equations sets
-                      DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                      DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                         !First Loop over the linear equations matrices
                         DO equations_matrix_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
@@ -13483,10 +13483,10 @@ CONTAINS
                   !Initialise the residual to zero
                   CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
                   !Loop over the equations sets
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                       IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
@@ -13766,10 +13766,10 @@ CONTAINS
                     ENDIF
                   ENDIF
                   !Loop over the equations sets
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                       IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
@@ -14775,7 +14775,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,lagrangeVariable
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
@@ -14814,12 +14814,12 @@ CONTAINS
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                       EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                           NULLIFY(vectorEquations)
                           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -16018,7 +16018,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
@@ -16051,12 +16051,12 @@ CONTAINS
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                       EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                           NULLIFY(vectorEquations)
                           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -17556,7 +17556,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,lagrangeVariable
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
@@ -17595,12 +17595,12 @@ CONTAINS
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                       EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                           NULLIFY(vectorEquations)
                           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -18782,7 +18782,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
@@ -18815,12 +18815,12 @@ CONTAINS
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                       EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                           NULLIFY(vectorEquations)
                           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)                         
@@ -20622,7 +20622,7 @@ CONTAINS
                   IF(ASSOCIATED(SOLVER_VECTOR)) THEN
                     DOMAIN_MAPPING=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%columnDOFSMapping
                     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
-                      DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                      DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                         DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                           DEPENDENT_VARIABLE=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
@@ -20921,7 +20921,7 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -21069,7 +21069,7 @@ CONTAINS
       !Restore the solver dof data
       CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
       !Start the transfer of the field dofs
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(dependentField)
@@ -21176,7 +21176,7 @@ CONTAINS
         ENDIF
       ENDDO !equationsSetIdx
       !Finish the transfer of the field dofs
-      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(dependentField)
@@ -21309,7 +21309,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: FIELD
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,RESIDUAL_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -21357,8 +21357,8 @@ CONTAINS
                   ENDDO !variable_idx
                   IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
                     !Loop over the equations sets and copy any residuals
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                      EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                      EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
@@ -21451,7 +21451,7 @@ CONTAINS
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(FieldType), POINTER :: dependentField
@@ -21505,7 +21505,7 @@ CONTAINS
                 & SOLVER_DOF_TO_VARIABLE_MAPS(solverDOFIdx)%VARIABLE(equationsDOFIdx)%ptr
               IF(.NOT.ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is not associated.",err,error,*999)
               variableType=dependentVariable%variableType
-              equationsSet=>solverMapping%EQUATIONS_SETS(solverMapping% &
+              equationsSet=>solverMapping%equationsSets(solverMapping% &
                 & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solverMatrixIdx)% &
                 & SOLVER_DOF_TO_VARIABLE_MAPS(solverDOFIdx)%EQUATIONS_INDICES(equationsDOFIdx))%ptr 
               IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -21574,7 +21574,7 @@ CONTAINS
               !Equations set dof.
               dependentVariable=>solverMapping%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solverMatrixIdx)% &
                 & SOLVER_DOF_TO_VARIABLE_MAPS(solverDOFIdx)%VARIABLE(equationsDOFIdx)%ptr
-              !equationsSet=>solverMapping%EQUATIONS_SETS(equationsDOFIdx)%ptr see above
+              !equationsSet=>solverMapping%equationsSets(equationsDOFIdx)%ptr see above
               
               interfaceCondition=>solverMapping%interfaceConditions(solverMapping% &
                 & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solverMatrixIdx)% &
@@ -21644,7 +21644,7 @@ CONTAINS
         !Restore the solver dof data
         CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
         !Start the transfer of the field dofs
-        DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           NULLIFY(dependentField)
@@ -21659,7 +21659,7 @@ CONTAINS
           ENDDO !variableIdx
         ENDDO !equationsSetIdx
         !Finish the transfer of the field dofs
-        DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           NULLIFY(dependentField)
@@ -21714,7 +21714,7 @@ CONTAINS
     REAL(DP) :: additive_constant,VALUE,variable_coefficient
     REAL(DP), POINTER :: SOLVER_DATA(:)
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,lagrangeVariable
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -21835,10 +21835,10 @@ CONTAINS
                     !Restore the solver dof data
                     CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,err,error,*999)
                     !Start the transfer of the field dofs
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                      EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                      EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                         DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                           VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
@@ -21850,9 +21850,9 @@ CONTAINS
                       ENDIF
                     ENDDO !equations_set_idx
                     !Finish the transfer of the field dofs
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                      EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                      EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
+                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                       DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                         & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                         VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &

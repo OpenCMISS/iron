@@ -54,7 +54,7 @@ MODULE RegionRoutines
   USE EquationsSetRoutines
   USE FieldRoutines
   USE GENERATED_MESH_ROUTINES
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE InterfaceRoutines
   USE ISO_VARYING_STRING
   USE KINDS
@@ -174,7 +174,7 @@ CONTAINS
   !>- NODES: null
   !>- MESHES: 0 mesh
   !>- FIELDS: 0 field
-  !>- EQUATIONS_SETS: 0 equation set
+  !>- equationsSets: 0 equation set
   !>- parentRegion: global region
   !>- numberOfSubRegions: 0
   !>- subRegions: 0 region

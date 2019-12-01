@@ -212,7 +212,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the equations set for
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the equations set for the specified equations. Must not be associated on entry
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On exit, a pointer to the equations set for the specified equations. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

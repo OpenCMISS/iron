@@ -55,7 +55,7 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE ISO_VARYING_STRING
   USE Kinds
@@ -136,7 +136,7 @@ CONTAINS
       & INTERFACE_EQUATIONS_LIST_ITEM(2),interface_idx,interface_matrix_idx,interface_row,interface_row_number,jacobian_column, &
       & local_column,local_dof,LOCAL_DOFS_OFFSET,local_row,matrices_type,matrix_number,matrix_type,matrix_type_idx, &
       & matrix_variable_idx,myrank,NUMBER_OF_COLUMNS,NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES,NUMBER_OF_EQUATIONS_COLUMNS, &
-      & NUMBER_OF_EQUATIONS_SETS,NUMBER_OF_EQUATIONS_VARIABLES,numberOfInterfaces,NUMBER_OF_INTERFACE_COLUMNS, &
+      & numberOfEquationsSets,NUMBER_OF_EQUATIONS_VARIABLES,numberOfInterfaces,NUMBER_OF_INTERFACE_COLUMNS, &
       & NUMBER_OF_INTERFACE_ROWS,NUMBER_OF_INTERFACE_VARIABLES,NUMBER_OF_GLOBAL_SOLVER_DOFS,NUMBER_OF_GLOBAL_SOLVER_ROWS, &
       & numberOfLinearMatrices,NUMBER_OF_LOCAL_SOLVER_DOFS,NUMBER_OF_LOCAL_SOLVER_ROWS,NUMBER_OF_RANK_COLS, &
       & NUMBER_OF_RANK_ROWS,NUMBER_OF_VARIABLES,rank,rank_idx,row_idx,ROW_LIST_ITEM(4),ROW_RANK,solver_global_dof, &
@@ -164,7 +164,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingRHSType), POINTER :: RHS_MAPPING
     TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET,equationsSet
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET,equationsSet
     TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: EQUATIONS_TO_SOLVER_MAP
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD,dependentField
     TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,lagrangeVariable,VARIABLE,rhsVariable
@@ -210,7 +210,7 @@ CONTAINS
           !
           
           !Allocate equations set to solver map
-          ALLOCATE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+          ALLOCATE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate solver mapping equations set to solver map.",ERR,ERROR,*999)      
           !Allocate interface condition to solver map
           ALLOCATE(SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(SOLVER_MAPPING%numberOfInterfaceConditions),STAT=ERR)
@@ -246,8 +246,8 @@ CONTAINS
           !
           ! Loop over equations sets
           !
-          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-            EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+          DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+            EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
@@ -293,19 +293,19 @@ CONTAINS
             ENDIF
           ENDDO !equations_set_idx
           DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
-            CALL LIST_DETACH_AND_DESTROY(INTERFACE_EQUATIONS_LISTS(interface_condition_idx)%PTR,NUMBER_OF_EQUATIONS_SETS, &
+            CALL LIST_DETACH_AND_DESTROY(INTERFACE_EQUATIONS_LISTS(interface_condition_idx)%PTR,numberOfEquationsSets, &
               INTERFACE_EQUATIONS_LIST,ERR,ERROR,*999)
             ALLOCATE(SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-              & INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+              & INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(numberOfEquationsSets),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate interface to solver maps equations.",ERR,ERROR,*999)
-            SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%NUMBER_OF_EQUATIONS_SETS= &
-              & NUMBER_OF_EQUATIONS_SETS
-            DO equations_idx=1,NUMBER_OF_EQUATIONS_SETS
+            SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%numberOfEquationsSets= &
+              & numberOfEquationsSets
+            DO equations_idx=1,numberOfEquationsSets
               CALL SolverMapping_InterfaceToSolverEquationsInitialise(SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
                 & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_idx),ERR,ERROR,*999)
               equations_set_idx=INTERFACE_EQUATIONS_LIST(1,equations_idx)
               interface_matrix_idx=INTERFACE_EQUATIONS_LIST(2,equations_idx)
-              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
                 SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                   & INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_idx)%EQUATIONS_SET_INDEX=equations_set_idx
@@ -335,15 +335,15 @@ CONTAINS
           !Presort the row numbers by rank.
           !
           !Allocate and initialise the rank lists.
-          ALLOCATE(RANK_GLOBAL_ROWS_LISTS(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING% &
+          ALLOCATE(RANK_GLOBAL_ROWS_LISTS(SOLVER_MAPPING%numberOfEquationsSets+SOLVER_MAPPING% &
             & numberOfInterfaceConditions,0:numberOfGroupComputationNodes-1),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate rank global rows lists.",ERR,ERROR,*999)
           CALL SolverDofCouplings_Initialise(rowCouplings,err,error,*999)
           DO rank=0,numberOfGroupComputationNodes-1
             equations_idx=0
-            DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
               equations_idx=equations_idx+1
-              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
                 NULLIFY(equations)
                 CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -406,9 +406,9 @@ CONTAINS
           !involved in the row. If all the variables are set as a fixed boundary condition then do not include the row. If
           !any variable is not fixed then include the row.
           equations_idx=0
-          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+          DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
             equations_idx=equations_idx+1
-            EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+            EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
@@ -423,7 +423,7 @@ CONTAINS
                 sourceMapping=>vectorMapping%sourceMapping
                 rowDOFsMapping=>vectorMapping%rowDOFSMapping
                 IF(ASSOCIATED(rowDOFsMapping)) THEN
-                  DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                  DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                   IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                     !Loop over the global rows for this equations set
                     DO global_row=1,vectorMapping%numberOfGlobalRows
@@ -688,10 +688,10 @@ CONTAINS
           ROW_DOMAIN_MAPPING%numberOfGlobal=NUMBER_OF_GLOBAL_SOLVER_ROWS
 
           !Initialise the equations sets to solver maps
-          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+          DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
 
             !Note that pointers have been checked for association above
-            EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+            EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
             NULLIFY(vectorEquations)
             CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -797,7 +797,7 @@ CONTAINS
 
             !Calculate the solver row <-> equations row & interface row mappings.
             equations_idx=0
-            DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
               equations_idx=equations_idx+1
 
               !Get rows list
@@ -806,7 +806,7 @@ CONTAINS
                 & RANK_GLOBAL_ROWS_LIST,ERR,ERROR,*999)
 
               !Note that pointers have been checked for association above
-              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -1151,9 +1151,9 @@ CONTAINS
               CALL SOLVER_MAPPING_VARIABLE_INITIALISE(SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)% &
                 & VARIABLES(solver_variable_idx),ERR,ERROR,*999)
               equations_set_idx=EQUATIONS_VARIABLES(1,variable_idx)
-              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
                 IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                   variable_type=EQUATIONS_VARIABLES(2,variable_idx)
                   VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%PTR
@@ -1245,7 +1245,7 @@ CONTAINS
             SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%solverMapping=>SOLVER_MAPPING
             !Allocate the solver col to equations set maps array
             ALLOCATE(SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%SOLVER_COL_TO_EQUATIONS_SET_MAPS( &
-              & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+              & SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate solver col to equations map solver col to equation set maps.", &
               & ERR,ERROR,*999)
             !Allocate the solver col to interface maps array
@@ -1256,13 +1256,13 @@ CONTAINS
             !Presort the column numbers by rank.
             !RANK_GLOBAL_COLS_LISTS(dof_type, equations_idx, variable_idx, rank_idx)
             !dof_type is 1 for domain local DOFs and 2 for ghost DOFs
-            ALLOCATE(RANK_GLOBAL_COLS_LISTS(2,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING% &
+            ALLOCATE(RANK_GLOBAL_COLS_LISTS(2,SOLVER_MAPPING%numberOfEquationsSets+SOLVER_MAPPING% &
               & numberOfInterfaceConditions,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%numberOfVariables, &
               & 0:numberOfGroupComputationNodes-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate rank global columns lists.",ERR,ERROR,*999)
             DO rank=0,numberOfGroupComputationNodes-1
               DO solver_variable_idx=1,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%numberOfVariables
-                DO equations_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING%numberOfInterfaceConditions
+                DO equations_idx=1,SOLVER_MAPPING%numberOfEquationsSets+SOLVER_MAPPING%numberOfInterfaceConditions
                   DO dof_type=1,2
                     NULLIFY(RANK_GLOBAL_COLS_LISTS(dof_type,equations_idx,solver_variable_idx,rank)%PTR)
                     CALL LIST_CREATE_START(RANK_GLOBAL_COLS_LISTS(dof_type,equations_idx,solver_variable_idx,rank)%PTR, &
@@ -1290,13 +1290,13 @@ CONTAINS
             !SUB_MATRIX_INFORMATION(3,equations_idx,variable_idx) = The interface matrix index, or 0 for an equations set matrix
             !equations_idx goes from 1 to the number of equations sets + interface conditions
             !variable_idx goes from 1 to the number of variables mapped to this solver matrix
-            ALLOCATE(SUB_MATRIX_INFORMATION(3,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+ &
+            ALLOCATE(SUB_MATRIX_INFORMATION(3,SOLVER_MAPPING%numberOfEquationsSets+ &
               & SOLVER_MAPPING%numberOfInterfaceConditions,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)% &
               & numberOfVariables),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate sub matrix information.",ERR,ERROR,*999)
             SUB_MATRIX_INFORMATION=0
             !Allocate sub-matrix list information
-            ALLOCATE(SUB_MATRIX_LIST(0:3,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+ &
+            ALLOCATE(SUB_MATRIX_LIST(0:3,SOLVER_MAPPING%numberOfEquationsSets+ &
               & SOLVER_MAPPING%numberOfInterfaceConditions,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)% &
               & numberOfVariables),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate sub matrix list.",ERR,ERROR,*999)
@@ -1323,10 +1323,10 @@ CONTAINS
             
             equations_idx=0
             !Loop over the equations sets
-            DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
               equations_idx=equations_idx+1
               !The pointers below have been checked for association above.
-              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -1335,7 +1335,7 @@ CONTAINS
               dynamicMapping=>vectorMapping%dynamicMapping
               linearMapping=>vectorMapping%linearMapping
               nonlinearMapping=>vectorMapping%nonlinearMapping
-              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
               NULLIFY(EQUATIONS_SET_VARIABLE_LIST)
               CALL LIST_CREATE_START(EQUATIONS_SET_VARIABLE_LIST,ERR,ERROR,*999)
               CALL LIST_DATA_TYPE_SET(EQUATIONS_SET_VARIABLE_LIST,LIST_INTG_TYPE,ERR,ERROR,*999)
@@ -1636,7 +1636,7 @@ CONTAINS
                         IF(ERR/=0) CALL FlagError("Could not allocate variables to solver column maps additive constants.", &
                           & ERR,ERROR,*999)
                         DO equations_idx2=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                          & NUMBER_OF_EQUATIONS_SETS
+                          & numberOfEquationsSets
                           equations_set_idx=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                             & INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_idx2)%EQUATIONS_SET_INDEX
                           interface_matrix_idx=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
@@ -1914,9 +1914,9 @@ CONTAINS
             NUMBER_OF_COLUMNS=NUMBER_OF_GLOBAL_SOLVER_DOFS
 
             !Initialise
-            DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
 
-              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -1982,7 +1982,7 @@ CONTAINS
                 & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%SOLVER_COL_TO_EQUATIONS_SET_MAPS( &
                 & equations_set_idx),ERR,ERROR,*999)
               
-              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
               IF(ASSOCIATED(dynamicMapping)) THEN
                 NUMBER_OF_VARIABLES=1
               ELSE
@@ -2328,7 +2328,7 @@ CONTAINS
                   
                   variable_type=SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%VARIABLES(solver_variable_idx)%variableType
                   
-                  DO equations_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING%numberOfInterfaceConditions
+                  DO equations_idx=1,SOLVER_MAPPING%numberOfEquationsSets+SOLVER_MAPPING%numberOfInterfaceConditions
                     
                     !Get columns list
                     CALL LIST_SORT(RANK_GLOBAL_COLS_LISTS(dof_type,equations_idx,solver_variable_idx,rank)%PTR,ERR,ERROR,*999)
@@ -2347,7 +2347,7 @@ CONTAINS
                         equations_set_idx=SUB_MATRIX_INFORMATION(2,equations_idx,solver_variable_idx)
                        
                         !The pointers below have been checked for association above.
-                        EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+                        EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         NULLIFY(vectorEquations)
                         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -2356,7 +2356,7 @@ CONTAINS
                         dynamicMapping=>vectorMapping%dynamicMapping
                         linearMapping=>vectorMapping%linearMapping
                         nonlinearMapping=>vectorMapping%nonlinearMapping
-                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
 
                         NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=0
                         numberOfLinearMatrices=0
@@ -3068,8 +3068,8 @@ CONTAINS
           ! 5. Set up the column mappings such that the solver matrix (sm) and equations matrix (em) orderings are the same.
           !
           
-          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-            EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+          DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+            EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
             NULLIFY(vectorEquations)
             CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -3194,9 +3194,9 @@ CONTAINS
         & NUMBER_OF_SOLVER_MATRICES,ERR,ERROR,*999)               
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Equation sets:",ERR,ERROR,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of equations sets = ",SOLVER_MAPPING% &
-        & NUMBER_OF_EQUATIONS_SETS,ERR,ERROR,*999)
-      DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-        EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+        & numberOfEquationsSets,ERR,ERROR,*999)
+      DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+        EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Equations set index : ",equations_set_idx,ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Region user number        = ",EQUATIONS_SET%REGION%userNumber, &
           & ERR,ERROR,*999)
@@ -3289,7 +3289,7 @@ CONTAINS
           & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfColumns,ERR,ERROR,*999)
         IF(DIAGNOSTICS2) THEN
           CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Solver column to equations set columns mappings:",ERR,ERROR,*999)
-          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+          DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Equations set index : ",equations_set_idx,ERR,ERROR,*999)
             DO column_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfColumns           
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE, "          Solver column : ",column_idx,ERR,ERROR,*999)
@@ -3375,7 +3375,7 @@ CONTAINS
           & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%totalNumberOfDofs,ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of global DOFs = ",SOLVER_MAPPING% &
           & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfGlobalDofs,ERR,ERROR,*999)
-        ALLOCATE(VARIABLE_TYPES(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING%numberOfInterfaceConditions),STAT=ERR)
+        ALLOCATE(VARIABLE_TYPES(SOLVER_MAPPING%numberOfEquationsSets+SOLVER_MAPPING%numberOfInterfaceConditions),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate variable types.",ERR,ERROR,*999)
         DO dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%totalNumberOfDofs     
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Solver local DOF : ",dof_idx,ERR,ERROR,*999)
@@ -3419,8 +3419,8 @@ CONTAINS
         IF(ALLOCATED(VARIABLE_TYPES)) DEALLOCATE(VARIABLE_TYPES)
       ENDDO !solver_matrix_idx
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Equation sets to solver mappings:",ERR,ERROR,*999)
-      DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-        EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+      DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+        EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
         EQUATIONS=>EQUATIONS_SET%EQUATIONS
         NULLIFY(vectorEquations)
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -3655,9 +3655,9 @@ CONTAINS
           DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Solver matrix : ",solver_matrix_idx,ERR,ERROR,*999)
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of equations sets = ",SOLVER_MAPPING% &
-              & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%NUMBER_OF_EQUATIONS_SETS,ERR,ERROR,*999)
+              & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%numberOfEquationsSets,ERR,ERROR,*999)
             DO equations_set_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-              & NUMBER_OF_EQUATIONS_SETS
+              & numberOfEquationsSets
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Equations set : ",equations_set_idx,ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Equations set index     = ",SOLVER_MAPPING% &
                 & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS( &
@@ -4021,27 +4021,27 @@ CONTAINS
         ALLOCATE(SOLVER_MAPPING%createValuesCache%EQUATIONS_VARIABLE_LIST(SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache equations variable list.", &
           & ERR,ERROR,*999)
-        ALLOCATE(SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+        ALLOCATE(SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache dynamic variable type.", &
           & ERR,ERROR,*999)
         ALLOCATE(SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-          & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
+          & SOLVER_MAPPING%numberOfEquationsSets,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache matrix variable types.", &
           & ERR,ERROR,*999)
         ALLOCATE(SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-          & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+          & SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache residual variable type.", &
           & ERR,ERROR,*999)
-        ALLOCATE(SOLVER_MAPPING%createValuesCache%rhsVariableType(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+        ALLOCATE(SOLVER_MAPPING%createValuesCache%rhsVariableType(SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache RHS variable type.", &
           & ERR,ERROR,*999)
-        ALLOCATE(SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+        ALLOCATE(SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache source variable type.", &
           & ERR,ERROR,*999)
         ALLOCATE(SOLVER_MAPPING%createValuesCache%INTERFACE_VARIABLE_LIST(SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache interface variable list.", &
           & ERR,ERROR,*999)
-        ALLOCATE(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS),STAT=ERR)
+        ALLOCATE(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING%numberOfEquationsSets),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate solver mapping create values cache interface condition indices.", &
           & ERR,ERROR,*999)
         DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
@@ -4065,7 +4065,7 @@ CONTAINS
         CALL LIST_DATA_TYPE_SET(SOLVER_MAPPING%createValuesCache%equationsRHSVariablesList,LIST_INTG_TYPE,ERR,ERROR,*999)
         CALL LIST_DATA_DIMENSION_SET(SOLVER_MAPPING%createValuesCache%equationsRHSVariablesList,2,ERR,ERROR,*999)
         CALL LIST_CREATE_FINISH(SOLVER_MAPPING%createValuesCache%equationsRHSVariablesList,ERR,ERROR,*999)
-        DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+        DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
           NULLIFY(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(equations_set_idx)%PTR)
           CALL LIST_CREATE_START(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(equations_set_idx)%PTR,ERR,ERROR,*999)
           CALL LIST_DATA_TYPE_SET(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(equations_set_idx)%PTR,LIST_INTG_TYPE, &
@@ -4112,17 +4112,17 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equations_set_idx2,numberOfVariables,variable_idx,VARIABLE_ITEM(2)
     LOGICAL :: VARIABLE_FOUND
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET,VAR_EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET,VAR_EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,VAR_DEPENDENT_FIELD
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("SolverMapping_CreateValuesCacheEqnVarListAdd",ERR,ERROR,*999)
 
     IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-      IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
-        EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+      IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%numberOfEquationsSets) THEN
+        EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
         IF(ASSOCIATED(EQUATIONS_SET)) THEN
-          DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+          DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%dependentField
           IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
             IF(variable_type/=0) THEN
               VARIABLE_FOUND=.FALSE.
@@ -4132,9 +4132,9 @@ CONTAINS
                 CALL LIST_ITEM_GET(SOLVER_MAPPING%createValuesCache%EQUATIONS_VARIABLE_LIST(solver_matrix_idx)%PTR, &
                   & variable_idx,VARIABLE_ITEM,ERR,ERROR,*999)
                 equations_set_idx2=VARIABLE_ITEM(1)
-                VAR_EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx2)%PTR
+                VAR_EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx2)%PTR
                 IF(ASSOCIATED(VAR_EQUATIONS_SET)) THEN
-                  VAR_DEPENDENT_FIELD=>VAR_EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                  VAR_DEPENDENT_FIELD=>VAR_EQUATIONS_SET%DEPENDENT%dependentField
                   IF(ASSOCIATED(VAR_DEPENDENT_FIELD)) THEN
                     IF(ASSOCIATED(DEPENDENT_FIELD,VAR_DEPENDENT_FIELD)) THEN
                       IF(variable_type==VARIABLE_ITEM(2)) VARIABLE_FOUND=.TRUE.                               
@@ -4162,7 +4162,7 @@ CONTAINS
       ELSE
         LOCAL_ERROR="The specified equations set index of "//TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
           & " is invalid. The index must be > 0 and <= "// &
-          & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,"*",ERR,ERROR))//"."        
+          & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfEquationsSets,"*",ERR,ERROR))//"."        
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
     ELSE
@@ -4193,7 +4193,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx2,numberOfVariables,variableIdx,variableItem(2)
     LOGICAL :: varFound
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,varEquationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet,varEquationsSet
     TYPE(FieldType), POINTER :: dependentField,varDependentField
     TYPE(FieldVariableType), POINTER :: rhsVariable,varRhsVariable
 
@@ -4402,7 +4402,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("SolverMapping_EquatsVarsToSolverMatrixSet",ERR,ERROR,*999)
@@ -4411,8 +4411,8 @@ CONTAINS
     
     IF(ASSOCIATED(SOLVER_MAPPING%createValuesCache)) THEN
       IF(SOLVER_MATRIX>=1.AND.SOLVER_MATRIX<=SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES) THEN
-        IF(EQUATIONS_SET_INDEX>=1.AND.EQUATIONS_SET_INDEX<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
-          EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(EQUATIONS_SET_INDEX)%PTR
+        IF(EQUATIONS_SET_INDEX>=1.AND.EQUATIONS_SET_INDEX<=SOLVER_MAPPING%numberOfEquationsSets) THEN
+          EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(EQUATIONS_SET_INDEX)%PTR
           IF(ASSOCIATED(EQUATIONS_SET)) THEN                
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
             IF(ASSOCIATED(EQUATIONS)) THEN
@@ -4466,7 +4466,7 @@ CONTAINS
         ELSE
           LOCAL_ERROR="The equations set index of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_INDEX,"*",ERR,ERROR))// &
             & " is invalid. The number must be >= 1 and <= "// &
-            & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,"*",ERR,ERROR))//"."
+            & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfEquationsSets,"*",ERR,ERROR))//"."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
@@ -4495,7 +4495,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer the solver mapping to add the equations set to
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to add
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to add
     INTEGER(INTG), INTENT(OUT) :: EQUATIONS_SET_INDEX !<On exit, the index of the equations set in the solver mapping
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4507,7 +4507,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EQUATIONS_SET_PTR_TYPE), ALLOCATABLE :: NEW_EQUATIONS_SETS(:)
+    TYPE(EquationsSetPtrType), ALLOCATABLE :: newEquationsSets(:)
     TYPE(ListPtrType), POINTER :: NEW_INTERFACE_INDICES(:)
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -4519,11 +4519,10 @@ CONTAINS
     EQUATIONS_SET_INDEX=0
 
     CALL SolverMapping_AssertNotFinished(SOLVER_MAPPING,ERR,ERROR,*999)
+    CALL EquationsSet_AssertIsFinished(EQUATIONS_SET,ERR,ERROR,*999)
     
     SOLVER_EQUATIONS=>SOLVER_MAPPING%SOLVER_EQUATIONS
     IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET)) THEN
-        IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
           NULLIFY(vectorEquations)
@@ -4531,76 +4530,76 @@ CONTAINS
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
           IF(ASSOCIATED(SOLVER_MAPPING%createValuesCache)) THEN
-            IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS>0) THEN
-              ALLOCATE(NEW_DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+            IF(SOLVER_MAPPING%numberOfEquationsSets>0) THEN
+              ALLOCATE(NEW_DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new dynamic variable type.",ERR,ERROR,*999)
               ALLOCATE(NEW_MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES,SOLVER_MAPPING% &
-                & NUMBER_OF_EQUATIONS_SETS+1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
+                & numberOfEquationsSets+1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new matrix variable types.",ERR,ERROR,*999)
               ALLOCATE(NEW_RESIDUAL_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-                & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+                & SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new residual variable type.",ERR,ERROR,*999)
-              ALLOCATE(NEW_RHS_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(NEW_RHS_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new RHS variable type.",ERR,ERROR,*999)
-              ALLOCATE(NEW_SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(NEW_SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new source variable type.",ERR,ERROR,*999)
-              ALLOCATE(NEW_INTERFACE_INDICES(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(NEW_INTERFACE_INDICES(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new interface indices.",ERR,ERROR,*999)
-              DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+              DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
                 NEW_INTERFACE_INDICES(equations_set_idx)%PTR=>SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES( &
                   & equations_set_idx)%PTR
               ENDDO !equations_sets
-              ALLOCATE(NEW_EQUATIONS_SETS(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(newEquationsSets(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",ERR,ERROR,*999)
               
               IF(ASSOCIATED(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES)) &
                 & DEALLOCATE(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES)
               
               NEW_DYNAMIC_VARIABLE_TYPE(1:SOLVER_MAPPING% &
-                & NUMBER_OF_EQUATIONS_SETS)=SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE
+                & numberOfEquationsSets)=SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE
               NEW_MATRIX_VARIABLE_TYPES(:,1:SOLVER_MAPPING% &
-                & NUMBER_OF_EQUATIONS_SETS,:)=SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES
+                & numberOfEquationsSets,:)=SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES
               NEW_RESIDUAL_VARIABLE_TYPES(:,1:SOLVER_MAPPING% &
-                & NUMBER_OF_EQUATIONS_SETS)=SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES
+                & numberOfEquationsSets)=SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES
               NEW_RHS_VARIABLE_TYPE(1:SOLVER_MAPPING% &
-                & NUMBER_OF_EQUATIONS_SETS)=SOLVER_MAPPING%createValuesCache%rhsVariableType
+                & numberOfEquationsSets)=SOLVER_MAPPING%createValuesCache%rhsVariableType
               NEW_SOURCE_VARIABLE_TYPE(1:SOLVER_MAPPING% &
-                & NUMBER_OF_EQUATIONS_SETS)=SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE
-              DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                NEW_EQUATIONS_SETS(equations_set_idx)%PTR=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+                & numberOfEquationsSets)=SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE
+              DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                newEquationsSets(equations_set_idx)%PTR=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
               ENDDO !equations_set_idx
               SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES=>NEW_INTERFACE_INDICES
               
-              NEW_DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)=0
-              NEW_MATRIX_VARIABLE_TYPES(:,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1,:)=0
-              NEW_RESIDUAL_VARIABLE_TYPES(:,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)=0
-              NEW_RHS_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)=0
-              NEW_SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)=0
+              NEW_DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1)=0
+              NEW_MATRIX_VARIABLE_TYPES(:,SOLVER_MAPPING%numberOfEquationsSets+1,:)=0
+              NEW_RESIDUAL_VARIABLE_TYPES(:,SOLVER_MAPPING%numberOfEquationsSets+1)=0
+              NEW_RHS_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1)=0
+              NEW_SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1)=0
               
               CALL MOVE_ALLOC(NEW_DYNAMIC_VARIABLE_TYPE,SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE)
               CALL MOVE_ALLOC(NEW_MATRIX_VARIABLE_TYPES,SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES)
               CALL MOVE_ALLOC(NEW_RESIDUAL_VARIABLE_TYPES,SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES)
               CALL MOVE_ALLOC(NEW_RHS_VARIABLE_TYPE,SOLVER_MAPPING%createValuesCache%rhsVariableType)
               CALL MOVE_ALLOC(NEW_SOURCE_VARIABLE_TYPE,SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE)
-              CALL MOVE_ALLOC(NEW_EQUATIONS_SETS,SOLVER_MAPPING%EQUATIONS_SETS)
+              CALL MOVE_ALLOC(newEquationsSets,SOLVER_MAPPING%equationsSets)
               SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES=>NEW_INTERFACE_INDICES
               
-            ELSE IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS==0) THEN
-              ALLOCATE(NEW_DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+            ELSE IF(SOLVER_MAPPING%numberOfEquationsSets==0) THEN
+              ALLOCATE(NEW_DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate dynamic variable type.",ERR,ERROR,*999)
               ALLOCATE(NEW_MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-                & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
+                & SOLVER_MAPPING%numberOfEquationsSets+1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate matrix variable types.",ERR,ERROR,*999)
               ALLOCATE(NEW_RESIDUAL_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-                & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+                & SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate residual variable type.",ERR,ERROR,*999)
-              ALLOCATE(NEW_RHS_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(NEW_RHS_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate RHS variable type.",ERR,ERROR,*999)
-              ALLOCATE(NEW_SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(NEW_SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate source variable type.",ERR,ERROR,*999)
-              ALLOCATE(NEW_INTERFACE_INDICES(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(NEW_INTERFACE_INDICES(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new interface indices.",ERR,ERROR,*999)
-              ALLOCATE(NEW_EQUATIONS_SETS(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+              ALLOCATE(newEquationsSets(SOLVER_MAPPING%numberOfEquationsSets+1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",ERR,ERROR,*999)
               
               NEW_DYNAMIC_VARIABLE_TYPE=0
@@ -4614,24 +4613,24 @@ CONTAINS
               CALL MOVE_ALLOC(NEW_RESIDUAL_VARIABLE_TYPES,SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES)
               CALL MOVE_ALLOC(NEW_RHS_VARIABLE_TYPE,SOLVER_MAPPING%createValuesCache%rhsVariableType)
               CALL MOVE_ALLOC(NEW_SOURCE_VARIABLE_TYPE,SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE)
-              CALL MOVE_ALLOC(NEW_EQUATIONS_SETS,SOLVER_MAPPING%EQUATIONS_SETS)
+              CALL MOVE_ALLOC(newEquationsSets,SOLVER_MAPPING%equationsSets)
               IF(ASSOCIATED(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES)) &
                 & DEALLOCATE(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES)
               SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES=>NEW_INTERFACE_INDICES
             ELSE
               CALL FlagError("The number of equations sets is < 0.",ERR,ERROR,*999)
             ENDIF
-            NULLIFY(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)%PTR)
+            NULLIFY(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING%numberOfEquationsSets+1)%PTR)
             CALL LIST_CREATE_START(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING% &
-              & NUMBER_OF_EQUATIONS_SETS+1)%PTR,ERR,ERROR,*999)
+              & numberOfEquationsSets+1)%PTR,ERR,ERROR,*999)
             CALL LIST_DATA_TYPE_SET(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING% &
-              & NUMBER_OF_EQUATIONS_SETS+1)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
+              & numberOfEquationsSets+1)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
             CALL LIST_DATA_DIMENSION_SET(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING% &
-              & NUMBER_OF_EQUATIONS_SETS+1)%PTR,2,ERR,ERROR,*999)
+              & numberOfEquationsSets+1)%PTR,2,ERR,ERROR,*999)
             CALL LIST_KEY_DIMENSION_SET(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING% &
-              & NUMBER_OF_EQUATIONS_SETS+1)%PTR,1,ERR,ERROR,*999)
+              & numberOfEquationsSets+1)%PTR,1,ERR,ERROR,*999)
             CALL LIST_CREATE_FINISH(SOLVER_MAPPING%createValuesCache%INTERFACE_INDICES(SOLVER_MAPPING% &
-              & NUMBER_OF_EQUATIONS_SETS+1)%PTR,ERR,ERROR,*999)
+              & numberOfEquationsSets+1)%PTR,ERR,ERROR,*999)
             SELECT CASE(EQUATIONS%timeDependence)
             CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
               SELECT CASE(EQUATIONS%linearity)
@@ -4647,9 +4646,9 @@ CONTAINS
                       IF(vectorMapping%linearMapping%varToEquationsMatricesMaps(variable_type)% &
                         & numberOfEquationsMatrices>0) THEN                  
                         SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(0, &
-                          & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1,matrix_idx)=1
+                          & SOLVER_MAPPING%numberOfEquationsSets+1,matrix_idx)=1
                         SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(1, &
-                          & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1,matrix_idx)=variable_type
+                          & SOLVER_MAPPING%numberOfEquationsSets+1,matrix_idx)=variable_type
                         MATRIX_DONE=.TRUE.
                       ELSE
                         variable_type=variable_type+1
@@ -4677,12 +4676,12 @@ CONTAINS
               CASE(EQUATIONS_NONLINEAR)
                 IF(ASSOCIATED(vectorMapping%nonlinearMapping)) THEN
                   !Set the number of residual variables for this equations set
-                  SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES(0,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)= &
+                  SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES(0,SOLVER_MAPPING%numberOfEquationsSets+1)= &
                     & vectorMapping%nonlinearMapping%numberOfResidualVariables
                   !Map the residual variables to the solver Jacobian
                   DO matrix_idx=1,vectorMapping%nonlinearMapping%numberOfResidualVariables
                     SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES(matrix_idx,SOLVER_MAPPING% &
-                      & NUMBER_OF_EQUATIONS_SETS+1)=vectorMapping%nonlinearMapping% &
+                      & numberOfEquationsSets+1)=vectorMapping%nonlinearMapping% &
                       & jacobianToVarMap(matrix_idx)%variableType
                   ENDDO
                   IF(ASSOCIATED(vectorMapping%linearMapping)) THEN
@@ -4694,9 +4693,9 @@ CONTAINS
                         IF(vectorMapping%linearMapping%varToEquationsMatricesMaps(variable_type)% &
                           & numberOfEquationsMatrices>0) THEN
                           SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(0, &
-                            & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1,1)=1
+                            & SOLVER_MAPPING%numberOfEquationsSets+1,1)=1
                           SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(1, &
-                            & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1,1)=variable_type
+                            & SOLVER_MAPPING%numberOfEquationsSets+1,1)=variable_type
                         ENDIF
                       ENDDO
                     ELSE
@@ -4719,18 +4718,18 @@ CONTAINS
               SELECT CASE(EQUATIONS%linearity)
               CASE(EQUATIONS_LINEAR)
                 IF(ASSOCIATED(vectorMapping%dynamicMapping)) THEN
-                  SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)= &
+                  SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1)= &
                     & vectorMapping%dynamicMapping%dynamicVariableType
                 ELSE
                   CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               CASE(SOLVER_EQUATIONS_NONLINEAR)
                 IF(ASSOCIATED(vectorMapping%dynamicMapping)) THEN
-                  SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)= &
+                  SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1)= &
                     & vectorMapping%dynamicMapping%dynamicVariableType
                   DO matrix_idx=1,vectorMapping%nonlinearMapping%numberOfResidualVariables
                     SOLVER_MAPPING%createValuesCache%RESIDUAL_VARIABLE_TYPES(matrix_idx,SOLVER_MAPPING% &
-                      & NUMBER_OF_EQUATIONS_SETS+1)=vectorMapping%nonlinearMapping% &
+                      & numberOfEquationsSets+1)=vectorMapping%nonlinearMapping% &
                       & jacobianToVarMap(matrix_idx)%variableType
                   ENDDO
                 ELSE
@@ -4747,16 +4746,16 @@ CONTAINS
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
             IF(ASSOCIATED(vectorMapping%rhsMapping)) THEN
-              SOLVER_MAPPING%createValuesCache%rhsVariableType(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)= &
+              SOLVER_MAPPING%createValuesCache%rhsVariableType(SOLVER_MAPPING%numberOfEquationsSets+1)= &
                 & vectorMapping%rhsMapping%rhsVariableType
             ENDIF
             IF(ASSOCIATED(vectorMapping%sourceMapping)) THEN
-              SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)= &
+              SOLVER_MAPPING%createValuesCache%SOURCE_VARIABLE_TYPE(SOLVER_MAPPING%numberOfEquationsSets+1)= &
                 & vectorMapping%sourceMapping%sourceVariableType
             ENDIF
-            SOLVER_MAPPING%EQUATIONS_SETS(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1)%PTR=>EQUATIONS_SET
-            SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+1
-            EQUATIONS_SET_INDEX=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            SOLVER_MAPPING%equationsSets(SOLVER_MAPPING%numberOfEquationsSets+1)%PTR=>EQUATIONS_SET
+            SOLVER_MAPPING%numberOfEquationsSets=SOLVER_MAPPING%numberOfEquationsSets+1
+            EQUATIONS_SET_INDEX=SOLVER_MAPPING%numberOfEquationsSets
             
             !Add the variables to the list of variables
             variable_type=SOLVER_MAPPING%createValuesCache%DYNAMIC_VARIABLE_TYPE(EQUATIONS_SET_INDEX)
@@ -4783,12 +4782,6 @@ CONTAINS
           ELSE
             CALL FlagError("Solvers mapping create values cache is not associated.",ERR,ERROR,*999)
           ENDIF
-        ELSE
-          CALL FlagError("Equations set has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-      ENDIF
     ELSE
       CALL FlagError("Solver mapping solver is not associated.",ERR,ERROR,*999)
     ENDIF
@@ -4799,7 +4792,7 @@ CONTAINS
     IF(ALLOCATED(NEW_RESIDUAL_VARIABLE_TYPES)) DEALLOCATE(NEW_RESIDUAL_VARIABLE_TYPES)
     IF(ALLOCATED(NEW_RHS_VARIABLE_TYPE)) DEALLOCATE(NEW_RHS_VARIABLE_TYPE)
     IF(ALLOCATED(NEW_SOURCE_VARIABLE_TYPE)) DEALLOCATE(NEW_SOURCE_VARIABLE_TYPE)
-    IF(ALLOCATED(NEW_EQUATIONS_SETS)) DEALLOCATE(NEW_EQUATIONS_SETS)
+    IF(ALLOCATED(newEquationsSets)) DEALLOCATE(newEquationsSets)
     ERRORSEXITS("SOLVER_MAPPING_EQUATIONS_SET_ADD",ERR,ERROR)    
     RETURN 1
    
@@ -5203,7 +5196,7 @@ CONTAINS
         DEALLOCATE(SOLVER_MAPPING%VARIABLES_LIST)
       ENDIF
       CALL SOLVER_MAPPING_VARIABLES_FINALISE(SOLVER_MAPPING%rhsVariablesList,ERR,ERROR,*999)      
-      IF(ALLOCATED(SOLVER_MAPPING%EQUATIONS_SETS)) DEALLOCATE(SOLVER_MAPPING%EQUATIONS_SETS)        
+      IF(ALLOCATED(SOLVER_MAPPING%equationsSets)) DEALLOCATE(SOLVER_MAPPING%equationsSets)        
       IF(ALLOCATED(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP)) THEN
         DO equations_set_idx=1,SIZE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP,1)
           CALL SolverMapping_EquationsSetToSolverMapFinalise(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP( &
@@ -5272,7 +5265,7 @@ CONTAINS
         SOLVER_EQUATIONS%solverMapping%NUMBER_OF_SOLVER_MATRICES=1
         SOLVER_EQUATIONS%solverMapping%numberOfRows=0
         SOLVER_EQUATIONS%solverMapping%numberOfGlobalRows=0
-        SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS=0
+        SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets=0
         SOLVER_EQUATIONS%solverMapping%numberOfInterfaceConditions=0
         CALL SOLVER_MAPPING_VARIABLES_INITIALISE(SOLVER_EQUATIONS%solverMapping%rhsVariablesList,err,error,*999)
         NULLIFY(SOLVER_EQUATIONS%solverMapping%rowDOFsMapping)
@@ -5307,7 +5300,7 @@ CONTAINS
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx,LIST_ITEM(2)
     INTEGER(INTG) :: number_of_interface_matrices
     LOGICAL :: EQUATIONS_SET_FOUND,VARIABLE_FOUND
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
     TYPE(InterfaceDependentType), POINTER :: INTERFACE_DEPENDENT
     TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
@@ -5350,8 +5343,8 @@ CONTAINS
                       EQUATIONS_SET=>INTERFACE_MAPPING%interfaceMatrixRowsToVarMaps(interface_matrix_idx)%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         EQUATIONS_SET_FOUND=.FALSE.
-                        DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                          IF(ASSOCIATED(EQUATIONS_SET,SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR)) THEN
+                        DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                          IF(ASSOCIATED(EQUATIONS_SET,SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR)) THEN
                             EQUATIONS_SET_FOUND=.TRUE.
                             EXIT
                           ENDIF
@@ -5502,7 +5495,7 @@ CONTAINS
     INTERFACE_CONDITION_TO_SOLVER_MAP%INTERFACE_CONDITION_INDEX=0
     NULLIFY(INTERFACE_CONDITION_TO_SOLVER_MAP%solverMapping)
     NULLIFY(INTERFACE_CONDITION_TO_SOLVER_MAP%interfaceEquations)
-    INTERFACE_CONDITION_TO_SOLVER_MAP%NUMBER_OF_EQUATIONS_SETS=0
+    INTERFACE_CONDITION_TO_SOLVER_MAP%numberOfEquationsSets=0
     IF(ALLOCATED(INTERFACE_CONDITION_TO_SOLVER_MAP%INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS)) THEN
       DO equations_set_idx=1,SIZE(INTERFACE_CONDITION_TO_SOLVER_MAP%INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS,1)
         CALL SolverMapping_InterfaceToSolverEquationsFinalise(INTERFACE_CONDITION_TO_SOLVER_MAP% &
@@ -5558,7 +5551,7 @@ CONTAINS
     INTERFACE_CONDITION_TO_SOLVER_MAP%INTERFACE_CONDITION_INDEX=0
     NULLIFY(INTERFACE_CONDITION_TO_SOLVER_MAP%solverMapping)
     NULLIFY(INTERFACE_CONDITION_TO_SOLVER_MAP%interfaceEquations)
-    INTERFACE_CONDITION_TO_SOLVER_MAP%NUMBER_OF_EQUATIONS_SETS=0
+    INTERFACE_CONDITION_TO_SOLVER_MAP%numberOfEquationsSets=0
     
     EXITS("SolverMapping_InterfConditionToSolverMapInitialise")
     RETURN
@@ -5627,7 +5620,7 @@ CONTAINS
     INTERFACE_CONDITION_TO_SOLVER_MAP%INTERFACE_CONDITION_INDEX=0
     NULLIFY(INTERFACE_CONDITION_TO_SOLVER_MAP%solverMapping)
     NULLIFY(INTERFACE_CONDITION_TO_SOLVER_MAP%interfaceEquations)
-    INTERFACE_CONDITION_TO_SOLVER_MAP%NUMBER_OF_EQUATIONS_SETS=0
+    INTERFACE_CONDITION_TO_SOLVER_MAP%numberOfEquationsSets=0
     
     EXITS("SolverMapping_InterfaceToSolverMapInitialise")
     RETURN
@@ -6407,7 +6400,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("SOLVER_MAPPING_SOLVER_MATRICES_NUMBER_SET",ERR,ERROR,*999)
@@ -6416,8 +6409,8 @@ CONTAINS
     
     IF(ASSOCIATED(SOLVER_MAPPING%createValuesCache)) THEN
       MAXIMUM_NUMBER_OF_EQUATIONS_MATRICES=1
-      DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-        EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+      DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+        EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
         EQUATIONS=>EQUATIONS_SET%EQUATIONS
         NULLIFY(vectorEquations)
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
@@ -6434,15 +6427,15 @@ CONTAINS
         !If we need to reallocate and reset all the create values cache arrays and change the number of matrices
         IF(NUMBER_OF_SOLVER_MATRICES/=SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES) THEN
           ALLOCATE(OLD_MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-            & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
+            & SOLVER_MAPPING%numberOfEquationsSets,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate old matrix variable types",ERR,ERROR,*999)
-          OLD_MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES,1:SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS, &
+          OLD_MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES,1:SOLVER_MAPPING%numberOfEquationsSets, &
             & 1:SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES)=SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES( &
-            & 0:FIELD_NUMBER_OF_VARIABLE_TYPES,1:SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS, &
+            & 0:FIELD_NUMBER_OF_VARIABLE_TYPES,1:SOLVER_MAPPING%numberOfEquationsSets, &
             & 1:SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES)
           DEALLOCATE(SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES)
           ALLOCATE(SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(0:FIELD_NUMBER_OF_VARIABLE_TYPES, &
-            & SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
+            & SOLVER_MAPPING%numberOfEquationsSets,NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate matrix variable types",ERR,ERROR,*999)
           IF(NUMBER_OF_SOLVER_MATRICES>SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES) THEN
             SOLVER_MAPPING%createValuesCache%MATRIX_VARIABLE_TYPES(:,:,1:SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES)= &

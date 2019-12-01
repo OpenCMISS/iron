@@ -2279,7 +2279,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information about the equations in an equations set. \see OpenCMISS::Iron::cmfe_EquationsType
   TYPE EquationsType
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations_set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations_set
     LOGICAL :: equationsFinished !<Is .TRUE. if the equations have been finished, .FALSE. if not.
     INTEGER(INTG) :: equationType !<The equations type \see EquationsRoutines_EquationTypes,EquationsRoutines
     INTEGER(INTG) :: equalityType !<The equations equality type \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
@@ -2435,135 +2435,135 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
 
   !>Contains information on the setup information for an equations set
-  TYPE EQUATIONS_SET_SETUP_TYPE
-    INTEGER(INTG) :: SETUP_TYPE !<The setup type for the equations set setup \see EquationsSetConstants_SetupTypes,EquationsSetConstants
-    INTEGER(INTG) :: ACTION_TYPE !<The action type for the equations set setup \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
+  TYPE EquationsSetSetupType
+    INTEGER(INTG) :: setupType !<The setup type for the equations set setup \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+    INTEGER(INTG) :: actionType !<The action type for the equations set setup \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
     INTEGER(INTG) :: fieldUserNumber !<The user number for the field for the equations set setup.
-    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field for the equations set setup.
-    INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to use.
-  END TYPE EQUATIONS_SET_SETUP_TYPE  
+    TYPE(FieldType), POINTER :: field !<A pointer to the field for the equations set setup.
+    INTEGER(INTG) :: analyticFunctionType !<The analytic function type to use.
+  END TYPE EquationsSetSetupType  
   
   !>Contains information on the geometry for an equations set
-  TYPE EQUATIONS_SET_GEOMETRY_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
+  TYPE EquationsSetGeometryType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
     TYPE(FieldType), POINTER :: geometricField !<The geometric field for this equations set.
-    TYPE(FieldType), POINTER :: FIBRE_FIELD !<The fibre field for this equations set if one is defined. If no fibre field is defined the pointer is NULL.
-  END TYPE EQUATIONS_SET_GEOMETRY_TYPE
+    TYPE(FieldType), POINTER :: fibreField !<The fibre field for this equations set if one is defined. If no fibre field is defined the pointer is NULL.
+  END TYPE EquationsSetGeometryType
 
-  TYPE EQUATIONS_SET_MATERIALS_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    LOGICAL :: MATERIALS_FINISHED !<Is .TRUE. if the materials for the equations set has finished being created, .FALSE. if not.
-    LOGICAL :: MATERIALS_FIELD_AUTO_CREATED !<Is .TRUE. if the materials field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: MATERIALS_FIELD !<A pointer to the materials field for the equations set if one is defined. If no material field is defined the pointer is NULL.
-  END TYPE EQUATIONS_SET_MATERIALS_TYPE
+  TYPE EquationsSetMaterialsType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
+    LOGICAL :: materialsFinished !<Is .TRUE. if the materials for the equations set has finished being created, .FALSE. if not.
+    LOGICAL :: materialsFieldAutoCreated !<Is .TRUE. if the materials field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: materialsField !<A pointer to the materials field for the equations set if one is defined. If no material field is defined the pointer is NULL.
+  END TYPE EquationsSetMaterialsType
 
   !>Contains information on the dependent variables for the equations set.
-  TYPE EQUATIONS_SET_DEPENDENT_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    LOGICAL :: DEPENDENT_FINISHED !<Is .TRUE. if the dependent variables for the equations set has finished being created, .FALSE. if not.
-    LOGICAL :: DEPENDENT_FIELD_AUTO_CREATED !<Is .TRUE. if the dependent field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the equations set.
-  END TYPE EQUATIONS_SET_DEPENDENT_TYPE
+  TYPE EquationsSetDependentType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
+    LOGICAL :: dependentFinished !<Is .TRUE. if the dependent variables for the equations set has finished being created, .FALSE. if not.
+    LOGICAL :: dependentFieldAutoCreated !<Is .TRUE. if the dependent field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: dependentField !<A pointer to the dependent field for the equations set.
+  END TYPE EquationsSetDependentType
 
   !>Contains information on the derived variables for the equations set, eg. stress or strain
   TYPE EquationsSetDerivedType
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer back to the equations set.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer back to the equations set.
     LOGICAL :: derivedFinished !<Is .TRUE. if the derived variables for the equations set have finished being created, .FALSE. if not.
     LOGICAL :: derivedFieldAutoCreated !<Is .TRUE. if the derived field has been or will be auto created by the equations set setup, .FALSE. if it was already created.
     TYPE(FieldType), POINTER :: derivedField !<A pointer to the derived field for the equations set.
     INTEGER(INTG) :: numberOfVariables !<The number of derived variables used.
-    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(DERIVED_TYPE) is zero if the derived type is not used, otherwise it is the field variable type in the derived field for the derived variable type
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(derivedType) is zero if the derived type is not used, otherwise it is the field variable type in the derived field for the derived variable type
   END TYPE EquationsSetDerivedType
 
   !>Contains information on the independent variables for the equations set.
-  TYPE EQUATIONS_SET_INDEPENDENT_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    LOGICAL :: INDEPENDENT_FINISHED !<Is .TRUE. if the independent variables for the equations set has finished being created, .FALSE. if not.
-    LOGICAL :: INDEPENDENT_FIELD_AUTO_CREATED !<Is .TRUE. if the independent field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: INDEPENDENT_FIELD !<A pointer to the independent field for the equations set.
-  END TYPE EQUATIONS_SET_INDEPENDENT_TYPE
+  TYPE EquationsSetIndependentType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
+    LOGICAL :: independentFinished !<Is .TRUE. if the independent variables for the equations set has finished being created, .FALSE. if not.
+    LOGICAL :: independentFieldAutoCreated !<Is .TRUE. if the independent field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: independentField !<A pointer to the independent field for the equations set.
+  END TYPE EquationsSetIndependentType
 
   !>Contains information on the source for the equations set.
-  TYPE EQUATIONS_SET_SOURCE_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    LOGICAL :: SOURCE_FINISHED !<Is .TRUE. if the source for the equations set has finished being created, .FALSE. if not.
-    LOGICAL :: SOURCE_FIELD_AUTO_CREATED !<Is .TRUE. if the source field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: SOURCE_FIELD !<A pointer to the source field for the equations set if one is defined. If no source is defined the pointer is NULL.
-  END TYPE EQUATIONS_SET_SOURCE_TYPE
+  TYPE EquationsSetSourceType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
+    LOGICAL :: sourceFinished !<Is .TRUE. if the source for the equations set has finished being created, .FALSE. if not.
+    LOGICAL :: sourceFieldAutoCreated !<Is .TRUE. if the source field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: sourceField !<A pointer to the source field for the equations set if one is defined. If no source is defined the pointer is NULL.
+  END TYPE EquationsSetSourceType
   
   !>Contains information on the analytic setup for the equations set.
-  TYPE EQUATIONS_SET_ANALYTIC_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE !<The analytic function identifier
-    LOGICAL :: ANALYTIC_FINISHED !<Is .TRUE. if the analytic setup for the problem has finished being created, .FALSE. if not.
-    LOGICAL :: ANALYTIC_FIELD_AUTO_CREATED !<Is .TRUE. if the analytic field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: ANALYTIC_FIELD !<A pointer to the analytic field for the equations set if one is defined. If no source is defined the pointer is NULL.
-    REAL(DP) :: ANALYTIC_TIME !<The time value to use for analytic evaluations.
-    REAL(DP) :: ANALYTIC_USER_PARAMS(20)  !<A small array that can be used to hold various parameters often required in analytic problems. \todo should this be allocated?
-  END TYPE EQUATIONS_SET_ANALYTIC_TYPE
+  TYPE EquationsSetAnalyticType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
+    INTEGER(INTG) :: analyticFunctionType !<The analytic function identifier
+    LOGICAL :: analyticFinished !<Is .TRUE. if the analytic setup for the problem has finished being created, .FALSE. if not.
+    LOGICAL :: analyticFieldAutoCreated !<Is .TRUE. if the analytic field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: analyticField !<A pointer to the analytic field for the equations set if one is defined. If no source is defined the pointer is NULL.
+    REAL(DP) :: analyticTime !<The time value to use for analytic evaluations.
+    REAL(DP) :: analyticUserParams(20)  !<A small array that can be used to hold various parameters often required in analytic problems. \todo should this be allocated?
+  END TYPE EquationsSetAnalyticType
 
-  TYPE EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    LOGICAL :: EQUATIONS_SET_FIELD_FINISHED !<Is .TRUE. if the equations set field for the equations set has finished being created, .FALSE. if not.
-    LOGICAL :: EQUATIONS_SET_FIELD_AUTO_CREATED !<Is .TRUE. if the equations set field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: EQUATIONS_SET_FIELD_FIELD !<A pointer to the equations set field for the equations set.
-  END TYPE EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE
+  TYPE EquationsSetEquationsSetFieldType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
+    LOGICAL :: equationsSetFieldFinished !<Is .TRUE. if the equations set field for the equations set has finished being created, .FALSE. if not.
+    LOGICAL :: equationsSetFieldAutoCreated !<Is .TRUE. if the equations set field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: equationsSetFieldField !<A pointer to the equations set field for the equations set.
+  END TYPE EquationsSetEquationsSetFieldType
 
   !>Contains information on an equations set. \see OpenCMISS::Iron::cmfe_EquationsSetType
-  TYPE EQUATIONS_SET_TYPE
+  TYPE EquationsSetType
     INTEGER(INTG) :: userNumber !<The user identifying number of the equations set
     INTEGER(INTG) :: globalNumber !<The global index of the equations set in the region.
-    LOGICAL :: EQUATIONS_SET_FINISHED !<Is .TRUE. if the equations set have finished being created, .FALSE. if not.
-    TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer back to the equations sets
+    LOGICAL :: equationsSetFinished !<Is .TRUE. if the equations set have finished being created, .FALSE. if not.
+    TYPE(EquationsSetsType), POINTER :: equationsSets !<A pointer back to the equations sets
     TYPE(VARYING_STRING) :: label !<A user defined label for the equations set.
     TYPE(RegionType), POINTER :: region !<A pointer back to the region containing the equations set.
     INTEGER(INTG), ALLOCATABLE :: specification(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     REAL(DP) :: currentTime !<The current time for the equations set
     REAL(DP) :: deltaTime !<The current time increment for the equations set
     INTEGER(INTG) :: outputType !<The output type for the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
-    INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EquationsRoutines_SolutionMethods 
-    TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: geometry !<The geometry information for the equations set.
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: materials !<A pointer to the materials information for the equations set.
-    TYPE(EQUATIONS_SET_SOURCE_TYPE), POINTER :: source !<A pointer to the source information for the equations set.
-    TYPE(EQUATIONS_SET_DEPENDENT_TYPE) :: dependent !<The depedent variable information for the equations set.
-    TYPE(EQUATIONS_SET_INDEPENDENT_TYPE), POINTER :: independent !<A pointer to the indepedent field information for the equations set.
-    TYPE(EQUATIONS_SET_ANALYTIC_TYPE), POINTER :: analytic !<A pointer to the analytic setup information for the equations set.
+    INTEGER(INTG) :: solutionMethod !<The solution method for the equations set \see EquationsRoutines_SolutionMethods 
+    TYPE(EquationsSetGeometryType) :: geometry !<The geometry information for the equations set.
+    TYPE(EquationsSetMaterialsType), POINTER :: materials !<A pointer to the materials information for the equations set.
+    TYPE(EquationsSetSourceType), POINTER :: source !<A pointer to the source information for the equations set.
+    TYPE(EquationsSetDependentType) :: dependent !<The depedent variable information for the equations set.
+    TYPE(EquationsSetIndependentType), POINTER :: independent !<A pointer to the indepedent field information for the equations set.
+    TYPE(EquationsSetAnalyticType), POINTER :: analytic !<A pointer to the analytic setup information for the equations set.
     TYPE(EquationsSetDerivedType), POINTER :: derived !<A pointer to the derived field information.
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations information for the equations set
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary condition information for the equations set.
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE) :: EQUATIONS_SET_FIELD !<A pointer to the equations set field for the equations set.
-  END TYPE EQUATIONS_SET_TYPE
+    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary condition information for the equations set. THIS SHOULD BE CHANGED AS EQUATIONS SETS SHOULDN'T HAVE BOUNDARY CONDITIONS
+    TYPE(EquationsSetEquationsSetFieldType) :: equationsSetField !<A pointer to the equations set field for the equations set.
+  END TYPE EquationsSetType
   
-  !>A buffer type to allow for an array of pointers to a EQUATIONS_SET_TYPE \see Types::EQUATIONS_SET_TYPE
-  TYPE EQUATIONS_SET_PTR_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: ptr !<A pointer to the equations set.
-  END TYPE EQUATIONS_SET_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a EquationsSetType \see Types::EquationsSetType
+  TYPE EquationsSetPtrType
+    TYPE(EquationsSetType), POINTER :: ptr !<A pointer to the equations set.
+  END TYPE EquationsSetPtrType
   
-  TYPE EQUATIONS_SETS_TYPE
-    TYPE(RegionType) , POINTER :: REGION !<A pointer to the region containing the equations sets
-    INTEGER(INTG) :: NUMBER_OF_EQUATIONS_SETS !<The number of equations sets
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: EQUATIONS_SETS(:) !<EQUATIONS_SETS(equations_set_idx). EQUATIONS_SETS(equations_set_idx)%PTR is the pointer to the equations_set_idx'th equations set.
-  END TYPE EQUATIONS_SETS_TYPE
+  TYPE EquationsSetsType
+    TYPE(RegionType) , POINTER :: region !<A pointer to the region containing the equations sets
+    INTEGER(INTG) :: numberOfEquationsSets!<The number of equations sets
+    TYPE(EquationsSetPtrType), POINTER :: equationsSets(:) !<EquationsSets(equationsSetIdx). EquationsSets(equationsSetIdx)%ptr is the pointer to the equationsSetIdx'th equations set.
+  END TYPE EquationsSetsType
 
-  PUBLIC EQUATIONS_SET_SETUP_TYPE
+  PUBLIC EquationsSetSetupType
 
-  PUBLIC EQUATIONS_SET_GEOMETRY_TYPE
+  PUBLIC EquationsSetGeometryType
 
-  PUBLIC EQUATIONS_SET_MATERIALS_TYPE
+  PUBLIC EquationsSetMaterialsType
 
-  PUBLIC EQUATIONS_SET_DEPENDENT_TYPE
+  PUBLIC EquationsSetDependentType
 
   PUBLIC EquationsSetDerivedType
 
-  PUBLIC EQUATIONS_SET_INDEPENDENT_TYPE
+  PUBLIC EquationsSetIndependentType
 
-  PUBLIC EQUATIONS_SET_SOURCE_TYPE
+  PUBLIC EquationsSetSourceType
 
-  PUBLIC EQUATIONS_SET_ANALYTIC_TYPE
+  PUBLIC EquationsSetAnalyticType
 
-  PUBLIC EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE
+  PUBLIC EquationsSetEquationsSetFieldType
 
-  PUBLIC EQUATIONS_SET_TYPE,EQUATIONS_SET_PTR_TYPE,EQUATIONS_SETS_TYPE
+  PUBLIC EquationsSetType,EquationsSetPtrType,EquationsSetsType
   
   !
   !================================================================================================================================
@@ -2622,7 +2622,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE InterfaceMatrixToVarMapType
     INTEGER(INTG) :: matrixNumber !<The interface matrix number
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set containing the dependent variable that is mapped to this interface matrix.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set containing the dependent variable that is mapped to this interface matrix.
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface condition containing the Lagrange variable that is mapped to this interface matrix.
     INTEGER(INTG) :: variableType !<The dependent variable type mapped to this interface matrix
     TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable that is mapped to this interface matrix
@@ -2742,7 +2742,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE InterfaceDependentType
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition
     INTEGER(INTG) :: numberOfDependentVariables !<The number of dependent variables in the interface condition
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: equationsSets(:) !<equationsSets(variableIdx). The pointer to the equations set containing the dependent variable for the variableIdx'th added dependent variable.
+    TYPE(EquationsSetPtrType), POINTER :: equationsSets(:) !<equationsSets(variableIdx). The pointer to the equations set containing the dependent variable for the variableIdx'th added dependent variable.
     TYPE(FieldVariablePtrType), POINTER :: fieldVariables(:) !<fieldVariables(variableIdx). The pointer to the variableIdx'th dependent variable in the interface condition.
     INTEGER(INTG), POINTER :: variableMeshIndices(:) !<variableMeshIndices(variableIdx). The mesh index of the variableIdx'th dependent variable in the interface condition.
   END TYPE InterfaceDependentType
@@ -3653,7 +3653,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE
     INTEGER(INTG) :: EQUATIONS_SET_INDEX
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     INTEGER(INTG) :: INTERFACE_MATRIX_INDEX
   END TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE
   
@@ -3662,7 +3662,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: INTERFACE_CONDITION_INDEX !<The index of the interface condition for these mappings
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mappings
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations in this interface condition
-    INTEGER(INTG) :: NUMBER_OF_EQUATIONS_SETS !<The number of equations sets that the interface condition affects
+    INTEGER(INTG) :: numberOfEquationsSets !<The number of equations sets that the interface condition affects
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_set_idx). The equations set information of the equations_set_idx'th equations set that the interface condition affects.
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx). The mappings from the interface matrices in this interface condition to the solver_matrix_idx'th solver_matrix
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_IM_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx). The mappings from the interface_matrix_idx'th interface matrix in this interface condition to the solver_matrices.
@@ -3788,8 +3788,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_SOLVER_MATRICES !<The number of solution matrices in this mapping.
     INTEGER(INTG) :: numberOfRows !<The number of (local) rows in the solver matrices
     INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the solver matrices
-    INTEGER(INTG) :: NUMBER_OF_EQUATIONS_SETS !<The number of equations sets in the solution mapping.
-    TYPE(EQUATIONS_SET_PTR_TYPE), ALLOCATABLE :: EQUATIONS_SETS(:) !<The list of equations sets that are in this solution mapping
+    INTEGER(INTG) :: numberOfEquationsSets !<The number of equations sets in the solution mapping.
+    TYPE(EquationsSetPtrType), ALLOCATABLE :: equationsSets(:) !<The list of equations sets that are in this solution mapping
     TYPE(EQUATIONS_SET_TO_SOLVER_MAP_TYPE), ALLOCATABLE :: EQUATIONS_SET_TO_SOLVER_MAP(:) !<EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx). The mapping from the equations_set_idx'th equations set to the solver matrices.
     INTEGER(INTG) :: numberOfInterfaceConditions !<The number of interface conditions in the solution mapping.
     TYPE(INTERFACE_CONDITION_PTR_TYPE), ALLOCATABLE :: interfaceConditions(:) !<The list of interface conditions that are in this
@@ -3968,10 +3968,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   ! Problem types
   !
 
-  TYPE PROBLEM_SETUP_TYPE
-    INTEGER(INTG) :: SETUP_TYPE !<The setup type \see PROBLEM_CONSTANTS_SetupTypes,PROBLEM_CONSTANTS
-    INTEGER(INTG) :: ACTION_TYPE !<The action type \see PROBLEM_CONSTANTS_SetupActionTypes,CONSTANTS_ROUTINES
-  END TYPE PROBLEM_SETUP_TYPE
+  TYPE ProblemSetupType
+    INTEGER(INTG) :: setupType !<The setup type \see ProblemRoutines_SetupTypes,ProblemRoutines
+    INTEGER(INTG) :: actionType !<The action type \see ProblemRoutines_SetupActionTypes,ProblemRoutines
+  END TYPE ProblemSetupType
   
   !>Contains information for a problem. \see OpenCMISS::Iron::cmfe_ProblemType
   TYPE ProblemType
@@ -3996,7 +3996,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(ProblemPtrType), POINTER :: problems(:) !<The array of pointers to the problems.
   END TYPE ProblemsType
 
-  PUBLIC PROBLEM_SETUP_TYPE
+  PUBLIC ProblemSetupType
 
   PUBLIC ProblemType,ProblemPtrType,ProblemsType
 
@@ -4023,7 +4023,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
     TYPE(DecomposersType), POINTER :: decomposers !<A pointer to the decomposers defined on the region.
     TYPE(FieldsType), POINTER :: fields !<A pointer to the fields defined on the region.
-    TYPE(EQUATIONS_SETS_TYPE), POINTER :: equationsSets !<A pointer to the equation sets defined on the region.
+    TYPE(EquationsSetsType), POINTER :: equationsSets !<A pointer to the equation sets defined on the region.
     TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: cellMLEnvironments !<A pointer to the CellML environments for the region.
     TYPE(RegionType), POINTER :: parentRegion !<A pointer to the parent region for the region. If the region has no parent region then it is the global (world) region and parentRegion is NULL.
     INTEGER(INTG) :: numberOfSubRegions !<The number of sub-regions defined for the region.

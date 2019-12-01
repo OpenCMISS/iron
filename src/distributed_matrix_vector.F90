@@ -51,7 +51,7 @@ MODULE DistributedMatrixVector
   USE ComputationAccessRoutines
   USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE ISO_C_BINDING
   USE Kinds

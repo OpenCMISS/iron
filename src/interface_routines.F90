@@ -54,7 +54,7 @@ MODULE InterfaceRoutines
   USE DecompositionAccessRoutines
   USE FieldRoutines
   USE GENERATED_MESH_ROUTINES
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_ROUTINES
   USE ISO_VARYING_STRING

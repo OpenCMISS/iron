@@ -47,7 +47,7 @@ MODULE BasisRoutines
   USE BaseRoutines
   USE BasisAccessRoutines
   USE Constants
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings

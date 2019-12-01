@@ -101,7 +101,7 @@ MODULE OpenCMISS_Iron
  USE GENERATED_MESH_ROUTINES
  USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
  USE HISTORY_ROUTINES
- USE INPUT_OUTPUT
+ USE InputOutput
  USE InterfaceRoutines
  USE InterfaceAccessRoutines
  USE INTERFACE_CONDITIONS_CONSTANTS
@@ -218,7 +218,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on an equations set defined on a region.
  TYPE cmfe_EquationsSetType
    PRIVATE
-   TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+   TYPE(EquationsSetType), POINTER :: equationsSet
  END TYPE cmfe_EquationsSetType
 
  !>Contains information for a field defined on a region.
@@ -3309,7 +3309,7 @@ MODULE OpenCMISS_Iron
   !>@}
 
   !> \addtogroup OpenCMISS_AnalyticParamIndices OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices
-  !> \brief Indices for EQUATIONS_SET_ANALYTIC_TYPE%ANALYTIC_USER_PARAMS
+  !> \brief Indices for EquationsSetAnalyticType%analyticUserParams
   !> \see OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX = &
@@ -28225,7 +28225,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28404,7 +28404,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28494,7 +28494,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28580,7 +28580,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28649,7 +28649,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28718,7 +28718,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28889,7 +28889,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -28958,7 +28958,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29027,7 +29027,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29096,7 +29096,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29294,7 +29294,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -29363,7 +29363,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29431,7 +29431,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: analyticField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -29504,7 +29504,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29569,7 +29569,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29634,7 +29634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29700,7 +29700,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29767,7 +29767,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29835,7 +29835,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29901,7 +29901,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29977,7 +29977,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: geometryFibreField,equationsSetField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -30062,7 +30062,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30128,7 +30128,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: derivedField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -30199,7 +30199,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30265,7 +30265,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30334,7 +30334,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -30399,7 +30399,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30463,7 +30463,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30530,7 +30530,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -30602,7 +30602,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30666,7 +30666,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -30732,7 +30732,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30799,7 +30799,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30863,7 +30863,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30931,7 +30931,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: independentField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -31003,7 +31003,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31068,7 +31068,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31134,7 +31134,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31200,7 +31200,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31266,7 +31266,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31331,7 +31331,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31398,7 +31398,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: materialsField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -31470,7 +31470,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31535,7 +31535,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31601,7 +31601,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31668,7 +31668,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31735,7 +31735,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31800,7 +31800,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31866,7 +31866,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: sourceField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -31936,7 +31936,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32002,7 +32002,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32071,7 +32071,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32143,7 +32143,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32220,7 +32220,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32290,7 +32290,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32360,7 +32360,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -46275,7 +46275,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceType), POINTER :: interface
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: equationsSetRegion,interfaceRegion
@@ -65423,7 +65423,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
@@ -65479,7 +65479,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region

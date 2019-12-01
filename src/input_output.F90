@@ -42,13 +42,13 @@
 !>
 
 !> This module handles all formating and input and output.
-MODULE INPUT_OUTPUT
+MODULE InputOutput
 
   USE BaseRoutines
-  USE CONSTANTS
-  USE KINDS
+  USE Constants
+  USE Kinds
   USE ISO_VARYING_STRING
-  USE STRINGS
+  USE Strings
 
 #include "macros.h"  
 
@@ -4105,4 +4105,4 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE INPUT_OUTPUT
+END MODULE InputOutput

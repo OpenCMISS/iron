@@ -64,7 +64,7 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths
@@ -104,7 +104,7 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -128,7 +128,7 @@ CONTAINS
         & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -168,8 +168,8 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -193,7 +193,7 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -275,7 +275,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -313,21 +313,21 @@ CONTAINS
       CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
         & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
         & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
+        SELECT CASE(PROBLEM_SETUP%setupType)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Do nothing
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
@@ -361,8 +361,8 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)
             !Sub-loops are finished when parent is finished
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -370,7 +370,7 @@ CONTAINS
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the monodomain sub loop
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
@@ -417,13 +417,13 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(ELASTICITY_SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -477,13 +477,13 @@ CONTAINS
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
+          SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -507,13 +507,13 @@ CONTAINS
             !Finish the CellML equations creation
             CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a bioelectrics finite elasticity equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -773,7 +773,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -829,8 +829,8 @@ CONTAINS
           IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
             SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-              DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+              DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
                   geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                   IF(.NOT.ASSOCIATED(geometricField)) THEN
@@ -838,13 +838,13 @@ CONTAINS
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
-                  dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>EQUATIONS_SET%dependent%dependentField
                   IF(.NOT.ASSOCIATED(dependentField)) THEN
                     LOCAL_ERROR="Dependent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
-                  independentField=>EQUATIONS_SET%INDEPENDENT%independent_Field
+                  independentField=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(independentField)) THEN
                     LOCAL_ERROR="Independent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
@@ -996,7 +996,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_PARENT
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -1061,16 +1061,16 @@ CONTAINS
           IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
             SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-              DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+              DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>EQUATIONS_SET%dependent%dependentField
                   IF(.NOT.ASSOCIATED(dependentField)) THEN
                     LOCAL_ERROR="Dependent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
-                  independentField=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                  independentField=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(independentField)) THEN
                     LOCAL_ERROR="Independent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
@@ -1356,7 +1356,7 @@ CONTAINS
     TYPE(ProblemType), POINTER :: PROBLEM
     INTEGER(INTG) :: equations_set_idx
     TYPE(ControlLoopTimeType), POINTER :: TIME_LOOP
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1420,10 +1420,10 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                      dependentField=>EQUATIONS_SET%dependent%dependentField
                       NULLIFY(DEPENDENT_REGION)
                       CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
                       FILENAME="MainTime_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
@@ -1460,10 +1460,10 @@ CONTAINS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                      EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                      EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                        dependentField=>EQUATIONS_SET%dependent%dependentField
                         NULLIFY(DEPENDENT_REGION)
                         CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
                         FILENAME="MainTime_M_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
@@ -1522,7 +1522,7 @@ CONTAINS
     !Local Variables
     TYPE(ProblemType), POINTER :: PROBLEM
     INTEGER(INTG) :: equations_set_idx,numberOfNodes,dof_idx,node_idx
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1557,10 +1557,10 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                    dependentField=>EQUATIONS_SET%dependent%dependentField
                   ELSE
                     LOCAL_ERROR="Equations set is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
@@ -1670,7 +1670,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_MONODOMAIN,DEPENDENT_FIELD_ELASTICITY
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT
     TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS
@@ -1742,7 +1742,7 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%geometricField
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
@@ -1770,9 +1770,9 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    DEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                    DEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%dependent%dependentField
                     IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_ELASTICITY)) THEN
                       CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
@@ -1816,18 +1816,18 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%geometricField
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
                       CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     ! the Field_V_Variable_Type contains the 3D nodal positions
-                    DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                    DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%dependent%dependentField
                     IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_MONODOMAIN)) THEN
                       CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
-                    INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                    INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
                       CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
@@ -1853,9 +1853,9 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                    INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%independentField
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) THEN
                       CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
@@ -2284,18 +2284,18 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%geometricField
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
                       CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     ! the Field_V_Variable_Type contains the 3D nodal positions
-                    DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                    DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%dependent%dependentField
                     IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_MONODOMAIN)) THEN
                       CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
-                    INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                    INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
                       CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
@@ -2321,9 +2321,9 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                    INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%independentField
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) THEN
                       CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
@@ -2585,7 +2585,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_ELASTICITY
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING,NODES_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE_U,FIELD_VARIABLE_V,FIELD_VARIABLE_FE
@@ -2639,9 +2639,9 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                  INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) CALL FlagError("Independent field is not associated.", &
                     & ERR,ERROR,*999)
                 ELSE
@@ -2664,9 +2664,9 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                  INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) CALL FlagError("Independent field is not associated.",ERR, &
                     & ERROR,*999)
                 ELSE
@@ -2912,7 +2912,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: FIELD_VAR_IND_M
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(DomainMappingType), POINTER :: NODES_MAPPING
     INTEGER(INTG) :: node_idx,dof_idx
     REAL(DP), PARAMETER :: LENGTH_ACTIN=1.04_DP,LENGTH_MBAND=0.0625_DP,LENGTH_MYOSIN=0.7375_DP
@@ -3031,9 +3031,9 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
+                  INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
                     CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                   ENDIF

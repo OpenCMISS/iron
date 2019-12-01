@@ -65,7 +65,7 @@ MODULE LaplaceEquationsRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths  
@@ -118,7 +118,7 @@ CONTAINS
   SUBROUTINE Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -402,7 +402,7 @@ CONTAINS
   SUBROUTINE Laplace_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet   !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: equationsSet   !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG),        INTENT(IN)  :: elementNumber  !<The element number to calculate
     INTEGER(INTG),        INTENT(OUT) :: err            !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error          !<The error string
@@ -742,8 +742,8 @@ CONTAINS
   SUBROUTINE Laplace_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to setup
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables %
@@ -778,19 +778,19 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
-    SELECT CASE(equationsSetSetup%SETUP_TYPE)
+    SELECT CASE(equationsSetSetup%setupType)
     CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
       !
       ! Initial setup
       !
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL Laplace_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         !Do nothing
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -820,73 +820,73 @@ CONTAINS
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
-        IF(equationsSet%dependent%DEPENDENT_FIELD_AUTO_CREATED) THEN
+        IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
           !Create the auto created dependent field
           CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsSet%dependent% &
-            & DEPENDENT_FIELD,err,error,*999)
-          CALL Field_LabelSet(equationsSet%dependent%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
-          CALL Field_TypeSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-          CALL Field_DependentTypeSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+            & dependentField,err,error,*999)
+          CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
+          CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
           NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
-          CALL Field_DecompositionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,geometricDecomposition, &
+          CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition, &
             & err,error,*999)
-          CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,geometricField,err,error,*999)
-          CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,2,err,error,*999)
-          CALL Field_VariableTypesSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+          CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
+          CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,2,err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
             & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-          CALL Field_VariableLabelSet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,"Phi",err,error,*999)
-          CALL Field_VariableLabelSet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,"del Phi/del n", &
+          CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"Phi",err,error,*999)
+          CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del Phi/del n", &
             & err,error,*999)
-          CALL Field_DataTypeSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+          CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
             & FIELD_DP_TYPE,err,error,*999)
-          CALL Field_DataTypeSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+          CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
             & FIELD_DP_TYPE,err,error,*999)
           IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
             numberOfDependentComponents=numberOfDimensions
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
           ELSE
             numberOfDependentComponents=1
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
               & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
           ENDIF          
-          CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+          CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
             & numberOfDependentComponents,err,error,*999)
-          CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+          CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
             & numberOfDependentComponents,err,error,*999)
           DO componentIdx=1,numberOfDependentComponents
             componentLabel="Phi"//TRIM(NumberToVString(componentIdx,"*",err,error))
-            CALL Field_ComponentLabelSet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & componentIdx,componentLabel,err,error,*999)
             componentLabel="del Phi"//TRIM(NumberToVString(componentIdx,"*",err,error))//"/del n"
-            CALL Field_ComponentLabelSet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
               & componentIdx,componentLabel,err,error,*999)
             !Default to the geometric interpolation setup
             CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,componentIdx, &
               & geometricMeshComponent,err,error,*999)
-            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & componentIdx,geometricMeshComponent,err,error,*999)
-            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
               & componentIdx,geometricMeshComponent,err,error,*999)
           ENDDO !componentIdx
-          SELECT CASE(equationsSet%SOLUTION_METHOD)
+          SELECT CASE(equationsSet%solutionMethod)
           CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
             DO componentIdx=1,numberOfDependentComponents
-              CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%DEPENDENT_FIELD, &
+              CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
                 & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-              CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%DEPENDENT_FIELD, &
+              CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
                 & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
             ENDDO !componentIdx
             !Default the scaling to the geometric field scaling
             CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
-            CALL Field_ScalingTypeSet(equationsSet%dependent%DEPENDENT_FIELD,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType,err,error,*999)
           CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -898,7 +898,7 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+            localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -926,7 +926,7 @@ CONTAINS
             & numberOfDependentComponents,err,error,*999)
           CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
             & numberOfDependentComponents,err,error,*999)
-          SELECT CASE(equationsSet%SOLUTION_METHOD)
+          SELECT CASE(equationsSet%solutionMethod)
           CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
             DO componentIdx=1,numberOfDependentComponents
               CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
@@ -945,17 +945,17 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+            localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        IF(equationsSet%dependent%DEPENDENT_FIELD_AUTO_CREATED) &
-          & CALL Field_CreateFinish(equationsSet%dependent%DEPENDENT_FIELD,err,error,*999)
+        IF(equationsSet%dependent%dependentFieldAutoCreated) &
+          & CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation"
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -963,46 +963,46 @@ CONTAINS
       !
       ! Independent setup
       !
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
           NULLIFY(geometricField)
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
           CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-          IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
+          IF(equationsSet%INDEPENDENT%independentFieldAutoCreated) THEN
             !Create the auto created independent field
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region, &
-              & equationsSet%independent%INDEPENDENT_FIELD,err,error,*999)
+              & equationsSet%independent%independentField,err,error,*999)
             !start creation of a new field
-            CALL Field_TypeSetAndLock(equationsSet%independent%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSet%independent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
             !define new created field to be independent
-            CALL Field_DependentTypeSetAndLock(equationsSet%independent%INDEPENDENT_FIELD, &
+            CALL Field_DependentTypeSetAndLock(equationsSet%independent%independentField, &
               & FIELD_INDEPENDENT_TYPE,err,error,*999)
             !look for decomposition rule already defined
             NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
             !apply decomposition rule found on new created field
-            CALL Field_DecompositionSetAndLock(equationsSet%independent%INDEPENDENT_FIELD,geometricDecomposition, &
+            CALL Field_DecompositionSetAndLock(equationsSet%independent%independentField,geometricDecomposition, &
               & err,error,*999)
             !point new field to geometric field
-            CALL Field_GeometricFieldSetAndLock(equationsSet%independent%INDEPENDENT_FIELD,geometricField,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsSet%independent%independentField,geometricField,err,error,*999)
             !set number of variables to 1 (1 for U)
-            CALL Field_NumberOfVariablesSetAndLock(equationsSet%independent%INDEPENDENT_FIELD,1,err,error,*999)
-            CALL Field_VariableTypesSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE], &
+            CALL Field_NumberOfVariablesSetAndLock(equationsSet%independent%independentField,1,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSet%INDEPENDENT%independentField,[FIELD_U_VARIABLE_TYPE], &
               & err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%independent%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%independent%independentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%independent%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%independent%independentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_DP_TYPE,err,error,*999)
             !calculate number of components with one component for each dimension
             numberOfIndependentComponents=numberOfDimensions
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%independent%INDEPENDENT_FIELD, & 
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%independent%independentField, & 
               & FIELD_U_VARIABLE_TYPE,numberOfIndependentComponents,err,error,*999)
             DO componentIdx=1,numberOfIndependentComponents
               CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,componentIdx, & 
                 & geometricMeshComponent,err,error,*999)
               !Default to the geometric interpolation setup
-              CALL Field_ComponentMeshComponentSet(equationsSet%independent%INDEPENDENT_FIELD, & 
+              CALL Field_ComponentMeshComponentSet(equationsSet%independent%independentField, & 
                 & FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999) 
             ENDDO !componentIdx
           ELSE
@@ -1022,21 +1022,21 @@ CONTAINS
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
-          IF(equationsSet%independent%INDEPENDENT_FIELD_AUTO_CREATED) &
-            & CALL Field_CreateFinish(equationsSet%independent%INDEPENDENT_FIELD,err,error,*999)
-          CALL Field_ParameterSetCreate(equationsSet%independent%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+          IF(equationsSet%independent%independentFieldAutoCreated) &
+            & CALL Field_CreateFinish(equationsSet%independent%independentField,err,error,*999)
+          CALL Field_ParameterSetCreate(equationsSet%independent%independentField,FIELD_U_VARIABLE_TYPE, & 
             & FIELD_BOUNDARY_SET_TYPE,err,error,*999)
           !Default k values to 1.0
-          CALL Field_NumberOfComponentsGet(equationsSet%independent%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+          CALL Field_NumberOfComponentsGet(equationsSet%independent%independentField,FIELD_U_VARIABLE_TYPE, &
             & numberOfIndependentComponents,err,error,*999)
           DO componentIdx=1,numberOfIndependentComponents
-            CALL Field_ComponentValuesInitialise(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ComponentValuesInitialise(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
           ENDDO !componentIdx
         ENDIF
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a Laplace equations set"
         CALL FlagError(localError,err,error,*999)
       END SELECT      
@@ -1047,24 +1047,24 @@ CONTAINS
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
-          IF(equationsSet%materials%MATERIALS_FIELD_AUTO_CREATED) THEN
+          IF(equationsSet%materials%materialsFieldAutoCreated) THEN
             !Create the auto created materials field
-            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsSet%materials% &
-              & MATERIALS_FIELD,err,error,*999)
-            CALL Field_LabelSet(equationsSet%materials%MATERIALS_FIELD,"Materials Field",err,error,*999)
-            CALL Field_TypeSetAndLock(equationsSet%materials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsSet%materials%materialsField, &
+              & err,error,*999)
+            CALL Field_LabelSet(equationsSet%materials%materialsField,"Materials Field",err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSet%materials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
             NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
-            CALL Field_DecompositionSetAndLock(equationsSet%materials%MATERIALS_FIELD,geometricDecomposition, &
+            CALL Field_DecompositionSetAndLock(equationsSet%materials%materialsField,geometricDecomposition, &
               & err,error,*999)
-            CALL Field_GeometricFieldSetAndLock(equationsSet%materials%MATERIALS_FIELD,geometricField,err,error,*999)
-            CALL Field_NumberOfVariablesSetAndLock(equationsSet%materials%MATERIALS_FIELD,1,err,error,*999)
-            CALL Field_VariableTypesSetAndLock(equationsSet%materials%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+            CALL Field_GeometricFieldSetAndLock(equationsSet%materials%materialsField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsSet%materials%materialsField,1,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSet%materials%materialsField,[FIELD_U_VARIABLE_TYPE], &
               & err,error,*999)
-            CALL Field_VariableLabelSet(equationsSet%materials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,"conductivity", &
+            CALL Field_VariableLabelSet(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE,"conductivity", &
               & err,error,*999)
             IF(numberOfDimensions==1) THEN
               numberOfMaterialsComponents=1
@@ -1074,25 +1074,25 @@ CONTAINS
               numberOfMaterialsComponents=6
             ENDIF
             !Set the number of materials components
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%materials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & numberOfMaterialsComponents,err,error,*999)        
-            CALL Field_DataTypeSetAndLock(equationsSet%materials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_DP_TYPE,err,error,*999)
             !Default the materials components to the first geometric component
             CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
             DO componentIdx=1,numberOfMaterialsComponents                
-              CALL Field_ComponentMeshComponentSet(equationsSet%materials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE,1, &
                 & geometricMeshComponent,err,error,*999)
             ENDDO !components_idx            
-            SELECT CASE(equationsSet%SOLUTION_METHOD)
+            SELECT CASE(equationsSet%solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               DO componentIdx=1,numberOfMaterialsComponents                
-                CALL Field_ComponentInterpolationSetAndLock(equationsSet%materials%MATERIALS_FIELD, &
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%materials%materialsField, &
                   & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               !Default the scaling to the geometric field scaling
               CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
-              CALL Field_ScalingTypeSet(equationsSet%materials%MATERIALS_FIELD,geometricScalingType,err,error,*999)
+              CALL Field_ScalingTypeSet(equationsSet%materials%materialsField,geometricScalingType,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -1104,7 +1104,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -1121,7 +1121,7 @@ CONTAINS
             ELSEIF(numberOfDimensions==3) THEN
               CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,6,err,error,*999)
             ENDIF
-            SELECT CASE(equationsSet%SOLUTION_METHOD)
+            SELECT CASE(equationsSet%solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !do nothing
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -1135,7 +1135,7 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              localError="The solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+              localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -1143,21 +1143,21 @@ CONTAINS
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
-          IF(equationsSet%materials%MATERIALS_FIELD_AUTO_CREATED) THEN
-            CALL Field_CreateFinish(equationsSet%materials%MATERIALS_FIELD,err,error,*999)
+          IF(equationsSet%materials%materialsFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsSet%materials%materialsField,err,error,*999)
             !Default conductivity values to 1.0
             CALL Field_NumberOfComponentsGet(equationsSet%geometry%geometricField,FIELD_U_VARIABLE_TYPE, &
               & numberOfDimensions,err,error,*999)
             DO componentIdx=1,numberOfDimensions
-              CALL Field_ComponentValuesInitialise(equationsSet%materials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ComponentValuesInitialise(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
             ENDDO !componentIdx
           ENDIF
         ENDIF
         !Do nothing
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1165,14 +1165,14 @@ CONTAINS
       !
       ! Source setup
       !
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         !Do nothing
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         !Do nothing
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1180,7 +1180,7 @@ CONTAINS
       !
       ! Analytic setup
       !
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
         NULLIFY(dependentField)
@@ -1188,73 +1188,73 @@ CONTAINS
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
         CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-        SELECT CASE(equationsSetSetup%ANALYTIC_FUNCTION_TYPE)
+        SELECT CASE(equationsSetSetup%analyticFunctionType)
         CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
           !Check that we are in 2D
           IF(numberOfDimensions/=2) THEN
             localError="The number of geometric dimensions of "// &
               & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
               & " is invalid. The analytic function type of "// &
-              & TRIM(NumberToVString(equationsSetSetup%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
               & " requires that there be 2 geometric dimensions."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           !Create analytic field if required
           !Set analtyic function type
-          equationsSet%analytic%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1
+          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1
         CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2)
           !Check that we are in 2D
           IF(numberOfDimensions/=2) THEN
             localError="The number of geometric dimensions of "// &
               & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
               & " is invalid. The analytic function type of "// &
-              & TRIM(NumberToVString(equationsSetSetup%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
               & " requires that there be 2 geometric dimensions."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           !Create analytic field if required
           !Set analytic function type
-          equationsSet%analytic%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
+          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
         CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1)
           !Check that we are in 3D
           IF(numberOfDimensions/=3) THEN
             localError="The number of geometric dimensions of "// &
               & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
               & " is invalid. The analytic function type of "// &
-              & TRIM(NumberToVString(equationsSetSetup%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
               & " requires that there be 3 geometric dimensions."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           !Create analytic field if required
           !Set analytic function type
-          equationsSet%analytic%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1
+          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1
         CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2)
           !Check that we are in 3D
           IF(numberOfDimensions/=3) THEN
             localError="The number of geometric dimensions of "// &
               & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
               & " is invalid. The analytic function type of "// &
-              & TRIM(NumberToVString(equationsSetSetup%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
               & " requires that there be 3 geometric dimensions."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           !Create analytic field if required
           !Set analytic function type
-          equationsSet%analytic%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
+          equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
         CASE DEFAULT
           localError="The specified analytic function type of "// &
-            & TRIM(NumberToVString(equationsSetSetup%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+            & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
             & " is invalid for a standard Laplace equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
         NULLIFY(analyticField)
         CALL EquationsSet_AnalyticFieldGet(equationsSet,analyticField,err,error,*999)
-        IF(equationsSet%analytic%ANALYTIC_FIELD_AUTO_CREATED) &
-          & CALL Field_CreateFinish(equationsSet%analytic%ANALYTIC_FIELD,err,error,*999)
+        IF(equationsSet%analytic%analyticFieldAutoCreated) &
+          & CALL Field_CreateFinish(equationsSet%analytic%analyticField,err,error,*999)
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1265,14 +1265,14 @@ CONTAINS
       CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
       IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) &
         & CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
-      SELECT CASE(equationsSetSetup%ACTION_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         NULLIFY(equations)
         CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
         CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
         CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           !Finish the equations creation
           NULLIFY(equations)
@@ -1317,18 +1317,18 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE DEFAULT
-      localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
+      localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
         & " is invalid for a standard Laplace equation."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1348,7 +1348,7 @@ CONTAINS
   SUBROUTINE Laplace_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1370,7 +1370,7 @@ CONTAINS
       & EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
       SELECT CASE(solutionMethod)
       CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-        equationsSet%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
+        equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
       CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -1407,7 +1407,7 @@ CONTAINS
   SUBROUTINE Laplace_EquationsSetSpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
     INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations set specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1456,7 +1456,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
-    TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1483,19 +1483,19 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
       
-    SELECT CASE(problemSetup%SETUP_TYPE)
+    SELECT CASE(problemSetup%setupType)
     CASE(PROBLEM_SETUP_INITIAL_TYPE)
       !
       ! Initial Setup
       !
-      SELECT CASE(problemSetup%ACTION_TYPE)
+      SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Do nothing????
       CASE(PROBLEM_SETUP_FINISH_ACTION)
         !Do nothing???
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1503,7 +1503,7 @@ CONTAINS
       !
       ! Control loop setup
       !
-      SELECT CASE(problemSetup%ACTION_TYPE)
+      SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Set up a simple control loop
         NULLIFY(controlLoop)
@@ -1516,8 +1516,8 @@ CONTAINS
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)            
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace problem."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1530,7 +1530,7 @@ CONTAINS
       CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop) 
       CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-      SELECT CASE(problemSetup%ACTION_TYPE)
+      SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Start the solvers creation
         NULLIFY(solvers)
@@ -1549,8 +1549,8 @@ CONTAINS
         !Finish the solvers creation
         CALL Solvers_CreateFinish(solvers,err,error,*999)
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1558,7 +1558,7 @@ CONTAINS
       !
       ! Solver equations setup
       !
-      SELECT CASE(problemSetup%ACTION_TYPE)
+      SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Get the control loop
         NULLIFY(controlLoopRoot)
@@ -1592,13 +1592,13 @@ CONTAINS
         !Finish the solver equations creation
         CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
       CASE DEFAULT
-        localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
-          & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
           & " is invalid for a standard Laplace problem."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE DEFAULT
-      localError="The setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
         & " is invalid for a standard Laplace problem."
       CALL FlagError(localError,err,error,*999)
     END SELECT

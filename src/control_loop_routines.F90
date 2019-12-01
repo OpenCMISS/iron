@@ -49,7 +49,7 @@ MODULE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE PROBLEM_CONSTANTS

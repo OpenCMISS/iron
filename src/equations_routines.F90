@@ -51,6 +51,7 @@ MODULE EquationsRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
@@ -217,7 +218,7 @@ CONTAINS
   SUBROUTINE Equations_CreateStart(equationsSet,equations,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to create equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to create equations for
     TYPE(EquationsType), POINTER :: equations !<On exit, a pointer to the created equations. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -466,7 +467,7 @@ CONTAINS
   SUBROUTINE Equations_Initialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -561,7 +562,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("Equations_InterpolationInitialise",err,error,*998)
@@ -597,20 +598,20 @@ CONTAINS
     NULLIFY(equations%interpolation%fibreInterpPointMetrics)
     
     equations%interpolation%geometricField=>equationsSet%geometry%geometricField
-    equations%interpolation%fibreField=>equationsSet%geometry%FIBRE_FIELD
-    equations%interpolation%dependentField=>equationsSet%dependent%DEPENDENT_FIELD
+    equations%interpolation%fibreField=>equationsSet%geometry%fibreField
+    equations%interpolation%dependentField=>equationsSet%dependent%dependentField
     IF(ASSOCIATED(equationsSet%independent)) THEN
-      equations%interpolation%independentField=>equationsSet%independent%INDEPENDENT_FIELD
+      equations%interpolation%independentField=>equationsSet%independent%independentField
     ELSE
       NULLIFY(equations%interpolation%independentField)
     ENDIF
     IF(ASSOCIATED(equationsSet%materials)) THEN
-      equations%interpolation%materialsField=>equationsSet%materials%MATERIALS_FIELD
+      equations%interpolation%materialsField=>equationsSet%materials%materialsField
     ELSE
       NULLIFY(equations%interpolation%materialsField)
     ENDIF
     IF(ASSOCIATED(equationsSet%source)) THEN
-      equations%interpolation%sourceField=>equationsSet%source%SOURCE_FIELD
+      equations%interpolation%sourceField=>equationsSet%source%sourceField
     ELSE
       NULLIFY(equations%interpolation%sourceField)
     ENDIF
@@ -1044,7 +1045,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: derivedField
     INTEGER(INTG) :: variableType
     TYPE(VARYING_STRING) :: localError
@@ -1063,7 +1064,7 @@ CONTAINS
     ENDIF
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
-    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
     IF(.NOT.ASSOCIATED(equationsSet%derived)) CALL FlagError("Equations set derived is not associated.",err,error,*999)
     IF(.NOT.equationsSet%derived%derivedFinished) &
       & CALL FlagError("Equations set derived has not been finished.",err,error,*999)

@@ -72,7 +72,7 @@ MODULE EquationsSetRoutines
   USE FieldAccessRoutines
   USE FittingRoutines
   USE FluidMechanicsRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
@@ -176,11 +176,11 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to create the analytic for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to create the analytic for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: analyticField
 
     ENTERS("EquationsSet_AnalyticCreateFinish",err,error,*999)
@@ -189,9 +189,9 @@ CONTAINS
 
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_ANALYTIC_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
-    analyticField=>equationsSet%analytic%ANALYTIC_FIELD
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_ANALYTIC_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
+    analyticField=>equationsSet%analytic%analyticField
     IF(ASSOCIATED(analyticField)) THEN
       equationsSetSetupInfo%fieldUserNumber=analyticField%userNumber
       equationsSetSetupInfo%field=>analyticField
@@ -201,7 +201,7 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Finish the analytic creation
-    equationsSet%analytic%ANALYTIC_FINISHED=.TRUE.
+    equationsSet%analytic%analyticFinished=.TRUE.
       
     EXITS("EquationsSet_AnalyticCreateFinish")
     RETURN
@@ -219,7 +219,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of an analytic for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of an analytic for.
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The analytic function type to setup \see EquationsSetConstants_AnalyticFunctionTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(IN) :: analyticFieldUserNumber !<The user specified analytic field number
     TYPE(FieldType), POINTER :: analyticField !<If associated on entry, a pointer to the user created analytic field which has the same user number as the specified analytic field user number. If not associated on entry, on exit, a pointer to the created analytic field for the equations set.
@@ -228,7 +228,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(DecompositionType), POINTER :: analyticDecomposition,geometricDecomposition
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,analyticFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -284,23 +284,23 @@ CONTAINS
     ENDIF
     !Initialise the equations set analytic
     CALL EquationsSet_AnalyticInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(analyticField)) equationsSet%analytic%ANALYTIC_FIELD_AUTO_CREATED=.TRUE.
+    IF(.NOT.ASSOCIATED(analyticField)) equationsSet%analytic%analyticFieldAutoCreated=.TRUE.
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_ANALYTIC_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_ANALYTIC_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=analyticFieldUserNumber
     equationsSetSetupInfo%field=>analyticField
-    equationsSetSetupInfo%ANALYTIC_FUNCTION_TYPE=analyticFunctionType
+    equationsSetSetupInfo%analyticFunctionType=analyticFunctionType
     !Start the equations set specific analytic setup
     CALL EquationsSet_Setup(equationsSet,equationsSetSetupInfo,err,error,*999)
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Set pointers
-    IF(equationsSet%analytic%ANALYTIC_FIELD_AUTO_CREATED) THEN
-      analyticField=>equationsSet%analytic%ANALYTIC_FIELD
+    IF(equationsSet%analytic%analyticFieldAutoCreated) THEN
+      analyticField=>equationsSet%analytic%analyticField
     ELSE
-      equationsSet%analytic%ANALYTIC_FIELD=>analyticField
+      equationsSet%analytic%analyticField=>analyticField
     ENDIF
     
     EXITS("EquationsSet_AnalyticCreateStart")
@@ -319,7 +319,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to destroy the analytic solutins for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to destroy the analytic solutins for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -345,7 +345,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticEvaluate(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the current analytic solutins for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the current analytic solutins for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -622,7 +622,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticFinalise(equationsSetAnalytic,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_ANALYTIC_TYPE), POINTER :: equationsSetAnalytic!<A pointer to the equations set analytic to finalise
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsSetAnalytic!<A pointer to the equations set analytic to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -647,7 +647,7 @@ CONTAINS
     & variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters,value,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
     REAL(DP), INTENT(IN) :: position(:) !<position(dimention_idx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
@@ -714,7 +714,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AnalyticInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the analytic solution for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the analytic solution for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -727,11 +727,11 @@ CONTAINS
     
     ALLOCATE(equationsSet%analytic,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations set analytic.",err,error,*999)
-    equationsSet%analytic%EQUATIONS_SET=>equationsSet
-    equationsSet%analytic%ANALYTIC_FINISHED=.FALSE.
-    equationsSet%analytic%ANALYTIC_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSet%analytic%ANALYTIC_FIELD)
-    equationsSet%analytic%ANALYTIC_TIME=0.0_DP
+    equationsSet%analytic%equationsSet=>equationsSet
+    equationsSet%analytic%analyticFinished=.FALSE.
+    equationsSet%analytic%analyticFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSet%analytic%analyticField)
+    equationsSet%analytic%analyticTime=0.0_DP
        
     EXITS("EquationsSet_AnalyticInitialise")
     RETURN
@@ -748,7 +748,7 @@ CONTAINS
   !>Sets the analytic problem user parameter
   SUBROUTINE EquationsSet_AnalyticUserParamSet(equationsSet,parameterIdx,parameter,err,error,*)
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the analytic solution for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the analytic solution for.
     INTEGER(INTG), INTENT(IN) :: parameterIdx !<Index of the user parameter
     REAL(DP), INTENT(IN) :: parameter !<Value of the parameter
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -760,15 +760,15 @@ CONTAINS
 
     CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
  
-    IF(parameterIdx<1.OR.parameterIdx>SIZE(equationsSet%analytic%ANALYTIC_USER_PARAMS,1)) THEN
+    IF(parameterIdx<1.OR.parameterIdx>SIZE(equationsSet%analytic%analyticUserParams,1)) THEN
       localError="The specified parameter index of "//TRIM(NumberToVString(parameterIdx,"*",err,error))// &
         & " is invalid. The parameter index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(SIZE(equationsSet%analytic%ANALYTIC_USER_PARAMS,1),"*",err,error))//"."
+        & TRIM(NumberToVString(SIZE(equationsSet%analytic%analyticUserParams,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
     !Set the value
-    equationsSet%analytic%ANALYTIC_USER_PARAMS(parameterIdx)=parameter
+    equationsSet%analytic%analyticUserParams(parameterIdx)=parameter
 
     EXITS("EquationsSet_AnalyticUserParamSet")
     RETURN
@@ -784,7 +784,7 @@ CONTAINS
   !>Sets the analytic problem user parameter
   SUBROUTINE EquationsSet_AnalyticUserParamGet(equationsSet,parameterIdx,parameter,err,error,*)
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the analytic solution for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the analytic solution for.
     INTEGER(INTG), INTENT(IN) :: parameterIdx !<Index of the user parameter
     REAL(DP), INTENT(OUT) :: parameter !<Value of the parameter
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -796,15 +796,15 @@ CONTAINS
     
     CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
  
-    IF(parameterIdx<1.OR.parameterIdx>SIZE(equationsSet%analytic%ANALYTIC_USER_PARAMS,1)) THEN
+    IF(parameterIdx<1.OR.parameterIdx>SIZE(equationsSet%analytic%analyticUserParams,1)) THEN
       localError="The specified parameter index of "//TRIM(NumberToVString(parameterIdx,"*",err,error))// &
         & " is invalid. The parameter index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(SIZE(equationsSet%analytic%ANALYTIC_USER_PARAMS,1),"*",err,error))//"."
+        & TRIM(NumberToVString(SIZE(equationsSet%analytic%analyticUserParams,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
     !Set the value    
-    PARAMETER=equationsSet%analytic%ANALYTIC_USER_PARAMS(parameterIdx)
+    PARAMETER=equationsSet%analytic%analyticUserParams(parameterIdx)
 
     EXITS("EquationsSet_AnalyticUserParamGet")
     RETURN
@@ -821,7 +821,7 @@ CONTAINS
   SUBROUTINE EquationsSet_Assemble(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -844,7 +844,7 @@ CONTAINS
     CASE(EQUATIONS_STATIC)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleStaticLinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
@@ -860,12 +860,12 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_NONLINEAR)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleStaticNonlinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
@@ -881,7 +881,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -894,7 +894,7 @@ CONTAINS
     CASE(EQUATIONS_QUASISTATIC)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleQuasistaticLinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -908,7 +908,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -923,7 +923,7 @@ CONTAINS
     CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleDynamicLinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -937,7 +937,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -972,7 +972,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssembleDynamicLinearFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1103,7 +1103,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssembleStaticLinearFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1236,7 +1236,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssembleStaticNonlinearFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1367,7 +1367,7 @@ CONTAINS
   !>element method. Currently the same as the static nonlinear case
   SUBROUTINE EquationsSet_AssembleQuasistaticNonlinearFEM(equationsSet,err,error,*)
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -1392,7 +1392,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssembleQuasistaticLinearFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1523,7 +1523,7 @@ CONTAINS
   SUBROUTINE EquationsSet_Backsubstitute(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to backsubstitute
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to backsubstitute
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<The boundary conditions to use for the backsubstitution
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1755,7 +1755,7 @@ CONTAINS
   SUBROUTINE EquationsSet_NonlinearRHSUpdate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<Boundary conditions to use for the RHS update
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1851,7 +1851,7 @@ CONTAINS
   SUBROUTINE EquationsSet_BoundaryConditionsAnalytic(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the analyticboundary conditions for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the analyticboundary conditions for.
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditions to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1904,28 +1904,28 @@ CONTAINS
   SUBROUTINE EquationsSet_CreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finish creating
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finish creating
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     
     ENTERS("EquationsSet_CreateFinish",err,error,*999)
 
     CALL EquationsSet_AssertNotFinished(equationsSet,err,error,*999)
     
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_INITIAL_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_INITIAL_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     !Finish the equations set specific setup
     CALL EquationsSet_Setup(equationsSet,equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     !Finish the equations set specific geometry setup
     CALL EquationsSet_Setup(equationsSet,equationsSetSetupInfo,err,error,*999)
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Finish the equations set creation
-    equationsSet%EQUATIONS_SET_FINISHED=.TRUE.
+    equationsSet%equationsSetFinished=.TRUE.
   
     EXITS("EquationsSet_CreateFinish")
     RETURN
@@ -1960,18 +1960,18 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: equationsSetSpecification(:) !<The equations set specification array to set
     INTEGER(INTG), INTENT(IN) :: equationsSetFieldUserNumber !<The user number of the equations set field
     TYPE(FieldType), POINTER :: equationsSetField !<On return, a pointer to the equations set field
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On return, a pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On return, a pointer to the equations set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr,equationsSetIdx
     TYPE(DecompositionType), POINTER :: equationsSetFieldDecomposition,geometricFibreFieldDecomposition
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: newEquationsSet
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: newEquationsSets(:)
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetType), POINTER :: newEquationsSet
+    TYPE(EquationsSetPtrType), POINTER :: newEquationsSets(:)
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(RegionType), POINTER :: geometricFibreFieldRegion,equationsSetFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
+    TYPE(EquationsSetEquationsSetFieldType), POINTER :: equationsEquationsSetField
     TYPE(FieldType), POINTER :: FIELD
 
     NULLIFY(newEquationsSet)
@@ -2053,17 +2053,17 @@ CONTAINS
     CALL EquationsSet_Initialise(newEquationsSet,err,error,*999)
     !Set default equations set values
     newEquationsSet%userNumber=userNumber
-    newEquationsSet%globalNumber=equationsSetRegion%equationsSets%NUMBER_OF_EQUATIONS_SETS+1
-    newEquationsSet%EQUATIONS_SETS=>equationsSetRegion%equationsSets
+    newEquationsSet%globalNumber=equationsSetRegion%equationsSets%numberOfEquationsSets+1
+    newEquationsSet%equationsSets=>equationsSetRegion%equationsSets
     newEquationsSet%label="Equations Set "//TRIM(NumberToVString(userNumber,"*",err,error))
     newEquationsSet%REGION=>equationsSetRegion
     !Set the equations set class, type and subtype
     CALL EquationsSet_SpecificationSet(newEquationsSet,equationsSetSpecification,err,error,*999)
-    newEquationsSet%EQUATIONS_SET_FINISHED=.FALSE.
+    newEquationsSet%equationsSetFinished=.FALSE.
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_INITIAL_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_INITIAL_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     !Here, we get a pointer to the equations_set_field; default is null
     equationsSetSetupInfo%fieldUserNumber=equationsSetFieldUserNumber
     equationsSetSetupInfo%field=>equationsSetField
@@ -2074,13 +2074,13 @@ CONTAINS
     CALL EquationsSet_GeometryInitialise(newEquationsSet,err,error,*999)
     IF(geometricFibreField%type==FIELD_GEOMETRIC_TYPE) THEN
       newEquationsSet%geometry%geometricField=>geometricFibreField
-      NULLIFY(newEquationsSet%geometry%FIBRE_FIELD)
+      NULLIFY(newEquationsSet%geometry%fibreField)
     ELSE
       newEquationsSet%geometry%geometricField=>geometricFibreField%geometricField
-      newEquationsSet%geometry%FIBRE_FIELD=>geometricFibreField
+      newEquationsSet%geometry%fibreField=>geometricFibreField
     ENDIF
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=geometricFibreField%userNumber
     equationsSetSetupInfo%field=>geometricFibreField
     !Set up equations set specific geometry
@@ -2088,22 +2088,22 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Add new equations set into list of equations set in the region
-    ALLOCATE(newEquationsSets(equationsSetRegion%equationsSets%NUMBER_OF_EQUATIONS_SETS+1),STAT=err)
+    ALLOCATE(newEquationsSets(equationsSetRegion%equationsSets%numberOfEquationsSets+1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate new equations sets.",err,error,*999)
-    DO equationsSetIdx=1,equationsSetRegion%equationsSets%NUMBER_OF_EQUATIONS_SETS
-      newEquationsSets(equationsSetIdx)%ptr=>equationsSetRegion%equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr
+    DO equationsSetIdx=1,equationsSetRegion%equationsSets%numberOfEquationsSets
+      newEquationsSets(equationsSetIdx)%ptr=>equationsSetRegion%equationsSets%equationsSets(equationsSetIdx)%ptr
     ENDDO !equationsSetIdx
-    newEquationsSets(equationsSetRegion%equationsSets%NUMBER_OF_EQUATIONS_SETS+1)%ptr=>newEquationsSet
-    IF(ASSOCIATED(equationsSetRegion%equationsSets%EQUATIONS_SETS)) DEALLOCATE(equationsSetRegion%equationsSets%EQUATIONS_SETS)
-    equationsSetRegion%equationsSets%EQUATIONS_SETS=>newEquationsSets
-    equationsSetRegion%equationsSets%NUMBER_OF_EQUATIONS_SETS=equationsSetRegion%equationsSets%NUMBER_OF_EQUATIONS_SETS+1
+    newEquationsSets(equationsSetRegion%equationsSets%numberOfEquationsSets+1)%ptr=>newEquationsSet
+    IF(ASSOCIATED(equationsSetRegion%equationsSets%equationsSets)) DEALLOCATE(equationsSetRegion%equationsSets%equationsSets)
+    equationsSetRegion%equationsSets%equationsSets=>newEquationsSets
+    equationsSetRegion%equationsSets%numberOfEquationsSets=equationsSetRegion%equationsSets%numberOfEquationsSets+1
     equationsSet=>newEquationsSet
-    equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
+    equationsEquationsSetField=>equationsSet%equationsSetField
     !\todo check pointer setup
-    IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
-      equationsSetField=>equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
+    IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
+      equationsSetField=>equationsSet%equationsSetField%equationsSetFieldField
     ELSE
-      equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD=>equationsSetField
+      equationsSet%equationsSetField%equationsSetFieldField=>equationsSetField
     ENDIF
    
     EXITS("EquationsSet_CreateStart")
@@ -2123,13 +2123,13 @@ CONTAINS
   SUBROUTINE EquationsSet_Destroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to destroy
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,equationsSetPosition
-    TYPE(EQUATIONS_SETS_TYPE), POINTER :: equationsSets
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: newEquationsSets(:)
+    TYPE(EquationsSetsType), POINTER :: equationsSets
+    TYPE(EquationsSetPtrType), POINTER :: newEquationsSets(:)
 
     NULLIFY(newEquationsSets)
 
@@ -2144,24 +2144,24 @@ CONTAINS
     CALL EquationsSet_Finalise(equationsSet,err,error,*999)
     
     !Remove the equations set from the list of equations set
-    IF(equationsSets%NUMBER_OF_EQUATIONS_SETS>1) THEN
-      ALLOCATE(newEquationsSets(equationsSets%NUMBER_OF_EQUATIONS_SETS-1),STAT=ERR)
+    IF(equationsSets%numberOfEquationsSets>1) THEN
+      ALLOCATE(newEquationsSets(equationsSets%numberOfEquationsSets-1),STAT=ERR)
       IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",err,error,*999)
-      DO equationsSetIdx=1,equationsSets%NUMBER_OF_EQUATIONS_SETS
+      DO equationsSetIdx=1,equationsSets%numberOfEquationsSets
         IF(equationsSetIdx<equationsSetPosition) THEN
-          newEquationsSets(equationsSetIdx)%ptr=>equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr
+          newEquationsSets(equationsSetIdx)%ptr=>equationsSets%equationsSets(equationsSetIdx)%ptr
         ELSE IF(equationsSetIdx>equationsSetPosition) THEN
-          equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr%globalNumber=equationsSets% &
-            & EQUATIONS_SETS(equationsSetIdx)%ptr%globalNumber-1
-          newEquationsSets(equationsSetIdx-1)%ptr=>equationsSets%EQUATIONS_SETS(equationsSetIdx)%ptr
+          equationsSets%equationsSets(equationsSetIdx)%ptr%globalNumber=equationsSets% &
+            & equationsSets(equationsSetIdx)%ptr%globalNumber-1
+          newEquationsSets(equationsSetIdx-1)%ptr=>equationsSets%equationsSets(equationsSetIdx)%ptr
         ENDIF
       ENDDO !equationsSetIdx
-      IF(ASSOCIATED(equationsSets%EQUATIONS_SETS)) DEALLOCATE(equationsSets%EQUATIONS_SETS)
-      equationsSets%EQUATIONS_SETS=>newEquationsSets
-      equationsSets%NUMBER_OF_EQUATIONS_SETS=equationsSets%NUMBER_OF_EQUATIONS_SETS-1
+      IF(ASSOCIATED(equationsSets%equationsSets)) DEALLOCATE(equationsSets%equationsSets)
+      equationsSets%equationsSets=>newEquationsSets
+      equationsSets%numberOfEquationsSets=equationsSets%numberOfEquationsSets-1
     ELSE
-      DEALLOCATE(equationsSets%EQUATIONS_SETS)
-      equationsSets%NUMBER_OF_EQUATIONS_SETS=0
+      DEALLOCATE(equationsSets%equationsSets)
+      equationsSets%numberOfEquationsSets=0
     ENDIF
 
     EXITS("EquationsSet_Destroy")
@@ -2180,7 +2180,7 @@ CONTAINS
   SUBROUTINE EquationsSet_Finalise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finalise.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2194,7 +2194,7 @@ CONTAINS
       CALL EquationsSet_MaterialsFinalise(equationsSet%materials,err,error,*999)
       CALL EquationsSet_SourceFinalise(equationsSet%source,err,error,*999)
       CALL EquationsSet_AnalyticFinalise(equationsSet%analytic,err,error,*999)
-      CALL EqutionsSet_EquationsSetFieldFinalise(equationsSet%EQUATIONS_SET_FIELD,err,error,*999)
+      CALL EqutionsSet_EquationsSetFieldFinalise(equationsSet%equationsSetField,err,error,*999)
       CALL EquationsSet_DerivedFinalise(equationsSet%derived,err,error,*999)
       IF(ASSOCIATED(equationsSet%equations)) CALL Equations_Destroy(equationsSet%equations,err,error,*999)
       IF(ALLOCATED(equationsSet%specification)) DEALLOCATE(equationsSet%specification)
@@ -2217,7 +2217,7 @@ CONTAINS
   SUBROUTINE EquationsSet_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calcualte
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2381,7 +2381,7 @@ CONTAINS
   SUBROUTINE EquationsSet_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2492,7 +2492,7 @@ CONTAINS
   SUBROUTINE EquationsSet_FiniteElementJacobianEvaluateFD(equationsSet,elementNumber,jacobianNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet  !<A pointer to the equations set to evaluate the element Jacobian for
+    TYPE(EquationsSetType), POINTER :: equationsSet  !<A pointer to the equations set to evaluate the element Jacobian for
     INTEGER(INTG), INTENT(IN) :: elementNumber  !<The element number to calculate the Jacobian for
     INTEGER(INTG), INTENT(IN) :: jacobianNumber  !<The Jacobian number to calculate when there are coupled problems
     INTEGER(INTG), INTENT(OUT) :: err  !<The error code
@@ -2639,7 +2639,7 @@ CONTAINS
   SUBROUTINE EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2814,11 +2814,11 @@ CONTAINS
   SUBROUTINE EquationsSet_IndependentCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of the independent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of the independent field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: independentField
 
     ENTERS("EquationsSet_IndependentCreateFinish",err,error,*999)
@@ -2827,11 +2827,11 @@ CONTAINS
     
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_INDEPENDENT_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_INDEPENDENT_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     NULLIFY(independentField)
     CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
-    independentField=>equationsSet%INDEPENDENT%INDEPENDENT_FIELD
+    independentField=>equationsSet%INDEPENDENT%independentField
     equationsSetSetupInfo%fieldUserNumber=independentField%userNumber
     equationsSetSetupInfo%field=>independentField
     !Finish equations set specific startup
@@ -2839,7 +2839,7 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Finish independent creation
-    equationsSet%independent%INDEPENDENT_FINISHED=.TRUE.
+    equationsSet%independent%independentFinished=.TRUE.
        
     EXITS("EquationsSet_IndependentCreateFinish")
     RETURN
@@ -2856,7 +2856,7 @@ CONTAINS
   SUBROUTINE EquationSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of the materials field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of the materials field for
     INTEGER(INTG), INTENT(IN) :: independentFieldUserNumber !<The user specified independent field number
     TYPE(FieldType), POINTER :: independentField !<If associated on entry, a pointer to the user created independent field which has the same user number as the specified independent field user number. If not associated on entry, on exit, a pointer to the created independent field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2864,7 +2864,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(DecompositionType), POINTER :: geometricDecomposition,independentDecomposition
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,independentFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -2920,11 +2920,11 @@ CONTAINS
     ENDIF
     !Initialise the equations set independent
     CALL EquationsSet_IndependentInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(independentField)) equationsSet%independent%INDEPENDENT_FIELD_AUTO_CREATED=.TRUE.
+    IF(.NOT.ASSOCIATED(independentField)) equationsSet%independent%independentFieldAutoCreated=.TRUE.
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_INDEPENDENT_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_INDEPENDENT_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=independentFieldUserNumber
     equationsSetSetupInfo%field=>independentField
     !Start equations set specific startup
@@ -2932,10 +2932,10 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Set pointers
-    IF(equationsSet%independent%INDEPENDENT_FIELD_AUTO_CREATED) THEN            
-      independentField=>equationsSet%independent%INDEPENDENT_FIELD
+    IF(equationsSet%independent%independentFieldAutoCreated) THEN            
+      independentField=>equationsSet%independent%independentField
     ELSE
-      equationsSet%independent%INDEPENDENT_FIELD=>independentField
+      equationsSet%independent%independentField=>independentField
     ENDIF
        
     EXITS("EquationSet_IndependentCreateStart")
@@ -2953,7 +2953,7 @@ CONTAINS
   SUBROUTINE EquationsSet_IndependentDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to destroy the independent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to destroy the independent field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2979,7 +2979,7 @@ CONTAINS
   SUBROUTINE EquationsSet_IndependentFinalise(equationsSetIndependent,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_INDEPENDENT_TYPE), POINTER :: equationsSetIndependent !<A pointer to the equations set independent to finalise
+    TYPE(EquationsSetIndependentType), POINTER :: equationsSetIndependent !<A pointer to the equations set independent to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3003,7 +3003,7 @@ CONTAINS
   SUBROUTINE EquationsSet_IndependentInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the independent for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the independent for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3016,10 +3016,10 @@ CONTAINS
     
     ALLOCATE(equationsSet%independent,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations set independent field.",err,error,*999)
-    equationsSet%independent%EQUATIONS_SET=>equationsSet
-    equationsSet%independent%INDEPENDENT_FINISHED=.FALSE.
-    equationsSet%independent%INDEPENDENT_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSet%independent%INDEPENDENT_FIELD)
+    equationsSet%independent%equationsSet=>equationsSet
+    equationsSet%independent%independentFinished=.FALSE.
+    equationsSet%independent%independentFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSet%independent%independentField)
       
     EXITS("EquationsSet_IndependentInitialise")
     RETURN
@@ -3037,7 +3037,7 @@ CONTAINS
   SUBROUTINE EquationsSet_Initialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The pointer to the equations set to initialise. Must not be associated on entry.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<The pointer to the equations set to initialise. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3052,14 +3052,14 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate equations set.",err,error,*999)
     equationsSet%userNumber=0
     equationsSet%globalNumber=0
-    equationsSet%EQUATIONS_SET_FINISHED=.FALSE.
-    NULLIFY(equationsSet%EQUATIONS_SETS)
+    equationsSet%equationsSetFinished=.FALSE.
+    NULLIFY(equationsSet%equationsSets)
     equationsSet%label=""
     NULLIFY(equationsSet%region)
     equationsSet%currentTime=0.0_DP
     equationsSet%deltaTime=0.0_DP
     equationsSet%outputType=EQUATIONS_SET_NO_OUTPUT
-    equationsSet%SOLUTION_METHOD=0
+    equationsSet%solutionMethod=0
     CALL EquationsSet_GeometryInitialise(equationsSet,err,error,*999)
     CALL EquationsSet_DependentInitialise(equationsSet,err,error,*999)
     CALL EquationsSet_EquationsSetFieldInitialise(equationsSet,err,error,*999)
@@ -3069,7 +3069,7 @@ CONTAINS
     NULLIFY(equationsSet%analytic)
     NULLIFY(equationsSet%derived)
     NULLIFY(equationsSet%equations)
-    NULLIFY(equationsSet%BOUNDARY_CONDITIONS)
+    NULLIFY(equationsSet%boundaryConditions)
        
     EXITS("EquationsSet_Initialise")
     RETURN
@@ -3087,7 +3087,7 @@ CONTAINS
   SUBROUTINE EquationsSet_GeometryFinalise(equationsSetGeometry,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: equationsSetGeometry !<A pointer to the equations set geometry to finalise
+    TYPE(EquationsSetGeometryType) :: equationsSetGeometry !<A pointer to the equations set geometry to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3095,7 +3095,7 @@ CONTAINS
     ENTERS("EquationsSet_GeometryFinalise",err,error,*999)
     
     NULLIFY(equationsSetGeometry%geometricField)
-    NULLIFY(equationsSetGeometry%FIBRE_FIELD)
+    NULLIFY(equationsSetGeometry%fibreField)
        
     EXITS("EquationsSet_GeometryFinalise")
     RETURN
@@ -3112,7 +3112,7 @@ CONTAINS
   SUBROUTINE EquationsSet_GeometryInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the geometry for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the geometry for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3121,9 +3121,9 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     
-    equationsSet%geometry%EQUATIONS_SET=>equationsSet
+    equationsSet%geometry%equationsSet=>equationsSet
     NULLIFY(equationsSet%geometry%geometricField)
-    NULLIFY(equationsSet%geometry%FIBRE_FIELD)
+    NULLIFY(equationsSet%geometry%fibreField)
         
     EXITS("EquationsSet_GeometryInitialise")
     RETURN
@@ -3140,11 +3140,11 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of the materials field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of the materials field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: materialsField
 
     ENTERS("EquationsSet_MaterialsCreateFinish",err,error,*999)
@@ -3153,9 +3153,9 @@ CONTAINS
     
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_MATERIALS_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
-    materialsField=>equationsSet%materials%MATERIALS_FIELD
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_MATERIALS_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
+    materialsField=>equationsSet%materials%materialsField
     IF(ASSOCIATED(materialsField)) THEN
       equationsSetSetupInfo%fieldUserNumber=materialsField%userNumber
       equationsSetSetupInfo%field=>materialsField
@@ -3165,7 +3165,7 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Finish materials creation
-    equationsSet%materials%MATERIALS_FINISHED=.TRUE.
+    equationsSet%materials%materialsFinished=.TRUE.
        
     EXITS("EquationsSet_MaterialsCreateFinish")
     RETURN
@@ -3182,7 +3182,7 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsCreateStart(equationsSet,materialsFieldUserNumber,materialsField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of the materials field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of the materials field for
     INTEGER(INTG), INTENT(IN) :: materialsFieldUserNumber !<The user specified materials field number
     TYPE(FieldType), POINTER :: materialsField !<If associated on entry, a pointer to the user created materials field which has the same user number as the specified materials field user number. If not associated on entry, on exit, a pointer to the created materials field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3190,7 +3190,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(DecompositionType), POINTER :: geometricDecomposition,materialsDecomposition
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,materialsFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -3247,11 +3247,11 @@ CONTAINS
     ENDIF
     !Initialise the equations set materials
     CALL EquationsSet_MaterialsInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(materialsField)) equationsSet%materials%MATERIALS_FIELD_AUTO_CREATED=.TRUE.
+    IF(.NOT.ASSOCIATED(materialsField)) equationsSet%materials%materialsFieldAutoCreated=.TRUE.
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_MATERIALS_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_MATERIALS_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=materialsFieldUserNumber
     equationsSetSetupInfo%field=>materialsField
     !Start equations set specific startup
@@ -3259,10 +3259,10 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Set pointers
-    IF(equationsSet%materials%MATERIALS_FIELD_AUTO_CREATED) THEN            
-      materialsField=>equationsSet%materials%MATERIALS_FIELD
+    IF(equationsSet%materials%materialsFieldAutoCreated) THEN            
+      materialsField=>equationsSet%materials%materialsField
     ELSE
-      equationsSet%materials%MATERIALS_FIELD=>materialsField
+      equationsSet%materials%materialsField=>materialsField
     ENDIF
        
     EXITS("EquationsSet_MaterialsCreateStart")
@@ -3281,7 +3281,7 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to destroy the materials for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to destroy the materials for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3307,7 +3307,7 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsFinalise(equationsSetMaterials,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsSetMaterials !<A pointer to the equations set materials to finalise
+    TYPE(EquationsSetMaterialsType), POINTER :: equationsSetMaterials !<A pointer to the equations set materials to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3331,7 +3331,7 @@ CONTAINS
   SUBROUTINE EquationsSet_MaterialsInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the materials for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the materials for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3344,10 +3344,10 @@ CONTAINS
     
     ALLOCATE(equationsSet%materials,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations set materials.",err,error,*999)
-    equationsSet%materials%EQUATIONS_SET=>equationsSet
-    equationsSet%materials%MATERIALS_FINISHED=.FALSE.
-    equationsSet%materials%MATERIALS_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSet%materials%MATERIALS_FIELD)
+    equationsSet%materials%equationsSet=>equationsSet
+    equationsSet%materials%materialsFinished=.FALSE.
+    equationsSet%materials%materialsFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSet%materials%materialsField)
        
     EXITS("EquationsSet_MaterialsInitialise")
     RETURN
@@ -3365,11 +3365,11 @@ CONTAINS
   SUBROUTINE EquationsSet_DependentCreateFinish(equationsSet,err,error,*)
     
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: dependentField
 
     ENTERS("EquationsSet_DependentCreateFinish",err,error,*999)
@@ -3378,8 +3378,8 @@ CONTAINS
     
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_DEPENDENT_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_DEPENDENT_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     equationsSetSetupInfo%fieldUserNumber=dependentField%userNumber
@@ -3389,7 +3389,7 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Finish the equations set creation
-    equationsSet%dependent%DEPENDENT_FINISHED=.TRUE.
+    equationsSet%dependent%dependentFinished=.TRUE.
        
     EXITS("EquationsSet_DependentCreateFinish")
     RETURN
@@ -3406,7 +3406,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DependentCreateStart(equationsSet,dependentFieldUserNumber,dependentField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a dependent field on
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a dependent field on
     INTEGER(INTG), INTENT(IN) :: dependentFieldUserNumber !<The user specified dependent field number
     TYPE(FieldType), POINTER :: dependentField !<If associated on entry, a pointer to the user created dependent field which has the same user number as the specified dependent field user number. If not associated on entry, on exit, a pointer to the created dependent field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3414,7 +3414,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,dependentFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -3468,12 +3468,12 @@ CONTAINS
           & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      equationsSet%dependent%DEPENDENT_FIELD_AUTO_CREATED=.TRUE.
+      equationsSet%dependent%dependentFieldAutoCreated=.TRUE.
     ENDIF
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_DEPENDENT_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_DEPENDENT_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=dependentFieldUserNumber
     equationsSetSetupInfo%field=>dependentField
     !Start the equations set specfic solution setup
@@ -3481,10 +3481,10 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Set pointers
-    IF(equationsSet%dependent%DEPENDENT_FIELD_AUTO_CREATED) THEN
-      dependentField=>equationsSet%dependent%DEPENDENT_FIELD
+    IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+      dependentField=>equationsSet%dependent%dependentField
     ELSE
-      equationsSet%dependent%DEPENDENT_FIELD=>dependentField
+      equationsSet%dependent%dependentField=>dependentField
     ENDIF
        
     EXITS("EquationsSet_DependentCreateStart")
@@ -3503,7 +3503,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DependentDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The pointer to the equations set to destroy
+    TYPE(EquationsSetType), POINTER :: equationsSet !<The pointer to the equations set to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3529,17 +3529,17 @@ CONTAINS
   SUBROUTINE EquationsSet_DependentFinalise(equationsSetDependent,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_DEPENDENT_TYPE) :: equationsSetDependent !<The pointer to the equations set
+    TYPE(EquationsSetDependentType) :: equationsSetDependent !<The pointer to the equations set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("EquationsSet_DependentFinalise",err,error,*999)
 
-    NULLIFY(equationsSetDependent%EQUATIONS_SET)
-    equationsSetDependent%DEPENDENT_FINISHED=.FALSE.
-    equationsSetDependent%DEPENDENT_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSetDependent%DEPENDENT_FIELD)
+    NULLIFY(equationsSetDependent%equationsSet)
+    equationsSetDependent%dependentFinished=.FALSE.
+    equationsSetDependent%dependentFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSetDependent%dependentField)
     
     EXITS("EquationsSet_DependentFinalise")
     RETURN
@@ -3556,7 +3556,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DependentInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the dependent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the dependent field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3565,10 +3565,10 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     
-    equationsSet%dependent%EQUATIONS_SET=>equationsSet
-    equationsSet%dependent%DEPENDENT_FINISHED=.FALSE.
-    equationsSet%dependent%DEPENDENT_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSet%dependent%DEPENDENT_FIELD)
+    equationsSet%dependent%equationsSet=>equationsSet
+    equationsSet%dependent%dependentFinished=.FALSE.
+    equationsSet%dependent%dependentFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSet%dependent%dependentField)
        
     EXITS("EquationsSet_DependentInitialise")
     RETURN
@@ -3585,11 +3585,11 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finish the derived variable creation for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finish the derived variable creation for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) :: equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) :: equationsSetSetupInfo
     TYPE(FieldType), POINTER :: derivedField
 
     ENTERS("EquationsSet_DerivedCreateFinish",err,error,*999)
@@ -3598,8 +3598,8 @@ CONTAINS
 
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_DERIVED_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_DERIVED_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     NULLIFY(derivedField)
     CALL EquationsSet_DerivedFieldGet(equationsSet,derivedField,err,error,*999)
     equationsSetSetupInfo%fieldUserNumber=derivedField%userNumber
@@ -3626,7 +3626,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedCreateStart(equationsSet,derivedFieldUserNumber,derivedField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a derived field on
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a derived field on
     INTEGER(INTG), INTENT(IN) :: derivedFieldUserNumber !<The user specified derived field number
     TYPE(FieldType), POINTER :: derivedField !<If associated on entry, a pointer to the user created derived field which has the same user number as the specified derived field user number. If not associated on entry, on exit, a pointer to the created derived field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3634,7 +3634,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(DecompositionType), POINTER :: derivedDecomposition,geometricDecomposition
-    TYPE(EQUATIONS_SET_SETUP_TYPE) :: equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) :: equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,derivedFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -3693,8 +3693,8 @@ CONTAINS
     CALL EquationsSet_DerivedInitialise(equationsSet,err,error,*999)
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_DERIVED_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_DERIVED_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=derivedFieldUserNumber
     equationsSetSetupInfo%field=>derivedField
     !Start the equations set specfic solution setup
@@ -3724,7 +3724,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The pointer to the equations set to destroy the derived fields for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<The pointer to the equations set to destroy the derived fields for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3776,7 +3776,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the derived field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the derived field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3814,17 +3814,17 @@ CONTAINS
   SUBROUTINE EqutionsSet_EquationsSetFieldFinalise(equationsSetField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE) :: equationsSetField !<The pointer to the equations set
+    TYPE(EquationsSetEquationsSetFieldType) :: equationsSetField !<The pointer to the equations set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("EqutionsSet_EquationsSetFieldFinalise",err,error,*999)
 
-    NULLIFY(equationsSetField%EQUATIONS_SET)
-    equationsSetField%EQUATIONS_SET_FIELD_FINISHED=.FALSE.
-    equationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSetField%EQUATIONS_SET_FIELD_FIELD)
+    NULLIFY(equationsSetField%equationsSet)
+    equationsSetField%equationsSetFieldFinished=.FALSE.
+    equationsSetField%equationsSetFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSetField%equationsSetFieldField)
     
     EXITS("EqutionsSet_EquationsSetFieldFinalise")
     RETURN
@@ -3840,7 +3840,7 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsSetFieldInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the dependent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the dependent field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3849,10 +3849,10 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     
-    equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET=>equationsSet
-    equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FINISHED=.FALSE.
-    equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED=.TRUE.
-    NULLIFY(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD)
+    equationsSet%equationsSetField%equationsSet=>equationsSet
+    equationsSet%equationsSetField%equationsSetFieldFinished=.FALSE.
+    equationsSet%equationsSetField%equationsSetFieldAutoCreated=.TRUE.
+    NULLIFY(equationsSet%equationsSetField%equationsSetFieldField)
         
     EXITS("EquationsSet_EquationsSetFieldInitialise")
     RETURN
@@ -3871,8 +3871,8 @@ CONTAINS
   SUBROUTINE EquationsSet_Setup(equationsSet,equationsSetSetupInfo,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to perform the setup on
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) ::equationsSetSetupInfo !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the setup on
+    TYPE(EquationsSetSetupType), INTENT(INOUT) ::equationsSetSetupInfo !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3932,11 +3932,11 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of the equations for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to finish the creation of the equations for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     
     ENTERS("EquationsSet_EquationsCreateFinish",err,error,*999)
 
@@ -3944,8 +3944,8 @@ CONTAINS
 
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_EQUATIONS_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_EQUATIONS_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     !Finish the equations specific solution setup.
     CALL EquationsSet_Setup(equationsSet,equationsSetSetupInfo,err,error,*999)
     !Finalise the setup
@@ -3976,12 +3976,12 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsCreateStart(equationsSet,equations,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to create equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to create equations for
     TYPE(EquationsType), POINTER :: equations !<On exit, a pointer to the created equations. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
 
     ENTERS("EquationsSet_EquationsCreateStart",err,error,*999)
 
@@ -3990,8 +3990,8 @@ CONTAINS
     
     !Initialise the setup    
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_EQUATIONS_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_EQUATIONS_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     !Start the equations set specific solution setup
     CALL EquationsSet_Setup(equationsSet,equationsSetSetupInfo,err,error,*999)
     !Finalise the setup
@@ -4014,7 +4014,7 @@ CONTAINS
   SUBROUTINE EquationsSet_EquationsDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to destroy the equations for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to destroy the equations for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4040,7 +4040,7 @@ CONTAINS
   SUBROUTINE EquationsSet_JacobianEvaluate(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4063,7 +4063,7 @@ CONTAINS
     CASE(EQUATIONS_LINEAR)
       SELECT CASE(equations%timeDependence)
       CASE(EQUATIONS_STATIC)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleStaticLinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -4077,12 +4077,12 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_QUASISTATIC)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleQuasistaticLinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -4097,12 +4097,12 @@ CONTAINS
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
           localError="The equations set solution method of "// &
-            & TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+            & TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_AssembleDynamicLinearFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -4116,7 +4116,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -4128,7 +4128,7 @@ CONTAINS
     CASE(EQUATIONS_NONLINEAR)
       SELECT CASE(equations%timeDependence)
       CASE(EQUATIONS_STATIC)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_JacobianEvaluateStaticFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
@@ -4144,12 +4144,12 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_QUASISTATIC)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_JacobianEvaluateStaticFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -4163,13 +4163,13 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
         ! sebk 15/09/09
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_JacobianEvaluateDynamicFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -4183,7 +4183,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -4216,7 +4216,7 @@ CONTAINS
   SUBROUTINE EquationsSet_JacobianEvaluateStaticFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4348,7 +4348,7 @@ CONTAINS
   SUBROUTINE EquationsSet_JacobianEvaluateDynamicFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4480,7 +4480,7 @@ CONTAINS
   SUBROUTINE EquationsSet_ResidualEvaluate(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4522,7 +4522,7 @@ CONTAINS
     CASE(EQUATIONS_NONLINEAR)
       SELECT CASE(equations%timeDependence)
       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)!Quasistatic handled like static
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_ResidualEvaluateStaticFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
@@ -4538,12 +4538,12 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-        SELECT CASE(equationsSet%SOLUTION_METHOD)
+        SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           CALL EquationsSet_ResidualEvaluateDynamicFEM(equationsSet,err,error,*999)
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -4557,7 +4557,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD,"*",err,error))// &
+          localError="The equations set solution method  of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -4603,7 +4603,7 @@ CONTAINS
   SUBROUTINE EquationsSet_ResidualEvaluateDynamicFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4735,7 +4735,7 @@ CONTAINS
   SUBROUTINE EquationsSet_ResidualEvaluateStaticFEM(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4867,18 +4867,18 @@ CONTAINS
   SUBROUTINE EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(OUT) :: equationsSetSetupInfo !<The equations set setup to be finalised
+    TYPE(EquationsSetSetupType), INTENT(OUT) :: equationsSetSetupInfo !<The equations set setup to be finalised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("EquationsSet_SetupFinalise",err,error,*999)
 
-    equationsSetSetupInfo%SETUP_TYPE=0
-    equationsSetSetupInfo%ACTION_TYPE=0
+    equationsSetSetupInfo%setupType=0
+    equationsSetSetupInfo%actionType=0
     equationsSetSetupInfo%fieldUserNumber=0
     NULLIFY(equationsSetSetupInfo%field)
-    equationsSetSetupInfo%ANALYTIC_FUNCTION_TYPE=0
+    equationsSetSetupInfo%analyticFunctionType=0
     
     EXITS("EquationsSet_SetupFinalise")
     RETURN
@@ -4895,18 +4895,18 @@ CONTAINS
   SUBROUTINE EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(OUT) :: equationsSetSetupInfo !<The equations set setup to be initialised
+    TYPE(EquationsSetSetupType), INTENT(OUT) :: equationsSetSetupInfo !<The equations set setup to be initialised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("EquationsSet_SetupInitialise",err,error,*999)
 
-    equationsSetSetupInfo%SETUP_TYPE=0
-    equationsSetSetupInfo%ACTION_TYPE=0
+    equationsSetSetupInfo%setupType=0
+    equationsSetSetupInfo%actionType=0
     equationsSetSetupInfo%fieldUserNumber=0
     NULLIFY(equationsSetSetupInfo%field)
-    equationsSetSetupInfo%ANALYTIC_FUNCTION_TYPE=0
+    equationsSetSetupInfo%analyticFunctionType=0
     
     EXITS("EquationsSet_SetupInitialise")
     RETURN
@@ -4923,7 +4923,7 @@ CONTAINS
   SUBROUTINE EquationsSet_OutputTypeSet(equationsSet,outputType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the output type for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the output type for
     INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4959,7 +4959,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: solutionMethod !<The equations set solution method to set \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -5019,11 +5019,11 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a souce for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a souce for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: sourceField
 
     ENTERS("EquationsSet_SourceCreateFinish",err,error,*999)
@@ -5032,8 +5032,8 @@ CONTAINS
     
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_SOURCE_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_SOURCE_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     NULLIFY(sourceField)
     CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
     equationsSetSetupInfo%fieldUserNumber=sourceField%userNumber
@@ -5043,7 +5043,7 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Finish the source creation
-    equationsSet%source%SOURCE_FINISHED=.TRUE.
+    equationsSet%source%sourceFinished=.TRUE.
        
     EXITS("EquationsSet_SourceCreateFinish")
     RETURN
@@ -5060,7 +5060,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceCreateStart(equationsSet,sourceFieldUserNumber,sourceField,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a source for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a source for
     INTEGER(INTG), INTENT(IN) :: sourceFieldUserNumber !<The user specified source field number
     TYPE(FieldType), POINTER :: sourceField !<If associated on entry, a pointer to the user created source field which has the same user number as the specified source field user number. If not associated on entry, on exit, a pointer to the created source field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -5068,7 +5068,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(DecompositionType), POINTER :: geometricDecomposition,sourceDecomposition
-    TYPE(EQUATIONS_SET_SETUP_TYPE) equationsSetSetupInfo
+    TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,sourceFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -5125,11 +5125,11 @@ CONTAINS
     ENDIF
     !Initialise the equations set source
     CALL EquationsSet_SourceInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(sourceField)) equationsSet%source%SOURCE_FIELD_AUTO_CREATED=.TRUE.
+    IF(.NOT.ASSOCIATED(sourceField)) equationsSet%source%sourceFieldAutoCreated=.TRUE.
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
-    equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_SOURCE_TYPE
-    equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+    equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_SOURCE_TYPE
+    equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
     equationsSetSetupInfo%fieldUserNumber=sourceFieldUserNumber
     equationsSetSetupInfo%field=>sourceField
     !Start the equation set specific source setup
@@ -5137,10 +5137,10 @@ CONTAINS
     !Finalise the setup
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Set pointers
-    IF(equationsSet%source%SOURCE_FIELD_AUTO_CREATED) THEN            
-      sourceField=>equationsSet%source%SOURCE_FIELD
+    IF(equationsSet%source%sourceFieldAutoCreated) THEN            
+      sourceField=>equationsSet%source%sourceField
     ELSE
-      equationsSet%source%SOURCE_FIELD=>sourceField
+      equationsSet%source%sourceField=>sourceField
     ENDIF
        
     EXITS("EquationsSet_SourceCreateStart")
@@ -5159,7 +5159,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceDestroy(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to destroy the source for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to destroy the source for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5185,7 +5185,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceFinalise(equationsSetSource,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_SOURCE_TYPE), POINTER :: equationsSetSource !<A pointer to the equations set source to finalise
+    TYPE(EquationsSetSourceType), POINTER :: equationsSetSource !<A pointer to the equations set source to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5209,7 +5209,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SourceInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to initialise the source field for.
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the source field for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5222,10 +5222,10 @@ CONTAINS
     
     ALLOCATE(equationsSet%source,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations set source.",err,error,*999)
-    equationsSet%source%EQUATIONS_SET=>equationsSet
-    equationsSet%source%SOURCE_FINISHED=.FALSE.
-    equationsSet%source%SOURCE_FIELD_AUTO_CREATED=.FALSE.
-    NULLIFY(equationsSet%source%SOURCE_FIELD)
+    equationsSet%source%equationsSet=>equationsSet
+    equationsSet%source%sourceFinished=.FALSE.
+    equationsSet%source%sourceFieldAutoCreated=.FALSE.
+    NULLIFY(equationsSet%source%sourceField)
         
     EXITS("EquationsSet_SourceInitialise")
     RETURN
@@ -5243,7 +5243,7 @@ CONTAINS
   SUBROUTINE EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the times for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the times for
     REAL(DP), INTENT(IN) :: currentTime !<The current time for the equations set to set.
     REAL(DP), INTENT(IN) :: deltaTime !<The current time incremenet for the equations set to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -5273,7 +5273,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate output for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate output for
     INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -5325,7 +5325,7 @@ CONTAINS
   SUBROUTINE EquationsSet_DerivedVariableSet(equationsSet,derivedType,variableType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate a derived field for
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate a derived field for
     INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type used to store the calculated derived value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -5370,7 +5370,7 @@ CONTAINS
   SUBROUTINE EquationsSet_SpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
     INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations set specification array to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -5432,7 +5432,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
@@ -5489,7 +5489,7 @@ CONTAINS
   SUBROUTINE EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
@@ -5552,8 +5552,8 @@ CONTAINS
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     
     IF(ASSOCIATED(region%equationsSets)) THEN
-      DO WHILE(region%equationsSets%NUMBER_OF_EQUATIONS_SETS>0)
-        CALL EquationsSet_Destroy(region%equationsSets%EQUATIONS_SETS(1)%ptr,err,error,*999)
+      DO WHILE(region%equationsSets%numberOfEquationsSets>0)
+        CALL EquationsSet_Destroy(region%equationsSets%equationsSets(1)%ptr,err,error,*999)
       ENDDO 
       DEALLOCATE(region%equationsSets)
     ENDIF
@@ -5587,8 +5587,8 @@ CONTAINS
     ALLOCATE(region%equationsSets,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate region equations sets",err,error,*999)
     region%equationsSets%region=>region
-    region%equationsSets%NUMBER_OF_EQUATIONS_SETS=0
-    NULLIFY(region%equationsSets%EQUATIONS_SETS)
+    region%equationsSets%numberOfEquationsSets=0
+    NULLIFY(region%equationsSets%equationsSets)
  
     EXITS("EquationsSets_Initialise")
     RETURN
@@ -5607,7 +5607,7 @@ CONTAINS
     & maximumNumberOfIterations,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The equations set to increment the boundary conditions for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<The equations set to increment the boundary conditions for
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<The boundary conditions to apply the increment to
     INTEGER(INTG), INTENT(IN) :: iterationNumber !<The current load increment iteration index
     INTEGER(INTG), INTENT(IN) :: maximumNumberOfIterations !<Final index for load increment loop
@@ -5848,7 +5848,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<The boundary conditions to apply the increment to
     INTEGER(INTG), INTENT(IN) :: iterationNumber !<The current load increment iteration index
     INTEGER(INTG), INTENT(IN) :: maximumNumberOfIterations !<Final index for load increment loop
@@ -5890,7 +5890,7 @@ CONTAINS
   SUBROUTINE EquationsSet_AssembleStaticNonlinearNodal(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6021,7 +6021,7 @@ CONTAINS
   SUBROUTINE EquationsSet_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: nodeNumber !<The node number to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6131,7 +6131,7 @@ CONTAINS
   SUBROUTINE EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: nodeNumber !<The nodal number to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6274,7 +6274,7 @@ CONTAINS
   SUBROUTINE EquationsSet_JacobianEvaluateStaticNodal(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6403,7 +6403,7 @@ CONTAINS
   SUBROUTINE EquationsSet_ResidualEvaluateStaticNodal(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

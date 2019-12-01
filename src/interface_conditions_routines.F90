@@ -49,7 +49,7 @@ MODULE INTERFACE_CONDITIONS_ROUTINES
   USE CoordinateSystemAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INPUT_OUTPUT
+  USE InputOutput
   USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
@@ -661,7 +661,7 @@ CONTAINS
     !Argument variables
     TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to add the dependent variable to
     INTEGER(INTG), INTENT(IN) :: MESH_INDEX !<The mesh index in the interface conditions interface that the dependent variable corresponds to
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set containing the dependent field to add the variable from.
+    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set containing the dependent field to add the variable from.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The variable type of the dependent field to add \see FieldRoutines_VariableTypes,FieldRoutines
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -670,7 +670,7 @@ CONTAINS
     INTEGER(INTG), POINTER :: NEW_VARIABLE_MESH_INDICES(:)
     LOGICAL :: FOUND_MESH_INDEX
     TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: NEW_EQUATIONS_SETS(:)
+    TYPE(EquationsSetPtrType), POINTER :: newEquationsSets(:)
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,INTERFACE_VARIABLE
     TYPE(FieldVariablePtrType), POINTER :: NEW_FIELD_VARIABLES(:)
@@ -688,7 +688,7 @@ CONTAINS
         IF(ASSOCIATED(INTERFACE)) THEN
           IF(MESH_INDEX>0.AND.MESH_INDEX<=INTERFACE%numberOfCoupledMeshes) THEN
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
-              dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+              dependentField=>EQUATIONS_SET%dependent%dependentField
               IF(ASSOCIATED(dependentField)) THEN
                 IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
                   FIELD_VARIABLE=>dependentField%variableTypeMap(VARIABLE_TYPE)%PTR
@@ -734,18 +734,18 @@ CONTAINS
                                   & variableTypeMap(VARIABLE_TYPE)%PTR
                               ELSE
                                 !The mesh index has not been found so add a new dependent variable.
-                                ALLOCATE(NEW_EQUATIONS_SETS(INTERFACE_DEPENDENT%numberOfDependentVariables+1),STAT=ERR)
+                                ALLOCATE(newEquationsSets(INTERFACE_DEPENDENT%numberOfDependentVariables+1),STAT=ERR)
                                 IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",err,error,*999)
                                 ALLOCATE(NEW_FIELD_VARIABLES(INTERFACE_DEPENDENT%numberOfDependentVariables+1),STAT=ERR)
                                 IF(ERR/=0) CALL FlagError("Could not allocate new field variables.",err,error,*999)
                                 ALLOCATE(NEW_VARIABLE_MESH_INDICES(INTERFACE_DEPENDENT%numberOfDependentVariables+1),STAT=ERR)
                                 IF(ERR/=0) CALL FlagError("Could not allocate new variable mesh indices.",err,error,*999)
                                 DO variable_idx=1,INTERFACE_DEPENDENT%numberOfDependentVariables
-                                  NEW_EQUATIONS_SETS(variable_idx)%PTR=>INTERFACE_DEPENDENT%equationsSets(variable_idx)%PTR
+                                  newEquationsSets(variable_idx)%PTR=>INTERFACE_DEPENDENT%equationsSets(variable_idx)%PTR
                                   NEW_FIELD_VARIABLES(variable_idx)%PTR=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
                                   NEW_VARIABLE_MESH_INDICES(variable_idx)=INTERFACE_DEPENDENT%variableMeshIndices(variable_idx)
                                 ENDDO !variable_idx
-                                NEW_EQUATIONS_SETS(INTERFACE_DEPENDENT%numberOfDependentVariables+1)%PTR=>EQUATIONS_SET
+                                newEquationsSets(INTERFACE_DEPENDENT%numberOfDependentVariables+1)%PTR=>EQUATIONS_SET
                                 NEW_FIELD_VARIABLES(INTERFACE_DEPENDENT%numberOfDependentVariables+1)%PTR=>dependentField% &
                                   & variableTypeMap(VARIABLE_TYPE)%PTR
                                 NEW_VARIABLE_MESH_INDICES(INTERFACE_DEPENDENT%numberOfDependentVariables+1)=MESH_INDEX
@@ -753,7 +753,7 @@ CONTAINS
                                 IF(ASSOCIATED(INTERFACE_DEPENDENT%fieldVariables)) DEALLOCATE(INTERFACE_DEPENDENT%fieldVariables)
                                 IF(ASSOCIATED(INTERFACE_DEPENDENT%variableMeshIndices)) &
                                   & DEALLOCATE(INTERFACE_DEPENDENT%variableMeshIndices)
-                                INTERFACE_DEPENDENT%equationsSets=>NEW_EQUATIONS_SETS
+                                INTERFACE_DEPENDENT%equationsSets=>newEquationsSets
                                 INTERFACE_DEPENDENT%fieldVariables=>NEW_FIELD_VARIABLES
                                 INTERFACE_DEPENDENT%variableMeshIndices=>NEW_VARIABLE_MESH_INDICES
                                 INTERFACE_DEPENDENT%numberOfDependentVariables= &

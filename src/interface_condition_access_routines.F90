@@ -596,7 +596,7 @@ CONTAINS
     !Argument variables
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the equations set for
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the dependent variable to get the equations set for
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the specified equations set in the interface dependent. Must not be associated on entry
+    TYPE(EquationsSetType), POINTER :: equationsSet !<On exit, a pointer to the specified equations set in the interface dependent. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
