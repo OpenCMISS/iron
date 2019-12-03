@@ -72,7 +72,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
-  USE GENERATED_MESH_ROUTINES
+  USE GeneratedMeshRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
@@ -235,13 +235,13 @@ CONTAINS
                     NODES_MAPPING=>DECOMPOSITION%DOMAIN(1)%ptr%MAPPINGS%NODES   !HACK - ALL CHECKING INTERMEDIATE SKIPPED
                     IF(ASSOCIATED(NODES_MAPPING)) THEN
                       !Get surfaces (hardcoded): fix two nodes on the bottom face, pressure conditions inside & outside
-                      CALL GENERATED_MESH_SURFACE_GET(GENERATED_MESH,MESH_COMPONENT,1_INTG, &
+                      CALL GeneratedMesh_SurfaceGet(GENERATED_MESH,MESH_COMPONENT,1_INTG, &
                           & INNER_SURFACE_NODES,INNER_NORMAL_XI,err,error,*999) !Inner
-                      CALL GENERATED_MESH_SURFACE_GET(GENERATED_MESH,MESH_COMPONENT,2_INTG, &
+                      CALL GeneratedMesh_SurfaceGet(GENERATED_MESH,MESH_COMPONENT,2_INTG, &
                           & OUTER_SURFACE_NODES,OUTER_NORMAL_XI,err,error,*999) !Outer
-                      CALL GENERATED_MESH_SURFACE_GET(GENERATED_MESH,MESH_COMPONENT,3_INTG, &
+                      CALL GeneratedMesh_SurfaceGet(GENERATED_MESH,MESH_COMPONENT,3_INTG, &
                           & TOP_SURFACE_NODES,TOP_NORMAL_XI,err,error,*999) !Top
-                      CALL GENERATED_MESH_SURFACE_GET(GENERATED_MESH,MESH_COMPONENT,4_INTG, &
+                      CALL GeneratedMesh_SurfaceGet(GENERATED_MESH,MESH_COMPONENT,4_INTG, &
                           & BOTTOM_SURFACE_NODES,BOTTOM_NORMAL_XI,err,error,*999) !Bottom
                       !Set all inner surface nodes to inner pressure (- sign is to make positive P into a compressive force) ?
                       PIN=EQUATIONS_SET%ANALYTIC%analyticUserParams(FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX)

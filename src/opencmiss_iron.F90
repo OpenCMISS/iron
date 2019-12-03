@@ -98,7 +98,8 @@ MODULE OpenCMISS_Iron
 #endif
  USE FIELD_IO_ROUTINES
  USE FINITE_ELASTICITY_ROUTINES
- USE GENERATED_MESH_ROUTINES
+ USE GeneratedMeshRoutines
+ USE GeneratedMeshAccessRoutines
  USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
  USE HISTORY_ROUTINES
  USE InputOutput
@@ -4766,7 +4767,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! GENERATED_MESH_ROUTINES
+! GeneratedMeshRoutines
 !
 !==================================================================================================================================
 
@@ -9312,7 +9313,7 @@ CONTAINS
     ENTERS("cmfe_GeneratedMesh_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_GeneratedMesh%generatedMesh))  &
-      & CALL GENERATED_MESH_DESTROY(cmfe_GeneratedMesh%generatedMesh,err,error,*999)
+      & CALL GeneratedMesh_Destroy(cmfe_GeneratedMesh%generatedMesh,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_Finalise")
     RETURN
@@ -42705,7 +42706,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! GENERATED_MESH_ROUTINES
+!! GeneratedMeshRoutines
 !!
 !!==================================================================================================================================
 
@@ -42887,7 +42888,7 @@ CONTAINS
       CALL Basis_Get(basisFunctions,basisUserNumbers(basisIdx),basis,err,error,*999)
       bases(basisIdx)%ptr=>basis
     ENDDO !basisIdx
-    CALL GENERATED_MESH_BASIS_SET(generatedMesh,bases,err,error,*999)
+    CALL GeneratedMesh_BasisSet(generatedMesh,bases,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_BasisSetNumber1")
     RETURN
@@ -42952,7 +42953,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END IF
     ENDDO !basisIdx
-    CALL GENERATED_MESH_BASIS_SET(generatedMesh%generatedMesh,bases2,err,error,*999)
+    CALL GeneratedMesh_BasisSet(generatedMesh%generatedMesh,bases2,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_BasisSetObj1")
     RETURN
@@ -42992,7 +42993,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_BASE_VECTORS_SET(generatedMesh,baseVectors,err,error,*999)
+    CALL GeneratedMesh_BaseVectorsSet(generatedMesh,baseVectors,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_BaseVectorsSetNumber")
     RETURN
@@ -43018,7 +43019,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_BaseVectorsSetObj",err,error,*999)
 
-    CALL GENERATED_MESH_BASE_VECTORS_SET(generatedMesh%generatedMesh,baseVectors,err,error,*999)
+    CALL GeneratedMesh_BaseVectorsSet(generatedMesh%generatedMesh,baseVectors,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_BaseVectorsSetObj")
     RETURN
@@ -43060,7 +43061,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_CREATE_FINISH(generatedMesh,meshUserNumber,mesh,err,error,*999)
+    CALL GeneratedMesh_CreateFinish(generatedMesh,meshUserNumber,mesh,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Generated Mesh Create')
@@ -43091,7 +43092,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_CreateFinishObj",err,error,*999)
 
-    CALL GENERATED_MESH_CREATE_FINISH(generatedMesh%generatedMesh,meshUserNumber,mesh%mesh,err,error,*999)
+    CALL GeneratedMesh_CreateFinish(generatedMesh%generatedMesh,meshUserNumber,mesh%mesh,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Generated Mesh Create')
@@ -43137,7 +43138,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL GENERATED_MESH_CREATE_START(generatedMeshUserNumber,region,generatedMesh,err,error,*999)
+    CALL GeneratedMesh_CreateStart(generatedMeshUserNumber,region,generatedMesh,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_CreateStartNumber")
     RETURN
@@ -43164,7 +43165,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_CreateStartInterfaceObj",err,error,*999)
 
-    CALL GENERATED_MESH_CREATE_START(generatedMeshUserNumber,interface%interface,generatedMesh%generatedMesh,err,error,*999)
+    CALL GeneratedMesh_CreateStart(generatedMeshUserNumber,interface%interface,generatedMesh%generatedMesh,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_CreateStartInterfaceObj")
     RETURN
@@ -43195,7 +43196,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('Generated Mesh Create')
 #endif
 
-    CALL GENERATED_MESH_CREATE_START(generatedMeshUserNumber,region%region,generatedMesh%generatedMesh,err,error,*999)
+    CALL GeneratedMesh_CreateStart(generatedMeshUserNumber,region%region,generatedMesh%generatedMesh,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_CreateStartRegionObj")
     RETURN
@@ -43234,7 +43235,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_DESTROY(generatedMesh,err,error,*999)
+    CALL GeneratedMesh_Destroy(generatedMesh,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_DestroyNumber")
     RETURN
@@ -43259,7 +43260,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_DestroyObj",err,error,*999)
 
-    CALL GENERATED_MESH_DESTROY(generatedMesh%generatedMesh,err,error,*999)
+    CALL GeneratedMesh_Destroy(generatedMesh%generatedMesh,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_DestroyObj")
     RETURN
@@ -43298,7 +43299,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_EXTENT_GET(generatedMesh,extent,err,error,*999)
+    CALL GeneratedMesh_ExtentGet(generatedMesh,extent,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_ExtentGetNumber")
     RETURN
@@ -43324,7 +43325,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_ExtentGetObj",err,error,*999)
 
-    CALL GENERATED_MESH_EXTENT_GET(generatedMesh%generatedMesh,extent,err,error,*999)
+    CALL GeneratedMesh_ExtentGet(generatedMesh%generatedMesh,extent,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_ExtentGetObj")
     RETURN
@@ -43364,7 +43365,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_EXTENT_SET(generatedMesh,extent,err,error,*999)
+    CALL GeneratedMesh_ExtentSet(generatedMesh,extent,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_ExtentSetNumber")
     RETURN
@@ -43390,7 +43391,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_ExtentSetObj",err,error,*999)
 
-    CALL GENERATED_MESH_EXTENT_SET(generatedMesh%generatedMesh,extent,err,error,*999)
+    CALL GeneratedMesh_ExtentSet(generatedMesh%generatedMesh,extent,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_ExtentSetObj")
     RETURN
@@ -43431,7 +43432,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_NUMBER_OF_ELEMENTS_GET(generatedMesh,numberOfElements,err,error,*999)
+    CALL GeneratedMesh_NumberOfElementsGet(generatedMesh,numberOfElements,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_NumberOfElementsGetNumber")
     RETURN
@@ -43458,7 +43459,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_NumberOfElementsGetObj",err,error,*999)
 
-    CALL GENERATED_MESH_NUMBER_OF_ELEMENTS_GET(generatedMesh%generatedMesh,numberOfElements,err,error,*999)
+    CALL GeneratedMesh_NumberOfElementsGet(generatedMesh%generatedMesh,numberOfElements,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_NumberOfElementsGetObj")
     RETURN
@@ -43499,7 +43500,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_NUMBER_OF_ELEMENTS_SET(generatedMesh,numberOfElements,err,error,*999)
+    CALL GeneratedMesh_NumberOfElementsSet(generatedMesh,numberOfElements,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_NumberOfElementsSetNumber")
     RETURN
@@ -43526,7 +43527,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_NumberOfElementsSetObj",err,error,*999)
 
-    CALL GENERATED_MESH_NUMBER_OF_ELEMENTS_SET(generatedMesh%generatedMesh,numberOfElements,err,error,*999)
+    CALL GeneratedMesh_NumberOfElementsSet(generatedMesh%generatedMesh,numberOfElements,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_NumberOfElementsSetObj")
     RETURN
@@ -43566,7 +43567,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_ORIGIN_GET(generatedMesh,origin,err,error,*999)
+    CALL GeneratedMesh_OriginGet(generatedMesh,origin,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_OriginGetNumber")
     RETURN
@@ -43592,7 +43593,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_OriginGetObj",err,error,*999)
 
-    CALL GENERATED_MESH_ORIGIN_GET(generatedMesh%generatedMesh,origin,err,error,*999)
+    CALL GeneratedMesh_OriginGet(generatedMesh%generatedMesh,origin,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_OriginGetObj")
     RETURN
@@ -43632,7 +43633,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_ORIGIN_SET(generatedMesh,origin,err,error,*999)
+    CALL GeneratedMesh_OriginSet(generatedMesh,origin,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_OriginSetNumber")
     RETURN
@@ -43658,7 +43659,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_OriginSetObj",err,error,*999)
 
-    CALL GENERATED_MESH_ORIGIN_SET(generatedMesh%generatedMesh,origin,err,error,*999)
+    CALL GeneratedMesh_OriginSet(generatedMesh%generatedMesh,origin,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_OriginSetObj")
     RETURN
@@ -43698,7 +43699,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_TYPE_GET(generatedMesh,generatedMeshType_,err,error,*999)
+    CALL GeneratedMesh_TypeGet(generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeGetNumber")
     RETURN
@@ -43724,7 +43725,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_TypeGetObj",err,error,*999)
 
-    CALL GENERATED_MESH_TYPE_GET(generatedMesh%generatedMesh,generatedMeshType_,err,error,*999)
+    CALL GeneratedMesh_TypeGet(generatedMesh%generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeGetObj")
     RETURN
@@ -43764,7 +43765,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_TYPE_SET(generatedMesh,generatedMeshType_,err,error,*999)
+    CALL GeneratedMesh_TypeSet(generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeSetNumber")
     RETURN
@@ -43790,7 +43791,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_TypeSetObj",err,error,*999)
 
-    CALL GENERATED_MESH_TYPE_SET(generatedMesh%generatedMesh,generatedMeshType_,err,error,*999)
+    CALL GeneratedMesh_TypeSet(generatedMesh%generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeSetObj")
     RETURN
@@ -43834,7 +43835,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GeneratedMesh_GeometricParametersCalculate(field,generatedMesh,err,error,*999)
+    CALL GeneratedMesh_GeometricParametersCalculate(generatedMesh,field,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_GeometricParametersCalculateNumber")
     RETURN
@@ -43861,7 +43862,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_GeometricParametersCalculateObj",err,error,*999)
 
-    CALL GeneratedMesh_GeometricParametersCalculate(field%field,generatedMesh%generatedMesh,err,error,*999)
+    CALL GeneratedMesh_GeometricParametersCalculate(generatedMesh%generatedMesh,field%field,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_GeometricParametersCalculateObj")
     RETURN
@@ -43905,7 +43906,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_SURFACE_GET(generatedMesh,1,surfaceType,surfaceNodes,normalXi,err,error,*999)
+    CALL GeneratedMesh_SurfaceGet(generatedMesh,1,surfaceType,surfaceNodes,normalXi,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_SurfaceGetNumber0")
     RETURN
@@ -43948,7 +43949,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_SURFACE_GET(generatedMesh,meshComponent,surfaceType,surfaceNodes,normalXi,err,error,*999)
+    CALL GeneratedMesh_SurfaceGet(generatedMesh,meshComponent,surfaceType,surfaceNodes,normalXi,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_SurfaceGetNumber1")
     RETURN
@@ -43974,7 +43975,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_SurfaceGetObj0",err,error,*999)
 
-    CALL GENERATED_MESH_SURFACE_GET(generatedMesh%generatedMesh,1,surfaceType,surfaceNodes,normalXi,err,error,*999)
+    CALL GeneratedMesh_SurfaceGet(generatedMesh%generatedMesh,1,surfaceType,surfaceNodes,normalXi,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_SurfaceGetObj0")
     RETURN
@@ -44001,7 +44002,7 @@ CONTAINS
 
     ENTERS("cmfe_GeneratedMesh_SurfaceGetObj1",err,error,*999)
 
-    CALL GENERATED_MESH_SURFACE_GET(generatedMesh%generatedMesh,meshComponent,surfaceType,surfaceNodes,normalXi,err,error,*999)
+    CALL GeneratedMesh_SurfaceGet(generatedMesh%generatedMesh,meshComponent,surfaceType,surfaceNodes,normalXi,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_SurfaceGetObj1")
     RETURN

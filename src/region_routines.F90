@@ -53,7 +53,7 @@ MODULE RegionRoutines
   USE DecompositionRoutines
   USE EquationsSetRoutines
   USE FieldRoutines
-  USE GENERATED_MESH_ROUTINES
+  USE GeneratedMeshRoutines
   USE InputOutput
   USE InterfaceRoutines
   USE ISO_VARYING_STRING
@@ -368,7 +368,7 @@ CONTAINS
       CALL EquationsSets_Finalise(region,err,error,*999)
       CALL Fields_Finalise(region%fields,err,error,*999)
       CALL Decomposers_Finalise(region%decomposers,err,error,*999)
-      IF(ASSOCIATED(region%generatedMeshes)) CALL GENERATED_MESHES_FINALISE(region%generatedMeshes,err,error,*999)
+      IF(ASSOCIATED(region%generatedMeshes)) CALL GeneratedMeshes_Finalise(region%generatedMeshes,err,error,*999)
       CALL Meshes_Finalise(region%meshes,err,error,*999)
       CALL DataPointSets_Finalise(region%dataPointSets,err,error,*999)
       IF(ASSOCIATED(region%nodes)) CALL Nodes_Destroy(region%nodes,err,error,*999)
@@ -424,7 +424,7 @@ CONTAINS
     NULLIFY(region%interfaces)
     CALL DataPointSets_Initialise(region,err,error,*999)
     CALL Meshes_Initialise(region,err,error,*999)
-    CALL GENERATED_MESHES_INITIALISE(region,err,error,*999)
+    CALL GeneratedMeshes_Initialise(region,err,error,*999)
     CALL Decomposers_Initialise(region,err,error,*999)
     CALL Fields_Initialise(region,err,error,*999)
     CALL EquationsSets_Initialise(region,err,error,*999)

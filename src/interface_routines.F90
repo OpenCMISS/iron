@@ -53,7 +53,7 @@ MODULE InterfaceRoutines
   USE DataProjectionAccessRoutines
   USE DecompositionAccessRoutines
   USE FieldRoutines
-  USE GENERATED_MESH_ROUTINES
+  USE GeneratedMeshRoutines
   USE InputOutput
   USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_ROUTINES
@@ -408,7 +408,7 @@ CONTAINS
       CALL Interface_MeshConnectivityFinalise(INTERFACE%meshConnectivity,err,error,*999)
       CALL Interface_PointsConnectivityFinalise(INTERFACE%pointsConnectivity,err,error,*999)
       IF(ASSOCIATED(INTERFACE%NODES)) CALL Nodes_Destroy(INTERFACE%NODES,err,error,*999)
-      CALL GENERATED_MESHES_FINALISE(INTERFACE%generatedMeshes,err,error,*999)
+      CALL GeneratedMeshes_Finalise(INTERFACE%generatedMeshes,err,error,*999)
       CALL Meshes_Finalise(INTERFACE%MESHES,err,error,*999)
       CALL Fields_Finalise(INTERFACE%FIELDS,err,error,*999)
       CALL INTERFACE_CONDITIONS_FINALISE(INTERFACE%interfaceConditions,err,error,*999)
@@ -463,7 +463,7 @@ CONTAINS
     NULLIFY(INTERFACE%dataPointSets)
     CALL DataPointSets_Initialise(INTERFACE,err,error,*999)
     CALL Meshes_Initialise(INTERFACE,err,error,*999)
-    CALL GENERATED_MESHES_INITIALISE(INTERFACE,err,error,*999)
+    CALL GeneratedMeshes_Initialise(INTERFACE,err,error,*999)
     CALL Fields_Initialise(INTERFACE,err,error,*999)
     CALL INTERFACE_CONDITIONS_INITIALISE(INTERFACE,err,error,*999)
     

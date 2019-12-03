@@ -19114,7 +19114,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dofIdx,parameterSetIdx
     REAL(DP) :: toValue
-    TYPE(REAL_DP_PTR_TYPE) :: fieldFromParameters(SIZE(fieldFromSetTypes,1))
+    TYPE(RealDPPtrType) :: fieldFromParameters(SIZE(fieldFromSetTypes,1))
     TYPE(FieldParameterSetType), POINTER :: fieldToParameterSet
     TYPE(FieldParameterSetPtrType) :: fieldFromParameterSets(SIZE(fieldFromSetTypes,1))
     TYPE(VARYING_STRING) :: localError
