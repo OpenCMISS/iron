@@ -64,9 +64,10 @@ MODULE OpenCMISS_Iron
  USE BasisAccessRoutines
  USE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
  USE BOUNDARY_CONDITIONS_ROUTINES
+ USE CellMLAccessRoutines
  USE Cmiss
  USE CmissPetsc
- USE CMISS_CELLML
+ USE CmissCellML
  USE ComputationRoutines
  USE ComputationAccessRoutines
  USE Constants
@@ -153,7 +154,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on a CellML environment.
  TYPE cmfe_CellMLType
    PRIVATE
-   TYPE(CELLML_TYPE), POINTER :: cellml
+   TYPE(CellMLType), POINTER :: cellml
  END TYPE cmfe_CellMLType
 
  !>Contains information about the CellML equations for a solver.
@@ -1084,7 +1085,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! CMISS_CELLML
+! CmissCellML
 !
 !==================================================================================================================================
 
@@ -14251,7 +14252,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! CMISS_CELLML
+!! CmissCellML
 !!
 !!==================================================================================================================================
 
@@ -14269,7 +14270,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14287,7 +14288,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_VARIABLE_SET_AS_KNOWN(cellml,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsKnown(cellml,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14320,7 +14321,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
     
-    CALL CELLML_VARIABLE_SET_AS_KNOWN(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsKnown(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14350,7 +14351,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14368,7 +14369,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_VARIABLE_SET_AS_KNOWN(cellml,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsKnown(cellml,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14401,7 +14402,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
     
-    CALL CELLML_VARIABLE_SET_AS_KNOWN(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsKnown(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14431,7 +14432,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14449,7 +14450,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_VARIABLE_SET_AS_WANTED(cellml,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsWanted(cellml,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14482,7 +14483,7 @@ CONTAINS
     
 #ifdef WITH_CELLML
 
-    CALL CELLML_VARIABLE_SET_AS_WANTED(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsWanted(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14512,7 +14513,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14530,7 +14531,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_VARIABLE_SET_AS_WANTED(cellml,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsWanted(cellml,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif    
 
@@ -14563,7 +14564,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_VARIABLE_SET_AS_WANTED(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
+    CALL CellML_VariableSetAsWanted(CellML%cellML,cellMLModelUserNumber,variableID,err,error,*999)
 
 #endif
 
@@ -14598,7 +14599,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -14619,7 +14620,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL CELLML_CREATE_CELLML_TO_FIELD_MAP(cellml,cellMLModelUserNumber,variableID,cellMLParameterSet, &
+    CALL CellML_CreateCellMLToFieldMap(cellml,cellMLModelUserNumber,variableID,cellMLParameterSet, &
       & FIELD,variableType,componentNumber,fieldParameterSet,err,error,*999)
 
 #endif
@@ -14659,7 +14660,7 @@ CONTAINS
     
 #ifdef WITH_CELLML
 
-    CALL CELLML_CREATE_CELLML_TO_FIELD_MAP(cellML%cellML,cellMLModelUserNumber,variableID,cellMLParameterSet, &
+    CALL CellML_CreateCellMLToFieldMap(cellML%cellML,cellMLModelUserNumber,variableID,cellMLParameterSet, &
       & field%field,variableType,componentNumber,fieldParameterSet,err,error,*999)
 
 #endif
@@ -14695,7 +14696,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -14716,7 +14717,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL CELLML_CREATE_CELLML_TO_FIELD_MAP(cellml,cellMLModelUserNumber,variableID,cellMLParameterSet, &
+    CALL CellML_CreateCellMLToFieldMap(cellml,cellMLModelUserNumber,variableID,cellMLParameterSet, &
       & FIELD,variableType,componentNumber,fieldParameterSet,err,error,*999)
 
 #endif
@@ -14756,7 +14757,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_CREATE_CELLML_TO_FIELD_MAP(cellML%cellML,cellMLModelUserNumber,variableID,cellMLParameterSet, &
+    CALL CellML_CreateCellMLToFieldMap(cellML%cellML,cellMLModelUserNumber,variableID,cellMLParameterSet, &
       & field%field,variableType,componentNumber,fieldParameterSet,err,error,*999)
 
 #endif
@@ -14792,7 +14793,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -14813,7 +14814,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL CELLML_CREATE_FIELD_TO_CELLML_MAP(cellml,field,variableType,componentNumber,fieldParameterSet, &
+    CALL CellML_CreateFieldToCellMLMap(cellml,field,variableType,componentNumber,fieldParameterSet, &
       & cellMLModelUserNumber,variableID,cellMLParameterSet,err,error,*999)
 
 #endif
@@ -14853,7 +14854,7 @@ CONTAINS
     
 #ifdef WITH_CELLML
 
-    CALL CELLML_CREATE_FIELD_TO_CELLML_MAP(cellML%cellML,field%field,variableType,componentNumber,fieldParameterSet, &
+    CALL CellML_CreateFieldToCellMLMap(cellML%cellML,field%field,variableType,componentNumber,fieldParameterSet, &
       & cellMLModelUserNumber,variableID,cellMLParameterSet,err,error,*999)
 
 #endif
@@ -14889,7 +14890,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -14910,7 +14911,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL CELLML_CREATE_FIELD_TO_CELLML_MAP(cellml,field,variableType,componentNumber,fieldParameterSet, &
+    CALL CellML_CreateFieldToCellMLMap(cellml,field,variableType,componentNumber,fieldParameterSet, &
       & cellMLModelUserNumber,variableID,cellMLParameterSet,err,error,*999)
 
 #endif
@@ -14950,7 +14951,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_CREATE_FIELD_TO_CELLML_MAP(cellML%cellML,field%field,variableType,componentNumber,fieldParameterSet, &
+    CALL CellML_CreateFieldToCellMLMap(cellML%cellML,field%field,variableType,componentNumber,fieldParameterSet, &
       & cellMLModelUserNumber,variableID,cellMLParameterSet,err,error,*999)
 
 #endif
@@ -14978,7 +14979,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14996,7 +14997,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_CREATE_FINISH(cellml,err,error,*999)
+    CALL CellML_CreateFinish(cellml,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START('CellML Create')
@@ -15031,7 +15032,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
     
-    CALL CELLML_CREATE_FINISH(cellML%cellML,err,error,*999)
+    CALL CellML_CreateFinish(cellML%cellML,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START('CellML Create')
@@ -15062,7 +15063,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15083,7 +15084,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL CELLML_CREATE_START(cellMLUserNumber,region,cellml,err,error,*999)
+    CALL CellML_CreateStart(cellMLUserNumber,region,cellml,err,error,*999)
 
 #endif
 
@@ -15120,7 +15121,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('CellML Create')
 #endif
 
-    CALL CELLML_CREATE_START(cellMLUserNumber,region%region,cellML%cellML,err,error,*999)
+    CALL CellML_CreateStart(cellMLUserNumber,region%region,cellML%cellML,err,error,*999)
 
 #endif
 
@@ -15147,7 +15148,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15223,7 +15224,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15241,7 +15242,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_FIELD_MAPS_CREATE_FINISH(cellml,err,error,*999)
+    CALL CellML_FieldMapsCreateFinish(cellml,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START('CellML Create')
@@ -15276,7 +15277,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_FIELD_MAPS_CREATE_FINISH(cellML%cellML,err,error,*999)
+    CALL CellML_FieldMapsCreateFinish(cellML%cellML,err,error,*999)
 
 #endif
 
@@ -15303,7 +15304,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15321,7 +15322,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_FIELD_MAPS_CREATE_START(cellml,err,error,*999)
+    CALL CellML_FieldMapsCreateStart(cellml,err,error,*999)
 
 #endif
 
@@ -15352,7 +15353,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
     
-    CALL CELLML_FIELD_MAPS_CREATE_START(cellML%cellML,err,error,*999)
+    CALL CellML_FieldMapsCreateStart(cellML%cellML,err,error,*999)
 
 #endif
 
@@ -15381,7 +15382,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -15399,7 +15400,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_MODEL_IMPORT(cellml,URI,modelIndex,err,error,*999)
+    CALL CellML_ModelImport(cellml,URI,modelIndex,err,error,*999)
 
 #endif
 
@@ -15432,7 +15433,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_MODEL_IMPORT(cellML%cellML,URI,modelIndex,err,error,*999)
+    CALL CellML_ModelImport(cellML%cellML,URI,modelIndex,err,error,*999)
 
 #endif
 
@@ -15461,7 +15462,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15479,7 +15480,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_MODEL_IMPORT(cellml,URI,modelIndex,err,error,*999)
+    CALL CellML_ModelImport(cellml,URI,modelIndex,err,error,*999)
 
 #endif
 
@@ -15512,7 +15513,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_MODEL_IMPORT(cellML%cellML,URI,modelIndex,err,error,*999)
+    CALL CellML_ModelImport(cellML%cellML,URI,modelIndex,err,error,*999)
 
 #endif
 
@@ -15539,7 +15540,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15557,7 +15558,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_MODELS_FIELD_CREATE_FINISH(cellml,err,error,*999)
+    CALL CellML_ModelsFieldCreateFinish(cellml,err,error,*999)
 
 #endif
 
@@ -15588,7 +15589,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_MODELS_FIELD_CREATE_FINISH(cellML%cellML,err,error,*999)
+    CALL CellML_ModelsFieldCreateFinish(cellML%cellML,err,error,*999)
 
 #endif
 
@@ -15617,7 +15618,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -15637,7 +15638,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_MODELS_FIELD_CREATE_START(cellMLModelsFieldUserNumber,cellml,field,err,error,*999)
+    CALL CellML_ModelsFieldCreateStart(cellMLModelsFieldUserNumber,cellml,field,err,error,*999)
 
 #endif
 
@@ -15670,7 +15671,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_MODELS_FIELD_CREATE_START(cellMLModelsFieldUserNumber,cellML%cellML,field%field,err,error,*999)
+    CALL CellML_ModelsFieldCreateStart(cellMLModelsFieldUserNumber,cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -15698,7 +15699,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -15718,7 +15719,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_MODELS_FIELD_GET(cellml,field,err,error,*999)
+    CALL CellML_ModelsFieldGet(cellml,field,err,error,*999)
     cellMLModelsFieldUserNumber = FIELD%userNumber
 
 #else
@@ -15755,7 +15756,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_MODELS_FIELD_GET(cellML%cellML,field%field,err,error,*999)
+    CALL CellML_ModelsFieldGet(cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -15782,7 +15783,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15800,7 +15801,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_STATE_FIELD_CREATE_FINISH(cellml,err,error,*999)
+    CALL CellML_StateFieldCreateFinish(cellml,err,error,*999)
 
 #endif
 
@@ -15831,7 +15832,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_STATE_FIELD_CREATE_FINISH(cellML%cellML,err,error,*999)
+    CALL CellML_StateFieldCreateFinish(cellML%cellML,err,error,*999)
 
 #endif
 
@@ -15860,7 +15861,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -15880,7 +15881,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_STATE_FIELD_CREATE_START(cellMLStateFieldUserNumber,cellml,field,err,error,*999)
+    CALL CellML_StateFieldCreateStart(cellMLStateFieldUserNumber,cellml,field,err,error,*999)
 
 #endif
 
@@ -15913,7 +15914,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_STATE_FIELD_CREATE_START(cellMLStateFieldUserNumber,cellML%cellML,field%field,err,error,*999)
+    CALL CellML_StateFieldCreateStart(cellMLStateFieldUserNumber,cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -15941,7 +15942,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -15961,7 +15962,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_STATE_FIELD_GET(cellml,field,err,error,*999)
+    CALL CellML_StateFieldGet(cellml,field,err,error,*999)
     cellMLStateFieldUserNumber = field%userNumber
 
 #else
@@ -15998,7 +15999,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_STATE_FIELD_GET(cellML%cellML,field%field,err,error,*999)
+    CALL CellML_StateFieldGet(cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -16030,7 +16031,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16048,7 +16049,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_FIELD_COMPONENT_GET(cellml,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
+    CALL CellML_FieldComponentGet(cellml,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
 
 #else
     
@@ -16088,7 +16089,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_FIELD_COMPONENT_GET(cellML%cellML,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
+    CALL CellML_FieldComponentGet(cellML%cellML,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
 
 #else
 
@@ -16124,7 +16125,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16142,7 +16143,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_FIELD_COMPONENT_GET(cellml,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
+    CALL CellML_FieldComponentGet(cellml,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
 
 #else
 
@@ -16181,7 +16182,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_FIELD_COMPONENT_GET(cellML%cellML,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
+    CALL CellML_FieldComponentGet(cellML%cellML,cellMLModelUserNumber,cellMLFieldType,variableID,fieldComponent,err,error,*999)
 
 #else
 
@@ -16212,7 +16213,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16230,7 +16231,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_INTERMEDIATE_FIELD_CREATE_FINISH(cellml,err,error,*999)
+    CALL CellML_IntermediateFieldCreateFinish(cellml,err,error,*999)
 
 #endif
 
@@ -16262,7 +16263,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_INTERMEDIATE_FIELD_CREATE_FINISH(cellML%cellML,err,error,*999)
+    CALL CellML_IntermediateFieldCreateFinish(cellML%cellML,err,error,*999)
 
 #endif
 
@@ -16292,7 +16293,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -16312,7 +16313,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_INTERMEDIATE_FIELD_CREATE_START(cellMLIntermediateFieldUserNumber,cellml,field,err,error,*999)
+    CALL CellML_IntermediateFieldCreateStart(cellMLIntermediateFieldUserNumber,cellml,field,err,error,*999)
 
 #endif
 
@@ -16346,7 +16347,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_INTERMEDIATE_FIELD_CREATE_START(cellMLIntermediateFieldUserNumber,cellML%cellML,field%field,err,error,*999)
+    CALL CellML_IntermediateFieldCreateStart(cellMLIntermediateFieldUserNumber,cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -16375,7 +16376,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -16395,7 +16396,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_INTERMEDIATE_FIELD_GET(cellml,field,err,error,*999)
+    CALL CellML_IntermediateFieldGet(cellml,field,err,error,*999)
     cellMLIntermediateFieldUserNumber = field%userNumber
 
 #else
@@ -16432,7 +16433,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-    CALL CELLML_INTERMEDIATE_FIELD_GET(cellML%cellML,field%field,err,error,*999)
+    CALL CellML_IntermediateFieldGet(cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -16459,7 +16460,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16477,7 +16478,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_PARAMETERS_FIELD_CREATE_FINISH(cellml,err,error,*999)
+    CALL CellML_ParametersFieldCreateFinish(cellml,err,error,*999)
 
 #endif
 
@@ -16509,7 +16510,7 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-   CALL CELLML_PARAMETERS_FIELD_CREATE_FINISH(cellML%cellML,err,error,*999)
+   CALL CellML_ParametersFieldCreateFinish(cellML%cellML,err,error,*999)
 
 #endif
 
@@ -16538,7 +16539,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -16558,7 +16559,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_PARAMETERS_FIELD_CREATE_START(cellMLParametersFieldUserNumber,cellml,field,err,error,*999)
+    CALL CellML_ParametersFieldCreateStart(cellMLParametersFieldUserNumber,cellml,field,err,error,*999)
 
 #endif
 
@@ -16592,7 +16593,7 @@ CONTAINS
     
 #ifdef WITH_CELLML
 
-    CALL CELLML_PARAMETERS_FIELD_CREATE_START(cellMLParametersFieldUserNumber,cellML%cellML,field%field,err,error,*999)
+    CALL CellML_ParametersFieldCreateStart(cellMLParametersFieldUserNumber,cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -16621,7 +16622,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -16641,7 +16642,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_PARAMETERS_FIELD_GET(cellml,field,err,error,*999)
+    CALL CellML_ParametersFieldGet(cellml,field,err,error,*999)
     cellMLParametersFieldUserNumber = field%userNumber
 
 #else
@@ -16678,7 +16679,7 @@ CONTAINS
     
 #ifdef WITH_CELLML
 
-    CALL CELLML_PARAMETERS_FIELD_GET(cellML%cellML,field%field,err,error,*999)
+    CALL CellML_ParametersFieldGet(cellML%cellML,field%field,err,error,*999)
 
 #endif
 
@@ -16705,7 +16706,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -56259,7 +56260,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: cellMLIndex !<On return, the index of the added CellML environment.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
@@ -56315,7 +56316,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: cellMLIndex !<On return, the index of the added CellML environment.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(CELLML_TYPE), POINTER :: cellml
+    TYPE(CellMLType), POINTER :: cellml
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem

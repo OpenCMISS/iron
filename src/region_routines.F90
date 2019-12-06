@@ -48,7 +48,7 @@ MODULE RegionRoutines
   USE ContextAccessRoutines
   USE CoordinateSystemRoutines
   USE CoordinateSystemAccessRoutines
-  USE CMISS_CELLML
+  USE CmissCellML
   USE DataPointRoutines
   USE DecompositionRoutines
   USE EquationsSetRoutines
@@ -364,7 +364,7 @@ CONTAINS
     
     IF(ASSOCIATED(region)) THEN
       region%label=""
-      CALL CELLML_ENVIRONMENTS_FINALISE(region%cellMLEnvironments,err,error,*999)
+      CALL CellMLEnvironments_Finalise(region%cellMLEnvironments,err,error,*999)
       CALL EquationsSets_Finalise(region,err,error,*999)
       CALL Fields_Finalise(region%fields,err,error,*999)
       CALL Decomposers_Finalise(region%decomposers,err,error,*999)
@@ -428,7 +428,7 @@ CONTAINS
     CALL Decomposers_Initialise(region,err,error,*999)
     CALL Fields_Initialise(region,err,error,*999)
     CALL EquationsSets_Initialise(region,err,error,*999)
-    CALL CELLML_ENVIRONMENTS_INITIALISE(region,err,error,*999)
+    CALL CellMLEnvironments_Initialise(region,err,error,*999)
     CALL Interfaces_Initialise(region,err,error,*999)
     
     EXITS("Region_Initialise")

@@ -260,7 +260,7 @@ CONTAINS
   SUBROUTINE Problem_SolverDAECellMLRHSEvaluate(cellML,time,dofIdx,stateData,rateData,err,error,*)
 
    !Argument variables
-    TYPE(CELLML_TYPE), POINTER :: cellML !<A pointer to the CellML to evaluate
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to evaluate
     REAL(DP), INTENT(IN) :: time !<The time to evaluate the CellML model at
     INTEGER(INTG), INTENT(IN) :: dofIdx !<The index of the DOF to evaluate
     REAL(DP), POINTER :: stateData(:) !<The states data to evaluate the model at
@@ -272,19 +272,19 @@ CONTAINS
       modelIdx,parameterDataOffset
     INTEGER(INTG), POINTER :: modelsData(:)
     REAL(DP), POINTER :: intermediateData(:),parameterData(:)
-    TYPE(CELLML_MODEL_TYPE), POINTER :: model
+    TYPE(CellMLModelType), POINTER :: model
     TYPE(FieldType), POINTER :: intermediateField,modelsField,parametersField
     TYPE(FieldVariableType), POINTER :: modelsVariable
     
     ENTERS("Problem_SolverDAECellMLRHSEvaluate",err,error,*999)
     
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(cellML%MODELS_FIELD)) CALL FlagError("CellML models field is not associated.",err,error,*999)
-    modelsField=>cellML%MODELS_FIELD%MODELS_FIELD
+    IF(.NOT.ASSOCIATED(cellML%modelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
+    modelsField=>cellML%modelsField%modelsField
     IF(.NOT.ASSOCIATED(modelsField)) CALL FlagError("Models field not associated.",err,error,*999)
    
-    maxNumberOfStates=cellML%MAXIMUM_NUMBER_OF_STATE
-    maxNumberOfIntermediates=cellML%MAXIMUM_NUMBER_OF_INTERMEDIATE
+    maxNumberOfStates=cellML%maximumNumberOfState
+    maxNumberOfIntermediates=cellML%maximumNumberOfIntermediate
     maxNumberOfParameters=cellML%maximumNumberOfParameters
     !Make sure CellML fields have been updated to the current value of any mapped fields
     NULLIFY(modelsVariable)
@@ -303,8 +303,8 @@ CONTAINS
     ENDIF
     NULLIFY(parameterData)
     !Get the parameters information if this environment has any.
-    IF(ASSOCIATED(cellML%PARAMETERS_FIELD)) THEN
-      parametersField=>cellML%PARAMETERS_FIELD%PARAMETERS_FIELD
+    IF(ASSOCIATED(cellML%parametersField)) THEN
+      parametersField=>cellML%parametersField%parametersField
       IF(ASSOCIATED(parametersField)) THEN
         CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parameterData, &
           & err,error,*999)
@@ -312,8 +312,8 @@ CONTAINS
     ENDIF
     !Get the intermediate information if this environment has any.
     NULLIFY(intermediateData)
-    IF(ASSOCIATED(cellML%INTERMEDIATE_FIELD)) THEN
-      intermediateField=>cellml%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD
+    IF(ASSOCIATED(cellML%intermediateField)) THEN
+      intermediateField=>cellml%intermediateField%intermediateField
       IF(ASSOCIATED(intermediateField)) THEN
         CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,intermediateData, &
           & err,error,*999)
@@ -4056,7 +4056,7 @@ SUBROUTINE Problem_SolverDAECellMLRHSPetsc(ts,time,states,rates,ctx,err)
   TYPE(CellMLPETScContextType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
-  TYPE(CELLML_TYPE), POINTER :: cellML
+  TYPE(CellMLType), POINTER :: cellML
   TYPE(SOLVER_TYPE), POINTER :: solver
   TYPE(VARYING_STRING) :: error
   INTEGER(INTG) :: dofIdx

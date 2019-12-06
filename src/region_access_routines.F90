@@ -93,6 +93,8 @@ MODULE RegionAccessRoutines
 
   PUBLIC Region_CellMLGet
 
+  PUBLIC Region_CellMLEnvironmentsGet
+
   PUBLIC Region_ContextGet
 
   PUBLIC Region_CoordinateSystemGet
@@ -213,7 +215,7 @@ CONTAINS
     !Argument variables
     TYPE(RegionType), POINTER :: region !<A pointer to the region to get the cellml for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the cellml to get.
-    TYPE(CELLML_TYPE), POINTER :: cellml !<On exit, a pointer to the cellml for the region. Must not be associated on entry.
+    TYPE(CellMLType), POINTER :: cellml !<On exit, a pointer to the cellml for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -239,6 +241,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Region_CellMLGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the CellML environments for a given user number in a region.
+  SUBROUTINE Region_CellMLEnvironmentsGet(region,cellMLEnvironments,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the CellML environments for
+    TYPE(CellMLEnvironmentsType), POINTER :: cellMLEnvironments !<On exit, a pointer to the CellML environments for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_CellMLEnvironmentsGet",err,error,*998)
+
+    IF(ASSOCIATED(cellMLEnvironments)) CALL FlagError("CellML environments is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*999)
+
+    cellMLEnvironments=>region%cellMLEnvironments
+    
+    IF(.NOT.ASSOCIATED(cellMLEnvironments)) THEN
+      localError="The CellML environments is not associated for region number "// &
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_CellMLEnvironmentsGet")
+    RETURN
+999 NULLIFY(cellMLEnvironments)
+998 ERRORSEXITS("Region_CellMLEnvironmentsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_CellMLEnvironmentsGet
   
   !
   !================================================================================================================================
@@ -284,7 +322,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the coordinate system of region. \see OPENCMISS::Iron::cmfe_RegionCoordinateSystemGet
+  !>Returns the coordinate system of region. \see OPENCMISS::Iron::cmfe_Region_CoordinateSystemGet
   SUBROUTINE Region_CoordinateSystemGet(region,coordinateSystem,err,error,*)
 
     !Argument variables

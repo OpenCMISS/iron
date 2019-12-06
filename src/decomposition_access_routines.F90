@@ -167,6 +167,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Domain_DomainTopologyGet
 
+  PUBLIC Domain_MeshComponentNumberGet
+
   PUBLIC DomainElements_BasisGet
 
   PUBLIC DomainFaces_BasisGet
@@ -1976,6 +1978,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Domain_DomainTopologyGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a mesh component number from a domain.
+  SUBROUTINE Domain_MeshComponentNumberGet(domain,meshComponentNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainType), POINTER :: domain !<The domain to get the mesh component number for.
+    INTEGER(INTG), INTENT(OUT) :: meshComponentNumber !<On exit, the mesh component number for the domain.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Domain_MeshComponentNumberGet",err,error,*999)
+
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+
+    !Get the domain mesh component number
+    meshComponentNumber=domain%meshComponentNumber
+
+    EXITS("Domain_MeshComponentNumberGet")
+    RETURN
+999 ERRORSEXITS("Domain_MeshComponentNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Domain_MeshComponentNumberGet
 
   !
   !================================================================================================================================

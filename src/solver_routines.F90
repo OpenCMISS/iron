@@ -49,7 +49,8 @@ MODULE SOLVER_ROUTINES
 #ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
 #endif
-  USE CMISS_CELLML
+  USE CmissCellML
+  USE CellMLAccessRoutines
   USE CmissPetsc
   USE CmissPetscTypes
   USE ComputationRoutines
@@ -106,8 +107,8 @@ MODULE SOLVER_ROUTINES
   INTERFACE
 
     SUBROUTINE SOLVER_DAE_EXTERNAL_INTEGRATE(numberOfDofs,START_TIME,END_TIME,INITIAL_STEP, &
-      & ONLY_ONE_MODEL_INDEX,MODELS_DATA,NUMBER_OF_STATE,STATE_DATA,NUMBER_OF_PARAMETERS, &
-      & PARAMETERS_DATA,NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR) BIND(C, NAME="SolverDAEExternalIntegrate")
+      & onlyOneModelIndex,MODELS_DATA,numberOfState,STATE_DATA,NUMBER_OF_PARAMETERS, &
+      & PARAMETERS_DATA,numberOfIntermediate,INTERMEDIATE_DATA,ERR) BIND(C, NAME="SolverDAEExternalIntegrate")
       
       USE ISO_C_BINDING
 
@@ -115,13 +116,13 @@ MODULE SOLVER_ROUTINES
       REAL(C_DOUBLE), VALUE, INTENT(IN) :: START_TIME
       REAL(C_DOUBLE), VALUE, INTENT(IN) :: END_TIME
       REAL(C_DOUBLE), INTENT(INOUT) :: INITIAL_STEP
-      INTEGER(C_INT), VALUE, INTENT(IN) :: ONLY_ONE_MODEL_INDEX
+      INTEGER(C_INT), VALUE, INTENT(IN) :: onlyOneModelIndex
       INTEGER(C_INT), INTENT(IN) :: MODELS_DATA(*)
-      INTEGER(C_INT), VALUE, INTENT(IN) :: NUMBER_OF_STATE
+      INTEGER(C_INT), VALUE, INTENT(IN) :: numberOfState
       REAL(C_DOUBLE), INTENT(INOUT) :: STATE_DATA(*)
       INTEGER(C_INT), VALUE, INTENT(IN) :: NUMBER_OF_PARAMETERS
       REAL(C_DOUBLE), INTENT(IN) :: PARAMETERS_DATA(*)
-      INTEGER(C_INT), VALUE, INTENT(IN) :: NUMBER_OF_INTERMEDIATE
+      INTEGER(C_INT), VALUE, INTENT(IN) :: numberOfIntermediate
       REAL(C_DOUBLE), INTENT(OUT) :: INTERMEDIATE_DATA(*)
       INTEGER(C_INT), INTENT(OUT) :: err
       
@@ -583,18 +584,18 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds a CellML environment to a solvers CellML equations. \see OpenCMISS::Iron::cmfe_CellMLEquationsCellMLAdd
+  !>Adds a CellML environment to a solvers CellML equations. \see OpenCMISS::Iron::cmfe_CellMLEquations_CellMLAdd
   SUBROUTINE CELLML_EQUATIONS_CELLML_ADD(CELLML_EQUATIONS,CELLML,CELLML_INDEX,err,error,*)
 
     !Argument variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS !<A pointer the CellML equations to add the CellML environment to.
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment to add
+    TYPE(CellMLType), POINTER :: CELLML !<A pointer to the CellML environment to add
     INTEGER(INTG), INTENT(OUT) :: CELLML_INDEX !<On return, the index of the added CellML environment.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: cellml_idx
-    TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: NEW_CELLML_ENVIRONMENTS(:)
+    TYPE(CellMLPtrType), ALLOCATABLE :: NEW_CELLML_ENVIRONMENTS(:)
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     
     ENTERS("CELLML_EQUATIONS_CELLML_ADD",err,error,*999)
@@ -605,23 +606,16 @@ CONTAINS
       ELSE
         SOLVER=>CELLML_EQUATIONS%SOLVER
         IF(ASSOCIATED(SOLVER)) THEN
-          IF(ASSOCIATED(CELLML)) THEN
-            IF(CELLML%CELLML_FINISHED) THEN
-              ALLOCATE(NEW_CELLML_ENVIRONMENTS(CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS+1),STAT=err)
-              IF(err/=0) CALL FlagError("Could not allocate new CellML environments.",err,error,*999)
-              DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
-                NEW_CELLML_ENVIRONMENTS(cellml_idx)%ptr=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
-              ENDDO !cellml_idx
-              NEW_CELLML_ENVIRONMENTS(CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS+1)%ptr=>CELLML
-              CALL MOVE_ALLOC(NEW_CELLML_ENVIRONMENTS,CELLML_EQUATIONS%CELLML_ENVIRONMENTS)
-              CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS=CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS+1
-              CELLML_INDEX=CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
-            ELSE
-              CALL FlagError("CellML environment has not been finished.",err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("CellML environment is not associated.",err,error,*999)
-          ENDIF
+          CALL CellML_AssertIsFinished(cellML,err,error,*999)
+          ALLOCATE(NEW_CELLML_ENVIRONMENTS(CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS+1),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate new CellML environments.",err,error,*999)
+          DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
+            NEW_CELLML_ENVIRONMENTS(cellml_idx)%ptr=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
+          ENDDO !cellml_idx
+          NEW_CELLML_ENVIRONMENTS(CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS+1)%ptr=>CELLML
+          CALL MOVE_ALLOC(NEW_CELLML_ENVIRONMENTS,CELLML_EQUATIONS%CELLML_ENVIRONMENTS)
+          CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS=CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS+1
+          CELLML_INDEX=CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
         ELSE
           CALL FlagError("CellML equations solver is not associated.",err,error,*999)
         ENDIF
@@ -1169,9 +1163,9 @@ CONTAINS
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
     REAL(DP) :: time
     REAL(DP), POINTER :: INTERMEDIATE_DATA(:),PARAMETERS_DATA(:),STATE_DATA(:)
-    TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
+    TYPE(CellMLType), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: CELLML_MODELS_FIELD
+    TYPE(CellMLModelsFieldType), POINTER :: CELLML_MODELS_FIELD
     TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
     TYPE(FieldType), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1198,23 +1192,23 @@ CONTAINS
           DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
             CELLML_ENVIRONMENT=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
             IF(ASSOCIATED(CELLML_ENVIRONMENT)) THEN                  
-              CELLML_MODELS_FIELD=>CELLML_ENVIRONMENT%MODELS_FIELD
+              CELLML_MODELS_FIELD=>CELLML_ENVIRONMENT%modelsField
               IF(ASSOCIATED(CELLML_MODELS_FIELD)) THEN
-                MODELS_FIELD=>CELLML_MODELS_FIELD%MODELS_FIELD
+                MODELS_FIELD=>CELLML_MODELS_FIELD%modelsField
                 IF(ASSOCIATED(MODELS_FIELD)) THEN
 
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
                       
                   !Make sure CellML fields have been updated to the current value of any mapped fields
-                  CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                  CALL CellML_FieldToCellMLUpdate(CELLML_ENVIRONMENT,err,error,*999)
 
                   CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,err,error,*999)
                   CALL Field_ParameterSetDataGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                     & MODELS_DATA,err,error,*999)
                       
                   !Get the state information if this environment has any.
-                  IF(ASSOCIATED(CELLML_ENVIRONMENT%STATE_FIELD)) THEN
-                    STATE_FIELD=>CELLML_ENVIRONMENT%STATE_FIELD%STATE_FIELD
+                  IF(ASSOCIATED(CELLML_ENVIRONMENT%stateField)) THEN
+                    STATE_FIELD=>CELLML_ENVIRONMENT%stateField%stateField
                     IF(ASSOCIATED(STATE_FIELD)) THEN
                       CALL Field_ParameterSetDataGet(STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & STATE_DATA,err,error,*999)
@@ -1222,8 +1216,8 @@ CONTAINS
                   ENDIF
                       
                   !Get the parameters information if this environment has any.
-                  IF(ASSOCIATED(CELLML_ENVIRONMENT%PARAMETERS_FIELD)) THEN
-                    PARAMETERS_FIELD=>CELLML_ENVIRONMENT%PARAMETERS_FIELD%PARAMETERS_FIELD
+                  IF(ASSOCIATED(CELLML_ENVIRONMENT%parametersField)) THEN
+                    PARAMETERS_FIELD=>CELLML_ENVIRONMENT%parametersField%parametersField
                     IF(ASSOCIATED(PARAMETERS_FIELD)) THEN
                       CALL Field_ParameterSetDataGet(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & PARAMETERS_DATA,err,error,*999)
@@ -1231,8 +1225,8 @@ CONTAINS
                   ENDIF
                       
                   !Get the intermediate information if this environment has any.
-                  IF(ASSOCIATED(CELLML_ENVIRONMENT%INTERMEDIATE_FIELD)) THEN
-                    INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD
+                  IF(ASSOCIATED(CELLML_ENVIRONMENT%intermediateField)) THEN
+                    INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%intermediateField%intermediateField
                     IF(ASSOCIATED(INTERMEDIATE_FIELD)) THEN
                       CALL Field_ParameterSetDataGet(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & INTERMEDIATE_DATA,err,error,*999)                            
@@ -1243,9 +1237,9 @@ CONTAINS
                   SELECT CASE(CELLML_EVALUATOR_SOLVER%SOLVER_LIBRARY)
                   CASE(SOLVER_CMISS_LIBRARY)
                     CALL SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
-                      & totalNumberOfDofs,CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
-                      & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
-                      & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
+                      & totalNumberOfDofs,CELLML_ENVIRONMENT%modelsField%onlyOneModelIndex,MODELS_DATA,CELLML_ENVIRONMENT% &
+                      & maximumNumberOfState,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
+                      & PARAMETERS_DATA,CELLML_ENVIRONMENT%maximumNumberOfIntermediate,INTERMEDIATE_DATA,ERR,ERROR,*999)
                   CASE DEFAULT
                     CALL FlagError("Solver library not implemented.",err,error,*999)
                   END SELECT
@@ -1261,7 +1255,7 @@ CONTAINS
                     & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,INTERMEDIATE_DATA,err,error,*999)
                    
                   !Make sure fields have been updated to the current value of any mapped CellML fields
-                  CALL CELLML_CELLML_TO_FIELD_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                  CALL CellML_CellMLToFieldUpdate(CELLML_ENVIRONMENT,err,error,*999)
                     
                 ELSE
                   localError="The CellML models field is not associated for CellML index "// &
@@ -1301,15 +1295,15 @@ CONTAINS
   !
   
   !>Evaluate the CellML equations. 
-  SUBROUTINE SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML,N, ONLY_ONE_MODEL_INDEX,MODELS_DATA,MAX_NUMBER_STATES, &
+  SUBROUTINE SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML,N, onlyOneModelIndex,MODELS_DATA,MAX_NUMBER_STATES, &
     & STATE_DATA,MAX_NUMBER_PARAMETERS,PARAMETERS_DATA,MAX_NUMBER_INTERMEDIATES,INTERMEDIATE_DATA,err,error,*)
 
     !Argument variables
     TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER !<A pointer the CellML evaluator equation solver to evaluate
     REAL(DP), INTENT(IN) :: time !<The time for the CellML evaluate.
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
+    TYPE(CellMLType), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
     INTEGER(INTG), INTENT(IN) :: N !<The number of degrees-of-freedom
-    INTEGER(INTG), INTENT(IN) :: ONLY_ONE_MODEL_INDEX !<If only one model is used in the models data the index of that model. 0 otherwise.
+    INTEGER(INTG), INTENT(IN) :: onlyOneModelIndex !<If only one model is used in the models data the index of that model. 0 otherwise.
     INTEGER(INTG), POINTER :: MODELS_DATA(:) !<MODELS_DATA(dof_idx). The models data for the dof_idx'th dof.
     INTEGER(INTG), INTENT(IN) :: MAX_NUMBER_STATES !<The maximum number of state variables per dof
     REAL(DP), POINTER :: STATE_DATA(:) !<STATE_DATA(state_idx,dof_idx). The state data for the state_idx'th state variable of the dof_idx'th dof. state_idx varies from 1..NUMBER_STATES.
@@ -1325,28 +1319,28 @@ CONTAINS
       & STATE_END_DOF,state_idx,STATE_START_DOF
     REAL(DP) :: INTERMEDIATES(MAX(1,MAX_NUMBER_INTERMEDIATES)),PARAMETERS(MAX(1,MAX_NUMBER_PARAMETERS)), &
       & RATES(MAX(1,MAX_NUMBER_STATES)),STATES(MAX(1,MAX_NUMBER_STATES))
-    TYPE(CELLML_MODEL_TYPE), POINTER :: MODEL
+    TYPE(CellMLModelType), POINTER :: MODEL
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SOLVER_CELLML_EVALUATE",err,error,*999)
 
     IF(ASSOCIATED(CELLML_EVALUATOR_SOLVER)) THEN
       IF(ASSOCIATED(CELLML)) THEN
-        IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
-          CALL Field_DOFOrderTypeGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
+        IF(ASSOCIATED(CELLML%modelsField)) THEN
+          CALL Field_DOFOrderTypeGet(CELLML%modelsField%modelsField,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
           IF(DOF_ORDER_TYPE==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
             !Dof components are separated. Will need to copy data to temporary arrays.
-            IF(ONLY_ONE_MODEL_INDEX/=0) THEN
+            IF(onlyOneModelIndex/=0) THEN
               !We have CellML models on this rank
-              IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+              IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
                 !Mulitple models
                 DO dof_idx=1,N
                   model_idx=MODELS_DATA(dof_idx)
                   IF(model_idx.GT.0) THEN
                     MODEL=>CELLML%MODELS(model_idx)%ptr
                     IF(ASSOCIATED(MODEL)) THEN
-                      NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                      NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                      NUMBER_STATES=MODEL%numberOfState
+                      NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                       NUMBER_PARAMETERS=MODEL%numberOfParameters
                     
                       !Copy CellML data to temporary arrays
@@ -1374,7 +1368,7 @@ CONTAINS
                     
                     ELSE
                       localError="CellML environment model is not associated for model index "// &
-                        & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//" belonging to dof index "// &
+                        & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//" belonging to dof index "// &
                         & TRIM(NumberToVString(dof_idx,"*",err,error))//"."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
@@ -1382,10 +1376,10 @@ CONTAINS
                 ENDDO !dof_idx
               ELSE
                 !One one model is used.          
-                MODEL=>CELLML%MODELS(ONLY_ONE_MODEL_INDEX)%ptr
+                MODEL=>CELLML%MODELS(onlyOneModelIndex)%ptr
                 IF(ASSOCIATED(MODEL)) THEN
-                  NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                  NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                  NUMBER_STATES=MODEL%numberOfState
+                  NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                   NUMBER_PARAMETERS=MODEL%numberOfParameters
                   DO dof_idx=1,N
                     model_idx=MODELS_DATA(dof_idx)
@@ -1417,16 +1411,16 @@ CONTAINS
                   ENDDO !dof_idx
                 ELSE
                   localError="CellML environment model is not associated for model index "// &
-                    & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//"."
+                    & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
               ENDIF
             ENDIF
           ELSE
             !Dof components are continguous. Can pass data directly.
-            IF(ONLY_ONE_MODEL_INDEX/=0) THEN
+            IF(onlyOneModelIndex/=0) THEN
               !We have CellML models on this rank
-              IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+              IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
                 !Mulitple models
 
 #ifdef WITH_CELLML                    
@@ -1436,8 +1430,8 @@ CONTAINS
                   IF(model_idx.GT.0) THEN
                     MODEL=>CELLML%MODELS(model_idx)%ptr
                     IF(ASSOCIATED(MODEL)) THEN
-                      NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                      NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                      NUMBER_STATES=MODEL%numberOfState
+                      NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                       NUMBER_PARAMETERS=MODEL%numberOfParameters
                       !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
                       !to avoid indexing in to null pointers
@@ -1520,7 +1514,7 @@ CONTAINS
                                           
                     ELSE
                       localError="CellML environment model is not associated for model index "// &
-                        & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//" belonging to dof index "// &
+                        & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//" belonging to dof index "// &
                         & TRIM(NumberToVString(dof_idx,"*",err,error))//"."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
@@ -1532,10 +1526,10 @@ CONTAINS
                 
               ELSE
                 !One model is used.
-                MODEL=>CELLML%MODELS(ONLY_ONE_MODEL_INDEX)%ptr
+                MODEL=>CELLML%MODELS(onlyOneModelIndex)%ptr
                 IF(ASSOCIATED(MODEL)) THEN
-                  NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                  NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                  NUMBER_STATES=MODEL%numberOfState
+                  NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                   NUMBER_PARAMETERS=MODEL%numberOfParameters                
 #ifdef WITH_CELLML
                   !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
@@ -1651,7 +1645,7 @@ CONTAINS
 #endif
                 ELSE
                   localError="CellML environment model is not associated for model index "// &
-                    & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//"."
+                    & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
               ENDIF
@@ -2035,17 +2029,17 @@ CONTAINS
 
   !>Integrate using a forward Euler differential-algebraic equation solver.
   SUBROUTINE SOLVER_DAE_EULER_FORWARD_INTEGRATE(FORWARD_EULER_SOLVER,CELLML,N,START_TIME,END_TIME,TIME_INCREMENT, &
-    & ONLY_ONE_MODEL_INDEX,MODELS_DATA,MAX_NUMBER_STATES,STATE_DATA,MAX_NUMBER_PARAMETERS,PARAMETERS_DATA, &
+    & onlyOneModelIndex,MODELS_DATA,MAX_NUMBER_STATES,STATE_DATA,MAX_NUMBER_PARAMETERS,PARAMETERS_DATA, &
     & MAX_NUMBER_INTERMEDIATES,INTERMEDIATE_DATA,err,error,*)
 
     !Argument variables
     TYPE(FORWARD_EULER_DAE_SOLVER_TYPE), POINTER :: FORWARD_EULER_SOLVER !<A pointer the forward Euler differential-algebraic equation solver to integrate
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
+    TYPE(CellMLType), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
     INTEGER(INTG), INTENT(IN) :: N !<The number of degrees-of-freedom
     REAL(DP), INTENT(IN) :: START_TIME !<The start time for the integration
     REAL(DP), INTENT(IN) :: END_TIME !<The end time for the integration
     REAL(DP), INTENT(INOUT) :: TIME_INCREMENT !<The (initial) time increment for the integration
-    INTEGER(INTG), INTENT(IN) :: ONLY_ONE_MODEL_INDEX !<If only one model is used in the models data the index of that model. 0 otherwise.
+    INTEGER(INTG), INTENT(IN) :: onlyOneModelIndex !<If only one model is used in the models data the index of that model. 0 otherwise.
     INTEGER(INTG), POINTER :: MODELS_DATA(:) !<MODELS_DATA(dof_idx). The models data for the dof_idx'th dof.
     INTEGER(INTG), INTENT(IN) :: MAX_NUMBER_STATES !<The maximum number of state variables per dof
     REAL(DP), POINTER :: STATE_DATA(:) !<STATE_DATA(state_idx,dof_idx). The state data for the state_idx'th state variable of the dof_idx'th dof. state_idx varies from 1..NUMBER_STATES.
@@ -2061,18 +2055,18 @@ CONTAINS
       & STATE_END_DOF,state_idx,STATE_START_DOF
     REAL(DP) :: INTERMEDIATES(MAX(1,MAX_NUMBER_INTERMEDIATES)),PARAMETERS(MAX(1,MAX_NUMBER_PARAMETERS)), &
       & RATES(MAX(1,MAX_NUMBER_STATES)),STATES(MAX(1,MAX_NUMBER_STATES)),TIME
-    TYPE(CELLML_MODEL_TYPE), POINTER :: MODEL
+    TYPE(CellMLModelType), POINTER :: MODEL
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SOLVER_DAE_EULER_FORWARD_INTEGRATE",err,error,*999)
 
     IF(ASSOCIATED(FORWARD_EULER_SOLVER)) THEN
       IF(ASSOCIATED(CELLML)) THEN
-        IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
-          CALL Field_DOFOrderTypeGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
+        IF(ASSOCIATED(CELLML%modelsField)) THEN
+          CALL Field_DOFOrderTypeGet(CELLML%modelsField%modelsField,FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
           IF(DOF_ORDER_TYPE==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
             !Dof components are separated. Will need to copy data to temporary arrays.
-            IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+            IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
               !Mulitple models
               DO WHILE(TIME<=END_TIME)
                 DO dof_idx=1,N
@@ -2080,8 +2074,8 @@ CONTAINS
                   IF(model_idx.GT.0) THEN
                     MODEL=>CELLML%MODELS(model_idx)%ptr
                     IF(ASSOCIATED(MODEL)) THEN
-                      NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                      NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                      NUMBER_STATES=MODEL%numberOfState
+                      NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                       NUMBER_PARAMETERS=MODEL%numberOfParameters
 
                       !Copy CellML data to temporary arrays
@@ -2109,7 +2103,7 @@ CONTAINS
                    
                     ELSE
                       localError="CellML environment model is not associated for model index "// &
-                        & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//" belonging to dof index "// &
+                        & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//" belonging to dof index "// &
                         & TRIM(NumberToVString(dof_idx,"*",err,error))//"."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
@@ -2119,10 +2113,10 @@ CONTAINS
               ENDDO !time              
             ELSE
               !One one model is used.          
-              MODEL=>CELLML%MODELS(ONLY_ONE_MODEL_INDEX)%ptr
+              MODEL=>CELLML%MODELS(onlyOneModelIndex)%ptr
               IF(ASSOCIATED(MODEL)) THEN
-                NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                NUMBER_STATES=MODEL%numberOfState
+                NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                 NUMBER_PARAMETERS=MODEL%numberOfParameters
                 TIME=START_TIME
                 DO WHILE(TIME<=END_TIME)
@@ -2158,13 +2152,13 @@ CONTAINS
                 ENDDO !time
               ELSE
                 localError="CellML environment model is not associated for model index "// &
-                  & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//"."
+                  & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
             ENDIF
           ELSE
             !Dof components are continguous. Can pass data directly.
-            IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+            IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
               !Mulitple models
               TIME=START_TIME
               DO WHILE(TIME<=END_TIME)
@@ -2172,11 +2166,11 @@ CONTAINS
                   model_idx=MODELS_DATA(dof_idx)
                   IF(model_idx==0) THEN
                     ! Do nothing- empty model index specified
-                  ELSE IF(model_idx > 0 .AND. model_idx <= CELLML%NUMBER_OF_MODELS) THEN
+                  ELSE IF(model_idx > 0 .AND. model_idx <= CELLML%numberOfModels) THEN
                     MODEL=>CELLML%MODELS(model_idx)%ptr
                     IF(ASSOCIATED(MODEL)) THEN
-                      NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                      NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                      NUMBER_STATES=MODEL%numberOfState
+                      NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                       NUMBER_PARAMETERS=MODEL%numberOfParameters
 
 #ifdef WITH_CELLML                    
@@ -2243,14 +2237,14 @@ CONTAINS
                         & TIME_INCREMENT*RATES(1:NUMBER_STATES)
                     ELSE
                       localError="CellML environment model is not associated for model index "// &
-                        & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//" belonging to dof index "// &
+                        & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//" belonging to dof index "// &
                         & TRIM(NumberToVString(dof_idx,"*",err,error))//"."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
                   ELSE
                     localError="Invalid CellML model index: "// &
                       & TRIM(NumberToVString(model_idx,"*",err,error))//". The specified index should be between 1 and "// &
-                      & TRIM(NumberToVString(CELLML%NUMBER_OF_MODELS,"*",err,error))//"."
+                      & TRIM(NumberToVString(CELLML%numberOfModels,"*",err,error))//"."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
                 ENDDO !dof_idx
@@ -2258,10 +2252,10 @@ CONTAINS
               ENDDO !time              
             ELSE
               !One one model is used.
-              MODEL=>CELLML%MODELS(ONLY_ONE_MODEL_INDEX)%ptr
+              MODEL=>CELLML%MODELS(onlyOneModelIndex)%ptr
               IF(ASSOCIATED(MODEL)) THEN
-                NUMBER_STATES=MODEL%NUMBER_OF_STATE
-                NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
+                NUMBER_STATES=MODEL%numberOfState
+                NUMBER_INTERMEDIATES=MODEL%numberOfIntermediate
                 NUMBER_PARAMETERS=MODEL%numberOfParameters
 #ifdef WITH_CELLML                    
 
@@ -2378,7 +2372,7 @@ CONTAINS
                     
               ELSE
                 localError="CellML environment model is not associated for model index "// &
-                  & TRIM(NumberToVString(ONLY_ONE_MODEL_INDEX,"*",err,error))//"."
+                  & TRIM(NumberToVString(onlyOneModelIndex,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
             ENDIF
@@ -2415,9 +2409,9 @@ CONTAINS
     INTEGER(INTG) :: cellml_idx
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
     REAL(DP), POINTER :: INTERMEDIATE_DATA(:),PARAMETERS_DATA(:),STATE_DATA(:)
-    TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
+    TYPE(CellMLType), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: CELLML_MODELS_FIELD
+    TYPE(CellMLModelsFieldType), POINTER :: CELLML_MODELS_FIELD
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER
     TYPE(EULER_DAE_SOLVER_TYPE), POINTER :: EULER_SOLVER
     TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
@@ -2449,23 +2443,23 @@ CONTAINS
               DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
                 CELLML_ENVIRONMENT=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
                 IF(ASSOCIATED(CELLML_ENVIRONMENT)) THEN                  
-                  CELLML_MODELS_FIELD=>CELLML_ENVIRONMENT%MODELS_FIELD
+                  CELLML_MODELS_FIELD=>CELLML_ENVIRONMENT%modelsField
                   IF(ASSOCIATED(CELLML_MODELS_FIELD)) THEN
-                    MODELS_FIELD=>CELLML_MODELS_FIELD%MODELS_FIELD
+                    MODELS_FIELD=>CELLML_MODELS_FIELD%modelsField
                     IF(ASSOCIATED(MODELS_FIELD)) THEN
 
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
                       
                       !Make sure CellML fields have been updated to the current value of any mapped fields
-                      CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                      CALL CellML_FieldToCellMLUpdate(CELLML_ENVIRONMENT,err,error,*999)
 
                       CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,err,error,*999)
                       CALL Field_ParameterSetDataGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & MODELS_DATA,err,error,*999)
                       
                       !Get the state information if this environment has any.
-                      IF(ASSOCIATED(CELLML_ENVIRONMENT%STATE_FIELD)) THEN
-                        STATE_FIELD=>CELLML_ENVIRONMENT%STATE_FIELD%STATE_FIELD
+                      IF(ASSOCIATED(CELLML_ENVIRONMENT%stateField)) THEN
+                        STATE_FIELD=>CELLML_ENVIRONMENT%stateField%stateField
                         IF(ASSOCIATED(STATE_FIELD)) THEN
                           CALL Field_ParameterSetDataGet(STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & STATE_DATA,err,error,*999)
@@ -2473,8 +2467,8 @@ CONTAINS
                       ENDIF
                       
                       !Get the parameters information if this environment has any.
-                      IF(ASSOCIATED(CELLML_ENVIRONMENT%PARAMETERS_FIELD)) THEN
-                        PARAMETERS_FIELD=>CELLML_ENVIRONMENT%PARAMETERS_FIELD%PARAMETERS_FIELD
+                      IF(ASSOCIATED(CELLML_ENVIRONMENT%parametersField)) THEN
+                        PARAMETERS_FIELD=>CELLML_ENVIRONMENT%parametersField%parametersField
                         IF(ASSOCIATED(PARAMETERS_FIELD)) THEN
                           CALL Field_ParameterSetDataGet(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & PARAMETERS_DATA,err,error,*999)
@@ -2482,8 +2476,8 @@ CONTAINS
                       ENDIF
                       
                       !Get the intermediate information if this environment has any.
-                      IF(ASSOCIATED(CELLML_ENVIRONMENT%INTERMEDIATE_FIELD)) THEN
-                        INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD
+                      IF(ASSOCIATED(CELLML_ENVIRONMENT%intermediateField)) THEN
+                        INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%intermediateField%intermediateField
                         IF(ASSOCIATED(INTERMEDIATE_FIELD)) THEN
                           CALL Field_ParameterSetDataGet(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                             & INTERMEDIATE_DATA,err,error,*999)                            
@@ -2493,9 +2487,9 @@ CONTAINS
                       !Integrate these CellML equations
                       CALL SOLVER_DAE_EULER_FORWARD_INTEGRATE(FORWARD_EULER_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
                         & totalNumberOfDofs,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
-                        & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
-                        & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
-                        & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
+                        & CELLML_ENVIRONMENT%modelsField%onlyOneModelIndex,MODELS_DATA,CELLML_ENVIRONMENT% &
+                        & maximumNumberOfState,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
+                        & PARAMETERS_DATA,CELLML_ENVIRONMENT%maximumNumberOfIntermediate,INTERMEDIATE_DATA,ERR,ERROR,*999)
                       
                       !Restore field data
                       CALL Field_ParameterSetDataRestore(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -2508,7 +2502,7 @@ CONTAINS
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,INTERMEDIATE_DATA,err,error,*999)
                       
                       !Make sure fields have been updated to the current value of any mapped CellML fields
-                      CALL CELLML_CELLML_TO_FIELD_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                      CALL CellML_CellMLToFieldUpdate(CELLML_ENVIRONMENT,err,error,*999)
                       
                     ELSE
                       localError="The CellML models field is not associated for CellML index "// &
@@ -3513,7 +3507,7 @@ CONTAINS
     !Argument variables
     TYPE(CellMLPETScContextType), INTENT(IN), POINTER :: ctx !<A pointer to initialise a CELLML_PETSC_CONTEXT
     TYPE(SOLVER_TYPE), POINTER, INTENT(IN) :: solver !<A pointer to the solver to set to ctx
-    TYPE(CELLML_TYPE), POINTER, INTENT(IN) :: cellml !<A pointer to the CellML environment to set to ctx
+    TYPE(CellMLType), POINTER, INTENT(IN) :: cellml !<A pointer to the CellML environment to set to ctx
     INTEGER(INTG), INTENT(IN) :: dofIdx !<The DOF index of the cellml-petsc context
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3530,13 +3524,13 @@ CONTAINS
           ctx%solver=>solver
           ctx%cellml=>cellml
           ctx%dofIdx=dofIdx
-          ALLOCATE(ctx%rates(cellml%MAXIMUM_NUMBER_OF_STATE),STAT=err)
+          ALLOCATE(ctx%rates(cellml%maximumNumberOfState),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate context rates.",err,error,*999)
           IF (.NOT. ALLOCATED(ctx%ratesIndices)) THEN
-            ALLOCATE(ctx%ratesIndices(cellml%MAXIMUM_NUMBER_OF_STATE),STAT=err)
+            ALLOCATE(ctx%ratesIndices(cellml%maximumNumberOfState),STAT=err)
           ENDIF
           IF(err/=0) CALL FlagError("Could not allocate context rates indicies.",err,error,*999)
-          ctx%ratesIndices=[(arrayIdx,arrayIdx=0,(cellml%MAXIMUM_NUMBER_OF_STATE-1))]
+          ctx%ratesIndices=[(arrayIdx,arrayIdx=0,(cellml%maximumNumberOfState-1))]
         ELSE
           CALL FlagError("CellML environment is not associated.",err,error,*999)
         ENDIF
@@ -3560,17 +3554,17 @@ CONTAINS
   !
   !>Integrate using a BDF differential-algebraic equation solver.
   SUBROUTINE SOLVER_DAE_BDF_INTEGRATE(BDF_SOLVER,CELLML,N,START_TIME,END_TIME,TIME_INCREMENT, &
-    & ONLY_ONE_MODEL_INDEX,MODELS_DATA,MAX_NUMBER_STATES,STATE_DATA,MAX_NUMBER_PARAMETERS,PARAMETERS_DATA, &
+    & onlyOneModelIndex,MODELS_DATA,MAX_NUMBER_STATES,STATE_DATA,MAX_NUMBER_PARAMETERS,PARAMETERS_DATA, &
     & MAX_NUMBER_INTERMEDIATES,INTERMEDIATE_DATA,err,error,*)
 
     !Argument variables
     TYPE(BDF_DAE_SOLVER_TYPE), POINTER :: BDF_SOLVER !<A pointer the BDF differential-algebraic equation solver to integrate
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
+    TYPE(CellMLType), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
     INTEGER(INTG), INTENT(IN) :: N !<The number of degrees-of-freedom
     REAL(DP), INTENT(IN) :: START_TIME !<The start time for the integration
     REAL(DP), INTENT(IN) :: END_TIME !<The end time for the integration
     REAL(DP), INTENT(INOUT) :: TIME_INCREMENT !<The (initial) time increment for the integration
-    INTEGER(INTG), INTENT(IN) :: ONLY_ONE_MODEL_INDEX !<If only one model is used in the models data the index of that model. 0 otherwise.
+    INTEGER(INTG), INTENT(IN) :: onlyOneModelIndex !<If only one model is used in the models data the index of that model. 0 otherwise.
     INTEGER(INTG), POINTER, INTENT(IN) :: MODELS_DATA(:) !<MODELS_DATA(dof_idx). The models data for the dof_idx'th dof.
     INTEGER(INTG), INTENT(IN) :: MAX_NUMBER_STATES !<The maximum number of state variables per dof
     REAL(DP), POINTER, INTENT (INOUT) :: STATE_DATA(:) !<STATE_DATA(state_idx,dof_idx). The state data for the state_idx'th state variable of the dof_idx'th dof. state_idx varies from 1..NUMBER_STATES.
@@ -3588,7 +3582,7 @@ CONTAINS
     INTEGER(INTG) :: dof_idx,DOF_ORDER_TYPE,model_idx, NUMBER_STATES,STATE_END_DOF,state_idx,STATE_START_DOF,array_idx
     REAL(DP), ALLOCATABLE  :: STATES_TEMP(:),RATES_TEMP(:)
     INTEGER(INTG), ALLOCATABLE :: ARRAY_INDICES(:)
-    TYPE(CELLML_MODEL_TYPE), POINTER :: MODEL
+    TYPE(CellMLModelType), POINTER :: MODEL
     TYPE(VARYING_STRING) :: localError
     TYPE(PetscVecType) :: PETSC_RATES
     EXTERNAL :: Problem_SolverDAECellMLRHSPetsc
@@ -3600,21 +3594,21 @@ CONTAINS
     TIMESTEP=END_TIME-START_TIME
     IF(ASSOCIATED(BDF_SOLVER)) THEN
       IF(ASSOCIATED(CELLML)) THEN
-        IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
+        IF(ASSOCIATED(CELLML%modelsField)) THEN
           SELECT CASE(BDF_SOLVER%SOLVER_LIBRARY)   
           CASE(SOLVER_PETSC_LIBRARY)
-            CALL Field_DOFOrderTypeGet(CELLML%MODELS_FIELD%MODELS_FIELD, & 
+            CALL Field_DOFOrderTypeGet(CELLML%modelsField%modelsField, & 
               & FIELD_U_VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
             IF(DOF_ORDER_TYPE==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
               
             ELSE !dof component order is contiguous
-              IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+              IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
                 
               ELSE !only one model
-                MODEL=>CELLML%MODELS(ONLY_ONE_MODEL_INDEX)%ptr
+                MODEL=>CELLML%MODELS(onlyOneModelIndex)%ptr
                 IF(ASSOCIATED(MODEL)) THEN
                   !determine no. of states in model and allocate necessary arrays
-                  NUMBER_STATES = MODEL%NUMBER_OF_STATE
+                  NUMBER_STATES = MODEL%numberOfState
                   ALLOCATE(STATES_TEMP(0:NUMBER_STATES-1),STAT=err)
                   ALLOCATE(RATES_TEMP(0:NUMBER_STATES-1),STAT=err)
                   ALLOCATE(ARRAY_INDICES(0:NUMBER_STATES-1),STAT=err)
@@ -3742,9 +3736,9 @@ CONTAINS
     INTEGER(INTG) :: cellml_idx
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
     REAL(DP), POINTER :: INTERMEDIATE_DATA(:),PARAMETERS_DATA(:),STATE_DATA(:)
-    TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
+    TYPE(CellMLType), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: CELLML_MODELS_FIELD
+    TYPE(CellMLModelsFieldType), POINTER :: CELLML_MODELS_FIELD
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER
     TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
     TYPE(FieldType), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
@@ -3769,23 +3763,23 @@ CONTAINS
             DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
               CELLML_ENVIRONMENT=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
               IF(ASSOCIATED(CELLML_ENVIRONMENT)) THEN                  
-                CELLML_MODELS_FIELD=>CELLML_ENVIRONMENT%MODELS_FIELD
+                CELLML_MODELS_FIELD=>CELLML_ENVIRONMENT%modelsField
                 IF(ASSOCIATED(CELLML_MODELS_FIELD)) THEN
-                  MODELS_FIELD=>CELLML_MODELS_FIELD%MODELS_FIELD
+                  MODELS_FIELD=>CELLML_MODELS_FIELD%modelsField
                   IF(ASSOCIATED(MODELS_FIELD)) THEN
 
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
                       
                       !Make sure CellML fields have been updated to the current value of any mapped fields
-                    CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                    CALL CellML_FieldToCellMLUpdate(CELLML_ENVIRONMENT,err,error,*999)
 
                     CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,err,error,*999)
                     CALL Field_ParameterSetDataGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & MODELS_DATA,err,error,*999)
                       
                       !Get the state information if this environment has any.
-                    IF(ASSOCIATED(CELLML_ENVIRONMENT%STATE_FIELD)) THEN
-                      STATE_FIELD=>CELLML_ENVIRONMENT%STATE_FIELD%STATE_FIELD
+                    IF(ASSOCIATED(CELLML_ENVIRONMENT%stateField)) THEN
+                      STATE_FIELD=>CELLML_ENVIRONMENT%stateField%stateField
                       IF(ASSOCIATED(STATE_FIELD)) THEN
                         CALL Field_ParameterSetDataGet(STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & STATE_DATA,err,error,*999)
@@ -3793,8 +3787,8 @@ CONTAINS
                     ENDIF
                       
                     !Get the parameters information if this environment has any.
-                    IF(ASSOCIATED(CELLML_ENVIRONMENT%PARAMETERS_FIELD)) THEN
-                      PARAMETERS_FIELD=>CELLML_ENVIRONMENT%PARAMETERS_FIELD%PARAMETERS_FIELD
+                    IF(ASSOCIATED(CELLML_ENVIRONMENT%parametersField)) THEN
+                      PARAMETERS_FIELD=>CELLML_ENVIRONMENT%parametersField%parametersField
                       IF(ASSOCIATED(PARAMETERS_FIELD)) THEN
                         CALL Field_ParameterSetDataGet(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & PARAMETERS_DATA,err,error,*999)
@@ -3802,8 +3796,8 @@ CONTAINS
                     ENDIF
                       
                     !Get the intermediate information if this environment has any.
-                    IF(ASSOCIATED(CELLML_ENVIRONMENT%INTERMEDIATE_FIELD)) THEN
-                      INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD
+                    IF(ASSOCIATED(CELLML_ENVIRONMENT%intermediateField)) THEN
+                      INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%intermediateField%intermediateField
                       IF(ASSOCIATED(INTERMEDIATE_FIELD)) THEN
                         CALL Field_ParameterSetDataGet(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & INTERMEDIATE_DATA,err,error,*999)                            
@@ -3814,9 +3808,9 @@ CONTAINS
 
                     CALL SOLVER_DAE_BDF_INTEGRATE(BDF_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
                       & totalNumberOfDofs,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
-                      & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
-                      & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
-                      & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
+                      & CELLML_ENVIRONMENT%modelsField%onlyOneModelIndex,MODELS_DATA,CELLML_ENVIRONMENT% &
+                      & maximumNumberOfState,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
+                      & PARAMETERS_DATA,CELLML_ENVIRONMENT%maximumNumberOfIntermediate,INTERMEDIATE_DATA,ERR,ERROR,*999)
                       
                     !Restore field data
                     CALL Field_ParameterSetDataRestore(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -3829,7 +3823,7 @@ CONTAINS
                       & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,INTERMEDIATE_DATA,err,error,*999)
                       
                     !Make sure fields have been updated to the current value of any mapped CellML fields
-                    CALL CELLML_CELLML_TO_FIELD_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                    CALL CellML_CellMLToFieldUpdate(CELLML_ENVIRONMENT,err,error,*999)
                                         
                   ELSE
                     localError="The CellML models field is not associated for CellML index "// &
@@ -4045,7 +4039,7 @@ CONTAINS
     INTEGER(INTG) :: cellml_idx
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
     REAL(DP), POINTER :: INTERMEDIATE_DATA(:),PARAMETERS_DATA(:),STATE_DATA(:)
-    TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
+    TYPE(CellMLType), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER
     TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
@@ -4070,12 +4064,12 @@ CONTAINS
             DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
               CELLML_ENVIRONMENT=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
               IF(ASSOCIATED(CELLML_ENVIRONMENT)) THEN
-                IF(ASSOCIATED(CELLML_ENVIRONMENT%MODELS_FIELD)) THEN
-                  MODELS_FIELD=>CELLML_ENVIRONMENT%MODELS_FIELD%MODELS_FIELD
+                IF(ASSOCIATED(CELLML_ENVIRONMENT%modelsField)) THEN
+                  MODELS_FIELD=>CELLML_ENVIRONMENT%modelsField%modelsField
                   IF(ASSOCIATED(MODELS_FIELD)) THEN
                                            
                     !Make sure CellML fields have been updated to the current value of any mapped fields
-                    CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                    CALL CellML_FieldToCellMLUpdate(CELLML_ENVIRONMENT,err,error,*999)
 
                     NULLIFY(MODELS_VARIABLE)
                     CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,err,error,*999)
@@ -4083,8 +4077,8 @@ CONTAINS
                       & MODELS_DATA,err,error,*999)
                     
                     !Get the state information if this environment has any.
-                    IF(ASSOCIATED(CELLML_ENVIRONMENT%STATE_FIELD)) THEN
-                      STATE_FIELD=>CELLML_ENVIRONMENT%STATE_FIELD%STATE_FIELD
+                    IF(ASSOCIATED(CELLML_ENVIRONMENT%stateField)) THEN
+                      STATE_FIELD=>CELLML_ENVIRONMENT%stateField%stateField
                       IF(ASSOCIATED(STATE_FIELD)) THEN
                         CALL Field_ParameterSetDataGet(STATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & STATE_DATA,err,error,*999)
@@ -4096,8 +4090,8 @@ CONTAINS
                     ENDIF
                     
                     !Get the parameters information if this environment has any.
-                    IF(ASSOCIATED(CELLML_ENVIRONMENT%PARAMETERS_FIELD)) THEN
-                      PARAMETERS_FIELD=>CELLML_ENVIRONMENT%PARAMETERS_FIELD%PARAMETERS_FIELD
+                    IF(ASSOCIATED(CELLML_ENVIRONMENT%parametersField)) THEN
+                      PARAMETERS_FIELD=>CELLML_ENVIRONMENT%parametersField%parametersField
                       IF(ASSOCIATED(PARAMETERS_FIELD)) THEN
                         CALL Field_ParameterSetDataGet(PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & PARAMETERS_DATA,err,error,*999)
@@ -4109,8 +4103,8 @@ CONTAINS
                     ENDIF
                     
                     !Get the intermediate information if this environment has any.
-                    IF(ASSOCIATED(CELLML_ENVIRONMENT%INTERMEDIATE_FIELD)) THEN
-                      INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD
+                    IF(ASSOCIATED(CELLML_ENVIRONMENT%intermediateField)) THEN
+                      INTERMEDIATE_FIELD=>CELLML_ENVIRONMENT%intermediateField%intermediateField
                       IF(ASSOCIATED(INTERMEDIATE_FIELD)) THEN
                         CALL Field_ParameterSetDataGet(INTERMEDIATE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                           & INTERMEDIATE_DATA,err,error,*999)                            
@@ -4123,10 +4117,10 @@ CONTAINS
 
                     !Call the external solver to integrate these CellML equations
                     CALL SOLVER_DAE_EXTERNAL_INTEGRATE(MODELS_VARIABLE%totalNumberOfDofs,DAE_SOLVER%START_TIME, &
-                      & DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP,CELLML_ENVIRONMENT%MODELS_FIELD% &
-                      & ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_STATE,STATE_DATA, &
+                      & DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP,CELLML_ENVIRONMENT%modelsField% &
+                      & onlyOneModelIndex,MODELS_DATA,CELLML_ENVIRONMENT%maximumNumberOfState,STATE_DATA, &
                       & CELLML_ENVIRONMENT%maximumNumberOfParameters,PARAMETERS_DATA,CELLML_ENVIRONMENT% &
-                      & MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR)
+                      & maximumNumberOfIntermediate,INTERMEDIATE_DATA,ERR)
                     IF(err/=0) THEN
                       ERROR="Error from external solver integrate."
                       GOTO 999
@@ -4143,7 +4137,7 @@ CONTAINS
                       & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,INTERMEDIATE_DATA,err,error,*999)                    
                     
                     !Make sure fields have been updated to the current value of any mapped CellML fields
-                    CALL CELLML_CELLML_TO_FIELD_UPDATE(CELLML_ENVIRONMENT,err,error,*999)
+                    CALL CellML_CellMLToFieldUpdate(CELLML_ENVIRONMENT,err,error,*999)
                     
                   ELSE
                     localError="The CellML models field is not associated for CellML index "// &
@@ -4190,7 +4184,7 @@ CONTAINS
     & parameterData,intermediateStartIdx,intermediateDataOffset,intermediateData,rateStartIdx,rateDataOffset,rateData,err,error,*)
 
     !Argument variables
-    TYPE(CELLML_MODEL_TYPE), POINTER :: model !<The CellML model to evaluate
+    TYPE(CellMLModelType), POINTER :: model !<The CellML model to evaluate
     REAL(DP), INTENT(IN) :: time !<The time to evaluate the CellML model at
     INTEGER(INTG), INTENT(IN) :: stateStartIdx !<The state start data offset.
     INTEGER(INTG), INTENT(IN) :: stateDataOffset !<The offset to the next state data
@@ -4218,8 +4212,8 @@ CONTAINS
 #ifdef WITH_CELLML                    
 
     IF(ASSOCIATED(model)) THEN
-      numberOfStates=model%NUMBER_OF_STATE
-      numberOfIntermediates=model%NUMBER_OF_INTERMEDIATE
+      numberOfStates=model%numberOfState
+      numberOfIntermediates=model%numberOfIntermediate
       numberOfParameters=model%numberOfParameters
       IF(numberOfStates>0) THEN
         IF(.NOT.ASSOCIATED(stateData)) CALL FlagError("State data is not associated.",err,error,*999)
@@ -4750,9 +4744,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: cellml_idx
-    TYPE(CELLML_TYPE), POINTER :: CELLML
+    TYPE(CellMLType), POINTER :: CELLML
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(CELLML_STATE_FIELD_TYPE), POINTER :: CELLML_STATE_FIELD
+    TYPE(CellMLStateFieldType), POINTER :: CELLML_STATE_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(VARYING_STRING) :: localError
 
@@ -4794,10 +4788,10 @@ CONTAINS
              DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
                CELLML=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%ptr
                IF(ASSOCIATED(CELLML)) THEN
-                 CELLML_STATE_FIELD=>CELLML%STATE_FIELD
+                 CELLML_STATE_FIELD=>CELLML%stateField
                  IF(ASSOCIATED(CELLML_STATE_FIELD)) THEN
                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"CellML index : ",cellml_idx,err,error,*999)
-                   CALL Field_ParameterSetOutput(GENERAL_OUTPUT_TYPE,CELLML_STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                   CALL Field_ParameterSetOutput(GENERAL_OUTPUT_TYPE,CELLML_STATE_FIELD%stateField,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_VALUES_SET_TYPE,err,error,*999)
                  ELSE
                    CALL FlagError("CellML environment state field is not associated.",err,error,*999)

@@ -2918,166 +2918,163 @@ END TYPE GeneratedMeshEllipsoidType
   !
   !================================================================================================================================
   !
-  ! CellML types (belongs under field types?)
+  ! CellML types
 
   !>This type is a wrapper for the C_PTR which references the actual CellML model definition object.
-  TYPE CELLML_MODEL_TYPE
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment.
+  TYPE CellMLModelType
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment.
     INTEGER(INTG) :: globalNumber !< The global number of this CellML model within the parent CellML environment.
-    TYPE(VARYING_STRING) :: MODEL_ID !<The ID of the model.
+    TYPE(VARYING_STRING) :: modelId !<The ID of the model.
     TYPE(C_PTR) :: ptr !< The handle for the actual C++ CellML model definition object
-    INTEGER(INTG) :: NUMBER_OF_STATE !<The number of state variables in the CellML model.
-    TYPE(VARYING_STRING), ALLOCATABLE :: STATE_VARIABLE_ID(:) !<STATE_VARIABLE_ID(state_variableIdx). The ID for the state_variableIdx'th state variable.
-    INTEGER(INTG) :: NUMBER_OF_INTERMEDIATE !<The number of intermediate variables in the CellML model.
-    TYPE(VARYING_STRING), ALLOCATABLE :: INTERMEDIATE_VARIABLE_ID(:) !<INTERMEDIATE_VARIABLE_ID(intermediate_variable_idx). The ID for the intermediate_variable_idx'th intermediate variable.
+    INTEGER(INTG) :: numberOfState !<The number of state variables in the CellML model.
+    TYPE(VARYING_STRING), ALLOCATABLE :: stateVariableId(:) !<stateVariableId(stateVariableIdx). The ID for the stateVariableIdx'th state variable.
+    INTEGER(INTG) :: numberOfIntermediate !<The number of intermediate variables in the CellML model.
+    TYPE(VARYING_STRING), ALLOCATABLE :: intermediateVariableId(:) !<intermediateVariableId(intermediateVariableIdx). The ID for the intermediateVariableIdx'th intermediate variable.
     INTEGER(INTG) :: numberOfParameters !<The number of parameters in the CellML model.
-    TYPE(VARYING_STRING), ALLOCATABLE :: PARAMETER_VARIABLE_ID(:) !<PARAMETER_VARIABLE_ID(parameter_variable_idx). The ID for the parameter_variable_idx'th parameter variable.
- END TYPE CELLML_MODEL_TYPE
+    TYPE(VARYING_STRING), ALLOCATABLE :: parameterVariableId(:) !<parameterVariableId(parameterVariableIdx). The ID for the parameter_variable_idx'th parameter variable.
+ END TYPE CellMLModelType
 
-  !>A buffer type to allow for an array of pointers to a CELLML_MODEL_TYPE
-  TYPE CELLML_MODEL_PTR_TYPE
-    TYPE(CELLML_MODEL_TYPE), POINTER :: ptr
-  END TYPE CELLML_MODEL_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a CellMLModelType
+  TYPE CellMLModelPtrType
+    TYPE(CellMLModelType), POINTER :: ptr
+  END TYPE CellMLModelPtrType
 
   !>Contains information on the models field for a CellML environment
-  TYPE CELLML_MODELS_FIELD_TYPE
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
-    LOGICAL :: MODELS_FIELD_FINISHED  !<Is .TRUE. if the models field has finished being created, .FALSE. if not.
-    LOGICAL :: MODELS_FIELD_AUTO_CREATED !<Is .TRUE. if the models field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: MODELS_FIELD !<A pointer to the models field
-    INTEGER(INTG) :: ONLY_ONE_MODEL_INDEX !<If only one model is used in the models field for the CellML environment then this will be equal to the model index. It will be zero otherwise.
-  END TYPE CELLML_MODELS_FIELD_TYPE
+  TYPE CellMLModelsFieldType
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment 
+    LOGICAL :: modelsFieldFinished  !<Is .TRUE. if the models field has finished being created, .FALSE. if not.
+    LOGICAL :: modelsFieldAutoCreated !<Is .TRUE. if the models field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: modelsField !<A pointer to the models field
+    INTEGER(INTG) :: onlyOneModelIndex !<If only one model is used in the models field for the CellML environment then this will be equal to the model index. It will be zero otherwise.
+  END TYPE CellMLModelsFieldType
   
   !>Contains information on the state field for a CellML environment
-  TYPE CELLML_STATE_FIELD_TYPE
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
-    LOGICAL :: STATE_FIELD_FINISHED  !<Is .TRUE. if the state field has finished being created, .FALSE. if not.
-    LOGICAL :: STATE_FIELD_AUTO_CREATED !<Is .TRUE. if the state field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: STATE_FIELD !<A pointer to the state field
-  END TYPE CELLML_STATE_FIELD_TYPE
+  TYPE CellMLStateFieldType
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment 
+    LOGICAL :: stateFieldFinished  !<Is .TRUE. if the state field has finished being created, .FALSE. if not.
+    LOGICAL :: stateFieldAutoCreated !<Is .TRUE. if the state field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: stateField !<A pointer to the state field
+  END TYPE CellMLStateFieldType
   
   !>Contains information on the intermediate field for a CellML environment
-  TYPE CELLML_INTERMEDIATE_FIELD_TYPE
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
-    LOGICAL :: INTERMEDIATE_FIELD_FINISHED  !<Is .TRUE. if the intermediate field has finished being created, .FALSE. if not.
-    LOGICAL :: INTERMEDIATE_FIELD_AUTO_CREATED !<Is .TRUE. if the intermediate field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: INTERMEDIATE_FIELD !<A pointer to the intermediate field
-  END TYPE CELLML_INTERMEDIATE_FIELD_TYPE
+  TYPE CellMLIntermediateFieldType
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment 
+    LOGICAL :: intermediateFieldFinished  !<Is .TRUE. if the intermediate field has finished being created, .FALSE. if not.
+    LOGICAL :: intermediateFieldAutoCreated!<Is .TRUE. if the intermediate field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: intermediateField !<A pointer to the intermediate field
+  END TYPE CellMLIntermediateFieldType
   
   !>Contains information on the parameters field for a CellML environment
-  TYPE CELLML_PARAMETERS_FIELD_TYPE
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
-    LOGICAL :: PARAMETERS_FIELD_FINISHED  !<Is .TRUE. if the parameters field has finished being created, .FALSE. if not.
-    LOGICAL :: PARAMETERS_FIELD_AUTO_CREATED !<Is .TRUE. if the parameters field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: PARAMETERS_FIELD !<A pointer to the parameters field
-  END TYPE CELLML_PARAMETERS_FIELD_TYPE
+  TYPE CellMLParametersFieldType
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment 
+    LOGICAL :: parametersFieldFinished  !<Is .TRUE. if the parameters field has finished being created, .FALSE. if not.
+    LOGICAL :: parametersFieldAutoCreated !<Is .TRUE. if the parameters field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: parametersField !<A pointer to the parameters field
+  END TYPE CellMLParametersFieldType
  
   !> Contains information on the solver, cellml, dof etc. for which cellml equations are to be evaluated by petsc
   TYPE CellMLPETScContextType
     TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
-    TYPE(CELLML_TYPE), POINTER :: cellml !<A pointer to the CellML environment
+    TYPE(CellMLType), POINTER :: cellml !<A pointer to the CellML environment
     INTEGER(INTG) :: dofIdx !<The current DOF to be evaluated
     REAL(DP), POINTER :: rates(:) !<A pointer to the temporary rates array
     INTEGER(INTG), ALLOCATABLE :: ratesIndices(:) !<The PETSc array indices for the rates
   END TYPE CellMLPETScContextType
   
   !>Contains information on the mapping between CellML fields and OpenCMISS fields and vise versa.
-  TYPE CELLML_MODEL_MAP_TYPE
-    INTEGER(INTG) :: CELLML_MAP_TYPE !<The direction of the mapping. \see CELLML_FieldMappingTypes,CMISS_CELLML
-    TYPE(FieldType), POINTER :: FIELD !<A pointer to/from the field being mapped.
+  TYPE CellMLModelMapType
+    INTEGER(INTG) :: cellMLMapType !<The direction of the mapping. \see CellML_FieldMappingTypes,CmissCellML
+    TYPE(FieldType), POINTER :: field !<A pointer to/from the field being mapped.
     INTEGER(INTG) :: variableType !<The field variable type being mapped.
     INTEGER(INTG) :: componentNumber !<The field variable component number being mapped.
-    INTEGER(INTG) :: FIELD_PARAMETER_SET !<The field variable parameter set being mapped.
-    TYPE(VARYING_STRING) :: VARIABLE_ID !<The variable ID of the CellML variable being mapped.
-    INTEGER(INTG) :: CELLML_FIELD_TYPE !<The type of CellML field variable being mapped. \see CELLML_FieldTypes,CMISS_CELLML
-    INTEGER(INTG) :: CELLML_VARIABLE_NUMBER !<The CellML variable component number being mapped.
-    INTEGER(INTG) :: CELLML_PARAMETER_SET !<The CellML variable parameter set being mapped.
-  END TYPE CELLML_MODEL_MAP_TYPE
+    INTEGER(INTG) :: fieldParameterSet !<The field variable parameter set being mapped.
+    TYPE(VARYING_STRING) :: variableId !<The variable ID of the CellML variable being mapped.
+    INTEGER(INTG) :: cellMLFieldType !<The type of CellML field variable being mapped. \see CellML_FieldTypes,CmissCellML
+    INTEGER(INTG) :: cellMLVariableNumber !<The CellML variable component number being mapped.
+    INTEGER(INTG) :: cellMLParameterSet !<The CellML variable parameter set being mapped.
+  END TYPE CellMLModelMapType
 
-  !>Buffer type to allow an array of pointers to CELLML_MODEL_MAP_FIELD_TYPE
-  TYPE CELLML_MODEL_MAP_PTR_TYPE
-    TYPE(CELLML_MODEL_MAP_TYPE), POINTER :: ptr !<A pointer to the CELLML_MODEL_MAP_TYPE
-  END TYPE CELLML_MODEL_MAP_PTR_TYPE
+  !>Buffer type to allow an array of pointers to CellMLModelMapType
+  TYPE CellMLModelMapPtrType
+    TYPE(CellMLModelMapType), POINTER :: ptr !<A pointer to the CellMLModelMapType
+  END TYPE CellMLModelMapPtrType
 
   !>Contains information on the maps between a CellML model and external OpenCMISS fields.
-  TYPE CELLML_MODEL_MAPS_TYPE
-    INTEGER(INTG) :: NUMBER_OF_FIELDS_MAPPED_TO !<The number of OpenCMISS fields mapped to this CellML model's variables.
-    TYPE(CELLML_MODEL_MAP_PTR_TYPE), ALLOCATABLE :: FIELDS_MAPPED_TO(:) !<FIELDS_MAPPED_TO(map_idx). The map_idx'th field mapping for OpenCMISS fields that the CellML model maps to.
-    INTEGER(INTG) :: NUMBER_OF_FIELDS_MAPPED_FROM !<The number of CellML variable fields mapped to OpenCMISS fields.
-    TYPE(CELLML_MODEL_MAP_PTR_TYPE), ALLOCATABLE :: FIELDS_MAPPED_FROM(:) !<FIELDS_MAPPED_FROM(map_idx). The map_idx'th field mapping for OpenCMISS fields that the CellML model maps from.
-  END TYPE CELLML_MODEL_MAPS_TYPE
+  TYPE CellMLModelMapsType
+    TYPE(CellMLFieldMapsType), POINTER :: cellMLFieldMaps !<A pointer back to the field maps
+    INTEGER(INTG) :: numberOfFieldsMappedTo !<The number of OpenCMISS fields mapped to this CellML model's variables.
+    TYPE(CellMLModelMapPtrType), ALLOCATABLE :: fieldsMappedTo(:) !<fieldsMappedTo(mapIdx). The mapIdx'th field mapping for OpenCMISS fields that the CellML model maps to.
+    INTEGER(INTG) :: numberOfFieldsMappedFrom !<The number of CellML variable fields mapped to OpenCMISS fields.
+    TYPE(CellMLModelMapPtrType), ALLOCATABLE :: fieldsMappedFrom(:) !<fieldsMappedFrom(mapIdx). The mapIdx'th field mapping for OpenCMISS fields that the CellML model maps from.
+  END TYPE CellMLModelMapsType
 
-  !>Buffer type to allow arrays of pointer to CELLML_MODEL_MAPS_TYPE
-  TYPE CELLML_MODEL_MAPS_PTR_TYPE
-    TYPE(CELLML_MODEL_MAPS_TYPE), POINTER :: ptr !<A pointer to the CELLML_MODEL_MAPS_TYPE
-  END TYPE CELLML_MODEL_MAPS_PTR_TYPE
+  !>Buffer type to allow arrays of pointer to CellMLModelMapsType
+  TYPE CellMLModelMapsPtrType
+    TYPE(CellMLModelMapsType), POINTER :: ptr !<A pointer to the CellMLModelMapsType
+  END TYPE CellMLModelMapsPtrType
   
   !>Contains information on the maps between CellML and external OpenCMISS fields.
-  TYPE CELLML_FIELD_MAPS_TYPE
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer back to the CellML environment.
-    LOGICAL :: CELLML_FIELD_MAPS_FINISHED !<Is .TRUE. if the CellML maps have finished being created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: SOURCE_GEOMETRIC_FIELD !<The source geometric field for the CellML environment.
-    TYPE(FieldVariableType), POINTER :: SOURCE_FIELD_VARIABLE !<The source field variable for the CellML environment.
-    TYPE(DomainType), POINTER :: SOURCE_FIELD_DOMAIN !<The source field domain for the CellML environment.
-    INTEGER(INTG) :: SOURCE_FIELD_INTERPOLATION_TYPE !<The source field interpolation type for the CellML environment.
-    TYPE(CELLML_MODEL_MAPS_PTR_TYPE), ALLOCATABLE :: MODEL_MAPS(:) !<MODEL_MAPS(model_idx). Contains information on the maps between the model_idx'th CellML model and external OpenCMISS fields.
-    !INTEGER(INTG) :: NUMBER_OF_SOURCE_DOFS !<The number of local (excluding ghosts) source dofs.
-    !INTEGER(INTG) :: TOTAL_NUMBER_OF_SOURCE_DOFS !<The number of local (including ghosts) source dofs.
-    !INTEGER(INTG) :: globalNumber_OF_SOURCE_DOFS !<The number of global source dofs.
-  END TYPE CELLML_FIELD_MAPS_TYPE
+  TYPE CellMLFieldMapsType
+    TYPE(CellMLType), POINTER :: cellML !<A pointer back to the CellML environment.
+    LOGICAL :: cellMLFieldMapsFinished !<Is .TRUE. if the CellML maps have finished being created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: sourceGeometricField !<The source geometric field for the CellML environment.
+    TYPE(FieldVariableType), POINTER :: sourceFieldVariable !<The source field variable for the CellML environment.
+    TYPE(DomainType), POINTER :: sourceFieldDomain !<The source field domain for the CellML environment.
+    INTEGER(INTG) :: sourceFieldInterpolationType !<The source field interpolation type for the CellML environment.
+    TYPE(CellMLModelMapsPtrType), ALLOCATABLE :: modelMaps(:) !<modelMaps(modelIdx). Contains information on the maps between the model_idx'th CellML model and external OpenCMISS fields.
+  END TYPE CellMLFieldMapsType
   
   !>Contains information for a CellML environment.
-  TYPE CELLML_TYPE
-    TYPE(RegionType), POINTER :: REGION !<A pointer to the region containing this CellML environment.
+  TYPE CellMLType
+    TYPE(RegionType), POINTER :: region !<A pointer to the region containing this CellML environment.
     INTEGER(INTG) :: globalNumber !<The global number of the CellML environment in the list of environments for a field.
     INTEGER(INTG) :: userNumber !<The user defined identifier for the CellML environment. The user number must be unique.
-    TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: ENVIRONMENTS !<A pointer back to the CellML environments.
-    LOGICAL :: CELLML_FINISHED !<Is .TRUE. if the environment has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: NUMBER_OF_MODELS !< The number of models defined in the CellML environment
-    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_STATE !<The maximum number of state variables across all models.
+    TYPE(CellMLEnvironmentsType), POINTER :: environments !<A pointer back to the CellML environments.
+    LOGICAL :: cellMLFinished !<Is .TRUE. if the environment has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: numberOfModels !< The number of models defined in the CellML environment
+    INTEGER(INTG) :: maximumNumberOfState !<The maximum number of state variables across all models.
     INTEGER(INTG) :: maximumNumberOfParameters !<The maximum number of parameters variables across all models.
-    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_INTERMEDIATE !<The maximum number of intermediate variables across all models.
-    TYPE(CELLML_MODEL_PTR_TYPE), ALLOCATABLE :: MODELS(:) !< MODELS(model_idx). The array of pointers to the models.
-    TYPE(CELLML_FIELD_MAPS_TYPE), POINTER :: FIELD_MAPS !<A pointer the information on CellML<-->Field maps.
-    TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: MODELS_FIELD !<A pointer to the models field information.
-    TYPE(CELLML_STATE_FIELD_TYPE), POINTER :: STATE_FIELD !<A pointer to the state field information.
-    TYPE(CELLML_INTERMEDIATE_FIELD_TYPE), POINTER :: INTERMEDIATE_FIELD !<A pointer to the intermediate field information.
-    TYPE(CELLML_PARAMETERS_FIELD_TYPE), POINTER :: PARAMETERS_FIELD !<A pointer to the parameters field information.
-    LOGICAL :: CELLML_GENERATED !<Is .TRUE. if the CellML environment has finished being generated, .FALSE. if not.
-  END TYPE CELLML_TYPE
+    INTEGER(INTG) :: maximumNumberOfIntermediate !<The maximum number of intermediate variables across all models.
+    TYPE(CellMLModelPtrType), ALLOCATABLE :: models(:) !< models(modelIdx). The array of pointers to the models.
+    TYPE(CellMLFieldMapsType), POINTER :: fieldMaps !<A pointer the information on CellML<-->Field maps.
+    TYPE(CellMLModelsFieldType), POINTER :: modelsField !<A pointer to the models field information.
+    TYPE(CellMLStateFieldType), POINTER :: stateField !<A pointer to the state field information.
+    TYPE(CellMLIntermediateFieldType), POINTER :: intermediateField !<A pointer to the intermediate field information.
+    TYPE(CellMLParametersFieldType), POINTER :: parametersField !<A pointer to the parameters field information.
+    LOGICAL :: cellMLGenerated !<Is .TRUE. if the CellML environment has finished being generated, .FALSE. if not.
+  END TYPE CellMLType
 
-  !> A buffer type to allow for an array of pointers to a CELLML_TYPE.
-  !! \todo Is this needed? not currently used...
-  TYPE CELLML_PTR_TYPE
-    TYPE(CELLML_TYPE), POINTER :: ptr !< The pointer to the CellML environment.
-  END TYPE CELLML_PTR_TYPE
+  !> A buffer type to allow for an array of pointers to a CellMLType.
+  TYPE CellMLPtrType
+    TYPE(CellMLType), POINTER :: ptr !< The pointer to the CellML environment.
+  END TYPE CellMLPtrType
 
   !>Contains information on the CellML environments defined.
-  TYPE CELLML_ENVIRONMENTS_TYPE
-    TYPE(RegionType), POINTER :: REGION !<A pointer to the region containing the CellML environments
-    INTEGER(INTG) :: NUMBER_OF_ENVIRONMENTS !<The number of environments defined.
-    TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: ENVIRONMENTS(:) !<The array of pointers to the CellML environments.
-  END TYPE CELLML_ENVIRONMENTS_TYPE
+  TYPE CellMLEnvironmentsType
+    TYPE(RegionType), POINTER :: region !<A pointer to the region containing the CellML environments
+    INTEGER(INTG) :: numberOfEnvironments !<The number of environments defined.
+    TYPE(CellMLPtrType), ALLOCATABLE :: environments(:) !<The array of pointers to the CellML environments.
+  END TYPE CellMLEnvironmentsType
 
-  PUBLIC CELLML_MODEL_TYPE,CELLML_MODEL_PTR_TYPE
+  PUBLIC CellMLModelType,CellMLModelPtrType
 
-  PUBLIC CELLML_MODELS_FIELD_TYPE
+  PUBLIC CellMLModelsFieldType
 
-  PUBLIC CELLML_STATE_FIELD_TYPE
+  PUBLIC CellMLStateFieldType
 
-  PUBLIC CELLML_INTERMEDIATE_FIELD_TYPE
+  PUBLIC CellMLIntermediateFieldType
 
-  PUBLIC CELLML_PARAMETERS_FIELD_TYPE
+  PUBLIC CellMLParametersFieldType
 
   PUBLIC CellMLPETScContextType
 
-  PUBLIC CELLML_MODEL_MAP_TYPE,CELLML_MODEL_MAP_PTR_TYPE,CELLML_MODEL_MAPS_TYPE,CELLML_MODEL_MAPS_PTR_TYPE
+  PUBLIC CellMLModelMapType,CellMLModelMapPtrType,CellMLModelMapsType,CellMLModelMapsPtrType
 
-  PUBLIC CELLML_FIELD_MAPS_TYPE
+  PUBLIC CellMLFieldMapsType
 
-  PUBLIC CELLML_TYPE,CELLML_PTR_TYPE
+  PUBLIC CellMLType,CellMLPtrType
 
-  PUBLIC CELLML_ENVIRONMENTS_TYPE
+  PUBLIC CellMLEnvironmentsType
 
   !
   !================================================================================================================================
@@ -3170,7 +3167,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: timeDependence !<The time dependence type of the CellML equations
     REAL(DP) :: currentTime !<The current time to evaluate the equations at
     INTEGER(INTG) :: NUMBER_OF_CELLML_ENVIRONMENTS !<The number of CellML environments in the equations
-    TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: CELLML_ENVIRONMENTS(:) !<CELLML_ENVIORNMENTS(cellml_idx). The array of pointers to the CellML environments for these CellML equations.     
+    TYPE(CellMLPtrType), ALLOCATABLE :: CELLML_ENVIRONMENTS(:) !<CELLML_ENVIORNMENTS(cellml_idx). The array of pointers to the CellML environments for these CellML equations.     
   END TYPE CELLML_EQUATIONS_TYPE
 
   PUBLIC CELLML_EQUATIONS_TYPE
@@ -3452,7 +3449,7 @@ END TYPE GeneratedMeshEllipsoidType
   TYPE CELLML_EVALUATOR_SOLVER_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the CellML evaluation solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment for the solver
+    TYPE(CellMLType), POINTER :: CELLML !<A pointer to the CellML environment for the solver
   END TYPE CELLML_EVALUATOR_SOLVER_TYPE
   
   !>Contains information for a geometric transformation solver
@@ -4024,7 +4021,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(DecomposersType), POINTER :: decomposers !<A pointer to the decomposers defined on the region.
     TYPE(FieldsType), POINTER :: fields !<A pointer to the fields defined on the region.
     TYPE(EquationsSetsType), POINTER :: equationsSets !<A pointer to the equation sets defined on the region.
-    TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: cellMLEnvironments !<A pointer to the CellML environments for the region.
+    TYPE(CellMLEnvironmentsType), POINTER :: cellMLEnvironments !<A pointer to the CellML environments for the region.
     TYPE(RegionType), POINTER :: parentRegion !<A pointer to the parent region for the region. If the region has no parent region then it is the global (world) region and parentRegion is NULL.
     INTEGER(INTG) :: numberOfSubRegions !<The number of sub-regions defined for the region.
     TYPE(RegionPtrType), POINTER :: subRegions(:) !<An array of pointers to the sub-regions defined on the region. \todo make this allocatable
