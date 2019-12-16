@@ -95,12 +95,10 @@
       $2 = PyString_AsString(temp_obj);
     } else {
       PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
-      Py_XDECREF(temp_obj);
       return NULL;
     }
   } else {
     PyErr_SetString(PyExc_ValueError,"Expected a string");
-    Py_XDECREF(temp_obj);
     return NULL;
   }  
   Py_XDECREF(temp_obj);
