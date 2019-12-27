@@ -1647,6 +1647,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equations_column_idx,equations_column_number,equations_matrix_idx,equations_row_number, &
       & EQUATIONS_STORAGE_TYPE,rhs_boundary_condition,rhs_global_dof,rhs_variable_dof,rhsVariableType,variable_dof,VARIABLE_TYPE
+    INTEGER(INTG) :: myComputationalNodeNumber, eqColLocalIdx, domain_idx
     INTEGER(INTG), POINTER :: COLUMN_INDICES(:),ROW_INDICES(:)
     REAL(DP) :: DEPENDENT_VALUE,MATRIX_VALUE,RHS_VALUE,SOURCE_VALUE
     REAL(DP), POINTER :: DEPENDENT_PARAMETERS(:),equationsMatrixData(:),sourceVectorData(:)
@@ -1674,6 +1675,8 @@ CONTAINS
     NULLIFY(sourceVectorData)
 
     ENTERS("EQUATIONS_SET_BACKSUBSTITUTE",err,error,*999)
+
+    myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(err,error)
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(equationsSet%EQUATIONS_SET_FINISHED) THEN
@@ -1740,7 +1743,7 @@ CONTAINS
                                           CALL DistributedMatrix_DataGet(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
                                             & err,error,*999)
                                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
-                                          CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+                                          CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE) ! = sparsity: full
                                             !Loop over the non ghosted rows in the equations set
                                             DO equations_row_number=1,vectorMapping%numberOfRows
                                               RHS_VALUE=0.0_DP
@@ -1762,6 +1765,12 @@ CONTAINS
                                                   DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
                                                   RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
                                                 ENDDO !equations_column_idx
+                                                IF(ASSOCIATED(sourceMapping)) THEN
+                                                  SOURCE_VALUE=sourceVectorData(equations_row_number)
+                                                  RHS_VALUE=RHS_VALUE-SOURCE_VALUE
+                                                ENDIF
+                                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
+                                                  & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                               CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
@@ -1774,12 +1783,6 @@ CONTAINS
                                                   & TRIM(NumberToVString(rhs_variable_dof,"*",err,error))//" is invalid."
                                                 CALL FlagError(localError,err,error,*999)
                                               END SELECT
-                                              IF(ASSOCIATED(sourceMapping)) THEN
-                                                SOURCE_VALUE=sourceVectorData(equations_row_number)
-                                                RHS_VALUE=RHS_VALUE-SOURCE_VALUE
-                                              ENDIF
-                                              CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                                                & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                             ENDDO !equations_row_number
                                           CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
@@ -1792,6 +1795,7 @@ CONTAINS
                                               & ROW_INDICES,COLUMN_INDICES,err,error,*999)
                                             !Loop over the non-ghosted rows in the equations set
                                             DO equations_row_number=1,vectorMapping%numberOfRows
+                                              ! This bit is the same as the BLOCK case
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
                                               rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
@@ -1799,15 +1803,41 @@ CONTAINS
                                               SELECT CASE(rhs_boundary_condition)
                                               CASE(BOUNDARY_CONDITION_DOF_FREE)
                                                 !Back substitute
-                                                !Loop over the local columns of the equations matrix
+                                                !Loop over the global columns of the equations matrix in the selected row
                                                 DO equations_column_idx=ROW_INDICES(equations_row_number), &
                                                   ROW_INDICES(equations_row_number+1)-1
+                                                  ! Get the GLOBAL column index
                                                   equations_column_number=COLUMN_INDICES(equations_column_idx)
-                                                  variable_dof=equations_column_idx-ROW_INDICES(equations_row_number)+1
-                                                  MATRIX_VALUE=equationsMatrixData(equations_column_idx)
-                                                  DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
-                                                  RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
-                                                ENDDO !equations_column_idx
+                                                  ! Get the LOCAL column index for all domains (=ranks)
+                                                  DO domain_idx=1,COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP &
+                                                    & (equations_column_number)%NUMBER_OF_DOMAINS
+                                                    ! Select the current domain 
+                                                    IF (COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP  &
+                                                      & (equations_column_number)%DOMAIN_NUMBER(domain_idx) &
+                                                      & == myComputationalNodeNumber) THEN
+                                                      ! Get the local dof (column index) on the current domain
+                                                      eqColLocalIdx = &
+                                                        & COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP &
+                                                        & (equations_column_number)%LOCAL_NUMBER(domain_idx)
+                                                      ! We do not consider ghosts
+                                                      IF (eqColLocalIdx <= &
+                                                        & COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
+                                                        ! Local dof on rhs
+                                                        variable_dof=eqColLocalIdx
+                                                        ! Global dof in compressed matrix
+                                                        MATRIX_VALUE=equationsMatrixData(equations_column_idx)
+                                                        DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
+                                                        RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
+                                                      END IF
+                                                    END IF
+                                                  END DO
+                                                END DO !equations_column_idx
+                                                IF(ASSOCIATED(sourceMapping)) THEN
+                                                  SOURCE_VALUE=sourceVectorData(equations_row_number)
+                                                  RHS_VALUE=RHS_VALUE-SOURCE_VALUE
+                                                ENDIF
+                                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
+                                                  & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                               CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
@@ -1820,12 +1850,6 @@ CONTAINS
                                                   & TRIM(NumberToVString(rhs_variable_dof,"*",err,error))//" is invalid."
                                                 CALL FlagError(localError,err,error,*999)
                                               END SELECT
-                                              IF(ASSOCIATED(sourceMapping)) THEN
-                                                SOURCE_VALUE=sourceVectorData(equations_row_number)
-                                                RHS_VALUE=RHS_VALUE-SOURCE_VALUE
-                                              ENDIF
-                                              CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                                                & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                             ENDDO !equations_row_number
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
@@ -1914,8 +1938,11 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
   !>Updates the right hand side variable from the equations residual vector
+
+  !>In the nonlinear case it should (re)compute the residual for Dirichlet fixed dofs!?
+  !>Dofs with applied traction: here traction is nonzero, but residual is zero...?
+  !>As it is, it returns an all-zero vector.
   SUBROUTINE EQUATIONS_SET_NONLINEAR_RHS_UPDATE(equationsSet,BOUNDARY_CONDITIONS,err,error,*)
 
     !Argument variables
