@@ -114,7 +114,9 @@ CONTAINS
  
     ENTERS("DataProjection_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.dataProjection%dataProjectionFinished) THEN
       localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))
@@ -147,7 +149,9 @@ CONTAINS
  
     ENTERS("DataProjection_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+#endif    
 
     IF(dataProjection%dataProjectionFinished) THEN
       localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))
@@ -180,7 +184,9 @@ CONTAINS
  
     ENTERS("DataProjection_AssertIsProjected",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.dataProjection%dataProjectionProjected) THEN
       localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))// &
@@ -211,7 +217,9 @@ CONTAINS
  
     ENTERS("DataProjection_AssertNotProjected",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+#endif    
 
     IF(dataProjection%dataProjectionProjected) THEN
       localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))// &
@@ -242,11 +250,16 @@ CONTAINS
    
     ENTERS("DataProjection_DataPointsGet",err,error,*999)
 
+#ifdef WITH_PRECHECK    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*999)
+#endif    
     
     dataPoints=>dataProjection%dataPoints
+
+#ifdef WITH_POSTCHECK    
     IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data projection data points is not associated.",err,error,*999)
+#endif    
  
     EXITS("DataProjection_DataPointsGet")
     RETURN
@@ -271,11 +284,16 @@ CONTAINS
    
     ENTERS("DataProjection_DecompositionGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
+#endif    
     
     decomposition=>dataProjection%decomposition
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Data projection decomposition is not associated.",err,error,*999)
+#endif    
  
     EXITS("DataProjection_DecompositionGet")
     RETURN
@@ -300,11 +318,16 @@ CONTAINS
    
     ENTERS("DataProjection_ProjectionFieldGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(ASSOCIATED(projectionField)) CALL FlagError("Projection field is already associated.",err,error,*999)
+#endif    
     
     projectionField=>dataProjection%projectionField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(projectionField)) CALL FlagError("Data projection projection field is not associated.",err,error,*999)
+#endif    
  
     EXITS("DataProjection_ProjectionFieldGet")
     RETURN
@@ -330,9 +353,8 @@ CONTAINS
    
     ENTERS("DataProjection_ResultMaximumErrorGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     maximumDataPoint=dataProjection%maximumErrorDataPoint
     maximumError=dataProjection%maximumError
@@ -361,9 +383,8 @@ CONTAINS
    
     ENTERS("DataProjection_ResultMinimumErrorGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     minimumDataPoint=dataProjection%minimumErrorDataPoint
     minimumError=dataProjection%minimumError
@@ -391,9 +412,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultRMSErrorGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     rmsError=dataProjection%rmsError
  
@@ -420,29 +440,34 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: projectionIdx
     TYPE(DataProjectionType), POINTER :: listDataProjection
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DataProjection_UserNumberFind",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
     IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(dataPoints%dataProjections)) &
       & CALL FlagError("Data points data projections is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(dataProjection)
     IF(ALLOCATED(dataPoints%dataProjections%dataProjections)) THEN
       projectionIdx=1
       DO WHILE(projectionIdx<=dataPoints%dataProjections%numberOfDataProjections)
         listDataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
-        IF(ASSOCIATED(listDataProjection)) THEN
-          IF(listDataProjection%userNumber==userNumber) THEN
-            dataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
-            EXIT
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(listDataProjection)) THEN
           localError="The data points data projections is not associated for projection index "// &
             & TRIM(NumberToVString(projectionIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
+        IF(listDataProjection%userNumber==userNumber) THEN
+          dataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
+          EXIT
         ENDIF
       ENDDO
     ENDIF

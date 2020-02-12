@@ -47,14 +47,13 @@ MODULE ElasticityRoutines
   USE BaseRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE LINEAR_ELASTICITY_ROUTINES
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE SolverAccessRoutines
   USE Strings
   USE Types
@@ -448,7 +447,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetConstants_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetRoutines_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -579,7 +578,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -711,7 +710,7 @@ CONTAINS
   SUBROUTINE Elasticity_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -760,7 +759,7 @@ CONTAINS
   SUBROUTINE Elasticity_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

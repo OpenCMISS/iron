@@ -62,226 +62,104 @@ MODULE Strings
   !Interfaces
 
   !>Returns a character string which is the lowercase equivalent of the supplied string.
-  INTERFACE CHARACTER_TO_LOWERCASE
-    MODULE PROCEDURE CHARACTER_TO_LOWERCASE_C
-    MODULE PROCEDURE CHARACTER_TO_LOWERCASE_VS
-  END INTERFACE CHARACTER_TO_LOWERCASE
-
-  !>Returns a character string which is the lowercase equivalent of the supplied string.
   INTERFACE CharacterToLowercase
-    MODULE PROCEDURE CHARACTER_TO_LOWERCASE_C
-    MODULE PROCEDURE CHARACTER_TO_LOWERCASE_VS
+    MODULE PROCEDURE CharacterToLowercaseC
+    MODULE PROCEDURE CharacterToLowercaseVS
   END INTERFACE CharacterToLowercase
 
   !>Returns a character string which is the uppercase equivalent of the supplied string.
-  INTERFACE CHARACTER_TO_UPPERCASE
-    MODULE PROCEDURE CHARACTER_TO_UPPERCASE_C
-    MODULE PROCEDURE CHARACTER_TO_UPPERCASE_VS
-  END INTERFACE CHARACTER_TO_UPPERCASE
-
-  !>Returns a character string which is the uppercase equivalent of the supplied string.
   INTERFACE CharacterToUppercase
-    MODULE PROCEDURE CHARACTER_TO_UPPERCASE_C
-    MODULE PROCEDURE CHARACTER_TO_UPPERCASE_VS
+    MODULE PROCEDURE CharacterToUppercaseC
+    MODULE PROCEDURE CharacterToUppercaseVS
   END INTERFACE CharacterToUppercase
 
   !>Returns .TRUE. if a supplied string is a valid abbreviation of a second supplied string.
-  INTERFACE IS_ABBREVIATION
-    MODULE PROCEDURE IS_ABBREVIATION_C_C
-    MODULE PROCEDURE IS_ABBREVIATION_C_VS
-    MODULE PROCEDURE IS_ABBREVIATION_VS_C
-    MODULE PROCEDURE IS_ABBREVIATION_VS_VS
-  END INTERFACE IS_ABBREVIATION
-
-  !>Returns .TRUE. if a supplied string is a valid abbreviation of a second supplied string.
   INTERFACE IsAbbreviation
-    MODULE PROCEDURE IS_ABBREVIATION_C_C
-    MODULE PROCEDURE IS_ABBREVIATION_C_VS
-    MODULE PROCEDURE IS_ABBREVIATION_VS_C
-    MODULE PROCEDURE IS_ABBREVIATION_VS_VS
+    MODULE PROCEDURE IsAbbreviationCC
+    MODULE PROCEDURE IsAbbreviationCVS
+    MODULE PROCEDURE IsAbbreviationVSC
+    MODULE PROCEDURE IsAbbreviationVSVS
   END INTERFACE IsAbbreviation
   
-  INTERFACE IsDigit
-    MODULE PROCEDURE IS_DIGIT
-  END INTERFACE IsDigit
-
-  INTERFACE IsLetter
-    MODULE PROCEDURE IS_LETTER
-  END INTERFACE IsLetter
-
-  INTERFACE IsWhitespace
-    MODULE PROCEDURE IS_WHITESPACE
-  END INTERFACE IsWhitespace
-
-  !>Converts a list to its equivalent character string representation.
-  INTERFACE LIST_TO_CHARACTER
-    MODULE PROCEDURE LIST_TO_CHARACTER_C
-    MODULE PROCEDURE LIST_TO_CHARACTER_INTG
-    MODULE PROCEDURE LIST_TO_CHARACTER_LINTG
-    MODULE PROCEDURE LIST_TO_CHARACTER_L
-    MODULE PROCEDURE LIST_TO_CHARACTER_SP
-    MODULE PROCEDURE LIST_TO_CHARACTER_DP
-  END INTERFACE LIST_TO_CHARACTER
-
   !>Converts a list to its equivalent character string representation.
   INTERFACE ListToCharacter
-    MODULE PROCEDURE LIST_TO_CHARACTER_C
-    MODULE PROCEDURE LIST_TO_CHARACTER_INTG
-    MODULE PROCEDURE LIST_TO_CHARACTER_LINTG
-    MODULE PROCEDURE LIST_TO_CHARACTER_L
-    MODULE PROCEDURE LIST_TO_CHARACTER_SP
-    MODULE PROCEDURE LIST_TO_CHARACTER_DP
+    MODULE PROCEDURE ListToCharacterC
+    MODULE PROCEDURE ListToCharacterIntg
+    MODULE PROCEDURE ListToCharacterLIntg
+    MODULE PROCEDURE ListToCharacterL
+    MODULE PROCEDURE ListToCharacterSP
+    MODULE PROCEDURE ListToCharacterDP
   END INTERFACE ListToCharacter
 
-  INTERFACE LogicalToCharacter
-    MODULE PROCEDURE LOGICAL_TO_CHARACTER
-  END INTERFACE LogicalToCharacter
-
-  INTERFACE LogicalToVString
-    MODULE PROCEDURE LOGICAL_TO_VSTRING
-  END INTERFACE LogicalToVString
-
   !>Converts a number to its equivalent character string representation.
-  INTERFACE NUMBER_TO_CHARACTER
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_INTG
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_LINTG
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_SP
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_DP
-  END INTERFACE NUMBER_TO_CHARACTER
-
-   !>Converts a number to its equivalent character string representation.
   INTERFACE NumberToCharacter
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_INTG
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_LINTG
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_SP
-    MODULE PROCEDURE NUMBER_TO_CHARACTER_DP
+    MODULE PROCEDURE NumberToCharacterIntg
+    MODULE PROCEDURE NumberToCharacterLIntg
+    MODULE PROCEDURE NumberToCharacterSP
+    MODULE PROCEDURE NumberToCharacterDP
   END INTERFACE NumberToCharacter
-
-  !>Converts a number to its equivalent varying string representation.
-  INTERFACE NUMBER_TO_VSTRING
-    MODULE PROCEDURE NUMBER_TO_VSTRING_INTG
-    MODULE PROCEDURE NUMBER_TO_VSTRING_LINTG
-    MODULE PROCEDURE NUMBER_TO_VSTRING_SP
-    MODULE PROCEDURE NUMBER_TO_VSTRING_DP
-  END INTERFACE NUMBER_TO_VSTRING
 
   !Provided to allow conversion to new code style
   INTERFACE NumberToVString
-    MODULE PROCEDURE NUMBER_TO_VSTRING_INTG
-    MODULE PROCEDURE NUMBER_TO_VSTRING_LINTG
-    MODULE PROCEDURE NUMBER_TO_VSTRING_SP
-    MODULE PROCEDURE NUMBER_TO_VSTRING_DP
+    MODULE PROCEDURE NumberToVStringIntg
+    MODULE PROCEDURE NumberToVStringLIntg
+    MODULE PROCEDURE NumberToVStringSP
+    MODULE PROCEDURE NumberToVStringDP
   END INTERFACE NumberToVString
 
   !>Converts a string representation of a number to a double precision number.
-  INTERFACE STRING_TO_DOUBLE
-    MODULE PROCEDURE STRING_TO_DOUBLE_C
-    MODULE PROCEDURE STRING_TO_DOUBLE_VS
-  END INTERFACE STRING_TO_DOUBLE
-
-  !>Converts a string representation of a number to a double precision number.
   INTERFACE StringToDouble
-    MODULE PROCEDURE STRING_TO_DOUBLE_C
-    MODULE PROCEDURE STRING_TO_DOUBLE_VS
+    MODULE PROCEDURE StringToDoubleC
+    MODULE PROCEDURE StringToDoubleVS
   END INTERFACE StringToDouble
 
   !>Converts a string representation of a number to an integer.
-  INTERFACE STRING_TO_INTEGER
-    MODULE PROCEDURE STRING_TO_INTEGER_C
-    MODULE PROCEDURE STRING_TO_INTEGER_VS
-  END INTERFACE STRING_TO_INTEGER
-
-  !>Converts a string representation of a number to an integer.
   INTERFACE StringToInteger
-    MODULE PROCEDURE STRING_TO_INTEGER_C
-    MODULE PROCEDURE STRING_TO_INTEGER_VS
+    MODULE PROCEDURE StringToIntegerC
+    MODULE PROCEDURE StringToIntegerVS
   END INTERFACE StringToInteger
 
   !>Converts a string representation of a number to a long integer.
-  INTERFACE STRING_TO_LONG_INTEGER
-    MODULE PROCEDURE STRING_TO_LONG_INTEGER_C
-    MODULE PROCEDURE STRING_TO_LONG_INTEGER_VS
-  END INTERFACE STRING_TO_LONG_INTEGER
-
-  !>Converts a string representation of a number to a long integer.
   INTERFACE StringToLongInteger
-    MODULE PROCEDURE STRING_TO_LONG_INTEGER_C
-    MODULE PROCEDURE STRING_TO_LONG_INTEGER_VS
+    MODULE PROCEDURE StringToLongIntegerC
+    MODULE PROCEDURE StringToLongIntegerVS
   END INTERFACE StringToLongInteger
 
-  !>Converts a string representation of a boolean value (TRUE or FALSE) to a logical.
-  INTERFACE STRING_TO_LOGICAL
-    MODULE PROCEDURE STRING_TO_LOGICAL_C
-    MODULE PROCEDURE STRING_TO_LOGICAL_VS
-  END INTERFACE STRING_TO_LOGICAL
-
-  !>Converts a string representation of a boolean value (TRUE or FALSE) to a logical.
+ !>Converts a string representation of a boolean value (TRUE or FALSE) to a logical.
   INTERFACE StringToLogical
-    MODULE PROCEDURE STRING_TO_LOGICAL_C
-    MODULE PROCEDURE STRING_TO_LOGICAL_VS
+    MODULE PROCEDURE StringToLogicalC
+    MODULE PROCEDURE StringToLogicalVS
   END INTERFACE StringToLogical
 
-  !>Converts a string representation of a number to a single precision number.
-  INTERFACE STRING_TO_SINGLE
-    MODULE PROCEDURE STRING_TO_SINGLE_C
-    MODULE PROCEDURE STRING_TO_SINGLE_VS
-  END INTERFACE STRING_TO_SINGLE
-
-  !>Converts a string representation of a number to a single precision number.
+   !>Converts a string representation of a number to a single precision number.
   INTERFACE StingToSingle
-    MODULE PROCEDURE STRING_TO_SINGLE_C
-    MODULE PROCEDURE STRING_TO_SINGLE_VS
+    MODULE PROCEDURE StringToSingleC
+    MODULE PROCEDURE StringToSingleVS
   END INTERFACE StingToSingle
 
   !>Returns a varying string which is the lowercase equivalent of the supplied string.
-  INTERFACE VSTRING_TO_LOWERCASE
-    MODULE PROCEDURE VSTRING_TO_LOWERCASE_C
-    MODULE PROCEDURE VSTRING_TO_LOWERCASE_VS
-  END INTERFACE VSTRING_TO_LOWERCASE
-
-  !>Returns a varying string which is the lowercase equivalent of the supplied string.
   INTERFACE VStringToLowercase
-    MODULE PROCEDURE VSTRING_TO_LOWERCASE_C
-    MODULE PROCEDURE VSTRING_TO_LOWERCASE_VS
+    MODULE PROCEDURE VStringToLowercaseC
+    MODULE PROCEDURE VStringToLowercaseVS
   END INTERFACE VStringToLowercase
 
   !>Returns a varying string which is the uppercase equivalent of the supplied string.
-  INTERFACE VSTRING_TO_UPPERCASE
-    MODULE PROCEDURE VSTRING_TO_UPPERCASE_C
-    MODULE PROCEDURE VSTRING_TO_UPPERCASE_VS
-  END INTERFACE VSTRING_TO_UPPERCASE
-
-  !>Returns a varying string which is the uppercase equivalent of the supplied string.
   INTERFACE VStringToUppercase
-    MODULE PROCEDURE VSTRING_TO_UPPERCASE_C
-    MODULE PROCEDURE VSTRING_TO_UPPERCASE_VS
+    MODULE PROCEDURE VStringToUppercaseC
+    MODULE PROCEDURE VStringToUppercaseVS
   END INTERFACE VStringToUppercase
 
-  PUBLIC CHARACTER_TO_LOWERCASE,CHARACTER_TO_UPPERCASE
-
   PUBLIC CharacterToLowercase,CharacterToUppercase
-
-  PUBLIC IS_ABBREVIATION,IS_DIGIT,IS_LETTER,IS_WHITESPACE
-
+  
   PUBLIC IsAbbreviation,IsDigit,IsLetter,IsWhitespace
-
-  PUBLIC LIST_TO_CHARACTER
-
+  
   PUBLIC ListToCharacter
   
-  PUBLIC LOGICAL_TO_CHARACTER,LOGICAL_TO_VSTRING
-
   PUBLIC LogicalToCharacter,LogicalToVString
-
-  PUBLIC NUMBER_TO_CHARACTER,NUMBER_TO_VSTRING
-
+  
   PUBLIC NumberToCharacter,NumberToVString
 
-  PUBLIC STRING_TO_DOUBLE,STRING_TO_INTEGER,STRING_TO_LONG_INTEGER,STRING_TO_LOGICAL,STRING_TO_SINGLE
-
   PUBLIC StringToDouble,StringToInteger,StringToLongInteger,StringToLogical,StingToSingle
-
-  PUBLIC VSTRING_TO_LOWERCASE,VSTRING_TO_UPPERCASE
 
   PUBLIC VStringToLowercase,VStringToUppercase
   
@@ -291,1717 +169,1754 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>IS_ABBREVIATION returns .TRUE. if the character string SHORT is an abbreviation of the character string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  PURE FUNCTION IS_ABBREVIATION_C_C(SHORT,LONG,MIN_NUM_CHARACTERS)
+  !>IsAbbreviation returns .TRUE. if the character string short is an abbreviation of the character string long. short must be at least minimumNumberOfCharacters long.
+  PURE FUNCTION IsAbbreviationCC(short,long,minimumNumberOfCharacters)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: SHORT !<The short form of the string
-    CHARACTER(LEN=*), INTENT(IN) :: LONG !<The long form of the string
-    INTEGER(INTG), INTENT(IN) :: MIN_NUM_CHARACTERS !<The minimum number of characters to match
+    CHARACTER(LEN=*), INTENT(IN) :: short !<The short form of the string
+    CHARACTER(LEN=*), INTENT(IN) :: long !<The long form of the string
+    INTEGER(INTG), INTENT(IN) :: minimumNumberOfCharacters !<The minimum number of characters to match
     !Function variable
-    LOGICAL :: IS_ABBREVIATION_C_C !<On exit, .TRUE. if the short string is an abbreviation
+    LOGICAL :: IsAbbreviationCC !<On exit, .TRUE. if the short string is an abbreviation
     !Local Variables
-    INTEGER(INTG) :: noch,NUM_CHARACTERS
-    CHARACTER(LEN=LEN(SHORT)) :: UPPER_SHORT
-    CHARACTER(LEN=LEN(LONG)) :: UPPER_LONG
+    INTEGER(INTG) :: characterIdx,numberOfCharacters
+    CHARACTER(LEN=LEN(short)) :: upperShort
+    CHARACTER(LEN=LEN(long)) :: upperLong
     
-    IS_ABBREVIATION_C_C=.FALSE.
-    UPPER_SHORT=CHARACTER_TO_UPPERCASE(SHORT)
-    UPPER_LONG=CHARACTER_TO_UPPERCASE(LONG)
-    NUM_CHARACTERS=MIN(LEN(LONG),LEN(SHORT))
-    DO noch=MIN_NUM_CHARACTERS,NUM_CHARACTERS
-      IF(UPPER_SHORT==UPPER_LONG(:noch)) THEN
-          IS_ABBREVIATION_C_C=.TRUE.
+    IsAbbreviationCC=.FALSE.
+    upperShort=CHARACTER_TO_UPPERCASE(short)
+    upperLong=CHARACTER_TO_UPPERCASE(long)
+    numberOfCharacters=MIN(LEN(long),LEN(short))
+    DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
+      IF(upperShort==upperLong(:characterIdx)) THEN
+          IsAbbreviationCC=.TRUE.
           EXIT
       ENDIF
-    ENDDO !noch
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION IS_ABBREVIATION_C_C
+  END FUNCTION IsAbbreviationCC
 
   !
   !================================================================================================================================
   !
 
-  !>IS_ABBREVIATION returns .TRUE. if the character string SHORT is an abbreviation of the varying string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  PURE FUNCTION IS_ABBREVIATION_C_VS(SHORT,LONG,MIN_NUM_CHARACTERS)
+  !>IsAbbreviation returns .TRUE. if the character string short is an abbreviation of the varying string long. short must be at least minimumNumberOfCharacters long.
+  PURE FUNCTION IsAbbreviationCVS(short,long,minimumNumberOfCharacters)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: SHORT !<The short form of the string
-    TYPE(VARYING_STRING), INTENT(IN) :: LONG !<The long form of the string
-    INTEGER(INTG), INTENT(IN) :: MIN_NUM_CHARACTERS !<The minimum number of characters to match
+    CHARACTER(LEN=*), INTENT(IN) :: short !<The short form of the string
+    TYPE(VARYING_STRING), INTENT(IN) :: long !<The long form of the string
+    INTEGER(INTG), INTENT(IN) :: minimumNumberOfCharacters !<The minimum number of characters to match
     !Function variable
-    LOGICAL :: IS_ABBREVIATION_C_VS !<On exit, .TRUE. if the short string is an abbreviation
+    LOGICAL :: IsAbbreviationCVS !<On exit, .TRUE. if the short string is an abbreviation
     !Local Variables
-    INTEGER(INTG) :: noch,NUM_CHARACTERS
-    CHARACTER(LEN=LEN(SHORT)) :: UPPER_SHORT
-    TYPE(VARYING_STRING) :: UPPER_LONG
+    INTEGER(INTG) :: characterIdx,numberOfCharacters
+    CHARACTER(LEN=LEN(short)) :: upperShort
+    TYPE(VARYING_STRING) :: upperLong
     
-    IS_ABBREVIATION_C_VS=.FALSE.
-    UPPER_SHORT=CHARACTER_TO_UPPERCASE(SHORT)
-    UPPER_LONG=VSTRING_TO_UPPERCASE(LONG)
-    NUM_CHARACTERS=MIN(LEN(LONG),LEN(SHORT))
-    DO noch=MIN_NUM_CHARACTERS,NUM_CHARACTERS
-      IF(UPPER_SHORT==EXTRACT(UPPER_LONG,1,noch)) THEN
-          IS_ABBREVIATION_C_VS=.TRUE.
+    IsAbbreviationCVS=.FALSE.
+    upperShort=CHARACTER_TO_UPPERCASE(short)
+    upperLong=VSTRING_TO_UPPERCASE(long)
+    numberOfCharacters=MIN(LEN(long),LEN(short))
+    DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
+      IF(upperShort==EXTRACT(upperLong,1,characterIdx)) THEN
+          IsAbbreviationCVS=.TRUE.
           EXIT
       ENDIF
-    ENDDO !noch
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION IS_ABBREVIATION_C_VS
+  END FUNCTION IsAbbreviationCVS
 
   !
   !================================================================================================================================
   !
 
-  !>IS_ABBREVIATION returns .TRUE. if the varying string SHORT is an abbreviation of the character string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  PURE FUNCTION IS_ABBREVIATION_VS_C(SHORT,LONG,MIN_NUM_CHARACTERS)
+  !>IsAbbreviation returns .TRUE. if the varying string short is an abbreviation of the character string long. short must be at least minimumNumberOfCharacters long.
+  PURE FUNCTION IsAbbreviationVSC(short,long,minimumNumberOfCharacters)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: SHORT !<The short form of the string
-    CHARACTER(LEN=*), INTENT(IN) :: LONG !<The long form of the string
-    INTEGER(INTG), INTENT(IN) :: MIN_NUM_CHARACTERS !<The minimum number of characters to match
+    TYPE(VARYING_STRING), INTENT(IN) :: short !<The short form of the string
+    CHARACTER(LEN=*), INTENT(IN) :: long !<The long form of the string
+    INTEGER(INTG), INTENT(IN) :: minimumNumberOfCharacters !<The minimum number of characters to match
     !Function variable
-    LOGICAL :: IS_ABBREVIATION_VS_C !<On exit, .TRUE. if the short string is an abbreviation
+    LOGICAL :: IsAbbreviationVSC !<On exit, .TRUE. if the short string is an abbreviation
     !Local Variables
-    INTEGER(INTG) :: noch,NUM_CHARACTERS
-    TYPE(VARYING_STRING) :: UPPER_SHORT
-    CHARACTER(LEN=LEN(LONG)) :: UPPER_LONG
+    INTEGER(INTG) :: characterIdx,numberOfCharacters
+    TYPE(VARYING_STRING) :: upperShort
+    CHARACTER(LEN=LEN(long)) :: upperLong
     
-    IS_ABBREVIATION_VS_C=.FALSE.
-    UPPER_SHORT=VSTRING_TO_UPPERCASE(SHORT)
-    UPPER_LONG=CHARACTER_TO_UPPERCASE(LONG)
-    NUM_CHARACTERS=MIN(LEN(LONG),LEN(SHORT))
-    DO noch=MIN_NUM_CHARACTERS,NUM_CHARACTERS
-      IF(UPPER_SHORT==UPPER_LONG(:noch)) THEN
-          IS_ABBREVIATION_VS_C=.TRUE.
+    IsAbbreviationVSC=.FALSE.
+    upperShort=VSTRING_TO_UPPERCASE(short)
+    upperLong=CHARACTER_TO_UPPERCASE(long)
+    numberOfCharacters=MIN(LEN(long),LEN(short))
+    DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
+      IF(upperShort==upperLong(:characterIdx)) THEN
+          IsAbbreviationVSC=.TRUE.
           EXIT
       ENDIF
-    ENDDO !noch
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION IS_ABBREVIATION_VS_C
+  END FUNCTION IsAbbreviationVSC
 
   !
   !================================================================================================================================
   !
 
-  !>IS_ABBREVIATION returns .TRUE. if the varying string SHORT is an abbreviation of the varying string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  PURE FUNCTION IS_ABBREVIATION_VS_VS(SHORT,LONG,MIN_NUM_CHARACTERS)
+  !>IsAbbreviation returns .TRUE. if the varying string short is an abbreviation of the varying string long. short must be at least minimumNumberOfCharacters long.
+  PURE FUNCTION IsAbbreviationVSVS(short,long,minimumNumberOfCharacters)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: SHORT !<The short form of the string
-    TYPE(VARYING_STRING), INTENT(IN) :: LONG !<The long form of the string
-    INTEGER(INTG), INTENT(IN) :: MIN_NUM_CHARACTERS !<The minimum number of characters to match
+    TYPE(VARYING_STRING), INTENT(IN) :: short !<The short form of the string
+    TYPE(VARYING_STRING), INTENT(IN) :: long !<The long form of the string
+    INTEGER(INTG), INTENT(IN) :: minimumNumberOfCharacters !<The minimum number of characters to match
     !Function variable
-    LOGICAL :: IS_ABBREVIATION_VS_VS !<On exit, .TRUE. if the short string is an abbreviation
+    LOGICAL :: IsAbbreviationVSVS !<On exit, .TRUE. if the short string is an abbreviation
     !Local Variables
-    INTEGER(INTG) :: noch,NUM_CHARACTERS
-    TYPE(VARYING_STRING) :: UPPER_SHORT,UPPER_LONG
+    INTEGER(INTG) :: characterIdx,numberOfCharacters
+    TYPE(VARYING_STRING) :: upperShort,upperLong
     
-    IS_ABBREVIATION_VS_VS=.FALSE.
-    UPPER_SHORT=VSTRING_TO_UPPERCASE(SHORT)
-    UPPER_LONG=VSTRING_TO_UPPERCASE(LONG)
-    NUM_CHARACTERS=MIN(LEN(LONG),LEN(SHORT))
-    DO noch=MIN_NUM_CHARACTERS,NUM_CHARACTERS
-      IF(UPPER_SHORT==EXTRACT(UPPER_LONG,1,noch)) THEN
-          IS_ABBREVIATION_VS_VS=.TRUE.
+    IsAbbreviationVSVS=.FALSE.
+    upperShort=VSTRING_TO_UPPERCASE(short)
+    upperLong=VSTRING_TO_UPPERCASE(long)
+    numberOfCharacters=MIN(LEN(long),LEN(short))
+    DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
+      IF(upperShort==EXTRACT(upperLong,1,characterIdx)) THEN
+          IsAbbreviationVSVS=.TRUE.
           EXIT
       ENDIF
-    ENDDO !noch
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION IS_ABBREVIATION_VS_VS
+  END FUNCTION IsAbbreviationVSVS
 
   !
   !================================================================================================================================
   !
 
-  !>IS_DIGIT returns .TRUE. if the character CHARAC is a digit character (i.e. 0..9)
-  PURE FUNCTION IS_DIGIT(CHARAC)
+  !>IsDigit returns .TRUE. if the character charac is a digit character (i.e. 0..9)
+  PURE FUNCTION IsDigit(charac)
 
     !Argument variables
-    CHARACTER(LEN=1), INTENT(IN) :: CHARAC !<The character to test if it is a digit
+    CHARACTER(LEN=1), INTENT(IN) :: charac !<The character to test if it is a digit
     !Function variable
-    LOGICAL :: IS_DIGIT !<On exit, .TRUE. if the character is a digit
+    LOGICAL :: IsDigit !<On exit, .TRUE. if the character is a digit
     !Local Variables
 
-    IS_DIGIT=(ICHAR(CHARAC)>=ICHAR("0").AND.ICHAR(CHARAC)<=ICHAR("9"))
+    IsDigit=(ICHAR(charac)>=ICHAR("0").AND.ICHAR(charac)<=ICHAR("9"))
 
     RETURN
-  END FUNCTION IS_DIGIT
+  END FUNCTION IsDigit
 
   !
   !================================================================================================================================
   !
 
-  !>IS_LETTER returns .TRUE. if the character CHARAC is a letter character (i.e. A..Z or a..z)
-  PURE FUNCTION IS_LETTER(CHARAC)
+  !>IsLetter returns .TRUE. if the character charac is a letter character (i.e. A..Z or a..z)
+  PURE FUNCTION IsLetter(charac)
 
     !Argument variables
-    CHARACTER(LEN=1), INTENT(IN) :: CHARAC !<The character to test if it is a letter
+    CHARACTER(LEN=1), INTENT(IN) :: charac !<The character to test if it is a letter
     !Function variable
-    LOGICAL :: IS_LETTER !<On exit, .TRUE. if the character is a letter
+    LOGICAL :: IsLetter !<On exit, .TRUE. if the character is a letter
     !Local Variables
 
-    IS_LETTER=((ICHAR(CHARAC)>=ICHAR("A").AND.ICHAR(CHARAC)<=ICHAR("Z")).OR.&
-	    & (ICHAR(CHARAC)>=ICHAR("a").AND.ICHAR(CHARAC)<=ICHAR("z")))
+    IsLetter=((ICHAR(charac)>=ICHAR("A").AND.ICHAR(charac)<=ICHAR("Z")).OR.&
+	    & (ICHAR(charac)>=ICHAR("a").AND.ICHAR(charac)<=ICHAR("z")))
 
     RETURN
-  END FUNCTION IS_LETTER
+  END FUNCTION IsLetter
 
   !
   !================================================================================================================================
   !
 
   !>Returns .TRUE. if the supplied character is a lowercase character.
-  PURE FUNCTION IS_LOWERCASE(CHARC)
+  PURE FUNCTION IsLowercase(charac)
 
     !Argument variables
-    CHARACTER(LEN=1), INTENT(IN) :: CHARC !<The character to test if it is lowercase
+    CHARACTER(LEN=1), INTENT(IN) :: charac !<The character to test if it is lowercase
     !Function variable
-    LOGICAL :: IS_LOWERCASE !<On exit, .TRUE. if the character is lowercase
+    LOGICAL :: IsLowercase !<On exit, .TRUE. if the character is lowercase
     !Local Variables
 
-    IF(LGE(CHARC,"a").AND.LLE(CHARC,"z")) THEN
-      IS_LOWERCASE=.TRUE.
+    IF(LGE(charac,"a").AND.LLE(charac,"z")) THEN
+      IsLowercase=.TRUE.
     ELSE
-      IS_LOWERCASE=.FALSE.
+      IsLowercase=.FALSE.
     ENDIF
 
     RETURN
-  END FUNCTION IS_LOWERCASE
+  END FUNCTION IsLowercase
 
   !
   !================================================================================================================================
   !
 
   !>Returns .TRUE. if the supplied character is an uppercase character.
-  PURE FUNCTION IS_UPPERCASE(CHARC)
+  PURE FUNCTION IsUppercase(charac)
 
     !Argument variables
-    CHARACTER(LEN=1), INTENT(IN) :: CHARC !<The character to test if it is uppercase
+    CHARACTER(LEN=1), INTENT(IN) :: charac !<The character to test if it is uppercase
     !Function variable
-    LOGICAL :: IS_UPPERCASE !<On exit, .TRUE. if the character is uppercase
+    LOGICAL :: IsUppercase !<On exit, .TRUE. if the character is uppercase
     !Local Variables
 
-    IF(LGE(CHARC,"A").AND.LLE(CHARC,"Z")) THEN
-      IS_UPPERCASE=.TRUE.
+    IF(LGE(charac,"A").AND.LLE(charac,"Z")) THEN
+      IsUppercase=.TRUE.
     ELSE
-      IS_UPPERCASE=.FALSE.
+      IsUppercase=.FALSE.
     ENDIF
 
     RETURN
-  END FUNCTION IS_UPPERCASE
+  END FUNCTION IsUppercase
 
   !
   !================================================================================================================================
   !
 
-  !>IS_WHITESPACE returns .TRUE. if the character CHARAC is a whitespace character (i.e. space, tabs, etc.)
-  PURE FUNCTION IS_WHITESPACE(CHARAC)
+  !>IsWhitespace returns .TRUE. if the character charac is a whitespace character (i.e. space, tabs, etc.)
+  PURE FUNCTION IsWhitespace(charac)
 
     !Argument variables
-    CHARACTER(LEN=1), INTENT(IN) :: CHARAC !<The character to test if it is whitespace
+    CHARACTER(LEN=1), INTENT(IN) :: charac !<The character to test if it is whitespace
     !Function variable
-    LOGICAL :: IS_WHITESPACE !<On exit, .TRUE. if the character is whitespace
+    LOGICAL :: IsWhitespace !<On exit, .TRUE. if the character is whitespace
     !Local Variables
     
     !!WARNING: Assumes ASCII encoding
-    IS_WHITESPACE=(CHARAC==CHAR(32).OR.CHARAC==CHAR(9))
+    IsWhitespace=(charac==CHAR(32).OR.charac==CHAR(9))
 
     RETURN
-  END FUNCTION IS_WHITESPACE
+  END FUNCTION IsWhitespace
 
   !
   !================================================================================================================================
   !
 
-  !>Converts a character list to its equivalent character string representation as determined by the supplied format. If present, the optional argument LIST_LENGTHS is used for the lengths of each list elements length otherwise the trimmed length is used. NOTE: The FORMAT is ignored for this child FUNCTION.
-  FUNCTION LIST_TO_CHARACTER_C(NUMBER_IN_LIST,LIST,FORMAT,ERR,ERROR,LIST_LENGTHS)
+  !>Converts a character list to its equivalent character string representation as determined by the supplied format. If present, the optional argument listLengths is used for the lengths of each list elements length otherwise the trimmed length is used. NOTE: The format is ignored for this child FUNCTION.
+  FUNCTION ListToCharacterC(numberInList,list,format,err,error,listLengths)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER_IN_LIST !<The number of items in the list
-    CHARACTER(LEN=*), INTENT(IN) :: LIST(NUMBER_IN_LIST) !<LIST(i). The i'th item in the list
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use. Ignored for character lists.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    INTEGER(INTG), OPTIONAL, INTENT(IN) :: LIST_LENGTHS(NUMBER_IN_LIST) !<LIST_LENGTHS(i). Optional, The length of the i'th list item.
+    INTEGER(INTG), INTENT(IN) :: numberInList !<The number of items in the list
+    CHARACTER(LEN=*), INTENT(IN) :: list(numberInList) !<list(listItemIdx). The listItemIdx'th item in the list
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use. Ignored for character lists.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    INTEGER(INTG), OPTIONAL, INTENT(IN) :: listLengths(numberInList) !<listLengths(listItemidx). Optional, The length of the listItemIdx'th list item.
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_TO_CHARACTER_C !<On exit, the character equivalent of the list
+    CHARACTER(LEN=MAXSTRLEN) :: ListToCharacterC !<On exit, the character equivalent of the list
     !Local variables
-    INTEGER(INTG) :: i,POSITION,LENGTH
+    INTEGER(INTG) :: length,listItemIdx,position
     
-    ENTERS("LIST_TO_CHARACTER_C",ERR,ERROR,*999)
+    ENTERS("ListToCharacterC",err,error,*999)
 
-    LIST_TO_CHARACTER_C=""
-    IF(NUMBER_IN_LIST>0) THEN
-      IF(PRESENT(LIST_LENGTHS)) THEN
-        LENGTH=LIST_LENGTHS(1)
-        LIST_TO_CHARACTER_C=LIST(1)(1:LENGTH)
-        DO i=2,NUMBER_IN_LIST
-          IF(LENGTH+LIST_LENGTHS(i)+1<=MAXSTRLEN) THEN
-            LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:LENGTH)//","//LIST(i)(1:LIST_LENGTHS(i))
-            LENGTH=LENGTH+LIST_LENGTHS(i)+1
-          ELSE IF(LENGTH+5<=MAXSTRLEN) THEN
-            LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:LENGTH)//",...."
+    ListToCharacterC=""
+    IF(numberInList>0) THEN
+      IF(PRESENT(listLengths)) THEN
+        length=listLengths(1)
+        ListToCharacterC=list(1)(1:length)
+        DO listItemIdx=2,numberInList
+          IF(length+listLengths(listItemIdx)+1<=MAXSTRLEN) THEN
+            ListToCharacterC=ListToCharacterC(1:length)//","//list(listItemIdx)(1:listLengths(listItemIdx))
+            length=length+listLengths(listItemIdx)+1
+          ELSE IF(length+5<=MAXSTRLEN) THEN
+            ListToCharacterC=ListToCharacterC(1:length)//",...."
             EXIT
           ELSE
-            POSITION=INDEX(LIST_TO_CHARACTER_C(1:MAXSTRLEN-4),",",.TRUE.)
-            IF(POSITION/=0) THEN
-              LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:POSITION)//"...."
+            position=INDEX(ListToCharacterC(1:MAXSTRLEN-4),",",.TRUE.)
+            IF(position/=0) THEN
+              ListToCharacterC=ListToCharacterC(1:position)//"...."
             ELSE
-              LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:MAXSTRLEN-5)//",...."
+              ListToCharacterC=ListToCharacterC(1:MAXSTRLEN-5)//",...."
             ENDIF
             EXIT
           ENDIF
-        ENDDO !i
+        ENDDO !listItemIdx
       ELSE
-        LIST_TO_CHARACTER_C=LIST(1)(1:LEN_TRIM(LIST(1)))
-        DO i=2,NUMBER_IN_LIST
-          IF(LEN_TRIM(LIST_TO_CHARACTER_C)+LEN_TRIM(LIST(i))+1<=MAXSTRLEN) THEN
-            LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:LEN_TRIM(LIST_TO_CHARACTER_C))//","//LIST(i)(1:LEN_TRIM(LIST(i)))
-          ELSE IF(LEN_TRIM(LIST_TO_CHARACTER_C)+5<=MAXSTRLEN) THEN
-            LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:LEN_TRIM(LIST_TO_CHARACTER_C))//",...."
+        ListToCharacterC=list(1)(1:LEN_TRIM(list(1)))
+        DO listItemIdx=2,numberInList
+          IF(LEN_TRIM(ListToCharacterC)+LEN_TRIM(list(listItemIdx))+1<=MAXSTRLEN) THEN
+            ListToCharacterC=ListToCharacterC(1:LEN_TRIM(ListToCharacterC))//","//list(listItemIdx)(1:LEN_TRIM(list(listItemIdx)))
+          ELSE IF(LEN_TRIM(ListToCharacterC)+5<=MAXSTRLEN) THEN
+            ListToCharacterC=ListToCharacterC(1:LEN_TRIM(ListToCharacterC))//",...."
             EXIT
           ELSE
-            POSITION=INDEX(LIST_TO_CHARACTER_C(1:MAXSTRLEN-4),",",.TRUE.)
-            IF(POSITION/=0) THEN
-              LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:POSITION)//"...."
+            position=INDEX(ListToCharacterC(1:MAXSTRLEN-4),",",.TRUE.)
+            IF(position/=0) THEN
+              ListToCharacterC=ListToCharacterC(1:position)//"...."
             ELSE
-              LIST_TO_CHARACTER_C=LIST_TO_CHARACTER_C(1:MAXSTRLEN-5)//",...."
+              ListToCharacterC=ListToCharacterC(1:MAXSTRLEN-5)//",...."
             ENDIF
             EXIT
           ENDIF
-        ENDDO !i
+        ENDDO !listItemIdx
       ENDIF
     ENDIF
 
-    EXITS("LIST_TO_CHARACTER_C")
+    EXITS("ListToCharacterC")
     RETURN
-999 ERRORSEXITS("LIST_TO_CHARACTER_C",ERR,ERROR)
-    RETURN    
-  END FUNCTION LIST_TO_CHARACTER_C
+999 ERRORSEXITS("ListToCharacterC",err,error)
+    RETURN
+    
+  END FUNCTION ListToCharacterC
   
   !
   !================================================================================================================================
   !
   
   !>Converts an integer list to its equivalent character string representation as determined by the supplied format. 
-  FUNCTION LIST_TO_CHARACTER_INTG(NUMBER_IN_LIST,LIST,FORMAT,ERR,ERROR)
+  FUNCTION ListToCharacterIntg(numberInList,list,format,err,error)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER_IN_LIST !<The number of items in the list
-    INTEGER(INTG), INTENT(IN) :: LIST(NUMBER_IN_LIST) !<LIST(i). The i'th item in the list
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use for the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: numberInList !<The number of items in the list
+    INTEGER(INTG), INTENT(IN) :: list(numberInList) !<list(listItemIdx). The listItemIdx'th item in the list
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use for the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_TO_CHARACTER_INTG !<On exit, the character equivalent of the list
+    CHARACTER(LEN=MAXSTRLEN) :: ListToCharacterIntg !<On exit, the character equivalent of the list
     !Local variables
-    INTEGER(INTG) :: i,POSITION
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_VALUE
+    INTEGER(INTG) :: listItemIdx,position
+    CHARACTER(LEN=MAXSTRLEN) :: listValue
     
-    ENTERS("LIST_TO_CHARACTER_INTG",ERR,ERROR,*999)
+    ENTERS("ListToCharacterIntg",err,error,*999)
 
-    LIST_TO_CHARACTER_INTG=""
-    IF(NUMBER_IN_LIST>0) THEN
-      LIST_TO_CHARACTER_INTG=NUMBER_TO_CHARACTER_INTG(LIST(1),FORMAT,ERR,ERROR)
-      IF(ERR/=0) GOTO 999
-      DO i=2,NUMBER_IN_LIST
-        LIST_VALUE=NUMBER_TO_CHARACTER_INTG(LIST(i),FORMAT,ERR,ERROR)
-        IF(ERR/=0) GOTO 999
-        IF(LEN_TRIM(LIST_TO_CHARACTER_INTG)+LEN_TRIM(LIST_VALUE)+1<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_INTG=LIST_TO_CHARACTER_INTG(1:LEN_TRIM(LIST_TO_CHARACTER_INTG))//","// &
-            & LIST_VALUE(1:LEN_TRIM(LIST_VALUE))
-        ELSE IF(LEN_TRIM(LIST_TO_CHARACTER_INTG)+5<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_INTG=LIST_TO_CHARACTER_INTG(1:LEN_TRIM(LIST_TO_CHARACTER_INTG))//",...."
+    ListToCharacterIntg=""
+    IF(numberInList>0) THEN
+      ListToCharacterIntg=NumberToCharacterIntg(list(1),format,err,error)
+      IF(err/=0) GOTO 999
+      DO listItemIdx=2,numberInList
+        listValue=NumberToCharacterIntg(list(listItemIdx),format,err,error)
+        IF(err/=0) GOTO 999
+        IF(LEN_TRIM(ListToCharacterIntg)+LEN_TRIM(listValue)+1<=MAXSTRLEN) THEN
+          ListToCharacterIntg=ListToCharacterIntg(1:LEN_TRIM(ListToCharacterIntg))//","// &
+            & listValue(1:LEN_TRIM(listValue))
+        ELSE IF(LEN_TRIM(ListToCharacterIntg)+5<=MAXSTRLEN) THEN
+          ListToCharacterIntg=ListToCharacterIntg(1:LEN_TRIM(ListToCharacterIntg))//",...."
           EXIT
         ELSE
-          POSITION=INDEX(LIST_TO_CHARACTER_INTG(1:MAXSTRLEN-4),",",.TRUE.)
-          IF(POSITION/=0) THEN
-            LIST_TO_CHARACTER_INTG=LIST_TO_CHARACTER_INTG(1:POSITION)//"...."
+          position=INDEX(ListToCharacterIntg(1:MAXSTRLEN-4),",",.TRUE.)
+          IF(position/=0) THEN
+            ListToCharacterIntg=ListToCharacterIntg(1:position)//"...."
           ELSE
-            LIST_TO_CHARACTER_INTG=LIST_TO_CHARACTER_INTG(1:MAXSTRLEN-5)//",...."
+            ListToCharacterIntg=ListToCharacterIntg(1:MAXSTRLEN-5)//",...."
           ENDIF
           EXIT
         ENDIF
-      ENDDO
+      ENDDO !listItemIdx
     ENDIF
 
-    EXITS("LIST_TO_CHARACTER_INTG")
+    EXITS("ListToCharacterIntg")
     RETURN
-999 ERRORSEXITS("LIST_TO_CHARACTER_INTG",ERR,ERROR)
-    RETURN    
-  END FUNCTION LIST_TO_CHARACTER_INTG
+999 ERRORSEXITS("ListToCharacterIntg",err,error)
+    RETURN
+    
+  END FUNCTION ListToCharacterIntg
   
   !
   !================================================================================================================================
   !
 
   !>Converts an long integer list to its equivalent character string representation as determined by the supplied format. 
-  FUNCTION LIST_TO_CHARACTER_LINTG(NUMBER_IN_LIST,LIST,FORMAT,ERR,ERROR)
+  FUNCTION ListToCharacterLIntg(numberInList,list,format,err,error)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER_IN_LIST !<The number of items in the list
-    INTEGER(LINTG), INTENT(IN) :: LIST(NUMBER_IN_LIST) !<LIST(i). The i'th item in the list
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use for the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: numberInList !<The number of items in the list
+    INTEGER(LINTG), INTENT(IN) :: list(numberInList) !<list(listItemIdx). The listItemIdx'th item in the list
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use for the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_TO_CHARACTER_LINTG !<On exit, the character equivalent of the list
+    CHARACTER(LEN=MAXSTRLEN) :: ListToCharacterLIntg !<On exit, the character equivalent of the list
     !Local variables
-    INTEGER(INTG) :: i,POSITION
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_VALUE
+    INTEGER(INTG) :: listItemIdx,position
+    CHARACTER(LEN=MAXSTRLEN) :: listValue
     
-    ENTERS("LIST_TO_CHARACTER_LINTG",ERR,ERROR,*999)
+    ENTERS("ListToCharacterLIntg",err,error,*999)
 
-    LIST_TO_CHARACTER_LINTG=""
-    IF(NUMBER_IN_LIST>0) THEN
-      LIST_TO_CHARACTER_LINTG=NUMBER_TO_CHARACTER_LINTG(LIST(1),FORMAT,ERR,ERROR)
-      IF(ERR/=0) GOTO 999
-      DO i=2,NUMBER_IN_LIST
-        LIST_VALUE=NUMBER_TO_CHARACTER_LINTG(LIST(i),FORMAT,ERR,ERROR)
-        IF(ERR/=0) GOTO 999
-        IF(LEN_TRIM(LIST_TO_CHARACTER_LINTG)+LEN_TRIM(LIST_VALUE)+1<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_LINTG=LIST_TO_CHARACTER_LINTG(1:LEN_TRIM(LIST_TO_CHARACTER_LINTG))//","// &
-            & LIST_VALUE(1:LEN_TRIM(LIST_VALUE))
-        ELSE IF(LEN_TRIM(LIST_TO_CHARACTER_LINTG)+5<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_LINTG=LIST_TO_CHARACTER_LINTG(1:LEN_TRIM(LIST_TO_CHARACTER_LINTG))//",...."
+    ListToCharacterLIntg=""
+    IF(numberInList>0) THEN
+      ListToCharacterLIntg=NumberToCharacterLIntg(list(1),format,err,error)
+      IF(err/=0) GOTO 999
+      DO listItemIdx=2,numberInList
+        listValue=NumberToCharacterLIntg(list(listItemIdx),format,err,error)
+        IF(err/=0) GOTO 999
+        IF(LEN_TRIM(ListToCharacterLIntg)+LEN_TRIM(listValue)+1<=MAXSTRLEN) THEN
+          ListToCharacterLIntg=ListToCharacterLIntg(1:LEN_TRIM(ListToCharacterLIntg))//","// &
+            & listValue(1:LEN_TRIM(listValue))
+        ELSE IF(LEN_TRIM(ListToCharacterLIntg)+5<=MAXSTRLEN) THEN
+          ListToCharacterLIntg=ListToCharacterLIntg(1:LEN_TRIM(ListToCharacterLIntg))//",...."
           EXIT
         ELSE
-          POSITION=INDEX(LIST_TO_CHARACTER_LINTG(1:MAXSTRLEN-4),",",.TRUE.)
-          IF(POSITION/=0) THEN
-            LIST_TO_CHARACTER_LINTG=LIST_TO_CHARACTER_LINTG(1:POSITION)//"...."
+          position=INDEX(ListToCharacterLIntg(1:MAXSTRLEN-4),",",.TRUE.)
+          IF(position/=0) THEN
+            ListToCharacterLIntg=ListToCharacterLIntg(1:position)//"...."
           ELSE
-            LIST_TO_CHARACTER_LINTG=LIST_TO_CHARACTER_LINTG(1:MAXSTRLEN-5)//",...."
+            ListToCharacterLIntg=ListToCharacterLIntg(1:MAXSTRLEN-5)//",...."
           ENDIF
           EXIT
         ENDIF
-      ENDDO
+      ENDDO !listItemIdx
     ENDIF
 
-    EXITS("LIST_TO_CHARACTER_LINTG")
+    EXITS("ListToCharacterLIntg")
     RETURN
-999 ERRORSEXITS("LIST_TO_CHARACTER_LINTG",ERR,ERROR)
-    RETURN    
-  END FUNCTION LIST_TO_CHARACTER_LINTG
+999 ERRORSEXITS("ListToCharacterLIntg",err,error)
+    RETURN
+    
+  END FUNCTION ListToCharacterLIntg
   
   !
   !================================================================================================================================
   !
 
-  !>Converts a logical list to its equivalent character string representation as determined by the supplied format string. The FORMAT is ignored for this child FUNCTION.
-  FUNCTION LIST_TO_CHARACTER_L(NUMBER_IN_LIST,LIST,FORMAT,ERR,ERROR)
+  !>Converts a logical list to its equivalent character string representation as determined by the supplied format string. The format is ignored for this child FUNCTION.
+  FUNCTION ListToCharacterL(numberInList,list,format,err,error)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER_IN_LIST !<The number of items in the list
-    LOGICAL, INTENT(IN) :: LIST(NUMBER_IN_LIST) !<LIST(i). The i'th item in the list
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use. Ignored for logical lists.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: numberInList !<The number of items in the list
+    LOGICAL, INTENT(IN) :: list(numberInList) !<list(listItemIdx). The listItemIdx'th item in the list
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use. Ignored for logical lists.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_TO_CHARACTER_L !<On exit, the character equivalent of the list
+    CHARACTER(LEN=MAXSTRLEN) :: ListToCharacterL !<On exit, the character equivalent of the list
     !Local variables
-    INTEGER(INTG) :: i,POSITION
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_VALUE
+    INTEGER(INTG) :: listItemIdx,position
+    CHARACTER(LEN=MAXSTRLEN) :: listValue
     
-    ENTERS("LIST_TO_CHARACTER_L",ERR,ERROR,*999)
+    ENTERS("ListToCharacterL",err,error,*999)
 
-    LIST_TO_CHARACTER_L=""
-    IF(NUMBER_IN_LIST>0) THEN
-      LIST_TO_CHARACTER_L=LOGICAL_TO_CHARACTER(LIST(1),ERR,ERROR)
-      IF(ERR/=0) GOTO 999
-      DO i=2,NUMBER_IN_LIST
-        LIST_VALUE=LOGICAL_TO_CHARACTER(LIST(i),ERR,ERROR)
-        IF(ERR/=0) GOTO 999
-        IF(LEN_TRIM(LIST_TO_CHARACTER_L)+LEN_TRIM(LIST_VALUE)+1<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_L=LIST_TO_CHARACTER_L(1:LEN_TRIM(LIST_TO_CHARACTER_L))//","//LIST_VALUE(1:LEN_TRIM(LIST_VALUE))
-        ELSE IF(LEN_TRIM(LIST_TO_CHARACTER_L)+5<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_L=LIST_TO_CHARACTER_L(1:LEN_TRIM(LIST_TO_CHARACTER_L))//",...."
+    ListToCharacterL=""
+    IF(numberInList>0) THEN
+      ListToCharacterL=LogicalToCharacter(list(1),err,error)
+      IF(err/=0) GOTO 999
+      DO listItemIdx=2,numberInList
+        listValue=LogicalToCharacter(list(listItemIdx),err,error)
+        IF(err/=0) GOTO 999
+        IF(LEN_TRIM(ListToCharacterL)+LEN_TRIM(listValue)+1<=MAXSTRLEN) THEN
+          ListToCharacterL=ListToCharacterL(1:LEN_TRIM(ListToCharacterL))//","//listValue(1:LEN_TRIM(listValue))
+        ELSE IF(LEN_TRIM(ListToCharacterL)+5<=MAXSTRLEN) THEN
+          ListToCharacterL=ListToCharacterL(1:LEN_TRIM(ListToCharacterL))//",...."
           EXIT
         ELSE
-          POSITION=INDEX(LIST_TO_CHARACTER_L(1:MAXSTRLEN-4),",",.TRUE.)
-          IF(POSITION/=0) THEN
-            LIST_TO_CHARACTER_L=LIST_TO_CHARACTER_L(1:POSITION)//"...."
+          position=INDEX(ListToCharacterL(1:MAXSTRLEN-4),",",.TRUE.)
+          IF(position/=0) THEN
+            ListToCharacterL=ListToCharacterL(1:position)//"...."
           ELSE
-            LIST_TO_CHARACTER_L=LIST_TO_CHARACTER_L(1:MAXSTRLEN-5)//",...."
+            ListToCharacterL=ListToCharacterL(1:MAXSTRLEN-5)//",...."
           ENDIF
           EXIT
         ENDIF
-      ENDDO
+      ENDDO !listItemIdx
     ENDIF
 
-    EXITS("LIST_TO_CHARACTER_L")
+    EXITS("ListToCharacterL")
     RETURN
-999 ERRORSEXITS("LIST_TO_CHARACTER_L",ERR,ERROR)
-    RETURN    
-  END FUNCTION LIST_TO_CHARACTER_L
+999 ERRORSEXITS("ListToCharacterL",err,error)
+    RETURN
+    
+  END FUNCTION ListToCharacterL
   
   !
   !================================================================================================================================
   !
 
   !>Converts a single precision list to its equivalent character string representation as determined by the supplied format string.
-  FUNCTION LIST_TO_CHARACTER_SP(NUMBER_IN_LIST,LIST,FORMAT,ERR,ERROR)
+  FUNCTION ListToCharacterSP(numberInList,list,format,err,error)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER_IN_LIST !<The number of items in the list
-    REAL(SP), INTENT(IN) :: LIST(NUMBER_IN_LIST) !<LIST(i). The i'th item in the list 
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use for the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: numberInList !<The number of items in the list
+    REAL(SP), INTENT(IN) :: list(numberInList) !<list(listItemIdx). The listItemIdx'th item in the list 
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use for the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_TO_CHARACTER_SP !<On exit, the character equivalent of the list
+    CHARACTER(LEN=MAXSTRLEN) :: ListToCharacterSP !<On exit, the character equivalent of the list
     !Local variables
-    INTEGER(INTG) :: i,POSITION
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_VALUE
+    INTEGER(INTG) :: listItemIdx,position
+    CHARACTER(LEN=MAXSTRLEN) :: listValue
     
-    ENTERS("LIST_TO_CHARACTER_SP",ERR,ERROR,*999)
+    ENTERS("ListToCharacterSP",err,error,*999)
 
-    LIST_TO_CHARACTER_SP=""
-    IF(NUMBER_IN_LIST>0) THEN
-      LIST_TO_CHARACTER_SP=NUMBER_TO_CHARACTER_SP(LIST(1),FORMAT,ERR,ERROR)
-      IF(ERR/=0) GOTO 999
-      DO i=2,NUMBER_IN_LIST
-        LIST_VALUE=NUMBER_TO_CHARACTER_SP(LIST(i),FORMAT,ERR,ERROR)
-        IF(ERR/=0) GOTO 999
-        IF(LEN_TRIM(LIST_TO_CHARACTER_SP)+LEN_TRIM(LIST_VALUE)+1<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_SP=LIST_TO_CHARACTER_SP(1:LEN_TRIM(LIST_TO_CHARACTER_SP))//","//LIST_VALUE(1:LEN_TRIM(LIST_VALUE))
-        ELSE IF(LEN_TRIM(LIST_TO_CHARACTER_SP)+5<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_SP=LIST_TO_CHARACTER_SP(1:LEN_TRIM(LIST_TO_CHARACTER_SP))//",...."
+    ListToCharacterSP=""
+    IF(numberInList>0) THEN
+      ListToCharacterSP=NumberToCharacterSP(list(1),format,err,error)
+      IF(err/=0) GOTO 999
+      DO listItemIdx=2,numberInList
+        listValue=NumberToCharacterSP(list(listItemIdx),format,err,error)
+        IF(err/=0) GOTO 999
+        IF(LEN_TRIM(ListToCharacterSP)+LEN_TRIM(listValue)+1<=MAXSTRLEN) THEN
+          ListToCharacterSP=ListToCharacterSP(1:LEN_TRIM(ListToCharacterSP))//","//listValue(1:LEN_TRIM(listValue))
+        ELSE IF(LEN_TRIM(ListToCharacterSP)+5<=MAXSTRLEN) THEN
+          ListToCharacterSP=ListToCharacterSP(1:LEN_TRIM(ListToCharacterSP))//",...."
           EXIT
         ELSE
-          POSITION=INDEX(LIST_TO_CHARACTER_SP(1:MAXSTRLEN-4),",",.TRUE.)
-          IF(POSITION/=0) THEN
-            LIST_TO_CHARACTER_SP=LIST_TO_CHARACTER_SP(1:POSITION)//"...."
+          position=INDEX(ListToCharacterSP(1:MAXSTRLEN-4),",",.TRUE.)
+          IF(position/=0) THEN
+            ListToCharacterSP=ListToCharacterSP(1:position)//"...."
           ELSE
-            LIST_TO_CHARACTER_SP=LIST_TO_CHARACTER_SP(1:MAXSTRLEN-5)//",...."
+            ListToCharacterSP=ListToCharacterSP(1:MAXSTRLEN-5)//",...."
           ENDIF
           EXIT
         ENDIF
-      ENDDO
+      ENDDO !listItemIdx
     ENDIF
 
-    EXITS("LIST_TO_CHARACTER_SP")
+    EXITS("ListToCharacterSP")
     RETURN
-999 ERRORSEXITS("LIST_TO_CHARACTER_SP",ERR,ERROR)
-    RETURN    
-  END FUNCTION LIST_TO_CHARACTER_SP
+999 ERRORSEXITS("ListToCharacterSP",err,error)
+    RETURN
+    
+  END FUNCTION ListToCharacterSP
   
   !
   !================================================================================================================================
   !
 
   !>Converts a double precision list to its equivalent character string representation as determined by the supplied format string.
-  FUNCTION LIST_TO_CHARACTER_DP(NUMBER_IN_LIST,LIST,FORMAT,ERR,ERROR)
+  FUNCTION ListToCharacterDP(numberInList,list,format,err,error)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER_IN_LIST !<The number of items in the list
-    REAL(DP), INTENT(IN) :: LIST(NUMBER_IN_LIST) !<LIST(i). The i'th item in the list
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use for the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: numberInList !<The number of items in the list
+    REAL(DP), INTENT(IN) :: list(numberInList) !<list(listItemIdx). The listItemIdx'th item in the list
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use for the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_TO_CHARACTER_DP !<On exit, the character equivalent of the list
+    CHARACTER(LEN=MAXSTRLEN) :: ListToCharacterDP !<On exit, the character equivalent of the list
     !Local variables
-    INTEGER(INTG) :: i,POSITION
-    CHARACTER(LEN=MAXSTRLEN) :: LIST_VALUE
+    INTEGER(INTG) :: listItemIdx,position
+    CHARACTER(LEN=MAXSTRLEN) :: listValue
     
-    ENTERS("LIST_TO_CHARACTER_DP",ERR,ERROR,*999)
+    ENTERS("ListToCharacterDP",err,error,*999)
 
-    LIST_TO_CHARACTER_DP=""
-    IF(NUMBER_IN_LIST>0) THEN
-      LIST_TO_CHARACTER_DP=NUMBER_TO_CHARACTER_DP(LIST(1),FORMAT,ERR,ERROR)
-      IF(ERR/=0) GOTO 999
-      DO i=2,NUMBER_IN_LIST
-        LIST_VALUE=NUMBER_TO_CHARACTER_DP(LIST(i),FORMAT,ERR,ERROR)
-        IF(ERR/=0) GOTO 999
-        IF(LEN_TRIM(LIST_TO_CHARACTER_DP)+LEN_TRIM(LIST_VALUE)+1<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_DP=LIST_TO_CHARACTER_DP(1:LEN_TRIM(LIST_TO_CHARACTER_DP))//","//LIST_VALUE(1:LEN_TRIM(LIST_VALUE))
-        ELSE IF(LEN_TRIM(LIST_TO_CHARACTER_DP)+5<=MAXSTRLEN) THEN
-          LIST_TO_CHARACTER_DP=LIST_TO_CHARACTER_DP(1:LEN_TRIM(LIST_TO_CHARACTER_DP))//",...."
+    ListToCharacterDP=""
+    IF(numberInList>0) THEN
+      ListToCharacterDP=NumberToCharacterDP(list(1),format,err,error)
+      IF(err/=0) GOTO 999
+      DO listItemIdx=2,numberInList
+        listValue=NumberToCharacterDP(list(listItemIdx),format,err,error)
+        IF(err/=0) GOTO 999
+        IF(LEN_TRIM(ListToCharacterDP)+LEN_TRIM(listValue)+1<=MAXSTRLEN) THEN
+          ListToCharacterDP=ListToCharacterDP(1:LEN_TRIM(ListToCharacterDP))//","//listValue(1:LEN_TRIM(listValue))
+        ELSE IF(LEN_TRIM(ListToCharacterDP)+5<=MAXSTRLEN) THEN
+          ListToCharacterDP=ListToCharacterDP(1:LEN_TRIM(ListToCharacterDP))//",...."
           EXIT
         ELSE
-          POSITION=INDEX(LIST_TO_CHARACTER_DP(1:MAXSTRLEN-4),",",.TRUE.)
-          IF(POSITION/=0) THEN
-            LIST_TO_CHARACTER_DP=LIST_TO_CHARACTER_DP(1:POSITION)//"...."
+          position=INDEX(ListToCharacterDP(1:MAXSTRLEN-4),",",.TRUE.)
+          IF(position/=0) THEN
+            ListToCharacterDP=ListToCharacterDP(1:position)//"...."
           ELSE
-            LIST_TO_CHARACTER_DP=LIST_TO_CHARACTER_DP(1:MAXSTRLEN-5)//",...."
+            ListToCharacterDP=ListToCharacterDP(1:MAXSTRLEN-5)//",...."
           ENDIF
           EXIT
         ENDIF
-      ENDDO
+      ENDDO !listItemIdx
     ENDIF
 
-    EXITS("LIST_TO_CHARACTER_DP")
+    EXITS("ListToCharacterDP")
     RETURN
-999 ERRORSEXITS("LIST_TO_CHARACTER_DP",ERR,ERROR)
-    RETURN    
-  END FUNCTION LIST_TO_CHARACTER_DP
+999 ERRORSEXITS("ListToCharacterDP",err,error)
+    RETURN
+    
+  END FUNCTION ListToCharacterDP
   
   !
   !================================================================================================================================
   !
-
+  
   !>Converts a logical value to either a "TRUE" or "FALSE" character string.
-  FUNCTION LOGICAL_TO_CHARACTER(LOGICALVALUE,ERR,ERROR)
+  FUNCTION LogicalToCharacter(logicalValue,err,error)
   
     !Argument variables
-    LOGICAL, INTENT(IN) :: LOGICALVALUE !<The logical value to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, INTENT(IN) :: logicalValue !<The logical value to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: LOGICAL_TO_CHARACTER !<On exit, the character equivalent value
+    CHARACTER(LEN=MAXSTRLEN) :: LogicalToCharacter !<On exit, the character equivalent value
     !Local variables
     
-    ENTERS("LOGICAL_TO_CHARACTER",ERR,ERROR,*999)
+    !ENTERS("LogicalToCharacter",err,error,*999)
 
-    IF(LOGICALVALUE) THEN
-      LOGICAL_TO_CHARACTER="TRUE"
+    IF(logicalValue) THEN
+      LogicalToCharacter="TRUE"
     ELSE
-      LOGICAL_TO_CHARACTER="FALSE"
+      LogicalToCharacter="FALSE"
     ENDIF
 
-    EXITS("LOGICAL_TO_CHARACTER")
+    !EXITS("LogicalToCharacter")
     RETURN
-999 ERRORSEXITS("LOGICAL_TO_CHARACTER",ERR,ERROR)
-    RETURN    
-  END FUNCTION LOGICAL_TO_CHARACTER
+!999 ERRORSEXITS("LogicalToCharacter",err,error)
+999 ERRORS("LogicalToCharacter",err,error)
+    RETURN
+    
+  END FUNCTION LogicalToCharacter
   
   !
   !================================================================================================================================
   !
 
   !>Converts a logical value to either a "TRUE" or "FALSE" varying string.
-  FUNCTION LOGICAL_TO_VSTRING(LOGICALVALUE,ERR,ERROR)
+  FUNCTION LogicalToVString(logicalValue,err,error)
     
     !Argument variables
-    LOGICAL, INTENT(IN) :: LOGICALVALUE !<The logical value to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, INTENT(IN) :: logicalValue !<The logical value to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    TYPE(VARYING_STRING) :: LOGICAL_TO_VSTRING !<On exit, the varying string equivalent value
+    TYPE(VARYING_STRING) :: LogicalToVString !<On exit, the varying string equivalent value
     !Local variables
     
-    ENTERS("LOGICAL_TO_VSTRING",ERR,ERROR,*999)
+    !ENTERS("LogicalToVString",err,error,*999)
 
-    IF(LOGICALVALUE) THEN
-      LOGICAL_TO_VSTRING="TRUE"
+    IF(logicalValue) THEN
+      LogicalToVString="TRUE"
     ELSE
-      LOGICAL_TO_VSTRING="FALSE"
+      LogicalToVString="FALSE"
     ENDIF
 
-    EXITS("LOGICAL_TO_VSTRING")
+    !EXITS("LogicalToVString")
     RETURN
-999 ERRORSEXITS("LOGICAL_TO_VSTRING",ERR,ERROR)
-    RETURN    
-  END FUNCTION LOGICAL_TO_VSTRING
+!999 ERRORSEXITS("LogicalToVString",err,error)
+999 ERRORS("LogicalToVString",err,error)
+    RETURN
+    
+  END FUNCTION LogicalToVString
   
   !
   !================================================================================================================================
   !
 
   !>Converts an integer number to its equivalent character string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g. "I3".
-  FUNCTION NUMBER_TO_CHARACTER_INTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
+  FUNCTION NumberToCharacterIntg(number,format,err,error,adjust)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    INTEGER(INTG), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_INTG !<On exit, the character equivalent of the number
+    CHARACTER(LEN=MAXSTRLEN) :: NumberToCharacterIntg !<On exit, the character equivalent of the number
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
-    LOGICAL :: ADJUST_LEFT
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat
+    LOGICAL :: adjustLeft
     
-    ENTERS("NUMBER_TO_CHARACTER_INTG",ERR,ERROR,*999)
+    !ENTERS("NumberToCharacterIntg",err,error,*999)
 
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
     
-    IF(FORMAT(1:1)=="*") THEN
-      LOCAL_FORMAT="(I12)"
+    IF(format(1:1)=="*") THEN
+      localFormat="(I12)"
     ELSE
-      LOCAL_FORMAT="("//FORMAT(1:LEN_TRIM(FORMAT))//")"
+      localFormat="("//format(1:LEN_TRIM(format))//")"
     ENDIF
-    WRITE(NUMBER_TO_CHARACTER_INTG,LOCAL_FORMAT,ERR=999) NUMBER
+    WRITE(NumberToCharacterIntg,localFormat,ERR=999) number
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_CHARACTER_INTG=ADJUSTL(NUMBER_TO_CHARACTER_INTG)
+      NumberToCharacterIntg=ADJUSTL(NumberToCharacterIntg)
     ENDIF
 
-    EXITS("NUMBER_TO_CHARACTER_INTG")
+    !EXITS("NumberToCharacterIntg")
     RETURN
-999 CALL FlagError("Error converting an integer to a character string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_CHARACTER_INTG",ERR,ERROR)
-    RETURN    
-  END FUNCTION NUMBER_TO_CHARACTER_INTG
+999 CALL FlagError("Error converting an integer to a character string.",err,error,*998)
+!998 ERRORSEXITS("NumberToCharacterIntg",err,error)
+998 ERRORS("NumberToCharacterIntg",err,error)
+    RETURN
+    
+  END FUNCTION NumberToCharacterIntg
   
   !
   !================================================================================================================================
   !
 
   !>Converts a long integer number to its equivalent character string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g. "I3".
-  FUNCTION NUMBER_TO_CHARACTER_LINTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
+  FUNCTION NumberToCharacterLIntg(number,format,err,error,adjust)
   
     !Argument variables
-    INTEGER(LINTG), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    INTEGER(LINTG), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_LINTG !<On exit, the character equivalent of the number
+    CHARACTER(LEN=MAXSTRLEN) :: NumberToCharacterLIntg !<On exit, the character equivalent of the number
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
-    LOGICAL :: ADJUST_LEFT
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat
+    LOGICAL :: adjustLeft
    
-    ENTERS("NUMBER_TO_CHARACTER_LINTG",ERR,ERROR,*999)
+    !ENTERS("NumberToCharacterLIntg",err,error,*999)
 
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
 
-    IF(FORMAT(1:1)=="*") THEN
-      LOCAL_FORMAT="(I18)"
+    IF(format(1:1)=="*") THEN
+      localFormat="(I18)"
     ELSE
-      LOCAL_FORMAT="("//FORMAT(1:LEN_TRIM(FORMAT))//")"
+      localFormat="("//format(1:LEN_TRIM(format))//")"
     ENDIF
-    WRITE(NUMBER_TO_CHARACTER_LINTG,LOCAL_FORMAT,ERR=999) NUMBER
+    WRITE(NumberToCharacterLIntg,localFormat,ERR=999) number
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_CHARACTER_LINTG=ADJUSTL(NUMBER_TO_CHARACTER_LINTG)
+      NumberToCharacterLIntg=ADJUSTL(NumberToCharacterLIntg)
     ENDIF
       
-    EXITS("NUMBER_TO_CHARACTER_LINTG")
+    !EXITS("NumberToCharacterLIntg")
     RETURN
-999 CALL FlagError("Error converting a long integer to a character string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_CHARACTER_LINTG",ERR,ERROR)
-    RETURN    
-  END FUNCTION NUMBER_TO_CHARACTER_LINTG
+999 CALL FlagError("Error converting a long integer to a character string.",err,error,*998)
+!998 ERRORSEXITS("NumberToCharacterLIntg",err,error)
+998 ERRORS("NumberToCharacterLIntg",err,error)
+    RETURN
+    
+  END FUNCTION NumberToCharacterLIntg
   
   !
   !================================================================================================================================
   !
 
-  !>Converts a single precision number to its equivalent character string representation as determined by the supplied format string. NOTE: If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_CHARACTER_SP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
+  !>Converts a single precision number to its equivalent character string representation as determined by the supplied format string. NOTE: If format is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., format="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
+  FUNCTION NumberToCharacterSP(number,format,err,error,adjust)
   
     !Argument variables
-    REAL(SP), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    REAL(SP), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_SP !<On exit, the character equivalent of the number
+    CHARACTER(LEN=MAXSTRLEN) :: NumberToCharacterSP !<On exit, the character equivalent of the number
     !Local variables
-    INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
-    CHARACTER(LEN=MAXSTRLEN) :: CI0,CI1
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
-    LOGICAL :: ADJUST_LEFT
+    INTEGER(INTG) :: asteriskPosition,i0,i1,length
+    CHARACTER(LEN=MAXSTRLEN) :: ci0,ci1
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat
+    LOGICAL :: adjustLeft
     
-    ENTERS("NUMBER_TO_CHARACTER_SP",ERR,ERROR,*999)
+    !ENTERS("NumberToCharacterSP",err,error,*999)
 
-   IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
 
-    ASTERISK_POS=INDEX(FORMAT,"*")
-    LENGTH=LEN_TRIM(FORMAT)
-    IF(ASTERISK_POS==1.AND.LENGTH==1) THEN !Free format
-      WRITE(NUMBER_TO_CHARACTER_SP,*,ERR=999) NUMBER      
-    ELSE IF(ASTERISK_POS>0) THEN !Adjustable format
-      CI0=FORMAT(ASTERISK_POS+1:LEN_TRIM(FORMAT))
-      READ(CI0,'(BN,I2)') i0
+    asteriskPosition=INDEX(format,"*")
+    length=LEN_TRIM(format)
+    IF(asteriskPosition==1.AND.length==1) THEN !Free format
+      WRITE(NumberToCharacterSP,*,ERR=999) number      
+    ELSE IF(asteriskPosition>0) THEN !Adjustable format
+      ci0=FORMAT(asteriskPosition+1:LEN_TRIM(format))
+      READ(ci0,'(BN,I2)') i0
       IF(i0<=MAXSTRLEN) THEN
-        IF(NUMBER>=0.0_SP) THEN
-          IF((NUMBER<10.0_SP**(i0-1)).AND.(NUMBER>=0.1_SP**(MIN(i0-2,5)))) THEN
-            IF(NUMBER>1.0_SP) THEN
-              i1=i0-2-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+        IF(number>=0.0_SP) THEN
+          IF((number<10.0_SP**(i0-1)).AND.(number>=0.1_SP**(MIN(i0-2,5)))) THEN
+            IF(number>1.0_SP) THEN
+              i1=i0-2-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterSP,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterSP,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(NumberToCharacterSP,localFormat,ERR=999) number
           ENDIF
         ELSE
-          IF((-NUMBER<10.0_SP**(i0-2)).AND.(-NUMBER>=0.01_SP**(MIN(i0-2,5)))) THEN
-            IF(-NUMBER>=1.0_SP) THEN
-              i1=i0-3-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,'(I2)') i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+          IF((-number<10.0_SP**(i0-2)).AND.(-number>=0.01_SP**(MIN(i0-2,5)))) THEN
+            IF(-number>=1.0_SP) THEN
+              i1=i0-3-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,'(I2)') i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterSP,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterSP,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(NumberToCharacterSP,localFormat,ERR=999) number
           ENDIF
         ENDIF
       ELSE
-        CALL FlagError("Invalid FORMAT",ERR,ERROR,*999)
+        CALL FlagError("Invalid format.",err,error,*999)
         GOTO 999
       ENDIF
     ELSE
-      LOCAL_FORMAT='('//FORMAT(1:LEN_TRIM(FORMAT))//')'
-      WRITE(NUMBER_TO_CHARACTER_SP,LOCAL_FORMAT,ERR=999) NUMBER
+      localFormat='('//format(1:LEN_TRIM(format))//')'
+      WRITE(NumberToCharacterSP,localFormat,ERR=999) number
     ENDIF
 
     !Add an extra zero if required
-    IF(NUMBER_TO_CHARACTER_SP(LEN_TRIM(NUMBER_TO_CHARACTER_SP):LEN_TRIM(NUMBER_TO_CHARACTER_SP))==".") &
-      & NUMBER_TO_CHARACTER_SP=NUMBER_TO_CHARACTER_SP(1:LEN_TRIM(NUMBER_TO_CHARACTER_SP))//"0"
+    IF(NumberToCharacterSP(LEN_TRIM(NumberToCharacterSP):LEN_TRIM(NumberToCharacterSP))==".") &
+      & NumberToCharacterSP=NumberToCharacterSP(1:LEN_TRIM(NumberToCharacterSP))//"0"
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_CHARACTER_SP=ADJUSTL(NUMBER_TO_CHARACTER_SP)
+      NumberToCharacterSP=ADJUSTL(NumberToCharacterSP)
     ENDIF
 
-    EXITS("NUMBER_TO_CHARACTER_SP")
+    !EXITS("NumberToCharacterSP")
     RETURN
-999 CALL FlagError("Error converting a single precision number to a character string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_CHARACTER_SP",ERR,ERROR)
-    RETURN    
-  END FUNCTION NUMBER_TO_CHARACTER_SP
+999 CALL FlagError("Error converting a single precision number to a character string.",err,error,*998)
+!998 ERRORSEXITS("NumberToCharacterSP",err,error)
+998 ERRORS("NumberToCharacterSP",err,error)
+    RETURN
+    
+  END FUNCTION NumberToCharacterSP
   
   !
   !================================================================================================================================
   !
 
-  !>Converts a double precision number to its equivalent character string representation as determined by the supplied format string. Note If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_CHARACTER_DP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
+  !>Converts a double precision number to its equivalent character string representation as determined by the supplied format string. Note If format is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., format="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
+  FUNCTION NumberToCharacterDP(number,format,err,error,adjust)
   
     !Argument variables
-    REAL(DP), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    REAL(DP), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_DP !<On exit, the character equivalent of the number
+    CHARACTER(LEN=MAXSTRLEN) :: NumberToCharacterDP !<On exit, the character equivalent of the number
     !Local variables
-    INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
-    CHARACTER(LEN=2) :: CI0,CI1
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
-    LOGICAL :: ADJUST_LEFT
+    INTEGER(INTG) :: asteriskPosition,i0,i1,length
+    CHARACTER(LEN=2) :: ci0,ci1
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat
+    LOGICAL :: adjustLeft
     
-    ENTERS("NUMBER_TO_CHARACTER_DP",ERR,ERROR,*999)
+    !ENTERS("NumberToCharacterDP",err,error,*999)
 
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
     
-    ASTERISK_POS=INDEX(FORMAT,"*")
-    LENGTH=LEN_TRIM(FORMAT)
-    IF(ASTERISK_POS==1.AND.LENGTH==1) THEN !Free format
-      WRITE(NUMBER_TO_CHARACTER_DP,*,ERR=999) NUMBER      
-    ELSE IF(ASTERISK_POS>0) THEN !Adjustable format
-      CI0=FORMAT(ASTERISK_POS+1:LEN_TRIM(FORMAT))
-      READ(CI0,'(BN,I2)') i0
+    asteriskPosition=INDEX(format,"*")
+    length=LEN_TRIM(format)
+    IF(asteriskPosition==1.AND.length==1) THEN !Free format
+      WRITE(NumberToCharacterDP,*,ERR=999) number      
+    ELSE IF(asteriskPosition>0) THEN !Adjustable format
+      ci0=FORMAT(asteriskPosition+1:LEN_TRIM(format))
+      READ(ci0,'(BN,I2)') i0
       IF(i0<=MAXSTRLEN) THEN
-        IF(NUMBER>=0.0_DP) THEN
-          IF((NUMBER<10.0_DP**(i0-1)).AND.(NUMBER>=0.1_DP**(MIN(i0-2,5)))) THEN
-            IF(NUMBER>1.0_DP) THEN
-              i1=i0-2-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+        IF(number>=0.0_DP) THEN
+          IF((number<10.0_DP**(i0-1)).AND.(number>=0.1_DP**(MIN(i0-2,5)))) THEN
+            IF(number>1.0_DP) THEN
+              i1=i0-2-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterDP,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterDP,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(NumberToCharacterDP,localFormat,ERR=999) number
           ENDIF
         ELSE
-          IF((-NUMBER<10.0_DP**(i0-2)).AND.(-NUMBER>=0.01_DP**(MIN(i0-2,5)))) THEN
-            IF(-NUMBER>=1.0_DP) THEN
-              i1=i0-3-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,'(I2)') i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+          IF((-number<10.0_DP**(i0-2)).AND.(-number>=0.01_DP**(MIN(i0-2,5)))) THEN
+            IF(-number>=1.0_DP) THEN
+              i1=i0-3-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,'(I2)') i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterDP,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(NumberToCharacterDP,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(NumberToCharacterDP,localFormat,ERR=999) number
           ENDIF
         ENDIF
       ELSE
-        CALL FlagError("Invalid format",ERR,ERROR,*999)
+        CALL FlagError("Invalid format.",err,error,*999)
       ENDIF
     ELSE
-      LOCAL_FORMAT='('//FORMAT(1:LEN_TRIM(FORMAT))//')'
-      WRITE(NUMBER_TO_CHARACTER_DP,LOCAL_FORMAT,ERR=999) NUMBER
+      localFormat='('//format(1:LEN_TRIM(format))//')'
+      WRITE(NumberToCharacterDP,localFormat,ERR=999) number
     ENDIF
 
     !Add an extra zero if required
-    IF(NUMBER_TO_CHARACTER_DP(LEN_TRIM(NUMBER_TO_CHARACTER_DP):LEN_TRIM(NUMBER_TO_CHARACTER_DP))==".") &
-      & NUMBER_TO_CHARACTER_DP=NUMBER_TO_CHARACTER_DP(1:LEN_TRIM(NUMBER_TO_CHARACTER_DP))//"0"
+    IF(NumberToCharacterDP(LEN_TRIM(NumberToCharacterDP):LEN_TRIM(NumberToCharacterDP))==".") &
+      & NumberToCharacterDP=NumberToCharacterDP(1:LEN_TRIM(NumberToCharacterDP))//"0"
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_CHARACTER_DP=ADJUSTL(NUMBER_TO_CHARACTER_DP)
+      NumberToCharacterDP=ADJUSTL(NumberToCharacterDP)
     ENDIF
 
-    EXITS("NUMBER_TO_CHARACTER_DP")
+    !EXITS("NumberToCharacterDP")
     RETURN
-999 CALL FlagError("Error converting double precision number to a character string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_CHARACTER_DP",ERR,ERROR)
-    RETURN    
-  END FUNCTION NUMBER_TO_CHARACTER_DP
+999 CALL FlagError("Error converting double precision number to a character string.",err,error,*998)
+!998 ERRORSEXITS("NumberToCharacterDP",err,error)
+998 ERRORS("NumberToCharacterDP",err,error)
+    RETURN
+    
+  END FUNCTION NumberToCharacterDP
   
   !
   !================================================================================================================================
   !
 
   !>Converts an integer number to its equivalent varying string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g. "I3".
-  FUNCTION NUMBER_TO_VSTRING_INTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
+  FUNCTION NumberToVStringIntg(number,format,err,error,adjust)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    INTEGER(INTG), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_INTG !<On exit, the varying string equivalent of the number
+    TYPE(VARYING_STRING) :: NumberToVStringIntg !<On exit, the varying string equivalent of the number
     !Local variables
-    LOGICAL :: ADJUST_LEFT
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
+    LOGICAL :: adjustLeft
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat,localString
     
-    !ENTERS("NUMBER_TO_VSTRING_INTG",ERR,ERROR,*999)
+    !ENTERS("NumberToVStringIntg",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
     
-    NUMBER_TO_VSTRING_INTG=""
+    NumberToVStringIntg=""
     
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
     
-    IF(FORMAT(1:1)=="*") THEN
-      LOCAL_FORMAT="(I12)"
+    IF(format(1:1)=="*") THEN
+      localFormat="(I12)"
     ELSE
-      LOCAL_FORMAT="("//FORMAT(1:LEN_TRIM(FORMAT))//")"
+      localFormat="("//format(1:LEN_TRIM(format))//")"
     ENDIF
-    WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+    WRITE(localString,localFormat,ERR=999) number
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_VSTRING_INTG=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+      NumberToVStringIntg=ADJUSTL(localString(1:LEN_TRIM(localString)))
     ELSE
-      NUMBER_TO_VSTRING_INTG=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+      NumberToVStringIntg=localString(1:LEN_TRIM(localString))
     ENDIF
 
-    !EXITS("NUMBER_TO_VSTRING_INTG")
+    !EXITS("NumberToVStringIntg")
     RETURN
-999 CALL FlagError("Error converting an integer to a varying string",ERR,ERROR,*998)
-998 ERRORS("NUMBER_TO_VSTRING_INTG",ERR,ERROR)
-    !EXITS("NUMBER_TO_VSTRING_INTG")
+999 CALL FlagError("Error converting an integer to a varying string.",err,error,*998)
+998 ERRORS("NumberToVStringIntg",err,error)
+    !EXITS("NumberToVStringIntg")
     RETURN
     
-  END FUNCTION NUMBER_TO_VSTRING_INTG
+  END FUNCTION NumberToVStringIntg
   
   !
   !================================================================================================================================
   !
 
   !>Converts a long integer number to its equivalent varying string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g., "I3".
-  FUNCTION NUMBER_TO_VSTRING_LINTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
+  FUNCTION NumberToVStringLIntg(number,format,err,error,adjust)
   
     !Argument variables
-    INTEGER(LINTG), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    INTEGER(LINTG), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_LINTG !<On exit, the varying string equivalent of the number
+    TYPE(VARYING_STRING) :: NumberToVStringLIntg !<On exit, the varying string equivalent of the number
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
-    LOGICAL :: ADJUST_LEFT   
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat,localString
+    LOGICAL :: adjustLeft   
 
-    !ENTERS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR,*999)
+    !ENTERS("NumberToVStringLIntg",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
     
-    NUMBER_TO_VSTRING_LINTG=""
+    NumberToVStringLIntg=""
     
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
     
-    IF(FORMAT(1:1)=="*") THEN
-      LOCAL_FORMAT="(I18)"
+    IF(format(1:1)=="*") THEN
+      localFormat="(I18)"
     ELSE
-      LOCAL_FORMAT="("//FORMAT(1:LEN_TRIM(FORMAT))//")"
+      localFormat="("//format(1:LEN_TRIM(format))//")"
     ENDIF
-    WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+    WRITE(localString,localFormat,ERR=999) number
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_VSTRING_LINTG=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+      NumberToVStringLIntg=ADJUSTL(localString(1:LEN_TRIM(localString)))
     ELSE
-      NUMBER_TO_VSTRING_LINTG=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+      NumberToVStringLIntg=localString(1:LEN_TRIM(localString))
     ENDIF
 
-    !EXITS("NUMBER_TO_VSTRING_LINTG")
+    !EXITS("NumberToVStringLIntg")
     RETURN
-999 CALL FlagError("Error converting a long integer to a varying string",ERR,ERROR,*998)
-998 ERRORS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR)
-    !EXITS("NUMBER_TO_VSTRING_LINTG")
+999 CALL FlagError("Error converting a long integer to a varying string.",err,error,*998)
+998 ERRORS("NumberToVStringLIntg",err,error)
+    !EXITS("NumberToVStringLIntg")
     RETURN
     
-  END FUNCTION NUMBER_TO_VSTRING_LINTG
+  END FUNCTION NumberToVStringLIntg
   
   !
   !================================================================================================================================
   !
 
-  !>Converts a single precision number to its equivalent varying string representation as determined by the supplied format string. Note If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_VSTRING_SP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
+  !>Converts a single precision number to its equivalent varying string representation as determined by the supplied format string. Note If format is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., format="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
+  FUNCTION NumberToVStringSP(number,format,err,error,adjust)
   
     !Argument variables
-    REAL(SP), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    REAL(SP), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_SP !<On exit, the varying string equivalent of the number
+    TYPE(VARYING_STRING) :: NumberToVStringSP !<On exit, the varying string equivalent of the number
     !Local variables
-    INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
-    CHARACTER(LEN=MAXSTRLEN) :: CI0,CI1
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
-    LOGICAL :: ADJUST_LEFT
+    INTEGER(INTG) :: asteriskPosition,i0,i1,length
+    CHARACTER(LEN=MAXSTRLEN) :: ci0,ci1
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat,localString
+    LOGICAL :: adjustLeft
     
-    !ENTERS("NUMBER_TO_VSTRING_SP",ERR,ERROR,*999)
+    !ENTERS("NumberToVStringSP",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
     
-    NUMBER_TO_VSTRING_SP=""    
+    NumberToVStringSP=""    
 
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
 
-    ASTERISK_POS=INDEX(FORMAT,"*")
-    LENGTH=LEN_TRIM(FORMAT)
-    IF(ASTERISK_POS==1.AND.LENGTH==1) THEN !Free format
-      WRITE(LOCAL_STRING,*,ERR=999) NUMBER      
-    ELSE IF(ASTERISK_POS>0) THEN !Adjustable format
-      CI0=FORMAT(ASTERISK_POS+1:LEN_TRIM(FORMAT))
-      READ(CI0,'(BN,I2)') i0
+    asteriskPosition=INDEX(format,"*")
+    length=LEN_TRIM(format)
+    IF(asteriskPosition==1.AND.length==1) THEN !Free format
+      WRITE(localString,*,ERR=999) number      
+    ELSE IF(asteriskPosition>0) THEN !Adjustable format
+      ci0=FORMAT(asteriskPosition+1:LEN_TRIM(format))
+      READ(ci0,'(BN,I2)') i0
       IF(i0<=MAXSTRLEN) THEN
-        IF(NUMBER>=0.0_SP) THEN
-          IF((NUMBER<10.0_SP**(i0-1)).AND.(NUMBER>=0.1_SP**(MIN(i0-2,5)))) THEN
-            IF(NUMBER>1.0_SP) THEN
-              i1=i0-2-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+        IF(number>=0.0_SP) THEN
+          IF((number<10.0_SP**(i0-1)).AND.(number>=0.1_SP**(MIN(i0-2,5)))) THEN
+            IF(number>1.0_SP) THEN
+              i1=i0-2-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(localString,localFormat,ERR=999) number
           ENDIF
         ELSE
-          IF((-NUMBER<10.0_SP**(i0-2)).AND.(-NUMBER>=0.01_SP**(MIN(i0-2,5)))) THEN
-            IF(-NUMBER>=1.0_SP) THEN
-              i1=i0-3-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,'(I2)') i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+          IF((-number<10.0_SP**(i0-2)).AND.(-number>=0.01_SP**(MIN(i0-2,5)))) THEN
+            IF(-number>=1.0_SP) THEN
+              i1=i0-3-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,'(I2)') i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(localString,localFormat,ERR=999) number
           ENDIF
         ENDIF
       ELSE
-        CALL FlagError("Invalid format",ERR,ERROR,*999)
+        CALL FlagError("Invalid format.",err,error,*999)
         GOTO 999
       ENDIF
     ELSE
-      LOCAL_FORMAT='('//FORMAT(1:LEN_TRIM(FORMAT))//')'
-      WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+      localFormat='('//format(1:LEN_TRIM(format))//')'
+      WRITE(localString,localFormat,ERR=999) number
     ENDIF
 
     !Add an extra zero if required
-    IF(LOCAL_STRING(LEN_TRIM(LOCAL_STRING):LEN_TRIM(LOCAL_STRING))==".") LOCAL_STRING=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))//"0"
+    IF(localString(LEN_TRIM(localString):LEN_TRIM(localString))==".") localString=localString(1:LEN_TRIM(localString))//"0"
     
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
       !Trim leading blanks
-      NUMBER_TO_VSTRING_SP=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+      NumberToVStringSP=ADJUSTL(localString(1:LEN_TRIM(localString)))
     ELSE
-      NUMBER_TO_VSTRING_SP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+      NumberToVStringSP=localString(1:LEN_TRIM(localString))
     ENDIF
 
-    !EXITS("NUMBER_TO_VSTRING_SP")
+    !EXITS("NumberToVStringSP")
     RETURN
-999 CALL FlagError("Error converting a single precision number to a varying string",ERR,ERROR,*998)
-998 ERRORS("NUMBER_TO_VSTRING_SP",ERR,ERROR)
-    !EXITS("NUMBER_TO_VSTRING_SP")
+999 CALL FlagError("Error converting a single precision number to a varying string.",err,error,*998)
+998 ERRORS("NumberToVStringSP",err,error)
+    !EXITS("NumberToVStringSP")
     RETURN
     
-  END FUNCTION NUMBER_TO_VSTRING_SP
+  END FUNCTION NumberToVStringSP
   
   !
   !================================================================================================================================
   !
 
-  !>Converts a double precision number to its equivalent varying string representation as determined by the supplied format string. Note If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_VSTRING_DP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
+  !>Converts a double precision number to its equivalent varying string representation as determined by the supplied format string. Note If format is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., format="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
+  FUNCTION NumberToVStringDP(number,format,err,error,adjust)
       
     !Argument variables
-    REAL(DP), INTENT(IN) :: NUMBER !<The number to convert
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
+    REAL(DP), INTENT(IN) :: number !<The number to convert
+    CHARACTER(LEN=*), INTENT(IN) :: format !<The format to use in the conversion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: adjust !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
-    TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_DP !<On exit, the varying string equivalent of the number
+    TYPE(VARYING_STRING) :: NumberToVStringDP !<On exit, the varying string equivalent of the number
     !Local variables
-    INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
-    CHARACTER(LEN=2) :: CI0,CI1
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
-    LOGICAL :: ADJUST_LEFT
+    INTEGER(INTG) :: asteriskPosition,i0,i1,length
+    CHARACTER(LEN=2) :: ci0,ci1
+    CHARACTER(LEN=MAXSTRLEN) :: localFormat,localString
+    LOGICAL :: adjustLeft
      
-    !ENTERS("NUMBER_TO_VSTRING_DP",ERR,ERROR,*999)
+    !ENTERS("NumberToVStringDP",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
     
-    NUMBER_TO_VSTRING_DP=""    
+    NumberToVStringDP=""    
 
-    IF(PRESENT(ADJUST)) THEN
-      ADJUST_LEFT=ADJUST
+    IF(PRESENT(adjust)) THEN
+      adjustLeft=adjust
     ELSE
-      ADJUST_LEFT=.TRUE.
+      adjustLeft=.TRUE.
     ENDIF
     
-    ASTERISK_POS=INDEX(FORMAT,"*")
-    LENGTH=LEN_TRIM(FORMAT)
-    IF(ASTERISK_POS==1.AND.LENGTH==1) THEN !Free format
-      WRITE(LOCAL_STRING,*,ERR=999) NUMBER      
-    ELSE IF(ASTERISK_POS>0) THEN !Adjustable format
-      CI0=FORMAT(ASTERISK_POS+1:LEN_TRIM(FORMAT))
-      READ(CI0,'(BN,I2)') i0
+    asteriskPosition=INDEX(format,"*")
+    length=LEN_TRIM(format)
+    IF(asteriskPosition==1.AND.length==1) THEN !Free format
+      WRITE(localString,*,ERR=999) number      
+    ELSE IF(asteriskPosition>0) THEN !Adjustable format
+      ci0=FORMAT(asteriskPosition+1:LEN_TRIM(format))
+      READ(ci0,'(BN,I2)') i0
       IF(i0<=MAXSTRLEN) THEN
-        IF(NUMBER>=0.0_DP) THEN
-          IF((NUMBER<10.0_DP**(i0-1)).AND.(NUMBER>=0.1_DP**(MIN(i0-2,5)))) THEN
-            IF(NUMBER>1.0_DP) THEN
-              i1=i0-2-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+        IF(number>=0.0_DP) THEN
+          IF((number<10.0_DP**(i0-1)).AND.(number>=0.1_DP**(MIN(i0-2,5)))) THEN
+            IF(number>1.0_DP) THEN
+              i1=i0-2-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(localString,localFormat,ERR=999) number
           ENDIF
         ELSE
-          IF((-NUMBER<10.0_DP**(i0-2)).AND.(-NUMBER>=0.01_DP**(MIN(i0-2,5)))) THEN
-            IF(-NUMBER>=1.0_DP) THEN
-              i1=i0-3-FLOOR(LOG10(NUMBER))
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,'(I2)') i1
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+          IF((-number<10.0_DP**(i0-2)).AND.(-number>=0.01_DP**(MIN(i0-2,5)))) THEN
+            IF(-number>=1.0_DP) THEN
+              i1=i0-3-FLOOR(LOG10(number))
+              localFormat="(I2)"
+              WRITE(ci1,'(I2)') i1
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ELSE
-              LOCAL_FORMAT="(I2)"
-              WRITE(CI1,LOCAL_FORMAT) i0-2
-              LOCAL_FORMAT="(F"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-              WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+              localFormat="(I2)"
+              WRITE(ci1,localFormat) i0-2
+              localFormat="(F"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+              WRITE(localString,localFormat,ERR=999) number
             ENDIF
           ELSE
-            LOCAL_FORMAT="(I2)"
-            WRITE(CI1,LOCAL_FORMAT) i0-6
-            LOCAL_FORMAT="(E"//CI0(1:LEN_TRIM(CI0))//"."//CI1(1:LEN_TRIM(CI1))//")"
-            WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+            localFormat="(I2)"
+            WRITE(ci1,localFormat) i0-6
+            localFormat="(E"//ci0(1:LEN_TRIM(ci0))//"."//ci1(1:LEN_TRIM(ci1))//")"
+            WRITE(localString,localFormat,ERR=999) number
           ENDIF
         ENDIF
       ELSE
-        CALL FlagError("Invalid format",ERR,ERROR,*999)
+        CALL FlagError("Invalid format.",err,error,*999)
       ENDIF
     ELSE
-      LOCAL_FORMAT='('//FORMAT(1:LEN_TRIM(FORMAT))//')'
-      WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
+      localFormat='('//format(1:LEN_TRIM(format))//')'
+      WRITE(localString,localFormat,ERR=999) number
     ENDIF
 
     !Add an extra zero if required
-    IF(LOCAL_STRING(LEN_TRIM(LOCAL_STRING):LEN_TRIM(LOCAL_STRING))==".") LOCAL_STRING=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))//"0"
+    IF(localString(LEN_TRIM(localString):LEN_TRIM(localString))==".") localString=localString(1:LEN_TRIM(localString))//"0"
 
-    IF(ADJUST_LEFT) THEN
+    IF(adjustLeft) THEN
 !!Do you really want to do this???
       !Trim leading blanks
-      !NUMBER_TO_VSTRING_DP=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
-      NUMBER_TO_VSTRING_DP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+      !NumberToVStringDP=ADJUSTL(localString(1:LEN_TRIM(localString)))
+      NumberToVStringDP=localString(1:LEN_TRIM(localString))
     ELSE
-      NUMBER_TO_VSTRING_DP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+      NumberToVStringDP=localString(1:LEN_TRIM(localString))
     ENDIF
 
-    !EXITS("NUMBER_TO_VSTRING_DP")
+    !EXITS("NumberToVStringDP")
     RETURN
-999 CALL FlagError("Error converting double precision number to a varying string",ERR,ERROR,*998)
-998 ERRORS("NUMBER_TO_VSTRING_DP",ERR,ERROR)
-    !EXITS("NUMBER_TO_VSTRING_DP")
+999 CALL FlagError("Error converting double precision number to a varying string.",err,error,*998)
+998 ERRORS("NumberToVStringDP",err,error)
+    !EXITS("NumberToVStringDP")
     RETURN
     
-  END FUNCTION NUMBER_TO_VSTRING_DP
+  END FUNCTION NumberToVStringDP
   
   !
   !================================================================================================================================
   !
 
   !>Converts a character string representation of a number to a double precision number.
-  FUNCTION STRING_TO_DOUBLE_C(STRING, ERR, ERROR)
+  FUNCTION StringToDoubleC(string,err,error)
   
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string !<The error string
     !Function variable
-    REAL(DP) :: STRING_TO_DOUBLE_C !<On exit, the double precision equivalent of the string
+    REAL(DP) :: StringToDoubleC !<On exit, the double precision equivalent of the string
     !Local variables
     
-    ENTERS("STRING_TO_DOUBLE_C",ERR,ERROR,*999)
+    !ENTERS("StringToDoubleC",err,error,*999)
 
-    READ(STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_DOUBLE_C
+    READ(string,*,IOSTAT=err,ERR=999) StringToDoubleC
 
-    EXITS("STRING_TO_DOUBLE_C")
+    !EXITS("StringToDoubleC")
     RETURN
-999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(STRING))//"' to a double real",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_DOUBLE_C",ERR,ERROR)
-    RETURN    
-  END FUNCTION STRING_TO_DOUBLE_C
+999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(string))//"' to a double real.",err,error,*998)
+!998 ERRORSEXITS("StringToDoubleC",err,error)
+998 ERRORS("StringToDoubleC",err,error)
+    RETURN
+    
+  END FUNCTION StringToDoubleC
   
   !
   !================================================================================================================================
   !
 
   !>Converts a varying string representation of a number to a double precision number.
-  FUNCTION STRING_TO_DOUBLE_VS(STRING, ERR, ERROR)
+  FUNCTION StringToDoubleVS(string,err,error)
   
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    REAL(DP) :: STRING_TO_DOUBLE_VS !<On exit, the double precision equivalent of the string
+    REAL(DP) :: StringToDoubleVS !<On exit, the double precision equivalent of the string
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_STRING
+    CHARACTER(LEN=MAXSTRLEN) :: localString
     
-    ENTERS("STRING_TO_DOUBLE_VS",ERR,ERROR,*999)
+    !ENTERS("StringToDoubleVS",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
 
-    LOCAL_STRING=CHAR(STRING)
-    READ(LOCAL_STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_DOUBLE_VS
+    localString=CHAR(string)
+    READ(localString,*,IOSTAT=err,ERR=999) StringToDoubleVS
 
-    EXITS("STRING_TO_DOUBLE_VS")
+    !EXITS("StringToDoubleVS")
     RETURN
-999 CALL FlagError("Cannot convert '"//CHAR(STRING)//"' to a double real",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_DOUBLE_VS",ERR,ERROR)
-    RETURN    
-  END FUNCTION STRING_TO_DOUBLE_VS
+999 CALL FlagError("Cannot convert '"//CHAR(string)//"' to a double real.",err,error,*998)
+!998 ERRORSEXITS("StringToDoubleVS",err,error)
+998 ERRORS("StringToDoubleVS",err,error)
+    RETURN
+    
+  END FUNCTION StringToDoubleVS
   
   !
   !================================================================================================================================
   !
 
   !>Converts a character string representation of a number to an integer.
-  FUNCTION STRING_TO_INTEGER_C(STRING, ERR, ERROR)
+  FUNCTION StringToIntegerC(string,err,error)
   
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    INTEGER(INTG) :: STRING_TO_INTEGER_C !<On exit, the integer equivalent of the string
+    INTEGER(INTG) :: StringToIntegerC !<On exit, the integer equivalent of the string
     !Local variables
     
-    ENTERS("STRING_TO_INTEGER_C",ERR,ERROR,*999)
+    !ENTERS("StringToIntegerC",err,error,*999)
 
-    READ(STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_INTEGER_C
+    READ(string,*,IOSTAT=err,ERR=999) StringToIntegerC
 
-    EXITS("STRING_TO_INTEGER_C")
+    !EXITS("StringToIntegerC")
     RETURN
-999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(STRING))//"' to an integer",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_INTEGER_C",ERR,ERROR)
-    RETURN 
-  END FUNCTION STRING_TO_INTEGER_C
+999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(string))//"' to an integer.",err,error,*998)
+!998 ERRORSEXITS("StringToIntegerC",err,error)
+998 ERRORS("StringToIntegerC",err,error)
+    RETURN
+    
+  END FUNCTION StringToIntegerC
   
   !
   !================================================================================================================================
   !
 
   !>Converts a varying string representation of a number to an integer.
-  FUNCTION STRING_TO_INTEGER_VS(STRING, ERR, ERROR)
+  FUNCTION StringToIntegerVS(string,err,error)
   
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    INTEGER(INTG) :: STRING_TO_INTEGER_VS !<On exit, the integer equivalent of the string
+    INTEGER(INTG) :: StringToIntegerVS !<On exit, the integer equivalent of the string
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_STRING
+    CHARACTER(LEN=MAXSTRLEN) :: localString
     
-    ENTERS("STRING_TO_INTEGER_VS",ERR,ERROR,*999)
+    !ENTERS("StringToIntegerVS",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
 
-    LOCAL_STRING=CHAR(STRING)
-    READ(LOCAL_STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_INTEGER_VS
+    localString=CHAR(string)
+    READ(localString,*,IOSTAT=err,ERR=999) StringToIntegerVS
 
-    EXITS("STRING_TO_INTEGER_VS")
+    !EXITS("StringToIntegerVS")
     RETURN
-999 CALL FlagError("Cannot convert '"//CHAR(STRING)//"' to an integer",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_INTEGER_VS",ERR,ERROR)
-    RETURN 
-  END FUNCTION STRING_TO_INTEGER_VS
+999 CALL FlagError("Cannot convert '"//CHAR(string)//"' to an integer.",err,error,*998)
+!998 ERRORSEXITS("StringToIntegerVS",err,error)
+998 ERRORS("StringToIntegerVS",err,error)
+    RETURN
+    
+  END FUNCTION StringToIntegerVS
   
   !
   !================================================================================================================================
   !
 
   !>Converts a character string representation of a number to a long integer.
-  FUNCTION STRING_TO_LONG_INTEGER_C(STRING, ERR, ERROR)
+  FUNCTION StringToLongIntegerC(string,err,error)
   
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    INTEGER(LINTG) :: STRING_TO_LONG_INTEGER_C !<On exit, the long integer equivalent of the string
+    INTEGER(LINTG) :: string_TO_LONG_INTEGER_C !<On exit, the long integer equivalent of the string
     !Local variables
     
-    ENTERS("STRING_TO_LONG_INTEGER_C",ERR,ERROR,*999)
+    !ENTERS("StringToLongIntegerC",err,error,*999)
 
-    READ(STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_LONG_INTEGER_C
+    READ(string,*,IOSTAT=err,ERR=999) StringToLongIntegerC
 
-    EXITS("STRING_TO_LONG_INTEGER_C")
+    !EXITS("StringToLongIntegerC")
     RETURN
-999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(STRING))//"' to a long integer",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_LONG_INTEGER_C",ERR,ERROR)
-    RETURN 
-  END FUNCTION STRING_TO_LONG_INTEGER_C
+999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(string))//"' to a long integer.",err,error,*998)
+!998 ERRORSEXITS("StringToLongIntegerC",err,error)
+998 ERRORS("StringToLongIntegerC",err,error)
+    RETURN
+    
+  END FUNCTION StringToLongIntegerC
   
   !
   !================================================================================================================================
   !
 
   !>Converts a varying string representation of a number to a long integer.
-  FUNCTION STRING_TO_LONG_INTEGER_VS(STRING, ERR, ERROR)
+  FUNCTION StringToLongIntegerVS(string,err,error)
   
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    INTEGER(LINTG) :: STRING_TO_LONG_INTEGER_VS !<On exit, the long integer equivalent of the string
+    INTEGER(LINTG) :: StringToLongIntegerVS !<On exit, the long integer equivalent of the string
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_STRING
+    CHARACTER(LEN=MAXSTRLEN) :: localString
     
-    ENTERS("STRING_TO_LONG_INTEGER_VS",ERR,ERROR,*999)
+    !ENTERS("StringToLongIntegerVS",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
 
-    LOCAL_STRING=CHAR(STRING)
-    READ(LOCAL_STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_LONG_INTEGER_VS
+    localString=CHAR(string)
+    READ(localString,*,IOSTAT=err,ERR=999) StringToLongIntegerVS
 
-    EXITS("STRING_TO_LONG_INTEGER_VS")
+    !EXITS("StringToLongIntegerVS")
     RETURN
-999 CALL FlagError("Cannot convert '"//CHAR(STRING)//"' to a long integer",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_LONG_INTEGER_VS",ERR,ERROR)
-    RETURN 
-  END FUNCTION STRING_TO_LONG_INTEGER_VS
+999 CALL FlagError("Cannot convert '"//CHAR(string)//"' to a long integer.",err,error,*998)
+!998 ERRORSEXITS("StringToLongIntegerVS",err,error)
+998 ERRORS("StringToLongIntegerVS",err,error)
+    RETURN
+    
+  END FUNCTION StringToLongIntegerVS
   
   !
   !================================================================================================================================
   !
 
   !>Converts a character string representation of a boolean (TRUE or FALSE) to a logical.
-  FUNCTION STRING_TO_LOGICAL_C(STRING,ERR,ERROR)
+  FUNCTION StringToLogicalC(string,err,error)
   
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    LOGICAL :: STRING_TO_LOGICAL_C !<On exit, the logical equivalent of the string
+    LOGICAL :: StringTLogicalC !<On exit, the logical equivalent of the string
     !Local variables
     
-    ENTERS("STRING_TO_LOGICAL_C",ERR,ERROR,*999)
+    !ENTERS("StringToLogicalC",err,error,*999)
 
-    READ(STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_LOGICAL_C
+    READ(string,*,IOSTAT=err,ERR=999) StringToLogicalC
 
-    EXITS("STRING_TO_LOGICAL_C")
+    !EXITS("StringToLogicalC")
     RETURN
-999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(STRING))//"' to a logical",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_LOGICAL_C",ERR,ERROR)
-    RETURN    
-  END FUNCTION STRING_TO_LOGICAL_C
+999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(string))//"' to a logical.",err,error,*998)
+!998 ERRORSEXITS("StringToLogicalC",err,error)
+998 ERRORS("StringToLogicalC",err,error)
+    RETURN
+    
+  END FUNCTION StringToLogicalC
   
   !
   !================================================================================================================================
   !
 
   !>Converts a varying string representation of a boolean (TRUE or FALSE) to a logical.
-  FUNCTION STRING_TO_LOGICAL_VS(STRING,ERR,ERROR)
+  FUNCTION StringToLogicalVS(string,err,error)
   
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    LOGICAL :: STRING_TO_LOGICAL_VS !<On exit, the logical equivalent of the string
+    LOGICAL :: StringToLogicalVS !<On exit, the logical equivalent of the string
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_STRING
+    CHARACTER(LEN=MAXSTRLEN) :: localString
     
-    ENTERS("STRING_TO_LOGICAL_VS",ERR,ERROR,*999)
+    !ENTERS("StringToLogicalVS",err,error,*999)
 
-    LOCAL_STRING=CHAR(STRING)
-    READ(LOCAL_STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_LOGICAL_VS
+    localString=CHAR(string)
+    READ(localString,*,IOSTAT=err,ERR=999) StringToLogicalVS
 
-    EXITS("STRING_TO_LOGICAL_VS")
+    !EXITS("StringToLogicalVS")
     RETURN
-999 CALL FlagError("Cannot convert '"//CHAR(STRING)//"' to a logical",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_LOGICAL_VS",ERR,ERROR)
-    RETURN    
-  END FUNCTION STRING_TO_LOGICAL_VS
+999 CALL FlagError("Cannot convert '"//CHAR(string)//"' to a logical.",err,error,*998)
+!998 ERRORSEXITS("StringToLogicalVS",err,error)
+998 ERRORS("StringToLogicalVS",err,error)
+    RETURN
+    
+  END FUNCTION StringToLogicalVS
   
   !
   !================================================================================================================================
   !
 
   !>Converts a character string representation of a number to a single precision number.
-  FUNCTION STRING_TO_SINGLE_C(STRING, ERR, ERROR)
+  FUNCTION StringToSingleC(string,err,error)
   
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    REAL(SP) :: STRING_TO_SINGLE_C !<On exit, the single precision equivalent of the string
+    REAL(SP) :: StringToSingleC !<On exit, the single precision equivalent of the string
     !Local variables
     
-    ENTERS("STRING_TO_SINGLE_C",ERR,ERROR,*999)
+    !ENTERS("StringToSingleC",err,error,*999)
 
-    READ(STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_SINGLE_C
+    READ(string,*,IOSTAT=err,ERR=999) StringToSingleC
     
-    EXITS("STRING_TO_SINGLE_C")
+    !EXITS("StringToSingleC")
     RETURN
-999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(STRING))//"' to a single real",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_SINGLE_C",ERR,ERROR)
-    RETURN    
-  END FUNCTION STRING_TO_SINGLE_C
+999 CALL FlagError("Cannot convert '"//STRING(1:LEN_TRIM(string))//"' to a single real.",err,error,*998)
+!998 ERRORSEXITS("StringToSingleC",err,error)
+998 ERRORS("StringToSingleC",err,error)
+    RETURN
+    
+  END FUNCTION StringToSingleC
     
   !
   !================================================================================================================================
   !
 
   !>Converts a varying string representation of a number to a single precision number.
-  FUNCTION STRING_TO_SINGLE_VS(STRING, ERR, ERROR)
+  FUNCTION StringToSingleVS(string,err,error)
   
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    REAL(SP) :: STRING_TO_SINGLE_VS !<On exit, the single precision equivalent of the string
+    REAL(SP) :: StringToSingleVS !<On exit, the single precision equivalent of the string
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_STRING
+    CHARACTER(LEN=MAXSTRLEN) :: localString
     
-    ENTERS("STRING_TO_SINGLE_VS",ERR,ERROR,*999)
+    !ENTERS("StringToSingleVS",err,error,*999)
 
-!!TODO: remove dependance on LOCAL_STRING
+!!TODO: remove dependance on localString
 
-    LOCAL_STRING=CHAR(STRING)
-    READ(LOCAL_STRING,*,IOSTAT=ERR,ERR=999) STRING_TO_SINGLE_VS
+    localString=CHAR(string)
+    READ(localString,*,IOSTAT=err,ERR=999) StringToSingleVS
     
-    EXITS("STRING_TO_SINGLE_VS")
+    !EXITS("StringToSingleVS")
     RETURN
-999 CALL FlagError("Cannot convert '"//CHAR(STRING)//"' to a single real",ERR,ERROR,*998)
-998 ERRORSEXITS("STRING_TO_SINGLE_VS",ERR,ERROR)
+999 CALL FlagError("Cannot convert '"//CHAR(string)//"' to a single real.",err,error,*998)
+!998 ERRORSEXITS("StringToSingleVS",err,error)
+998 ERRORSEXITS("StringToSingleVS",err,error)
     RETURN
     
-  END FUNCTION STRING_TO_SINGLE_VS
+  END FUNCTION StringToSingleVS
     
   !
   !================================================================================================================================
   !
     
-  PURE FUNCTION CHARACTER_TO_LOWERCASE_C(STRING)
+  PURE FUNCTION CharacterToLowercaseC(string)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert to lowercase
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert to lowercase
     !Function variable
-    CHARACTER(LEN=LEN(STRING)) :: CHARACTER_TO_LOWERCASE_C !<On exit, the lowercase equivalent of the string
+    CHARACTER(LEN=LEN(string)) :: CharacterToLowercaseC !<On exit, the lowercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("a")-ICHAR("A"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("a")-ICHAR("A"))
+    INTEGER(INTG) :: characterIdx
 
-    CHARACTER_TO_LOWERCASE_C=STRING
-    DO i=1,LEN(STRING)
-      IF(IS_UPPERCASE(STRING(i:i))) THEN
-        CHARACTER_TO_LOWERCASE_C(i:i)=CHAR(ICHAR(STRING(i:i))+OFFSET)
+    CharacterToLowercaseC=string
+    DO characterIdx=1,LEN(string)
+      IF(IsUppercase(string(characterIdx:characterIdx))) THEN
+        CharacterToLowercaseC(characterIdx:characterIdx)=CHAR(ICHAR(string(characterIdx:characterIdx))+offset)
       ENDIF
-    ENDDO !i
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION CHARACTER_TO_LOWERCASE_C
+  END FUNCTION CharacterToLowercaseC
 
   !
   !================================================================================================================================
   !
 
   !>Returns a character string that is the lowercase equivalent of the supplied varying string.
-  PURE FUNCTION CHARACTER_TO_LOWERCASE_VS(STRING)
+  PURE FUNCTION CharacterToLowercaseVS(string)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
     !Function variable
-    CHARACTER(LEN=LEN(STRING)) :: CHARACTER_TO_LOWERCASE_VS !<On exit, the lowercase equivalent of the string
+    CHARACTER(LEN=LEN(string)) :: CharacterToLowercaseVS !<On exit, the lowercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("a")-ICHAR("A"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("a")-ICHAR("A"))
+    INTEGER(INTG) :: characterIdx
 
-    CHARACTER_TO_LOWERCASE_VS=CHAR(STRING)
-    DO i=1,LEN(STRING)
-      IF(IS_UPPERCASE(CHAR(EXTRACT(STRING,i,i)))) THEN
-        CHARACTER_TO_LOWERCASE_VS(i:i)=CHAR(ICHAR(EXTRACT(STRING,i,i))+OFFSET)
+    CharacterToLowercaseVS=CHAR(string)
+    DO characterIdx=1,LEN(string)
+      IF(IsUppercase(CHAR(EXTRACT(string,characterIdx,characterIdx)))) THEN
+        CharacterToLowercaseVS(characterIdx:characterIdx)=CHAR(ICHAR(EXTRACT(string,characterIdx,characterIdx))+offset)
       ENDIF
-    ENDDO !i
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION CHARACTER_TO_LOWERCASE_VS
+  END FUNCTION CharacterToLowercaseVS
 
   !
   !================================================================================================================================
   !
 
   !>Returns a varying string that is the lowercase equivalent of the supplied character string.
-  PURE FUNCTION VSTRING_TO_LOWERCASE_C(STRING)
+  PURE FUNCTION VStringToLowercaseC(string)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
     !Function variable
-    TYPE(VARYING_STRING) :: VSTRING_TO_LOWERCASE_C !<On exit, the lowercase equivalent of the string
+    TYPE(VARYING_STRING) :: VStringToLowercaseC !<On exit, the lowercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("a")-ICHAR("A"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("a")-ICHAR("A"))
+    INTEGER(INTG) :: characterIdx
 
-    VSTRING_TO_LOWERCASE_C=STRING
-    DO i=1,LEN(STRING)
-      IF(IS_UPPERCASE(STRING(i:i))) THEN
-        VSTRING_TO_LOWERCASE_C=INSERT(VSTRING_TO_LOWERCASE_C,i,CHAR(ICHAR(STRING(i:i))+OFFSET))
+    VStringToLowercaseC=string
+    DO characterIdx=1,LEN(string)
+      IF(IsUppercase(string(characterIdx:characterIdx))) THEN
+        VStringToLowercaseC=INSERT(VStringToLowercaseC,characterIdx,CHAR(ICHAR(string(characterIdx:characterIdx))+offset))
       ENDIF
-    ENDDO !i
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION VSTRING_TO_LOWERCASE_C
+  END FUNCTION VStringToLowercaseC
 
   !
   !================================================================================================================================
   !
 
   !>Returns a varying string that is the lowercase equivalent of the supplied varying string.
-  PURE FUNCTION VSTRING_TO_LOWERCASE_VS(STRING)
+  PURE FUNCTION VStringToLowercaseVS(string)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
     !Function variable
-    TYPE(VARYING_STRING) :: VSTRING_TO_LOWERCASE_VS !<On exit, the lowercase equivalent of the string
+    TYPE(VARYING_STRING) :: VStringToLowercaseVS !<On exit, the lowercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("a")-ICHAR("A"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("a")-ICHAR("A"))
+    INTEGER(INTG) :: characterIdx
 
-    VSTRING_TO_LOWERCASE_VS=STRING
-    DO i=1,LEN(STRING)
-      IF(IS_UPPERCASE(CHAR(EXTRACT(STRING,i,i)))) THEN
-        VSTRING_TO_LOWERCASE_VS=INSERT(VSTRING_TO_LOWERCASE_VS,i,CHAR(ICHAR(EXTRACT(STRING,i,i))+OFFSET))
+    VStringToLowercaseVS=string
+    DO characterIdx=1,LEN(string)
+      IF(IsUppercase(CHAR(EXTRACT(string,characterIdx,characterIdx)))) THEN
+        VStringToLowercaseVS=INSERT(VStringToLowercaseVS,characterIdx,CHAR(ICHAR(EXTRACT(string,characterIdx,characterIdx))+offset))
       ENDIF
-    ENDDO !i
+    ENDDO !charaterIdx
 
     RETURN
-  END FUNCTION VSTRING_TO_LOWERCASE_VS
+  END FUNCTION VStringToLowercaseVS
 
   !
   !================================================================================================================================
   !
 
   !>Returns a character string which is uppercase equivalent of the supplied character string.
-  PURE FUNCTION CHARACTER_TO_UPPERCASE_C(STRING)
+  PURE FUNCTION CharacterToUppercaseC(string)
 
     !Argument variables 
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
     !Function variable
-    CHARACTER(LEN=LEN(STRING)) :: CHARACTER_TO_UPPERCASE_C !<On exit, the uppercase equivalent of the string
+    CHARACTER(LEN=LEN(string)) :: CharacterToUppercaseC !<On exit, the uppercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("A")-ICHAR("a"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("A")-ICHAR("a"))
+    INTEGER(INTG) :: characterIdx
 
-    CHARACTER_TO_UPPERCASE_C=STRING
-    DO i=1,LEN(STRING)
-      IF(IS_LOWERCASE(STRING(i:i))) THEN
-        CHARACTER_TO_UPPERCASE_C(i:i)=CHAR(ICHAR(STRING(i:i))+OFFSET)
+    CharacterToUppercaseC=string
+    DO characterIdx=1,LEN(string)
+      IF(IsLowercase(string(characterIdx:characterIdx))) THEN        
+        CharacterToUppercaseC(characterIdx:characterIdx)=CHAR(ICHAR(string(characterIdx:characterIdx))+offset)
       ENDIF
     ENDDO !i
 
     RETURN
-  END FUNCTION CHARACTER_TO_UPPERCASE_C
+  END FUNCTION CharacterToUppercaseC
 
   !
   !================================================================================================================================
   !
 
   !>Returns a character string which is uppercase equivalent of the supplied varying string.
-  PURE FUNCTION CHARACTER_TO_UPPERCASE_VS(STRING)
+  PURE FUNCTION CharacterToUppercaseVS(string)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
     !Function variable
-    CHARACTER(LEN=LEN(STRING)) :: CHARACTER_TO_UPPERCASE_VS !<On exit, the uppercase equivalent of the string
+    CHARACTER(LEN=LEN(string)) :: CharacterToUppercaseVS !<On exit, the uppercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("A")-ICHAR("a"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("A")-ICHAR("a"))
+    INTEGER(INTG) :: characterIdx
 
-    CHARACTER_TO_UPPERCASE_VS=CHAR(STRING)
-    DO i=1,LEN(STRING)
-      IF(IS_LOWERCASE(CHAR(EXTRACT(STRING,i,i)))) THEN
-        CHARACTER_TO_UPPERCASE_VS(i:i)=CHAR(ICHAR(EXTRACT(STRING,i,i))+OFFSET)
+    CharacterToUppercaseVS=CHAR(string)
+    DO characterIdx=1,LEN(string)
+      IF(IsLowercase(CHAR(EXTRACT(string,characterIdx,characterIdx)))) THEN        
+        CharacterToUppercaseVS(characterIdx:characterIdx)=CHAR(ICHAR(EXTRACT(string,characterIdx,characterIdx))+offset)
       ENDIF
-    ENDDO !i
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION CHARACTER_TO_UPPERCASE_VS
+  END FUNCTION CharacterToUppercaseVS
 
   !
   !================================================================================================================================
   !
 
   !>Returns a varying string which is uppercase equivalent of the supplied character string.
-  PURE FUNCTION VSTRING_TO_UPPERCASE_C(STRING)
+  PURE FUNCTION VStringToUppercaseC(string)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to convert
     !Function variable
-    TYPE(VARYING_STRING) :: VSTRING_TO_UPPERCASE_C !<On exit, the uppercase equivalent of the string
+    TYPE(VARYING_STRING) :: VStringToUppercaseC !<On exit, the uppercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("A")-ICHAR("a"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("A")-ICHAR("a"))
+    INTEGER(INTG) :: characterIdx
 
-    VSTRING_TO_UPPERCASE_C=STRING
-    DO i=1,LEN(STRING)
-      IF(IS_LOWERCASE(STRING(i:i))) THEN
-        VSTRING_TO_UPPERCASE_C=INSERT(VSTRING_TO_UPPERCASE_C,i,CHAR(ICHAR(STRING(i:i))+OFFSET))
+    VStringToUppercaseC=string
+    DO characterIdx=1,LEN(string)
+      IF(IsLowercase(string(characterIdx:characterIdx))) THEN
+        VStringToUppercaseC=INSERT(VStringToUppercaseC,characterIdx,CHAR(ICHAR(string(characterIdx:characterIdx))+offset))
       ENDIF
-    ENDDO !i
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION VSTRING_TO_UPPERCASE_C
+  END FUNCTION VStringToUppercaseC
 
   !
   !================================================================================================================================
   !
 
   !>Returns a varying string which is uppercase equivalent of the supplied varying string.
-  PURE FUNCTION VSTRING_TO_UPPERCASE_VS(STRING)
+  PURE FUNCTION VStringToUppercaseVS(string)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The string to convert
     !Function variable
-    TYPE(VARYING_STRING) :: VSTRING_TO_UPPERCASE_VS !<On exit, the uppercase equivalent of the string
+    TYPE(VARYING_STRING) :: VStringToUppercaseVS !<On exit, the uppercase equivalent of the string
     !Local Variables
-    INTEGER(INTG), PARAMETER :: OFFSET=(ICHAR("A")-ICHAR("a"))
-    INTEGER(INTG) :: i
+    INTEGER(INTG), PARAMETER :: offset=(ICHAR("A")-ICHAR("a"))
+    INTEGER(INTG) :: characterIdx
 
-    VSTRING_TO_UPPERCASE_VS=STRING
-    DO i=1,LEN(STRING)
-      IF(IS_LOWERCASE(CHAR(EXTRACT(STRING,i,i)))) THEN
-        VSTRING_TO_UPPERCASE_VS=INSERT(VSTRING_TO_UPPERCASE_VS,i,CHAR(ICHAR(EXTRACT(STRING,i,i))+OFFSET))
+    VStringToUppercaseVS=string
+    DO characterIdx=1,LEN(string)
+      IF(IsLowercase(CHAR(EXTRACT(string,characterIdx,characterIdx)))) THEN
+        VStringToUppercaseVS=INSERT(VStringToUppercaseVS,characterIdx,CHAR(ICHAR(EXTRACT(string,characterIdx,characterIdx))+offset))
       ENDIF
-    ENDDO !i
+    ENDDO !characterIdx
 
     RETURN
-  END FUNCTION VSTRING_TO_UPPERCASE_VS
+  END FUNCTION VStringToUppercaseVS
 
   !
   !================================================================================================================================

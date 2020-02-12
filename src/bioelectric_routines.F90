@@ -47,13 +47,13 @@ MODULE BIOELECTRIC_ROUTINES
   USE BaseRoutines
   USE BIODOMAIN_EQUATION_ROUTINES
   USE ControlLoopAccessRoutines
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE MONODOMAIN_EQUATIONS_ROUTINES
-  USE PROBLEM_CONSTANTS
-  USE STRINGS
-  USE TYPES
+  USE ProblemAccessRoutines
+  USE Strings
+  USE Types
 
 #include "macros.h"
 
@@ -120,7 +120,7 @@ CONTAINS
           CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
             CALL MONODOMAIN_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
               & " is not valid for a bioelectric problem class."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -215,7 +215,7 @@ CONTAINS
       CASE(EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE)
         CALL BIODOMAIN_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set type "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a bioelectric equation set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -259,7 +259,7 @@ CONTAINS
       CASE(EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE)
         CALL Biodomain_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equation set type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equation set type "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a bioelectric equation set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -303,7 +303,7 @@ CONTAINS
       CASE(EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE)
         CALL Biodomain_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set equation type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set equation type of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a bioelectric equations set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -326,19 +326,19 @@ CONTAINS
   SUBROUTINE BIOELECTRIC_PRE_SOLVE(SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("BIOELECTRIC_PRE_SOLVE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(SOLVER)) THEN
-      SOLVERS=>SOLVER%SOLVERS
+      SOLVERS=>SOLVER%solvers
       IF(ASSOCIATED(SOLVERS)) THEN
         CONTROL_LOOP=>SOLVERS%controlLoop
         IF(ASSOCIATED(CONTROL_LOOP)) THEN
@@ -355,7 +355,7 @@ CONTAINS
             CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
               CALL MONODOMAIN_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -386,19 +386,19 @@ CONTAINS
   SUBROUTINE BIOELECTRIC_POST_SOLVE(SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("BIOELECTRIC_POST_SOLVE",ERR,ERROR,*999)
   
     IF(ASSOCIATED(SOLVER)) THEN
-      SOLVERS=>SOLVER%SOLVERS
+      SOLVERS=>SOLVER%solvers
       IF(ASSOCIATED(SOLVERS)) THEN
         CONTROL_LOOP=>SOLVERS%controlLoop
         IF(ASSOCIATED(CONTROL_LOOP)) THEN
@@ -415,7 +415,7 @@ CONTAINS
             CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
               CALL MONODOMAIN_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -516,7 +516,7 @@ CONTAINS
       CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
         CALL MONODOMAIN_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a bioelectric problem class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT

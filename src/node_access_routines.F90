@@ -65,17 +65,13 @@ MODULE NodeAccessRoutines
 
   !Interfaces
 
-  INTERFACE NODE_CHECK_EXISTS
-    MODULE PROCEDURE Nodes_NodeCheckExists
-  END INTERFACE NODE_CHECK_EXISTS
-  
   INTERFACE Node_CheckExists
     MODULE PROCEDURE Nodes_NodeCheckExists
   END INTERFACE Node_CheckExists
 
   PUBLIC Nodes_NodeCheckExists
 
-  PUBLIC Node_CheckExists,NODE_CHECK_EXISTS
+  PUBLIC Node_CheckExists
 
 CONTAINS
   
@@ -98,7 +94,9 @@ CONTAINS
    
     ENTERS("Nodes_NodeCheckExists",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+#endif    
 
     nodeExists=.FALSE.
     globalNumber=0

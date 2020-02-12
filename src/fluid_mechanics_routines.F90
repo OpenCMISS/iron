@@ -31,7 +31,7 @@
 !> of Oxford are Copyright (C) 2007 by the University of Auckland and
 !> the University of Oxford. All Rights Reserved.
 !>
-!> Contributor(s): David Ladd, Chris Bradley
+!> Contributor(s): Sebastian Krittian, David Ladd, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -49,24 +49,24 @@
 !> This module handles all fluid mechanics class routines.
 MODULE FluidMechanicsRoutines
 
-  USE ADVECTION_EQUATION_ROUTINES
+  USE AdvectionEquationsRoutines
   USE BaseRoutines
-  USE BURGERS_EQUATION_ROUTINES
-  USE CHARACTERISTIC_EQUATION_ROUTINES
+  USE BurgersEquationsRoutines
+  USE CharacteristicEquationsRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE DARCY_EQUATIONS_ROUTINES
+  USE DarcyEquationsRoutines
   USE DARCY_PRESSURE_EQUATIONS_ROUTINES
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
-  USE STOKES_EQUATIONS_ROUTINES
+  USE StokesEquationsRoutines
   USE NavierStokesEquationsRoutines
-  USE POISEUILLE_EQUATIONS_ROUTINES
-  USE PROBLEM_CONSTANTS
+  USE PoiseuilleEquationsRoutines
+  USE ProblemAccessRoutines
   USE Strings
-  USE STREE_EQUATION_ROUTINES
+  USE StreeEquationsRoutines
   USE Types
 
 #include "macros.h"  
@@ -261,7 +261,7 @@ CONTAINS
     CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
       CALL FlagError("There are no finite element matrices to be calculated for Navier-Stokes equation.",err,error,*999)
     CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-      CALL DARCY_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL Darcy_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
       CALL FlagError("There is no element stiffness matrix to be calculated for Darcy pressure.",err,error,*999)
     CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
@@ -521,17 +521,17 @@ CONTAINS
       
     SELECT CASE(equationsSet%specification(2))
     CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-      CALL STOKES_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Stokes_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
       CALL NavierStokes_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-      CALL DARCY_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Darcy_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
       CALL DarcyPressure_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-      CALL POISEUILLE_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Poiseuille_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-      CALL BURGERS_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Burgers_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
       CALL Characteristic_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_STREE_EQUATION_TYPE)
@@ -612,7 +612,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -729,15 +729,15 @@ CONTAINS
       
     SELECT CASE(problem%specification(2))
     CASE(PROBLEM_STOKES_EQUATION_TYPE)
-      CALL STOKES_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Stokes_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
       CALL NavierStokes_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_DARCY_EQUATION_TYPE)
-      CALL DARCY_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Darcy_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
-      CALL POISEUILLE_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Poiseuille_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_BURGERS_EQUATION_TYPE)
-      CALL BURGERS_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Burgers_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE DEFAULT
       localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
         & " is not valid for a fluid mechanics problem class."
@@ -759,7 +759,7 @@ CONTAINS
   SUBROUTINE FluidMechanics_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -811,7 +811,7 @@ CONTAINS
   SUBROUTINE FluidMechanics_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -889,7 +889,7 @@ CONTAINS
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
         !do nothing
       CASE(PROBLEM_DARCY_EQUATION_TYPE)
-        CALL DARCY_CONTROL_TIME_LOOP_PRE_LOOP(controlLoop,err,error,*999)
+        CALL Darcy_PreLoop(controlLoop,err,error,*999)
       CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
         !do nothing
       CASE(PROBLEM_BURGERS_EQUATION_TYPE)

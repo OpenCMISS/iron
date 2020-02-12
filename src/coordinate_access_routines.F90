@@ -164,7 +164,9 @@ CONTAINS
  
     ENTERS("CoordinateSystem_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.coordinateSystem%coordinateSystemFinished) THEN
       localError="Coordinate system number "//TRIM(NumberToVString(coordinateSystem%userNumber,"*",err,error))// &
@@ -195,7 +197,9 @@ CONTAINS
  
     ENTERS("CoordinateSystem_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+#endif    
 
     IF(coordinateSystem%coordinateSystemFinished) THEN
       localError="Coordinate system number "//TRIM(NumberToVString(coordinateSystem%userNumber,"*",err,error))// &
@@ -223,19 +227,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CoordinateSystem_CoordinateSystemsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+#endif    
 
     coordinateSystems=>coordinateSystem%coordinateSystems
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystems)) THEN
       localError="Coordinate systems is not associated for coordinate system number "// &
         & TRIM(NumberToVString(coordinateSystem%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("CoordinateSystem_CoordinateSystemsGet")
     RETURN
@@ -262,8 +273,7 @@ CONTAINS
 
     ENTERS("CoordinateSystem_DimensionGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
-    IF(.NOT.coordinateSystem%coordinateSystemFinished) CALL FlagError("Coordinate system has not been finished.",err,error,*999)
+    CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)    
 
     numberOfDimensions=coordinateSystem%numberOfDimensions
     
@@ -323,15 +333,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("CoordinateSystem_Get",err,error,*999)
 
     CALL CoordinateSystem_UserNumberFind(coordinateSystems,userNumber,coordinateSystem,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
       localError="A coordinate system with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
   
     EXITS("CoordinateSystem_Get")
     RETURN
@@ -353,17 +368,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CoordinateSystem_OriginGet",err,error,*999)
 
     CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
-    
+#ifdef WITH_PRECHECKS    
     IF(SIZE(origin,1)<3) THEN
       localError="The size of the specified origin array is "// &
         & TRIM(NumberToVString(SIZE(origin,1),"*",err,error))//" is invalid. The size must be >= 3."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     origin(1:3)=coordinateSystem%origin
      
@@ -387,16 +405,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CoordinateSystem_OrientationGet",err,error,*999)
 
     CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
+#ifdef WITH_PRECHECKS    
     IF(SIZE(orientation,1)<3.OR.SIZE(orientation,2)<3) THEN
       localError="The size of the specified orientation array is "//TRIM(NumberToVString(SIZE(orientation,1),"*",err,error))// &
         & "x"//TRIM(NumberToVString(SIZE(orientation,2),"*",err,error))//" and it must be >= 3x3."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     orientation(1:3,1:3)=coordinateSystem%orientation
    
@@ -426,7 +448,7 @@ CONTAINS
 
     CALL CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*999)
     
-    SELECT CASE(coordinateSystem%TYPE)
+    SELECT CASE(coordinateSystem%type)
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE)
       radialInterpolationType=coordinateSystem%radialInterpolationType
     CASE DEFAULT
@@ -485,25 +507,30 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: coordinateSystemIdx
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("CoordinateSystem_UserNumberFind",ERR,ERROR,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is not associated.",err,error,*999)
+#endif    
    
     NULLIFY(coordinateSystem)
     IF(ASSOCIATED(coordinateSystems%coordinateSystems)) THEN
       DO coordinateSystemIdx=1,coordinateSystems%numberOfCoordinateSystems
-        IF(ASSOCIATED(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr)) THEN
-          IF(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr%userNumber==userNumber) THEN
-            coordinateSystem=>coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr
-            EXIT
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr)) THEN
           localError="The coordinate system pointer in coordinate systems is not associated for coordinate system index "// &
             & TRIM(NumberToVString(coordinateSystemIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
+        IF(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr%userNumber==userNumber) THEN
+          coordinateSystem=>coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr
+          EXIT
         ENDIF
       ENDDO !coordinateSystemIdx
     ENDIF
@@ -532,12 +559,17 @@ CONTAINS
  
     ENTERS("CoordinateSystems_WorldCoordinateSystemGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(worldCoordinateSystem)) CALL FlagError("World coordinate system is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is not associated.",err,error,*998)
+#endif    
 
     CALL CoordinateSystem_UserNumberFind(coordinateSystems,0,worldCoordinateSystem,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(worldCoordinateSystem)) &
       & CALL FlagError("Coordinate systems world coordinate system is not associated.",err,error,*999)
+#endif    
        
     EXITS("CoordinateSystems_WorldCoordinateSystemGet")
     RETURN

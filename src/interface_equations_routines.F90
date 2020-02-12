@@ -48,13 +48,11 @@ MODULE InterfaceEquationsRoutines
   USE EquationsRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingRoutines
   USE InterfaceMatricesRoutines
   USE InterfaceMatricesAccessRoutines
-  USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
@@ -144,8 +142,7 @@ CONTAINS
       NULLIFY(lagrangeField)
       CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
       NULLIFY(penaltyField)
-      IF(ASSOCIATED(interfaceCondition%penalty)) &
-        & CALL InterfaceCondition_PenaltyFieldGet(interfaceCondition,penaltyField,err,error,*999)
+      CALL InterfaceCondition_PenaltyFieldExists(interfaceCondition,penaltyField,err,error,*999)
       CALL InterfaceEquations_DomainInterpolationSetup(interfaceEquationsInterpolation%interfaceInterpolation, &
         & geometricField,lagrangeField,penaltyField,err,error,*999)
       DO variableIdx=1,interfaceDependent%numberOfDependentVariables

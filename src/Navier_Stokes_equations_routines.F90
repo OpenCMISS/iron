@@ -44,12 +44,12 @@
 !>This module handles all Navier-Stokes fluid routines.
 MODULE NavierStokesEquationsRoutines
 
-  USE ADVECTION_EQUATION_ROUTINES
+  USE AdvectionEquationsRoutines
   USE AnalyticAnalysisRoutines
   USE BaseRoutines
   USE BasisRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
-  USE CHARACTERISTIC_EQUATION_ROUTINES
+  USE BoundaryConditionsRoutines
+  USE CharacteristicEquationsRoutines
   USE CmissMPI 
   USE CmissPetsc
   USE CmissPetscTypes
@@ -69,7 +69,6 @@ MODULE NavierStokesEquationsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -86,12 +85,11 @@ MODULE NavierStokesEquationsRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE PROBLEM_CONSTANTS
   USE ProblemAccessRoutines
   USE RegionAccessRoutines
-  USE STREE_EQUATION_ROUTINES
+  USE StreeEquationsRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE SolverMatricesAccessRoutines
@@ -332,10 +330,10 @@ CONTAINS
       & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
       & EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
       SELECT CASE(equationsSetSetup%setupType)
+      CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
         !-----------------------------------------------------------------
         ! I n i t i a l   s e t u p
         !-----------------------------------------------------------------
-      CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
         SELECT CASE(equationsSet%specification(3))
         CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
@@ -918,7 +916,6 @@ CONTAINS
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
@@ -967,7 +964,6 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
-            !Specify finish action
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(equationsSet%dependent%dependentFieldAutoCreated) &
               & CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)              
@@ -980,7 +976,6 @@ CONTAINS
         CASE(EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
           SELECT CASE(equationsSetSetup%actionType)
-            !Set start action
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
               !Create the auto created dependent field
@@ -2163,22 +2158,22 @@ CONTAINS
               !Create the equations mapping.
               NULLIFY(vectorMapping)
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               NULLIFY(vectorMatrices)
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2186,7 +2181,7 @@ CONTAINS
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               !Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+              CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
                 & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
               !Finish the creation of the equations
@@ -2198,22 +2193,22 @@ CONTAINS
               !Create the equations mapping.
               NULLIFY(vectorMapping)
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               NULLIFY(vectorMatrices)
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2221,7 +2216,7 @@ CONTAINS
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               !Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+              CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
                 & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -2274,29 +2269,29 @@ CONTAINS
               !Create the equations mapping.
               NULLIFY(vectorMapping)
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-              CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               NULLIFY(vectorMatrices)
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE, &
                   & MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
                   & err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                   & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                   & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices, &
                   & MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices, &
                   & EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -2305,7 +2300,7 @@ CONTAINS
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               !Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+              CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
                 & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -2346,26 +2341,29 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               NULLIFY(vectorMapping)
-              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               NULLIFY(vectorMatrices)
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices, &
                   & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices, &
                   & MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-                CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices, &
                   & EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -2374,7 +2372,7 @@ CONTAINS
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               !Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+              CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
                 & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -2429,7 +2427,7 @@ CONTAINS
   SUBROUTINE NavierStokes_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -2437,18 +2435,18 @@ CONTAINS
     REAL(DP) :: absoluteTolerance,currentTime,relativeTolerance,timeIncrement
     LOGICAL :: continueLoop
     TYPE(ControlLoopType), POINTER :: controlLoop,parentLoop
-    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldParameterSetType), POINTER :: inputParameterSet,upwindParameterSet
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
-    TYPE(SOLVER_TYPE), POINTER :: solver2
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverType), POINTER :: solver2
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("NavierStokes_PreSolve",err,error,*999)
@@ -2487,7 +2485,7 @@ CONTAINS
         CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
       CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
         & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
-        SELECT CASE(solver%SOLVE_TYPE)
+        SELECT CASE(solver%solveType)
         CASE(SOLVER_DYNAMIC_TYPE)
           ! --- D y n a m i c    S o l v e r s ---
           NULLIFY(solverEquations)
@@ -2603,7 +2601,7 @@ CONTAINS
             END SELECT
           ENDDO !equationsSetIdx
         CASE DEFAULT
-          localError="The solve type of "//TRIM(NumberToVString(SOLVER%SOLVE_TYPE,"*",err,error))// &
+          localError="The solve type of "//TRIM(NumberToVString(SOLVER%solveType,"*",err,error))// &
             & " is invalid for a multiscale Navier-Stokes problem type."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -2615,7 +2613,7 @@ CONTAINS
         &  PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE, &
         &  PROBLEM_STREE1D0D_ADV_NAVIER_STOKES_SUBTYPE)
 
-        SELECT CASE(solver%SOLVE_TYPE)
+        SELECT CASE(solver%solveType)
           ! This switch takes advantage of the uniqueness of the solver types to do pre-solve operations
           ! for each of solvers in the various possible 1D subloops
 
@@ -2670,7 +2668,7 @@ CONTAINS
             CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
             NULLIFY(solverMatrices)
             CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-            DO solverMatrixIdx=1,solverMapping%NUMBER_OF_SOLVER_MATRICES
+            DO solverMatrixIdx=1,solverMapping%numberOfSolverMatrices
               NULLIFY(solverMatrix)
               CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
               solverMatrix%updateMatrix=.TRUE.
@@ -2702,7 +2700,7 @@ CONTAINS
           CALL Stree_PreSolve(solver,err,error,*999)
 
         CASE DEFAULT
-          localError="The solve type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+          localError="The solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
             & " is invalid for a 1D Navier-Stokes problem."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -2718,7 +2716,7 @@ CONTAINS
         CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
         !Pre solve for the linear solver
-        IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+        IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
           !Update boundary conditions for mesh-movement
           CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
           NULLIFY(solvers)
@@ -2731,7 +2729,7 @@ CONTAINS
           !Update material properties for Laplace mesh movement
           CALL NavierStokes_PreSolveALEUpdateParameters(solver,err,error,*999)
           !Pre solve for the linear solver
-        ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+        ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
           NULLIFY(dynamicSolver)
           CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
           IF(dynamicSolver%ale) THEN
@@ -2761,7 +2759,7 @@ CONTAINS
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
           !Pre solve for the linear solver
-          IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+          IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
             !TODO if first time step smooth imported mesh with respect to absolute nodal position?
             !Update boundary conditions for mesh-movement
             CALL NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
@@ -2782,7 +2780,7 @@ CONTAINS
             !Update material properties for Laplace mesh movement
             CALL NavierStokes_PreSolveALEUpdateParameters(solver,err,error,*999)
             !Pre solve for the dynamic solver which deals with the coupled FiniteElasticity-NavierStokes problem
-          ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+          ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
             NULLIFY(dynamicSolver)
             CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
             IF(dynamicSolver%ale) THEN
@@ -2892,12 +2890,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(ControlLoopType), POINTER :: iterativeWhileLoop,iterativeWhileLoop2,iterativeWhileLoop3,simpleLoop
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations,meshSolverEquations
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(SOLVER_TYPE), POINTER :: solver,meshSolver,cellmlSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations,meshSolverEquations
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver,meshSolver,cellmlSolver
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("NavierStokes_ProblemSetup",err,error,*999)
@@ -2950,7 +2948,7 @@ CONTAINS
         CASE(PROBLEM_SETUP_START_ACTION)
           !Start the solvers creation
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-          CALL Solvers_NumberSet(solvers,1,err,error,*999)
+          CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a nonlinear solver
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_NONLINEAR_TYPE,err,error,*999)
@@ -3049,7 +3047,7 @@ CONTAINS
         CASE(PROBLEM_SETUP_START_ACTION)
           !Start the solvers creation
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-          CALL Solvers_NumberSet(solvers,2,err,error,*999)
+          CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
           !Set the first solver to be an CellML Evaluator for time varying boundary conditions
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -3288,7 +3286,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,1,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- D A E --
             !
@@ -3303,7 +3301,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,2,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
             CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
@@ -3324,7 +3322,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop2,1,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- D A E --
             !
@@ -3338,7 +3336,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop2,2,iterativeWhileLoop3,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop3,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -3365,7 +3363,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,2,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
             CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
@@ -3839,7 +3837,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(controlLoop,1,iterativeWhileLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -3866,7 +3864,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(controlLoop,1,iterativeWhileLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -3892,7 +3890,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(controlLoop,2,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- A D V E C T I O N --
             !
@@ -3915,7 +3913,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,1,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- D A E --
             !
@@ -3929,7 +3927,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,2,iterativeWhileLoop2,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop2,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -3955,7 +3953,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(controlLoop,2,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- A D V E C T I O N --
             !
@@ -3978,7 +3976,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,1,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- D A E --
             !
@@ -3993,7 +3991,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,2,iterativeWhileLoop2,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop2,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -4019,7 +4017,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(controlLoop,2,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- A D V E C T I O N --
             !
@@ -4042,7 +4040,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,1,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- D A E --
             !
@@ -4056,7 +4054,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,2,iterativeWhileLoop2,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop2,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -4087,7 +4085,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,1,simpleLoop,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(simpleLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !
             !-- D A E --
             !
@@ -4102,7 +4100,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(iterativeWhileLoop,2,iterativeWhileLoop2,err,error,*999)
             NULLIFY(solvers)
             CALL Solvers_CreateStart(iterativeWhileLoop2,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
             !
             !-- C H A R A C T E R I S T I C --
             !
@@ -4849,7 +4847,7 @@ CONTAINS
           !Start the solvers creation
           NULLIFY(solvers)
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-          CALL Solvers_NumberSet(solvers,1,err,error,*999)
+          CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a nonlinear solver
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -4959,7 +4957,7 @@ CONTAINS
           !Start the solvers creation
           NULLIFY(solvers)
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-          CALL Solvers_NumberSet(solvers,2,err,error,*999)
+          CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
           !Set the first solver to be a linear solver for the Laplace mesh movement problem
           NULLIFY(meshSolver)
           CALL Solvers_SolverGet(solvers,1,meshSolver,err,error,*999)
@@ -6114,7 +6112,7 @@ CONTAINS
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField,independentField
@@ -6208,11 +6206,14 @@ CONTAINS
       NULLIFY(residualVariable)
       CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,residualVariable,err,error,*999)
       residualVariableType=residualVariable%variableType
-      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,1,jacobianMatrix,err,error,*999)
-      nonlinearMatrices%elementResidual%vector=0.0_DP
+      NULLIFY(residualVector)
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
+      NULLIFY(jacobianMatrix)
+      CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,1,jacobianMatrix,err,error,*999)
+      residualVector%elementResidual%vector=0.0_DP
       jacobianMatrix%elementJacobian%matrix=0.0_DP
       IF(ASSOCIATED(rhsVector)) updateRHSVector=rhsVector%updateVector
-      IF(ASSOCIATED(nonlinearMatrices)) updateNonlinearResidual=nonlinearMatrices%updateResidual
+      IF(ASSOCIATED(residualVector)) updateNonlinearResidual=residualVector%updateResidual
       IF(ASSOCIATED(jacobianMatrix)) updateJacobianMatrix=jacobianMatrix%updateJacobian
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
@@ -6720,7 +6721,7 @@ CONTAINS
   SUBROUTINE NavierStokes_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<The solver for the post solve
+    TYPE(SolverType), POINTER :: solver !<The solver for the post solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6733,10 +6734,10 @@ CONTAINS
     TYPE(FieldParameterSetType), POINTER :: upwindParameterSet
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_TYPE), POINTER :: solver2
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver2
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("NavierStokes_PostSolve",err,error,*999)
@@ -6760,7 +6761,7 @@ CONTAINS
     CASE(PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE,PROBLEM_PGM_NAVIER_STOKES_SUBTYPE)
       IF(solver%globalNumber==2) CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
     CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE)
-      SELECT CASE(solver%SOLVE_TYPE)
+      SELECT CASE(solver%solveType)
       CASE(SOLVER_NONLINEAR_TYPE)
         ! Characteristic solver- copy branch Q,A values to new parameter set
         NULLIFY(solverEquations)
@@ -6784,7 +6785,7 @@ CONTAINS
       CASE(SOLVER_DYNAMIC_TYPE)
         ! Navier-Stokes solver: do nothing
       CASE DEFAULT
-        localError="The solver type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+        localError="The solver type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
           & " is invalid for a 1D Navier-Stokes problem."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -6999,7 +7000,7 @@ CONTAINS
       IF(solver%globalNumber==2) THEN
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
           & timestep,outputIteration,err,error,*999)
-        IF(ASSOCIATED(solver%SOLVER_EQUATIONS)) THEN
+        IF(ASSOCIATED(solver%solverEquations)) THEN
           convergedFlag = .FALSE.
           NULLIFY(solverEquations)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -7073,18 +7074,18 @@ CONTAINS
       ENDIF
     CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
       !Post solve for the linear solver
-      IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+      IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
         NULLIFY(solvers)
         CALL Solver_SolversGet(solver,solvers,err,error,*999)
         NULLIFY(solver2)
         CALL Solvers_SolverGet(solvers,2,solver2,err,error,*999)
-        IF(ASSOCIATED(solver2%DYNAMIC_SOLVER)) THEN
-          solver2%DYNAMIC_SOLVER%ALE=.TRUE.
+        IF(ASSOCIATED(solver2%dynamicSolver)) THEN
+          solver2%dynamicSolver%ale=.TRUE.
         ELSE
           CALL FlagError("Dynamic solver is not associated for ALE problem.",err,error,*999)
         ENDIF
         !Post solve for the dynamic solver
-      ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+      ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
@@ -7129,7 +7130,7 @@ CONTAINS
   SUBROUTINE NavierStokes_PreSolveUpdateBoundaryConditions(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    TYPE(SolverType), POINTER :: SOLVER
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -7152,8 +7153,8 @@ CONTAINS
     LOGICAL :: solidEquationsSetFound=.FALSE.,SolidNodeFound=.FALSE.,fluidEquationsSetFound=.FALSE.,parameterSetCreated
     CHARACTER(70) :: inputFile,tempString
     TYPE(BasisType), POINTER :: basis
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -7172,10 +7173,10 @@ CONTAINS
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations,solidSolverEquations,fluidSolverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping,solidSolverMapping,fluidSolverMapping
-    TYPE(SOLVER_TYPE), POINTER :: solver2
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations,solidSolverEquations,fluidSolverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping,solidSolverMapping,fluidSolverMapping
+    TYPE(SolverType), POINTER :: solver2
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup 
 
@@ -7231,6 +7232,7 @@ CONTAINS
             NULLIFY(independentVariable)
             CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
             independentVariableType=independentVariable%variableType
+            NULLIFY(boundaryConditionsVariable)
             CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
               & err,error,*999)
             !Read in field data from file
@@ -7279,7 +7281,7 @@ CONTAINS
                         & FIELD_VALUES_SET_TYPE,independentDof,VALUE,err,error,*999)
                       CALL Field_ComponentDOFGetUserNode(dependentField,dependentVariableType,1,1, &
                         & userNodeNumber,componentIdx,localDof,globalDof,err,error,*999)
-                      boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(globalDof)
+                      boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(globalDof)
                       IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_FITTED) &
                         & CALL Field_ParameterSetUpdateLocalDOF(dependentField,dependentVariableType, &
                         & FIELD_VALUES_SET_TYPE,localDof,VALUE,err,error,*999)
@@ -7502,11 +7504,10 @@ CONTAINS
                           & componentIdx,localDOF,err,error,*999)
                         CALL Field_ParameterSetUpdateLocalDOF(dependentField,dependentVariableType, &
                           & FIELD_ANALYTIC_VALUES_SET_TYPE,localDOF,VALUE,err,error,*999)
+                        NULLIFY(boundaryConditionsVariable)
                         CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                           & err,error,*999)
-                        IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-                          & CALL FlagError("Boundary conditions U variable is not associated.",err,error,*999)
-                        boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                        boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                         IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED) THEN
                           CALL Field_ParameterSetUpdateLocalDOF(dependentField,dependentVariableType,FIELD_VALUES_SET_TYPE, &
                             & localDOF,VALUE,err,error,*999)
@@ -7573,7 +7574,8 @@ CONTAINS
             DO variableIdx=1,dependentField%numberOfVariables
               NULLIFY(dependentVariable)
               CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,dependentVariableType,err,error,*999)
-              CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
+              NULLIFY(boundaryConditionsVariable)
+              CALL BoundaryConditions_VariableExists(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                 & err,error,*999)
               IF(ASSOCIATED(boundaryConditionsVariable)) THEN
                 DO componentIdx=1,dependentVariable%numberOfComponents
@@ -7597,7 +7599,7 @@ CONTAINS
                           CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx, &
                             & derivativeIdx,nodeIdx,componentIdx,dependentDOF,err,error,*999)
                           ! Update dependent field value if this is a splint BC
-                          boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(dependentDof)
+                          boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(dependentDof)
                           IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_FITTED) THEN
                             !Update analytic field if file exists and dependent field if boundary condition set
                             inputFile = './input/interpolatedData/1D/'
@@ -7676,7 +7678,8 @@ CONTAINS
             DO variableIdx=1,dependentField%numberOfVariables
               NULLIFY(dependentVariable)
               CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,dependentVariableType,err,error,*999)
-              CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
+              NULLIFY(boundaryConditionsVariable)
+              CALL BoundaryConditions_VariableExists(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                 & err,error,*999)
               IF(ASSOCIATED(boundaryConditionsVariable)) THEN
                 DO componentIdx=1,dependentVariable%numberOfComponents
@@ -7694,7 +7697,7 @@ CONTAINS
                         DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
                           CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx, &
                             & derivativeIdx,nodeIdx,componentIdx,dependentDOF,err,error,*999)
-                          boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(dependentDof)
+                          boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(dependentDof)
                           IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_INLET) THEN
                             CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U1_VARIABLE_TYPE, &
                               & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber,1,VALUE, &
@@ -7724,7 +7727,7 @@ CONTAINS
       CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
         & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
         ! TODO: this should be set up so it uses the same pre_solve steps as the individual 3D/1D equations sets
-        SELECT CASE(solver%SOLVE_TYPE)
+        SELECT CASE(solver%solveType)
         CASE(SOLVER_DYNAMIC_TYPE)
           ! --- D y n a m i c    S o l v e r s ---
           CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
@@ -7760,6 +7763,7 @@ CONTAINS
                 CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
                 dependentVariableType=dependentVariable%variableType
                 independentVariableType=independentVariable%variableType
+                NULLIFY(boundaryConditionsVariable)
                 CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                   & err,error,*999)
                 !Read in field data from file
@@ -7814,7 +7818,7 @@ CONTAINS
                           & FIELD_VALUES_SET_TYPE,independentDof,VALUE,err,error,*999)
                         CALL Field_ComponentDOFGetUserNode(dependentField,dependentVariableType,1,1, &
                           & userNodeNumber,componentIdx,localDof,globalDof,err,error,*999)
-                        boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(globalDof)
+                        boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(globalDof)
                         IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_FITTED) THEN
                           CALL Field_ParameterSetUpdateLocalDOF(dependentField,dependentVariableType, &
                             & FIELD_VALUES_SET_TYPE,localDof,VALUE,err,error,*999)
@@ -7873,7 +7877,8 @@ CONTAINS
                     NULLIFY(dependentVariable)
                     CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable, &
                       & dependentVariableType,err,error,*999)
-                    CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
+                    NULLIFY(boundaryConditionsVariable)
+                    CALL BoundaryConditions_VariableExists(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                       & err,error,*999)
                     IF(ASSOCIATED(boundaryConditionsVariable)) THEN
                       DO componentIdx=1,dependentVariable%numberOfComponents
@@ -7942,7 +7947,7 @@ CONTAINS
                                     & dependentVariableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                                     & dependentDof,VALUE,err,error,*999)
                                   ! Update dependent field value if this is a splint BC
-                                  boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(dependentDof)
+                                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(dependentDof)
                                   IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_FITTED) THEN
                                     CALL Field_ParameterSetUpdateLocalDOF(dependentField, &
                                       & dependentVariableType,FIELD_VALUES_SET_TYPE,dependentDof, &
@@ -7980,7 +7985,7 @@ CONTAINS
             END SELECT
           ENDDO !equationsSetIdx
         CASE DEFAULT
-          localError="The solve type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+          localError="The solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
             & " is invalid for pre_solve_update_BC step of a multiscale Navier-Stokes problem type."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -8002,8 +8007,8 @@ CONTAINS
         CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
         NULLIFY(dependentVariable)
         CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentVariable,err,error,*999)
+        NULLIFY(boundaryConditionsVariable)
         CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-        IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions are not associated.",err,error,*999)
         NULLIFY(boundaryValues)
         CALL Field_ParameterSetDataGet(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_BOUNDARY_SET_TYPE,boundaryValues, &
           & err,error,*999)
@@ -8026,7 +8031,7 @@ CONTAINS
                 !Default to version 1 of each node derivative
                 CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx, &
                   & componentIdx,localDOF,err,error,*999)
-                boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                 IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_INLET) &
                   & CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & localDOF,boundaryValues(localDOF),err,error,*999)
@@ -8042,7 +8047,7 @@ CONTAINS
           & FIELD_VALUES_SET_TYPE,err,error,*999)
       CASE(PROBLEM_PGM_NAVIER_STOKES_SUBTYPE)
         !Pre solve for the dynamic solver
-        IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+        IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
           IF(controlLoop%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
             & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
           NULLIFY(solverEquations)
@@ -8064,8 +8069,6 @@ CONTAINS
           CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
           NULLIFY(boundaryConditionsVariable)
           CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-          IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-            & CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
           NULLIFY(meshVelocityValues)
           CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_VELOCITY_SET_TYPE, &
             & meshVelocityValues,err,error,*999)
@@ -8092,7 +8095,7 @@ CONTAINS
                   CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOF, &
                     & err,error,*999)
                   displacementValue=0.0_DP
-                  boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                   IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
                     CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & localDOF,meshVelocityValues(localDOF),err,error,*999)
@@ -8111,7 +8114,7 @@ CONTAINS
         ENDIF
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
         !Pre solve for the linear solver
-        IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+        IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
           IF(controlLoop%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
             & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
           NULLIFY(solverEquations)
@@ -8133,8 +8136,6 @@ CONTAINS
           CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
           NULLIFY(boundaryConditionsVariable)
           CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-          IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-            & CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
           NULLIFY(boundaryValues)
           CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_BOUNDARY_SET_TYPE,boundaryValues, &
             & err,error,*999)
@@ -8157,7 +8158,7 @@ CONTAINS
                   !Default to version 1 of each node derivative
                   CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx, &
                     & componentIdx,localDOF,err,error,*999)
-                  boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                   IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
                     CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & localDOF,boundaryValues(localDOF),err,error,*999)
@@ -8174,7 +8175,7 @@ CONTAINS
           CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE, &
             & FIELD_VALUES_SET_TYPE,err,error,*999)
           !Pre solve for the dynamic solver
-        ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+        ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
           IF(controlLoop%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
             & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
           NULLIFY(solverEquations)
@@ -8196,8 +8197,6 @@ CONTAINS
           CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
           NULLIFY(boundaryConditionsVariable)
           CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-          IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-            & CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
           NULLIFY(meshVelocityValues)
           CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_VELOCITY_SET_TYPE, &
             & meshVelocityValues,err,error,*999)
@@ -8224,7 +8223,7 @@ CONTAINS
                   CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOF, &
                     & err,error,*999)
                   displacementValue=0.0_DP
-                  boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                   IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
                     CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & localDOF,meshVelocityValues(localDOF),err,error,*999)
@@ -8262,7 +8261,7 @@ CONTAINS
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
           !Pre solve for the linear solver
-          IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+          IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
             IF(controlLoop%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
               & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
             NULLIFY(solverEquations)
@@ -8284,8 +8283,6 @@ CONTAINS
             CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
             NULLIFY(boundaryConditionsVariable)
             CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-            IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-              & CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
             NULLIFY(solvers)
             CALL Solver_SolversGet(solver,solvers,err,error,*999)
             !Update moving wall nodes from solid/fluid gap (as we solve for displacements of the mesh
@@ -8376,7 +8373,7 @@ CONTAINS
                   !Default to version 1 of each node derivative
                   CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx, &
                     & componentIdx,localDOF,err,error,*999)
-                  boundaryConditionCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                   !Update moved wall nodes only
                   IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
                     !NOTE: assuming same mesh and mesh nodes for fluid domain and moving mesh domain
@@ -8410,9 +8407,9 @@ CONTAINS
             CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
               & err,error,*999)
             !Pre solve for the dynamic solver
-          ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+          ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
             !   CALL WriteString(GENERAL_OUTPUT_TYPE,"Velocity field change boundary conditions... ",err,error,*999)
-            !   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            !   SOLVER_EQUATIONS=>SOLVER%solverEquations
             !   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
             !     SOLVER_MAPPING=>SOLVER_equations%solverMapping
             !     !Find the NavierStokes equations set as there is a finite elasticity equations set too
@@ -8420,7 +8417,7 @@ CONTAINS
             !     ALENavierStokesEquationsSetFound=.FALSE.
             !     DO WHILE (.NOT.ALENavierStokesEquationsSetFound &
             !       & .AND.EquationsSetIndex<=SOLVER_MAPPING%numberOfEquationsSets)
-            !       EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(EquationsSetIndex)%EQUATIONS
+            !       EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(EquationsSetIndex)%EQUATIONS
             !       IF(ASSOCIATED(EQUATIONS)) THEN
             !         EQUATIONS_SET=>equations%equationsSet
             !         IF(ASSOCIATED(equationsSet)) THEN
@@ -8444,10 +8441,11 @@ CONTAINS
             !       CALL FlagError(localError,Err,Error,*999)
             !     ENDIF
             !     !Get boundary conditions
-            !     boundaryConditions=>SOLVER_equations%BOUNDARY_CONDITIONS
+            !     boundaryConditions=>SOLVER_equations%boundaryConditions
             !     IF(ASSOCIATED(boundaryConditions)) THEN
             !       dependentVariable=>equationsSet%dependent%dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr
             !       IF(ASSOCIATED(dependentVariable)) THEN
+            !         NULLIFY(boundaryConditionsVariable)
             !         CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable, &
             !           & boundaryConditionsVariable,err,error,*999)
             !       ELSE
@@ -8466,7 +8464,7 @@ CONTAINS
             !         IF(controlLoop%timeLoop%inputNumber==1) THEN
             !           componentBC=1
             !           CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(equationsSet%geometry%geometricField, &
-            !             & SOLVER%SOLVE_TYPE,InletNodes, &
+            !             & SOLVER%solveType,InletNodes, &
             !             & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,controlLoop%timeLoop%inputNumber, &
             !             & currentTime,controlLoop%timeLoop%stopTime,err,error,*999)
             !           DO nodeIdx=1,SIZE(InletNodes)
@@ -8483,7 +8481,7 @@ CONTAINS
             !           ENDIF
             !           !Get inlet nodes and the corresponding velocities
             !           CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(equationsSet%geometry%geometricField, &
-            !             & SOLVER%SOLVE_TYPE,InletNodes, &
+            !             & SOLVER%solveType,InletNodes, &
             !             & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,controlLoop%timeLoop%inputNumber, &
             !             & currentTime,controlLoop%timeLoop%stopTime,err,error,*999)
             !           DO nodeIdx=1,SIZE(InletNodes)
@@ -8544,7 +8542,7 @@ CONTAINS
   SUBROUTINE NavierStokes_PreSolveAleUpdateMesh(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -8567,10 +8565,10 @@ CONTAINS
     TYPE(InterfaceConditionType), POINTER :: fsiInterfaceCondition
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: laplaceSolverEquations,fluidSolverEquations,fsiSolverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: laplaceSolverMapping,fsiSolverMapping,fluidSolverMapping
-    TYPE(SOLVER_TYPE), POINTER :: dynamicSolver,laplaceSolver
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: laplaceSolverEquations,fluidSolverEquations,fsiSolverEquations
+    TYPE(SolverMappingType), POINTER :: laplaceSolverMapping,fsiSolverMapping,fluidSolverMapping
+    TYPE(SolverType), POINTER :: dynamicSolver,laplaceSolver
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("NavierStokes_PreSolveAleUpdateMesh",err,error,*999)
@@ -8606,7 +8604,7 @@ CONTAINS
         ! do nothing ???
       CASE(PROBLEM_PGM_NAVIER_STOKES_SUBTYPE)
         !Update mesh within the dynamic solver
-        IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+        IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
           !Get the independent field for the ALE Navier-Stokes problem
           NULLIFY(dynamicSolver)
           CALL Solvers_SolverGet(solvers,1,dynamicSolver,err,error,*999)
@@ -8675,8 +8673,8 @@ CONTAINS
         ENDIF
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
         !Update mesh within the dynamic solver
-        IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-          IF(solver%DYNAMIC_SOLVER%ALE) THEN
+        IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
+          IF(solver%dynamicSolver%ale) THEN
             !Get the dependent field for the three component Laplace problem
             NULLIFY(laplaceSolver)
             CALL Solvers_SolverGet(solvers,1,laplaceSolver,err,error,*999)
@@ -8771,8 +8769,8 @@ CONTAINS
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
           !Update mesh within the dynamic solver
-          IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-            IF(solver%DYNAMIC_SOLVER%ALE) THEN
+          IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
+            IF(solver%dynamicSolver%ale) THEN
               !Get the dependent field for the Laplace problem
               IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
                 & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
@@ -8984,7 +8982,7 @@ CONTAINS
   SUBROUTINE NavierStokes_PreSolveALEUpdateParameters(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -8999,9 +8997,9 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("NavierStokes_PreSolveALEUpdateParameters",err,error,*999)
@@ -9033,7 +9031,7 @@ CONTAINS
         & PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE,PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
         ! do nothing ???
       CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
-        IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+        IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
           !Get the independent field for the ALE Navier-Stokes problem
           NULLIFY(solverEquations)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -9074,7 +9072,7 @@ CONTAINS
           ENDDO !variableIdx
           CALL Field_ParameterSetDataRestore(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
             & meshStiffValues,err,error,*999)
-        ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+        ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
           CALL FlagError("Mesh motion calculation not successful for ALE problem.",err,error,*999)
         ENDIF
       CASE DEFAULT
@@ -9092,7 +9090,7 @@ CONTAINS
           & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-          IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+          IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
             !Get the independent field for the ALE Navier-Stokes problem
             NULLIFY(solverEquations)
             CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -9134,7 +9132,7 @@ CONTAINS
             ENDDO !variableIdx
             CALL Field_ParameterSetDataRestore(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
               & meshStiffValues,err,error,*999)
-          ELSE IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+          ELSE IF(SOLVER%solveType==SOLVER_DYNAMIC_TYPE) THEN
             CALL FlagError("Mesh motion calculation not successful for ALE problem.",err,error,*999)
           ENDIF
         CASE DEFAULT
@@ -9171,7 +9169,7 @@ CONTAINS
   SUBROUTINE NavierStokes_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -9185,8 +9183,8 @@ CONTAINS
     TYPE(FieldsType), POINTER :: fields
     TYPE(ProblemType), POINTER :: problem
     TYPE(RegionType), POINTER :: region
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError,method,vFileName,filename
    
     ENTERS("NavierStokes_PostSolveOutputData",err,error,*999)
@@ -9454,7 +9452,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -9466,7 +9464,7 @@ CONTAINS
     REAL(DP) :: time,value,x(3),xiCoordinates(3),initialValue,tCoordinates(20,3),nodeAnalyticParameters(10)
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
     TYPE(BasisType), POINTER :: basis
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -9624,10 +9622,11 @@ CONTAINS
                       & FIELD_ANALYTIC_VALUES_SET_TYPE,localDof,VALUE,err,error,*999)
                     IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
                       IF(domainNodes%nodes(nodeNumber)%boundaryNode) THEN
-                        CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
+                        NULLIFY(boundaryConditionsVariable)
+                        CALL BoundaryConditions_VariableExists(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                           & err,error,*999)
                         IF(ASSOCIATED(boundaryConditionsVariable)) THEN
-                          boundaryConditionsCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(globalDof)
+                          boundaryConditionsCheckVariable=boundaryConditionsVariable%conditionTypes(globalDof)
                           ! update dependent field values if fixed inlet or pressure BC
                           IF(boundaryConditionsCheckVariable==BOUNDARY_CONDITION_FIXED_INLET .OR. &
                             & boundaryConditionsCheckVariable==BOUNDARY_CONDITION_FIXED_PRESSURE) THEN
@@ -9663,10 +9662,11 @@ CONTAINS
                     CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx, &
                       & localDOF,err,error,*999)
                     IF(domainNodes%nodes(nodeIdx)%boundaryNode) THEN
-                      CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
+                      NULLIFY(boundaryConditionsVariable)
+                      CALL BoundaryConditions_VariableExists(boundaryConditions,dependentVariable,boundaryConditionsVariable, &
                         & err,error,*999)
                       IF(ASSOCIATED(boundaryConditionsVariable)) THEN
-                        boundaryConditionsCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(localDOF)
+                        boundaryConditionsCheckVariable=boundaryConditionsVariable%conditionTypes(localDOF)
                         IF(boundaryConditionsCheckVariable==BOUNDARY_CONDITION_FIXED_INLET) THEN
                           CALL NavierStokes_AnalyticFunctionsEvaluate(analyticFunctionType,x,time,variableType, &
                             & globalDerivativeIndex,componentIdx,numberOfXi,dependentVariable%numberOfComponents, &
@@ -10885,7 +10885,7 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology1,domainTopology2
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: interpolation
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -10937,8 +10937,10 @@ CONTAINS
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
       NULLIFY(nonlinearMatrices)
       CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+      NULLIFY(residualVector)
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
       NULLIFY(jacobianMatrix)
-      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,1,jacobianMatrix,err,error,*999)
+      CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,1,jacobianMatrix,err,error,*999)
 
       !Set general and specific pointers
       NULLIFY(dependentVariable)
@@ -11873,7 +11875,7 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology1,domainTopology2
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: interpolation
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
@@ -11922,8 +11924,10 @@ CONTAINS
       CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
       NULLIFY(nonlinearMatrices)
       CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+      NULLIFY(residualVector)
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
       NULLIFY(jacobianMatrix)
-      IF(jacobianFlag) CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,1,jacobianMatrix,err,error,*999)
+      IF(jacobianFlag) CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,1,jacobianMatrix,err,error,*999)
       NULLIFY(independentField)
       IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
         & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) &
@@ -13017,7 +13021,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -13029,8 +13033,8 @@ CONTAINS
     REAL(DP) :: qPrevious,pPrevious,aPrevious,q1d,a1d,qError,aError,couplingTolerance
     LOGICAL :: boundaryNode,boundaryConverged(30),localConverged,MPI_LOGICAL,coupled1D0DBoundary,continueLoop
     LOGICAL, ALLOCATABLE :: globalConverged(:)
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: parentLoop,parentLoop2,subLoop
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
@@ -13045,10 +13049,10 @@ CONTAINS
     TYPE(FieldParameterSetType), POINTER :: previousParameterSet
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_TYPE), POINTER :: solver1D
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver1D
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError    
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -13123,7 +13127,6 @@ CONTAINS
 
     CALL ControlLoop_AbsoluteToleranceGet(controlLoop,couplingTolerance,err,error,*999)
 
-    solverEquations=>solver1D%SOLVER_EQUATIONS
     NULLIFY(solverEquations)
     CALL Solver_SolverEquationsGet(solver1D,solverEquations,err,error,*999)
     NULLIFY(boundaryConditions)
@@ -13177,9 +13180,10 @@ CONTAINS
         CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentVariable,err,error,*999)
         CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,nodeNumber,componentIdx, &
           & dependentDOF,err,error,*999)
+        NULLIFY(boundaryConditionsVariable)
         CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable, &
           & boundaryConditionsVariable,err,error,*999)
-        boundaryConditionType=boundaryConditionsVariable%CONDITION_TYPES(dependentDof)
+        boundaryConditionType=boundaryConditionsVariable%conditionTypes(dependentDof)
         IF (boundaryConditionType == BOUNDARY_CONDITION_FIXED_CELLML) THEN
           coupled1D0DBoundary = .TRUE.
         ENDIF
@@ -13344,8 +13348,8 @@ CONTAINS
     REAL(DP) :: maxStressError,maxFlowError,flowTolerance,stressTolerance,absoluteCouplingTolerance
     REAL(DP) :: absoluteCouplingTolerance2,relativeCouplingTolerance
     LOGICAL :: boundaryNode,boundaryConverged(30),localConverged,globalConverged,continueLoop
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -13358,9 +13362,9 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField1D,dependentField3D,independentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_TYPE), POINTER :: solver1D
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver1D
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -13385,7 +13389,7 @@ CONTAINS
       versionIdx=1
       derivativeIdx=1
       !TODO: make this more general!
-      solver1D=>controlLoop%subLoops(1)%PTR%subLoops(2)%PTR%SOLVERS%SOLVERS(solver1dNavierStokesNumber)%PTR
+      solver1D=>controlLoop%subLoops(1)%PTR%subLoops(2)%PTR%solvers%solvers(solver1dNavierStokesNumber)%PTR
       IF(.NOT.ASSOCIATED(solver1D)) THEN
         localError="The 1D Navier-Stokes solver is not associated for 3D-1D fluid coupling."
         CALL FlagError(localError,err,error,*999)
@@ -13405,7 +13409,7 @@ CONTAINS
       ! 3D equations pointers
       solver3dNavierStokesNumber = 1
       ! TODO: make this more general!
-      equationsSet3D=>controlLoop%subLoops(2)%PTR%SOLVERS%SOLVERS(solver3dNavierStokesNumber)%PTR% &
+      equationsSet3D=>controlLoop%subLoops(2)%PTR%solvers%solvers(solver3dNavierStokesNumber)%PTR% &
         & SOLVER_EQUATIONS%solverMapping%equationsSets(1)%PTR
       IF(.NOT.ASSOCIATED(equationsSet3D)) CALL FlagError("Equations set 3D is not associated.",err,error,*999)
       NULLIFY(dependentField3D)
@@ -13468,15 +13472,16 @@ CONTAINS
         boundaryType1D = 0
         NULLIFY(dependentVariable)
         CALL Field_VariableGet(dependentField1D,FIELD_U_VARIABLE_TYPE,dependentVariable,err,error,*999)
+        NULLIFY(boundaryConditionsVariable)
         CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
         CALL Field_ComponentDOFGetUserNode(dependentField1D,FIELD_U_VARIABLE_TYPE,versionIdx,derivativeIdx, &
           & userNodeNumber,1,localDof,globalDof,err,error,*999)
-        IF(boundaryConditionsVariable%CONDITION_TYPES(globalDof)==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
+        IF(boundaryConditionsVariable%conditionTypes(globalDof)==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
           boundaryType1D = BOUNDARY_CONDITION_COUPLING_FLOW
         ENDIF
         CALL Field_ComponentDOFGetUserNode(dependentField1D,FIELD_U_VARIABLE_TYPE,versionIdx,derivativeIdx, &
           & userNodeNumber,2,localDof,globalDof,err,error,*999)
-        IF(boundaryConditionsVariable%CONDITION_TYPES(globalDof)==BOUNDARY_CONDITION_COUPLING_STRESS) THEN
+        IF(boundaryConditionsVariable%conditionTypes(globalDof)==BOUNDARY_CONDITION_COUPLING_STRESS) THEN
           IF(boundaryType1D==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
             localError="Boundary type for node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
               & " is set as both FLOW and STRESS for 3D-1D Navier-Stokes fluid coupling."
@@ -13635,7 +13640,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -13659,10 +13664,10 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,equationsSetField,independentField,materialsField
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_TYPE), POINTER :: solver1DNavierStokes
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver1DNavierStokes
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -14178,10 +14183,10 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet,equationsSet2,coupledEquationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_TYPE), POINTER :: navierStokesSolver,navierStokesSolver3D,navierStokesSolver1D,solver,solver2
-    TYPE(SOLVERS_TYPE), POINTER :: solvers,solvers2
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations,solverEquations2,solverEquations1D,solverEquations3D
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping,solverMapping1D,solverMapping2,solverMapping3D
+    TYPE(SolverType), POINTER :: navierStokesSolver,navierStokesSolver3D,navierStokesSolver1D,solver,solver2
+    TYPE(SolversType), POINTER :: solvers,solvers2
+    TYPE(SolverEquationsType), POINTER :: solverEquations,solverEquations2,solverEquations1D,solverEquations3D
+    TYPE(SolverMappingType), POINTER :: solverMapping,solverMapping1D,solverMapping2,solverMapping3D
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("NavierStokes_ControlLoopPostLoop",err,error,*999)
@@ -14312,7 +14317,7 @@ CONTAINS
         DO solverIdx=1,numberOfSolvers
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-          SELECT CASE(solver%SOLVE_TYPE)
+          SELECT CASE(solver%solveType)
           CASE(SOLVER_DYNAMIC_TYPE)
             NULLIFY(solverEquations)
             CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -14380,7 +14385,7 @@ CONTAINS
           CASE(SOLVER_DAE_TYPE)
             ! CellML solver simple loop - do nothing
           CASE DEFAULT
-            localError="The solve type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+            localError="The solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
               & " is invalid for a simple loop in a Navier-Stokes multiscale problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -14410,7 +14415,7 @@ CONTAINS
                 DO solverIdx=1,numberOfSolvers
                   NULLIFY(solver)
                   CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-                  IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) &
+                  IF(solver%solveType==SOLVER_DYNAMIC_TYPE) &
                     & CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
                 ENDDO !solverIdx
               ENDDO !subLoopIdx3
@@ -14422,7 +14427,7 @@ CONTAINS
               DO solverIdx=1,numberOfSolvers
                 NULLIFY(solver)
                 CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-                IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
+                IF(solver%solveType==SOLVER_DYNAMIC_TYPE) CALL NavierStokes_PostSolveOutputData(solver,err,error,*999)
               ENDDO !solverIdx
             ENDIF
           ENDDO ! subloop2
@@ -14512,7 +14517,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     REAL(DP), INTENT(IN) :: timeIncrement
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
@@ -14523,7 +14528,7 @@ CONTAINS
     REAL(DP), POINTER :: impedance(:),flow(:)
     INTEGER(INTG) :: nodeIdx,versionIdx,derivativeIdx,componentIdx,numberOfVersions,numberOfLocalNodes
     INTEGER(INTG) :: dependentDof,boundaryConditionType,k
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: dependentDomain
     TYPE(DomainNodesType), POINTER :: dependentDomainNodes
@@ -14621,8 +14626,9 @@ CONTAINS
             DO componentIdx=1,2
               CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx, &
                 & dependentDOF,err,error,*999)
+              NULLIFY(boundaryConditionsVariable)
               CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-              boundaryConditionType=boundaryConditionsVariable%CONDITION_TYPES(dependentDof)
+              boundaryConditionType=boundaryConditionsVariable%conditionTypes(dependentDof)
               SELECT CASE(boundaryConditionType)
 
               ! N o n - r e f l e c t i n g   B o u n d a r y
@@ -15346,7 +15352,7 @@ CONTAINS
       NULLIFY(dependentField)
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       NULLIFY(dependentVariable)
-      CALL Field_VariableCheck(dependentField,FIELD_W_VARIABLE_TYPE,dependentVariable,err,error,*999)
+      CALL Field_VariableExists(dependentField,FIELD_W_VARIABLE_TYPE,dependentVariable,err,error,*999)
       IF(ASSOCIATED(dependentVariable)) THEN
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)

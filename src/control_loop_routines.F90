@@ -52,8 +52,8 @@ MODULE ControlLoopRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
-  USE PROBLEM_CONSTANTS
-  USE SOLVER_ROUTINES
+  USE ProblemAccessRoutines
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMatricesAccessRoutines  
   USE Strings
@@ -482,14 +482,14 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: loopIdx,matrixIdx,solverIdx,variableIdx,variableLinearity,variableTimeDependence
     TYPE(ControlLoopType), POINTER :: controlLoop2
-    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
+    TYPE(DynamicSolverTypeXS), POINTER :: dynamicSolver
     TYPE(FieldType), POINTER :: field
     TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("ControlLoop_FieldVariablesCalculate",err,error,*999)
@@ -527,11 +527,11 @@ CONTAINS
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
       !Loop over the solvers
-      DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+      DO solverIdx=1,solvers%numberOfSolvers
         !Get the solver
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-        solverEquations=>solver%SOLVER_EQUATIONS
+        solverEquations=>solver%solverEquations
 !!TODO: Need to think about solvers that do not have solver equations.
         IF(ASSOCIATED(solverEquations)) THEN
           !If we have solver equations then find the variables.
@@ -552,7 +552,7 @@ CONTAINS
           CASE(SOLVER_EQUATIONS_QUASISTATIC)
             variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
           CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
-            dynamicSolver=>solver%DYNAMIC_SOLVER
+            dynamicSolver=>solver%dynamicSolver
             IF(ASSOCIATED(dynamicSolver)) THEN
               IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE)  THEN
                 IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE)  THEN
@@ -577,10 +577,10 @@ CONTAINS
           NULLIFY(solverMapping)
           CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
           !Loop over the solver matrices
-          DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+          DO matrixIdx=1,solverMatrices%numberOfMatrices
             !Loop over the field variables associated with the solver mapping
-            DO variableIdx=1,solverMapping%VARIABLES_LIST(matrixIdx)%numberOfVariables
-              fieldVariable=>solverMapping%VARIABLES_LIST(matrixIdx)%variables(variableIdx)%variable
+            DO variableIdx=1,solverMapping%variablesList(matrixIdx)%numberOfVariables
+              fieldVariable=>solverMapping%variablesList(matrixIdx)%variables(variableIdx)%variable
               IF(ASSOCIATED(fieldVariable)) THEN
                 CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
                   & fieldVariable,err,error,*999)
@@ -1596,9 +1596,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: loopIdx,solverIdx
     TYPE(ControlLoopType), POINTER :: controlLoop2
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
  
     ENTERS("ControlLoop_SolverEquationsDestroy",err,error,*999)
 
@@ -1614,10 +1614,10 @@ CONTAINS
     !Destroy the solver equations in this control loop
     solvers=>controlLoop%solvers
     IF(ASSOCIATED(solvers)) THEN
-      DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+      DO solverIdx=1,solvers%numberOfSolvers
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-        solverEquations=>solver%SOLVER_EQUATIONS
+        solverEquations=>solver%solverEquations
         IF(ASSOCIATED(solverEquations)) CALL SolverEquations_Destroy(solverEquations,err,error,*999)
       ENDDO !solverIdx
     ENDIF
@@ -1883,7 +1883,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to control loop to set the type of
-    INTEGER(INTG), INTENT(IN) :: loopType !<The type of loop type to set \see PROBLEM_CONSTANTS_ControlLoopTypes,PROBLEM_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: loopType !<The type of loop type to set \see ProblemRoutines_ControlLoopTypes,ProblemRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

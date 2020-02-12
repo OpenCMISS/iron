@@ -126,7 +126,9 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_WorldCommunicatorGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+#endif    
     
     worldCommunicator=computationEnvironment%mpiCommWorld
  
@@ -154,7 +156,9 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_WorldNodeNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+#endif    
     
     worldNodeNumber=computationEnvironment%myWorldComputationNodeNumber
         
@@ -182,7 +186,9 @@ CONTAINS
     
     ENTERS("ComputationEnvironment_NumberOfWorldNodesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+#endif    
     
     numberOfWorldNodes=computationEnvironment%numberOfWorldComputationNodes    
     
@@ -210,15 +216,20 @@ CONTAINS
  
     ENTERS("ComputationEnvironment_WorldWorkGroupGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(worldWorkGroup)) CALL FlagError("World work group is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+#endif    
 
     !Get the world work group
     worldWorkGroup=>computationEnvironment%worldWorkGroup
+
+#ifdef WITH_POSTCHECKS    
     !Check world work group is associated.
     IF(.NOT.ASSOCIATED(worldWorkGroup)) &
       & CALL FlagError("World work group is not associated for the computation environment.",err,error,*999)
+#endif    
     
     EXITS("ComputationEnvironment_WorldWorkGroupGet")
     RETURN
@@ -244,7 +255,9 @@ CONTAINS
  
     ENTERS("WorkGroup_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.workGroup%workGroupFinished) THEN
       localError="Work group number "//TRIM(NumberToVString(workGroup%userNumber,"*",err,error))// &
@@ -275,7 +288,9 @@ CONTAINS
  
     ENTERS("WorkGroup_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     IF(workGroup%workGroupFinished) THEN
       localError="Work group number "//TRIM(NumberToVString(workGroup%userNumber,"*",err,error))// &
@@ -303,19 +318,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("WorkGroup_ComputationEnvironmentGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     computationEnvironment=>workGroup%computationEnvironment
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(computationEnvironment)) THEN      
       localError="The computation environment is not associated for work group number "// &
         & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("WorkGroup_ComputationEnvironmentGet")
     RETURN
@@ -338,24 +360,31 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("WorkGroup_ContextGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
-
     IF(.NOT.ASSOCIATED(workGroup%computationEnvironment)) THEN
       localError="Computation environment is not associated for work group number "// &
         & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
+    
     context=>workGroup%computationEnvironment%context
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="The context is not associated for the computation environment for work group number "// &
         & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("WorkGroup_ContextGet")
     RETURN
@@ -379,16 +408,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("WorkGroup_Get",err,error,*999)
 
     CALL WorkGroup_UserNumberFind(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) THEN
       localError="A work group with an user number of "//TRIM(NumberToVString(workGroupUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("WorkGroup_Get")
     RETURN
@@ -413,8 +447,10 @@ CONTAINS
  
     ENTERS("WorkGroup_GroupCommunicatorGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     groupCommunicator=workGroup%mpiGroupCommunicator
     
@@ -441,7 +477,9 @@ CONTAINS
 
     ENTERS("WorkGroup_GroupNodeNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
     
     groupNodeNumber=workGroup%myGroupComputationNodeNumber
         
@@ -468,7 +506,9 @@ CONTAINS
 
     ENTERS("WorkGroup_LabelGetC",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     label=CHAR(workGroup%label)
     
@@ -495,7 +535,9 @@ CONTAINS
 
     ENTERS("WorkGroup_LabelGetVS",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     label=workGroup%label
     
@@ -522,6 +564,10 @@ CONTAINS
     
     ENTERS("WorkGroup_NumberOfGroupNodesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif
+
     numberOfGroupNodes=workGroup%numberOfGroupComputationNodes
     
     EXITS("WorkGroup_NumberOfGroupNodesGet")
@@ -544,22 +590,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("WorkGroup_ParentWorkGroupGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(parentWorkGroup)) CALL FlagError("Parent work group is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     !Get the parent work group
     parentWorkGroup=>workGroup%parentWorkGroup
+
+#ifdef WITH_POSTCHECKS    
     !Check parent work group is associated.
     IF(.NOT.ASSOCIATED(parentWorkGroup)) THEN
       localError="Parent work group is not associated for work group "// &
         & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("WorkGroup_ParentWorkGroupGet")
     RETURN
@@ -583,21 +636,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(WorkGroupType), POINTER :: worldWorkGroup
     
     ENTERS("WorkGroup_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
-    
-    worldWorkGroup=>computationEnvironment%worldWorkGroup
-    IF(.NOT.ASSOCIATED(worldWorkGroup)) CALL FlagError("World work group is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnvironment%worldWorkGroup)) CALL FlagError("World work group is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(workGroup)
     IF(userNumber==0) THEN
-      workGroup=>worldWorkGroup
+      workGroup=>computationEnvironment%worldWorkGroup
     ELSE
-      CALL WorkGroup_UserNumberFindPtr(userNumber,worldWorkGroup,workGroup,err,error,*999)
+      CALL WorkGroup_UserNumberFindPtr(userNumber,computationEnvironment%worldWorkGroup,workGroup,err,error,*999)
     ENDIF
   
     EXITS("WorkGroup_UserNumberFind")
@@ -625,8 +677,10 @@ CONTAINS
 
     ENTERS("WorkGroup_UserNumberFindPtr",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(startWorkGroup)) CALL FlagError("Start work group is not associated",err,error,*999)
     IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*999)
+#endif    
 
     NULLIFY(workGroup)
     IF(startWorkGroup%userNumber==userNumber) THEN
@@ -663,7 +717,9 @@ CONTAINS
 
     ENTERS("WorkGroup_UserNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+#endif    
 
     userNumber=workGroup%userNumber
   
@@ -688,10 +744,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("WorkGroup_WorkSubGroupGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(subWorkGroup)) CALL FlagError("Sub work group is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
@@ -702,9 +761,12 @@ CONTAINS
         & TRIM(NumberToVString(workGroup%numberOfSubGroups,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     !Get the parent work group
     subWorkGroup=>workGroup%subGroups(subGroupIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
     !Check sub work group is associated.
     IF(.NOT.ASSOCIATED(subWorkGroup)) THEN
       localError="The sub work group is not associated for sub group index "// &
@@ -712,6 +774,7 @@ CONTAINS
         & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("WorkGroup_WorkSubGroupGet")
     RETURN

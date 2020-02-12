@@ -47,7 +47,7 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -59,7 +59,6 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
@@ -68,9 +67,9 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -127,10 +126,10 @@ CONTAINS
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: FILENAME,LOCAL_ERROR,METHOD
     INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER,CURRENT_LOOP_ITERATION
 
@@ -155,7 +154,7 @@ CONTAINS
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)            
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
               !Loop over the equations sets associated with the solver
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -174,20 +173,20 @@ CONTAINS
                         IF(ASSOCIATED(TIME_LOOP_PARENT)) THEN
                           OUTPUT_ITERATION_NUMBER=TIME_LOOP_PARENT%outputNumber
                           CURRENT_LOOP_ITERATION=TIME_LOOP_PARENT%globalIterationNumber
-                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                            & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP_PARENT%globalIterationNumber,"*",ERR,ERROR))// &
-                            & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%iterationNumber,"*",ERR,ERROR))
+                          FILENAME="Time_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
+                            & "_"//TRIM(NumberToVString(TIME_LOOP_PARENT%globalIterationNumber,"*",ERR,ERROR))// &
+                            & "_"//TRIM(NumberToVString(TIME_LOOP%iterationNumber,"*",ERR,ERROR))
                         ELSE
                           OUTPUT_ITERATION_NUMBER=TIME_LOOP%outputNumber
                           CURRENT_LOOP_ITERATION=TIME_LOOP%globalIterationNumber
-                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                            & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
+                          FILENAME="Time_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
+                            & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                         ENDIF
                       ELSE
                         OUTPUT_ITERATION_NUMBER=TIME_LOOP%outputNumber
                         CURRENT_LOOP_ITERATION=TIME_LOOP%globalIterationNumber
-                        FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                          & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
+                        FILENAME="Time_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
+                          & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                       ENDIF
                       METHOD="FORTRAN"
                       IF(OUTPUT_ITERATION_NUMBER/=0.AND.MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0) THEN
@@ -195,7 +194,7 @@ CONTAINS
                       ENDIF
                     ELSE
                       LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                        & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
                         & " in the solver mapping."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
@@ -217,7 +216,7 @@ CONTAINS
         CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
           !do nothing
         CASE DEFAULT
-          LOCAL_ERROR="The control loop type of "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The control loop type of "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
             & " is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -552,7 +551,7 @@ CONTAINS
             ENDDO !mh
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+          LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
             & " is not valid for a Monodomain equation type of a Strang splitting equations set class."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -598,7 +597,7 @@ CONTAINS
       CASE(EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE,EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE)
         CALL Monodomain_EquationsSetSubtypeSetUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)        
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " is not valid for a Monodomain equation type of a Strang splitting equation set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -652,11 +651,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
+          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " is not valid for a Monodomain equation type of monodomain Strang splitting equations set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -721,8 +720,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -778,7 +777,7 @@ CONTAINS
                 CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
                 CALL Field_ScalingTypeSet(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",ERR,ERROR))// &
                   & " is invalid or not implemented"
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
@@ -791,8 +790,8 @@ CONTAINS
               CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation"
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -865,8 +864,8 @@ CONTAINS
               END SELECT              
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation"
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -960,8 +959,8 @@ CONTAINS
             ENDIF
 ! ! ! Upto here
            CASE DEFAULT
-             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
-               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+             LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+               & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
                & " is invalid for a Monodomain equation."
              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
@@ -972,8 +971,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -995,54 +994,54 @@ CONTAINS
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,ERR,ERROR,*999)
               !!! Check this 
-              !CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,ERR,ERROR,*999)
-              CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,ERR,ERROR,*999)
-              !CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
-               ! & ERR,ERROR,*999)
-              CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,ERR,ERROR,*999)
+              !CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,ERR,ERROR,*999)
+              CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,ERR,ERROR,*999)
+              !CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              ! & ERR,ERROR,*999)
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,ERR,ERROR,*999)
               !!!! Check the above two lines
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,ERR,ERROR,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,ERR,ERROR,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,ERR,ERROR,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,ERR,ERROR,*999)
               SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & ERR,ERROR,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
-                !CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                !CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                  ! & ERR,ERROR,*999)
-                !CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                !CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                  ! & ERR,ERROR,*999)
-                 CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                 CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & ERR,ERROR,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                 CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],ERR,ERROR,*999)     
               CASE DEFAULT
                 LOCAL_ERROR="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,ERR,ERROR,*999)
             CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",ERR,ERROR))// &
                 & " is invalid or not implemented."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a Monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a Monodomain equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " does not equal a Monodomain equation subtype."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
@@ -1084,7 +1083,7 @@ CONTAINS
       CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
         CALL Monodomain_ProblemStrangSplittingSetup(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a Monodomain equation Strang splitting problem class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -1125,7 +1124,7 @@ CONTAINS
       CASE(PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE,PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE)
         CALL MONODOMAIN_EQUATION_PROBLEM_SUBTYPE_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " is not valid for a Monodomain equation type of a Strang splitting problem class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -1155,9 +1154,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("MONODOMAIN_EQUATION_PROBLEM_SUBTYPE_SETUP",ERR,ERROR,*999)
@@ -1183,8 +1182,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -1200,8 +1199,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -1213,7 +1212,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,ERR,ERROR,*999)
             !Set the solver to be a first order dynamic solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
@@ -1228,8 +1227,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -1258,18 +1257,18 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a monodomain equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a Monodomain equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " does not equal a Monodomain equation subtype."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
@@ -1292,7 +1291,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1309,9 +1308,9 @@ CONTAINS
       END IF
       SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
       CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
-        DEPENDENT_FIELD=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+        DEPENDENT_FIELD=>SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping% &
           & equationsSets(1)%ptr%dependent%dependentField
-        independentField=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+        independentField=>SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping% &
           & equationsSets(1)%ptr%INDEPENDENT%independentField
 
         CALL Field_ParametersToFieldParametersCopy(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -1320,7 +1319,7 @@ CONTAINS
           & 1,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1,ERR,ERROR,*999) ! also to prev.
 
       CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem type "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a monodomain problem class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -1343,7 +1342,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1372,7 +1371,7 @@ CONTAINS
 
 
        ! Don't update in next step
-        EQUATIONS=>SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping%equationsSets(1)%ptr%EQUATIONS
+        EQUATIONS=>SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping%equationsSets(1)%ptr%EQUATIONS
         vectorEquations=>equations%vectorEquations
         vectorMatrices=>vectorEquations%vectorMatrices
         dynamicMatrices=>vectorMatrices%dynamicMatrices
@@ -1384,13 +1383,13 @@ CONTAINS
         rhsVector%updateVector       = .FALSE.
 
        ! integrate   cell models
-        GEOMETRIC_FIELD => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+        GEOMETRIC_FIELD => SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping% &
                            & equationsSets(1)%ptr%GEOMETRY%geometricField
-        DEPENDENT_FIELD => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+        DEPENDENT_FIELD => SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping% &
                            & equationsSets(1)%ptr%dependent%dependentField
-        MATERIAL_FIELD  => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+        MATERIAL_FIELD  => SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping% &
                            & equationsSets(1)%ptr%MATERIALS%materialsField
-        independentField => SOLVER%SOLVERS%SOLVERS(1)%ptr%SOLVER_EQUATIONS%solverMapping% &
+        independentField => SOLVER%solvers%solvers(1)%ptr%solverEquations%solverMapping% &
                            & equationsSets(1)%ptr%INDEPENDENT%independentField
 
         CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -1430,7 +1429,7 @@ CONTAINS
         ENDIF
 
       CASE DEFAULT
-        LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem type "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
           & " is not valid for a monodomain problem class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT

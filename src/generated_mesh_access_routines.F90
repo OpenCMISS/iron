@@ -178,7 +178,9 @@ CONTAINS
  
     ENTERS("GeneratedMesh_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.generatedMesh%generatedMeshFinished) THEN
       region=>generatedMesh%region
@@ -233,7 +235,9 @@ CONTAINS
  
     ENTERS("GeneratedMesh_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
 
     IF(generatedMesh%generatedMeshFinished) THEN
       region=>generatedMesh%region
@@ -291,15 +295,20 @@ CONTAINS
 
     ENTERS("GeneratedMesh_BasisGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(bases)) CALL FlagError("Bases is already associated.",err,error,*999)
+#endif    
     CALL GeneratedMesh_AssertIsFinished(generatedMesh,err,error,*999)
 
     SELECT CASE(generatedMesh%generatedType)
     CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
       NULLIFY(regularMesh)
       CALL GeneratedMesh_RegularMeshGet(generatedMesh,regularMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(.NOT.ALLOCATED(regularMesh%bases)) CALL FlagError("Generated mesh bases are not allocated.",err,error,*999)
+#endif      
       numberOfBases=SIZE(regularMesh%bases)
+!!TODO: bases should be passed in and not allocated!!!      
       ALLOCATE(bases(numberOfBases),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate bases.",err,error,*999)
       DO basisIdx=1,numberOfBases
@@ -312,7 +321,9 @@ CONTAINS
     CASE(GENERATED_MESH_CYLINDER_MESH_TYPE)
       NULLIFY(cylinderMesh)
       CALL GeneratedMesh_CylinderMeshGet(generatedMesh,cylinderMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(.NOT.ALLOCATED(cylinderMesh%bases)) CALL FlagError("Generated mesh bases are not allocated.",err,error,*999)
+#endif      
       numberOfBases=SIZE(cylinderMesh%bases)
       ALLOCATE(bases(numberOfBases),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate bases.",err,error,*999)
@@ -322,7 +333,9 @@ CONTAINS
     CASE(GENERATED_MESH_ELLIPSOID_MESH_TYPE)
       NULLIFY(ellipsoidMesh)
       CALL GeneratedMesh_EllipsoidMeshGet(generatedMesh,ellipsoidMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(.NOT.ALLOCATED(ellipsoidMesh%bases)) CALL FlagError("Generated mesh bases are not allocated.",err,error,*999)
+#endif      
       numberOfBases=SIZE(generatedMesh%ellipsoidMesh%bases)
       ALLOCATE(bases(numberOfBases),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate bases.",err,error,*999)
@@ -357,32 +370,40 @@ CONTAINS
     !Local Variables
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("GeneratedMesh_CoordinateSystemGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
     
     region=>generatedMesh%region
     IF(ASSOCIATED(region)) THEN
       coordinateSystem=>region%coordinateSystem
+#ifdef WITH_POSTCHECKS      
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system is not associated for generated mesh number "// &
           & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//" of region number "// &
           & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
     ELSE
       interface=>generatedMesh%interface
       IF(ASSOCIATED(interface)) THEN
         coordinateSystem=>interface%coordinateSystem
+#ifdef WITH_POSTCHECKS        
         IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
           localError="The coordinate system is not associated for generated mesh number "// &
             & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//" of interface number "// &
             & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
+#endif        
       ELSE
         localError="The interface is not associated for generated mesh number "// &
           & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
@@ -411,19 +432,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMesh_CylinderMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cylinderMesh)) CALL FlagError("Cylinder mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*998)
+#endif    
     
     cylinderMesh=>generatedMesh%cylinderMesh
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cylinderMesh)) THEN
       localError="A cylinder mesh is not associated on generated mesh number "// &
         & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("GeneratedMesh_CylinderMeshGet")
     RETURN
@@ -446,19 +474,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMesh_EllipsoidMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(ellipsoidMesh)) CALL FlagError("Ellipsoid mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*998)
+#endif    
     
     ellipsoidMesh=>generatedMesh%ellipsoidMesh
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(ellipsoidMesh)) THEN
       localError="An ellipsoid mesh is not associated on generated mesh number "// &
         & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("GeneratedMesh_EllipsoidMeshGet")
     RETURN
@@ -484,22 +519,28 @@ CONTAINS
     TYPE(GeneratedMeshCylinderType), POINTER :: cylinderMesh
     TYPE(GeneratedMeshEllipsoidType), POINTER :: ellipsoidMesh
     TYPE(GeneratedMeshRegularType), POINTER :: regularMesh
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("GeneratedMesh_ExtentGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated",err,error,*999)
+#endif    
       
     SELECT CASE(generatedMesh%generatedType)
     CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
       NULLIFY(regularMesh)
-      CALL GeneratedMesh_RegularMeshGet(generatedMesh,regularMesh,err,error,*999)      
+      CALL GeneratedMesh_RegularMeshGet(generatedMesh,regularMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(extent,1)<SIZE(regularMesh%maximumExtent,1)) THEN
         localError="The size of extent is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(extent,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(regularMesh%maximumExtent,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       extent(1:SIZE(regularMesh%maximumExtent,1))=regularMesh%maximumExtent(1:SIZE(regularMesh%maximumExtent,1))
     CASE(GENERATED_MESH_POLAR_MESH_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -508,22 +549,26 @@ CONTAINS
     CASE(GENERATED_MESH_CYLINDER_MESH_TYPE)
       NULLIFY(cylinderMesh)
       CALL GeneratedMesh_CylinderMeshGet(generatedMesh,cylinderMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(extent,1)<SIZE(cylinderMesh%cylinderExtent,1)) THEN
         localError="The size of extent is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(extent,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(cylinderMesh%cylinderExtent,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       extent(1:SIZE(cylinderMesh%cylinderExtent,1))=cylinderMesh%cylinderExtent(1:SIZE(cylinderMesh%cylinderExtent,1))
     CASE(GENERATED_MESH_ELLIPSOID_MESH_TYPE)
       NULLIFY(ellipsoidMesh)
       CALL GeneratedMesh_EllipsoidMeshGet(generatedMesh,ellipsoidMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(extent,1)<SIZE(ellipsoidMesh%ellipsoidExtent,1)) THEN
         localError="The size of extent is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(extent,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(ellipsoidMesh%ellipsoidExtent,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       extent(1:SIZE(ellipsoidMesh%ellipsoidExtent,1))=ellipsoidMesh%ellipsoidExtent(1:SIZE(ellipsoidMesh%ellipsoidExtent,1))
     CASE DEFAULT
       localError="The generated mesh mesh type of "//TRIM(NumberToVString(generatedMesh%generatedType,"*",err,error))// &
@@ -551,19 +596,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMesh_GeneratedMeshesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(generatedMeshes)) CALL FlagError("Generated meshes is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*998)
+#endif    
     
     generatedMeshes=>generatedMesh%generatedMeshes
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(generatedMeshes)) THEN
       localError="The generated meshes is not associated for generated mesh number "// &
         & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("GeneratedMesh_GeneratedMeshesMeshesGet")
     RETURN
@@ -586,19 +638,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("GeneratedMesh_MeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
     
     mesh=>generatedMesh%mesh
+
+#ifdef WITH_POSTCHECKS    
     IF(ASSOCIATED(mesh)) THEN
       localError="The mesh is not associated for generated mesh number "// &
         & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("GeneratedMesh_MeshGet")
     RETURN
@@ -628,18 +687,22 @@ CONTAINS
 
     ENTERS("GeneratedMesh_NumberOfElementsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
     
     SELECT CASE(generatedMesh%generatedType)
     CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
       NULLIFY(regularMesh)
       CALL GeneratedMesh_RegularMeshGet(generatedMesh,regularMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(numberOfElements,1)<SIZE(regularMesh%numberOfElementsXi,1)) THEN
         localError="The size of the specified number of elements array is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(numberOfElements,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(regularMesh%numberOfElementsXi,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       numberOfElements(1:SIZE(regularMesh%numberOfElementsXi,1))= &
         & regularMesh%numberOfElementsXi(1:SIZE(regularMesh%numberOfElementsXi,1))
     CASE(GENERATED_MESH_POLAR_MESH_TYPE)
@@ -649,23 +712,27 @@ CONTAINS
     CASE(GENERATED_MESH_CYLINDER_MESH_TYPE)
       NULLIFY(cylinderMesh)
       CALL GeneratedMesh_CylinderMeshGet(generatedMesh,cylinderMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(numberOfElements,1)<SIZE(cylinderMesh%numberOfElementsXi,1)) THEN
         localError="The size of the specified number of elements array is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(numberOfElements,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(cylinderMesh%numberOfElementsXi,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       numberOfElements(1:SIZE(cylinderMesh%numberOfElementsXi,1))= &
         & cylinderMesh%numberOfElementsXi(1:SIZE(cylinderMesh%numberOfElementsXi,1))
     CASE(GENERATED_MESH_ELLIPSOID_MESH_TYPE)
       NULLIFY(ellipsoidMesh)
       CALL GeneratedMesh_EllipsoidMeshGet(generatedMesh,ellipsoidMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(numberOfElements,1)<SIZE(generatedMesh%ellipsoidMesh%numberOfElementsXi,1)) THEN
         localError="The size of the specified number of elements array is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(numberOfElements,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(ellipsoidMesh%numberOfElementsXi,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       numberOfElements(1:SIZE(ellipsoidMesh%numberOfElementsXi,1))= &
         & ellipsoidMesh%numberOfElementsXi(1:SIZE(ellipsoidMesh%numberOfElementsXi,1))
     CASE DEFAULT
@@ -701,18 +768,22 @@ CONTAINS
 
     ENTERS("GeneratedMesh_OriginGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated",err,error,*999)
+#endif    
     
     SELECT CASE(generatedMesh%generatedType)
     CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
       NULLIFY(regularMesh)
       CALL GeneratedMesh_RegularMeshGet(generatedMesh,regularMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(origin,1)<SIZE(regularMesh%origin,1)) THEN
         localError="The size of origin is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(origin,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(regularMesh%origin,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       origin(1:SIZE(regularMesh%origin,1))=regularMesh%origin(1:SIZE(regularMesh%origin,1))
     CASE(GENERATED_MESH_POLAR_MESH_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -721,22 +792,26 @@ CONTAINS
     CASE(GENERATED_MESH_CYLINDER_MESH_TYPE)
       NULLIFY(cylinderMesh)
       CALL GeneratedMesh_CylinderMeshGet(generatedMesh,cylinderMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(origin,1) < SIZE(cylinderMesh%origin,1)) THEN
         localError="The size of origin is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(origin,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(cylinderMesh%origin,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       origin(1:SIZE(cylinderMesh%origin,1))=cylinderMesh%origin(1:SIZE(cylinderMesh%origin,1))
     CASE(GENERATED_MESH_ELLIPSOID_MESH_TYPE)
       NULLIFY(ellipsoidMesh)
       CALL GeneratedMesh_EllipsoidMeshGet(generatedMesh,ellipsoidMesh,err,error,*999)
+#ifdef WITH_PRECHECKS      
       IF(SIZE(origin,1)<SIZE(ellipsoidMesh%origin,1)) THEN
         localError="The size of origin is too small. The supplied size is "// &
           & TRIM(NumberToVString(SIZE(origin,1),"*",err,error))//" and it needs to be >= "// &
           & TRIM(NumberToVString(SIZE(ellipsoidMesh%origin,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       origin(1:SIZE(ellipsoidMesh%origin,1))=ellipsoidMesh%origin(1:SIZE(ellipsoidMesh%origin,1))
     CASE DEFAULT
       localError="The generated mesh mesh type of "//TRIM(NumberToVString(generatedMesh%generatedType,"*",err,error))// &
@@ -770,27 +845,28 @@ CONTAINS
 
     ENTERS("GeneratedMesh_RegionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
     
     region=>generatedMesh%region
     IF(.NOT.ASSOCIATED(region)) THEN
-      interface=>generatedMesh%interface
-      IF(ASSOCIATED(interface)) THEN
-        parentRegion=>interface%parentRegion
-        IF(ASSOCIATED(parentRegion)) THEN
-          region=>parentRegion
-        ELSE
-          localError="The parent region not associated for generated mesh number "// &
-            & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//" of interface number "// &
-            & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
+      INTERFACE=>generatedMesh%INTERFACE
+      IF(.NOT.ASSOCIATED(INTERFACE)) THEN
         localError="The region or interface is not associated for generated mesh number "// &
           & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+      parentRegion=>interface%parentRegion
+#ifdef WITH_PRECHECKS      
+      IF(.NOT.ASSOCIATED(parentRegion)) THEN
+        localError="The parent region not associated for generated mesh number "// &
+          & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//" of interface number "// &
+          & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+#endif      
+      region=>parentRegion
     ENDIF
 
     EXITS("GeneratedMesh_RegionGet")
@@ -814,19 +890,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMesh_RegularMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(regularMesh)) CALL FlagError("Regular mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*998)
+#endif    
     
     regularMesh=>generatedMesh%regularMesh
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(regularMesh)) THEN
       localError="A regular mesh is not associated on generated mesh number "// &
         & TRIM(NumberToVString(generatedMesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("GeneratedMesh_RegularMeshGet")
     RETURN
@@ -852,7 +935,9 @@ CONTAINS
 
     ENTERS("GeneratedMesh_TypeGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
     
     type=generatedMesh%generatedType
 
@@ -878,27 +963,32 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: generatedMeshIdx
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("GeneratedMesh_UserNumberFindGeneric",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(generatedMeshes)) CALL FlagError("Generated meshes is not associated",err,error,*999)
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*999)
+#endif    
     
     !Get the generated mesh from the user number
     NULLIFY(generatedMesh)
     IF(ALLOCATED(generatedMeshes%generatedMeshes)) THEN
       DO generatedMeshIdx=1,generatedMeshes%numberOfGeneratedMeshes
-        IF(ASSOCIATED(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr)) THEN
-          IF(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr%userNumber==userNumber) THEN
-            generatedMesh=>generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr
-            EXIT
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr)) THEN
           localError="The generated mesh pointer in generated meshes is not associated for generated mesh index "// &
             & TRIM(NumberToVString(generatedMeshIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)          
+        ENDIF
+#endif        
+        IF(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr%userNumber==userNumber) THEN
+          generatedMesh=>generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr
+          EXIT
         ENDIF
       ENDDO !generatedMeshIdx      
     ENDIF
@@ -927,8 +1017,10 @@ CONTAINS
   
     ENTERS("GeneratedMesh_UserNumberFindInterface",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated",err,error,*999)
+#endif    
     
     CALL GeneratedMesh_UserNumberFindGeneric(userNumber,interface%generatedMeshes,generatedMesh,err,error,*999)
      
@@ -956,8 +1048,10 @@ CONTAINS
     
     ENTERS("GeneratedMesh_UserNumberFindRegion",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated",err,error,*999)
+#endif    
     
     CALL GeneratedMesh_UserNumberFindGeneric(userNumber,region%generatedMeshes,generatedMesh,err,error,*999)
      
@@ -984,7 +1078,9 @@ CONTAINS
 
     ENTERS("GeneratedMesh_UserNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("GeneratedMesh is not associated.",err,error,*999)
+#endif    
 
     userNumber=generatedMesh%userNumber
   
@@ -1009,10 +1105,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMeshCylinder_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cylinderMesh)) CALL FlagError("Cylinder mesh is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(cylinderMesh%bases)) CALL FlagError("Cylinder mesh bases are not allocated.",err,error,*999)
@@ -1025,8 +1124,11 @@ CONTAINS
         & TRIM(NumberToVString(cylinderMesh%generatedMesh%userNumber,"*",err,error))
       localError=localError//"."
     ENDIF
+#endif    
     
     basis=>cylinderMesh%bases(basisIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis corresponding to basis index "//TRIM(NumberToVString(basisIndex,"*",err,error))
       IF(ASSOCIATED(cylinderMesh%generatedMesh)) &
@@ -1034,6 +1136,7 @@ CONTAINS
         & TRIM(NumberToVString(cylinderMesh%generatedMesh%userNumber,"*",err,error))
       localError=localError//" is not associated."
     ENDIF
+#endif    
     
     EXITS("GeneratedMeshCylinder_BasisGet")
     RETURN
@@ -1057,10 +1160,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMeshEllipsoid_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(ellipsoidMesh)) CALL FlagError("Ellipsoid mesh is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(ellipsoidMesh%bases)) CALL FlagError("Ellipsoid mesh bases are not allocated.",err,error,*999)
@@ -1073,8 +1179,11 @@ CONTAINS
         & TRIM(NumberToVString(ellipsoidMesh%generatedMesh%userNumber,"*",err,error))
       localError=localError//"."
     ENDIF
+#endif    
     
     basis=>ellipsoidMesh%bases(basisIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis corresponding to basis index "//TRIM(NumberToVString(basisIndex,"*",err,error))
       IF(ASSOCIATED(ellipsoidMesh%generatedMesh)) &
@@ -1082,6 +1191,7 @@ CONTAINS
         & TRIM(NumberToVString(ellipsoidMesh%generatedMesh%userNumber,"*",err,error))
       localError=localError//" is not associated."
     ENDIF
+#endif    
     
     EXITS("GeneratedMeshEllipsoid_BasisGet")
     RETURN
@@ -1105,10 +1215,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("GeneratedMeshRegular_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(regularMesh)) CALL FlagError("Regular mesh is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(regularMesh%bases)) CALL FlagError("Regular mesh bases are not allocated.",err,error,*999)
@@ -1121,8 +1234,11 @@ CONTAINS
         & TRIM(NumberToVString(regularMesh%generatedMesh%userNumber,"*",err,error))
       localError=localError//"."
     ENDIF
+#endif    
     
     basis=>regularMesh%bases(basisIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis corresponding to basis index "//TRIM(NumberToVString(basisIndex,"*",err,error))
       IF(ASSOCIATED(regularMesh%generatedMesh)) &
@@ -1130,6 +1246,7 @@ CONTAINS
         & TRIM(NumberToVString(regularMesh%generatedMesh%userNumber,"*",err,error))
       localError=localError//" is not associated."
     ENDIF
+#endif    
     
     EXITS("GeneratedMeshRegular_BasisGet")
     RETURN

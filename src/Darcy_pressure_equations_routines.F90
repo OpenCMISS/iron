@@ -47,7 +47,7 @@ MODULE DARCY_PRESSURE_EQUATIONS_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -57,7 +57,6 @@ MODULE DARCY_PRESSURE_EQUATIONS_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -67,9 +66,9 @@ MODULE DARCY_PRESSURE_EQUATIONS_ROUTINES
   USE Kinds
   USE Maths
   USE MatrixVector
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE Timer
   USE Types
 
@@ -765,21 +764,21 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,0,err,error,*999)
-              CALL EquationsMapping_ResidualVariablesNumberSet(vectorMapping,2,err,error,*999)
-              CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping, &
-                  & [FIELD_V_VARIABLE_TYPE,FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,0,err,error,*999)
+              CALL EquationsMappingVector_ResidualNumberOfVariablesSet(viectorMapping,2,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping, &
+                & [FIELD_V_VARIABLE_TYPE,FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
                   & err,error,*999)
-                CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE, &
+                CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE, &
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -955,7 +954,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1006,7 +1005,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables

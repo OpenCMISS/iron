@@ -53,7 +53,6 @@ MODULE InterfaceOperatorsRoutines
   USE FieldAccessRoutines
   USE InputOutput
   USE InterfaceAccessRoutines
-  USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsRoutines
   USE InterfaceEquationsAccessRoutines

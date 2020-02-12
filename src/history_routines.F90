@@ -46,10 +46,10 @@ MODULE HISTORY_ROUTINES
   
   USE BaseRoutines
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE PROBLEM_CONSTANTS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE ProblemAccessRoutines
+  USE Strings
+  USE Types
 
 #include "macros.h"  
   
@@ -61,7 +61,7 @@ MODULE HISTORY_ROUTINES
 
   !> \addtogroup HISTORY_ROUTINES_FileFormatTypes HISTORY_ROUTINES::FileFormatTypes
   !> \brief The types of a file format for a history file.
-  !> \see SOLVER_ROUTINES
+  !> \see SolverRoutines
   !>@{
   INTEGER(INTG), PARAMETER :: HISTORY_ASCII_FILE_FORMAT=1 !<ASCII history file format \see HISTORY_ROUTINES_FileFormatTypes,HISTORY_ROUTINES
   INTEGER(INTG), PARAMETER :: HISTORY_BINARY_FILE_FORMAT=2 !Binary history file format \see HISTORY_ROUTINES_FileFormatTypes,HISTORY_ROUTINES
@@ -286,7 +286,7 @@ CONTAINS
         CASE(HISTORY_BINARY_FILE_FORMAT)
           HISTORY%FILE_FORMAT=HISTORY_BINARY_FILE_FORMAT
         CASE DEFAULT
-          LOCAL_ERROR="The supplied file format of "//TRIM(NUMBER_TO_VSTRING(FILE_FORMAT,"*",ERR,ERROR))//" is invalid."
+          LOCAL_ERROR="The supplied file format of "//TRIM(NumberToVString(FILE_FORMAT,"*",ERR,ERROR))//" is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF

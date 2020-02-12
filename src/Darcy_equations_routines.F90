@@ -1,9 +1,52 @@
-MODULE DARCY_EQUATIONS_ROUTINES  
+!> \file
+!> \brief This module handles all Darcy equations routines.
+!>
+!> \section LICENSE
+!>
+!> Version: MPL 1.1/GPL 2.0/LGPL 2.1
+!>
+!> The contents of this file are subject to the Mozilla Public License
+!> Version 1.1 (the "License"); you may not use this file except in
+!> compliance with the License. You may obtain a copy of the License at
+!> http://www.mozilla.org/MPL/
+!>
+!> Software distributed under the License is distributed on an "AS IS"
+!> basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+!> License for the specific language governing rights and limitations
+!> under the License.
+!>
+!> The Original Code is OpenCMISS
+!>
+!> The Initial Developer of the Original Code is University of Auckland,
+!> Auckland, New Zealand, the University of Oxford, Oxford, United
+!> Kingdom and King's College, London, United Kingdom. Portions created
+!> by the University of Auckland, the University of Oxford and King's
+!> College, London are Copyright (C) 2007-2010 by the University of
+!> Auckland, the University of Oxford and King's College, London.
+!> All Rights Reserved.
+!>
+!> Contributor(s): Adam Reeve, Chris Bradley
+!>
+!> Alternatively, the contents of this file may be used under the terms of
+!> either the GNU General Public License Version 2 or later (the "GPL"), or
+!> the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+!> in which case the provisions of the GPL or the LGPL are applicable instead
+!> of those above. If you wish to allow use of your version of this file only
+!> under the terms of either the GPL or the LGPL, and not to allow others to
+!> use your version of this file under the terms of the MPL, indicate your
+!> decision by deleting the provisions above and replace them with the notice
+!> and other provisions required by the GPL or the LGPL. If you do not delete
+!> the provisions above, a recipient may use your version of this file under
+!> the terms of any one of the MPL, the GPL or the LGPL.
+!>
+
+!>This module handles all Darcy equations routines.
+MODULE DarcyEquationsRoutines  
 
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -17,7 +60,6 @@ MODULE DARCY_EQUATIONS_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FIELD_IO_ROUTINES
@@ -30,9 +72,9 @@ MODULE DARCY_EQUATIONS_ROUTINES
   USE Maths
   USE MatrixVector
   USE MeshRoutines
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -41,7 +83,7 @@ MODULE DARCY_EQUATIONS_ROUTINES
 
   IMPLICIT NONE
 
-  PUBLIC DARCY_EQUATION_EQUATIONS_SET_SETUP
+  PUBLIC Darcy_EquationsSetSetup
   
   PUBLIC Darcy_EquationsSetSpecificationSet
   
@@ -49,28 +91,23 @@ MODULE DARCY_EQUATIONS_ROUTINES
   
   PUBLIC Darcy_BoundaryConditionsAnalyticCalculate
 
-  PUBLIC DARCY_EQUATION_PROBLEM_SETUP
+  PUBLIC Darcy_ProblemSetup
   
   PUBLIC Darcy_ProblemSpecificationSet
 
-  PUBLIC DARCY_EQUATION_FINITE_ELEMENT_CALCULATE
+  PUBLIC Darcy_FiniteElementCalculate
 
   PUBLIC Darcy_PreSolve
   
   PUBLIC Darcy_PostSolve
   
-  PUBLIC DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA
+  PUBLIC Darcy_PostSolveOutputData
 
-  PUBLIC DARCY_CONTROL_TIME_LOOP_PRE_LOOP
+  PUBLIC Darcy_PreLoop
 
   PUBLIC Darcy_PreSolveStorePreviousIterate
 
-  PUBLIC DARCY_EQUATION_MONITOR_CONVERGENCE
-
-  INTEGER(INTG) :: SOLVER_NUMBER_SOLID,SOLVER_NUMBER_MAT_PROPERTIES,SOLVER_NUMBER_DARCY
-  INTEGER(INTG) :: SOLVER_INDEX_SOLID,SOLVER_INDEX_MAT_PROPERTIES,SOLVER_INDEX_DARCY
-
-  REAL(DP) :: RESIDUAL_NORM_0
+  PUBLIC Darcy_MonitorConvergence
 
   LOGICAL :: idebug1, idebug2, idebug3
 
@@ -81,61 +118,60 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a Darcy equation type of a fluid mechanics equations set class.
-  SUBROUTINE Darcy_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
+  SUBROUTINE Darcy_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: esSpecification(3)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Darcy_EquationsSetSolutionMethodSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
-        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-        SELECT CASE(SOLUTION_METHOD)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+      SELECT CASE(solutionMethod)
+      CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+        equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
+      CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a Darcy equation type of a fluid mechanics equations set class."
+        localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Darcy equation type of a fluid mechanics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_EquationsSetSolutionMethodSet")
     RETURN
 999 ERRORSEXITS("Darcy_EquationsSetSolutionMethodSet",err,error)
     RETURN 1
+    
   END SUBROUTINE Darcy_EquationsSetSolutionMethodSet
 
   !
@@ -143,20 +179,33 @@ CONTAINS
   !
 
   !>Sets up the Darcy equation.
-  SUBROUTINE DARCY_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
+  SUBROUTINE Darcy_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set to setup
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equations_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: GEOMETRIC_SCALING_TYPE, GEOMETRIC_MESH_COMPONENT,NUMBER_OF_COMPONENTS,NUMBER_OF_DARCY_COMPONENTS
-    INTEGER(INTG) :: imy_matrix,Ncompartments
-    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
+    INTEGER(INTG) :: geometricScalingType, geometricMeshComponent,numberOfComponents,darcyNumberOfComponents
+    INTEGER(INTG) :: myMatrixIdx,numberOfCompartments
+    INTEGER:: dependentNumberOfVariables, dependentNumberOfComponents
+    INTEGER:: elasticityDependentNumberOfComponents, darcyDependentNumberOfComponents
+    INTEGER:: independentNumberOfVariables, independentNumberOfComponents
+    INTEGER:: numberOfDimensions, geometricComponentNumber
+    INTEGER:: materialsNumberOfVariables, materialFieldNumberOfComponents
+    INTEGER:: meshComponent,materialsNumberOfUComponents,materialsNumberOfVComponents
+    INTEGER:: materialsNumberOfU1Components
+    INTEGER:: componentIdx
+    INTEGER(INTG) :: variableIdx,variableCount
+    INTEGER(INTG) :: equationsSetNumberOfVariables,equationsSetNumberOfComponents,sourceNumberOfComponents
+    INTEGER(INTG), POINTER :: equationsSetFieldData(:)
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:),variableUTypes(:),couplingMatrixStorageType(:)
+    INTEGER(INTG), ALLOCATABLE :: couplingMatrixStructureType(:)
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsSetMaterialsType), POINTER :: equations_MATERIALS
+    TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsSetEquationsSetFieldType), POINTER :: eqsEquationsSetField
@@ -164,1525 +213,1376 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(EquationsSetSourceType), POINTER :: equationsSource
     TYPE(VARYING_STRING) :: localError
-    INTEGER:: DEPENDENT_FIELD_NUMBER_OF_VARIABLES, DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER:: DEPENDENT_FIELD_ELASTICITY_NUMBER_OF_COMPONENTS, DEPENDENT_FIELD_DARCY_NUMBER_OF_COMPONENTS
-    INTEGER:: INDEPENDENT_FIELD_NUMBER_OF_VARIABLES, INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER:: numberOfDimensions, GEOMETRIC_COMPONENT_NUMBER
-    INTEGER:: MATERIAL_FIELD_NUMBER_OF_VARIABLES, MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER:: MESH_COMPONENT,MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS,MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS
-    INTEGER:: MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS
-    INTEGER:: i,component_idx
 
-    INTEGER(INTG) :: num_var,num_var_count
-    INTEGER(INTG) :: equations_SET_FIELD_NUMBER_OF_VARIABLES,EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS,NUMBER_OF_SOURCE_COMPONENTS
-    INTEGER(INTG), POINTER :: equations_SET_FIELD_DATA(:)
-    INTEGER(INTG), ALLOCATABLE :: VARIABLE_TYPES(:),VARIABLE_U_TYPES(:),COUPLING_MATRIX_STORAGE_TYPE(:)
-    INTEGER(INTG), ALLOCATABLE :: COUPLING_MATRIX_STRUCTURE_TYPE(:)
+    ENTERS("Darcy_EquationsSetSetup",err,error,*999)
 
-    ENTERS("DARCY_EQUATION_EQUATIONS_SET_SETUP",err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
-    NULLIFY(EQUATIONS)
-    NULLIFY(vectorMapping)
-    NULLIFY(vectorMatrices)
-    NULLIFY(GEOMETRIC_DECOMPOSITION)
-    NULLIFY(eqsEquationsSetField)
-    NULLIFY(equationsSetField)
-    NULLIFY(EQUATIONS_SET_FIELD_DATA)
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.",err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
-        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%setupType)
+    NULLIFY(region)
+    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
 
-        !-----------------------------------------------------------------
-        ! s o l u t i o n   m e t h o d
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-             CALL Darcy_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-               !do nothing
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard or quasistatic Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              CALL Darcy_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
-
-              EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES = 1
-              EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS = 2
-              eqsEquationsSetField=>EQUATIONS_SET%equationsSetField
-              IF(eqsEquationsSetField%equationsSetFieldAutoCreated) THEN
-                !Create the auto created equations set field
-                CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
-                  & eqsEquationsSetField%equationsSetFieldField,err,error,*999)
-                equationsSetField=>eqsEquationsSetField%equationsSetFieldField
-                CALL Field_LabelSet(equationsSetField,"Equations Set Field",err,error,*999)
-                CALL Field_TypeSetAndLock(equationsSetField,FIELD_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeSetAndLock(equationsSetField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL Field_NumberOfVariablesSet(equationsSetField,EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(equationsSetField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                  & EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-              ELSE
-                !Check the user specified field
-                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES, &
-                  & err,error,*999)
-                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & err,error,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(EQUATIONS_SET%equationsSetField%equationsSetFieldAutoCreated) THEN
-                CALL Field_CreateFinish(EQUATIONS_SET%equationsSetField%equationsSetFieldField,err,error,*999)
-                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%equationsSetField%equationsSetFieldField,&
-                  & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, 1, 1_INTG, ERR, ERROR, *999)
-                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%equationsSetField%equationsSetFieldField,&
-                  & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, 2, 1_INTG, ERR, ERROR, *999)
-              ENDIF
-!!TODO: Check valid setup
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard or quasistatic Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          END SELECT
-
-        !-----------------------------------------------------------------
-        ! g e o m e t r y   f i e l d
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
-          !Do nothing
-          CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-
-              FIELD_VARIABLE=>EQUATIONS_SET%GEOMETRY%geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr
-
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                & FIELD_INITIAL_VALUES_SET_TYPE, ERR, ERROR, *999)
-
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                & FIELD_PREVIOUS_VALUES_SET_TYPE, ERR, ERROR, *999)
-
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                & FIELD_MESH_DISPLACEMENT_SET_TYPE, ERR, ERROR, *999)
-
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                & FIELD_MESH_VELOCITY_SET_TYPE, ERR, ERROR, *999)
-
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                & FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE, ERR, ERROR, *999)
-
-              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE .OR. &
-                 EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-                !Create the equations set field for multi-compartment Darcy
-                EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS = 2
-
-                eqsEquationsSetField=>EQUATIONS_SET%equationsSetField
-                equationsSetField=>eqsEquationsSetField%equationsSetFieldField
-
-                IF(eqsEquationsSetField%equationsSetFieldAutoCreated) THEN
-                  CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_DecompositionSetAndLock(equationsSetField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_GeometricFieldSetAndLock(equationsSetField,EQUATIONS_SET%GEOMETRY%geometricField,err,error,*999)
-                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                    & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  DO component_idx = 1, EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS
-                    CALL Field_ComponentMeshComponentSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,component_idx, &
-                      & GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,component_idx, &
-                      & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                  END DO
-
-                  !Default the field scaling to that of the geometric field
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(equationsSetField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                ELSE
-                  !Do nothing
-                ENDIF
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              ! do nothing
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a linear diffusion equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          END SELECT
-
-        !-----------------------------------------------------------------
-        ! d e p e n d e n t   f i e l d
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
-                !Create the auto created dependent field
-                CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
-                  & EQUATIONS_SET%dependent%dependentField,err,error,*999)
-                CALL Field_TypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
-
-                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL Field_DecompositionSetAndLock(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_DECOMPOSITION, &
-                  & err,error,*999)
-                CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                  & EQUATIONS_SET%GEOMETRY%geometricField,err,error,*999)
-
-                DEPENDENT_FIELD_NUMBER_OF_VARIABLES = 2  ! U and the normal component of its flux
-                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                  & DEPENDENT_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
-                    & err,error,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-
-                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                  & numberOfDimensions, ERR, ERROR, *999)
-                DEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions + 1
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField, FIELD_U_VARIABLE_TYPE, &
-                  & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS, ERR, ERROR, *999)
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE, DEPENDENT_FIELD_NUMBER_OF_COMPONENTS, ERR, ERROR, *999)
-                !Default to the geometric interpolation setup
-                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
-                  & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                DO i=1,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-                  IF( i < DEPENDENT_FIELD_NUMBER_OF_COMPONENTS ) THEN
-                    !Set velocity mesh component (default to the geometric one)
-                    MESH_COMPONENT = GEOMETRIC_MESH_COMPONENT
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                      & i, MESH_COMPONENT,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                      & i, MESH_COMPONENT,err,error,*999)
-                  ELSE
-                    !Set pressure mesh component (default to the geometric one)
-                    MESH_COMPONENT = GEOMETRIC_MESH_COMPONENT
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                      & i, MESH_COMPONENT,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                      & i, MESH_COMPONENT,err,error,*999)
-                  ENDIF
-                ENDDO
-
-                SELECT CASE(EQUATIONS_SET%solutionMethod)
-                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                  DO i = 1, DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-                    CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                      & FIELD_U_VARIABLE_TYPE,i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                      & FIELD_DELUDELN_VARIABLE_TYPE,i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  ENDDO
-                  !Default the scaling to the geometric field scaling
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              ELSE
-                !-----------------------------------
-                ! DEPENDENT_FIELD: not AUTO_CREATED
-                !-----------------------------------
-                SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-                  & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                  & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-                  !-----------------------------------------------------------------------
-                  ! Check the shared dependent field set up in finite elasticity routines
-                  !-----------------------------------------------------------------------
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,4,err,error,*999)
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
-                    & FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions, ERR, ERROR, *999)
-
-                  SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                  CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE)  !compressible elasticity
-                    DEPENDENT_FIELD_ELASTICITY_NUMBER_OF_COMPONENTS = numberOfDimensions
-                    DEPENDENT_FIELD_DARCY_NUMBER_OF_COMPONENTS = numberOfDimensions + 2  !(u,v,w,p,m)
-                  CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                    DEPENDENT_FIELD_ELASTICITY_NUMBER_OF_COMPONENTS = numberOfDimensions + 1
-                    DEPENDENT_FIELD_DARCY_NUMBER_OF_COMPONENTS = numberOfDimensions + 1
-                  CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-                    DEPENDENT_FIELD_ELASTICITY_NUMBER_OF_COMPONENTS = numberOfDimensions + 1 !(u1,u2,u3,p)
-                    DEPENDENT_FIELD_DARCY_NUMBER_OF_COMPONENTS = numberOfDimensions + 1 !(u,v,w,m)
-                  END SELECT
-
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & DEPENDENT_FIELD_ELASTICITY_NUMBER_OF_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                    & DEPENDENT_FIELD_ELASTICITY_NUMBER_OF_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE, &
-                    & DEPENDENT_FIELD_DARCY_NUMBER_OF_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELVDELN_VARIABLE_TYPE, &
-                    & DEPENDENT_FIELD_DARCY_NUMBER_OF_COMPONENTS,err,error,*999)
-
-                  SELECT CASE(EQUATIONS_SET%solutionMethod)
-                  CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                      !Mind that elastic hydrostatic pressure might be interpolated element-wise
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,1, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELVDELN_VARIABLE_TYPE,1, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE DEFAULT
-                    localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                      & " is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                  !-----------------------------------------------------------------------
-                  ! Check the shared dependent field set up in finite elasticity routines
-                  ! Must have 2+2*Ncompartments number of variable types
-                  !-----------------------------------------------------------------------
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                  !Get the number of Darcy compartments from the equations set field
-                    equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-                    CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                     & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,err,error,*999)
-                    Ncompartments=EQUATIONS_SET_FIELD_DATA(2)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,(2+2*Ncompartments),err,error,*999)
-                  ALLOCATE(VARIABLE_TYPES(2*Ncompartments+2))
-                  DO num_var=1,Ncompartments+1
-                    VARIABLE_TYPES(2*num_var-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                    VARIABLE_TYPES(2*num_var)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                  ENDDO
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES,err,error,*999)
-
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions,err,error,*999)
-                  NUMBER_OF_COMPONENTS=numberOfDimensions+1
-                  NUMBER_OF_DARCY_COMPONENTS=numberOfDimensions+1
-
-                  DO num_var=1,2*Ncompartments+2
-                    CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var),FIELD_VECTOR_DIMENSION_TYPE, &
-                      & err,error,*999)
-                    CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var),FIELD_DP_TYPE,err,error,*999)
-                    CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var),NUMBER_OF_COMPONENTS, &
-                      & err,error,*999)
-                  ENDDO
-
-                  SELECT CASE(EQUATIONS_SET%solutionMethod)
-                  CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                    !Elasticity:
-                   DO component_idx=1,numberOfDimensions
-                     CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
-                       & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                     CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,component_idx,&
-                       & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                   ENDDO !component_idx
-                   !If solid hydrostatic pressure is driving Darcy flow, check that pressure uses node based interpolation
-                   CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS,&
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                   CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                      & NUMBER_OF_COMPONENTS,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  DO num_var=3,2*Ncompartments+2
-                    !Darcy:
-                    DO component_idx=1,NUMBER_OF_DARCY_COMPONENTS
-                      CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var),component_idx, &
-                        & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    ENDDO !component_idx
-                  ENDDO
-                  CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE DEFAULT
-                    localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                      & " is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
-                  !Check the field created by Darcy routines for the multi-compartment model
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                  equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-                  CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                   & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,err,error,*999)
-                  Ncompartments=EQUATIONS_SET_FIELD_DATA(2)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,2*Ncompartments,err,error,*999)
-                  !Create & populate array storing all of the relevant variable types against which to check the field variables
-                  ALLOCATE(VARIABLE_TYPES(2*Ncompartments))
-                  DO num_var=1,Ncompartments
-                    VARIABLE_TYPES(2*num_var-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                    VARIABLE_TYPES(2*num_var)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                  ENDDO
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES,err,error,*999)
-
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions,err,error,*999)
-                  DO num_var=1,2*Ncompartments
-                    CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var), &
-                       & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                    CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var),FIELD_DP_TYPE,err,error,*999)
-                    CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var), &
-                       & numberOfDimensions+1,err,error,*999)
-                  ENDDO
-
-                  SELECT CASE(EQUATIONS_SET%solutionMethod)
-                  CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                      component_idx=1
-                    DO num_var=1,2*Ncompartments
-                     DO component_idx=1,numberOfDimensions+1
-                      CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var),component_idx, &
-                        & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                      !NOTE-pressure might use element based interpolation - need to account for this
-                     ENDDO
-                    ENDDO
-                  CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE DEFAULT
-                    localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                      & " is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-
-                CASE DEFAULT
-                  !--------------------------------
-                  ! Check the user specified field
-                  !--------------------------------
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE],&
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions, ERR, ERROR, *999)
-                  DEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions + 1
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                    & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-
-                  SELECT CASE(EQUATIONS_SET%solutionMethod)
-                  CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                    CALL FlagError("Not implemented.",err,error,*999)
-                  CASE DEFAULT
-                    localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                      & " is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                END SELECT ! on (EQUATIONS_SET%SPECIFICATION(3))
-              ENDIF ! on (EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated)
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
-                CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
-                CALL Field_ParameterSetCreate(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                   & FIELD_INITIAL_VALUES_SET_TYPE,err,error,*999)
-              ENDIF
-              IF(EQUATIONS_SET%SPECIFICATION(3)/=EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)THEN
-              !Actually, only needed for PGM (for elasticity_Darcy defined in elasticity V var):
-                CALL Field_ParameterSetCreate(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                   & FIELD_RELATIVE_VELOCITY_SET_TYPE,err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard, quasistatic or ALE Darcy equation"
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          END SELECT
-
-        !-----------------------------------------------------------------
-        ! I N d e p e n d e n t   f i e l d
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            !\todo: revise: do they all need an independent field ?
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              IF(EQUATIONS_SET%INDEPENDENT%independentFieldAutoCreated) THEN
-                !Create the auto created INdependent field
-                CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
-                  & EQUATIONS_SET%INDEPENDENT%independentField,err,error,*999)
-                CALL Field_TypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_GENERAL_TYPE,err,error,*999)
-
-                CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_INDEPENDENT_TYPE,&
-                  & err,error,*999)
-
-                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL Field_DecompositionSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,GEOMETRIC_DECOMPOSITION, &
-                  & err,error,*999)
-                CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, &
-                  & EQUATIONS_SET%GEOMETRY%geometricField,err,error,*999)
-
-                INDEPENDENT_FIELD_NUMBER_OF_VARIABLES = 2  ! U and the normal component of its flux
-                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, &
-                  & INDEPENDENT_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,[FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE,"Independent U", &
-                    & err,error,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                    & "Independent del U/del n",err,error,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-
-                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                  & numberOfDimensions, ERR, ERROR, *999)
-                INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions !+ 1
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, FIELD_U_VARIABLE_TYPE, &
-                  & INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS, ERR, ERROR, *999)
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE, INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS, ERR, ERROR, *999)
-                !Default to the geometric interpolation setup
-                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
-                  & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                DO i=1,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-                  IF( i < INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS ) THEN
-                    !Set velocity mesh component (default to the geometric one)
-                    MESH_COMPONENT = GEOMETRIC_MESH_COMPONENT
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
-                      & i, MESH_COMPONENT,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%INDEPENDENT%independentField,&
-                      & FIELD_DELUDELN_VARIABLE_TYPE, i, MESH_COMPONENT,err,error,*999)
-                  ELSE
-                    !Set pressure mesh component (default to the geometric one)
-                    MESH_COMPONENT = GEOMETRIC_MESH_COMPONENT
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
-                      & i, MESH_COMPONENT,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%INDEPENDENT%independentField,&
-                      & FIELD_DELUDELN_VARIABLE_TYPE, i, MESH_COMPONENT,err,error,*999)
-                  ENDIF
-                ENDDO
-
-                SELECT CASE(EQUATIONS_SET%solutionMethod)
-                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                  DO i = 1, INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-                    CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, &
-                      & FIELD_U_VARIABLE_TYPE,i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%INDEPENDENT%independentField, &
-                      & FIELD_DELUDELN_VARIABLE_TYPE,i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  ENDDO
-                  !Default the scaling to the geometric field scaling
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(EQUATIONS_SET%INDEPENDENT%independentField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              ELSE
-                !Check the user specified field
-                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-
-                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-
-                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
-                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
-                  & err,error,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & err,error,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & err,error,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                  & numberOfDimensions, ERR, ERROR, *999)
-                INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions !+ 1
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-
-                SELECT CASE(EQUATIONS_SET%solutionMethod)
-                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                  CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(EQUATIONS_SET%INDEPENDENT%independentFieldAutoCreated) THEN
-                CALL Field_CreateFinish(EQUATIONS_SET%INDEPENDENT%independentField,err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard, quasistatic or ALE Darcy equation"
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          END SELECT
-
-        !-----------------------------------------------------------------
-        !   m a t e r i a l   f i e l d
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
-            MATERIAL_FIELD_NUMBER_OF_VARIABLES = 1
-            SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-            CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,EQUATIONS_SET_ALE_DARCY_SUBTYPE)
-              !Porosity + scalar permeability/viscosity
-              MATERIAL_FIELD_NUMBER_OF_COMPONENTS = 2
-            CASE DEFAULT
-              !Porosity + symmetric permeability/viscosity tensor
-              MATERIAL_FIELD_NUMBER_OF_COMPONENTS = 7
-            END SELECT
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-              IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-                IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
-                  !Create the auto created materials field
-                  CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                    & materialsField,err,error,*999)
-                  CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_DECOMPOSITION, &
-                    & err,error,*999)
-                  CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%materialsField,EQUATIONS_SET%GEOMETRY% &
-                    & geometricField,err,error,*999)
-                  CALL Field_NumberOfVariablesSet(EQUATIONS_MATERIALS%materialsField, &
-                    & MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                  CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%materialsField,[FIELD_U_VARIABLE_TYPE], &
-                    & err,error,*999)
-                  CALL Field_VariableLabelSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE,"Material", &
-                      & err,error,*999)
-                  CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & MATERIAL_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                    & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-
-                  !Auto-created / default is node_based_interpolation: that's an expensive default ...
-                  !Maybe default should be constant; node_based should be requested by the user \todo
-                  DO i = 1, MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-                    CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & i,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  END DO
-
-                  !Default the field scaling to that of the geometric field
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                ELSE
-                  !Check the user specified field
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & MATERIAL_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set materials is not associated.",err,error,*999)
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-              IF( ASSOCIATED(EQUATIONS_MATERIALS) ) THEN
-                IF( EQUATIONS_MATERIALS%materialsFieldAutoCreated ) THEN
-                  CALL Field_CreateFinish(EQUATIONS_MATERIALS%materialsField,err,error,*999)
-                  !Set the default values for the materials field
-                  DO i=1,MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE, i, 1.0_DP, ERR, ERROR, *999)
-                  ENDDO
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set materials is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard, quasistatic or ALE Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-          !Materials field needs two extra variable types
-          !The V variable type stores the Darcy coupling coefficients that govern flux between compartments
-          !The U1 variable type stores the parameters for the constitutive laws that determine the partial pressure in each compartment
-          !For a first attempt at this, it will be assumed that the functional form of this law is the same for each compartment, with only the paramenters varying (default will be three components)
-            equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-            CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,err,error,*999)
-            Ncompartments=EQUATIONS_SET_FIELD_DATA(2)
-            MATERIAL_FIELD_NUMBER_OF_VARIABLES = 3
-            MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS = 2
-            MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS = Ncompartments
-            MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS = 3
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-              IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-                IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
-                  !Create the auto created materials field
-                  CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                    & materialsField,err,error,*999)
-                  CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_DECOMPOSITION, &
-                    & err,error,*999)
-                  CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%materialsField,EQUATIONS_SET%GEOMETRY% &
-                    & geometricField,err,error,*999)
-                  CALL Field_NumberOfVariablesSet(EQUATIONS_MATERIALS%materialsField, &
-                    & MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                  CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%materialsField,[FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U1_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U1_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U1_VARIABLE_TYPE, &
-                    & MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS,err,error,*999)
-                  CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                    & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-
-                  !Auto-created / default is node_based_interpolation: that's an expensive default ...
-                  !Maybe default should be constant; node_based should be requested by the user \todo
-                  DO i = 1, MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS
-                    CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & i,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  END DO
-                  DO i = 1, MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS
-                    CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_V_VARIABLE_TYPE, &
-                      & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_V_VARIABLE_TYPE, &
-                      & i,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  END DO
-                  DO i = 1, MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS
-                    CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U1_VARIABLE_TYPE, &
-                      & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U1_VARIABLE_TYPE, &
-                      & i,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  END DO
-
-                  !Default the field scaling to that of the geometric field
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                ELSE
-                  !Check the user specified field
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                     & MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE, &
-                     & MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE, &
-                     & MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS,err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set materials is not associated.",err,error,*999)
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-              IF( ASSOCIATED(EQUATIONS_MATERIALS) ) THEN
-                IF( EQUATIONS_MATERIALS%materialsFieldAutoCreated ) THEN
-                  CALL Field_CreateFinish(EQUATIONS_MATERIALS%materialsField,err,error,*999)
-                  !Set the default values for the materials field
-                  DO i=1,MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE, i, 1.0_DP, ERR, ERROR, *999)
-                  ENDDO
-                  DO i=1,MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_V_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE, i, 0.0_DP, ERR, ERROR, *999)
-                  ENDDO
-                  DO i=1,MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS
-                    CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U1_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE, i, 0.0_DP, ERR, ERROR, *999)
-                  ENDDO
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set materials is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard, quasistatic or ALE Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          END SELECT
-
-        !-----------------------------------------------------------------
-        !   a n a l y t i c   f i e l d
-        !-----------------------------------------------------------------
-
-        CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
-
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
-              SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-                !Set start action
-              CASE(EQUATIONS_SET_SETUP_START_ACTION)
-                CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
-                IF(ASSOCIATED(EQUATIONS_SET%dependent%dependentField)) THEN
-                  IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%geometricField)) THEN
-                    CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                      & numberOfDimensions,err,error,*999)
-                    SELECT CASE(EQUATIONS_SET_SETUP%analyticFunctionType)
-                    CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1
-                    CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2
-                    CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3
-                    CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1
-                    CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2
-                    CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3
-                    CASE(EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
-                    CASE DEFAULT
-                      localError="The specified analytic function type of "// &
-                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
-                        & " is invalid for an analytic Darcy problem."
-                      CALL FlagError(localError,err,error,*999)
-                    END SELECT
-                  ELSE
-                    CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-                ENDIF
-               CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-                  IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                    IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC%analyticField)) THEN
-                      IF(EQUATIONS_SET%ANALYTIC%analyticFieldAutoCreated) THEN
-                        !--- Why finish the dependent field and not the analytic one ???
-                        CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
-                      ENDIF
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-                  ENDIF
-                CASE DEFAULT
-                  localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                    & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                    & " is invalid for an analytic Darcy problem."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-          CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-              SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-                !Set start action
-              CASE(EQUATIONS_SET_SETUP_START_ACTION)
-                CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
-                IF(ASSOCIATED(EQUATIONS_SET%dependent%dependentField)) THEN
-                  IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%geometricField)) THEN
-                    CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                      & numberOfDimensions,err,error,*999)
-                    !Initialise analytic parameter which stores value of time to zero - need to update this somewhere in a pre_solve routine
-                    SELECT CASE(EQUATIONS_SET_SETUP%analyticFunctionType)
-                    CASE(EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)
-                      !Set analytic function type
-                      EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
-                    CASE DEFAULT
-                      localError="The specified analytic function type of "// &
-                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
-                        & " is invalid for an analytic Darcy problem."
-                      CALL FlagError(localError,err,error,*999)
-                    END SELECT
-                  ELSE
-                    CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-                ENDIF
-              CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-                  IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                    IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC%analyticField)) THEN
-                      IF(EQUATIONS_SET%ANALYTIC%analyticFieldAutoCreated) THEN
-                        !--- Why finish the dependent field and not the analytic one ???
-                        CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
-                      ENDIF
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-                  ENDIF
-                CASE DEFAULT
-                  localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                    & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                    & " is invalid for an analytic Darcy problem."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-          CASE DEFAULT
-            localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-
-        !-----------------------------------------------------------------
-        !   s o u r c e   t y p e   -   include gravity at some point
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              equationsSource=>EQUATIONS_SET%SOURCE
-              IF(ASSOCIATED(equationsSource)) THEN
-                IF(equationsSource%sourceFieldAutoCreated) THEN
-                  CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,equationsSource% &
-                    & sourceField,err,error,*999)
-                  CALL Field_LabelSet(equationsSource%sourceField,"Source Field",err,error,*999)
-                  CALL Field_TypeSetAndLock(equationsSource%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeSetAndLock(equationsSource%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_DecompositionSetAndLock(equationsSource%sourceField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                  CALL Field_GeometricFieldSetAndLock(equationsSource%sourceField,EQUATIONS_SET%GEOMETRY% &
-                    & geometricField,err,error,*999)
-                  CALL Field_NumberOfVariablesSetAndLock(equationsSource%sourceField,1,err,error,*999)
-                  CALL Field_VariableTypesSetAndLock(equationsSource%sourceField,[FIELD_U_VARIABLE_TYPE], &
-                    & err,error,*999)
-                  CALL Field_VariableLabelSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,"Source", &
-                      & err,error,*999)
-                  CALL Field_DimensionSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions, ERR, ERROR, *999)
-                    NUMBER_OF_SOURCE_COMPONENTS = numberOfDimensions + 1
-                  CALL Field_NumberOfComponentsSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                    & NUMBER_OF_SOURCE_COMPONENTS,err,error,*999)
-
-                  !Default the source components to the geometric interpolation setup with nodal interpolation
-                  IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-                    & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-                    !nodal / mesh based
-                    DO component_idx=1,numberOfDimensions !NUMBER_OF_SOURCE_COMPONENTS
-                      CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                        & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                      CALL Field_ComponentInterpolationSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                        & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                      CALL Field_ComponentMeshComponentSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                       & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                    ENDDO !component_idx
-                    !Set source component 'numberOfDimensions + 1' according to GEOMETRIC_MESH_COMPONENT 'numberOfDimensions'
-                    CALL Field_ComponentInterpolationSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                      & numberOfDimensions + 1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                      & numberOfDimensions + 1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                  ENDIF
-                  !Default the field scaling to that of the geometric field
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                  CALL Field_ScalingTypeSet(equationsSource%sourceField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                ELSE
-                  !Check the user specified field
-                  CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions, ERR, ERROR, *999)
-                    NUMBER_OF_SOURCE_COMPONENTS = numberOfDimensions + 1
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & NUMBER_OF_SOURCE_COMPONENTS,err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set source is not associated.",err,error,*999)
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              equationsSource=>EQUATIONS_SET%SOURCE
-              IF(ASSOCIATED(equationsSource)) THEN
-                IF(equationsSource%sourceFieldAutoCreated) THEN
-                  !Finish creating the source field
-                  CALL Field_CreateFinish(equationsSource%sourceField,err,error,*999)
-                  !Set the default values for the source field
-                  CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDimensions,err,error,*999)
-                  IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-                    & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-                    NUMBER_OF_SOURCE_COMPONENTS = numberOfDimensions + 1
-                  ELSE
-                    NUMBER_OF_SOURCE_COMPONENTS=0
-                  ENDIF
-                  !Now set the source values to 0.0
-                  DO component_idx=1,NUMBER_OF_SOURCE_COMPONENTS
-                    CALL Field_ComponentValuesInitialise(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,component_idx,0.0_DP,err,error,*999)
-                  ENDDO !component_idx
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set source is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard, quasistatic or ALE Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          END SELECT
-
-        !-----------------------------------------------------------------
-        !   e q u a t i o n s   t y p e
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          !-----------------------------------------------------------------
-          !   s t a t i c
-          !-----------------------------------------------------------------
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              CALL EquationsSet_AssertMaterialsIsFinished(EQUATIONS_SET,err,error,*999)
-              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
-              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              SELECT CASE(EQUATIONS_SET%solutionMethod)
-              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
-                  !!!!!THE FOLLOWING IF STATEMENT IS ILLUSTRATIVE ONLY - need to implement the equation set field thing, and make a generalised case statement
-                  CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
-                  CALL Equations_CreateFinish(equations,err,error,*999)
-                  NULLIFY(vectorEquations)
-                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                  !Create the equations mapping.
-                  CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-                  CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-                  equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-                  CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,err,error,*999)
-                  imy_matrix = EQUATIONS_SET_FIELD_DATA(1)
-                  Ncompartments = EQUATIONS_SET_FIELD_DATA(2)
-                  ALLOCATE(VARIABLE_TYPES(2*Ncompartments))
-                  DO num_var=1,Ncompartments
-                    VARIABLE_TYPES(2*num_var-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                    VARIABLE_TYPES(2*num_var)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                  ENDDO
-                  CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[VARIABLE_TYPES(2*imy_matrix-1)], &
-                    & err,error,*999)
-                  CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix),err,error,*999)
-                  CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-                  !Create the equations matrices
-                  CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                  SELECT CASE(equations%sparsityType)
-                  CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-                      & err,error,*999)
-                  CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                      & err,error,*999)
-                    CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
-                      & err,error,*999)
-                  CASE DEFAULT
-                    localError="The equations matrices sparsity type of "// &
-                      & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                  CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-                CASE DEFAULT
-                  !Finish the equations creation
-                  CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
-                  CALL Equations_CreateFinish(equations,err,error,*999)
-                  NULLIFY(vectorEquations)
-                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                  !Create the equations mapping.
-                  CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-                  CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-                  CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
-                    & err,error,*999)
-                  CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-                  CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-                  !Create the equations matrices
-                  CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                  SELECT CASE(equations%sparsityType)
-                  CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-                      & err,error,*999)
-                  CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                      & err,error,*999)
-                    CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
-                      & err,error,*999)
-                  CASE DEFAULT
-                    localError="The equations matrices sparsity type of "// &
-                      & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                  CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-                END SELECT
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                  localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          !-----------------------------------------------------------------
-          !   q u a s i s t a t i c   and    A L E
-          !-----------------------------------------------------------------
-          CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              CALL EquationsSet_AssertMaterialsIsFinished(EQUATIONS_SET,err,error,*999)
-              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
-              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_QUASISTATIC,err,error,*999)
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              SELECT CASE(EQUATIONS_SET%solutionMethod)
-              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                !Finish the equations creation
-                CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
-                CALL Equations_CreateFinish(equations,err,error,*999)
-                NULLIFY(vectorEquations)
-                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-                SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                  CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_V_VARIABLE_TYPE], &
-                    & err,error,*999)
-                  CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
-                CASE DEFAULT
-                  CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
-                    & err,error,*999)
-                  CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-                END SELECT
-                CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-                !Create the equations matrices
-                CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                SELECT CASE(equations%sparsityType)
-                CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-                    & err,error,*999)
-                CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                    & err,error,*999)
-                  CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
-                    & err,error,*999)
-                CASE DEFAULT
-                  localError="The equations matrices sparsity type of "// &
-                    & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a quasistatic Darcy equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          !-----------------------------------------------------------------
-          !   d y n a m i c
-          !-----------------------------------------------------------------
-          CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
-              & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-              & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-              CASE(EQUATIONS_SET_SETUP_START_ACTION)
-                CALL EquationsSet_AssertMaterialsIsFinished(EQUATIONS_SET,err,error,*999)
-                CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
-                CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
-                CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-              CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-                SELECT CASE(EQUATIONS_SET%solutionMethod)
-                  CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                    !Finish the equations creation
-                    CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
-                    CALL Equations_CreateFinish(equations,err,error,*999)
-                    NULLIFY(vectorEquations)
-                    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                    !Create the equations mapping.
-                    CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping, &
-                      & err,error,*999)
-                    IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE .OR. &
-                      & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                      CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,0,err,error,*999)
-                    ENDIF
-                    CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-                    SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                    CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-                      CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_V_VARIABLE_TYPE,err,error,*999)
-                      CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE, &
-                        & err,error,*999)
-                      IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                        CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-                      ENDIF
-                    CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                      equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-                      CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                         & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,err,error,*999)
-                      imy_matrix = EQUATIONS_SET_FIELD_DATA(1)
-                      Ncompartments = EQUATIONS_SET_FIELD_DATA(2)
-                      CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,Ncompartments-1,err,error,*999)
-                      ALLOCATE(VARIABLE_TYPES(2*Ncompartments+2))
-                      ALLOCATE(VARIABLE_U_TYPES(Ncompartments-1))
-                      DO num_var=1,Ncompartments+1
-                        VARIABLE_TYPES(2*num_var-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                        VARIABLE_TYPES(2*num_var)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(num_var-1))
-                      ENDDO
-                      num_var_count=0
-                      DO num_var=2,Ncompartments+1
-                        IF((num_var-1)/=imy_matrix)THEN
-                          num_var_count=num_var_count+1
-                          VARIABLE_U_TYPES(num_var_count)=VARIABLE_TYPES(2*num_var-1)
-                        ENDIF
-                      ENDDO
-                      CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix+1), &
-                         & err,error,*999)
-                      CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,VARIABLE_U_TYPES,err,error,*999)
-                      CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix+2),err,error,*999)
-                      CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-                    CASE DEFAULT
-                    CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-                    CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE, &
-                      & err,error,*999)
-                    END SELECT
-                    CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-                    !Create the equations matrices
-                    CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                    !Set up matrix storage and structure
-                    IF(equations%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
-                      !Set up lumping
-                      CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
-                        & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
-                      CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
-                        & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE] &
-                        & ,err,error,*999)
-                      CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
-                        & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
-                    ELSE
-                      SELECT CASE(equations%sparsityType)
-                        CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                        CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
-                            & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-                        CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                          CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
-                            & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
-                            & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                          CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
-                            & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-                            IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)THEN
-                              ALLOCATE(COUPLING_MATRIX_STORAGE_TYPE(Ncompartments-1))
-                              ALLOCATE(COUPLING_MATRIX_STRUCTURE_TYPE(Ncompartments-1))
-                              DO num_var=1,Ncompartments-1
-                               COUPLING_MATRIX_STORAGE_TYPE(num_var)=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-                               COUPLING_MATRIX_STRUCTURE_TYPE(num_var)=EQUATIONS_MATRIX_FEM_STRUCTURE
-                              ENDDO
-                              CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,COUPLING_MATRIX_STORAGE_TYPE, &
-                                & err,error,*999)
-                              CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,COUPLING_MATRIX_STRUCTURE_TYPE, &
-                                & err,error,*999)
-                            ENDIF
-                        CASE DEFAULT
-                          localError="The equations matrices sparsity type of "// &
-                            & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                          CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    ENDIF
-                    CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-                  CASE DEFAULT
-                    localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*", &
-                      & err,error))//" is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-                  & " is invalid for a Darcy equation."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          !-----------------------------------------------------------------
-          !   D e f a u l t
-          !-----------------------------------------------------------------
-          CASE DEFAULT
-            localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-              & " for a setup of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-
-        !-----------------------------------------------------------------
-        !   c a s e   d e f a u l t
-        !-----------------------------------------------------------------
+    SELECT CASE(equationsSetSetup%setupType)
+    CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
+      !-----------------------------------------------------------------
+      ! I n i t i a l   s e t u p
+      !-----------------------------------------------------------------
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL Darcy_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          !do nothing
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a standard, quasistatic, ALE or dynamic Darcy equation."
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard or quasistatic Darcy equation."
           CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        equationsSetNumberOfVariables = 1
+        equationsSetNumberOfComponents = 2
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL Darcy_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
+          IF(equationsSet%equationsSetField%equationsSetFieldAutoCreated) THEN
+            !Create the auto created equations set field
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region, &
+              & equationsSet%equationsSetField%equationsSetFieldField,err,error,*999)
+            NULLIFY(equationsSetField)
+            CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+            CALL Field_LabelSet(equationsSetField,"Equations Set Field",err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSetField,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsSetField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesSet(equationsSetField,equationsSetNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSetField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,equationsSetNumberOfComponents, &
+              & err,error,*999)
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,equationsSetNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_INTG_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+              & equationsSetNumberOfComponents,err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%equationsSetField%equationsSetFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsSet%equationsSetField%equationsSetFieldField,err,error,*999)
+            CALL Field_ComponentValuesInitialise(equationsSet%equationsSetField%equationsSetFieldField,&
+              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1_INTG,err,error,*999)
+            CALL Field_ComponentValuesInitialise(equationsSet%equationsSetField%equationsSetFieldField,&
+              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2,1_INTG,err,error,*999)
+          ENDIF
+!!TODO: Check valid setup
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard or quasistatic Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      END SELECT
 
+    CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
+      !-----------------------------------------------------------------
+      ! g e o m e t r y   f i e l d
+      !-----------------------------------------------------------------
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
+        !Do nothing
+      CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)        
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          NULLIFY(geometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+          NULLIFY(geometricVariable)
+          CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(geometricVariable,FIELD_INITIAL_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(geometricVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(geometricVariable,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(geometricVariable,FIELD_MESH_VELOCITY_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(geometricVariable,FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE,err,error,*999)
+          IF(esSpecification(3)==EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE .OR. &
+            esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+            !Create the equations set field for multi-compartment Darcy
+            equationsSetNumberOfComponents = 2
+            NULLIFY(eqsEquationsSetField)
+            CALL EquationsSet_EquationsSetFieldGet(equationsSet,eqsEquationsSetField,err,error,*999)
+            NULLIFY(equationsSetField)
+            CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+            IF(eqsEquationsSetField%equationsSetFieldAutoCreated) THEN
+              NULLIFY(geometricDecomposition)
+              CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+              CALL Field_DecompositionSetAndLock(equationsSetField,geometricDecomposition,err,error,*999)
+              CALL Field_GeometricFieldSetAndLock(equationsSetField,geometricField,err,error,*999)
+              CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+              DO componentIdx=1,equationsSetNumberOfComponents
+                CALL Field_ComponentMeshComponentSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                  & geometricComponentNumber,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                  & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+              ENDDO !componentIdx
+              !Default the field scaling to that of the geometric field
+              CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+              CALL Field_ScalingTypeSet(equationsSetField,geometricScalingType,err,error,*999)
+            ELSE
+              !Do nothing
+            ENDIF
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          ! do nothing
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a linear diffusion equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
+      !-----------------------------------------------------------------
+      ! d e p e n d e n t   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        dependentNumberOfVariables = 2  ! U and the normal component of its flux
+        dependentNumberOfComponents = numberOfDimensions + 1
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+            !Create the auto created dependent field
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition, err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,dependentNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
+            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
+              & err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)            
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, FIELD_U_VARIABLE_TYPE, &
+              & dependentNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, &
+              & FIELD_DELUDELN_VARIABLE_TYPE, dependentNumberOfComponents,err,error,*999)
+            !Default to the geometric interpolation setup
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+            DO componentIdx=1,dependentNumberOfComponents
+              IF(componentIdx<dependentNumberOfComponents ) THEN
+                !Set velocity mesh component (default to the geometric one)
+                meshComponent = geometricMeshComponent
+                CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+                  & componentIdx,meshComponent,err,error,*999)
+                CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & componentIdx,meshComponent,err,error,*999)
+              ELSE
+                !Set pressure mesh component (default to the geometric one)
+                meshComponent = geometricMeshComponent
+                CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+                  & componentIdx,meshComponent,err,error,*999)
+                CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & componentIdx,meshComponent,err,error,*999)
+              ENDIF
+            ENDDO !componentIdx
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+              DO componentIdx=1,dependentNumberOfComponents
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              ENDDO !componentIdx
+              !Default the scaling to the geometric field scaling
+              CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+              CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType,err,error,*999)
+            CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ELSE
+            SELECT CASE(esSpecification(3))
+            CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+              & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+              !-----------------------------------------------------------------------
+              ! Check the shared dependent field set up in finite elasticity routines
+              !-----------------------------------------------------------------------
+              CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                & err,error,*999)
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                & err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              SELECT CASE(esSpecification(3))
+              CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE)  !compressible elasticity
+                elasticityDependentNumberOfComponents = numberOfDimensions
+                darcyDependentNumberOfComponents = numberOfDimensions + 2  !(u,v,w,p,m)
+              CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
+                elasticityDependentNumberOfComponents = numberOfDimensions + 1
+                darcyDependentNumberOfComponents = numberOfDimensions + 1
+              CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+                elasticityDependentNumberOfComponents = numberOfDimensions + 1 !(u1,u2,u3,p)
+                darcyDependentNumberOfComponents = numberOfDimensions + 1 !(u,v,w,m)
+              END SELECT
+              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+                & elasticityDependentNumberOfComponents,err,error,*999)
+              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & elasticityDependentNumberOfComponents,err,error,*999)
+              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE, &
+                & darcyDependentNumberOfComponents,err,error,*999)
+              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE, &
+                & darcyDependentNumberOfComponents,err,error,*999)
+              CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)              
+              SELECT CASE(solutionMethod)
+              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                !Mind that elastic hydrostatic pressure might be interpolated element-wise
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,1, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,1, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+              !-----------------------------------------------------------------------
+              ! Check the shared dependent field set up in finite elasticity routines
+              ! Must have 2+2*numberOfCompartments number of variable types
+              !-----------------------------------------------------------------------
+              CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+              !Get the number of Darcy compartments from the equations set field
+              NULLIFY(equationsSetField)
+              CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+              CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,equationsSetFieldData,err,error,*999)
+              numberOfCompartments=equationsSetFieldData(2)
+              CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,(2+2*numberOfCompartments),err,error,*999)
+              ALLOCATE(variableTypes(2*numberOfCompartments+2))
+              DO variableIdx=1,numberOfCompartments+1
+                variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+                variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+              ENDDO !variableIdx
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,variableTypes,err,error,*999)
+              numberOfComponents=numberOfDimensions+1
+              darcyNumberOfComponents=numberOfDimensions+1              
+              DO variableIdx=1,2*numberOfCompartments+2
+                CALL Field_DimensionCheck(equationsSetSetup%field,variableTypes(variableIdx),FIELD_VECTOR_DIMENSION_TYPE, &
+                  & err,error,*999)
+                CALL Field_DataTypeCheck(equationsSetSetup%field,variableTypes(variableIdx),FIELD_DP_TYPE,err,error,*999)
+                CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,variableTypes(variableIdx),numberOfComponents, &
+                  & err,error,*999)
+              ENDDO !variableIdx
+              CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+              SELECT CASE(solutionMethod)
+              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+                !Elasticity:
+                DO componentIdx=1,numberOfDimensions
+                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,&
+                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                ENDDO !componentIdx
+                !If solid hydrostatic pressure is driving Darcy flow, check that pressure uses node based interpolation
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,&
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                DO variableIdx=3,2*numberOfCompartments+2
+                  !Darcy:
+                  DO componentIdx=1,darcyNumberOfComponents
+                    CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,variableTypes(variableIdx),componentIdx, &
+                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  ENDDO !componentIdx
+                ENDDO !variableIdx
+              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
+              !Check the field created by Darcy routines for the multi-compartment model
+              CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+              NULLIFY(equationsSetField)
+              CALL EquationsSet_EquationSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+              equationsSetField=>equationsSet%equationsSetField%equationsSetFieldField
+              CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & equationsSetFieldData,err,error,*999)
+              numberOfCompartments=equationsSetFieldData(2)
+              CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2*numberOfCompartments,err,error,*999)
+              !Create & populate array storing all of the relevant variable types against which to check the field variables
+              ALLOCATE(variableTypes(2*numberOfCompartments))
+              DO variableIdx=1,numberOfCompartments
+                variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+                variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+              ENDDO !variableIdx
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,variableTypes,err,error,*999)
+              DO variableIdx=1,2*numberOfCompartments
+                CALL Field_DimensionCheck(equationsSetSetup%field,variableTypes(variableIdx),FIELD_VECTOR_DIMENSION_TYPE, &
+                  & err,error,*999)
+                CALL Field_DataTypeCheck(equationsSetSetup%field,variableTypes(variableIdx),FIELD_DP_TYPE,err,error,*999)
+                CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,variableTypes(variableIdx),numberOfDimensions+1, &
+                  & err,error,*999)
+              ENDDO !variableIdx
+              CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+              SELECT CASE(solutionMethod)
+              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+                componentIdx=1
+                DO variableIdx=1,2*numberOfCompartments
+                  DO componentIdx=1,numberOfDimensions+1
+                    CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,variableTypes(variableIdx),componentIdx, &
+                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                    !NOTE-pressure might use element based interpolation - need to account for this
+                  ENDDO !componentIdx
+                ENDDO !variableIdx
+              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            CASE DEFAULT
+              !--------------------------------
+              ! Check the user specified field
+              !--------------------------------
+              CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2,err,error,*999)
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE],&
+                & err,error,*999)
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                & err,error,*999)
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                & err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
+                & numberOfDimensions,err,error,*999)
+              dependentNumberOfComponents = numberOfDimensions + 1
+              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+                & dependentNumberOfComponents,err,error,*999)
+              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & dependentNumberOfComponents,err,error,*999)
+
+              SELECT CASE(equationsSet%solutionMethod)
+              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            END SELECT ! on (equationsSet%SPECIFICATION(3))
+          ENDIF ! on (equationsSet%dependent%dependentFieldAutoCreated)
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
+            CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_INITIAL_VALUES_SET_TYPE,err,error,*999)
+          ENDIF
+          IF(esSpecification(3)/=EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)THEN
+            !Actually, only needed for PGM (for elasticity_Darcy defined in elasticity V var):
+            CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_RELATIVE_VELOCITY_SET_TYPE,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard, quasistatic or ALE Darcy equation"
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
+      !-----------------------------------------------------------------
+      ! I N d e p e n d e n t   f i e l d
+      !-----------------------------------------------------------------
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        !\todo: revise: do they all need an independent field ?
+        NULLIFY(equationsIndependent)
+        CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+        independentNumberOfVariables = 2  ! U and the normal component of its flux
+        independentNumberOfComponents = numberOfDimensions !+ 1
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsIndependent%independentFieldAutoCreated) THEN
+            !Create the auto created INdependent field
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsIndependent%independentField,err,error,*999)
+            CALL Field_TypeSetAndLock(equationsIndependent%independentField,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsIndependent%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsIndependent%independentField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsIndependent%independentField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsIndependent%independentField, &
+              & independentNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsIndependent%independentField,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableLabelSet(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE,"Independent U", &
+              & err,error,*999)
+            CALL Field_VariableLabelSet(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & "Independent del U/del n",err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField, FIELD_U_VARIABLE_TYPE, &
+              & independentNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsIndependent%independentField, &
+              & FIELD_DELUDELN_VARIABLE_TYPE,independentNumberOfComponents,err,error,*999)
+            !Default to the geometric interpolation setup
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+            DO componentIdx=1,independentNumberOfComponents
+              IF(componentIdx<independentNumberOfComponents) THEN
+                !Set velocity mesh component (default to the geometric one)
+                meshComponent = geometricMeshComponent
+                CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+                  & componentIdx,meshComponent,err,error,*999)
+                CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,&
+                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,meshComponent,err,error,*999)
+              ELSE
+                !Set pressure mesh component (default to the geometric one)
+                meshComponent = geometricMeshComponent
+                CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
+                  & componentIdx,meshComponent,err,error,*999)
+                CALL Field_ComponentMeshComponentSet(equationsIndependent%independentField,&
+                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,meshComponent,err,error,*999)
+              ENDIF
+            ENDDO !componentIdx
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)            
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+              DO componentIdx=1,independentNumberOfComponents
+                CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField, &
+                  & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsIndependent%independentField, &
+                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              ENDDO !componentIdx
+              !Default the scaling to the geometric field scaling
+              CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+              CALL Field_ScalingTypeSet(equationsIndependent%independentField,geometricScalingType,err,error,*999)
+            CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)            
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)            
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,independentNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+              & err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              & err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              & err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+              & independentNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & independentNumberOfComponents,err,error,*999)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)            
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsIndependent%independentFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsIndependent%independentField,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard, quasistatic or ALE Darcy equation"
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
+      !-----------------------------------------------------------------
+      !   m a t e r i a l   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(equationsMaterials)
+      CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
+        materialsNumberOfVariables = 1
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,EQUATIONS_SET_ALE_DARCY_SUBTYPE)
+          !Porosity + scalar permeability/viscosity
+          materialFieldNumberOfComponents = 2
+        CASE DEFAULT
+          !Porosity + symmetric permeability/viscosity tensor
+          materialFieldNumberOfComponents = 7
+        END SELECT
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsMaterials%materialsFieldAutoCreated) THEN
+            !Create the auto created materials field
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsMaterials%materialsField,err,error,*999)
+            CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField,materialsNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableLabelSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,"Material",err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & materialFieldNumberOfComponents,err,error,*999)
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+            !Auto-created / default is node_based_interpolation: that's an expensive default ...
+            !Maybe default should be constant; node_based should be requested by the user \todo
+            DO componentIdx=1,materialFieldNumberOfComponents
+              CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & componentIdx,geometricComponentNumber,err,error,*999)
+            ENDDO !componentIdx
+            !Default the field scaling to that of the geometric field
+            CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,materialsNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              & err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+              & materialFieldNumberOfComponents,err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF( equationsMaterials%materialsFieldAutoCreated ) THEN
+            CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
+            !Set the default values for the materials field
+            DO i=1,materialFieldNumberOfComponents
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE, i, 1.0_DP,err,error,*999)
+            ENDDO
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard, quasistatic or ALE Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        !Materials field needs two extra variable types
+        !The V variable type stores the Darcy coupling coefficients that govern flux between compartments
+        !The U1 variable type stores the parameters for the constitutive laws that determine the partial pressure in
+        !each compartment
+        !For a first attempt at this, it will be assumed that the functional form of this law is the same for each
+        !compartment, with only the paramenters varying (default will be three components)
+        NULLIFY(equationsSetField)
+        CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+        CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetFieldData, &
+          & err,error,*999)
+        numberOfCompartments=equationsSetFieldData(2)
+        materialsNumberOfVariables = 3
+        materialsNumberOfUComponents = 2
+        materialsNumberOfVComponents = numberOfCompartments
+        materialsNumberOfU1Components = 3
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsMaterials%materialsFieldAutoCreated) THEN
+            !Create the auto created materials field
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsMaterials%materialsField,err,error,*999)
+            CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField,materialsNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U1_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & materialsNumberOfUComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+              & materialsNumberOfVComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U1_VARIABLE_TYPE, &
+              & materialsNumberOfU1Components,err,error,*999)
+            CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
+              & 1,geometricComponentNumber,err,error,*999)            
+            !Auto-created / default is node_based_interpolation: that's an expensive default ...
+            !Maybe default should be constant; node_based should be requested by the user \todo
+            DO i = 1, materialsNumberOfUComponents
+              CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & i,geometricComponentNumber,err,error,*999)
+            END DO
+            DO i = 1, materialsNumberOfVComponents
+              CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+                & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+                & i,geometricComponentNumber,err,error,*999)
+            END DO
+            DO i = 1, materialsNumberOfU1Components
+              CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U1_VARIABLE_TYPE, &
+                & i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U1_VARIABLE_TYPE, &
+                & i,geometricComponentNumber,err,error,*999)
+            END DO
+            !Default the field scaling to that of the geometric field
+            CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,materialsNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,materialsNumberOfUComponents, &
+              & err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,materialsNumberOfVComponents, &
+              & err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,materialsNumberOfU1Components, &
+              & err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF( equationsMaterials%materialsFieldAutoCreated ) THEN
+            CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
+            !Set the default values for the materials field
+            DO componentIdx=1,materialsNumberOfUComponents
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+            ENDDO !componentIdx
+            DO componentIdx=1,materialsNumberOfVComponents
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+            ENDDO !componentIdx
+            DO componentIdx=1,materialsNumberOfU1Components
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U1_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+            ENDDO !componentIdx
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard, quasistatic or ALE Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
+      !-----------------------------------------------------------------
+      !   a n a l y t i c   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(equationsAnalytic)
+      CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytics,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
+        SELECT CASE(equationsSetSetup%actionType)
+          !Set start action
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+          SELECT CASE(equationsSetSetup%analyticFunctionType)
+          CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1
+          CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2
+          CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3
+          CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1
+          CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2
+          CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3
+          CASE(EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
+          CASE DEFAULT
+            localError="The specified analytic function type of "// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+              & " is invalid for an analytic Darcy problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%analytic%analyticFieldAutoCreated) THEN
+            !--- Why finish the dependent field and not the analytic one ???
+            !CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for an analytic Darcy problem."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+          !Initialise analytic parameter which stores value of time to zero - need to update this somewhere in a pre_solve routine
+          SELECT CASE(equationsSetSetup%analyticFunctionType)
+          CASE(EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)
+            !Set analytic function type
+            equationsSet%analytic%analyticFunctionType=EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
+          CASE DEFAULT
+            localError="The specified analytic function type of "// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+              & " is invalid for an analytic Darcy problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%analytic%analyticFieldAutoCreated) THEN
+            !--- Why finish the dependent field and not the analytic one ???
+            !CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for an analytic Darcy problem."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " does not equal a standard, quasistatic, ALE or dynamic Darcy equation subtype."
+        localError="The equation set subtype of "//TRIM(NumberToVString(equationsSet%SPECIFICATION(3),"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a Darcy equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
+      !-----------------------------------------------------------------
+      !   s o u r c e   t y p e   -   include gravity at some point
+      !-----------------------------------------------------------------
+      NULLIFY(equationsSource)
+      CALL EquationsSet_SourceGet(equationsSet,equationsSource,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        sourceNumberOfComponents = numberOfDimensions + 1
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsSource%sourceFieldAutoCreated) THEN
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSource%sourceField,err,error,*999)
+            CALL Field_LabelSet(equationsSource%sourceField,"Source Field",err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSource%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsSource%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            NULLIFY(geometricDecomposition)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsSource%sourceField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsSource%sourceField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsSource%sourceField,1,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSource%sourceField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableLabelSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,"Source",err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              & err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,sourceNumberOfComponents, &
+              & err,error,*999)
+            !Default the source components to the geometric interpolation setup with nodal interpolation
+            IF(esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+              & esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+              !nodal / mesh based
+              DO componentIdx=1,numberOfDimensions !sourceNumberOfComponents
+                CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent, &
+                  & err,error,*999)
+                CALL Field_ComponentInterpolationSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentMeshComponentSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                  & geometricMeshComponent,err,error,*999)
+              ENDDO !componentIdx
+              !Set source component 'numberOfDimensions + 1' according to geometricMeshComponent 'numberOfDimensions'
+              CALL Field_ComponentInterpolationSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
+                & numberOfDimensions+1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
+                & numberOfDimensions+1,geometricMeshComponent,err,error,*999)
+            ENDIF
+            !Default the field scaling to that of the geometric field
+            CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsSource%sourceField,geometricScalingType,err,error,*999)
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE,numberOfDimensions, &
+              & err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,sourceNumberOfComponents, &
+              & err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSource%sourceFieldAutoCreated) THEN
+            !Finish creating the source field
+            CALL Field_CreateFinish(equationsSource%sourceField,err,error,*999)
+            !Set the default values for the source field
+            IF(esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+              & esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+              sourceNumberOfComponents=numberOfDimensions + 1
+            ELSE
+              sourceNumberOfComponents=0
+            ENDIF
+            !Now set the source values to 0.0
+            DO componentIdx=1,sourceNumberOfComponents
+              CALL Field_ComponentValuesInitialise(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+            ENDDO !componentIdx
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard, quasistatic or ALE Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
+      !-----------------------------------------------------------------
+      !   e q u a t i o n s   t y p e
+      !-----------------------------------------------------------------
+      SELECT CASE(equationsSet%SPECIFICATION(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
+        !-----------------------------------------------------------------
+        !   s t a t i c
+        !-----------------------------------------------------------------
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
+          NULLIFY(equations)
+          CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+          CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            SELECT CASE(esSpecification(3))
+            CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
+!!!!!THE FOLLOWING IF STATEMENT IS ILLUSTRATIVE ONLY - need to implement the equation set field thing, and make a generalised case statement
+              NULLIFY(equationsSetField)
+              CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+              NULLIFY(equations)
+              CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+              !Create the equations mapping.
+              NULLIFY(vectorMapping)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & equationsSetFieldData,err,error,*999)
+              myMatrixIdx = equationsSetFieldData(1)
+              numberOfCompartments = equationsSetFieldData(2)
+              ALLOCATE(variableTypes(2*numberOfCompartments))
+              DO variableIdx=1,numberOfCompartments
+                variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+                variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+              ENDDO !variableIdx
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[variableTypes(2*myMatrixIdx-1)], &
+                & err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx),err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+              !Create the equations matrices
+              NULLIFY(vectorMatrices)
+              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+              CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+              SELECT CASE(sparsityType)
+              CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                  & err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+              CASE DEFAULT
+                localError="The equations matrices sparsity type of "// &
+                  & TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+            CASE DEFAULT
+              !Finish the equations creation
+              NULLIFY(equations)
+              CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+              !Create the equations mapping.
+              NULLIFY(vectorMapping)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+              !Create the equations matrices
+              NULLIFY(vectorMatrices)
+              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+              CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+              SELECT CASE(sparsityType)
+              CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                  & err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+              CASE DEFAULT
+                localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+            END SELECT
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
+        !-----------------------------------------------------------------
+        !   q u a s i s t a t i c   and    A L E
+        !-----------------------------------------------------------------
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
+          NULLIFY(equations)
+          CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+          CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_QUASISTATIC,err,error,*999)
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            !Finish the equations creation
+            NULLIFY(equations)
+            CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+            CALL Equations_CreateFinish(equations,err,error,*999)
+            NULLIFY(vectorEquations)
+            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+            !Create the equations mapping.
+            NULLIFY(vectorMapping)
+            CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+            CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+            SELECT CASE(esSpecification(3))
+            CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_V_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
+            CASE DEFAULT
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+            END SELECT
+            CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+            !Create the equations matrices
+            NULLIFY(vectorMatrices)
+            CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+            CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+            SELECT CASE(sparsityType)
+            CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+            CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                & err,error,*999)
+              CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+            CASE DEFAULT
+              localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+            CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a quasistatic Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        !-----------------------------------------------------------------
+        !   d y n a m i c
+        !-----------------------------------------------------------------
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
+          NULLIFY(equations)
+          CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+          CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            !Finish the equations creation
+            NULLIFY(equations)
+            CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+            CALL Equations_CreateFinish(equations,err,error,*999)
+            NULLIFY(vectorEquations)
+            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+            !Create the equations mapping.
+            NULLIFY(vectorMapping)
+            CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+            IF(esSpecification(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE .OR. &
+              & esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,0,err,error,*999)
+            ENDIF
+            CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+            SELECT CASE(esSpecification(3))
+            CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_V_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
+              IF(esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+                CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              ENDIF
+            CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+              NULLIFY(equationsSetField)
+              CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+              NULLIFY(equationsSetFieldData)
+              CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & equationsSetFieldData,err,error,*999)
+              myMatrixIdx = equationsSetFieldData(1)
+              numberOfCompartments = equationsSetFieldData(2)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,numberOfCompartments-1,err,error,*999)
+              ALLOCATE(variableTypes(2*numberOfCompartments+2))
+              ALLOCATE(variableUTypes(numberOfCompartments-1))
+              DO variableIdx=1,numberOfCompartments+1
+                variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+                variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+              ENDDO !variableIdx
+              variableCount=0
+              DO variableIdx=2,numberOfCompartments+1
+                IF((variableIdx-1)/=myMatrixIdx)THEN
+                  variableCount=variableCount+1
+                  variableUTypes(variableCount)=variableTypes(2*variableIdx-1)
+                ENDIF
+              ENDDO
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx+1),err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,variableUTypes,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx+2),err,error,*999)
+              CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CASE DEFAULT
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & err,error,*999)
+            END SELECT
+            CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+            !Create the equations matrices
+            NULLIFY(vectorMatrices)
+            CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+            !Set up matrix storage and structure
+            CALL Equations_LumpingTypeGet(equations,lumpingType,err,error,*999)
+            IF(lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
+              !Set up lumping
+              CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices,[EQUATIONS_MATRIX_UNLUMPED, &
+                & EQUATIONS_MATRIX_LUMPED],err,error,*999)
+              CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+                & DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+              CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE, &
+                & EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
+            ELSE
+              CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+              SELECT CASE(sparsityType)
+              CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
+                  & DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
+                  & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+                  & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
+                  & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+                  ALLOCATE(couplingMatrixStorageType(numberOfCompartments-1))
+                  ALLOCATE(couplingMatrixStructureType(numberOfCompartments-1))
+                  DO variableIdx=1,numberOfCompartments-1
+                    couplingMatrixStorageType(variableIdx)=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+                    couplingMatrixStructureType(variableIdx)=EQUATIONS_MATRIX_FEM_STRUCTURE
+                  ENDDO
+                  CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,couplingMatrixStorageType, &
+                    & err,error,*999)
+                  CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,couplingMatrixStructureType, &
+                    & err,error,*999)
+                ENDIF
+              CASE DEFAULT
+                localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDIF
+            CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+          CASE DEFAULT
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a Darcy equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The equation set subtype of "//TRIM(NumberToVString(equationsSet%SPECIFICATION(3),"*",err,error))// &
+          & " for a setup of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a Darcy equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+        & " is invalid for a standard, quasistatic, ALE or dynamic Darcy equation."
+      CALL FlagError(localError,err,error,*999)      
+    END SELECT
 
-    EXITS("DARCY_EQUATION_EQUATIONS_SET_SETUP")
+    EXITS("Darcy_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("DARCY_EQUATION_EQUATIONS_SET_SETUP",err,error)
+999 ERRORSEXITS("Darcy_EquationsSetSetup",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_EQUATIONS_SET_SETUP
+    
+  END SUBROUTINE Darcy_EquationsSetSetup
 
   !
   !================================================================================================================================
   !
 
   !>Calculates the element stiffness matrices and RHS for a Darcy equation finite element equations set.
-  SUBROUTINE DARCY_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE Darcy_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set to perform the finite element calculations on
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local Variables
-    INTEGER(INTG) :: FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns,idxdim,num_var_count,idx_tensor
-    INTEGER(INTG) :: my_compartment,Ncompartments,imatrix
-    INTEGER(INTG) :: component_idx,xi_idx,derivative_idx
-    INTEGER(INTG) :: MESH_COMPONENT_NUMBER, global_element_idx
-    INTEGER(INTG) :: MESH_COMPONENT_1, MESH_COMPONENT_2
-    INTEGER(INTG) :: NDOFS, NUMBER_OF_VEL_PRESS_COMPONENTS
-    INTEGER(INTG) :: FIELD_VAR_TYPES(99)
-    INTEGER(INTG) :: equations_SET_SUBTYPE
+    INTEGER(INTG) :: FIELD_VAR_TYPE,gaussPointIdx,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx,columnComponentIdx,columnElementDOFIdx,columnXiIdx,columnElementParameterIdx,dimensionIdx,variableCount,idx_tensor
+    INTEGER(INTG) :: myCompartment,numberOfCompartments,matrixIdx
+    INTEGER(INTG) :: componentIdx,xiIdx,derivativeIdx
+    INTEGER(INTG) :: meshComponentNumber, globalElementIdx
+    INTEGER(INTG) :: meshComponent1, meshComponent2
+    INTEGER(INTG) :: numberOfDOFs, numberOfVelPressComponents
+    INTEGER(INTG) :: fieldVarTypes(99)
+    INTEGER(INTG) :: equationsSetSubtype
     INTEGER(INTG), POINTER :: equationsSetFieldData(:)
-    REAL(DP) :: RWG,SUM,PGMSI(3),PGNSI(3),PGM,PGN,COUPLING_PARAM
-    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
-    TYPE(BasisType), POINTER :: DEPENDENT_BASIS_1, DEPENDENT_BASIS_2
+    REAL(DP) :: jacobianGaussWeight,sum,rowsdPhidXi(3),colsdPhidXi(3),rowsPhi,colsPhi,couplingParameter
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisType), POINTER :: dependentBasis1, dependentBasis2
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -1694,34 +1594,34 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix, dampingMatrix
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField,equationsSetField
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(MeshElementType), POINTER :: MESH_ELEMENT
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshElementType), POINTER :: meshElement
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(FieldType), POINTER :: sourceField
-    TYPE(FieldVariablePtrType) :: FIELD_VARIABLES(99)
-    TYPE(EquationsMatrixPtrType) :: COUPLING_MATRICES(99)
-    REAL(DP), ALLOCATABLE :: PRESSURE_COEFF(:),PRESSURE(:),GRAD_PRESSURE(:,:)
+    TYPE(FieldVariablePtrType) :: fieldVariables(99)
+    TYPE(EquationsMatrixPtrType) :: couplingMatrices(99)
+    REAL(DP), ALLOCATABLE :: pressureCoefficient(:),pressure(:),pressureGradient(:,:)
 
-    TYPE(QuadratureSchemeType), POINTER :: QUADRATURE_SCHEME
-    TYPE(QuadratureSchemeType), POINTER :: QUADRATURE_SCHEME_1, QUADRATURE_SCHEME_2
-    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT
-    TYPE(FieldInterpolatedPointType), POINTER :: REFERENCE_GEOMETRIC_INTERPOLATED_POINT
-    TYPE(FieldInterpolationParametersType), POINTER :: ELASTICITY_DEPENDENT_INTERPOLATION_PARAMETERS
-    TYPE(FieldInterpolatedPointType), POINTER :: ELASTICITY_DEPENDENT_INTERPOLATED_POINT
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme1, quadratureScheme2
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,materialsInterpPoint
+    TYPE(FieldInterpolatedPointType), POINTER :: referenceGeometricInterpPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: elasticityDependentInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: elasticityDependentInterpPoint
     TYPE(VARYING_STRING) :: localError
 
-    REAL(DP):: SOURCE,INTER_COMP_SOURCE,INTER_COMP_PERM_1,INTER_COMP_PERM_2
-    REAL(DP):: BETA_PARAM, P_SINK_PARAM
+    REAL(DP):: source,interComparmentSource,interCompartmentPermeability1,interCompartmentPermeability2
+    REAL(DP):: betaParameter, pSinkParameter
 
-    REAL(DP):: PERM_OVER_VIS_PARAM, DARCY_RHO_0_F
-    REAL(DP):: PERM_TENSOR_OVER_VIS(3,3), VIS_OVER_PERM_TENSOR(3,3), Jmat
-    REAL(DP):: X(3), ARG(3), L, FACT
-    REAL(DP):: LM_PRESSURE,GRAD_LM_PRESSURE(3)
+    REAL(DP):: permeabilityOverViscosityParameter, darcyRho0F
+    REAL(DP):: permeabilityOverViscosity(3,3), viscosityOverPermeability(3,3), Jmat
+    REAL(DP):: x(3), arg(3), L, fact
+    REAL(DP):: lmPressure,gradientLMPressure(3)
 
-    REAL(DP):: DXDY(3,3), DXDXI(3,3), DYDXI(3,3), DXIDY(3,3)
+    REAL(DP):: dXdY(3,3), dXdXi(3,3), dYdXi(3,3), dXidY(3,3)
     REAL(DP):: Jxy, Jyxi
 
     REAL(DP):: Mfact, bfact, p0fact
@@ -1729,1362 +1629,1334 @@ CONTAINS
     REAL(DP):: ffact !f(Jxy) of the INRIA model
     REAL(DP):: dfdJfact !dfdJfact = f'(Jxy) of the INRIA model
 
-    REAL(DP):: C_PARAM
+    REAL(DP):: cParameter
 
-    LOGICAL :: STABILIZED
+    LOGICAL :: stabilized
 
 
     !--- Parameter settings concerning the Finite Element implementation
-    STABILIZED = .TRUE.
-    DARCY%LENGTH = 10.0_DP
-    L = DARCY%LENGTH
+    stabilized = .TRUE.
+    darcy%length = 10.0_DP
+    L = darcy%length
 
     !--- testcase: default
-    DARCY%TESTCASE = 0
-    DARCY%ANALYTIC = .FALSE.
+    darcy%testcase = 0
+    darcy%analytic = .FALSE.
 
-    ENTERS("DARCY_EQUATION_FINITE_ELEMENT_CALCULATE",err,error,*999)
+    ENTERS("Darcy_FiniteElementCalculate",err,error,*999)
 
     !Parameters settings for coupled elasticity Darcy INRIA model:
-    CALL GET_DARCY_FINITE_ELASTICITY_PARAMETERS(DARCY_RHO_0_F,Mfact,bfact,p0fact,err,error,*999)
+    CALL GET_DARCY_FINITE_ELASTICITY_PARAMETERS(darcyRho0F,Mfact,bfact,p0fact,err,error,*999)
 
-    NULLIFY(DEPENDENT_BASIS,GEOMETRIC_BASIS)
-    NULLIFY(DEPENDENT_BASIS_1, DEPENDENT_BASIS_2)
-    NULLIFY(EQUATIONS)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+
+    equationsSetSubtype=esSpecification(3)
+    SELECT CASE(equationsSetSubtype)
+    CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(equationsSetSubtype,"*",err,error))// &
+        & " is not valid for a Darcy equation type of a fluid mechanics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    NULLIFY(equations)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
-    NULLIFY(linearMapping)
-    NULLIFY(dynamicMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(lhsMapping)
+    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+    NULLIFY(rowsVariable)
+    CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+    NULLIFY(rhsMapping)
+    CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
     NULLIFY(vectorMatrices)
-    NULLIFY(linearMatrices)
-    NULLIFY(dynamicMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(rhsVector)
-    NULLIFY(stiffnessMatrix, dampingMatrix)
-    NULLIFY(dependentField,geometricField,materialsField)
-    NULLIFY(FIELD_VARIABLE)
-    NULLIFY(QUADRATURE_SCHEME)
-    NULLIFY(QUADRATURE_SCHEME_1, QUADRATURE_SCHEME_2)
-    NULLIFY(GEOMETRIC_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT)
-    NULLIFY(REFERENCE_GEOMETRIC_INTERPOLATED_POINT)
-    NULLIFY(ELASTICITY_DEPENDENT_INTERPOLATION_PARAMETERS)
-    NULLIFY(ELASTICITY_DEPENDENT_INTERPOLATED_POINT)
-    NULLIFY(DECOMPOSITION,MESH_ELEMENT)
-    NULLIFY(BOUNDARY_CONDITIONS,BOUNDARY_CONDITIONS_VARIABLE)
-    NULLIFY(sourceVector,sourceField)
-    NULLIFY(equationsSetFieldData)
+    updateRHS=.FALSE.
+    IF(ASSOCIATED(rhsMapping)) THEN
+      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+      updateRHS=rhsVector%updateVector
+    ENDIF
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      EQUATIONS=>EQUATIONS_SET%EQUATIONS
-      IF(ASSOCIATED(EQUATIONS)) THEN
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-          CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
+    NULLIFY(dynamicMapping)
+    NULLIFY(dynamicMatrices)
+    NULLIFY(linearMapping)
+    NULLIFY(linearMatrices)
+    updateStiffness=.FALSE.
+    updateDamping=.FALSE.
+    updateCoupling=.FALSE.
+    NULLIFY(sourcesMapping)
+    NULLIFY(sourceVectors)
+    NULLIFY(sourceVector)
+    updateSource=.FALSE.
+    SELECT CASE(equationsSetSubtype)
+    CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)      
+      updateStiffness=stiffnessMatrix%updateMatrix
+      NULLIFY(colsVariable)
+      CALL EquationsMappingLinear_MatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+    CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
+      updateStiffness=stiffnessMatrix%updateMatrix
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
+      updateDamping=dampingMatrix%updateMatrix
+      NULLIFY(colsVariable)
+      CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,colsVariable,err,error,*999)
+      updateSource=.FALSE.
+      IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+        CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+        IF(ASSOCIATED(sourcesMapping)) THEN
+          CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,1,sourceMapping,err,error,*999)
+          CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+          CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,1,sourceVector,err,error,*999)
+          updateSource=sourceVector%updateVector
+        ENDIF
+      ENDIF
+    CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      NULLIFY(linearMatrices)
+      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      NULLIFY(stiffnessMatrix)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)      
+      updateStiffness=stiffnessMatrix%updateMatrix
+      updateDamping=.FALSE.
+      updateSource=.FALSE.
+      NULLIFY(colsVariable)
+      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+      NULLIFY(equationsSetField)
+      CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+      NULLIFY(equationsSetFieldData)
+      CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetFieldData, &
+        & err,error,*999)
+      myCompartment = equationsSetFieldData(1)
+      numberOfCompartments  = equationsSetFieldData(2) 
+    CASE(EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE)
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      NULLIFY(dynamicMatrices)
+      CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+      NULLIFY(stiffnessMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
+      updateStiffness=stiffnessMatrix%updateMatrix
+      NULLIFY(dampingMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
+      updateDamping=dampingMatrix%updateMatrix
+      updateSource=.FALSE.
+      NULLIFY(colsVariable)
+      CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,colsVariable,err,error,*999)
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      NULLIFY(linearMatrices)
+      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      variableCount=0
+      DO matrixIdx=1,numberOfCompartments
+        IF(matrixIdx/=myCompartment)THEN
+          variableCount=variableCount+1
+          NULLIFY(couplingMatrices(variableCount)%ptr)
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,variableCount,couplingMatrices(variableCount)%ptr, &
+            & err,error,*999)
+          updateCoupling=updateCoupling.OR.couplingMatrices(variableCount)%ptr%updateMatrix
+          NULLIFY(fieldVariables(variableCount)%ptr)
+          CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,variableCount,fieldVariables(variableCount)%ptr, &
+            & err,error,*999)
+          CALL EquationsMappingLinear_LinearMatrixVariableTypeGet(linearMapping,variableCount,fieldVarTypes(variableCount), &
+            & err,error,*999)          
+        ENDIF
+      ENDDO !matrixIdx
+    CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
+      updateStiffness=stiffnessMatrix%updateMatrix
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
+      updateDamping=dampingMatrix%updateMatrix
+      NULLIFY(colsVariable)
+      CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,colsVariable,err,error,*999)
+      !These linear matrices are actually only required if we are coupling the momentum terms too
+      !If it is just a mass coupling, then all of the additional terms are placed in the RHS of the mass-increase equation      
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      variableCount=0
+      DO matrixIdx=1,numberOfCompartments
+        IF(matrixIdx/=myCompartment)THEN
+          variableCount=variableCount+1
+          NULLIFY(couplingMatrices(variableCount)%ptr)
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,variableCount,couplingMatrices(variableCount)%ptr, &
+            & err,error,*999)
+          updateCoupling=updateCoupling.OR.couplingMatrices(variableCount)%ptr%updateMatrix
+          NULLIFY(fieldVariables(variableCount)%ptr)
+          CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,variableCount,fieldVariables(variableCount)%ptr, &
+            & err,error,*999)
+          CALL EquationsMappingLinear_LinearMatrixVariableTypeGet(linearMapping,variableCount,fieldVarTypes(variableCount), &
+            & err,error,*999)          
+        ENDIF
+      ENDDO !matrixIdx
+      CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+      IF(ASSOCIATED(sourcesMapping)) THEN
+        CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,1,sourceMapping,err,error,*999)
+        CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+        CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,1,sourceVector,err,error,*999)
+        updateSource=sourceVector%updateVector
+      ENDIF
+      ALLOCATE(pressureCoefficient(numberOfCompartments),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate pressure coefficients.",err,erorr,*999)
+      ALLOCATE(pressure(numberOfCompartments),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate pressure.",err,error,*999)
+      ALLOCATE(pressureGradient(3,numberOfCompartments),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate pressure gradient.",err,error,*999)
+      pressure = 0.0_DP
+      pressureGradient = 0.0_DP
+      pressureCoefficient(1)=0.25_DP
+      pressureCoefficient(2)=0.25_DP
+      pressureCoefficient(3)=0.25_DP
+      pressureCoefficient(4)=0.25_DP
+    END SELECT
+
+    updateMatrices=(updateStiffness.OR.updateDamping)
+    update=(updateMatrices.OR.updateCoupling.OR.updateSource.OR.updateRHS)
+
+    IF(update) THEN
+
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      NULLIFY(dependentField)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      NULLIFY(materialsField)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+      NULLIFY(sourceField)
+      IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN      
+        CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
+      ENDIF
+
+      NULLIFY(geometricVariable)
+      CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+      NULLIFY(geometricDecomposition)
+      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+      NULLIFY(geometricDomain)
+      CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
+      NULLIFY(geometricDomainTopology)
+      CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
+      NULLIFY(geometricDomainElements)
+      CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
+      CALL DomainElements_ElementBoundaryElementGet(geometricDomainElements,elementNumber,boundaryElement,err,error,*999)
+      NULLIFY(geometricBasis)
+      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
+
+      NULLIFY(dependentDecomposition)
+      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+      NULLIFY(colsDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
+      NULLIFY(colsDomainTopology)
+      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+      NULLIFY(colsDomainElements)
+      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+      NULLIFY(colsBasis)
+      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+
+      NULLIFY(rowsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
+
+      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
+
+      NULLIFY(geometricQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
+      NULLIFY(colsQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
+      CALL BasisQuadrature_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
+
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+
+      NULLIFY(geometricInterpParameters)
+      CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpParameters,err,error,*999)
+      NULLIFY(geometricInterpPoint)
+      CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,geometricInterpPoint, &
+        & err,error,*999)
+      NULLIFY(geometricInterpPointMetrics)
+      CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpPointMetrics,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
+      NULLIFY(referenceGeometricInterpParameters)
+      NULLIFY(referenceGeometricInterpPoint)
+      IF(equationsSetSubtype==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.OR. &
+        & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+        CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,referenceGeometricInterpParameters,err,error,*999)
+        CALL Field_InterpolatedPointInitialise(referenceGeometricInterpParameters,referenceGeometricInterpPoint,err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_INITIAL_VALUES_SET_TYPE,elementNumber, &
+          & referenceGeometricInterpParameters,err,error,*999)
+      ENDIF
+
+      NULLIFY(elasticityDependentInterpParameters)
+      NULLIFY(elasticityDependentInterpPoint)
+      IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+        CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & elasticityDependentInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,elasticityDependentInterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,elastcityDependentInterpParameters, &
+          & err,error,*999)
+      ENDIF
+
+      NULLIFY(materialsUInterpParamters)
+      CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & materialsUInterpParameters,err,error,*999)
+      NULLIFY(materialsUInterpPoint)
+      CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,materialsUInterpPoint, &
+        & err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsUInterpParameters,err,error,*999)
+      IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+        NULLIFY(materialsVInterpParamters)
+        CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
+          & materialsVInterpParameters,err,error,*999)
+        NULLIFY(materialsVInterpPoint)
+        CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE,materialsVInterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsVInterpParameters,err,error,*999)
+        NULLIFY(materialsU1InterpParamters)
+        CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U1_VARIABLE_TYPE, &
+          & materialsU1InterpParameters,err,error,*999)
+        NULLIFY(materialsU1InterpPoint)
+        CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U1_VARIABLE_TYPE,materialsU1InterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsU1InterpParameters,err,error,*999)
+      ENDIF
+
+      NULLIFY(sourceInterpParameters)
+      NULLIFY(sourceInterpPoint)
+      IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+        & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+        NULLIFY(sourceInterpParamters)
+        CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & sourceInterpParameters,err,error,*999)
+        NULLIFY(sourceInterpPoint)
+        CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,sourceInterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,sourceInterpParameters,err,error,*999)
+      ENDIF
+
+      SELECT CASE(equationsSetSubtype)
+      CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)        
+        numberOfVelPressComponents = numberOfColsComponents - 1  !last component: mass increase
+      CASE DEFAULT
+        numberOfVelPressComponents = numberOfColsComponents
+      END SELECT
+
+      !---------------------------------------------------------------------------------------------------------
+      !Invoke penalty term to enforce impermeable BC. 
+      !This sshould only be executed if THIS element lies on the surface
+      !(within the routine we check whether the element nodes have actually been set impermeable)
+      SELECT CASE(equationsSetSubtype)
+      CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+        IF(boundaryElement) CALL Darcy_ImpermeableBCViaPenalty(equationsSet,elementNumber,err,error,*999)
+      END SELECT
+      !---------------------------------------------------------------------------------------------------------
+
+      !--- Loop over gauss points
+      !    Given that also materials field is interpolated, ensure sufficient number of Gauss points !!!
+      DO gaussPointIdx=1,numberOfGauss
+
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
+        !--- Retrieve local map dXdXi
+        DO componentIdx=1,numberOfDimensions
+          DO xiIdx=1,numberOfXi
+            derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
+            dXdXi(componentIdx,xiIdx)=geometricInterpPoint%values(componentIdx,derivativeIdx) !dx/dxi
+          ENDDO !xiIdx
+        ENDDO !componentIdx
+
+        IF(equationsSetSubtype==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.OR. &
+          & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+          & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+          !------------------------------------------------------------------------------
+          !--- begin: Compute the Jacobian of the mapping
+
+          !--- Interpolation of Reference Geometry
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & referenceGeometricInterpPoint,err,error,*999)
+          !--- Retrieve local map dYdXi
+          DO componentIdx=1,numberOfDimensions
+            DO xiIdx=1,numberOfXi
+              derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
+              dYdXi(componentIdx,xiIdx)=referenceGeometricInterpPoint%values(componentIdx,derivativeIdx) !dy/dxi (y = referential)
+            ENDDO !xiIdx
+          ENDDO !componentIdx
+
+          !--- Compute deformation gradient tensor dXdY and its Jacobian Jxy
+          CALL Invert(dYdXi,dXidY,Jyxi,err,error,*999) !dy/dxi -> dxi/dy
+          CALL MatrixProduct(dXdXi,dXidY,dXdY,err,error,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
+          CALL Determinant(dXdY,Jxy,err,error,*999)
+
+          IF( ABS(Jxy) < 1.0E-10_DP ) THEN
+            localError="Darcy_FiniteElementCalculate: Jacobian Jxy is smaller than 1.0E-10_DP."
+            CALL FlagError(localError,err,error,*999)
+          END IF
+
+          !ffact = f(Jxy) of the INRIA model, dfdJfact is not relevant here
+          CALL EVALUATE_CHAPELLE_FUNCTION(Jxy,ffact,dfdJfact,err,error,*999)
+
+          !--- end: Compute the Jacobian of the mapping
+          !------------------------------------------------------------------------------
+        END IF
+
+        !--- Material Settings ---!
+        !*** If material is variable, need to account for this in deriving the variational statement ***!        
+
+        !--- Interpolate materials field
+        !Get the Darcy permeability
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+          & materialsUInterpPoint,err,error,*999)
+        IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+          !Get the intercompartmental permeabilities
+          CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsVInterpPoint, &
+            & err,error,*999)
+          !Get the material parameters for the constitutive law for each Darcy compartment (for determining the partial pressures)
+          CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsU1InterpPoint, &
+            & err,error,*999)
+        ENDIF
+
+        IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+          & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+          CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
         END IF
-        EQUATIONS_SET_SUBTYPE=EQUATIONS_SET%SPECIFICATION(3)
-        SELECT CASE(EQUATIONS_SET_SUBTYPE)
-        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE,EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-!!TODO: move these and scale factor adjustment out once generalised Darcy is put in.
-          !Store all these in equations matrices/somewhere else?????
-          dependentField=>equations%interpolation%dependentField
-          geometricField=>equations%interpolation%geometricField
-          materialsField=>equations%interpolation%materialsField
-          IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-            & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-            sourceField=>equations%interpolation%sourceField
-          END IF
 
-          vectorMatrices=>vectorEquations%vectorMatrices
-          rhsVector=>vectorMatrices%rhsVector
-          vectorMapping=>vectorEquations%vectorMapping
+        SELECT CASE(equationsSetSubtype)
+        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,EQUATIONS_SET_ALE_DARCY_SUBTYPE)
+          !scalar permeability/viscosity
+          permeabilityOverViscosity=0.0_DP
+          permeabilityOverViscosity(1,1) = materialsUInterpPoint%values(2,NO_PART_DERIV)
+          permeabilityOverViscosity(2,2) = materialsUInterpPoint%values(2,NO_PART_DERIV)
+          permeabilityOverViscosity(3,3) = materialsUInterpPoint%values(2,NO_PART_DERIV)
+          !Multiply by porosity
+          permeabilityOverViscosity=permeabilityOverViscosity*materialsUInterpPoint%values(1,NO_PART_DERIV)
+        CASE DEFAULT
+          !symmetric permeability/viscosity tensor
+          permeabilityOverViscosity(1,1) = materialsUInterpPoint%values(2,NO_PART_DERIV)
+          permeabilityOverViscosity(1,2) = materialsUInterpPoint%values(3,NO_PART_DERIV)
+          permeabilityOverViscosity(1,3) = materialsUInterpPoint%values(4,NO_PART_DERIV)
+          permeabilityOverViscosity(2,2) = materialsUInterpPoint%values(5,NO_PART_DERIV)
+          permeabilityOverViscosity(2,3) = materialsUInterpPoint%values(6,NO_PART_DERIV)
+          permeabilityOverViscosity(3,3) = materialsUInterpPoint%values(7,NO_PART_DERIV)
 
-          IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-            & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-            sourceVector=>vectorMatrices%sourceVector
-            sourceVector%elementVector%vector = 0.0_DP
-          END IF
+          permeabilityOverViscosity(2,1) = permeabilityOverViscosity(1,2)
+          permeabilityOverViscosity(3,1) = permeabilityOverViscosity(1,3)
+          permeabilityOverViscosity(3,2) = permeabilityOverViscosity(2,3)
+        END SELECT
 
-          SELECT CASE(EQUATIONS_SET_SUBTYPE)
-          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-            EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-            linearMatrices=>vectorMatrices%linearMatrices
-            stiffnessMatrix=>linearMatrices%matrices(1)%ptr
-
-            linearMapping=>vectorMapping%linearMapping
-            FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-
-            stiffnessMatrix%elementMatrix%matrix=0.0_DP
-
-          CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-            dynamicMatrices=>vectorMatrices%dynamicMatrices
-            stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
-            dampingMatrix=>dynamicMatrices%matrices(2)%ptr
-
-            dynamicMapping=>vectorMapping%dynamicMapping
-            FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-
-            stiffnessMatrix%elementMatrix%matrix=0.0_DP
-            dampingMatrix%elementMatrix%matrix=0.0_DP
-
-            !Stuff used to check if this element is on the mesh boundary
-            DECOMPOSITION => dependentField%DECOMPOSITION
-            MESH_COMPONENT_NUMBER = decomposition%meshComponentNumber
-            global_element_idx = DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%ELEMENTS%localToGlobalMap(ELEMENT_NUMBER)
-            MESH_ELEMENT => DECOMPOSITION%MESH%TOPOLOGY(MESH_COMPONENT_NUMBER)%ptr%ELEMENTS%ELEMENTS(global_element_idx)
-
-          CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
-            equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-            CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,equationsSetFieldData,err,error,*999)
-
-            my_compartment = equationsSetFieldData(1)
-            Ncompartments  = equationsSetFieldData(2)
-            linearMatrices=>vectorMatrices%linearMatrices
-            stiffnessMatrix=>linearMatrices%matrices(1)%ptr
-
-            linearMapping=>vectorMapping%linearMapping
-            FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-
-            stiffnessMatrix%elementMatrix%matrix=0.0_DP
-
-          CASE(EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE)
-
-            equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-            CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,equationsSetFieldData,err,error,*999)
-
-            my_compartment = equationsSetFieldData(1)
-            Ncompartments  = equationsSetFieldData(2)
-
-            !if Ncompartments>99 then flag error
-
-            linearMatrices=>vectorMatrices%linearMatrices
-            linearMapping=>vectorMapping%linearMapping
-
-!             DO imatrix = 1,Ncompartments
-!               COUPLING_MATRICES(imatrix)%ptr=>linearMatrices%matrices(imatrix)%ptr
-!               FIELD_VARIABLES(imatrix)%ptr=>linearMapping%equationsMatrixToVarMaps(imatrix)%VARIABLE
-!               FIELD_VAR_TYPES(imatrix)=FIELD_VARIABLES(imatrix)%ptr%variableType
-!               COUPLING_MATRICES(imatrix)%ptr%elementMatrix%matrix=0.0_DP
-!             END DO
-
-            dynamicMatrices=>vectorMatrices%dynamicMatrices
-            stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
-            dampingMatrix=>dynamicMatrices%matrices(2)%ptr
-
-
-
-            dynamicMapping=>vectorMapping%dynamicMapping
-            FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-
-            stiffnessMatrix%elementMatrix%matrix=0.0_DP
-            dampingMatrix%elementMatrix%matrix=0.0_DP
-          CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            equationsSetField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
-            CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,equationsSetFieldData,err,error,*999)
-
-            my_compartment = equationsSetFieldData(1)
-            Ncompartments  = equationsSetFieldData(2)
-            !These linear matrices are actually only required if we are coupling the momentum terms too
-            !If it is just a mass coupling, then all of the additional terms are placed in the RHS of the mass-increase equation
-            linearMatrices=>vectorMatrices%linearMatrices
-            linearMapping=>vectorMapping%linearMapping
-
-            num_var_count=0
-            DO imatrix = 1,Ncompartments
-             IF(imatrix/=my_compartment)THEN
-              num_var_count=num_var_count+1
-              COUPLING_MATRICES(num_var_count)%ptr=>linearMatrices%matrices(num_var_count)%ptr
-              FIELD_VARIABLES(num_var_count)%ptr=>linearMapping%equationsMatrixToVarMaps(num_var_count)%VARIABLE
-              FIELD_VAR_TYPES(num_var_count)=FIELD_VARIABLES(num_var_count)%ptr%variableType
-              COUPLING_MATRICES(num_var_count)%ptr%elementMatrix%matrix=0.0_DP
-             ENDIF
-            END DO
-
-            dynamicMatrices=>vectorMatrices%dynamicMatrices
-            stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
-            dampingMatrix=>dynamicMatrices%matrices(2)%ptr
-
-            dynamicMapping=>vectorMapping%dynamicMapping
-            FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-
-            stiffnessMatrix%elementMatrix%matrix=0.0_DP
-            dampingMatrix%elementMatrix%matrix=0.0_DP
-
-              ALLOCATE(PRESSURE_COEFF(Ncompartments))
-
-              ALLOCATE(PRESSURE(Ncompartments))
-              ALLOCATE(GRAD_PRESSURE(3,Ncompartments))
-              PRESSURE = 0.0_DP
-              GRAD_PRESSURE = 0.0_DP
-              PRESSURE_COEFF(1)=0.25_DP
-              PRESSURE_COEFF(2)=0.25_DP
-              PRESSURE_COEFF(3)=0.25_DP
-              PRESSURE_COEFF(4)=0.25_DP
-          END SELECT
-
-          !\ToDo: DEPENDENT_BASIS, DEPENDENT_BASIS_1, DEPENDENT_BASIS_2 - consistency !!!
-
-          GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          DEPENDENT_BASIS=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-            & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-          IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-              & materialsInterpParameters(FIELD_V_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-              & materialsInterpParameters(FIELD_U1_VARIABLE_TYPE)%ptr,err,error,*999)
+        IF(diagnostics3) THEN
+          IF(idebug2) THEN
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"materialsUInterpPoint%values(1,NO_PART_DERIV) = ", &
+              & materialsUInterpPoint%values(1,NO_PART_DERIV),err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"materialsUInterpPoint%values(2,NO_PART_DERIV) = ", &
+              & materialsUInterpPoint%values(2,NO_PART_DERIV),err,error,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+            idebug2 = .FALSE.
           ENDIF
+        ENDIF
 
-          IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-            & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-              & sourceInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-          END IF
+        CALL Determinant(permeabilityOverViscosity,Jmat,err,error,*999)
+        IF(Jmat>ZERO_TOLERANCE) THEN
+          CALL INVERT(permeabilityOverViscosity,viscosityOverPermeability,Jmat,err,error,*999)
+        ELSE
+          viscosityOverPermeability = 0.0_DP
+          DO componentIdx=1,3
+            viscosityOverPermeability(componentIdx,componentIdx) = 1.0e10_DP
+          ENDDO !componentIdx
+        ENDIF
 
-          IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-           & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-            ELASTICITY_DEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation% &
-              & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-              & ELASTICITY_DEPENDENT_INTERPOLATION_PARAMETERS,err,error,*999)
-            ELASTICITY_DEPENDENT_INTERPOLATED_POINT=>equations%interpolation% &
-              & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-          ENDIF
+        !Two parameters that are used only for TESTCASE==3: VenousCompartment problem: Exclude this, too specific ???
+        betaParameter   = - darcy%PERM_OVER_VIS * (2.0_DP * PI / darcy%length) * (2.0_DP * PI / darcy%length)
+        pSinkParameter = darcy%P_SINK
 
+        IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & elasticityDependentInterpPoint,err,error,*999)
+          !Mind the sign !!!
+          !The minus sign derives from the convention of using "+ P * Jznu * AZU(i,j)"
+          ! in the constitutive law in FINITE_ELASTICITY_GAUSS_CAUCHY_TENSOR
+          lmPressure = -elasticityDependentInterpPoint%values(4,NO_PART_DERIV)
+          DO xiIdx=1,numberOfXi
+            derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
+            !gradient wrt. element coordinates xi
+            gradientLMPressure(xiIdx) = -elasticityDependentInterpPoint%values(4,derivativeIdx)
+          ENDDO !xiIdx
+        ENDIF
 
-          SELECT CASE(EQUATIONS_SET_SUBTYPE)
-          CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-             & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            NUMBER_OF_VEL_PRESS_COMPONENTS = FIELD_VARIABLE%numberOfComponents - 1  !last component: mass increase
-          CASE DEFAULT
-            NUMBER_OF_VEL_PRESS_COMPONENTS = FIELD_VARIABLE%numberOfComponents
-          END SELECT
+        !For multi-compartment model - determine pressure from partial derivative of constitutive law
+        IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+          CALL FlagWarning("NEED CONSTITUTIVE LAWS HERE!!!! THE FOLLOWING IS PLACEHOLDER ONLY!",err,error,*999)
+          !BEGIN PLACEHOLDER
+          CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+            & elasticityDependentInterpPoint,err,error,*999)
+          !Mind the sign !!!
+          lmPressure = -elasticityDependentInterpPoint%values(4,NO_PART_DERIV)
+          DO xiIdx=1,dependentBasis%numberOfXi
+            derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
+            !gradient wrt. element coordinates xi
+            gradientLMPressure(xiIdx) = -elasticityDependentInterpPoint%values(4,derivativeIdx)
+          ENDDO !xiIdx
+          !loop over compartments to determine the pressure in each one - this could be quite inefficient, as it will be
+          !calculated several times over
 
-          !---------------------------------------------------------------------------------------------------------
-          !Invoke penalty term to enforce impermeable BC
-          !  should only be executed if THIS element lies on the surface
-          !  (within the routine we check whether the element nodes have actually been set impermeable)
-          SELECT CASE(EQUATIONS_SET_SUBTYPE)
-          CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE,EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
-            & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-            IF( MESH_ELEMENT%boundaryElement ) THEN
-              CALL DARCY_EQUATION_IMPERMEABLE_BC_VIA_PENALTY(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
-            ENDIF
-          END SELECT
-          !---------------------------------------------------------------------------------------------------------
+          !unless calculate the pressures in a pre-solve and store them in extra components/variables of the dependent field
+          !these pressures should really be known immediately after the finite elasticity solve and not determined here
+          !END PLACEHOLDER
+          !The following pressure_coeff matrix is just for testing purposes and ultimately will be replaced with functions
+          !and materials field parameters (for present, sum of coefficients should be 1).
 
-          !--- Loop over gauss points
-          !    Given that also materials field is interpolated, ensure sufficient number of Gauss points !!!
-          DO ng=1,QUADRATURE_SCHEME%numberOfGauss
+          DO matrixIdx=1,numberOfCompartments
+            pressure(matrixIdx) =  pressureCoefficient(matrixIdx)*lmPressure
+            DO xiIdx=1,numberOfXi
+              pressureGradient(xiIdx,matrixIdx) = pressureCoefficient(matrixIdx)*gradientLMPressure(xiIdx)
+            ENDDO !xiIdx
+          ENDDO !matrixIdx
+        ENDIF
 
+        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        jacobianGaussWeight=jacobian*gaussWeight
 
-            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.OR. &
-             & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-             & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-              !------------------------------------------------------------------------------
-              !--- begin: Compute the Jacobian of the mapping
+        !Loop over element rows
+        rowElementDOFIdx=0          
+        DO rowComponentIdx=1,numberOfRowsComponents
+          NULLIFY(rowsDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+          NULLIFY(rowsDomainTopology)
+          CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+          NULLIFY(rowsDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+          NULLIFY(rowsBasis)
+          CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+          CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+          !Loop over element rows
+          DO rowElementParameterIdx=1,numberOfRowsElementParameters
+            rowElementDOFIdx=rowElementDOFIdx+1
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+              & rowsPhi,err,error,*999)
+            DO xiIdx=1,numberOfXi
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
+                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,rowsdPhidXi(xiIdx),err,error,*999)
+            ENDDO !xiIdx
+            IF(updateMatrices) THEN
+              !Loop over element columns
+              columnElementDOFIdx=0
+              DO columnComponentIdx=1,numberOfColsComponents
+                NULLIFY(colsDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+                NULLIFY(colsDomainTopology)
+                CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+                NULLIFY(colsDomainElements)
+                CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+                NULLIFY(colsBasis)
+                CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColsElementParameters
+                  columnElementDOFIdx=columnElementDOFIdx+1                  
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                    & colsPhi,err,error,*999)
+                  DO xiIdx1=1,numberOfXi
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
+                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx,colsdPhidXi(xiIdx1),err,error,*999)
+                  ENDDO !xiIdx1
+                  SELECT CASE(equationsSetSubtype)
+                  CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+                    !----------------------------------------------------------------------------------------------------
+                    !  i n c o m p r e s s i b l e   e l a s t i c i t y   d r i v e n   D a r c y   :   M A T R I C E S
+                    !----------------------------------------------------------------------------------------------------
+                    IF(updateStiffness) THEN
+                      !velocity test function, velocity trial function
+                      IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx<numberOfColsComponents) THEN
 
-              !--- Interpolation of Reference Geometry
-              CALL Field_InterpolationParametersElementGet(FIELD_INITIAL_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-                & equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              REFERENCE_GEOMETRIC_INTERPOLATED_POINT => equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-                & REFERENCE_GEOMETRIC_INTERPOLATED_POINT,err,error,*999)
-              !--- Retrieve local map DYDXI
-              DO component_idx=1,DEPENDENT_BASIS%numberOfXi
-                DO xi_idx=1,DEPENDENT_BASIS%numberOfXi
-                  derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
-                  DYDXI(component_idx,xi_idx)=REFERENCE_GEOMETRIC_INTERPOLATED_POINT%VALUES(component_idx,derivative_idx) !dy/dxi (y = referential)
-                ENDDO
-              ENDDO
+                        sum = viscosityOverPermeability( rowComponentIdx, columnComponentIdx ) * rowsPhi * colsPhi
+                        !MIND: double check the matrix index order: (rowComponentIdx, columnComponentIdx)
+                        !or (columnComponentIdx, rowComponentIdx) !within this conditional: rowComponentIdx==columnComponentIdx
+                        !anyway
 
-              !--- Interpolation of (actual) Geometry and Metrics
-              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-                & equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              GEOMETRIC_INTERPOLATED_POINT => equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-                & GEOMETRIC_INTERPOLATED_POINT,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi, &
-                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              !--- Retrieve local map DXDXI
-              DO component_idx=1,DEPENDENT_BASIS%numberOfXi
-                DO xi_idx=1,DEPENDENT_BASIS%numberOfXi
-                  derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
-                  DXDXI(component_idx,xi_idx)=GEOMETRIC_INTERPOLATED_POINT%VALUES(component_idx,derivative_idx) !dx/dxi
-                ENDDO
-              ENDDO
-
-              !--- Compute deformation gradient tensor DXDY and its Jacobian Jxy
-              CALL Invert(DYDXI,DXIDY,Jyxi,err,error,*999) !dy/dxi -> dxi/dy
-              CALL MatrixProduct(DXDXI,DXIDY,DXDY,err,error,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
-              CALL Determinant(DXDY,Jxy,err,error,*999)
-
-              IF( ABS(Jxy) < 1.0E-10_DP ) THEN
-                localError="DARCY_EQUATION_FINITE_ELEMENT_CALCULATE: Jacobian Jxy is smaller than 1.0E-10_DP."
-                CALL FlagError(localError,err,error,*999)
-              END IF
-
-              !ffact = f(Jxy) of the INRIA model, dfdJfact is not relevant here
-              CALL EVALUATE_CHAPELLE_FUNCTION(Jxy,ffact,dfdJfact,err,error,*999)
-
-              !--- end: Compute the Jacobian of the mapping
-              !------------------------------------------------------------------------------
-            END IF
-
-            !--- Interpolate geometric and mesh velocity field (if applicable)
-            GEOMETRIC_INTERPOLATED_POINT => equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-              & GEOMETRIC_INTERPOLATED_POINT,err,error,*999)
-            CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi, &
-              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-
-            !--- Calculate 'geometricInterpParameters' from 'FIELD_VALUES_SET_TYPE'
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-              & equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-              & GEOMETRIC_INTERPOLATED_POINT,err,error,*999)
-
-
-!             !--- Material Settings ---!
-!             !*** If material is variable, need to account for this in deriving the variational statement ***!
-
-
-            !--- Interpolate materials field
-            !Get the Darcy permeability
-            MATERIALS_INTERPOLATED_POINT => equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-              & MATERIALS_INTERPOLATED_POINT,err,error,*999)
-            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-            !Get the intercompartmental permeabilities
-              CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & materialsInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr,err,error,*999)
-            !Get the material parameters for the constitutive law for each Darcy compartment (for determining the partial pressures)
-              CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & materialsInterpPoint(FIELD_U1_VARIABLE_TYPE)%ptr,err,error,*999)
-            ENDIF
-
-            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-              & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-              CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            END IF
-
-            SELECT CASE(EQUATIONS_SET_SUBTYPE)
-            CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,EQUATIONS_SET_ALE_DARCY_SUBTYPE)
-              !scalar permeability/viscosity
-              PERM_TENSOR_OVER_VIS=0.0_DP
-              PERM_TENSOR_OVER_VIS(1,1) = MATERIALS_INTERPOLATED_POINT%VALUES(2,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(2,2) = MATERIALS_INTERPOLATED_POINT%VALUES(2,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(3,3) = MATERIALS_INTERPOLATED_POINT%VALUES(2,NO_PART_DERIV)
-              !Multiply by porosity
-              PERM_TENSOR_OVER_VIS=PERM_TENSOR_OVER_VIS*MATERIALS_INTERPOLATED_POINT%VALUES(1,NO_PART_DERIV)
-            CASE DEFAULT
-              !symmetric permeability/viscosity tensor
-              PERM_TENSOR_OVER_VIS(1,1) = MATERIALS_INTERPOLATED_POINT%VALUES(2,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(1,2) = MATERIALS_INTERPOLATED_POINT%VALUES(3,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(1,3) = MATERIALS_INTERPOLATED_POINT%VALUES(4,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(2,2) = MATERIALS_INTERPOLATED_POINT%VALUES(5,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(2,3) = MATERIALS_INTERPOLATED_POINT%VALUES(6,NO_PART_DERIV)
-              PERM_TENSOR_OVER_VIS(3,3) = MATERIALS_INTERPOLATED_POINT%VALUES(7,NO_PART_DERIV)
-
-              PERM_TENSOR_OVER_VIS(2,1) = PERM_TENSOR_OVER_VIS(1,2)
-              PERM_TENSOR_OVER_VIS(3,1) = PERM_TENSOR_OVER_VIS(1,3)
-              PERM_TENSOR_OVER_VIS(3,2) = PERM_TENSOR_OVER_VIS(2,3)
-            END SELECT
-
-            IF(DIAGNOSTICS3) THEN
-              IF(idebug2) THEN
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"MATERIALS_INTERPOLATED_POINT%VALUES(1,NO_PART_DERIV) = ", &
-                  & MATERIALS_INTERPOLATED_POINT%VALUES(1,NO_PART_DERIV),err,error,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"MATERIALS_INTERPOLATED_POINT%VALUES(2,NO_PART_DERIV) = ", &
-                  & MATERIALS_INTERPOLATED_POINT%VALUES(2,NO_PART_DERIV),err,error,*999)
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-                idebug2 = .FALSE.
-              ENDIF
-            ENDIF
-
-            CALL Determinant(PERM_TENSOR_OVER_VIS,Jmat,err,error,*999)
-            IF(Jmat>ZERO_TOLERANCE) THEN
-              CALL INVERT(PERM_TENSOR_OVER_VIS,VIS_OVER_PERM_TENSOR,Jmat,err,error,*999)
-            ELSE
-              VIS_OVER_PERM_TENSOR = 0.0_DP
-              DO idx_tensor=1,3
-                VIS_OVER_PERM_TENSOR(idx_tensor,idx_tensor) = 1.0e10_DP
-              END DO
-!               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE, &
-!                 & "WARNING: Jmat<ZERO_TOLERANCE - Thus setting VIS_OVER_PERM_TENSOR(i,i) = 1.0e10_DP",err,error,*999)
-            END IF
-
-
-            !Two parameters that are used only for TESTCASE==3: VenousCompartment problem: Exclude this, too specific ???
-            BETA_PARAM   = - DARCY%PERM_OVER_VIS * (2.0_DP * PI / DARCY%LENGTH) * (2.0_DP * PI / DARCY%LENGTH)
-            P_SINK_PARAM = DARCY%P_SINK
-
-
-            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-                & ELASTICITY_DEPENDENT_INTERPOLATED_POINT,err,error,*999)
-              !Mind the sign !!!
-              !The minus sign derives from the convention of using "+ P * Jznu * AZU(i,j)"
-              ! in the constitutive law in FINITE_ELASTICITY_GAUSS_CAUCHY_TENSOR
-              LM_PRESSURE = -ELASTICITY_DEPENDENT_INTERPOLATED_POINT%VALUES(4,NO_PART_DERIV)
-              DO xi_idx=1,DEPENDENT_BASIS%numberOfXi
-                derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
-                !gradient wrt. element coordinates xi
-                GRAD_LM_PRESSURE(xi_idx) = -ELASTICITY_DEPENDENT_INTERPOLATED_POINT%VALUES(4,derivative_idx)
-              ENDDO
-            ENDIF
-
-            !For multi-compartment model - determine pressure from partial derivative of constitutive law
-            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-              write(*,*) 'NEED CONSTITUTIVE LAWS HERE!!!! THE FOLLOWING IS PLACEHOLDER ONLY!'
-              !BEGIN PLACEHOLDER
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
-                & ELASTICITY_DEPENDENT_INTERPOLATED_POINT,err,error,*999)
-              !Mind the sign !!!
-              LM_PRESSURE = -ELASTICITY_DEPENDENT_INTERPOLATED_POINT%VALUES(4,NO_PART_DERIV)
-              DO xi_idx=1,DEPENDENT_BASIS%numberOfXi
-                derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
-                !gradient wrt. element coordinates xi
-                GRAD_LM_PRESSURE(xi_idx) = -ELASTICITY_DEPENDENT_INTERPOLATED_POINT%VALUES(4,derivative_idx)
-              ENDDO
-              !loop over compartments to determine the pressure in each one - this could be quite inefficient, as it will be calculated several times over
-              !unless calculate the pressures in a pre-solve and store them in extra components/variables of the dependent field
-              !these pressures should really be known immediately after the finite elasticity solve and not determined here
-              !END PLACEHOLDER
-              !The following pressure_coeff matrix is just for testing purposes and ultimately will be replaced with functions and materials field parameters (for present, sum of
-              !coefficients should be 1).
-
-              DO imatrix=1,Ncompartments
-
-                PRESSURE(imatrix) =  PRESSURE_COEFF(imatrix)*LM_PRESSURE
-                DO xi_idx=1,DEPENDENT_BASIS%numberOfXi
-                  GRAD_PRESSURE(xi_idx,imatrix) = PRESSURE_COEFF(imatrix)*GRAD_LM_PRESSURE(xi_idx)
-                ENDDO
-              ENDDO
-            ENDIF
-
-
-!             RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * QUADRATURE_SCHEME%gaussWeights(ng)
-
-            !Loop over element rows
-            mhs=0
-            DO mh=1,FIELD_VARIABLE%numberOfComponents
-
-              MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
-              DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
-                & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-              QUADRATURE_SCHEME_1 => DEPENDENT_BASIS_1%QUADRATURE% &
-                & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-              RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
-                & QUADRATURE_SCHEME_1%gaussWeights(ng)
-
-              DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
-                mhs=mhs+1
-
-                !===================================================================================================================
-                !stiffnessMatrix
-                IF(stiffnessMatrix%updateMatrix) THEN
-
-                  !Loop over element columns
-                  nhs=0
-                  DO nh=1,FIELD_VARIABLE%numberOfComponents
-
-                    MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
-                    DEPENDENT_BASIS_2 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
-                      & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                    !--- We cannot use two different quadrature schemes here !!!
-                    QUADRATURE_SCHEME_2 => DEPENDENT_BASIS_2%QUADRATURE% &
-                     & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                    !RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * &
-                    !  & QUADRATURE_SCHEME_2%gaussWeights(ng)
-
-                    DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
-                      nhs=nhs+1
-
-                      SELECT CASE(EQUATIONS_SET_SUBTYPE)
-                      !====================================================================================================
-                      !  i n c o m p r e s s i b l e   e l a s t i c i t y   d r i v e n   D a r c y   :   M A T R I C E S
-                      CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-                        !-------------------------------------------------------------------------------------------------------------
-                        !velocity test function, velocity trial function
-                        IF(mh==nh.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
-
-                          SUM = 0.0_DP
-
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-
-                          SUM = SUM + VIS_OVER_PERM_TENSOR( mh, nh ) * PGM * PGN
-                          !MIND: double check the matrix index order: (mh, nh) or (nh, mh)
-                          !within this conditional: mh==nh anyway
-
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
-                        !-------------------------------------------------------------------------------------------------------------
+                        stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                          & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                          & sum * jacobianGaussWeight
+                        !--------------------------------------------------------------------------------------------------------
                         !mass-increase test function, velocity trial function
-                        ELSE IF(mh==FIELD_VARIABLE%numberOfComponents.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
+                      ELSE IF(rowComponentIdx==numberOfRowsComponents.AND. &
+                        & columnComponentIdx<numberOfColsComponents) THEN
 
-                          SUM = 0.0_DP
+                        sum = 0.0_DP
+                        DO columnXiIdx=1,numberOfXi
+                          sum = sum + rowsPhi * colsdPhidXi(columnXiIdx) * dXidX(columnXiIdx,columnComponentIdx)
+                        ENDDO !columnXiIdx
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                        stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                          & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                          & sum * jacobianGaussWeight
+                      ENDIF
+                    ENDIF
+                    IF(updateDamping) THEN
+                      !MASS-INCREASE test function, mass-increase trial function
+                      IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx==numberOfColsComponents) THEN
 
-                          DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                            PGMSI(mi)=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),ng)
-                          ENDDO !mi
+                        !To integrate the mass-increase term in the reference configuration, we divide by Jxy.
+                        sum = rowsPhi * colsPhi / (Jxy * darcyRho0F)
 
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            PGNSI(ni)=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                          ENDDO !ni
+                        dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                          & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                          & sum * jacobianGaussWeight
+                      END IF
 
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            SUM = SUM + PGM * PGNSI(ni) * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nh)
-                          ENDDO !ni
+                      !                           !Try out adding the inertia term ...
+                      !                           IF(rowComponentIdx==columnComponentIdx.AND.rowComponentIdx<fieldVariable%numberOfComponents) THEN
+                      !                             rowsPhi=quadratureScheme1%gaussBasisFunctions(rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
+                      !                             colsPhi=quadratureScheme2%gaussBasisFunctions(columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
+                      !
+                      !                             sum = 0.0_DP
+                      !
+                      !                             sum = rowsPhi*colsPhi*darcyRho0F
+                      !
+                      !                             dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                      !                               & sum * jacobianGaussWeight
+                      !                           END IF
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
-                        ENDIF
-                        !=====================================================================================================================
-                        !dampingMatrix
-                        IF(dampingMatrix%updateMatrix) THEN
-                          !MASS-INCREASE test function, mass-increase trial function
-                          IF(mh==nh.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
-                            PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                            PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                    END IF
 
-                            SUM = 0.0_DP
+                  CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+                    ! matrices for multi-compartment poroelastic equations
+                    IF(updateStiffness) THEN
 
-                            !To integrate the mass-increase term in the reference configuration, we divide by Jxy.
-                            SUM = PGM * PGN / (Jxy * DARCY_RHO_0_F)
+                      !velocity test function, velocity trial function
+                      IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx<numberOfColsComponents) THEN
 
-                            dampingMatrix%elementMatrix%matrix(mhs,nhs) = dampingMatrix%elementMatrix%matrix(mhs,nhs) + &
-                              & SUM * RWG
-                          END IF
+                        sum = viscosityOverPermeability( rowComponentIdx, columnComponentIdx ) * rowsPhi * colsPhi
+                        !MIND: double check the matrix index order: (rowComponentIdx, columnComponentIdx) or
+                        !(columnComponentIdx, rowComponentIdx) within this conditional: rowComponentIdx==columnComponentIdx anyway
 
-!                           !Try out adding the inertia term ...
-!                           IF(mh==nh.AND.mh<FIELD_VARIABLE%numberOfComponents) THEN
-!                             PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-!                             PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-!
-!                             SUM = 0.0_DP
-!
-!                             SUM = PGM*PGN*DARCY_RHO_0_F
-!
-!                             dampingMatrix%elementMatrix%matrix(mhs,nhs) = dampingMatrix%elementMatrix%matrix(mhs,nhs) + &
-!                               & SUM * RWG
-!                           END IF
+                        stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                          & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                          & sum * jacobianGaussWeight
 
-                        END IF
-
-                      ! matrices for multi-compartment poroelastic equations
-                      CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                        !velocity test function, velocity trial function
-                        IF(mh==nh.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
-
-                          SUM = 0.0_DP
-
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-
-                          SUM = SUM + VIS_OVER_PERM_TENSOR( mh, nh ) * PGM * PGN
-                          !MIND: double check the matrix index order: (mh, nh) or (nh, mh)
-                          !within this conditional: mh==nh anyway
-
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
-                        !-------------------------------------------------------------------------------------------------------------
+                        !--------------------------------------------------------------------------------------------------------
                         !mass-increase test function, velocity trial function
-                        ELSE IF(mh==FIELD_VARIABLE%numberOfComponents.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
+                      ELSE IF(rowComponentIdx==numberOfRowsComponents.AND.columnComponentIdx<numberOfColsComponents) THEN
 
-                          SUM = 0.0_DP
+                        sum = 0.0_DP
+                        DO columnXiIdx=1,dependentBasis2%numberOfXi
+                          sum = sum + rowsPhi * colsdPhidXi(columnXiIdx) * dXidX(columnXiIdx,columnComponentIdx)
+                        ENDDO !columnXiIdx
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                        stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                          & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                          & sum * jacobianGaussWeight
+                      ENDIF
 
-                          DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                            PGMSI(mi)=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),ng)
-                          ENDDO !mi
+                      IF(updateDamping) THEN
+                        !MASS-INCREASE test function, mass-increase trial function
+                        IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx==numberOfColsComponents) THEN
 
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            PGNSI(ni)=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                          ENDDO !ni
+                          !To integrate the mass-increase term in the reference configuration, we divide by Jxy.
+                          sum = rowsPhi * colsPhi / (Jxy * darcyRho0F)
 
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            SUM = SUM + PGM * PGNSI(ni) * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nh)
-                          ENDDO !ni
-
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
+                          dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
                         ENDIF
-                        !=====================================================================================================================
-                        !dampingMatrix
-                        IF(dampingMatrix%updateMatrix) THEN
-                          !MASS-INCREASE test function, mass-increase trial function
-                          IF(mh==nh.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
-                            PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                            PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
 
-                            SUM = 0.0_DP
+!!Try out adding the inertia term ...
+                        !IF(rowComponentIdx==columnComponentIdx.AND.rowComponentIdx<fieldVariable%numberOfComponents) THEN
+                        !  rowsPhi=quadratureScheme1%gaussBasisFunctions(rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
+                        !  colsPhi=quadratureScheme2%gaussBasisFunctions(columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
+                        !
+                        !  sum = 0.0_DP
+                        !
+                        !  sum = rowsPhi*colsPhi*darcyRho0F
+                        !
+                        !  dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                        !    dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                        !    & sum * jacobianGaussWeight
+                        !ENDIF
 
-                            !To integrate the mass-increase term in the reference configuration, we divide by Jxy.
-                            SUM = PGM * PGN / (Jxy * DARCY_RHO_0_F)
-
-                            dampingMatrix%elementMatrix%matrix(mhs,nhs) = dampingMatrix%elementMatrix%matrix(mhs,nhs) + &
-                              & SUM * RWG
-                          END IF
-
-!                           !Try out adding the inertia term ...
-!                           IF(mh==nh.AND.mh<FIELD_VARIABLE%numberOfComponents) THEN
-!                             PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-!                             PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-!
-!                             SUM = 0.0_DP
-!
-!                             SUM = PGM*PGN*DARCY_RHO_0_F
-!
-!                             dampingMatrix%elementMatrix%matrix(mhs,nhs) = dampingMatrix%elementMatrix%matrix(mhs,nhs) + &
-!                               & SUM * RWG
-!                           END IF
-
-                        END IF
+                      ENDIF
 
 
                       !=================================================================================
                       !    d e f a u l t   :   M A T R I C E S
-                      CASE DEFAULT
-                        !-------------------------------------------------------------------------------------------------------------
+                    CASE DEFAULT
+
+                      IF(updateStiffness) THEN
+                        !---------------------------------------------------------------------------------------------------
                         !velocity test function, velocity trial function
-                        IF(mh==nh.AND.nh<NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
+                        IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx<numberOfVelPressComponents) THEN
 
-                          SUM = 0.0_DP
+                          sum=viscosityOverPermeability( rowComponentIdx, columnComponentIdx ) * rowsPhi * colsPhi
+                          !MIND: double check the matrix index order: (rowComponentIdx, columnComponentIdx) or
+                          !(columnComponentIdx, rowComponentIdx) within this conditional: rowComponentIdx==columnComponentIdx
+                          !anyway
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-
-                          SUM = SUM + VIS_OVER_PERM_TENSOR( mh, nh ) * PGM * PGN
-                          !MIND: double check the matrix index order: (mh, nh) or (nh, mh)
-                          !within this conditional: mh==nh anyway
-
-                          IF( STABILIZED ) THEN
-                            SUM = SUM - 0.5_DP * VIS_OVER_PERM_TENSOR( mh, nh ) * PGM * PGN
+                          IF( stabilized ) THEN
+                            sum=sum-0.5_DP*viscosityOverPermeability(rowComponentIdx,columnComponentIdx)*rowsPhi*colsPhi
                           END IF
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
 
-                        !-------------------------------------------------------------------------------------------------------------
-                        !velocity test function, pressure trial function
-                        ELSE IF(mh<NUMBER_OF_VEL_PRESS_COMPONENTS.AND.nh==NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
+                          !--------------------------------------------------------------------------------------------------------
+                          !velocity test function, pressure trial function
+                        ELSE IF(rowComponentIdx<numberOfVelPressComponents.AND.columnComponentIdx==numberOfVelPressComponents) THEN
 
-                          SUM = 0.0_DP
+                          sum = 0.0_DP
+                          DO rowXiIdx=1,numberOfXi
+                            sum = sum - rowsdPhidXi(rowXiIdx)*colsPhi*dXidX(rowXiIdx,rowComponentIdx)
+                          ENDDO !rowXiIdx
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-
-                          DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                            PGMSI(mi)=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),ng)
-                          ENDDO !mi
-
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            PGNSI(ni)=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                          ENDDO !ni
-
-                          DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                            SUM = SUM - PGMSI(mi) * PGN * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
-                          ENDDO !mi
-
-                          IF( STABILIZED ) THEN
-                            DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                              SUM = SUM - 0.5_DP * PGM * PGNSI(ni) * &
-                                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,mh)
-                            ENDDO !ni
+                          IF( stabilized ) THEN
+                            DO columnXiIdx=1,numberOfXi
+                              sum = sum - 0.5_DP * rowsPhi * colsdPhidXi(columnXiIdx) * dXidX(columnXiIdx,rowComponentIdx)
+                            ENDDO !columnXiIdx
                           END IF
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
 
-                        !-------------------------------------------------------------------------------------------------------------
-                        !pressure test function, velocity trial function
-                        ELSE IF(mh==NUMBER_OF_VEL_PRESS_COMPONENTS.AND.nh<NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
+                          !---------------------------------------------------------------------------------------------------------
+                          !pressure test function, velocity trial function
+                        ELSE IF(rowComponentIdx==numberOfVelPressComponents.AND.columnComponentIdx<numberOfVelPressComponents) THEN
 
-                          SUM = 0.0_DP
+                          sum = 0.0_DP
+                          DO columnXiIdx=1,dependentBasis2%numberOfXi
+                            sum = sum + rowsPhi * colsdPhidXi(columnXiIdx) * dXidX(columnXiIdx,columnComponentIdx)
+                          ENDDO !columnXiIdx
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-
-                          DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                            PGMSI(mi)=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),ng)
-                          ENDDO !mi
-
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            PGNSI(ni)=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                          ENDDO !ni
-
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            SUM = SUM + PGM * PGNSI(ni) * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nh)
-                          ENDDO !ni
-
-                          IF( STABILIZED ) THEN
-                            DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                              SUM = SUM + 0.5_DP * PGMSI(mi) * PGN * &
-                                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,nh)
-                            ENDDO !mi
+                          IF( stabilized ) THEN
+                            DO rowXiIdx=1,dependentBasis1%numberOfXi
+                              sum = sum + 0.5_DP * rowsdPhidXi(rowXiIdx) * colsPhi * dXidX(rowXiIdx,columnComponentIdx)
+                            ENDDO !rowXiIdx
                           END IF
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
 
-                        !-------------------------------------------------------------------------------------------------------------
-                        !pressure test function, pressure trial function
-                        ELSE IF(mh==nh.AND.nh==NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
+                          !---------------------------------------------------------------------------------------------------------
+                          !pressure test function, pressure trial function
+                        ELSE IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx==numberOfVelPressComponents) THEN
 
-                          SUM = 0.0_DP
+                          sum = 0.0_DP
 
-                          DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                            PGMSI(mi)=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),ng)
-                          ENDDO !mi
-
-                          DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                            PGNSI(ni)=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                          ENDDO !ni
-
-                          IF( STABILIZED ) THEN
-                            DO idxdim =1,DEPENDENT_BASIS_1%numberOfXi !number space dimension equiv. number of xi
-                              DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                                DO ni=1,DEPENDENT_BASIS_2%numberOfXi
-                                  SUM = SUM + 0.5_DP * PERM_TENSOR_OVER_VIS( idxdim, idxdim ) * PGMSI(mi) * PGNSI(ni) * &
-                                    & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
-                                    & dXidX(mi,idxdim) * equations%interpolation% &
-                                    & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,idxdim)
-                                ENDDO !ni
-                              ENDDO !mi
-                            ENDDO !idxdim
+                          IF( stabilized ) THEN
+                            DO dimensionIdx =1,numberOfDimensions !number space dimension equiv. number of xi
+                              DO rowXiIdx=1,numberOfXi
+                                DO columnXiIdx=1,numberOfXi
+                                  sum = sum + 0.5_DP * permeabilityOverViscosity( dimensionIdx, dimensionIdx ) * &
+                                    & rowsdPhidXi(rowXiIdx) * colsdPhidXi(columnXiIdx) * dXidX(rowXiIdx,dimensionIdx) *  &
+                                    & dXidX(columnXiIdx,dimensionIdx)
+                                ENDDO !columnXiIdx
+                              ENDDO !rowXiIdx
+                            ENDDO !dimensionIdx
                           END IF
 
-                          IF( DARCY%TESTCASE == 3 ) THEN
+                          IF( darcy%testcase == 3 ) THEN
                             !This forms part of the pressure-dependent source term,
                             !thus it enters the LHS
-                            PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                            PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
 
-                            SUM = SUM + BETA_PARAM * PGM * PGN
+                            sum = sum + betaParameter * rowsPhi * colsPhi
                           END IF
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
 
-                        !-------------------------------------------------------------------------------------------------------------
-                        !For the INRIA model, and: mass-increase test function, pressure trial function
-                        ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
-                          & mh==FIELD_VARIABLE%numberOfComponents.AND.nh==NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
+                          !--------------------------------------------------------------------------------------------------------
+                          !For the INRIA model, and: mass-increase test function, pressure trial function
+                        ELSE IF(equationsSetSubtype==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
+                          & rowComponentIdx==numberOfRowsComponents.AND. &
+                          & columnComponentIdx==numberOfVelPressComponents) THEN
 
-                          SUM = 0.0_DP
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                          sum = -rowsPhi * colsPhi / (Mfact * ffact)
 
-                          SUM = SUM - PGM * PGN / (Mfact * ffact)
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
+                          !--------------------------------------------------------------------------------------------------------
+                          !For the INRIA model, and: mass-increase test function, mass-increase trial function
+                        ELSE IF(equationsSetSubtype==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
+                          & rowComponentIdx==columnComponentIdx.AND.columnComponentIdx==numberOfColsComponents) THEN
 
-                        !-------------------------------------------------------------------------------------------------------------
-                        !For the INRIA model, and: mass-increase test function, mass-increase trial function
-                        ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
-                          & mh==nh.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
 
-                          SUM = 0.0_DP
+                          sum = rowsPhi * colsPhi / darcyRho0F
 
-                          PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                          PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & sum * jacobianGaussWeight
 
-                          SUM = SUM + PGM * PGN / DARCY_RHO_0_F
-
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
-                            & SUM * RWG
-
-                        !-------------------------------------------------------------------------------------------------------------
+                          !-------------------------------------------------------------------------------------------------------
                         ELSE
 
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = 0.0_DP
+                          stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = 0.0_DP
 
                         ENDIF
 
-                        !=====================================================================================================================
-                        ! dampingMatrix
+                      ENDIF
+                      !=======================================================================================================
+                      ! dampingMatrix
 
-                        IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE) THEN
-                          IF(dampingMatrix%updateMatrix) THEN
-                            IF(mh==nh.AND.mh<NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
-                              PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                              PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                      IF(equationsSetSubtype==EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE) THEN
+                        IF(updateDamping) THEN
+                          IF(rowComponentIdx==columnComponentIdx.AND.rowComponentIdx<numberOfVelPressComponents) THEN
 
-                              SUM = 0.0_DP
+                            sum = rowsPhi*colsPhi*darcyRho0F
 
-                              SUM = PGM*PGN*DARCY_RHO_0_F
+                            dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                              & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                              & sum * jacobianGaussWeight
+                          ENDIF
+                        ENDIF
+                      ELSE IF(equationsSetSubtype==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) THEN
+                        IF(updateDamping) THEN
+                          !pressure test function, mass-increase trial function
+                          IF(rowComponentIdx==numberOfVelPressComponents.AND.columnComponentIdx==numberOfColsComponents) THEN
 
-                              dampingMatrix%elementMatrix%matrix(mhs,nhs) = dampingMatrix%elementMatrix%matrix(mhs,nhs) + &
-                                & SUM * RWG
-                            END IF
-                          END IF
-                        ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) THEN
-                          IF(dampingMatrix%updateMatrix) THEN
-                            !pressure test function, mass-increase trial function
-                            IF(mh==NUMBER_OF_VEL_PRESS_COMPONENTS.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
-                              PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                              PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                            sum = rowsPhi * colsPhi / (Jxy * darcyRho0F)
 
-                              SUM = 0.0_DP
+                            dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                              & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                              & sum * jacobianGaussWeight
+                          ENDIF
+                        ENDIF
+                      ENDIF
 
-                              SUM = PGM * PGN / (Jxy * DARCY_RHO_0_F)
+                    END SELECT
+                    !   e n d   s e l e c t   equationsSetSubtype
+                    !=================================================================================
 
-                              dampingMatrix%elementMatrix%matrix(mhs,nhs) = dampingMatrix%elementMatrix%matrix(mhs,nhs) + &
-                                & SUM * RWG
-                            END IF
-                          END IF
-                        END IF
+                  ENDDO !columnElementParameterIdx
+                ENDDO !columnComponentIdx
+              ENDIF !udpate matrices
+              !===================================================================================================================
+              !rhsVector
+              IF(updateRHS) THEN
 
-                      END SELECT
-                      !   e n d   s e l e c t   EQUATIONS_SET_SUBTYPE
-                      !=================================================================================
-
-                    ENDDO !ns
-                  ENDDO !nh
-                ENDIF
-                !===================================================================================================================
-                !rhsVector
-                IF(rhsVector%updateVector) THEN
-
-                  SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                SELECT CASE(equationsSetSubtype)
                   !==========================================================================================
                   !  i n c o m p r e s s i b l e   e l a s t i c i t y   d r i v e n   D a r c y   :   R H S
-                  CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
+                CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
 
-                    !-----------------------------------------------------------------------------------------------------------------
-                    !velocity test function
-                    IF( mh<FIELD_VARIABLE%numberOfComponents ) THEN
+                  !---------------------------------------------------------------------------------------------------------
+                  !velocity test function
+                  IF( rowComponentIdx<numberOfRowsComponents ) THEN
 
-                      SUM = 0.0_DP
+                    sum = 0.0_DP
 
-                      PGM = QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
+                    !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
+                    DO rowXiIdx=1,dependentBasis1%numberOfXi
+                      sum = sum - rowsPhi * gradientLMPressure(rowXiIdx) * dXidX(rowXiIdx,rowComponentIdx)
+                    ENDDO !rowXiIdx
 
-                      !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
-                      DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-                        SUM = SUM - PGM * GRAD_LM_PRESSURE(mi) * &
-                          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
-                      ENDDO !mi
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + &
+                      & sum * jacobianGaussWeight
 
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
-
-                    !-----------------------------------------------------------------------------------------------------------------
+                    !-------------------------------------------------------------------------------------------------------
                     !mass-increase test function
-                    ELSE IF( mh==FIELD_VARIABLE%numberOfComponents ) THEN
+                  ELSE IF( rowComponentIdx==numberOfRowsComponents ) THEN
 
-                      SUM = 0.0_DP
+                    ! + possible source AND SINK TERMS
+                    source = 0.0_DP
 
-                      PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
+                    sum = rowsPhi * source
 
-                      ! + possible SOURCE AND SINK TERMS
-                      SOURCE = 0.0_DP
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + &
+                      & sum * jacobianGaussWeight
 
-                      SUM = SUM + PGM * SOURCE
+                  ELSE
 
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = 0.0_DP
 
-                    ELSE
+                  ENDIF
+                  !------------------------------------------------------------------------------------------------------
+                CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+                  !------------------------------------------------------------------------------------------------------
+                  !velocity test function
+                  IF( rowComponentIdx<fieldVariable%numberOfComponents ) THEN
 
-                      rhsVector%elementVector%vector(mhs) = 0.0_DP
+                    sum = 0.0_DP
+                    !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
+                    !TO DO- need to read different grad p depending on the compartment of interest
+                    DO rowXiIdx=1,numberOfXi
+                      !sum = sum - rowsPhi * gradientLMPressure(rowXiIdx) * dXidX(rowXiIdx,rowComponentIdx)
+                      !this is the pressure gradient for the appropriate compartment
+                      sum = sum - rowsPhi * pressureGradient(rowXiIdx,myCompartment) * dXidX(rowXiIdx,rowComponentIdx)
+                    ENDDO !rowXiIdx
 
-                    END IF
-                    !-------------------------------------------------------------------------------------------------------------
-                  CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                    !-----------------------------------------------------------------------------------------------------------------
-                    !velocity test function
-                    IF( mh<FIELD_VARIABLE%numberOfComponents ) THEN
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + &
+                      & sum * jacobianGaussWeight
 
-                      SUM = 0.0_DP
-
-                      PGM = QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-
-                      !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
-                      !TO DO- need to read different grad p depending on the compartment of interest
-                      DO mi=1,DEPENDENT_BASIS_1%numberOfXi
-!                         SUM = SUM - PGM * GRAD_LM_PRESSURE(mi) * &
-!                           & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
-                        !this is the pressure gradient for the appropriate compartment
-                        SUM = SUM - PGM * GRAD_PRESSURE(mi,my_compartment) * &
-                          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
-                      ENDDO !mi
-
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
-
-                    !-----------------------------------------------------------------------------------------------------------------
+                    !-----------------------------------------------------------------------------------------------------
                     !mass-increase test function
-                    ELSE IF( mh==FIELD_VARIABLE%numberOfComponents ) THEN
+                  ELSE IF( rowComponentIdx==fieldVariable%numberOfComponents ) THEN
 
-                      SUM = 0.0_DP
+                    ! n o   s o u r c e
+                    !source terms need to be converted to use source field & vector
+                    source = 0.0_DP                      
 
-                      PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
+                    !Add in the source/sink terms due to the pressure difference between compartments
+                    DO matrixIdx=1,numberOfCompartments
+                      IF(matrixIdx/=myCompartment) THEN
+                        !Interpolate the coupling material parameter from the V variable type of the materials field
+                        interCompartmentPermeability1=materialsVInterpPoint%values(myCompartment,NO_PART_DERIV)
+                        interCompartmentPermeability2=materialsVInterpPoint%values(matrixIdx,NO_PART_DERIV)
+                        !Source term is coefficient*(p(myCompartment) - p(matrixIdx))
+                        interComparmentSource=-interCompartmentPermeability1*pressure(myCompartment) + &
+                          & interCompartmentPermeability2*pressure(matrixIdx)
+                      ENDIF
+                    ENDDO !matrixIdx                      
 
-                      ! n o   s o u r c e
-                      !source terms need to be converted to use source field & vector
-                      SOURCE = 0.0_DP
+                    sum = rowsPhi * source + rowsPhi * interComparmentSource
 
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + sum * jacobianGaussWeight
 
-                     !Add in the source/sink terms due to the pressure difference between compartments
-                     DO imatrix=1,Ncompartments
-                       IF(imatrix/=my_compartment) THEN
-                       !Interpolate the coupling material parameter from the V variable type of the materials field
-                        INTER_COMP_PERM_1=equations%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr% &
-                          & VALUES(my_compartment,NO_PART_DERIV)
-                        INTER_COMP_PERM_2=equations%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr% &
-                          & VALUES(imatrix,NO_PART_DERIV)
-                       !Source term is coefficient*(p(my_compartment) - p(imatrix))
-                       INTER_COMP_SOURCE=-INTER_COMP_PERM_1*PRESSURE(my_compartment) + INTER_COMP_PERM_2*PRESSURE(imatrix)
-                       ENDIF
-                     ENDDO
+                  ELSE
 
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = 0.0_DP
 
-                      SUM = SUM + PGM * SOURCE + PGM * INTER_COMP_SOURCE
-
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
-
-                    ELSE
-
-                      rhsVector%elementVector%vector(mhs) = 0.0_DP
-
-                    END IF
+                  ENDIF
                   !=================================================================================
                   !    d e f a u l t   :   R H S
-                  CASE DEFAULT
-                    !-----------------------------------------------------------------------------------------------------------------
-                    !velocity test function
-                    IF( mh<NUMBER_OF_VEL_PRESS_COMPONENTS ) THEN
+                CASE DEFAULT
+                  !-------------------------------------------------------------------------------------------------
+                  !velocity test function
+                  IF( rowComponentIdx<numberOfVelPressComponents ) THEN
 
-                      SUM = 0.0_DP
+                    sum = 0.0_DP
 
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + sum * jacobianGaussWeight
 
-                    !-----------------------------------------------------------------------------------------------------------------
+                    !-------------------------------------------------------------------------------------------------
                     !pressure test function
-                    ELSE IF( mh==NUMBER_OF_VEL_PRESS_COMPONENTS ) THEN
+                  ELSE IF( rowComponentIdx==numberOfVelPressComponents ) THEN
 
-                      SUM = 0.0_DP
+                    ! n o   s o u r c e
+                    source = 0.0_DP
 
-                      PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
+                    sum = rowsPhi * source
 
-                      ! n o   s o u r c e
-                      SOURCE = 0.0_DP
-
-                      SUM = SUM + PGM * SOURCE
-
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + sum * jacobianGaussWeight
 
                     !-------------------------------------------------------------------------------------------------------------
                     !For the INRIA model, and: mass-increase test function
-                    ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
-                      & mh==FIELD_VARIABLE%numberOfComponents) THEN
+                  ELSE IF(equationsSetSubtype==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
+                    & rowComponentIdx==numberOfRowsComponents) THEN
 
-                      SUM = 0.0_DP
+                    sum = -rowsPhi * bfact * (1.0_DP - Jxy)
 
-                      PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
+                    sum = sum - rowsPhi * p0fact / (Mfact * ffact)
 
-                      SUM = SUM - PGM * bfact * (1.0_DP - Jxy)
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = &
+                      & rhsVector%elementVector%vector(rowElementDOFIdx) + sum * jacobianGaussWeight
 
-                      SUM = SUM - PGM * p0fact / (Mfact * ffact)
+                  ELSE
 
-                      rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
+                    rhsVector%elementVector%vector(rowElementDOFIdx) = 0.0_DP
 
-                    ELSE
-
-                      rhsVector%elementVector%vector(mhs) = 0.0_DP
-
-                    END IF
-                    !-------------------------------------------------------------------------------------------------------------
-                  END SELECT
-                  !   e n d   s e l e c t   EQUATIONS_SET_SUBTYPE
-                  !=================================================================================
-
-                END IF
-
-                IF(ASSOCIATED(sourceVector)) THEN
-                  IF(sourceVector%updateVector) THEN
-                    IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
-                      & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
-
-                        C_PARAM=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(mh, NO_PART_DERIV)
-
-                        !IF(ABS(C_PARAM)>1.0E-08) WRITE(*,*)'C_PARAM = ',C_PARAM
-
-                        SUM = 0.0_DP
-                        PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                        SUM = SUM + PGM * C_PARAM
-                        sourceVector%elementVector%vector(mhs) = sourceVector%elementVector%vector(mhs) + SUM * RWG
-                    ENDIF
                   END IF
-                END IF
-              ENDDO !ms
-            ENDDO !mh
+                  !-------------------------------------------------------------------------------------------------------------
+                END SELECT
+                !   e n d   s e l e c t   equationsSetSubtype
+                !=================================================================================
 
-            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+              END IF
+
+              IF(updateSource) THEN
+                IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
+                  & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+
+                  cParameter=sourceInterpPoint%values(rowComponentIdx, NO_PART_DERIV)
+
+                  !IF(ABS(cParameter)>1.0E-08) WRITE(*,*)'cParameter = ',cParameter
+
+                  sum = rowsPhi * cParameter
+                  sourceVector%elementVector%vector(rowElementDOFIdx) = &
+                    & sourceVector%elementVector%vector(rowElementDOFIdx) + sum * jacobianGaussWeight
+                ENDIF
+              ENDIF
+            ENDDO !rowElementParameterIdx
+          ENDDO !rowComponentIdx
+
+          IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
             !Calculate the momentum coupling matrices
 
-              !Loop over element rows
-              mhs=0
-              DO mh=1,FIELD_VARIABLE%numberOfComponents !field_variable is the variable associated with the equations set under consideration
+            !Loop over element rows
+            rowElementDOFIdx=0
+            DO rowComponentIdx=1,numberOfRowsComponents !field_variable is the variable associated with the equations set under consideration
+              NULLIFY(rowsDomain)
+              CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+              NULLIFY(rowsDomainTopology)
+              CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+              NULLIFY(rowsDomainElements)
+              CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+              NULLIFY(rowsBasis)
+              CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+              CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
+              CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
 
-                MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
-                DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
-                  & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                QUADRATURE_SCHEME_1 => DEPENDENT_BASIS_1%QUADRATURE% &
-                  & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
-                  & QUADRATURE_SCHEME_1%gaussWeights(ng)
+              DO rowElementParameterIdx=1,numberOfRowsElementParameters
+                rowElementDOFIdx=rowElementDOFIdx+1
+                CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                  & rowsPhi,err,error,*999)
 
-                DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
-                  mhs=mhs+1
+                variableCount=0
+                DO matrixIdx = 1,numberOfCompartments
+                  IF(matrixIdx/=myCompartment)THEN
+                    variableCount=variableCount+1
 
-                  num_var_count=0
-                  DO imatrix = 1,Ncompartments
-                  IF(imatrix/=my_compartment)THEN
-                    num_var_count=num_var_count+1
-
-!need to test for the case where imatrix==mycompartment
-!the coupling terms then needs to be added into the stiffness matrix
-                    IF(COUPLING_MATRICES(num_var_count)%ptr%updateMatrix) THEN
+                    !need to test for the case where matrixIdx==mycompartment
+                    !the coupling terms then needs to be added into the stiffness matrix
+                    IF(couplingMatrices(variableCount)%ptr%updateMatrix) THEN
 
                       !Loop over element columns
-                      nhs=0
-                      DO nh=1,FIELD_VARIABLES(num_var_count)%ptr%numberOfComponents
+                      columnElementDOFIdx=0
+                      DO columnComponentIdx=1,numberOfColsComponents
+                        NULLIFY(colsDomain)
+                        CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+                        NULLIFY(colsDomainTopology)
+                        CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+                        NULLIFY(colsDomainElements)
+                        CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+                        NULLIFY(colsBasis)
+                        CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                        CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme, &
+                          & err,error,*999)
+                        CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+                        DO columnElementParameterIdx=1,numberOfColsElementParameters
+                          columnElementDOFIdx=columnElementDOFIdx+1
+                          CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
+                            & NO_PART_DERIV,colsPhi,err,error,*999)
 
-                        MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
-                        DEPENDENT_BASIS_2 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
-                          & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                        !--- We cannot use two different quadrature schemes here !!!
-                        QUADRATURE_SCHEME_2 => DEPENDENT_BASIS_2%QUADRATURE% &
-                         & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                        !RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * &
-                        !  & QUADRATURE_SCHEME_2%gaussWeights(ng)
+                          !---------------------------------------------------------------------------------------------------
+                          !concentration test function, concentration trial function
+                          !For now, this is only a dummy implementation - this still has to be properly set up.
+                          !IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx<numberOfVelPressComponents) THEN ! don't need this for diffusion equation
 
-                        DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
-                          nhs=nhs+1
+                          !                             sum = 0.0_DP
 
-!                           !-------------------------------------------------------------------------------------------------------------
-!                           !concentration test function, concentration trial function
-!                           !For now, this is only a dummy implementation - this still has to be properly set up.
-!                           IF(mh==nh.AND.nh<NUMBER_OF_VEL_PRESS_COMPONENTS) THEN ! don't need this for diffusion equation
+                          !Get the coupling coefficients
+                          couplingParameter=materialsVInterpPoint%values(matrixIdx,NO_PART_DERIV)
 
-!                             SUM = 0.0_DP
+                          !                              sum = sum + couplingParameter * rowsPhi * PGN
 
-                            PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                            PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
+                          couplingMatrices(variableCount)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+                            & couplingMatrices(variableCount)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + &
+                            & couplingParameter * rowsPhi * colsPhi * jacobianGaussWeight
+                          !                           ENDIF
 
-                            !Get the coupling coefficients
-                              COUPLING_PARAM=equations%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr% &
-                                & VALUES(imatrix,NO_PART_DERIV)
-
-!                              SUM = SUM + COUPLING_PARAM * PGM * PGN
-
-                             COUPLING_MATRICES(num_var_count)%ptr%elementMatrix%matrix(mhs,nhs) = &
-                               & COUPLING_MATRICES(num_var_count)%ptr%elementMatrix%matrix(mhs,nhs) + &
-                               & COUPLING_PARAM * PGM * PGN * RWG
-!                           ENDIF
-
-                        ENDDO !ns
-                      ENDDO !nh
+                        ENDDO !columnElementParameterIdx
+                      ENDDO !columnComponentIdx
                     ENDIF
-                   ENDIF
-                  ENDDO !imatrix
-                ENDDO !ms
-              ENDDO !mh
-            ENDIF
-
-
-            !-----------------------------------------------------------------------------------------------------------------------------------
-            ! RIGHT HAND SIDE FOR ANALYTIC SOLUTION
-            !-----------------------------------------------------------------------------------------------------------------------------------
-
-            IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-              IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1.OR. &
-                & EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2.OR. &
-                & EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3.OR. &
-                & EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1.OR. &
-                & EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2.OR. &
-                & EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3) THEN
-
-                mhs=0
-                DO mh=1,FIELD_VARIABLE%numberOfComponents
-                  MESH_COMPONENT_1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
-                  DEPENDENT_BASIS_1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
-                    & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                  QUADRATURE_SCHEME_1=>DEPENDENT_BASIS_1%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                  RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
-                    & QUADRATURE_SCHEME_1%gaussWeights(ng)
-                  DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
-                    mhs=mhs+1
-                    PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                    !note mh value derivative
-                    SUM=0.0_DP
-
-                    X(1) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,1)
-                    X(2) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,1)
-                    IF(DEPENDENT_BASIS_1%numberOfXi==3) THEN
-                      X(3) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
-                    END IF
-                    IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1) THEN
-                      SUM=0.0_DP
-                    ELSE IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2) THEN
-                      IF(mh==3) THEN
-                        FACT   = PERM_OVER_VIS_PARAM / L
-                        ARG(1) = X(1) / L
-                        ARG(2) = X(2) / L
-                        SOURCE = -2.0_DP / L * FACT * EXP( ARG(1) ) * EXP( ARG(2) )
-                        SUM = PGM * SOURCE
-                      ELSE
-                        SUM = 0.0_DP
-                      ENDIF
-                    ELSE IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3) THEN
-                      IF(mh==3) THEN
-                        FACT   = 2.0_DP * PI * PERM_OVER_VIS_PARAM / L
-                        ARG(1) = 2.0_DP * PI * X(1) / L
-                        ARG(2) = 2.0_DP * PI * X(2) / L
-                        SOURCE = +2.0_DP * (2.0_DP * PI / L) * FACT * SIN( ARG(1) ) * SIN( ARG(2) )
-                        SUM = PGM * SOURCE
-                      ELSE
-                        SUM = 0.0_DP
-                      ENDIF
-                    ELSE IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1) THEN
-                      SUM=0.0_DP
-                    ELSE IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2) THEN
-                      IF(mh==4) THEN
-                        FACT   = PERM_OVER_VIS_PARAM / L
-                        ARG(1) = X(1) / L
-                        ARG(2) = X(2) / L
-                        ARG(3) = X(3) / L
-                        SOURCE = -3.0_DP / L * FACT * EXP( ARG(1) ) * EXP( ARG(2) ) * EXP( ARG(3) )
-                        SUM = PGM * SOURCE
-                      ELSE
-                        SUM = 0.0_DP
-                      ENDIF
-                    ELSE IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3) THEN
-                      IF(mh==4) THEN
-                        FACT   = 2.0_DP * PI * PERM_OVER_VIS_PARAM / L
-                        ARG(1) = 2.0_DP * PI * X(1) / L
-                        ARG(2) = 2.0_DP * PI * X(2) / L
-                        ARG(3) = 2.0_DP * PI * X(3) / L
-                        SOURCE = +3.0_DP * ( 2.0_DP * PI / L ) * FACT * SIN( ARG(1) ) * SIN( ARG(2) ) * SIN( ARG(3) )
-                        SUM = PGM * SOURCE
-                      ELSE
-                        SUM = 0.0_DP
-                      END IF
-                    ENDIF
-
-                    !Calculate RHS VECTOR
-                    rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)+SUM*RWG
-                  ENDDO !ms
-                ENDDO !mh
-              ELSE
-                rhsVector%elementVector%vector(mhs)=0.0_DP
-              ENDIF
-            ENDIF
-
-            ! end: RIGHT HAND SIDE FOR ANALYTIC SOLUTION
-            !-----------------------------------------------------------------------------------------------------------------------------------
-
-!             !===================================================================================================================
-!             !COUPLING_MATRICES
-!             SELECT CASE(EQUATIONS_SET_SUBTYPE)
-!             CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE)
-!
-!               !Create FIELD_VARIABLES type, COUPLING_MATRICES type
-!
-!               !Loop over element rows
-!               mhs=0
-!               DO mh=1,FIELD_VARIABLE%numberOfComponents
-!
-!                 MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
-!                 DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
-!                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-!                 QUADRATURE_SCHEME_1 => DEPENDENT_BASIS_1%QUADRATURE% &
-!                   & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-!                 RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
-!                   & QUADRATURE_SCHEME_1%gaussWeights(ng)
-!
-!                 DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
-!                   mhs=mhs+1
-!
-!                   DO imatrix=1,Ncompartments
-!
-!                     IF(COUPLING_MATRICES(imatrix)%ptr%updateMatrix) THEN
-!
-!                       !Loop over element columns
-!                       nhs=0
-! !                       DO nh=1,FIELD_VARIABLE%numberOfComponents
-!                       DO nh=1,FIELD_VARIABLES(imatrix)%ptr%numberOfComponents
-!
-!                         MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
-!                         DEPENDENT_BASIS_2 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
-!                           & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-!                         !--- We cannot use two different quadrature schemes here !!!
-!                         QUADRATURE_SCHEME_2 => DEPENDENT_BASIS_2%QUADRATURE% &
-!                          & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-!                         !RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * &
-!                         !  & QUADRATURE_SCHEME_2%gaussWeights(ng)
-!
-!                         DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
-!                           nhs=nhs+1
-!
-!                           !-------------------------------------------------------------------------------------------------------------
-!                           !velocity test function, velocity trial function
-!                           !For now, this is only a dummy implementation - this still has to be properly set up.
-!                           IF(mh==nh.AND.nh<NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
-!
-!                             SUM = 0.0_DP
-!
-!                             PGM=QUADRATURE_SCHEME_1%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-!                             PGN=QUADRATURE_SCHEME_2%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-!
-!                             SUM = SUM + VIS_OVER_PERM_TENSOR( mh, nh ) * PGM * PGN
-!
-!                             COUPLING_MATRICES(imatrix)%ptr%elementMatrix%matrix(mhs,nhs) = &
-!                               & COUPLING_MATRICES(imatrix)%ptr%elementMatrix%matrix(mhs,nhs) + SUM * RWG
-!                           ENDIF
-!
-!                         ENDDO !ns
-!                       ENDDO !nh
-!                     ENDIF
-!                   ENDDO !imatrix
-!                 ENDDO !ms
-!               ENDDO !mh
-!             CASE DEFAULT
-!               !Do nothing
-!             END SELECT
-          ENDDO !ng
-
-          IF(rhsVector%updateVector) THEN
-            ! Integrate pressure over faces, and add to RHS vector
-            CALL Darcy_FiniteElementFaceIntegrate(EQUATIONS_SET,ELEMENT_NUMBER,FIELD_VARIABLE,err,error,*999)
-          ENDIF
-
-          ! CHECK STIFFNESS MATRIX WITH CMHEART
-          IF(DIAGNOSTICS5) THEN
-            IF( ELEMENT_NUMBER == 1 ) THEN
-              NDOFS = 0
-              DO mh=1,FIELD_VARIABLE%numberOfComponents
-                MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
-                DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
-                  & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                NDOFS = NDOFS + DEPENDENT_BASIS_1%numberOfElementParameters
-              END DO
-
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Element Matrix for element number 1 (Darcy):",err,error,*999)
-              DO mhs=1,NDOFS
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"row number = ",mhs,err,error,*999)
-                CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS,NDOFS,NDOFS,&
-                  & stiffnessMatrix%elementMatrix%matrix(mhs,:), &
-                  & '("",4(X,E13.6))','4(4(X,E13.6))',err,error,*999)
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE," ",err,error,*999)
-              END DO
-            END IF
-          END IF
-
-          !Scale factor adjustment
-          IF(dependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
-            CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
-              & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
-            mhs=0
-            DO mh=1,FIELD_VARIABLE%numberOfComponents
-              !Loop over element rows
-              MESH_COMPONENT_1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
-              DEPENDENT_BASIS_1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
-                & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-              DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
-                mhs=mhs+1
-                nhs=0
-                IF(ASSOCIATED(stiffnessMatrix).AND.ASSOCIATED(dampingMatrix)) THEN
-                  IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
-                    !Loop over element columns
-                    DO nh=1,FIELD_VARIABLE%numberOfComponents
-                      MESH_COMPONENT_2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
-                      DEPENDENT_BASIS_2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
-                        & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                      DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
-                        nhs=nhs+1
-                        IF(stiffnessMatrix%updateMatrix)THEN
-                          stiffnessMatrix%elementMatrix%matrix(mhs,nhs)=stiffnessMatrix%elementMatrix%matrix(mhs,nhs)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ns,nh)
-                        END IF
-                        IF(dampingMatrix%updateMatrix)THEN
-                          dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ns,nh)
-                        END IF
-                      ENDDO !ns
-                    ENDDO !nh
                   ENDIF
-                ENDIF
-                IF(ASSOCIATED(rhsVector)) THEN
-                  IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)
-                ENDIF
-                IF(ASSOCIATED(sourceVector)) THEN
-                  IF(sourceVector%updateVector) sourceVector%elementVector%vector(mhs)= &
-                     & sourceVector%elementVector%vector(mhs)* &
-                     & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)
-                ENDIF
-              ENDDO !ms
-            ENDDO !mh
+                ENDDO !matrixIdx
+              ENDDO !rowElementParameterIdx
+            ENDDO !rowComponentIdx
           ENDIF
 
-         ! RESTORE ALL POINTERS CALL PARAMATER_SET_FIELD_DATA_RESTORE
+          !---------------------------------------------------------------------------------------------------------------
+          ! RIGHT HAND SIDE FOR ANALYTIC SOLUTION
+          !---------------------------------------------------------------------------------------------------------------
 
-        CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
-            & " is not valid for a Darcy equation type of a fluid mechanics equations set class."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+          NULLIFY(equationsAnalytic)
+          CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+          IF(ASSOCIATED(equationsAnalytic)) THEN
+            CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+            IF(analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1.OR. &
+              & analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2.OR. &
+              & analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3.OR. &
+              & analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1.OR. &
+              & analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2.OR. &
+              & analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3) THEN
 
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+              rowElementDOFIdx=0
+              DO rowComponentIdx=1,numberOfRowsComponents
+                NULLIFY(rowsDomain)
+                CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+                NULLIFY(rowsDomainTopology)
+                CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+                NULLIFY(rowsDomainElements)
+                CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+                NULLIFY(rowsBasis)
+                CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+                CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+                !Loop over element rows
+                DO rowElementParameterIdx=1,numberOfRowsElementParameters
+                  rowElementDOFIdx=rowElementDOFIdx+1
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                    & rowsPhi,err,error,*999)
+                  !note rowComponentIdx value derivative
+                  sum=0.0_DP
 
-  EXITS("DARCY_EQUATION_FINITE_ELEMENT_CALCULATE")
+                  x(1) = geometricInterpPoint%values(1,1)
+                  x(2) = geometricInterpPoint%values(2,1)
+                  IF(numberOfDimensions==3) x(3) = geometricInterpPoint%values(3,1)
+                  IFanalyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1) THEN
+                    sum=0.0_DP
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2) THEN
+                    IF(rowComponentIdx==3) THEN
+                      fact   = permeabilityOverViscosityParameter / L
+                      arg(1) = x(1) / L
+                      arg(2) = x(2) / L
+                      source = -2.0_DP / L * fact * EXP( arg(1) ) * EXP( arg(2) )
+                      sum = rowsPhi * source
+                    ELSE
+                      sum = 0.0_DP
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3) THEN
+                    IF(rowComponentIdx==3) THEN
+                      fact   = 2.0_DP * PI * permeabilityOverViscosityParameter / L
+                      arg(1) = 2.0_DP * PI * x(1) / L
+                      arg(2) = 2.0_DP * PI * x(2) / L
+                      source = +2.0_DP * (2.0_DP * PI / L) * fact * SIN( arg(1) ) * SIN( arg(2) )
+                      sum = rowsPhi * source
+                    ELSE
+                      sum = 0.0_DP
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1) THEN
+                    sum=0.0_DP
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2) THEN
+                    IF(rowComponentIdx==4) THEN
+                      fact   = permeabilityOverViscosityParameter / L
+                      arg(1) = x(1) / L
+                      arg(2) = x(2) / L
+                      arg(3) = x(3) / L
+                      source = -3.0_DP / L * fact * EXP( arg(1) ) * EXP( arg(2) ) * EXP( arg(3) )
+                      sum = rowsPhi * source
+                    ELSE
+                      sum = 0.0_DP
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3) THEN
+                    IF(rowComponentIdx==4) THEN
+                      fact   = 2.0_DP * PI * permeabilityOverViscosityParameter / L
+                      arg(1) = 2.0_DP * PI * x(1) / L
+                      arg(2) = 2.0_DP * PI * x(2) / L
+                      arg(3) = 2.0_DP * PI * x(3) / L
+                      source = +3.0_DP * ( 2.0_DP * PI / L ) * fact * SIN( arg(1) ) * SIN( arg(2) ) * SIN( arg(3) )
+                      sum = rowsPhi * source
+                    ELSE
+                      sum = 0.0_DP
+                    END IF
+                  ENDIF
+
+                  !Calculate RHS VECTOR
+                  rhsVector%elementVector%vector(rowElementDOFIdx)= &
+                    & rhsVector%elementVector%vector(rowElementDOFIdx)+sum*jacobianGaussWeight
+                ENDDO !rowElementParameterIdx
+              ENDDO !rowComponentIdx
+            ELSE
+              rhsVector%elementVector%vector(rowElementDOFIdx)=0.0_DP
+            ENDIF
+          ENDIF
+
+          ! end: RIGHT HAND SIDE FOR ANALYTIC SOLUTION
+          !-------------------------------------------------------------------------------------------------------------
+
+          !===================================================================================================================
+          !couplingMatrices
+          !SELECT CASE(equationsSetSubtype)
+          !CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE)
+          !
+          !  !Create fieldVariables type, couplingMatrices type
+          !
+          !  !Loop over element rows
+          !               rowElementDOFIdx=0
+          !               DO rowComponentIdx=1,fieldVariable%numberOfComponents
+          !
+          !                 meshComponent1 = fieldVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
+          !                 dependentBasis1 => dependentField%decomposition%DOMAIN(meshComponent1)%ptr% &
+          !                   & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          !                 quadratureScheme1 => dependentBasis1%QUADRATURE% &
+          !                   & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+          !                 jacobianGaussWeight = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
+          !                   & quadratureScheme1%gaussWeights(gaussPointIdx)
+          !
+          !                 DO rowElementParameterIdx=1,dependentBasis1%numberOfElementParameters
+          !                   rowElementDOFIdx=rowElementDOFIdx+1
+          !
+          !                   DO matrixIdx=1,numberOfCompartments
+          !
+          !                     IF(couplingMatrices(matrixIdx)%ptr%updateMatrix) THEN
+          !
+          !                       !Loop over element columns
+          !                       columnElementDOFIdx=0
+          ! !                       DO columnComponentIdx=1,fieldVariable%numberOfComponents
+          !                       DO columnComponentIdx=1,fieldVariables(matrixIdx)%ptr%numberOfComponents
+          !
+          !                         meshComponent2 = fieldVariable%COMPONENTS(columnComponentIdx)%meshComponentNumber
+          !                         dependentBasis2 => dependentField%decomposition%DOMAIN(meshComponent2)%ptr% &
+          !                           & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          !                         !--- We cannot use two different quadrature schemes here !!!
+          !                         quadratureScheme2 => dependentBasis2%QUADRATURE% &
+          !                          & quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+          !                         !jacobianGaussWeight = equations%interpolation%geometricInterpPointMetrics%jacobian * &
+          !                         !  & quadratureScheme2%gaussWeights(gaussPointIdx)
+          !
+          !                         DO columnElementParameterIdx=1,dependentBasis2%numberOfElementParameters
+          !                           columnElementDOFIdx=columnElementDOFIdx+1
+          !
+          !                           !-------------------------------------------------------------------------------------------------------------
+          !                           !velocity test function, velocity trial function
+          !                           !For now, this is only a dummy implementation - this still has to be properly set up.
+          !                           IF(rowComponentIdx==columnComponentIdx.AND.columnComponentIdx<numberOfVelPressComponents) THEN
+          !
+          !                             sum = 0.0_DP
+          !
+          !                             rowsPhi=quadratureScheme1%gaussBasisFunctions(rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
+          !                             colsPhi=quadratureScheme2%gaussBasisFunctions(columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
+          !
+          !                             sum = sum + viscosityOverPermeability( rowComponentIdx, columnComponentIdx ) * rowsPhi * PGN
+          !
+          !                             couplingMatrices(matrixIdx)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = &
+          !                               & couplingMatrices(matrixIdx)%ptr%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) + sum * jacobianGaussWeight
+          !                           ENDIF
+          !
+          !                         ENDDO !columnElementParameterIdx
+          !                       ENDDO !columnComponentIdx
+          !                     ENDIF
+          !                   ENDDO !matrixIdx
+          !                 ENDDO !rowElementParameterIdx
+          !               ENDDO !rowComponentIdx
+          !             CASE DEFAULT
+          !               !Do nothing
+          !             END SELECT
+        ENDDO !gaussPointIdx
+
+        IF(rhsVector%updateVector) THEN
+          ! Integrate pressure over faces, and add to RHS vector
+          CALL Darcy_FiniteElementFaceIntegrate(equationsSet,elementNumber,fieldVariable,err,error,*999)
+        ENDIF
+
+
+        !Scale factor adjustment
+        CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
+        IF(scalingType/=FIELD_NO_SCALING) THEN
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsInterpParameters, &
+            & err,error,*999)
+          NULLIFY(colsInterpParameters)
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
+            & err,error,*999)
+          CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,rowsInterpParameters,err,error,*999)
+          CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters,err,error,*999)
+          !Loop over element rows
+          rowElementDOFIdx=0          
+          DO rowComponentIdx=1,numberOfRowsComponents
+            NULLIFY(rowsDomain)
+            CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+            NULLIFY(rowsDomainTopology)
+            CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+            NULLIFY(rowsDomainElements)
+            CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+            NULLIFY(rowsBasis)
+            CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+            CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+            DO rowElementParameterIdx=1,numberOfRowsElementParameters
+              rowElementDOFIdx=rowElementDOFIdx+1                    
+              IF(updateMatrices) THEN
+                columnElementDOFIdx=0
+                !Loop over element columns
+                DO columnComponentIdx=1,numberOfColsComponents
+                  NULLIFY(colsDomain)
+                  CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+                  NULLIFY(colsDomainTopology)
+                  CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+                  NULLIFY(colsDomainElements)
+                  CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+                  NULLIFY(colsBasis)
+                  CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                  CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+                  DO columnElementParameterIdx=1,numberOfColsElementParameters
+                    columnElementDOFIdx=columnElementDOFIdx+1
+                    IF(updateStiffness)THEN
+                      stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                        & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                        & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
+                        & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
+                    ENDIF
+                    IF(updateDamping)THEN
+                      dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                        & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                        & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
+                        & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
+                    ENDIF
+                  ENDDO !columnElementParameterIdx
+                ENDDO !columnComponentIdx
+              ENDIF
+              IF(updateRHS) THEN
+                rhsVector%elementVector%vector(rowElementDOFIdx)= &
+                  & rhsVector%elementVector%vector(rowElementDOFIdx)* &
+                  & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
+              ENDIF
+              IF(updateSource) THEN
+                sourceVector%elementVector%vector(rowElementDOFIdx)= &
+                  & sourceVector%elementVector%vector(rowElementDOFIdx)* &
+                  & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
+              ENDIF
+            ENDDO !rowElementParameterIdx
+          ENDDO !rowComponentIdx
+        ENDIF
+        
+        ! RESTORE ALL POINTERS CALL PARAMATER_SET_FIELD_DATA_RESTORE
+
+      CASE DEFAULT
+        localError="Equations set subtype "//TRIM(NumberToVString(equationsSetSubtype,"*",err,error))// &
+          & " is not valid for a Darcy equation type of a fluid mechanics equations set class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+
+    ENDIF !update
+
+    EXITS("Darcy_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("DARCY_EQUATION_FINITE_ELEMENT_CALCULATE",err,error)
+999 ERRORSEXITS("Darcy_FiniteElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_FINITE_ELEMENT_CALCULATE
+    
+  END SUBROUTINE Darcy_FiniteElementCalculate
 
   !
   !================================================================================================================================
@@ -3095,163 +2967,182 @@ CONTAINS
   SUBROUTINE Darcy_FiniteElementFaceIntegrate(equationsSet,elementNumber,dependentVariable,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<The equations set to calculate the RHS term for
+    TYPE(EquationsqSetType), POINTER :: equationsSet !<The equations set to calculate the RHS term for
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculat the RHS term for
     TYPE(FieldVariableType), POINTER :: dependentVariable
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DecompositionElementType), POINTER :: decompElement
-    TYPE(BasisType), POINTER :: dependentBasis
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsMatricesVectorType), POINTER :: equationsMatrices
-    TYPE(DecompositionFaceType), POINTER :: face
-    TYPE(BasisType), POINTER :: faceBasis
-    TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpolatedPoint
-    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters
-    TYPE(QuadratureSchemeType), POINTER :: faceQuadratureScheme
-    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint
-    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpolationParameters
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: pointMetrics
-    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     INTEGER(INTG) :: faceIdx, faceNumber
     INTEGER(INTG) :: componentIdx, gaussIdx
     INTEGER(INTG) :: elementBaseDofIdx, faceNodeIdx, elementNodeIdx
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber, nodeDerivativeIdx, parameterIdx
     INTEGER(INTG) :: faceParameterIdx, elementDofIdx, normalComponentIdx
     REAL(DP) :: gaussWeight, normalProjection, pressureGauss
+    TYPE(BasisType), POINTER :: dependentBasis,faceBasis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementType), POINTER :: decompElement
+    TYPE(DecompositionFaceType), POINTER :: face
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesVectorType), POINTER :: equationsMatrices
+    TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpolatedPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpolationParameters
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: pointMetrics
+    TYPE(QuadratureSchemeType), POINTER :: faceQuadratureScheme
 
     ENTERS("Darcy_FiniteElementFaceIntegrate",err,error,*999)
 
-    NULLIFY(decomposition)
-    NULLIFY(decompElement)
-    NULLIFY(dependentBasis)
+    IF(ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is not associated.",err,error,*999)
+    
     NULLIFY(equations)
-    NULLIFY(equationsMatrices)
-    NULLIFY(face)
-    NULLIFY(faceBasis)
-    NULLIFY(faceQuadratureScheme)
-    NULLIFY(dependentInterpolatedPoint)
-    NULLIFY(dependentInterpolationParameters)
-    NULLIFY(geometricInterpolatedPoint)
-    NULLIFY(geometricInterpolationParameters)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(rhsMapping)
+    CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(rhsVector)
+    updateRHS=.FALSE.
+    IF(ASSOCIATED(rhsMapping)) THEN
+      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+      updateRHS=rhsVector%updateVector
+    ENDIF
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      equations=>equationsSet%EQUATIONS
-      IF(ASSOCIATED(equations)) THEN
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        equationsMatrices=>vectorEquations%vectorMatrices
-        IF(ASSOCIATED(equationsMatrices)) THEN
-          rhsVector=>equationsMatrices%rhsVector
-        END IF
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+    IF(updateRHS) THEN
 
-    IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-      CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    ELSE IF(SIZE(equationsSet%specification,1)/=3) THEN
-      CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-        & err,error,*999)
-    END IF
-    SELECT CASE(equationsSet%specification(3))
-    CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
+      CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
         & EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
         & EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
         & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
 
-      !Get the mesh decomposition and basis for this element
-      decomposition=>dependentVariable%FIELD%DECOMPOSITION
-      !These RHS terms are associated with the equations for the three velocity components,
-      !rather than the pressure term
-      meshComponentNumber=dependentVariable%COMPONENTS(1)%meshComponentNumber
-      dependentBasis=>decomposition%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-      decompElement=>DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
-
-      !Only add RHS terms if the face geometric parameters are calculated
-      IF(decomposition%calculateFaces) THEN
-        !Get interpolation parameters and point for Darcy pressure
-        dependentInterpolationParameters=>equations%interpolation%dependentInterpParameters(dependentVariable%variableType)%ptr
-        dependentInterpolatedPoint=>equations%interpolation%dependentInterpPoint(dependentVariable%variableType)%ptr
-
-        DO faceIdx=1,dependentBasis%numberOfLocalFaces
-          !Get the face normal and quadrature information
-          IF(ALLOCATED(decompElement%elementFaces)) THEN
-            faceNumber=decompElement%elementFaces(faceIdx)
-          ELSE
-            CALL FlagError("Decomposition element faces is not allocated.",err,error,*999)
-          END IF
-          face=>decomposition%TOPOLOGY%FACES%FACES(faceNumber)
-          !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
-          !correspond to the other element.
-          IF(.NOT.(face%boundaryFace)) CYCLE
-          CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber,dependentInterpolationParameters, &
+        !Get the mesh decomposition and basis for this element
+        NULLIFY(dependentField)
+        CALL FieldVariable_FieldGet(dependentVariable,dependentField,err,error,*999)
+        NULLIFY(decomposition)
+        CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+        !Only add RHS terms if the face geometric parameters are calculated
+        IF(decomposition%calculateFaces) THEN
+          !These RHS terms are associated with the equations for the three velocity components,
+          !rather than the pressure term
+          CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
+          CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfDependentComponents,err,error,*999)
+          NULLIFY(domain)
+          CALL FieldVariable_ComponentDomainGet(dependentVariable,1,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+          NULLIFY(domainFaces)
+          CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
+          NULLIFY(dependentBasis)
+          CALL DomainElements_BasisGet(domainElements,elementNumber,dependentBasis,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(dependentBasis,numberOfElementParameters,err,error,*999)
+          NULLIFY(decompositionTopology)
+          CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+          NULLIFY(decompositionElements)
+          CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+          NULLIFY(decompositionFaces)
+          CALL DecompositionTopology_DecompositionFacesGet(decompositionTopology,decompositionFaces,err,error,*999)
+          !Get interpolation parameters and point for Darcy pressure
+          NULLIFY(equationsInterpolation)
+          CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+          NULLIFY(geometricInterpParameters)
+          CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+            & geometricInterpParameters,err,error,*999)
+          NULLIFY(geometricInterpPoint)
+          CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+            & geometricInterpPoint,err,error,*999)
+          NULLIFY(geometricInterpPointMetrics)
+          CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+            & geometricInterpPointMetrics,err,error,*999)
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters, &
             & err,error,*999)
-          normalComponentIdx=ABS(face%xiNormalDirection)
-          faceBasis=>decomposition%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%FACES%FACES(faceNumber)%BASIS
-          faceQuadratureScheme=>faceBasis%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+          NULLIFY(dependentInterpParameters)
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,variableType,dependentInterpParameters, &
+            & err,error,*999)
+          NULLIFY(dependentInterpPoint)
+          CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,variableType,dependentInterpPoint,err,error,*999)
+          CALL Basis_NumberOfLocalFacesGet(dependentBasis,numberOfLocalFaces,err,error,*999)
+          DO faceIdx=1,numberOfLocalFaces
+            !Get the face normal and quadrature information
+            CALL DecompositionElements_ElementFaceNumberGet(decompositionElements,faceIdx,faceNumber,err,error,*999)
+            !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
+            !correspond to the other element.
+            CALL DecompositionFaces_FaceBoundaryFaceGet(decompositionFaces,faceIdx,boundaryFace,err,error,*999)
+            IF(.NOT.boundaryFace) CYCLE
+            CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber,dependentInterpolationParameters, &
+              & err,error,*999)
+            CALL DecompositionFaces_FaceXiNormalDirectionGet(decompositionFaces,faceIdx,normalComponentIdx,err,error,*999)
+            normalComponentIdx=ABS(normalComponentIdx)
+            NULLIFY(faceBasis)
+            CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)            
+            NULLIFY(faceQuadratureScheme)
+            CALL Basis_QuadratureSchemeGet(faceBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,faceQuadratureScheme,err,error,*999)
+            CALL BasisQuadrature_NumberOfGaussGet(faceQuadratureScheme,numberOfGauss,err,error,*999)
+            CALL Basis_NumberOfNodesGet(faceBasis,numberOfFaceNodes,err,error,*999)
+            DO gaussIdx=1,numberOfGauss
+              !Get interpolated Darcy pressure
+              CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+                & dependentInterpolatedPoint,err,error,*999)
+              pressureGauss=dependentInterpolatedPoint%values(4,NO_PART_DERIV) !(component,derivative)
+              !Use the geometric field to find the face normal and the Jacobian for the face integral
+              CALL Field_InterpolateLocalFaceGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
+                & geometricInterpPoint,err,error,*999)
+              !Calculate the metric tensors and Jacobian
+              CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_VOLUME_TYPE,geometricInterpPointMetrics, &
+                & err,error,*999)
+              CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+              CALL BasisQuadratureScheme_GaussWeightGet(faceQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+              DO componentIdx=1,numberOfDependentComponents-1
+                normalProjection=DOT_PRODUCT(geometricInterpPointMetrics%GU(normalComponentIdx,:), &
+                  & geometricInterpPointMetrics%dXdXi(componentIdx,:))
+                IF(normalComponentIdx<0) normalProjection=-normalProjection
+                IF(ABS(normalProjection)<ZERO_TOLERANCE) CYCLE
+                !Work out the first index of the rhs vector for this element - 1
+                elementBaseDofIdx=numberOfElementParameters*(componentIdx-1)
+                DO faceNodeIdx=1,numberOfFaceNodes
+                  CALL Basis_FaceNodeNumberGet(dependentBasis,faceNodeIdx,faceIdx,elementNodeIdx,err,error,*999)
+                  CALL Basis_FaceNodeNumberOfDerivativesGet(dependentBasis,faceNodeIdx,faceIdx,numberOfNodeDerivatives, &
+                    & err,error,*999)
+                  DO faceNodeDerivativeIdx=1,numberOfNodeDerivatives
+                    CALL Basis_FaceNodeDerivativeNumberGet(dependentBasis,faceNodeDerivativeIdx,faceNodeIdx,faceIdx, &
+                      & nodeDerivativeIdx,err,error,*999)
+                    CALL Basis_ElementParameterGet(dependentBasis,nodeDerivativeIdx,elementNodeIdx,parameterIdx,err,error,*999)
+                    CALL Basis_ElementParameterGet(faceBasis,faceNodeDerivativeIdx,faceNodeIdx,faceParameterIdx,err,error,*999)
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(faceQuadratureScheme,faceParameterIdx,NO_PART_DERIV, &
+                      & gaussIdx,facePhi,err,error,*999)
+                    elementDofIdx=elementBaseDofIdx+parameterIdx
+                    rhsVector%elementVector%vector(elementDofIdx) = rhsVector%elementVector%vector(elementDofIdx) - &
+                      & gaussWeight*pressureGauss*normalProjection*facePhi*jacobian
+                  ENDDO !nodeDerivativeIdx
+                ENDDO !faceNodeIdx
+              ENDDO !componentIdx
+            ENDDO !gaussIdx
+          END DO !faceIdx
+        END IF !decomposition%calculateFaces
 
-          DO gaussIdx=1,faceQuadratureScheme%numberOfGauss
-            gaussWeight=faceQuadratureScheme%gaussWeights(gaussIdx)
-            !Get interpolated Darcy pressure
-            CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
-              & dependentInterpolatedPoint,err,error,*999)
-            pressureGauss=dependentInterpolatedPoint%values(4,1) !(component,derivative)
+      CASE DEFAULT
+        ! Do nothing for other equation set subtypes
+      END SELECT
 
-            !Use the geometric field to find the face normal and the Jacobian for the face integral
-            geometricInterpolationParameters=>equations%interpolation%geometricInterpParameters( &
-              & FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
-              & geometricInterpolationParameters,err,error,*999)
-            geometricInterpolatedPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolateLocalFaceGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
-              & geometricInterpolatedPoint,err,error,*999)
-            !Calculate the metric tensors and Jacobian
-            pointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_VOLUME_TYPE,pointMetrics,err,error,*999)
-
-            DO componentIdx=1,dependentVariable%numberOfComponents-1
-              normalProjection=DOT_PRODUCT(pointMetrics%GU(normalComponentIdx,:),pointMetrics%dXdXi(componentIdx,:))
-              IF(face%xiNormalDirection<0) THEN
-                normalProjection=-normalProjection
-              END IF
-              IF(ABS(normalProjection)<ZERO_TOLERANCE) CYCLE
-              !Work out the first index of the rhs vector for this element - 1
-              elementBaseDofIdx=dependentBasis%numberOfElementParameters*(componentIdx-1)
-              DO faceNodeIdx=1,faceBasis%numberOfNodes
-                elementNodeIdx=dependentBasis%nodeNumbersInLocalFace(faceNodeIdx,faceIdx)
-                DO faceNodeDerivativeIdx=1,faceBasis%numberOfDerivatives(faceNodeIdx)
-                  nodeDerivativeIdx=dependentBasis%derivativeNumbersInLocalFace(faceNodeDerivativeIdx,faceNodeIdx,faceIdx)
-                  parameterIdx=dependentBasis%elementParameterIndex(nodeDerivativeIdx,elementNodeIdx)
-                  faceParameterIdx=faceBasis%elementParameterIndex(faceNodeDerivativeIdx,faceNodeIdx)
-                  elementDofIdx=elementBaseDofIdx+parameterIdx
-                  rhsVector%elementVector%vector(elementDofIdx) = rhsVector%elementVector%vector(elementDofIdx) - &
-                    & gaussWeight*pressureGauss*normalProjection* &
-                    & faceQuadratureScheme%gaussBasisFunctions(faceParameterIdx,NO_PART_DERIV,gaussIdx)* &
-                    & pointMetrics%jacobian
-                END DO !nodeDerivativeIdx
-              END DO !faceNodeIdx
-            END DO !componentIdx
-          END DO !gaussIdx
-        END DO !faceIdx
-      END IF !decomposition%calculateFaces
-
-    CASE DEFAULT
-      ! Do nothing for other equation set subtypes
-    END SELECT
-
+    ENDIF
+      
     EXITS("Darcy_FiniteElementFaceIntegrate")
     RETURN
 999 ERRORSEXITS("Darcy_FiniteElementFaceIntegrate",err,error)
     RETURN 1
-  END SUBROUTINE
+    
+  END SUBROUTINE Darcy_FiniteElementFaceIntegrate
 
   !
   !================================================================================================================================
@@ -3266,46 +3157,42 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: subtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Darcy_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-          & err,error,*999)
-      END IF
-      subtype=specification(3)
-      SELECT CASE(subtype)
-      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-        !ok
-      CASE DEFAULT
-        localError="The third equations set specification of "//TRIM(NumberToVstring(specification(3),"*",err,error))// &
-          & " is not valid for a Darcy type of a fluid mechanics equations set."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      !Set full specification
-      IF(ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(equationsSet%specification(3),stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-      END IF
-      equationsSet%specification(1:3)=[EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_DARCY_EQUATION_TYPE,subtype]
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)    
+    IF(SIZE(specification,1)<3) THEN
+      localError="The size of the specified specification array of "// &
+        & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
     END IF
+    
+    subtype=specification(3)
+    SELECT CASE(subtype)
+    CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
+      & EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE, &
+      & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVstring(specification(3),"*",err,error))// &
+        & " is not valid for a Darcy type of a fluid mechanics equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !Set full specification
+    ALLOCATE(equationsSet%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
+    equationsSet%specification(1:3)=[EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_DARCY_EQUATION_TYPE,subtype]
 
     EXITS("Darcy_EquationsSetSpecificationSet")
     RETURN
@@ -3328,40 +3215,37 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Darcy_ProblemSpecificationSet",err,error,*998)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)==3) THEN
-        problemSubtype=problemSpecification(3)
-        SELECT CASE(problemSubtype)
-        CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
-            & PROBLEM_QUASISTATIC_DARCY_SUBTYPE, &
-            & PROBLEM_ALE_DARCY_SUBTYPE, &
-            & PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
-            & PROBLEM_PGM_DARCY_SUBTYPE, &
-            & PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
-          !All ok
-        CASE DEFAULT
-          localError="The third problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
-            & " is not valid for a Darcy type of a fluid mechanics problem."
-          CALL FlagError(localError,err,error,*998)
-        END SELECT
-        IF(ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is already allocated.",err,error,*998)
-        ELSE
-          ALLOCATE(problem%specification(3),stat=err)
-          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-        END IF
-        problem%specification(1:3)=[PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_DARCY_EQUATION_TYPE,problemSubtype]
-      ELSE
-        CALL FlagError("Darcy problem specification must have three entries.",err,error,*998)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*998)
-    END IF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    problemSubtype=problemSpecification(3)
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_DARCY_SUBTYPE, &
+      & PROBLEM_ALE_DARCY_SUBTYPE, &
+      & PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      !All ok
+    CASE DEFAULT
+      localError="The third problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a Darcy type of a fluid mechanics problem."
+      CALL FlagError(localError,err,error,*998)
+    END SELECT
+    ALLOCATE(problem%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+    problem%specification(1:3)=[PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_DARCY_EQUATION_TYPE,problemSubtype]
 
     EXITS("Darcy_ProblemSpecificationSet")
     RETURN
@@ -3377,1000 +3261,655 @@ CONTAINS
   !
 
   !>Sets up the Darcy equations problem.
-!   SUBROUTINE DARCY_EQUATION_PROBLEM_STANDARD_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
-  SUBROUTINE DARCY_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
+  SUBROUTINE Darcy_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER, SOLVER_MAT_PROPERTIES
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS, SOLVER_EQUATIONS_MAT_PROPERTIES
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
+    TYPE(SolverType), POINTER :: solver, solverMatProperties
+    TYPE(SolverEquationsType), POINTER :: solverEquations, solverEquationsMatProperties
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
-!     ENTERS("DARCY_EQUATION_PROBLEM_STANDARD_SETUP",err,error,*999)
-    ENTERS("DARCY_EQUATION_PROBLEM_SETUP",err,error,*999)
+    ENTERS("Darcy_ProblemSetup",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVER_MAT_PROPERTIES)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVER_EQUATIONS_MAT_PROPERTIES)
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(3))
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_DARCY_SUBTYPE, &
+      & PROBLEM_ALE_DARCY_SUBTYPE, &
+      & PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      !All ok
+    CASE DEFAULT
+      localError="The third problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a Darcy type of a fluid mechanics problem."
+      CALL FlagError(localError,err,error,*998)
+    END SELECT
+    
 
       !-----------------------------------------------------------------
       !   s t a n d a r d   D a r c y
       !-----------------------------------------------------------------
-      CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing???
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a simple control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
-            !Set the solver to be a linear solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            !Create the solver equations
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            !Get the solver equations
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a standard Darcy equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-
-      !-----------------------------------------------------------------
-      !   q u a s i s t a t i c   D a r c y
-      !-----------------------------------------------------------------
-      CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing???
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a quasistatic Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a time control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a quasistatic Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
-            !Set the solver to be a linear solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a quasistatic Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            !Create the solver equations
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            !Get the solver equations
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a quasistatic Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a quasistatic Darcy equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-
-      !-----------------------------------------------------------------
-      !   A L E / P G M   D a r c y
-      !-----------------------------------------------------------------
-      CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing???
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a time control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
-            !
-            !Set the first solver to be a linear solver for the material update
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_LINEAR_TYPE,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_PETSC_LIBRARY,err,error,*999)
-            !
-            !Set the second solver to be a linear solver for the ALE Darcy
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Get the material-properties solver and create the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_QUASISTATIC, &
-              & err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_SPARSE_MATRICES,err,error,*999)
-            !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the creation of the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_MAT_PROPERTIES,err,error,*999)
-            !Finish the creation of the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for an ALE Darcy equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-
-      !-----------------------------------------------------------------
-      !   D Y N A M I C   A L E / P G M   D a r c y
-      !-----------------------------------------------------------------
-      CASE(PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing???
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a time control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
-            !
-            !Set the first solver to be a linear solver for the material update
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_LINEAR_TYPE,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_PETSC_LIBRARY,err,error,*999)
-            !
-            !Set the second solver to be a first order dynamic solver for the ALE Darcy
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-!             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Get the material-properties solver and create the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_QUASISTATIC, &
-              & err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_SPARSE_MATRICES,err,error,*999)
-            !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the creation of the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_MAT_PROPERTIES,err,error,*999)
-            !Finish the creation of the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for an ALE Darcy equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for an ALE Darcy equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-
-      !-----------------------------------------------------------------
-      !   d y n a m i c   D a r c y
-      !-----------------------------------------------------------------
-      CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-          CASE(PROBLEM_SETUP_INITIAL_TYPE)
-            SELECT CASE(PROBLEM_SETUP%actionType)
-              CASE(PROBLEM_SETUP_START_ACTION)
-                !Do nothing????
-              CASE(PROBLEM_SETUP_FINISH_ACTION)
-                !Do nothing????
-              CASE DEFAULT
-                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                  & " is invalid for a transient Darcy fluid."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE(PROBLEM_SETUP_CONTROL_TYPE)
-            SELECT CASE(PROBLEM_SETUP%actionType)
-              CASE(PROBLEM_SETUP_START_ACTION)
-                !Set up a time control loop
-                CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-                CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
-              CASE(PROBLEM_SETUP_FINISH_ACTION)
-                !Finish the control loops
-                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-                CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-                CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
-              CASE DEFAULT
-                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                  & " is invalid for a transient Darcy fluid."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            SELECT CASE(PROBLEM_SETUP%actionType)
-              CASE(PROBLEM_SETUP_START_ACTION)
-                !Start the solvers creation
-                CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-                CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
-                !Set the solver to be a first order dynamic solver
-                CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-                CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
-                CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-                !Set solver defaults
-                CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-                CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-                CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-              CASE(PROBLEM_SETUP_FINISH_ACTION)
-                !Get the solvers
-                CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-                !Finish the solvers creation
-                CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-              CASE DEFAULT
-                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-                 & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                 & " is invalid for a transient Darcy fluid."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-            SELECT CASE(PROBLEM_SETUP%actionType)
-              CASE(PROBLEM_SETUP_START_ACTION)
-                !Get the control loop
-                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-                CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-                !Get the solver
-                CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-                CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-                !Create the solver equations
-                CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-                CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-                CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,&
-                & err,error,*999)
-                CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-              CASE(PROBLEM_SETUP_FINISH_ACTION)
-                !Get the control loop
-                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-                CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-                !Get the solver equations
-                CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-                CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-                CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-                !Finish the solver equations creation
-                CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)
-              CASE DEFAULT
-                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                  & " is invalid for a transient Darcy fluid."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE DEFAULT
-            localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a transient Darcy fluid."
-            CALL FlagError(localError,err,error,*999)
-        END SELECT
-
-      !-----------------------------------------------------------------
-      !   c a s e   d e f a u l t
-      !-----------------------------------------------------------------
+      !CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+    SELECT CASE(problemSetup%setupType)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Do nothing????
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Do nothing???
       CASE DEFAULT
-        localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-          & " does not equal a standard, quasistatic or ALE Darcy equation subtype."
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Darcy equation."
         CALL FlagError(localError,err,error,*999)
-
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    ENDIF
+    CASE(PROBLEM_SETUP_CONTROL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Set up a simple control loop
+        NULLIFY(controlLoop)
+        CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+        IF(psSpecification(3)/=PROBLEM_STANDARD_DARCY_SUBTYPE) &
+          & CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the control loops
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Darcy equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      !Get the control loop
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Start the solvers creation
+        NULLIFY(solvers)
+        CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
+        SELECT CASE(psSpecification(3))
+        CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
+          & PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
+          !Set the solver to be a linear solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CASE(PROBLEM_ALE_DARCY_SUBTYPE, &
+          & PROBLEM_PGM_DARCY_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
+          !Set the first solver to be a linear solver for the material update
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+          !Set the second solver to be a linear solver for the ALE Darcy
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CASE(PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
+          !Set the first solver to be a linear solver for the material update
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+          !Set the second solver to be a first order dynamic solver for the ALE Darcy
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+        CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
+          !Set the solver to be a first order dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+        CASE DEFAULT
+          localError="The problem subtype of "//TRIM(NumberToVString(psSpecification(3),"*",err,error))// &
+            & " is invalid for a Darcy equation subtype."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the solvers
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(solvers,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Darcy equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
 
-!     EXITS("DARCY_EQUATION_PROBLEM_STANDARD_SETUP")
-    EXITS("DARCY_EQUATION_PROBLEM_SETUP")
+
+      
+    CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        !Get the solver
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        SELECT CASE(psSpecification(3))
+        CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
+          & PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          IF(psSpecification(3)==PROBLEM_QUASISTATIC_DARCY_SUBTYPE) THEN
+            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
+          ELSE
+            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+          ENDIF
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE(PROBLEM_ALE_DARCY_SUBTYPE, &
+          & PROBLEM_PGM_DARCY_SUBTYPE)
+          DO solverIdx=1,2
+            !solverIdx=1 is material-properties solver and solverIdx=2 is the Darcy-ALE solver equations
+            NULLIFY(solver)
+            CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+            NULLIFY(solverEquations)
+            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
+            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          ENDDO !solverIdx
+        CASE(PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+          !Get the material-properties solver and create the material-properties solver equations
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE DEFAULT
+          localError="The problem subtype of "//TRIM(NumberToVString(psSpecification(3),"*",err,error))// &
+            & " is invalid for a Darcy equation subtype."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        !Get the solver equations
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+        DO solverIdx=1,numberOfSolvers
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
+        ENDDO !solverIdx
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Darcy equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+        & " is invalid for a standard Darcy equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Darcy_ProblemSetup")
     RETURN
-! 999 ERRORSEXITS("DARCY_EQUATION_PROBLEM_STANDARD_SETUP",err,error)
-999 ERRORSEXITS("DARCY_EQUATION_PROBLEM_SETUP",err,error)
+999 ERRORSEXITS("Darcy_ProblemSetup",err,error)
     RETURN 1
-!   END SUBROUTINE DARCY_EQUATION_PROBLEM_STANDARD_SETUP
-  END SUBROUTINE DARCY_EQUATION_PROBLEM_SETUP
+    
+  END SUBROUTINE Darcy_ProblemSetup
 
   !
-  !================================================================================================================================
+  !=============================================================================================================================
   !
 
   !>Sets up the Darcy problem pre-solve.
-  SUBROUTINE Darcy_PreSolve(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolve(solver,err,error,*)
 
     !Argument variables
-   TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP 
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
+    INTEGER(INTG) :: analyticFunctionType,loopType,pSpecification(3),solverMatrixIdx,solverNumber,solverNumberDarcy, &
+      & solverNumberMatProperties,solverNumberSolid
+    TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(EquationsType), POINTER :: equations
-
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_ALE_DARCY  !<A pointer to the solvers
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolverType), POINTER :: solverALEDarcy
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
-
-    INTEGER(INTG) :: solver_matrix_idx
-
 
     ENTERS("Darcy_PreSolve",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-          END IF
-          !--- Set 'SOLVER_NUMBER' depending on CONTROL_LOOP%PROBLEM%SPECIFICATION(3)
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-              SOLVER_NUMBER_DARCY=1
-            CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
-              SOLVER_NUMBER_MAT_PROPERTIES=1
-              SOLVER_NUMBER_DARCY=2
-            CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
-              SOLVER_NUMBER_SOLID=1
-              SOLVER_NUMBER_DARCY=1
-            CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              SOLVER_NUMBER_SOLID=1
-              SOLVER_NUMBER_MAT_PROPERTIES=1
-              SOLVER_NUMBER_DARCY=2
-          END SELECT
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,psSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      solverNumberDarcy=1
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      solverNumberMatProperties=1
+      solverNumberDarcy=2
+    CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
+      solverNumberSolid=1
+      solverNumberDarcy=1
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      solverNumberSolid=1
+      solverNumberMatProperties=1
+      solverNumberDarcy=2
+    END SELECT
 
-          !--- Set explicitly 'SOLVER_MATRIX%updateMatrix=.TRUE.'
-          SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-          IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-            SOLVER_MAPPING=>SOLVER_equations%solverMapping
-            IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-              SOLVER_MATRICES=>SOLVER_equations%SOLVER_MATRICES
-              IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-                DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
-                  SOLVER_MATRIX=>SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr
-                  IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                    SOLVER_MATRIX%updateMatrix=.TRUE.
-                  ELSE
-                    CALL FlagError("Solver Matrix is not associated.",err,error,*999)
-                  ENDIF
-                ENDDO
-              ELSE
-                CALL FlagError("Solver Matrices is not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver mapping is not associated.",err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Solver equations is not associated.",err,error,*999)
+    !--- Set explicitly 'solverMatrix%updateMatrix=.TRUE.'
+    NULLIFY(solverEquations)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    NULLIFY(solverMapping)
+    CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfSolverMatrices
+      NULLIFY(solverMatrix)
+      CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
+      solverMatrix%updateMatrix=.TRUE.
+    ENDDO !solverMatrixIdx
+ 
+    !--- pre_solve calls for various actions
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      IF(solveNumber==solverNumberDarcy) CALL Darcy_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
+    CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+      CALL Solver_NumberGet(solver,solverNumber,err,error,*999)
+      IF((loopType==CONTROL_SIMPLE_TYPE.OR.loopType==CONTROL_TIME_LOOP_TYPE).AND.solverNumber==solverNumberDarcy) THEN
+!!TODO remove these debug flags
+        !--- flags to ensure once-per-time-step output in conjunction with diagnostics
+        idebug1 = .TRUE.
+        idebug2 = .TRUE.
+        idebug3 = .TRUE.
+
+        NULLIFY(solvers)
+        CALL Solver_SolversGet(solver,solvers,err,error,*999)
+        NULLIFY(solverALEDarcy)
+        CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverALEDarcy,err,error,*999)
+        NULLIFY(solverEquationsALEDarcy)
+        CALL Solver_SolverEquationsGet(solverALEDarcy,solverEquationsALEDarcy,err,error,*999)
+        NULLIFY(solverMappingALEDarcy)
+        CALL SolverEquations_SolverMappingGet(solverEquationsALEDarcy,solverMappingALEDarcy,err,error,*999)
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMappingALEDarcy,1,equationsSet,err,error,*999)
+        NULLIFY(equationsAnalytic)
+        CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
+        IF(ASSOCIATED(equationsAnalytic)) THEN
+          CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+          IF(analyticFunctionType==EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)THEN
+            !call only analytic update and DO NOT call the other standard pre-solve routines as the mesh does not require deform
+            CALL Darcy_PreSolveUpdateAnalyticValues(solverALEDarcy,err,error,*999)
           ENDIF
-
-          !--- pre_solve calls for various actions
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-              CALL Darcy_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
-            CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
-
-              IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) &
-                  & .AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                !--- flags to ensure once-per-time-step output in conjunction with diagnostics
-                idebug1 = .TRUE.
-                idebug2 = .TRUE.
-                idebug3 = .TRUE.
-
-                NULLIFY(SOLVER_ALE_DARCY)
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_ALE_DARCY,err,error,*999)
-                EQUATIONS=>SOLVER_ALE_DARCY%SOLVER_equations%solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
-                IF(ASSOCIATED(EQUATIONS)) THEN
-                 EQUATIONS_SET=>equations%equationsSet
-                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                   IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)THEN
-                   !call only analytic update and DO NOT call the other standard pre-solve routines as the mesh does not require deformation
-                     CALL Darcy_PreSolveUpdateAnalyticValues(SOLVER_ALE_DARCY,err,error,*999)
-                   ENDIF
-                  ELSE
-                   !default
-                     !--- 1.1 Transfer solid displacement to Darcy geometric field
-                     CALL Darcy_PreSolveGetSolidDisplacement(SOLVER_ALE_DARCY,err,error,*999)
-
-                     !--- 1.2 Update the mesh (and calculate boundary velocities) PRIOR to solving for new material properties
-                     CALL Darcy_PreSolveALEUpdateMesh(SOLVER_ALE_DARCY,err,error,*999)
-
-  ! ! !                 !i n   p r i n c i p l e   c u r r e n t l y   d o   n o t   n e e d   t o   u p d a t e   B C s
-  ! ! !              !unless:
-  ! ! !              !--- 1.3 Apply both normal and moving mesh boundary conditions, OR:
-  ! ! !              !--- 1.3 (Iteratively) Render the boundary impermeable (ellipsoid, general curvilinear mesh)
-  ! ! !              CALL Darcy_PreSolveUpdateBoundaryConditions(SOLVER_ALE_DARCY,err,error,*999)
-                  ENDIF
-                 ENDIF
-                ENDIF
-              END IF
-            CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-              & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-
-              IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) &
-                  & .AND.SOLVER%globalNumber==SOLVER_NUMBER_MAT_PROPERTIES) THEN
-                !--- flags to ensure once-per-time-step output in conjunction with diagnostics
-                idebug1 = .TRUE.
-                idebug2 = .TRUE.
-                idebug3 = .TRUE.
-
-                NULLIFY(SOLVER_ALE_DARCY)
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_ALE_DARCY,err,error,*999)
-                EQUATIONS=>SOLVER_ALE_DARCY%SOLVER_equations%solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
-                IF(ASSOCIATED(EQUATIONS)) THEN
-                 EQUATIONS_SET=>equations%equationsSet
-                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                   IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)THEN
-                   !call only analytic update and DO NOT call the other standard pre-solve routines as the mesh does not require deformation
-                     CALL Darcy_PreSolveUpdateAnalyticValues(SOLVER_ALE_DARCY,err,error,*999)
-                   ENDIF
-                  ELSE
-                   !default
-                     !--- 1.1 Transfer solid displacement to Darcy geometric field
-                     CALL Darcy_PreSolveGetSolidDisplacement(SOLVER_ALE_DARCY,err,error,*999)
-
-                     !--- 1.2 Update the mesh (and calculate boundary velocities) PRIOR to solving for new material properties
-                     CALL Darcy_PreSolveALEUpdateMesh(SOLVER_ALE_DARCY,err,error,*999)
-
-  ! ! !                 !i n   p r i n c i p l e   c u r r e n t l y   d o   n o t   n e e d   t o   u p d a t e   B C s
-  ! ! !                 !--- 1.3 Apply both normal and moving mesh boundary conditions
-  ! ! !                 CALL Darcy_PreSolveUpdateBoundaryConditions(SOLVER_ALE_DARCY,err,error,*999)
-                  ENDIF
-                 ENDIF
-                ENDIF
-              ELSE IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR. &
-                    & CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE).AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-! ! !                 !n o t   f o r   n o w   ! ! !
-! ! !                 !--- 2.1 Update the material field
-! ! !                 CALL Darcy_PreSolveUpdateMatrixProperties(SOLVER,err,error,*999)
-              END IF
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a Darcy fluid type of a fluid mechanics problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
         ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+          !default
+          !--- 1.1 Transfer solid displacement to Darcy geometric field
+          CALL Darcy_PreSolveGetSolidDisplacement(solverALEDarcy,err,error,*999)
+          
+          !--- 1.2 Update the mesh (and calculate boundary velocities) PRIOR to solving for new material properties
+          IF(solverNumber==solverNumberDarcy) CALL Darcy_PreSolveALEUpdateMesh(solverALEDarcy,err,error,*999)
+          
+          ! ! ! ! i n   p r i n c i p l e   c u r r e n t l y   d o   n o t   n e e d   t o   u p d a t e   B C s
+          ! ! ! !unless:
+          ! ! ! !--- 1.3 Apply both normal and moving mesh boundary conditions, OR:
+          ! ! ! !--- 1.3 (Iteratively) Render the boundary impermeable (ellipsoid, general curvilinear mesh)
+          ! ! ! CALL Darcy_PreSolveUpdateBoundaryConditions(solverALEDarcy,err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+      CALL SolverMatrix_NumberGet(solverMatrix,matrixNumber,err,error,*999)
+      IF((loopType==CONTROL_SIMPLE_TYPE.OR.loopType==CONTROL_TIME_LOOP_TYPE).AND.solverNumber==solverNumberMatProperties) THEN
+!!TODO remove these debug flags
+        !--- flags to ensure once-per-time-step output in conjunction with diagnostics
+        idebug1 = .TRUE.
+        idebug2 = .TRUE.
+        idebug3 = .TRUE.
+        
+        NULLIFY(solvers)
+        CALL Solver_SolversGet(solver,solvers,err,error,*999)
+        NULLIFY(solverALEDarcy)
+        CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverALEDarcy,err,error,*999)
+        NULLIFY(solverEquationsALEDarcy)
+        CALL Solver_SolverEquationsGet(solverALEDarcy,solverEquationsALEDarcy,err,error,*999)
+        NULLIFY(solverMappingALEDarcy)
+        CALL SolverEquations_SolverMappingGet(solverEquationsALEDarcy,solverMappingALEDarcy,err,error,*999)
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMappingALEDarcy,1,equationsSet,err,error,*999)
+        NULLIFY(equationsAnalytic)
+        CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
+        IF(ASSOCIATED(equationsAnalytic)) THEN
+          CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+          IF(analyticFunctionType==EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY) THEN
+            !call only analytic update and DO NOT call the other standard pre-solve routines as the mesh does not require deform
+            CALL Darcy_PreSolveUpdateAnalyticValues(solverALEDarcy,err,error,*999)
+          ENDIF
+        ELSE
+          !default
+          !--- 1.1 Transfer solid displacement to Darcy geometric field
+          CALL Darcy_PreSolveGetSolidDisplacement(solverALEDarcy,err,error,*999)
+
+          !--- 1.2 Update the mesh (and calculate boundary velocities) PRIOR to solving for new material properties
+          CALL Darcy_PreSolveALEUpdateMesh(solverALEDarcy,err,error,*999)
+
+          ! ! ! ! i n   p r i n c i p l e   c u r r e n t l y   d o   n o t   n e e d   t o   u p d a t e   B C s
+          ! ! ! !--- 1.3 Apply both normal and moving mesh boundary conditions
+          ! ! ! CALL Darcy_PreSolveUpdateBoundaryConditions(solverALEDarcy,err,error,*999)
+        ENDIF
+      ELSE IF(loopType==CONTROL_SIMPLE_TYPE.OR.loopType==CONTROL_TIME_LOOP_TYPE).AND.solverNumber==solverNumberDarcy) THEN
+        ! ! ! !n o t   f o r   n o w   ! ! !
+        ! ! ! !--- 2.1 Update the material field
+        ! ! ! CALL Darcy_PreSolveUpdateMatrixProperties(solver,solverNumberDarcy,solverNumberMatProperties,err,error,*999)
+      END IF
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a Darcy fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PreSolve")
     RETURN
 999 ERRORSEXITS("Darcy_PreSolve",err,error)
     RETURN 1
+    
   END SUBROUTINE Darcy_PreSolve
 
   !
   !================================================================================================================================
   !
 
-  SUBROUTINE DARCY_CONTROL_TIME_LOOP_PRE_LOOP(CONTROL_LOOP,err,error,*)
+  SUBROUTINE Darcy_PreLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the time control loop for the Darcy  problem
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the time control loop for the Darcy  problem
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_DARCY
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_DARCY
+    INTEGER(INTG) :: iterationNumber,outputType,pSpecification(3),solverNumberDarcy,solverNumberMatProperties,solverNumberSolid
+    TYPE(ControlLoopType), POINTER :: controlLoopDarcy
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolverType), POINTER :: solverDarcy
+    TYPE(SolverSType), POINTER :: solvers
 
-    ENTERS("DARCY_CONTROL_TIME_LOOP_PRE_LOOP",err,error,*999)
+    ENTERS("Darcy_PreLoop",err,error,*999)
 
     !Get the solver for the Darcy problem
-    NULLIFY(SOLVER_DARCY)
-    NULLIFY(CONTROL_LOOP_DARCY)
-    IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-      CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-      CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-    END IF
-    SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-      CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-        !SOLVER_NUMBER_DARCY has to be set here so that store_reference_data and store_previous_data have access to it
-        SOLVER_NUMBER_DARCY=1
-        CALL CONTROL_LOOP_GET(CONTROL_LOOP,[CONTROL_LOOP_NODE],CONTROL_LOOP_DARCY,err,error,*999)
-        CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-      CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
-        SOLVER_NUMBER_MAT_PROPERTIES=1
-        SOLVER_NUMBER_DARCY=2
-        CALL CONTROL_LOOP_GET(CONTROL_LOOP,[CONTROL_LOOP_NODE],CONTROL_LOOP_DARCY,err,error,*999)
-        CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-      CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
-        SOLVER_NUMBER_SOLID=1
-        SOLVER_NUMBER_MAT_PROPERTIES=1
-        SOLVER_NUMBER_DARCY=2
-        CALL CONTROL_LOOP_GET(CONTROL_LOOP,[2,CONTROL_LOOP_NODE],CONTROL_LOOP_DARCY,err,error,*999)
-        CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-      CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
-        SOLVER_NUMBER_SOLID=1
-        SOLVER_NUMBER_DARCY=1
-        CALL CONTROL_LOOP_GET(CONTROL_LOOP,[1,2,CONTROL_LOOP_NODE],CONTROL_LOOP_DARCY,err,error,*999)
-        CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-      CASE(PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-        SOLVER_NUMBER_SOLID=1
-        SOLVER_NUMBER_MAT_PROPERTIES=1
-        SOLVER_NUMBER_DARCY=2
-        CALL CONTROL_LOOP_GET(CONTROL_LOOP,[1,2,CONTROL_LOOP_NODE],CONTROL_LOOP_DARCY,err,error,*999)
-        CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      !solverNumberDarcy has to be set here so that store_reference_data and store_previous_data have access to it
+      solverNumberDarcy=1
+      NULLIFY(controlLoopDarcy)
+      CALL ControlLoop_Get(controlLoop,[CONTROL_LOOP_NODE],controlLoopDarcy,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
+      NULLIFY(solverDarcy)
+      CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      solverNumberMatProperties=1
+      solverNumberDarcy=2
+      NULLIFY(controlLoopDarcy)
+      CALL ControlLoop_Get(controlLoop,[CONTROL_LOOP_NODE],controlLoopDarcy,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
+      NULLIFY(solverDarcy)
+      CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
+      solverNumberSolid=1
+      solverNumberMatProperties=1
+      solverNumberDarcy=2
+      NULLIFY(controlLoopDarcy)
+      CALL ControlLoop_Get(controlLoop,[2,CONTROL_LOOP_NODE],controlLoopDarcy,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
+      NULLIFY(solverDarcy)
+      CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+    CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
+      solverNumberSolid=1
+      solverNumberDarcy=1
+      NULLIFY(controlLoopDarcy)
+      CALL ControlLoop_Get(controlLoop,[1,2,CONTROL_LOOP_NODE],controlLoopDarcy,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
+      NULLIFY(solverDarcy)
+      CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+    CASE(PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      solverNumberSolid=1
+      solverNumberMatProperties=1
+      solverNumberDarcy=2
+      NULLIFY(controlLoopDarcy)
+      CALL ControlLoop_Get(controlLoop,[1,2,CONTROL_LOOP_NODE],controlLoopDarcy,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
+      NULLIFY(solverDarcy)
+      CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
     END SELECT
 
+    CALL Solver_NumberGet(solverDarcy,solverNumber,err,error,*999)
+    CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
+    CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
     !If this is the first time step then store reference data
-    IF(CONTROL_LOOP%timeLoop%iterationNumber==0) THEN
-      IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,'== Storing reference data',err,error,*999)
+    IF(iterationNumber==0) THEN
+      IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,'== Storing reference data',err,error,*999)
       ENDIF
-      CALL Darcy_PreSolveStoreReferenceData(SOLVER_DARCY,err,error,*999)
+      IF(solverNumber==solverNumberDarcy) CALL Darcy_PreSolveStoreReferenceData(solverDarcy,err,error,*999)
     ENDIF
 
     !Store data of previous time step (mesh position); executed once per time step before subiteration
-    IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,'== Storing previous data',err,error,*999)
+    IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,'== Storing previous data',err,error,*999)
     ENDIF
-    CALL Darcy_PreSolveStorePreviousData(SOLVER_DARCY,err,error,*999)
+    IF(solverNumber==solverNumberDarcy) CALL Darcy_PreSolveStorePreviousData(solverDarcy,err,error,*999)
 
-    EXITS("DARCY_CONTROL_TIME_LOOP_PRE_LOOP")
+    EXITS("Darcy_PreLoop")
     RETURN
-999 ERRORSEXITS("DARCY_CONTROL_TIME_LOOP_PRE_LOOP",err,error)
+999 ERRORSEXITS("Darcy_PreLoop",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_CONTROL_TIME_LOOP_PRE_LOOP
+    
+  END SUBROUTINE Darcy_PreLoop
 
   !
   !================================================================================================================================
   !
 
   !>Store some reference data for ALE Darcy problem
-  SUBROUTINE Darcy_PreSolveStoreReferenceData(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveStoreReferenceData(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solvers
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    INTEGER(INTG) :: equationsSetIdx,numberDOFsToPrint,variableType
+    REAL(DP) :: alpha
+    REAL(DP), POINTER :: initialValues(:)
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(FieldType), POINTER :: dependentField, geometricField
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
-
-    REAL(DP) :: ALPHA
-    REAL(DP), POINTER :: INITIAL_VALUES(:)
-
-    INTEGER(INTG) :: FIELD_VAR_TYPE
-    INTEGER(INTG) :: NDOFS_TO_PRINT,equations_set_idx
-
 
     ENTERS("Darcy_PreSolveStoreReferenceData",err,error,*999)
 
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVER_MAPPING)
-    NULLIFY(EQUATIONS_SET)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-          IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-            IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-              CALL FlagError("Problem specification is not allocated.",err,error,*999)
-            ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-              CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-            END IF
-            SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-                & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-                & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                   DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-                        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-                      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-                        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-                          & err,error,*999)
-                      END IF
-                      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-                          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-                          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                          dependentField=>EQUATIONS_SET%dependent%dependentField
-                          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-                          IF(ASSOCIATED(dependentField).AND.ASSOCIATED(geometricField)) THEN
-                            !--- Store the initial (= reference) GEOMETRY field values
-                            ALPHA = 1.0_DP
-                            CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_VALUES_SET_TYPE,FIELD_INITIAL_VALUES_SET_TYPE,ALPHA,err,error,*999)
-                            NULLIFY(vectorEquations)
-                            CALL Equations_VectorEquationsGet(EQUATIONS_SET%equations,vectorEquations,err,error,*999)
-                            vectorMapping=>vectorEquations%vectorMapping
-                            IF(ASSOCIATED(vectorMapping)) THEN
-
-                              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                              CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                              FIELD_VARIABLE=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
-                              ! '1' associated with linear matrix
-                              CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                                  & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-                                  & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                                FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-                              END SELECT
-
-                              IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-                                !--- Store the initial DEPENDENT field values
-                                ALPHA = 1.0_DP
-                                CALL Field_ParameterSetsCopy(dependentField,FIELD_VAR_TYPE, &
-                                  & FIELD_VALUES_SET_TYPE,FIELD_INITIAL_VALUES_SET_TYPE,ALPHA,err,error,*999)
-
-                                IF(DIAGNOSTICS1) THEN
-                                  NULLIFY(INITIAL_VALUES)
-                                  CALL Field_ParameterSetDataGet(dependentField,FIELD_VAR_TYPE, &
-                                    & FIELD_INITIAL_VALUES_SET_TYPE,INITIAL_VALUES,err,error,*999)
-                                  NDOFS_TO_PRINT = SIZE(INITIAL_VALUES,1)
-                                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,&
-                                    & INITIAL_VALUES, &
-                                    & '(" dependentField,FIELD_U_VARIABLE_TYPE,FIELD_INITIAL_VALUES_SET_TYPE = ",4(X,E13.6))', &
-                                    & '4(4(X,E13.6))',err,error,*999)
-                                  CALL Field_ParameterSetDataRestore(dependentField,FIELD_VAR_TYPE, &
-                                    & FIELD_INITIAL_VALUES_SET_TYPE,INITIAL_VALUES,err,error,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("FIELD_VAR_TYPE is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("vectorMapping is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Dependent field and / or geometric field is / are not associated.",err,error,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          localError="Equations set subtype " &
-                            & //TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                            & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-                          CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    ELSE
-                      CALL FlagError("Equations set is not associated.",err,error,*999)
-                    ENDIF
-                   ENDDO
-                  ELSE
-                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver equations is not associated.",err,error,*999)
-                ENDIF
-              CASE DEFAULT
-                localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                  & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Problem is not associated.",err,error,*999)
-          ENDIF
-        ELSE
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+        CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,eror,*999)
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
           ! do nothing
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+        CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
+          ! do nothing
+        CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
+          ! do nothing
+        CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+          NULLIFY(geometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+          NULLIFY(dependentField)
+          CALL EquationstSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          !--- Store the initial (= reference) geometry field values
+          alpha = 1.0_DP
+          CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & FIELD_INITIAL_VALUES_SET_TYPE,alpha,err,error,*999)
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          NULLIFY(vectorMapping)
+          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+          SELECT CASE(esSpecification(3))
+          CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
+            NULLIFY(linearMapping)
+            CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+            NULLIFY(fieldVariable)
+            CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,fieldVariable,err,error,*999)
+            ! '1' associated with linear matrix
+          CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+            & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+            NULLIFY(dynamicMapping)
+            CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+            NULLIFY(fieldVariable)
+            CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,fieldVariable,err,error,*999)
+          END SELECT
 
+          CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+          !--- Store the initial DEPENDENT field values
+          alpha = 1.0_DP
+          CALL FieldVariable_ParameterSetsCopy(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_INITIAL_VALUES_SET_TYPE, &
+            & alpha,err,error,*999)
+
+          IF(diagnostics1) THEN
+            NULLIFY(initialValues)
+            CALL FieldVariable_ParameterSetDataGet(fieldVariable,FIELD_INITIAL_VALUES_SET_TYPE,initialValues,err,error,*999)
+            numberDOFsToPrint = SIZE(initialValues,1)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint, &
+              & initialValues'(" dependentField,FIELD_U_VARIABLE_TYPE,FIELD_INITIAL_VALUES_SET_TYPE = ",4(X,E13.6))', &
+              & '4(4(X,E13.6))',err,error,*999)
+            CALL FieldVariable_ParameterSetDataRestore(fieldVariable,FIELD_INITIAL_VALUES_SET_TYPE,initialValues,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+            & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !equationsSetIdx
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PreSolveStoreReferenceData")
     RETURN
@@ -4384,115 +3923,77 @@ CONTAINS
   !
 
   !>Store data of previous time step (mesh position) for ALE Darcy problem
-  SUBROUTINE Darcy_PreSolveStorePreviousData(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveStorePreviousData(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solvers
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP 
+    REAL(DP) :: alpha
+    TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(FieldType), POINTER :: geometricField
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
-
-    REAL(DP) :: ALPHA
-
 
     ENTERS("Darcy_PreSolveStorePreviousData",err,error,*999)
 
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVER_MAPPING)
-    NULLIFY(EQUATIONS_SET)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-          IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-            IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-              CALL FlagError("Problem specification is not allocated.",err,error,*999)
-            ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-              CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-            END IF
-            SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-                & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-                & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-                        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-                      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-                        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-                          & err,error,*999)
-                      END IF
-                      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-                          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-                          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-                          IF(ASSOCIATED(geometricField)) THEN
-                            !--- Store the GEOMETRY field values of the previous time step
-                            ALPHA = 1.0_DP
-                            CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,ALPHA,err,error,*999)
-                          ELSE
-                            CALL FlagError("Dependent field and / or geometric field is / are not associated.",err,error,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          localError="Equations set subtype " &
-                            & //TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                            & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-                          CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    ELSE
-                      CALL FlagError("Equations set is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver equations is not associated.",err,error,*999)
-                ENDIF
-              CASE DEFAULT
-                localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                  & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-                CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Problem is not associated.",err,error,*999)
-          ENDIF
-        ELSE
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+        CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,eror,*999)
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
           ! do nothing
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+        CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
+          ! do nothing
+        CASE(EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE)
+          ! do nothing
+        CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+          NULLIFY(geometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+          !--- Store the geometry field values of the previous time step
+          alpha = 1.0_DP
+          CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE, &
+            & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,alpha,err,error,*999)
+        CASE DEFAULT
+          localError="Equations set subtype " &
+            & //TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+            & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !equationsSetIdx
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PreSolveStorePreviousData")
     RETURN
@@ -4506,171 +4007,115 @@ CONTAINS
   !
 
   !>Update mesh position and velocity for ALE Darcy problem
-  SUBROUTINE Darcy_PreSolveALEUpdateMesh(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveALEUpdateMesh(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solvers
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
+    INTEGER(INTG) :: dofNumber,numberOfDofs,numberDOFsToPrint,loopIdx
+    INTEGER(INTG) :: problemSubtype
+    REAL(DP) :: currentTime,timeIncrement,alpha
+    REAL(DP), POINTER :: meshDisplacementValues(:)
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(FieldType), POINTER :: geometricField
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_ALE_DARCY !<A pointer to the solvers
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
-    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
+    TYPE(SolverType), POINTER :: solverALEDarcy !<A pointer to the solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
+    TYPE(ControlLoopType), POINTER :: controlTimeLoop !<A pointer to the control time loop
     TYPE(VARYING_STRING) :: localError
-
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,ALPHA
-    REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:)
-
-    INTEGER(INTG) :: dof_number,numberOfDofs,NDOFS_TO_PRINT,loop_idx
-    INTEGER(INTG) :: PROBLEM_SUBTYPE
 
     ENTERS("Darcy_PreSolveALEUpdateMesh",err,error,*999)
 
-    NULLIFY(SOLVER_ALE_DARCY)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVER_MAPPING)
-    NULLIFY(EQUATIONS_SET)
-
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-          CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-          EXIT
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
+    CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+    problemSubtype=pSpecification(3)
+    
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+      CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+      CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
+        ! do nothing
+      CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
+        ! do nothing
+      CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy update mesh ... ",err,error,*999)
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        !--- First, get pointer to mesh displacement values
+        NULLIFY(meshDisplacementValues)
+        CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
+          & meshDisplacementValues,err,error,*999)
+        IF(diagnostics1) THEN
+          numberDOFsToPrint = SIZE(meshDisplacementValues,1)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,&
+            & meshDisplacementValues,'(" meshDisplacementValues = ",3(X,E13.6))','3(3(X,E13.6))', &
+            & err,error,*999)
+        ENDIF
+
+        CALL Field_NumberOfDOFsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDOFs,err,error,*999)
+        
+        IF(problemSubtype==PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE &
+          & .OR. problemSubtype==PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE &
+          & .OR. problemSubtype==PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE) THEN
+          !--- Don't update geometric field here, this is done in
+          !    darcy_equation_pre_solve_get_solid_displacement for these problems, but
+          !    needs to be made consistent between the different problem types
         ELSE
-          CALL FlagError("Could not find a time control loop.",err,error,*999)
+          !--- Second, update geometric field
+          DO dofNumber=1,numberOfDofs
+            CALL Field_ParameterSetAddLocalDOF(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dofNumber, &
+              & meshDisplacementValues(dofNumber),err,error,*999)
+          END DO
+          CALL Field_ParameterSetUpdateStart(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL Field_ParameterSetUpdateFinish(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
         ENDIF
-      ENDDO
-
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-          END IF
-          PROBLEM_SUBTYPE=CONTROL_LOOP%PROBLEM%SPECIFICATION(3)
-          SELECT CASE(PROBLEM_SUBTYPE)
-            CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE, &
-              & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-                        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-                      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-                        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-                          & err,error,*999)
-                      END IF
-                      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                        CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
-                          ! do nothing
-                        CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-                          & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-                          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                          IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy update mesh ... ",err,error,*999)
-                          ENDIF
-                          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-                          IF(ASSOCIATED(geometricField)) THEN
-                            !--- First, get pointer to mesh displacement values
-                            NULLIFY(MESH_DISPLACEMENT_VALUES)
-                            CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
-                            IF(DIAGNOSTICS1) THEN
-                              NDOFS_TO_PRINT = SIZE(MESH_DISPLACEMENT_VALUES,1)
-                              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,&
-                                & MESH_DISPLACEMENT_VALUES,'(" MESH_DISPLACEMENT_VALUES = ",3(X,E13.6))','3(3(X,E13.6))', &
-                                & err,error,*999)
-                            ENDIF
-
-                            numberOfDofs = geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%numberOfDofs
-
-                            IF(PROBLEM_SUBTYPE==PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE &
-                                & .OR. PROBLEM_SUBTYPE==PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE &
-                                & .OR. PROBLEM_SUBTYPE==PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE) THEN
-                              !--- Don't update geometric field here, this is done in
-                              !    darcy_equation_pre_solve_get_solid_displacement for these problems, but
-                              !    needs to be made consistent between the different problem types
-                            ELSE
-                              !--- Second, update geometric field
-                              DO dof_number=1,numberOfDofs
-                                CALL Field_ParameterSetAddLocalDOF(geometricField, &
-                                  & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-                                  & MESH_DISPLACEMENT_VALUES(dof_number), &
-                                  & err,error,*999)
-                              END DO
-                              CALL Field_ParameterSetUpdateStart(geometricField, &
-                                & FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-                              CALL Field_ParameterSetUpdateFinish(geometricField, &
-                                & FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-                            ENDIF
-
-                            !--- Third, use displacement values to calculate velocity values
-                            ALPHA=1.0_DP/TIME_INCREMENT
-                            CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_MESH_DISPLACEMENT_SET_TYPE,FIELD_MESH_VELOCITY_SET_TYPE,ALPHA,err,error,*999)
-                            CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
-                          ELSE
-                            CALL FlagError("Geometric field is not associated.",err,error,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          localError="Equations set subtype " &
-                            & //TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                            & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-                          CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    ELSE
-                      CALL FlagError("Equations set is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver equations is not associated.",err,error,*999)
-                ENDIF
-              ELSE
-                ! do nothing
-              ENDIF
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(PROBLEM_SUBTYPE,"*",err,error))// &
-                & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+        
+        !--- Third, use displacement values to calculate velocity values
+        alpha=1.0_DP/timeIncrement
+        CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
+          & FIELD_MESH_VELOCITY_SET_TYPE,alpha,err,error,*999)
+        CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
+          & meshDisplacementValues,err,error,*999)
+      CASE DEFAULT
+        localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+          & " is not valid for a Darcy equation fluid type of a fluid mechanics equations set."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(problemSubtype,"*",err,error))// &
+        & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PreSolveALEUpdateMesh")
     RETURN
@@ -4684,260 +4129,185 @@ CONTAINS
   !
 
   !>Update boundary conditions for Darcy equation pre solve
-  SUBROUTINE Darcy_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveUpdateBoundaryConditions(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP 
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
+    INTEGER(INTG) :: variableType
+    INTEGER(INTG) :: boundaryConditionCheckVariable
+    INTEGER(INTG) :: dofNumber,numberOfDofs,loopIdx
+    INTEGER(INTG) :: numberDOFsToPrint
+    REAL(DP) :: currentTime, pressure,timeIncrement
+    REAL(DP), POINTER :: meshVelocityValues(:)
+    REAL(DP), POINTER :: initialValues(:)
+    REAL(DP), POINTER :: dummyValues1(:)
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: localError
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(FieldType), POINTER :: dependentField, geometricField
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
-    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP
-
-    REAL(DP), POINTER :: MESH_VELOCITY_VALUES(:)
-    REAL(DP), POINTER :: INITIAL_VALUES(:)
-    REAL(DP), POINTER :: DUMMY_VALUES1(:)
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    REAL(DP) :: PRESSURE
-
-    INTEGER(INTG) :: FIELD_VAR_TYPE
-    INTEGER(INTG) :: BOUNDARY_CONDITION_CHECK_VARIABLE
-    INTEGER(INTG) :: dof_number,numberOfDofs,loop_idx
-    INTEGER(INTG) :: NDOFS_TO_PRINT
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Darcy_PreSolveUpdateBoundaryConditions",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-          CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-          EXIT
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
+    CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+    problemSubtype=pSpecification(3)
+    SELECT CASE(problemSubType)
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+      CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+      CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
+      SELECT CASE(esSpecification(3))
+      CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
+        ! do nothing
+      CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
+        ! do nothing
+      CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy update boundary conditions ... ",err,error,*999)
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
-        ELSE
-          CALL FlagError("Could not find a time control loop.",err,error,*999)
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        NULLIFY(dependentField)
+        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        NULLIFY(boundaryConditions)
+        CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+        NULLIFY(equations)
+        CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+        NULLIFY(vectorMapping)
+        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
+          NULLIFY(linearMapping)
+          CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+          NULLIFY(fieldVariable)
+          CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,fieldVariable,err,error,*999)
+        CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
+          NULLIFY(dynamicMapping)
+          CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+          NULLIFY(fieldVariable)
+          CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,fieldVariable,err,error,*999)
+        END SELECT
+
+        CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+        
+        NULLIFY(boundaryConditionsVariable)
+        CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
+        NULLIFY(meshVelocityValues)
+        CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_VELOCITY_SET_TYPE,meshVelocityValues, &
+          & err,error,*999)
+        NULLIFY(initialValues)
+        CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_INITIAL_VALUES_SET_TYPE,initialValues,err,error,*999)
+        IF(diagnostics1) THEN
+          NULLIFY(dummyValues1)
+          CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_VALUES_SET_TYPE,dummyValues1,err,error,*999)
+          numberDOFsToPrint = SIZE(dummyValues1,1)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint, &
+            & numberDOFsToPrint,dummyValues1, &
+            & '(" dependentField,variableType,FIELD_VALUES_SET_TYPE (before) = ",4(X,E13.6))', &
+            & '4(4(X,E13.6))',err,error,*999)
         ENDIF
-      ENDDO
-
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-          IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-            IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-              CALL FlagError("Problem specification is not allocated.",err,error,*999)
-            ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-              CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-            END IF
-            SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-                ! do nothing
-              CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-                & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-                & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
-                    IF(ASSOCIATED(EQUATIONS)) THEN
-                      EQUATIONS_SET=>equations%equationsSet
-                      IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-                          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-                        ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-                          CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-                            & err,error,*999)
-                        END IF
-                        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                          CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE)
-                            ! do nothing
-                          CASE(EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE)
-                            ! do nothing
-                          CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-                            & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                            & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-                            & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                            IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy update boundary conditions ... ",err,error,*999)
-                            ENDIF
-                            dependentField=>EQUATIONS_SET%dependent%dependentField
-                            geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-                            IF(ASSOCIATED(dependentField).AND.ASSOCIATED(geometricField)) THEN
-                              BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
-                              IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-                                vectorMapping=>EQUATIONS_SET%equations%vectorEquations%vectorMapping
-                                IF(ASSOCIATED(vectorMapping)) THEN
-
-                                  SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-                                  CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-                                    & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                                  FIELD_VARIABLE=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
-                                  ! '1' associated with linear matrix
-                                  CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE, &
-                                      & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-                                      & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-                                      & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                                    FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-                                  END SELECT
-
-                                  IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                    FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-
-                                    CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE, &
-                                      & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
-                                    IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                                      NULLIFY(MESH_VELOCITY_VALUES)
-                                      CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE, &
-                                        & FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
-                                      NULLIFY(INITIAL_VALUES)
-                                      CALL Field_ParameterSetDataGet(dependentField,FIELD_VAR_TYPE, &
-                                        & FIELD_INITIAL_VALUES_SET_TYPE,INITIAL_VALUES,err,error,*999)
-                                      IF(DIAGNOSTICS1) THEN
-                                        NULLIFY( DUMMY_VALUES1 )
-                                        CALL Field_ParameterSetDataGet(dependentField,FIELD_VAR_TYPE, &
-                                          & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
-                                        NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                                          & NDOFS_TO_PRINT,DUMMY_VALUES1, &
-                                          & '(" dependentField,FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE (before) = ",4(X,E13.6))', &
-                                          & '4(4(X,E13.6))',err,error,*999)
-                                      ENDIF
-                                      numberOfDofs = dependentField%variableTypeMap(FIELD_VAR_TYPE)%ptr%numberOfDofs
-                                      DO dof_number=1,numberOfDofs
-                                        BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
-                                          & CONDITION_TYPES(dof_number)
-                                        IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL) THEN
-                                          !--- Reset boundary condition to the initial normal-velocity boundary condition
-                                          CALL Field_ParameterSetUpdateLocalDOF(dependentField, &
-                                            & FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-                                            & INITIAL_VALUES(dof_number),err,error,*999)
-                                          !--- Add the velocity of the moving boundary on top of the initial boundary condition
-                                          !! === If we solve in terms of Darcy flow vector, then do not add mesh velocity === !!
-                                          !! === The BC is kept to the initial BC, for instance: null-flux                === !!
-!                                          CALL Field_ParameterSetAddLocalDOF(dependentField, &
-!                                            & FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-!                                            & MESH_VELOCITY_VALUES(dof_number),err,error,*999)
-!                                            ! dependent field      ( V_u, V_v, V_w, P_p )
-!                                            ! MESH_VELOCITY_VALUES ( V_u, V_v, V_w )
-
-                                        ELSE IF( BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED .AND. &
-                                          & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) THEN
-                                          !\ToDo: Check component number; this way we can also apply it to velocity
-                                          !--- Set the time-dependent pressure BC
-                                          PRESSURE = INITIAL_VALUES(dof_number) * (1.0_DP - exp(- CURRENT_TIME**2.0_DP / 0.25_DP))
-
-                                          CALL Field_ParameterSetUpdateLocalDOF(dependentField, &
-                                            & FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-                                            & PRESSURE,err,error,*999)
-                                        ELSE
-                                          ! do nothing
-                                        END IF
-                                      END DO
-                                      CALL Field_ParameterSetUpdateStart(dependentField, &
-                                        & FIELD_VAR_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-                                      CALL Field_ParameterSetUpdateFinish(dependentField, &
-                                        & FIELD_VAR_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-                                      IF(DIAGNOSTICS1) THEN
-                                        NDOFS_TO_PRINT = SIZE(MESH_VELOCITY_VALUES,1)
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                                          & NDOFS_TO_PRINT,MESH_VELOCITY_VALUES, &
-                                          & '(" MESH_VELOCITY_VALUES = ",4(X,E13.6))','4(4(X,E13.6))',err,error,*999)
-                                          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE," ",err,error,*999)
-                                        !
-                                        NDOFS_TO_PRINT = SIZE(INITIAL_VALUES,1)
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                                          & NDOFS_TO_PRINT,INITIAL_VALUES, &
-                                          & '(" INITIAL_VALUES = ",4(X,E13.6))', &
-                                          & '4(4(X,E13.6))',err,error,*999)
-                                        !
-                                        NULLIFY( DUMMY_VALUES1 )
-                                        CALL Field_ParameterSetDataGet(dependentField,FIELD_VAR_TYPE, &
-                                          & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
-                                        NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                                          & NDOFS_TO_PRINT,DUMMY_VALUES1, &
-                                          & '(" dependentField,FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE (after) = ",4(X,E13.6))', &
-                                          & '4(4(X,E13.6))',err,error,*999)
-                                        CALL Field_ParameterSetDataRestore(dependentField,FIELD_VAR_TYPE, &
-                                          & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
-                                      ENDIF
-                                      CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE, &
-                                        & FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
-                                      CALL Field_ParameterSetDataRestore(dependentField,FIELD_VAR_TYPE, &
-                                        & FIELD_INITIAL_VALUES_SET_TYPE,INITIAL_VALUES,err,error,*999)
-                                    ELSE
-                                      CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
-                                    END IF
-
-                                    CALL Field_ParameterSetUpdateStart(EQUATIONS_SET%dependent%dependentField,FIELD_VAR_TYPE, &
-                                      & FIELD_VALUES_SET_TYPE,err,error,*999)
-                                    CALL Field_ParameterSetUpdateFinish(EQUATIONS_SET%dependent%dependentField,FIELD_VAR_TYPE, &
-                                      & FIELD_VALUES_SET_TYPE,err,error,*999)
-
-                                  ELSE
-                                    CALL FlagError("FIELD_VAR_TYPE is not associated.",err,error,*999)
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("vectorMapping is not associated.",err,error,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Boundary conditions are not associated.",err,error,*999)
-                              END IF
-                            ELSE
-                              CALL FlagError("Dependent field and/or geometric field is/are not associated.",err,error,*999)
-                            END IF
-                          CASE DEFAULT
-                            localError="Equations set subtype " &
-                              & //TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                              & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-                            CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      ELSE
-                        CALL FlagError("Equations set is not associated.",err,error,*999)
-                      END IF
-                    ELSE
-                      CALL FlagError("Equations are not associated.",err,error,*999)
-                    END IF
-                  ELSE
-                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver equations are not associated.",err,error,*999)
-                END IF
-              CASE DEFAULT
-                localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                  & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
+        CALL Field_NumberOfDOFsGet(dependentField,variableType,numberOfDOFs,err,error,*999)
+        DO dofNumber=1,numberOfDofs
+          boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(dofNumber)
+          IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
+            !--- Reset boundary condition to the initial normal-velocity boundary condition
+            CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType,FIELD_VALUES_SET_TYPE,dofNumber, &
+              & initialValues(dofNumber),err,error,*999)
+            !--- Add the velocity of the moving boundary on top of the initial boundary condition
+!! === If we solve in terms of Darcy flow vector, then do not add mesh velocity === !!
+!! === The BC is kept to the initial BC, for instance: null-flux                === !!
+            !                                          CALL Field_ParameterSetAddLocalDOF(dependentField, &
+            !                                            & variableType,FIELD_VALUES_SET_TYPE,dofNumber, &
+            !                                            & meshVelocityValues(dofNumber),err,error,*999)
+            !                                            ! dependent field      ( V_u, V_v, V_w, P_p )
+            !                                            ! meshVelocityValues ( V_u, V_v, V_w )
+            
+          ELSE IF( boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED .AND. &
+            & esSpecification(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) THEN
+            !\ToDo: Check component number; this way we can also apply it to velocity
+            !--- Set the time-dependent pressure BC
+            pressure = initialValues(dofNumber) * (1.0_DP - EXP(- currentTime**2.0_DP / 0.25_DP))
+            
+            CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType,FIELD_VALUES_SET_TYPE,dofNumber, &
+              & pressure,err,error,*999)
           ELSE
-            CALL FlagError("Problem is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          ! do nothing
+            ! do nothing
+          END IF
+        ENDDO !dofNumber
+        CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
+        IF(diagnostics1) THEN
+          numberDOFsToPrint = SIZE(meshVelocityValues,1)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint, &
+            & numberDOFsToPrint,meshVelocityValues,'(" meshVelocityValues = ",4(X,E13.6))','4(4(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE," ",err,error,*999)
+          !
+          numberDOFsToPrint = SIZE(initialValues,1)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint, &
+            & numberDOFsToPrint,initialValues,'(" initialValues = ",4(X,E13.6))','4(4(X,E13.6))',err,error,*999)
+          !
+          NULLIFY( dummyValues1 )
+          CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_VALUES_SET_TYPE,dummyValues1,err,error,*999)
+          numberDOFsToPrint = SIZE(dummyValues1,1)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint, &
+            & numberDOFsToPrint,dummyValues1,'(" dependentField,variableType,FIELD_VALUES_SET_TYPE (after) = ",4(X,E13.6))', &
+            & '4(4(X,E13.6))',err,error,*999)
+          CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_VALUES_SET_TYPE,dummyValues1,err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+        CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_VELOCITY_SET_TYPE, &
+          & meshVelocityValues,err,error,*999)
+        CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_INITIAL_VALUES_SET_TYPE,INITIAL_VALUES, &
+          & err,error,*999)        
+        CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
+      CASE DEFAULT
+        localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+          & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(problemSubType(3),"*",err,error))// &
+        & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PreSolveUpdateBoundaryConditions")
     RETURN
@@ -4952,153 +4322,106 @@ CONTAINS
   !
 
   !>Update materials field for ALE Darcy problem
-  SUBROUTINE Darcy_PreSolveUpdateMatrixProperties(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveUpdateMatrixProperties(solver,solverNumberDarcy,solverNumberMatProperties,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solvers
+    INTEGER(INTG), INTENT(IN) :: solverNumberDarcy !<The solver number corresponding to the Darcy solver
+    INTEGER(INTG), INTENT(IN) :: solverNumberMatProperties !<The solver number corresponding to the material properties solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_MAT_PROPERTIES, SOLVER_ALE_DARCY  !<A pointer to the solvers
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_MAT_PROPERTIES, MATERIALS_FIELD_ALE_DARCY
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_MAT_PROPERTIES, SOLVER_EQUATIONS_ALE_DARCY  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_MAT_PROPERTIES, SOLVER_MAPPING_ALE_DARCY !<A pointer to the solver mapping
-    TYPE(EquationsSetType), POINTER :: equations_SET_MAT_PROPERTIES, EQUATIONS_SET_ALE_DARCY !<A pointer to the equations set
+    INTEGER(INTG) :: numberOfComponentsMatProperties,numberOfComponentsALEDarcy,pSpecification(3),ouputType
+    INTEGER(INTG) :: componentIdx,numberDOFsToPrint
+    REAL(DP), POINTER :: dummyValues2(:)
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(EquationsSetType), POINTER :: equationsSetMatProperties,equationsSetALEDarcy
+    TYPE(FieldType), POINTER :: dependentFieldMatProperties,materialsFieldALEDarcy
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolverType), POINTER :: solverMatProperties,solverALEDarcy
+    TYPE(SolverEquationsType), POINTER :: solverEquationsMatProperties,solverEquationsALEDarcy
+    TYPE(SolverMappingType), POINTER :: solverMappingMatProperties,solverMappingALEDarcy
     TYPE(VARYING_STRING) :: localError
-
-    REAL(DP), POINTER :: DUMMY_VALUES2(:)
-
-    INTEGER(INTG) :: NUMBER_OF_COMPONENTS_DEPENDENT_FIELD_MAT_PROPERTIES,NUMBER_OF_COMPONENTS_MATERIALS_FIELD_ALE_DARCY
-    INTEGER(INTG) :: NDOFS_TO_PRINT, I
-
 
     ENTERS("Darcy_PreSolveUpdateMatrixProperties",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-
-      NULLIFY(SOLVER_MAT_PROPERTIES)
-      NULLIFY(SOLVER_ALE_DARCY)
-
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-              & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) &
-                  & .AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                !--- Get the dependent field of the Material-Properties Galerkin-Projection equations
-                IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy update materials ... ",err,error,*999)
-                ENDIF
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_MAT_PROPERTIES,SOLVER_MAT_PROPERTIES,err,error,*999)
-                SOLVER_EQUATIONS_MAT_PROPERTIES=>SOLVER_MAT_PROPERTIES%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS_MAT_PROPERTIES)) THEN
-                  SOLVER_MAPPING_MAT_PROPERTIES=>SOLVER_EQUATIONS_MAT_PROPERTIES%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING_MAT_PROPERTIES)) THEN
-                    EQUATIONS_SET_MAT_PROPERTIES=>SOLVER_MAPPING_MAT_PROPERTIES%equationsSets(1)%ptr
-                    IF(ASSOCIATED(EQUATIONS_SET_MAT_PROPERTIES)) THEN
-                      DEPENDENT_FIELD_MAT_PROPERTIES=>EQUATIONS_SET_MAT_PROPERTIES%dependent%dependentField
-                      IF(ASSOCIATED(DEPENDENT_FIELD_MAT_PROPERTIES)) THEN
-                        CALL Field_NumberOfComponentsGet(DEPENDENT_FIELD_MAT_PROPERTIES, &
-                          & FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS_DEPENDENT_FIELD_MAT_PROPERTIES,err,error,*999)
-                      ELSE
-                        CALL FlagError("DEPENDENT_FIELD_MAT_PROPERTIES is not associated.",err,error,*999)
-                      END IF
-                    ELSE
-                      CALL FlagError("Galerkin Projection equations set is not associated.",err,error,*999)
-                    END IF
-                  ELSE
-                    CALL FlagError("Galerkin Projection solver mapping is not associated.",err,error,*999)
-                  END IF
-                ELSE
-                  CALL FlagError("Galerkin Projection solver equations are not associated.",err,error,*999)
-                END IF
-
-                !--- Get the materials field for the ALE Darcy equations
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_ALE_DARCY,err,error,*999)
-                SOLVER_EQUATIONS_ALE_DARCY=>SOLVER_ALE_DARCY%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS_ALE_DARCY)) THEN
-                  SOLVER_MAPPING_ALE_DARCY=>SOLVER_EQUATIONS_ALE_DARCY%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING_ALE_DARCY)) THEN
-                    EQUATIONS_SET_ALE_DARCY=>SOLVER_MAPPING_ALE_DARCY%equationsSets(1)%ptr
-                    IF(ASSOCIATED(EQUATIONS_SET_ALE_DARCY)) THEN
-                      MATERIALS_FIELD_ALE_DARCY=>EQUATIONS_SET_ALE_DARCY%MATERIALS%materialsField
-                      IF(ASSOCIATED(MATERIALS_FIELD_ALE_DARCY)) THEN
-                        CALL Field_NumberOfComponentsGet(MATERIALS_FIELD_ALE_DARCY, &
-                          & FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS_MATERIALS_FIELD_ALE_DARCY,err,error,*999)
-                      ELSE
-                        CALL FlagError("MATERIALS_FIELD_ALE_DARCY is not associated.",err,error,*999)
-                      END IF
-                    ELSE
-                      CALL FlagError("ALE Darcy equations set is not associated.",err,error,*999)
-                    END IF
-                  ELSE
-                    CALL FlagError("ALE Darcy solver mapping is not associated.",err,error,*999)
-                  END IF
-                ELSE
-                  CALL FlagError("ALE Darcy solver equations are not associated.",err,error,*999)
-                END IF
-
-                !--- Copy the result from Galerkin-Projection's dependent field to ALE Darcy's material field
-                IF(NUMBER_OF_COMPONENTS_MATERIALS_FIELD_ALE_DARCY==NUMBER_OF_COMPONENTS_DEPENDENT_FIELD_MAT_PROPERTIES) THEN
-                  DO I=1,NUMBER_OF_COMPONENTS_MATERIALS_FIELD_ALE_DARCY
-                    CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD_MAT_PROPERTIES, &
-                      & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,MATERIALS_FIELD_ALE_DARCY, &
-                      & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,err,error,*999)
-                  END DO
-                ELSE
-!                   CALL FlagError("Dimension of Galerkin Projection and ALE Darcy equations set is not consistent",err,error,*999)
-                  localError="Number of components of Galerkin-Projection dependent field "// &
-                    & "is not consistent with ALE-Darcy-equation material field."
-                  CALL FlagError(localError,err,error,*999)
-                END IF
-
-                IF(DIAGNOSTICS3) THEN
-                  NULLIFY( DUMMY_VALUES2 )
-                  CALL Field_ParameterSetDataGet(DEPENDENT_FIELD_MAT_PROPERTIES,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,DUMMY_VALUES2,err,error,*999)
-                  NDOFS_TO_PRINT = SIZE(DUMMY_VALUES2,1)
-                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,DUMMY_VALUES2, &
-                    & '(" DEPENDENT_FIELD_MAT_PROPERTIES,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE = ",4(X,E13.6))',&
-                    & '4(4(X,E13.6))',err,error,*999)
-                  CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD_MAT_PROPERTIES,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,DUMMY_VALUES2,err,error,*999)
-                ENDIF
-
-              ELSE
-                ! do nothing
-              END IF
-            CASE DEFAULT
-              localError="The third problem specification of "// &
-                & TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for Darcy_PreSolveUpdateMatrixProperties."
-            CALL FLAG_ERROR(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      IF(controlLoop%loopType==CONTROL_SIMPLE_TYPE.OR.controlLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+        !--- Get the dependent field of the Material-Properties Galerkin-Projection equations
+        CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy update materials ... ",err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
+        NULLIFY(solvers)
+        CALL Solver_SolversGet(solver,solvers,err,error,*999)
+        NULLIFY(solverMatProperties)
+        CALL Solvers_SolverGetsolvers,solverNumberMatProperties,solverMatProperties,err,error,*999)
+        NULLIFY(solverEquationsMatProperties)
+        CALL Solver_SolverEquationsGet(solverMatProperties,solverEquationsMatProperties,err,error,*999)
+        NULLIFY(solverMappingMatProperties)
+        CALL SolverEquations_SolverMappingGet(solverEquationsMatProperties,solverMappingMatProperties,err,error,*999)
+        NULLIFY(equationsSetMatProperties)
+        CALL SolverMapping_EquationsSetGet(solverMappingMatProperties,1,equationsSetMatProperties,err,error,*999)
+        NULLIFY(dependentFieldMatProperties)
+        CALL EquationsSet_DependentFieldGet(equationsSetMatProperties,dependentFieldMatProperties,err,error,*999)
+        CALL Field_NumberOfComponentsGet(dependentFieldMatProperties,FIELD_U_VARIABLE_TYPE,numberOfComponentsMatProperties, &
+          & err,error,*999)
+ 
+        !--- Get the materials field for the ALE Darcy equations
+        NULLIFY(solverALEDarcy)
+        CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverALEDarcy,err,error,*999)
+        NULLIFY(solverEquationsALEDarcy)
+        CALL Solver_SolverEquationGet(solverALEDarcy,solverEquationsALEDarcy,err,error,*999)
+        NULLIFY(solverMappingALEDarcy)
+        CALL SolverEquations_SolverMappingGet(solverEquationsALEDarcy,solverMappingALEDarcy,err,error,*999)
+        NULLIFY(equationsSetALEDarcy)
+        CALL SolverMapping_EquationsSetGet(solverMappingALEDarcy,1,equationsSetALEDarcy,err,error,*999)
+        NULLIFY(materialsFieldALEDarcy)
+        CALL EquationsSet_MaterialsFieldGet(equationsSetALEDarcy,materialsFieldALEDarcy,err,error,*999)
+        CALL Field_NumberOfComponentsGet(materialsFieldALEDarcy,numberOfComponentsALEDarcy,err,error,*999)
+        
+        !--- Copy the result from Galerkin-Projection's dependent field to ALE Darcy's material field
+        IF(numberOfComponentsALEDarcy/=numberOfComponentsMatProperties) THEN
+         localError="Number of components of Galerkin-Projection dependent field "// &
+            & "is not consistent with ALE-Darcy-equation material field."
+          CALL FlagError(localError,err,error,*999)
+        END IF
+        DO componentIdx=1,numberOfComponentsALEDarcy
+          CALL Field_ParametersToFieldParametersCopy(dependentFieldMatPropertis,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & componentIdx,materialsFieldALEDarcy,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,componentIdx,err,error,*999)
+        ENDDO !componentIdx
+ 
+        IF(diagnostics3) THEN
+          NULLIFY( dummyValues2 )
+          CALL Field_ParameterSetDataGet(dependentFieldMatProperties,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dummyValues2, &
+            & err,error,*999)
+          numberDOFsToPrint = SIZE(dummyValues2,1)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,dummyValues2, &
+            & '(" DEPENDENT_FIELD_MAT_PROPERTIES,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE = ",4(X,E13.6))',&
+            & '4(4(X,E13.6))',err,error,*999)
+          CALL Field_ParameterSetDataRestore(dependentFieldMatProperties,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & dummyValues2,err,error,*999)
+        ENDIF
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="The third problem specification of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for Darcy_PreSolveUpdateMatrixProperties."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PreSolveUpdateMatrixProperties")
     RETURN
@@ -5113,64 +4436,49 @@ CONTAINS
   !
 
   !>Sets up the Darcy problem post solve.
-  SUBROUTINE Darcy_PostSolve(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver!<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    INTEGER(INTG) :: pSpecification(3)
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Darcy_PostSolve",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-              CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
-              CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-              END IF
-            CASE(PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-
-              ! The following command only when setting the Darcy mass increase explicitly to test finite elasticity !!!
-! ! !               CALL DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE(CONTROL_LOOP,SOLVER,err,error,*999)
-
-              END IF
-            CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
-              CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a Darcy fluid type of a fluid mechanics problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      CALL Darcy_PostSolveOutputData(solver,err,error,*999)
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
+      CALL Darcy_PostSolveOutputData(solver,err,error,*999)
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
+      IF(solver%globalNumber==2) CALL Darcy_PostSolveOutputData(controlLoop,solver,err,error,*999)
+    CASE(PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      IF(solver%globalNumber==2) THEN
+        CALL Darcy_PostSolveOutputData(solver,err,error,*999)
+        
+        ! The following command only when setting the Darcy mass increase explicitly to test finite elasticity !!!
+        ! ! !               CALL Darcy_PostSolveSetMassIncrease(controlLoop,solver,err,error,*999)
+        
+      END IF
+    CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
+      CALL Darcy_PostSolveOutputData(solver,err,error,*999)
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a Darcy fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Darcy_PostSolve")
     RETURN
@@ -5184,360 +4492,329 @@ CONTAINS
   !
 
   !>Sets up the Darcy problem post solve output data.
-  SUBROUTINE DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Darcy_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
-    TYPE(FieldsType), POINTER :: Fields
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop.
-    TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
-    CHARACTER(14) :: OUTPUT_FILE
-    LOGICAL :: EXPORT_FIELD
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    INTEGER(INTG) :: CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER
-    INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER
-    INTEGER(INTG) :: equations_set_idx,loop_idx
+    INTEGER(INTG) :: currentIteration,subIterationNumber
+    INTEGER(INTG) :: outputIteration
+    INTEGER(INTG) :: equationsSetIdx,loopIdx
+    REAL(DP) :: currentTime,timeIncrement
+    CHARACTER(14) :: outputFile
+    LOGICAL :: exportField
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop 
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(FieldsType), POINTER :: fields
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(VARYING_STRING) :: localError,method,filename
+  
+    ENTERS("Darcy_PostSolveOutputData",err,error,*999)
 
-    ENTERS("DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA",err,error,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
-          END IF
-          CALL SYSTEM('mkdir -p ./output')
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    !Make sure the equations sets are up to date
-                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                      EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                      FILENAME="./output/"//"STATIC_SOLUTION"
-                      METHOD="FORTRAN"
-                      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                      ENDIF
-                      Fields=>EQUATIONS_SET%REGION%FIELDS
-                      CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
-                      CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
-                      NULLIFY(Fields)
-                    ENDDO
-                  ENDIF
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,pSpecification,err,error,*999)
+    CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
+    
+    CALL SYSTEM('mkdir -p ./output')
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+        NULLIFY(region)
+        CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+        NULLIFY(fields)
+        CALL Region_FieldsGet(region,fields,err,error,*999)
+        filename="./output/"//"StaticSolution"
+        method="FORTRAN"
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+        ENDIF
+        CALL FIELD_IO_NODES_EXPORT(Fields,filename,method,err,error,*999)
+        CALL FIELD_IO_ELEMENTS_EXPORT(Fields,filename,method,err,error,*999)
+      ENDDO !equationsSetIdx
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE, PROBLEM_ALE_DARCY_SUBTYPE, PROBLEM_PGM_DARCY_SUBTYPE, &
+      & PROBLEM_TRANSIENT_DARCY_SUBTYPE, PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+        & outputIteration,err,error,*999)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      !Make sure the equations sets are up to date
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+        CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+        IF(esSpecification(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) THEN
+          IF(esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
+            NULLIFY(parentLoop)
+            CALL ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*999)
+            CALL ControlLoop_TypeGet(parentLoop,parentLoopType,err,error,*999)
+            IF(parentLoopType==CONTROL_WHILE_LOOP_TYPE) &
+              &  CALL ControlLoop_WhileInformationGet(parentLoop,subIteration,maximumNumberOfIterations,absoluteTolerance, &
+              & relativeTolerance,continueLoop,err,error,*999)            
+            IF(outputIteration/=0) THEN
+              IF(currentTime<=stopTime) THEN
+                IF(currentIteration<10) THEN
+                  WRITE(outputFile,'("TimeStep_000",I0)') currentIteration
+                ELSE IF(currentIteration<100) THEN
+                  WRITE(outputFile,'("TimeStep_00",I0)') currentIteration
+                ELSE IF(currentIteration<1000) THEN
+                  WRITE(outputFile,'("TimeStep_0",I0)') currentIteration
+                ELSE IF(currentIteration<10000) THEN
+                  WRITE(outputFile,'("TimeStep_",I0)') currentIteration
+                END IF                
+                NULLIFY(region)
+                CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+                NULLIFY(fields)
+                CALL Region_FieldsGet(region,fields,err,error,*999)
+                filename="./output/"//"MainTime_"//TRIM(NumberToVString(currentIteration,"*",err,error))
+                method="FORTRAN"
+                IF(MOD(currentIteration,outputIteration)==0)  THEN
+                  IF(outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
                 ENDIF
-            CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE, PROBLEM_ALE_DARCY_SUBTYPE, PROBLEM_PGM_DARCY_SUBTYPE, &
-              & PROBLEM_TRANSIENT_DARCY_SUBTYPE, PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-              & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                   IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE)THEN
-                    IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)THEN
-                      CONTROL_TIME_LOOP=>CONTROL_LOOP
-                      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-                        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-                          CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
-                          OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%timeLoop%outputNumber
-                          EXIT
-                        ENDIF
-                        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-                          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
-                        ELSE
-                          CURRENT_LOOP_ITERATION=0
-                          OUTPUT_ITERATION_NUMBER=0
-                        ENDIF
-                      ENDDO
-                      IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
-                        SUBITERATION_NUMBER=CONTROL_LOOP%parentLoop%whileLoop%iterationNumber
-                      ENDIF
-
-                      IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                       IF(CONTROL_TIME_LOOP%timeLoop%currentTime<=CONTROL_TIME_LOOP%timeLoop%stopTime) THEN
-                         IF(CURRENT_LOOP_ITERATION<10) THEN
-                           WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
-                         ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
-                           WRITE(OUTPUT_FILE,'("TIME_STEP_00",I0)') CURRENT_LOOP_ITERATION
-                         ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
-                           WRITE(OUTPUT_FILE,'("TIME_STEP_0",I0)') CURRENT_LOOP_ITERATION
-                         ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
-                           WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
-                         END IF
-
-                         FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
-                         METHOD="FORTRAN"
-                         IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                           IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                           ENDIF
-                           Fields=>EQUATIONS_SET%REGION%FIELDS
-                           CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
-                           CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
-                           NULLIFY(Fields)
-                           IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
-                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                           ENDIF
-                         END IF
-                       ENDIF
-                      ENDIF
-
-                      !Subiteration intermediate solutions / iterates output:
-!                        IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
-!                         IF(CURRENT_LOOP_ITERATION<10) THEN
-!                           IF(SUBITERATION_NUMBER<10) THEN
-!                             WRITE(OUTPUT_FILE,'("T_00",I0,"_SB_0",I0,"_C",I0)') CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER, &
-!                               & equations_set_idx
-!                           ELSE IF(SUBITERATION_NUMBER<100) THEN
-!                             WRITE(OUTPUT_FILE,'("T_00",I0,"_SB_",I0,"_C",I0)') CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER, &
-!                               & equations_set_idx
-!                           END IF
-!                           FILE=OUTPUT_FILE
-!                           METHOD="FORTRAN"
-!                           EXPORT_FIELD=.TRUE.
-!                           IF(EXPORT_FIELD) THEN
-!                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy export subiterates ...",err,error,*999)
-!                             CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%globalNumber,FILE, &
-!                               & err,error,*999)
-!                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-!                           ENDIF
-!                         ENDIF
-!                        ENDIF
-
-                    ELSE !for single compartment (i.e. standary Darcy flow) equations sets
-                      !Find the time loop
-                      CONTROL_TIME_LOOP=>CONTROL_LOOP
-                      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-                        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-                          CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
-                          OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%timeLoop%outputNumber
-                          EXIT
-                        ENDIF
-                        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-                          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
-                        ELSE
-                          CURRENT_LOOP_ITERATION=0
-                          OUTPUT_ITERATION_NUMBER=0
-                        ENDIF
-                      ENDDO
-                      !If coupled with finite elasticity and using subiterations, get the while loop iteration number
-                      IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-                        IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
-                          SUBITERATION_NUMBER=CONTROL_LOOP%parentLoop%whileLoop%iterationNumber
-                        ELSE
-                          SUBITERATION_NUMBER=0
-                        ENDIF
-                      ENDIF
-
-                      IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                        IF(CONTROL_TIME_LOOP%timeLoop%currentTime<=CONTROL_TIME_LOOP%timeLoop%stopTime) THEN
-                          IF(CURRENT_LOOP_ITERATION<10) THEN
-                            WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
-                          ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
-                            WRITE(OUTPUT_FILE,'("TIME_STEP_00",I0)') CURRENT_LOOP_ITERATION
-                          ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
-                            WRITE(OUTPUT_FILE,'("TIME_STEP_0",I0)') CURRENT_LOOP_ITERATION
-                          ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
-                            WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
-                          END IF
-
-                          FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
-                          METHOD="FORTRAN"
-                          IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                            IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                            ENDIF
-                            Fields=>EQUATIONS_SET%REGION%FIELDS
-                            CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
-                            CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
-                            NULLIFY(Fields)
-                            IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                            ENDIF
-                          END IF
-                        ENDIF
-                      ENDIF
-
-
-!                       !Subiteration intermediate solutions / iterates output:
-!                        IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
-!                         IF(CURRENT_LOOP_ITERATION<10) THEN
-!                           IF(SUBITERATION_NUMBER<10) THEN
-!                             WRITE(OUTPUT_FILE,'("T_00",I0,"_SUB_000",I0)') CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER
-!                           ELSE IF(SUBITERATION_NUMBER<100) THEN
-!                             WRITE(OUTPUT_FILE,'("T_00",I0,"_SUB_00",I0)') CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER
-!                           END IF
-!                           FILE=OUTPUT_FILE
-!                           METHOD="FORTRAN"
-!                           EXPORT_FIELD=.TRUE.
-!                           IF(EXPORT_FIELD) THEN
-!                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy export subiterates ...",err,error,*999)
-!                             CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%globalNumber,FILE, &
-!                               & err,error,*999)
-!                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-!                           ENDIF
-!                         ENDIF
-!                        ENDIF
-
-                    ENDIF
-                   ENDIF
-                  ENDDO
+                CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
+                CALL FIELD_IO_ELEMENTS_EXPORT(fields,filename,method,err,error,*999)
+                IF(outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,filename,err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                 ENDIF
               ENDIF
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a Darcy fluid type of a fluid mechanics problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+            ENDIF
+          ENDIF
 
-    EXITS("DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA")
+          !Subiteration intermediate solutions / iterates output:
+          !                        IF(controlLoop%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
+          !                         IF(currentIteration<10) THEN
+          !                           IF(subIterationNumber<10) THEN
+          !                             WRITE(outputFile,'("T_00",I0,"_SB_0",I0,"_C",I0)') currentIteration,subIterationNumber, &
+          !                               & equationsSetIdx
+          !                           ELSE IF(subIterationNumber<100) THEN
+          !                             WRITE(outputFile,'("T_00",I0,"_SB_",I0,"_C",I0)') currentIteration,subIterationNumber, &
+          !                               & equationsSetIdx
+          !                           END IF
+          !                           FILE=outputFile
+          !                           method="FORTRAN"
+          !                           exportField=.TRUE.
+          !                           IF(exportField) THEN
+          !                             CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy export subiterates ...",err,error,*999)
+          !                             CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%globalNumber,FILE, &
+          !                               & err,error,*999)
+          !                             CALL WriteString(GENERAL_OUTPUT_TYPE,outputFile,err,error,*999)
+          !                           ENDIF
+          !                         ENDIF
+          !                        ENDIF
+          
+        ELSE !for single compartment (i.e. standary Darcy flow) equations sets
+          !Find the time loop
+          !If coupled with finite elasticity and using subiterations, get the while loop iteration number
+          NULLIFY(parentLoop)
+          CALL ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*999)
+          CALL ControlLoop_TypeGet(parentLoop,parentLoopType,err,error,*999)
+          IF(parentLoopType==CONTROL_WHILE_LOOP_TYPE) &
+            & CALL ControlLoop_WhileInformationGet(parentLoop,subIteration,maximumNumberOfIterations,absoluteTolerance, &
+            & relativeTolerance,continueLoop,err,error,*999)            
+          
+          IF(outputIteration/=0) THEN
+            IF(currentTime<=stopTime) THEN
+              IF(currentIteration<10) THEN
+                WRITE(outputFile,'("TimeStep_000",I0)') currentIteration
+              ELSE IF(currentIteration<100) THEN
+                WRITE(outputFile,'("TimeStep_00",I0)') currentIteration
+              ELSE IF(currentIteration<1000) THEN
+                WRITE(outputFile,'("TimeStep_0",I0)') currentIteration
+              ELSE IF(currentIteration<10000) THEN
+                WRITE(outputFile,'("TimeStep_",I0)') currentIteration
+              END IF
+              NULLIFY(region)
+              CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+              NULLIFY(fields)
+              CALL Region_FieldsGet(region,fields,err,error,*999)              
+              filename="./output/"//"MainTime_"//TRIM(NumberToVString(currentIteration,"*",err,error))
+              method="FORTRAN"
+              IF(MOD(currentIteration,outputIteration)==0)  THEN
+                IF(controlLoop%outputtype >= controlLoop_PROGRESS_OUTPUT) THEN
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                ENDIF
+                CALL FIELD_IO_NODES_EXPORT(Fields,filename,method,err,error,*999)
+                CALL FIELD_IO_ELEMENTS_EXPORT(Fields,filename,method,err,error,*999)
+                IF(outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,filename,err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+          
+
+          !                       !Subiteration intermediate solutions / iterates output:
+          !                        IF(controlLoop%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
+          !                         IF(currentIteration<10) THEN
+          !                           IF(subIterationNumber<10) THEN
+          !                             WRITE(outputFile,'("T_00",I0,"_SUB_000",I0)') currentIteration,subIterationNumber
+          !                           ELSE IF(subIterationNumber<100) THEN
+          !                             WRITE(outputFile,'("T_00",I0,"_SUB_00",I0)') currentIteration,subIterationNumber
+          !                           END IF
+          !                           FILE=outputFile
+          !                           method="FORTRAN"
+          !                           exportField=.TRUE.
+          !                           IF(exportField) THEN
+          !                             CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy export subiterates ...",err,error,*999)
+          !                             CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%globalNumber,FILE, &
+          !                               & err,error,*999)
+          !                             CALL WriteString(GENERAL_OUTPUT_TYPE,outputFile,err,error,*999)
+          !                           ENDIF
+          !                         ENDIF
+          !                        ENDIF
+          
+        ENDIF
+      ENDDO !equationsSetIdx
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a Darcy fluid type of a fluid mechanics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Darcy_PostSolveOutputData")
     RETURN
-999 ERRORSEXITS("DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA",err,error)
+999 ERRORSEXITS("Darcy_PostSolveOutputData",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA
+    
+  END SUBROUTINE Darcy_PostSolveOutputData
 
   !
   !================================================================================================================================
   !
 
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE Darcy_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*)
+  SUBROUTINE Darcy_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equations_SET
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,numberOfDimensions,variable_idx,variable_type,I,J,K
-    INTEGER(INTG) :: number_of_nodes_xic(3),element_idx,en_idx,BOUND_COUNT
-    REAL(DP) :: VALUE,X(3),ARG(3),L,XI_COORDINATES(3),FACT,PERM_OVER_VIS_PARAM
-    REAL(DP) :: BOUNDARY_TOLERANCE, BOUNDARY_X(3,2), T_COORDINATES(20,3)
-    REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
-    TYPE(DomainType), POINTER :: DOMAIN
-    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,geometricField
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINT (:)
-    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:)
+    INTEGER(INTG) :: componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,numberOfDimensions,variableIdx,variableType,I,J,K
+    INTEGER(INTG) :: numberOfNodesXic(3),elementIdx,en_idx,boundCount
+    REAL(DP) :: VALUE,x(3),arg(3),L,xiCoordinates(3),fact,permeabilityOverViscosityParameter
+    REAL(DP) :: boundaryTolerance, boundaryX(3,2), tCoordinates(20,3)
+    REAL(DP), POINTER :: geometricParameters(:)
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(FieldType), POINTER :: dependentField,geometricField
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:)
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
     TYPE(VARYING_STRING) :: localError
-    INTEGER(INTG) :: GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE
-    REAL(DP) :: CURRENT_TIME
+    INTEGER(INTG) :: globalDerivativeIndex,analyticFunctionType
+    REAL(DP) :: currentTime
     !Temp variables
-    INTEGER(INTG) :: number_of_element_nodes,temp_local_ny,temp_node_number,velocity_DOF_check,temp_local_node_number
+    INTEGER(INTG) :: numberOfElementNodes,tempLocalDOFIdx,tempNodeNumber,velocityDOFCheck,tempLocalNodeNumber
 
     ENTERS("Darcy_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    BOUND_COUNT=0
+    boundCount=0
 
-    PERM_OVER_VIS_PARAM = 1.0_DP  !temporarily hard-coded: Should rather be determined by interpolating materials field
+    permeabilityOverViscosityParameter = 1.0_DP  !temporarily hard-coded: Should rather be determined by interpolating materials field
 
     L=10.0_DP
-    XI_COORDINATES(3)=0.0_DP
-    BOUNDARY_TOLERANCE=0.000000001_DP
-    BOUNDARY_X=0.0_DP
-    T_COORDINATES=0.0_DP
+    xiCoordinates(3)=0.0_DP
+    boundaryTolerance=0.000000001_DP
+    boundaryX=0.0_DP
+    tCoordinates=0.0_DP
 
-    number_of_element_nodes=0
-    temp_local_node_number=0
-    temp_local_ny=0
-    temp_node_number=0
-    velocity_DOF_check=0
+    numberOfElementNodes=0
+    tempLocalNodeNumber=0
+    tempLocalDOFIdx=0
+    tempNodeNumber=0
+    velocityDOFCheck=0
 
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-      SELECT CASE(EQUATIONS_SET%ANALYTIC%analyticFunctionType)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    NULLIFY(equationsAnalytic)
+    CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
+    IF(ASSOCIATED(equationsAnalytic)) THEN
+      CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+      SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)
-        DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-        IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-          IF(ASSOCIATED(geometricField)) THEN
-            CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-            NULLIFY(GEOMETRIC_VARIABLE)
-            CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
-            NULLIFY(GEOMETRIC_PARAMETERS)
-            CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
-              & err,error,*999)
-            IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-              CURRENT_TIME=EQUATIONS_SET%ANALYTIC%analyticTime
-              DO variable_idx=3,DEPENDENT_FIELD%numberOfVariables
-                variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%variableType
-                FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%ptr
-                IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                  CALL Field_ParameterSetCreate(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
-                      DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
-                      IF(ASSOCIATED(DOMAIN)) THEN
-                        IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                          DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                          IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                            !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
-                              !!TODO \todo We should interpolate the geometric field here and the node position.
-                              DO dim_idx=1,numberOfDimensions
-                                !Default to version 1 of each node derivative
-                                CALL FieldVariable_LocalNodeDOFGet(GEOMETRIC_VARIABLE,1,1,node_idx,dim_idx, &
-                                  & local_ny,err,error,*999)
-                                X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
-                              ENDDO !dim_idx
-                              !Loop over the derivatives
-                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
-                                GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex
-!                                 CALL DIFFUSION_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,CURRENT_TIME,variable_type, &
-!                                   & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,err,error,*999)
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        NULLIFY(dependentField)
+        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        NULLIFY(geometricVariable)
+        CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+        NULLIFY(geometricParameters)
+        CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+        CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+        CALL EquationsSet_AnalyticTimeGet(equationsSet,currentTime,err,error,*999)
+        DO variableIdx=3,numberOfVariables
+          NULLIFY(fieldVariable)
+          CALL Field_VariableIndexGet(dependentField,variableIdx,fieldVariable,variableType,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(fieldVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_NumberOfComponentsGet(fieldVariable,numberOfComponents,err,error,*999)
+          DO componentIdx=1,numberOfComponents
+            CALL FieldVariable_ComponentInterpolationCheck(fieldVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            NULLIFY(domain)
+            CALL FieldVariable_ComponentDomainGet(fieldVariable,componentIdx,domain,err,error,*999)
+            NULLIFY(domainTopology)
+            CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+            NULLIFY(domainNodes)
+            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+            !Loop over the local nodes excluding the ghosts.
+            CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+            DO nodeIdx=1,numberOfNodes
+!!TODO \todo We should interpolate the geometric field here and the node position.
+              DO dimensionIdx=1,numberOfDimensions
+                !Default to version 1 of each node derivative
+                CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+                x(dimensionIdx)=geometricParameters(localDOFIdx)
+              ENDDO !dimensionIdx
+              !Loop over the derivatives
+              CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+              DO derivativeIdx=1,numberOfNodeDerivatives
+                                analyticFunctionType=equationsSet%analytic%analyticFunctionType
+                                globalDerivativeIndex=domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex
+!                                 CALL DIFFUSION_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,currentTime,variableType, &
+!                                   & globalDerivativeIndex,analyticFunctionType,err,error,*999)
 !!!!!!!!!!!!NEED TO SET APPROPRIATE VALUE DEPENDING ON WHETHER IT IS A VELOCITY COMPONENT OR THE MASS INCREASE COMPONENT
                                 VALUE=0.0_DP
                                 !Default to version 1 of each node derivative
-                                CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
-                                  & component_idx,local_ny,err,error,*999)
-                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
-                                IF(variable_type==FIELD_V_VARIABLE_TYPE) THEN
-                                  IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
+                                CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,derivativeIdx,nodeIdx, &
+                                  & componentIdx,localDOFIdx,err,error,*999)
+                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
+                                IF(variableType==FIELD_V_VARIABLE_TYPE) THEN
+                                  IF(domainNodes%NODES(nodeIdx)%boundaryNode) THEN
                                     !If we are a boundary node then set the analytic value on the boundary
-                                    CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
-                                      & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
+                                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
+                                      & localDOFIdx,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
                                   ELSE
-                                    CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                    & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+                                    CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+                                    & FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
                                   ENDIF
                                 ENDIF
-                              ENDDO !deriv_idx
-                            ENDDO !node_idx
+                              ENDDO !derivativeIdx
+                            ENDDO !nodeIdx
                           ELSE
                             CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                           ENDIF
@@ -5550,17 +4827,17 @@ CONTAINS
                     ELSE
                       CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                     ENDIF
-                  ENDDO !component_idx
-                  CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+                  ENDDO !componentIdx
+                  CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                     & err,error,*999)
-                  CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+                  CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                     & err,error,*999)
                 ELSE
                   CALL FlagError("Field variable is not associated.",err,error,*999)
                 ENDIF
-              ENDDO !variable_idx
+              ENDDO !variableIdx
               CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & GEOMETRIC_PARAMETERS,err,error,*999)
+               & geometricParameters,err,error,*999)
             ELSE
               CALL FlagError("Equations set boundary conditions is not associated.",err,error,*999)
             ENDIF
@@ -5571,68 +4848,68 @@ CONTAINS
           CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
         ENDIF
       CASE DEFAULT
-        DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-        IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
+        dependentField=>equationsSet%dependent%dependentField
+        IF(ASSOCIATED(dependentField)) THEN
+          geometricField=>equationsSet%GEOMETRY%geometricField
           IF(ASSOCIATED(geometricField)) THEN
-            NULLIFY(INTERPOLATION_PARAMETERS)
-            NULLIFY(INTERPOLATED_POINT)
-            CALL Field_InterpolationParametersInitialise(geometricField,INTERPOLATION_PARAMETERS,err,error,*999)
-            CALL Field_InterpolatedPointsInitialise(INTERPOLATION_PARAMETERS,INTERPOLATED_POINT,err,error,*999)
+            NULLIFY(interpolationParameters)
+            NULLIFY(interpolatedPoint)
+            CALL Field_InterpolationParametersInitialise(geometricField,interpolationParameters,err,error,*999)
+            CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
 
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
 
             IF(numberOfDimensions==2) THEN
-              BOUNDARY_X(1,1)=0.0_DP
-              BOUNDARY_X(1,2)=10.0_DP
-              BOUNDARY_X(2,1)=0.0_DP
-              BOUNDARY_X(2,2)=10.0_DP
+              boundaryX(1,1)=0.0_DP
+              boundaryX(1,2)=10.0_DP
+              boundaryX(2,1)=0.0_DP
+              boundaryX(2,2)=10.0_DP
             ELSE IF(numberOfDimensions==3) THEN
-              BOUNDARY_X(1,1)=-5.0_DP
-              BOUNDARY_X(1,2)=5.0_DP
-              BOUNDARY_X(2,1)=-5.0_DP
-              BOUNDARY_X(2,2)=5.0_DP
-              BOUNDARY_X(3,1)=-5.0_DP
-              BOUNDARY_X(3,2)=5.0_DP
+              boundaryX(1,1)=-5.0_DP
+              boundaryX(1,2)=5.0_DP
+              boundaryX(2,1)=-5.0_DP
+              boundaryX(2,2)=5.0_DP
+              boundaryX(3,1)=-5.0_DP
+              boundaryX(3,2)=5.0_DP
             ENDIF
 
-            NULLIFY(GEOMETRIC_VARIABLE)
-            CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
-            NULLIFY(GEOMETRIC_PARAMETERS)
+            NULLIFY(geometricVariable)
+            CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+            NULLIFY(geometricParameters)
             CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & GEOMETRIC_PARAMETERS,err,error,*999)
-            IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-              DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
-                variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%variableType
-                FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%ptr
-                IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                  CALL Field_ParameterSetCreate(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                    BOUND_COUNT=0
-                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
-                      DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
+              & geometricParameters,err,error,*999)
+            IF(ASSOCIATED(boundaryConditions)) THEN
+              DO variableIdx=1,dependentField%numberOfVariables
+                variableType=dependentField%VARIABLES(variableIdx)%variableType
+                fieldVariable=>dependentField%variableTypeMap(variableType)%ptr
+                IF(ASSOCIATED(fieldVariable)) THEN
+                  CALL Field_ParameterSetCreate(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+                  DO componentIdx=1,fieldVariable%numberOfComponents
+                    boundCount=0
+                    IF(fieldVariable%COMPONENTS(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
+                      DOMAIN=>fieldVariable%COMPONENTS(componentIdx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
                         IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                          DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                          IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                          domainNodes=>DOMAIN%TOPOLOGY%NODES
+                          IF(ASSOCIATED(domainNodes)) THEN
                             !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                            DO nodeIdx=1,domainNodes%numberOfNodes
 
-                              element_idx=DOMAIN%topology%nodes%nodes(node_idx)%surroundingElements(1)
-                              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
-                                & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                              elementIdx=DOMAIN%topology%nodes%nodes(nodeIdx)%surroundingElements(1)
+                              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
+                                & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
 
 !                             DO I=1,DOMAIN%topology%elements%maximumNumberOfElementParameters
-!                               IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(I)=node_idx THEN
+!                               IF(DOMAIN%topology%elements%elements(elementIdx)%elementNodes(I)=nodeIdx THEN
 
                               en_idx=0
-                              XI_COORDINATES=0.0_DP
-                              number_of_nodes_xic(1)=DOMAIN%topology%elements%elements(element_idx)%basis%numberOfNodesXiC(1)
-                              number_of_nodes_xic(2)=DOMAIN%topology%elements%elements(element_idx)%basis%numberOfNodesXiC(2)
+                              xiCoordinates=0.0_DP
+                              numberOfNodesXic(1)=DOMAIN%topology%elements%elements(elementIdx)%basis%numberOfNodesXiC(1)
+                              numberOfNodesXic(2)=DOMAIN%topology%elements%elements(elementIdx)%basis%numberOfNodesXiC(2)
                               IF(numberOfDimensions==3) THEN
-                                number_of_nodes_xic(3)=DOMAIN%topology%elements%elements(element_idx)%basis%numberOfNodesXiC(3)
+                                numberOfNodesXic(3)=DOMAIN%topology%elements%elements(elementIdx)%basis%numberOfNodesXiC(3)
                               ELSE
-                                number_of_nodes_xic(3)=1
+                                numberOfNodesXic(3)=1
                               ENDIF
 
                               IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4.AND.numberOfDimensions==2 .OR. &
@@ -5642,128 +4919,128 @@ CONTAINS
                                 & DOMAIN%topology%elements%maximumNumberOfElementParameters==27.OR. &
                                 & DOMAIN%topology%elements%maximumNumberOfElementParameters==64) THEN
 
-                                DO K=1,number_of_nodes_xic(3)
-                                  DO J=1,number_of_nodes_xic(2)
-                                    DO I=1,number_of_nodes_xic(1)
+                                DO K=1,numberOfNodesXic(3)
+                                  DO J=1,numberOfNodesXic(2)
+                                    DO I=1,numberOfNodesXic(1)
                                       en_idx=en_idx+1
-                                      IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(en_idx)==node_idx) EXIT
-                                      XI_COORDINATES(1)=XI_COORDINATES(1)+(1.0_DP/(number_of_nodes_xic(1)-1))
+                                      IF(DOMAIN%topology%elements%elements(elementIdx)%elementNodes(en_idx)==nodeIdx) EXIT
+                                      xiCoordinates(1)=xiCoordinates(1)+(1.0_DP/(numberOfNodesXic(1)-1))
                                     ENDDO
-                                      IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(en_idx)==node_idx) EXIT
-                                      XI_COORDINATES(1)=0.0_DP
-                                      XI_COORDINATES(2)=XI_COORDINATES(2)+(1.0_DP/(number_of_nodes_xic(2)-1))
+                                      IF(DOMAIN%topology%elements%elements(elementIdx)%elementNodes(en_idx)==nodeIdx) EXIT
+                                      xiCoordinates(1)=0.0_DP
+                                      xiCoordinates(2)=xiCoordinates(2)+(1.0_DP/(numberOfNodesXic(2)-1))
                                   ENDDO
-                                  IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(en_idx)==node_idx) EXIT
-                                  XI_COORDINATES(1)=0.0_DP
-                                  XI_COORDINATES(2)=0.0_DP
-                                  IF(number_of_nodes_xic(3)/=1) THEN
-                                    XI_COORDINATES(3)=XI_COORDINATES(3)+(1.0_DP/(number_of_nodes_xic(3)-1))
+                                  IF(DOMAIN%topology%elements%elements(elementIdx)%elementNodes(en_idx)==nodeIdx) EXIT
+                                  xiCoordinates(1)=0.0_DP
+                                  xiCoordinates(2)=0.0_DP
+                                  IF(numberOfNodesXic(3)/=1) THEN
+                                    xiCoordinates(3)=xiCoordinates(3)+(1.0_DP/(numberOfNodesXic(3)-1))
                                   ENDIF
                                 ENDDO
-                                CALL Field_InterpolateXi(NO_PART_DERIV,XI_COORDINATES, &
-                                  & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                                CALL Field_InterpolateXi(NO_PART_DERIV,xiCoordinates, &
+                                  & interpolatedPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                               ELSE
                                 IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==3) THEN
-                                  T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
-                                  T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
-                                  T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
+                                  tCoordinates(1,1:2)=[0.0_DP,1.0_DP]
+                                  tCoordinates(2,1:2)=[1.0_DP,0.0_DP]
+                                  tCoordinates(3,1:2)=[1.0_DP,1.0_DP]
                                 ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==6) THEN
-                                  T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
-                                  T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
-                                  T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
-                                  T_COORDINATES(4,1:2)=[0.5_DP,0.5_DP]
-                                  T_COORDINATES(5,1:2)=[1.0_DP,0.5_DP]
-                                  T_COORDINATES(6,1:2)=[0.5_DP,1.0_DP]
+                                  tCoordinates(1,1:2)=[0.0_DP,1.0_DP]
+                                  tCoordinates(2,1:2)=[1.0_DP,0.0_DP]
+                                  tCoordinates(3,1:2)=[1.0_DP,1.0_DP]
+                                  tCoordinates(4,1:2)=[0.5_DP,0.5_DP]
+                                  tCoordinates(5,1:2)=[1.0_DP,0.5_DP]
+                                  tCoordinates(6,1:2)=[0.5_DP,1.0_DP]
                                 ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==10.AND. &
                                   & numberOfDimensions==2) THEN
-                                  T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
-                                  T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
-                                  T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
-                                  T_COORDINATES(4,1:2)=[1.0_DP/3.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(5,1:2)=[2.0_DP/3.0_DP,1.0_DP/3.0_DP]
-                                  T_COORDINATES(6,1:2)=[1.0_DP,1.0_DP/3.0_DP]
-                                  T_COORDINATES(7,1:2)=[1.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(8,1:2)=[2.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(9,1:2)=[1.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(10,1:2)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(1,1:2)=[0.0_DP,1.0_DP]
+                                  tCoordinates(2,1:2)=[1.0_DP,0.0_DP]
+                                  tCoordinates(3,1:2)=[1.0_DP,1.0_DP]
+                                  tCoordinates(4,1:2)=[1.0_DP/3.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(5,1:2)=[2.0_DP/3.0_DP,1.0_DP/3.0_DP]
+                                  tCoordinates(6,1:2)=[1.0_DP,1.0_DP/3.0_DP]
+                                  tCoordinates(7,1:2)=[1.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(8,1:2)=[2.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(9,1:2)=[1.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(10,1:2)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP]
                                 ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4) THEN
-                                  T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
-                                  T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
-                                  T_COORDINATES(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
+                                  tCoordinates(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
+                                  tCoordinates(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
                                 ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==10.AND. &
                                   & numberOfDimensions==3) THEN
-                                  T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
-                                  T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
-                                  T_COORDINATES(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(5,1:3)=[0.5_DP,0.5_DP,1.0_DP]
-                                  T_COORDINATES(6,1:3)=[0.5_DP,1.0_DP,0.5_DP]
-                                  T_COORDINATES(7,1:3)=[0.5_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(8,1:3)=[1.0_DP,0.5_DP,0.5_DP]
-                                  T_COORDINATES(9,1:3)=[1.0_DP,1.0_DP,0.5_DP]
-                                  T_COORDINATES(10,1:3)=[1.0_DP,0.5_DP,1.0_DP]
+                                  tCoordinates(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
+                                  tCoordinates(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
+                                  tCoordinates(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(5,1:3)=[0.5_DP,0.5_DP,1.0_DP]
+                                  tCoordinates(6,1:3)=[0.5_DP,1.0_DP,0.5_DP]
+                                  tCoordinates(7,1:3)=[0.5_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(8,1:3)=[1.0_DP,0.5_DP,0.5_DP]
+                                  tCoordinates(9,1:3)=[1.0_DP,1.0_DP,0.5_DP]
+                                  tCoordinates(10,1:3)=[1.0_DP,0.5_DP,1.0_DP]
                                 ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==20) THEN
-                                  T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
-                                  T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
-                                  T_COORDINATES(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(5,1:3)=[1.0_DP/3.0_DP,2.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(6,1:3)=[2.0_DP/3.0_DP,1.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(7,1:3)=[1.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(8,1:3)=[2.0_DP/3.0_DP,1.0_DP,1.0_DP/3.0_DP]
-                                  T_COORDINATES(9,1:3)=[1.0_DP/3.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(10,1:3)=[2.0_DP/3.0_DP,1.0_DP,1.0_DP]
-                                  T_COORDINATES(11,1:3)=[1.0_DP,1.0_DP/3.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(12,1:3)=[1.0_DP,2.0_DP/3.0_DP,1.0_DP/3.0_DP]
-                                  T_COORDINATES(13,1:3)=[1.0_DP,1.0_DP,1.0_DP/3.0_DP]
-                                  T_COORDINATES(14,1:3)=[1.0_DP,1.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(15,1:3)=[1.0_DP,1.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(16,1:3)=[1.0_DP,2.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(17,1:3)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(18,1:3)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP,1.0_DP]
-                                  T_COORDINATES(19,1:3)=[2.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
-                                  T_COORDINATES(20,1:3)=[1.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
+                                  tCoordinates(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
+                                  tCoordinates(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(5,1:3)=[1.0_DP/3.0_DP,2.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(6,1:3)=[2.0_DP/3.0_DP,1.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(7,1:3)=[1.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(8,1:3)=[2.0_DP/3.0_DP,1.0_DP,1.0_DP/3.0_DP]
+                                  tCoordinates(9,1:3)=[1.0_DP/3.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(10,1:3)=[2.0_DP/3.0_DP,1.0_DP,1.0_DP]
+                                  tCoordinates(11,1:3)=[1.0_DP,1.0_DP/3.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(12,1:3)=[1.0_DP,2.0_DP/3.0_DP,1.0_DP/3.0_DP]
+                                  tCoordinates(13,1:3)=[1.0_DP,1.0_DP,1.0_DP/3.0_DP]
+                                  tCoordinates(14,1:3)=[1.0_DP,1.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(15,1:3)=[1.0_DP,1.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(16,1:3)=[1.0_DP,2.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(17,1:3)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(18,1:3)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP,1.0_DP]
+                                  tCoordinates(19,1:3)=[2.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
+                                  tCoordinates(20,1:3)=[1.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
                                 ENDIF
 
                                 DO K=1,DOMAIN%topology%elements%maximumNumberOfElementParameters
-                                  IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(K)==node_idx) EXIT
+                                  IF(DOMAIN%topology%elements%elements(elementIdx)%elementNodes(K)==nodeIdx) EXIT
                                 ENDDO
 
                                 IF(numberOfDimensions==2) THEN
-                                  CALL Field_InterpolateXi(NO_PART_DERIV,T_COORDINATES(K,1:2), &
-                                    & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                                  CALL Field_InterpolateXi(NO_PART_DERIV,tCoordinates(K,1:2), &
+                                    & interpolatedPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                                 ELSE IF(numberOfDimensions==3) THEN
-                                  CALL Field_InterpolateXi(NO_PART_DERIV,T_COORDINATES(K,1:3), &
-                                    & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                                  CALL Field_InterpolateXi(NO_PART_DERIV,tCoordinates(K,1:3), &
+                                    & interpolatedPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                                 ENDIF
                               ENDIF
 
                               X=0.0_DP
-                              DO dim_idx=1,numberOfDimensions
-                                X(dim_idx)=INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(dim_idx,1)
-                              ENDDO !dim_idx
+                              DO dimensionIdx=1,numberOfDimensions
+                                x(dimensionIdx)=interpolatedPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(dimensionIdx,1)
+                              ENDDO !dimensionIdx
 
                               !Loop over the derivatives
-                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                SELECT CASE(EQUATIONS_SET%ANALYTIC%analyticFunctionType)
+                              DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%numberOfDerivatives
+                                SELECT CASE(equationsSet%analytic%analyticFunctionType)
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1)
-                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%numberOfComponents==3) THEN
+                                  IF(numberOfDimensions==2.AND.fieldVariable%numberOfComponents==3) THEN
 !POLYNOM
-                                    SELECT CASE(variable_type)
+                                    SELECT CASE(variableType)
                                       CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            FACT = PERM_OVER_VIS_PARAM
-                                            IF(component_idx==1) THEN
+                                            fact = permeabilityOverViscosityParameter
+                                            IF(componentIdx==1) THEN
                                               !calculate u
-                                              VALUE = - FACT * ( 2.0_DP*X(1) + 2.0_DP*X(2) )
-                                            ELSE IF(component_idx==2) THEN
+                                              VALUE = - fact * ( 2.0_DP*x(1) + 2.0_DP*x(2) )
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
-                                              VALUE = - FACT * ( 2.0_DP*X(1) - 2.0_DP*X(2) )
-                                            ELSE IF(component_idx==3) THEN
+                                              VALUE = - fact * ( 2.0_DP*x(1) - 2.0_DP*x(2) )
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate p
-                                              VALUE = X(1)**2.0_DP + 2.0_DP*X(1)*X(2) - X(2)**2.0_DP
+                                              VALUE = x(1)**2.0_DP + 2.0_DP*x(1)*x(2) - x(2)**2.0_DP
                                             ELSE
                                               CALL FlagError("Not implemented.",err,error,*999)
                                             ENDIF
@@ -5775,12 +5052,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
                                               VALUE= 0.0_DP
                                           CASE(GLOBAL_DERIV_S1)
@@ -5791,12 +5068,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE DEFAULT
-                                        localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
+                                        localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//&
                                           & " is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -5807,24 +5084,24 @@ CONTAINS
 
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2)
-                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%numberOfComponents==3) THEN
+                                  IF(numberOfDimensions==2.AND.fieldVariable%numberOfComponents==3) THEN
 !EXPONENTIAL
-                                    SELECT CASE(variable_type)
+                                    SELECT CASE(variableType)
                                       CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            FACT   = PERM_OVER_VIS_PARAM / L
-                                            ARG(1) = X(1) / L
-                                            ARG(2) = X(2) / L
-                                            IF(component_idx==1) THEN
+                                            fact   = permeabilityOverViscosityParameter / L
+                                            arg(1) = x(1) / L
+                                            arg(2) = x(2) / L
+                                            IF(componentIdx==1) THEN
                                               !calculate u
-                                              VALUE = - FACT * EXP( ARG(1) ) * EXP( ARG(2) )
-                                            ELSE IF(component_idx==2) THEN
+                                              VALUE = - fact * EXP( arg(1) ) * EXP( arg(2) )
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
-                                              VALUE = - FACT * EXP( ARG(1) ) * EXP( ARG(2) )
-                                            ELSE IF(component_idx==3) THEN
+                                              VALUE = - fact * EXP( arg(1) ) * EXP( arg(2) )
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate p
-                                              VALUE =          EXP( ARG(1) ) * EXP( ARG(2) )
+                                              VALUE =          EXP( arg(1) ) * EXP( arg(2) )
                                             ELSE
                                               CALL FlagError("Not implemented.",err,error,*999)
                                             ENDIF
@@ -5836,20 +5113,20 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            IF(component_idx==1) THEN
+                                            IF(componentIdx==1) THEN
                                               !calculate u
                                               VALUE= 0.0_DP
-                                            ELSE IF(component_idx==2) THEN
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
                                               VALUE= 0.0_DP
-                                            ELSE IF(component_idx==3) THEN
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate p
                                               VALUE= 0.0_DP
                                             ELSE
@@ -5864,14 +5141,14 @@ CONTAINS
 
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
 
 
                                       CASE DEFAULT
-                                        localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
+                                        localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//&
                                           & " is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -5882,24 +5159,24 @@ CONTAINS
 
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3)
-                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%numberOfComponents==3) THEN
+                                  IF(numberOfDimensions==2.AND.fieldVariable%numberOfComponents==3) THEN
 !SINUS/COSINUS
-                                    SELECT CASE(variable_type)
+                                    SELECT CASE(variableType)
                                       CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            FACT = 2.0_DP * PI * PERM_OVER_VIS_PARAM / L
-                                            ARG(1) = 2.0_DP * PI * X(1) / L
-                                            ARG(2) = 2.0_DP * PI * X(2) / L
-                                            IF(component_idx==1) THEN
+                                            fact = 2.0_DP * PI * permeabilityOverViscosityParameter / L
+                                            arg(1) = 2.0_DP * PI * x(1) / L
+                                            arg(2) = 2.0_DP * PI * x(2) / L
+                                            IF(componentIdx==1) THEN
                                               !calculate u
-                                              VALUE = - FACT * COS( ARG(1) ) * SIN( ARG(2) )
-                                            ELSE IF(component_idx==2) THEN
+                                              VALUE = - fact * COS( arg(1) ) * SIN( arg(2) )
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
-                                              VALUE = - FACT * SIN( ARG(1) ) * COS( ARG(2) )
-                                            ELSE IF(component_idx==3) THEN
+                                              VALUE = - fact * SIN( arg(1) ) * COS( arg(2) )
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate p
-                                              VALUE =          SIN( ARG(1) ) * SIN( ARG(2) )
+                                              VALUE =          SIN( arg(1) ) * SIN( arg(2) )
                                             ELSE
                                               CALL FlagError("Not implemented.",err,error,*999)
                                             ENDIF
@@ -5911,20 +5188,20 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            IF(component_idx==1) THEN
+                                            IF(componentIdx==1) THEN
                                               !calculate u
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==2) THEN
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==3) THEN
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate p
                                               VALUE=0.0_DP
                                             ELSE
@@ -5938,12 +5215,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE DEFAULT
-                                        localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
+                                        localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//&
                                           & " is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -5953,26 +5230,26 @@ CONTAINS
                                   ENDIF
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1)
-                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%numberOfComponents==4) THEN
+                                  IF(numberOfDimensions==3.AND.fieldVariable%numberOfComponents==4) THEN
 !POLYNOM
-                                    SELECT CASE(variable_type)
+                                    SELECT CASE(variableType)
                                       CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            FACT = PERM_OVER_VIS_PARAM
-                                            IF(component_idx==1) THEN
+                                            fact = permeabilityOverViscosityParameter
+                                            IF(componentIdx==1) THEN
                                               !calculate u
-                                              VALUE = - FACT * ( 2.0_DP*X(1) + 2.0_DP*X(2) + X(3) )
-                                            ELSE IF(component_idx==2) THEN
+                                              VALUE = - fact * ( 2.0_DP*x(1) + 2.0_DP*x(2) + x(3) )
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
-                                              VALUE = - FACT * ( 2.0_DP*X(1) - 2.0_DP*X(2) + X(3) )
-                                            ELSE IF(component_idx==3) THEN
+                                              VALUE = - fact * ( 2.0_DP*x(1) - 2.0_DP*x(2) + x(3) )
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate w
-                                              VALUE = - FACT * ( 3.0_DP + X(1) + X(2) )
-                                            ELSE IF(component_idx==4) THEN
+                                              VALUE = - fact * ( 3.0_DP + x(1) + x(2) )
+                                            ELSE IF(componentIdx==4) THEN
                                               !calculate p
-                                              VALUE = X(1)**2.0_DP + 2.0_DP*X(1)*X(2) - X(2)**2.0_DP + &
-                                                       & 3.0_DP*X(3) + X(3)*X(1) + X(3)*X(2)
+                                              VALUE = x(1)**2.0_DP + 2.0_DP*x(1)*x(2) - x(2)**2.0_DP + &
+                                                       & 3.0_DP*x(3) + x(3)*x(1) + x(3)*x(2)
                                             ELSE
                                               CALL FlagError("Not implemented.",err,error,*999)
                                             ENDIF
@@ -5984,12 +5261,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
                                             VALUE=0.0_DP
                                           CASE(GLOBAL_DERIV_S1)
@@ -6000,12 +5277,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE DEFAULT
-                                        localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
+                                        localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//&
                                           & " is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -6016,28 +5293,28 @@ CONTAINS
 
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2)
-                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%numberOfComponents==4) THEN
+                                  IF(numberOfDimensions==3.AND.fieldVariable%numberOfComponents==4) THEN
 !EXPONENTIAL
-                                    SELECT CASE(variable_type)
+                                    SELECT CASE(variableType)
                                       CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            FACT   = PERM_OVER_VIS_PARAM / L
-                                            ARG(1) = X(1) / L
-                                            ARG(2) = X(2) / L
-                                            ARG(3) = X(3) / L
-                                            IF(component_idx==1) THEN
+                                            fact   = permeabilityOverViscosityParameter / L
+                                            arg(1) = x(1) / L
+                                            arg(2) = x(2) / L
+                                            arg(3) = x(3) / L
+                                            IF(componentIdx==1) THEN
                                               !calculate u
-                                              VALUE = - FACT * EXP( ARG(1) ) * EXP( ARG(2) ) * EXP( ARG(3) )
-                                            ELSE IF(component_idx==2) THEN
+                                              VALUE = - fact * EXP( arg(1) ) * EXP( arg(2) ) * EXP( arg(3) )
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
-                                              VALUE = - FACT * EXP( ARG(1) ) * EXP( ARG(2) ) * EXP( ARG(3) )
-                                            ELSE IF(component_idx==3) THEN
+                                              VALUE = - fact * EXP( arg(1) ) * EXP( arg(2) ) * EXP( arg(3) )
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate w
-                                              VALUE = - FACT * EXP( ARG(1) ) * EXP( ARG(2) ) * EXP( ARG(3) )
-                                            ELSE IF(component_idx==4) THEN
+                                              VALUE = - fact * EXP( arg(1) ) * EXP( arg(2) ) * EXP( arg(3) )
+                                            ELSE IF(componentIdx==4) THEN
                                               !calculate p
-                                              VALUE =          EXP( ARG(1) ) * EXP( ARG(2) ) * EXP( ARG(3) )
+                                              VALUE =          EXP( arg(1) ) * EXP( arg(2) ) * EXP( arg(3) )
                                             ELSE
                                               CALL FlagError("Not implemented.",err,error,*999)
                                             ENDIF
@@ -6049,23 +5326,23 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            IF(component_idx==1) THEN
+                                            IF(componentIdx==1) THEN
                                               !calculate u
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==2) THEN
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==3) THEN
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate w
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==4) THEN
+                                            ELSE IF(componentIdx==4) THEN
                                               !calculate p
                                               VALUE=0.0_DP
                                             ELSE
@@ -6080,12 +5357,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE DEFAULT
-                                        localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
+                                        localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//&
                                           & " is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -6095,28 +5372,28 @@ CONTAINS
                                   ENDIF
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3)
-                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%numberOfComponents==4) THEN
+                                  IF(numberOfDimensions==3.AND.fieldVariable%numberOfComponents==4) THEN
   !SINE/COSINE
-                                    SELECT CASE(variable_type)
+                                    SELECT CASE(variableType)
                                       CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            FACT = 2.0_DP * PI * PERM_OVER_VIS_PARAM / L
-                                            ARG(1) = 2.0_DP * PI * X(1) / L
-                                            ARG(2) = 2.0_DP * PI * X(2) / L
-                                            ARG(3) = 2.0_DP * PI * X(3) / L
-                                            IF(component_idx==1) THEN
+                                            fact = 2.0_DP * PI * permeabilityOverViscosityParameter / L
+                                            arg(1) = 2.0_DP * PI * x(1) / L
+                                            arg(2) = 2.0_DP * PI * x(2) / L
+                                            arg(3) = 2.0_DP * PI * x(3) / L
+                                            IF(componentIdx==1) THEN
                                               !calculate u
-                                              VALUE = - FACT * COS( ARG(1) ) * SIN( ARG(2) )  * SIN( ARG(3) )
-                                            ELSE IF(component_idx==2) THEN
+                                              VALUE = - fact * COS( arg(1) ) * SIN( arg(2) )  * SIN( arg(3) )
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
-                                              VALUE = - FACT * SIN( ARG(1) ) * COS( ARG(2) )  * SIN( ARG(3) )
-                                            ELSE IF(component_idx==3) THEN
+                                              VALUE = - fact * SIN( arg(1) ) * COS( arg(2) )  * SIN( arg(3) )
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate w
-                                              VALUE = - FACT * SIN( ARG(1) ) * SIN( ARG(2) )  * COS( ARG(3) )
-                                            ELSE IF(component_idx==4) THEN
+                                              VALUE = - fact * SIN( arg(1) ) * SIN( arg(2) )  * COS( arg(3) )
+                                            ELSE IF(componentIdx==4) THEN
                                               !calculate p
-                                              VALUE =          SIN( ARG(1) ) * SIN( ARG(2) )  * SIN( ARG(3) )
+                                              VALUE =          SIN( arg(1) ) * SIN( arg(2) )  * SIN( arg(3) )
                                             ELSE
                                               CALL FlagError("Not implemented.",err,error,*999)
                                             ENDIF
@@ -6128,23 +5405,23 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
+                                        SELECT CASE(domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex)
                                           CASE(NO_GLOBAL_DERIV)
-                                            IF(component_idx==1) THEN
+                                            IF(componentIdx==1) THEN
                                               !calculate u
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==2) THEN
+                                            ELSE IF(componentIdx==2) THEN
                                               !calculate v
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==3) THEN
+                                            ELSE IF(componentIdx==3) THEN
                                               !calculate w
                                               VALUE=0.0_DP
-                                            ELSE IF(component_idx==4) THEN
+                                            ELSE IF(componentIdx==4) THEN
                                               !calculate p
                                               VALUE=0.0_DP
                                             ELSE
@@ -6158,12 +5435,12 @@ CONTAINS
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE DEFAULT
                                             localError="The global derivative index of "//TRIM(NumberToVString( &
-                                              & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
+                                              & domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%globalDerivativeIndex,"*", &
                                               & err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                         END SELECT
                                       CASE DEFAULT
-                                        localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
+                                        localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//&
                                           & " is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -6173,29 +5450,29 @@ CONTAINS
                                   ENDIF
                                 CASE DEFAULT
                                   localError="The analytic function type of "// &
-                                    & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",err,error))// &
+                                    & TRIM(NumberToVString(equationsSet%analytic%analyticFunctionType,"*",err,error))// &
                                     & " is invalid."
                                   CALL FlagError(localError,err,error,*999)
                                 END SELECT
                                 !Default to version 1 of each node derivative
-                                CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
-                                  & component_idx,local_ny,err,error,*999)
-                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
-                                IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
+                                CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,derivativeIdx,nodeIdx, &
+                                  & componentIdx,localDOFIdx,err,error,*999)
+                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
+                                IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
 
 
-! ! !                                 IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
+! ! !                                 IF(domainNodes%NODES(nodeIdx)%boundaryNode) THEN
 ! ! !                                   !If we are a boundary node then set the analytic value on the boundary
-! ! !                                   IF(component_idx<=numberOfDimensions) THEN
-! ! !                                     CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
+! ! !                                   IF(componentIdx<=numberOfDimensions) THEN
+! ! !                                     CALL BoundaryConditions_SetLocalDOF(boundaryConditions,variableType,localDOFIdx, &
 ! ! !                                       & BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
-! ! !                                   BOUND_COUNT=BOUND_COUNT+1
+! ! !                                   boundCount=boundCount+1
 ! ! !                                   ENDIF
 ! ! !                                 ELSE
-! ! !                                   IF(component_idx<=numberOfDimensions) THEN
-! ! !                                     CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-! ! !                                       & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+! ! !                                   IF(componentIdx<=numberOfDimensions) THEN
+! ! !                                     CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+! ! !                                       & FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
 ! ! !                                   ENDIF
 ! ! !                                 ENDIF
 
@@ -6204,97 +5481,97 @@ CONTAINS
 
                                   !If we are a boundary node then set the analytic value on the boundary
                                   IF(numberOfDimensions==2) THEN
-                                    IF(ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE) THEN
-                                      IF(component_idx<=numberOfDimensions) THEN
-                                        CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
-                                          & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
-                                      BOUND_COUNT=BOUND_COUNT+1
+                                    IF(ABS(x(1)-boundaryX(1,1))<boundaryTolerance.OR. &
+                                      & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.OR. &
+                                      & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.OR. &
+                                      & ABS(x(2)-boundaryX(2,2))<boundaryTolerance) THEN
+                                      IF(componentIdx<=numberOfDimensions) THEN
+                                        CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
+                                          & localDOFIdx,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
+                                      boundCount=boundCount+1
 !Apply boundary conditions check for pressure nodes
-                                      ELSE IF(component_idx>numberOfDimensions) THEN
+                                      ELSE IF(componentIdx>numberOfDimensions) THEN
                                         IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==3.OR. &
                                           & DOMAIN%topology%elements%maximumNumberOfElementParameters==6.OR. &
                                           & DOMAIN%topology%elements%maximumNumberOfElementParameters==10) THEN
 
-                                        IF(ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.AND. &
-                                          & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.OR. &
-                                          & ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.AND.&
-                                          & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE.OR. &
-                                          & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.AND.&
-                                          & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.OR. &
-                                          & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.AND.&
-                                          & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE) &
+                                        IF(ABS(x(1)-boundaryX(1,1))<boundaryTolerance.AND. &
+                                          & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.OR. &
+                                          & ABS(x(1)-boundaryX(1,1))<boundaryTolerance.AND.&
+                                          & ABS(x(2)-boundaryX(2,2))<boundaryTolerance.OR. &
+                                          & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.AND.&
+                                          & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.OR. &
+                                          & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.AND.&
+                                          & ABS(x(2)-boundaryX(2,2))<boundaryTolerance) &
                                           & THEN
-                                            CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD, &
-                                              & variable_type,local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
-                                            BOUND_COUNT=BOUND_COUNT+1
+                                            CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField, &
+                                              & variableType,localDOFIdx,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
+                                            boundCount=boundCount+1
                                         ENDIF
                                         ENDIF
                                       ENDIF
                                     ELSE
-                                      IF(component_idx<=numberOfDimensions) THEN
-                                        CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                          & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+                                      IF(componentIdx<=numberOfDimensions) THEN
+                                        CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+                                          & FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
                                       ENDIF
                                     ENDIF
                                   ELSE IF(numberOfDimensions==3) THEN
-                                    IF(ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(3)-BOUNDARY_X(3,1))<BOUNDARY_TOLERANCE.OR. &
-                                      & ABS(X(3)-BOUNDARY_X(3,2))<BOUNDARY_TOLERANCE) THEN
-                                      IF(component_idx<=numberOfDimensions) THEN
-                                        CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
-                                          & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
-                                      BOUND_COUNT=BOUND_COUNT+1
+                                    IF(ABS(x(1)-boundaryX(1,1))<boundaryTolerance.OR. &
+                                      & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.OR. &
+                                      & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.OR. &
+                                      & ABS(x(2)-boundaryX(2,2))<boundaryTolerance.OR. &
+                                      & ABS(x(3)-boundaryX(3,1))<boundaryTolerance.OR. &
+                                      & ABS(x(3)-boundaryX(3,2))<boundaryTolerance) THEN
+                                      IF(componentIdx<=numberOfDimensions) THEN
+                                        CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
+                                          & localDOFIdx,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
+                                      boundCount=boundCount+1
 !Apply boundary conditions check for pressure nodes
-                                      ELSE IF(component_idx>numberOfDimensions) THEN
+                                      ELSE IF(componentIdx>numberOfDimensions) THEN
                                         IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4.OR. &
                                           & DOMAIN%topology%elements%maximumNumberOfElementParameters==10.OR. &
                                           & DOMAIN%topology%elements%maximumNumberOfElementParameters==20) THEN
-                                        IF(ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,1))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,2))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,1))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,2))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,1))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,1))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,2))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,1))<BOUNDARY_TOLERANCE.OR. &
-                                         & ABS(X(1)-BOUNDARY_X(1,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(2)-BOUNDARY_X(2,2))<BOUNDARY_TOLERANCE.AND. &
-                                         & ABS(X(3)-BOUNDARY_X(3,2))<BOUNDARY_TOLERANCE) THEN
-                                           CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD, &
-                                             & variable_type,local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
-                                           BOUND_COUNT=BOUND_COUNT+1
+                                        IF(ABS(x(1)-boundaryX(1,1))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,1))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,1))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,2))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,1))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,2))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,1))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,1))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,2))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,2))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,1))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,1))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,2))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,2))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,1))<boundaryTolerance.OR. &
+                                         & ABS(x(1)-boundaryX(1,2))<boundaryTolerance.AND. &
+                                         & ABS(x(2)-boundaryX(2,2))<boundaryTolerance.AND. &
+                                         & ABS(x(3)-boundaryX(3,2))<boundaryTolerance) THEN
+                                           CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField, &
+                                             & variableType,localDOFIdx,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
+                                           boundCount=boundCount+1
                                         ENDIF
                                         ENDIF
                                       ENDIF
                                     ELSE
-                                      IF(component_idx<=numberOfDimensions) THEN
-                                        CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                          & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+                                      IF(componentIdx<=numberOfDimensions) THEN
+                                        CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+                                          & FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
                                       ENDIF
                                     ENDIF
                                   ENDIF
                                 ENDIF
-                              ENDDO !deriv_idx
-                            ENDDO !node_idx
+                              ENDDO !derivativeIdx
+                            ENDDO !nodeIdx
                           ELSE
                             CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                           ENDIF
@@ -6307,21 +5584,21 @@ CONTAINS
                     ELSE
                       CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                     ENDIF
-                  ENDDO !component_idx
-                  CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+                  ENDDO !componentIdx
+                  CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                     & err,error,*999)
-                  CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+                  CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                     & err,error,*999)
-                  CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
+                  CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
                     & err,error,*999)
-                  CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
+                  CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
                     & err,error,*999)
                 ELSE
                   CALL FlagError("Field variable is not associated.",err,error,*999)
                 ENDIF
-              ENDDO !variable_idx
-              CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & GEOMETRIC_PARAMETERS,err,error,*999)
+              ENDDO !variableIdx
+              CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLETYPE,FIELD_VALUES_SET_TYPE, &
+                & geometricParameters,err,error,*999)
             ELSE
               CALL FlagError("Equations set boundary conditions is not associated.",err,error,*999)
             ENDIF
@@ -6343,6 +5620,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Darcy_BoundaryConditionsAnalyticCalculate",err,error)
     RETURN 1
+    
   END SUBROUTINE Darcy_BoundaryConditionsAnalyticCalculate
 
   !
@@ -6350,30 +5628,30 @@ CONTAINS
   !
 
   !>Update geometric field for ALE Darcy problem
-  SUBROUTINE Darcy_PreSolveGetSolidDisplacement(SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveGetSolidDisplacement(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solvers
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_FINITE_ELASTICITY, SOLVER_DARCY  !<A pointer to the solvers
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_FINITE_ELASTICITY, GEOMETRIC_FIELD_DARCY
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_FINITE_ELASTICITY, SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY, SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(SolverType), POINTER :: SOLVER_FINITE_ELASTICITY, solverDarcy  !<A pointer to the solvers
+    TYPE(FieldType), POINTER :: dependentField_FINITE_ELASTICITY, GEOMETRIC_FIELD_DARCY
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_FINITE_ELASTICITY, SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY, SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: equations_SET_FINITE_ELASTICITY, EQUATIONS_SET_DARCY !<A pointer to the equations set
-    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
-    TYPE(ControlLoopType), POINTER :: ROOT_CONTROL_LOOP, CONTROL_LOOP_SOLID
+    TYPE(ControlLoopType), POINTER :: controlTimeLoop !<A pointer to the control time loop
+    TYPE(ControlLoopType), POINTER :: ROOT_CONTROL_LOOP77, CONTROL_LOOP_SOLID
     TYPE(VARYING_STRING) :: localError
 
-    REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:),SOLUTION_VALUES_SOLID(:)
-    REAL(DP), POINTER :: DUMMY_VALUES2(:)
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,ALPHA
+    REAL(DP), POINTER :: meshDisplacementValues(:),SOLUTION_VALUES_SOLID(:)
+    REAL(DP), POINTER :: dummyValues2(:)
+    REAL(DP) :: currentTime,timeIncrement,alpha
 
-!     INTEGER(INTG) :: NUMBER_OF_COMPONENTS_DEPENDENT_FIELD_FINITE_ELASTICITY,NUMBER_OF_COMPONENTS_GEOMETRIC_FIELD_DARCY
-    INTEGER(INTG) :: numberOfDimensions,numberOfDofs,NDOFS_TO_PRINT,dof_number,loop_idx
+!     INTEGER(INTG) :: NUMBER_OF_COMPONENTS_dependentField_FINITE_ELASTICITY,NUMBER_OF_COMPONENTS_GEOMETRIC_FIELD_DARCY
+    INTEGER(INTG) :: numberOfDimensions,numberOfDofs,numberDOFsToPrint,dofNumber,loopIdx
     INTEGER(INTG) :: INPUT_TYPE,INPUT_OPTION
 
 
@@ -6382,8 +5660,8 @@ CONTAINS
 !--- \todo : Do we need for each case a Field_ParameterSetUpdateStart / FINISH on FIELD_MESH_DISPLACEMENT_SET_TYPE ?
 
     NULLIFY(SOLVER_FINITE_ELASTICITY)
-    NULLIFY(SOLVER_DARCY)
-    NULLIFY(MESH_DISPLACEMENT_VALUES)
+    NULLIFY(solverDarcy)
+    NULLIFY(meshDisplacementValues)
     NULLIFY(SOLUTION_VALUES_SOLID)
     NULLIFY(ROOT_CONTROL_LOOP)
     NULLIFY(CONTROL_LOOP_SOLID)
@@ -6392,26 +5670,26 @@ CONTAINS
     CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-          CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+      controlTimeLoop=>CONTROL_LOOP
+      DO loopIdx=1,CONTROL_LOOP%controlLoopLevel
+        IF(controlTimeLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+          CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,timeIncrement,err,error,*999)
           EXIT
         ENDIF
         IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
+          controlTimeLoop=>controlTimeLoop%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
       ENDDO
 
-      IF(DIAGNOSTICS1) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE, &
+      IF(diagnostics1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE, &
           & "*******************************************************************************************************", &
           & err,error,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"CURRENT_TIME   = ",CURRENT_TIME,err,error,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"TIME_INCREMENT = ",TIME_INCREMENT,err,error,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE, &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"currentTime   = ",currentTime,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"timeIncrement = ",timeIncrement,err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE, &7
           & "*******************************************************************************************************", &
           & err,error,*999)
       ENDIF
@@ -6433,8 +5711,8 @@ CONTAINS
               ! do nothing
             CASE(PROBLEM_ALE_DARCY_SUBTYPE)
               !--- Motion: specified
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                SOLVER_EQUATIONS_DARCY=>SOLVER%SOLVER_EQUATIONS
+              IF(SOLVER%globalNumber==solverNumberDarcy) THEN
+                SOLVER_EQUATIONS_DARCY=>SOLVER%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DARCY)) THEN
                   SOLVER_MAPPING_DARCY=>SOLVER_EQUATIONS_DARCY%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DARCY)) THEN
@@ -6454,13 +5732,13 @@ CONTAINS
                         CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
                           & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy motion specified ... ",err,error,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy motion specified ... ",err,error,*999)
                           GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD_DARCY)) THEN
-                            ALPHA = 0.085_DP * sin( 2.0_DP * PI * CURRENT_TIME / 4.0_DP )
+                            alpha = 0.085_DP * sin( 2.0_DP * PI * currentTime / 4.0_DP )
 
                             CALL Field_ParameterSetsCopy(GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE, &
-                              & FIELD_INITIAL_VALUES_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,ALPHA,err,error,*999)
+                              & FIELD_INITIAL_VALUES_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,alpha,err,error,*999)
                           ELSE
                             CALL FlagError("Geometric field is not associated.",err,error,*999)
                           ENDIF
@@ -6484,9 +5762,9 @@ CONTAINS
               ENDIF
             CASE(PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
               !--- Motion: read in from a file
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-                SOLVER_EQUATIONS_DARCY=>SOLVER_DARCY%SOLVER_EQUATIONS
+              IF(SOLVER%globalNumber==solverNumberDarcy) THEN
+                CALL Solvers_SolverGet(SOLVER%solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+                SOLVER_EQUATIONS_DARCY=>solverDarcy%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DARCY)) THEN
                   SOLVER_MAPPING_DARCY=>SOLVER_EQUATIONS_DARCY%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DARCY)) THEN
@@ -6497,7 +5775,7 @@ CONTAINS
                       CALL FlagError("Darcy equations set is not associated.",err,error,*999)
                     END IF
                     IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy motion read from a file ... ",err,error,*999)
+                      CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy motion read from a file ... ",err,error,*999)
                     ENDIF
 
                     CALL Field_NumberOfComponentsGet(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
@@ -6507,8 +5785,8 @@ CONTAINS
                     INPUT_TYPE=42
                     INPUT_OPTION=2
                     CALL Field_ParameterSetDataGet(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
-                      & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
-                    CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, &
+                      & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,meshDisplacementValues,err,error,*999)
+                    CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,meshDisplacementValues, &
                       & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                     CALL Field_ParameterSetUpdateStart(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
@@ -6522,10 +5800,10 @@ CONTAINS
                   CALL FlagError("Darcy solver equations are not associated.",err,error,*999)
                 END IF
 
-               IF(DIAGNOSTICS1) THEN
-                 NDOFS_TO_PRINT = SIZE(MESH_DISPLACEMENT_VALUES,1)
-                 CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,&
-                   & MESH_DISPLACEMENT_VALUES,'(" MESH_DISPLACEMENT_VALUES = ",4(X,E13.6))','4(4(X,E13.6))', &
+               IF(diagnostics1) THEN
+                 numberDOFsToPrint = SIZE(meshDisplacementValues,1)
+                 CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,&
+                   & meshDisplacementValues,'(" meshDisplacementValues = ",4(X,E13.6))','4(4(X,E13.6))', &
                    & err,error,*999)
                ENDIF
               ELSE
@@ -6534,32 +5812,32 @@ CONTAINS
             CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
               & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
               !--- Motion: defined by fluid-solid interaction (thus read from solid's dependent field)
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN  !It is called with 'SOLVER%globalNumber=SOLVER_NUMBER_DARCY', otherwise it doesn't work
+              IF(SOLVER%globalNumber==solverNumberDarcy) THEN  !It is called with 'SOLVER%globalNumber=solverNumberDarcy', otherwise it doesn't work
                 !--- Get the dependent field of the finite elasticity equations
                 IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy motion read from solid's dependent field ... ",err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy motion read from solid's dependent field ... ",err,error,*999)
                 ENDIF
                 SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
                 CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
-                  CALL CONTROL_LOOP_GET(ROOT_CONTROL_LOOP,[1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
+                  CALL ControlLoop_Get(ROOT_CONTROL_LOOP,[1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
                 CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                  CALL CONTROL_LOOP_GET(ROOT_CONTROL_LOOP,[1,1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
+                  CALL ControlLoop_Get(ROOT_CONTROL_LOOP,[1,1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
                 END SELECT
-                CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%SOLVERS,SOLVER_NUMBER_SOLID, &
+                CALL Solvers_SolverGet(CONTROL_LOOP_SOLID%solvers,solverNumberSolid, &
                     & SOLVER_FINITE_ELASTICITY,err,error,*999)
-                SOLVER_EQUATIONS_FINITE_ELASTICITY=>SOLVER_FINITE_ELASTICITY%SOLVER_EQUATIONS
+                SOLVER_EQUATIONS_FINITE_ELASTICITY=>SOLVER_FINITE_ELASTICITY%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_FINITE_ELASTICITY)) THEN
                   SOLVER_MAPPING_FINITE_ELASTICITY=>SOLVER_EQUATIONS_FINITE_ELASTICITY%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_FINITE_ELASTICITY)) THEN
                     EQUATIONS_SET_FINITE_ELASTICITY=>SOLVER_MAPPING_FINITE_ELASTICITY%equationsSets(1)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET_FINITE_ELASTICITY)) THEN
-                      DEPENDENT_FIELD_FINITE_ELASTICITY=>EQUATIONS_SET_FINITE_ELASTICITY%dependent%dependentField
-                      IF(ASSOCIATED(DEPENDENT_FIELD_FINITE_ELASTICITY)) THEN
+                      dependentField_FINITE_ELASTICITY=>EQUATIONS_SET_FINITE_ELASTICITY%dependent%dependentField
+                      IF(ASSOCIATED(dependentField_FINITE_ELASTICITY)) THEN
                           !No longer needed, since no more 'Field_ParametersToFieldParametersCopy'
-!                         CALL Field_NumberOfComponentsGet(DEPENDENT_FIELD_FINITE_ELASTICITY, &
-!                           & FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS_DEPENDENT_FIELD_FINITE_ELASTICITY,err,error,*999)
+!                         CALL Field_NumberOfComponentsGet(dependentField_FINITE_ELASTICITY, &
+!                           & FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS_dependentField_FINITE_ELASTICITY,err,error,*999)
                       ELSE
-                        CALL FlagError("DEPENDENT_FIELD_FINITE_ELASTICITY is not associated.",err,error,*999)
+                        CALL FlagError("dependentField_FINITE_ELASTICITY is not associated.",err,error,*999)
                       END IF
                     ELSE
                       CALL FlagError("Finite elasticity equations set is not associated.",err,error,*999)
@@ -6572,8 +5850,8 @@ CONTAINS
                 END IF
 
                 !--- Get the geometric field for the ALE Darcy equations
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-                SOLVER_EQUATIONS_DARCY=>SOLVER_DARCY%SOLVER_EQUATIONS
+                CALL Solvers_SolverGet(SOLVER%solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+                SOLVER_EQUATIONS_DARCY=>solverDarcy%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DARCY)) THEN
                   SOLVER_MAPPING_DARCY=>SOLVER_EQUATIONS_DARCY%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DARCY)) THEN
@@ -6599,56 +5877,56 @@ CONTAINS
 
                 !--- Copy the result from Finite-elasticity's dependent field to ALE Darcy's geometric field
                 !--- First: FIELD_MESH_DISPLACEMENT_SET_TYPE = - FIELD_PREVIOUS_VALUES_SET_TYPE
-                ALPHA=-1.0_DP
+                alpha=-1.0_DP
                 CALL Field_ParameterSetsCopy(GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,ALPHA,err,error,*999)
+                  & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,alpha,err,error,*999)
 
                 ! Write 'FIELD_PREVIOUS_VALUES_SET_TYPE'
-                IF(DIAGNOSTICS3) THEN
-                  NULLIFY( DUMMY_VALUES2 )
+                IF(diagnostics3) THEN
+                  NULLIFY( dummyValues2 )
                   CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_PREVIOUS_VALUES_SET_TYPE,DUMMY_VALUES2,err,error,*999)
-                  NDOFS_TO_PRINT = SIZE(DUMMY_VALUES2,1)
-                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,DUMMY_VALUES2, &
+                    & FIELD_PREVIOUS_VALUES_SET_TYPE,dummyValues2,err,error,*999)
+                  numberDOFsToPrint = SIZE(dummyValues2,1)
+                  CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,dummyValues2, &
                     & '(" GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE = ",4(X,E13.6))',&
                     & '4(4(X,E13.6))',err,error,*999)
                   CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_PREVIOUS_VALUES_SET_TYPE,DUMMY_VALUES2,err,error,*999)
+                    & FIELD_PREVIOUS_VALUES_SET_TYPE,dummyValues2,err,error,*999)
                 ENDIF
 
                 !--- Second: Get a pointer to the solution values of the solid
                 !    (deformed absolute positions in x, y, z; possibly solid pressure)
-                CALL Field_ParameterSetDataGet(DEPENDENT_FIELD_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                CALL Field_ParameterSetDataGet(dependentField_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,SOLUTION_VALUES_SOLID,err,error,*999)
-!                 CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+!                 CALL Field_ParameterSetDataRestore(dependentField_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
 !                   & FIELD_VALUES_SET_TYPE,SOLUTION_VALUES_SOLID,err,error,*999) ! necessary ???
 
-                ! Write 'DEPENDENT_FIELD_FINITE_ELASTICITY'
-                IF(DIAGNOSTICS3) THEN
-                  NULLIFY( DUMMY_VALUES2 )
-                  CALL Field_ParameterSetDataGet(DEPENDENT_FIELD_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,DUMMY_VALUES2,err,error,*999)
-                  NDOFS_TO_PRINT = SIZE(DUMMY_VALUES2,1)
-                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,DUMMY_VALUES2, &
-                    & '(" DEPENDENT_FIELD_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE = ",4(X,E13.6))',&
+                ! Write 'dependentField_FINITE_ELASTICITY'
+                IF(diagnostics3) THEN
+                  NULLIFY( dummyValues2 )
+                  CALL Field_ParameterSetDataGet(dependentField_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,dummyValues2,err,error,*999)
+                  numberDOFsToPrint = SIZE(dummyValues2,1)
+                  CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,dummyValues2, &
+                    & '(" dependentField_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE = ",4(X,E13.6))',&
                     & '4(4(X,E13.6))',err,error,*999)
-                  CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,DUMMY_VALUES2,err,error,*999)
+                  CALL Field_ParameterSetDataRestore(dependentField_FINITE_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,dummyValues2,err,error,*999)
                 ENDIF
 
                 !--- Third: FIELD_MESH_DISPLACEMENT_SET_TYPE += Deformed absolute position of solid
                 numberOfDofs = GEOMETRIC_FIELD_DARCY%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%numberOfDofs
-                DO dof_number=1,numberOfDofs
+                DO dofNumber=1,numberOfDofs
                   ! assumes fluid-geometry and solid-dependent mesh are identical \todo: introduce check
                   CALL Field_ParameterSetAddLocalDOF(GEOMETRIC_FIELD_DARCY, &
-                    & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,dof_number, &
-                    & SOLUTION_VALUES_SOLID(dof_number), &
+                    & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,dofNumber, &
+                    & SOLUTION_VALUES_SOLID(dofNumber), &
                     & err,error,*999)
 
 !---              !!! Why not directly do the mesh update here ??? !!!
                   CALL Field_ParameterSetUpdateLocalDOF(GEOMETRIC_FIELD_DARCY, &
-                    & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-                    & SOLUTION_VALUES_SOLID(dof_number), &
+                    & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dofNumber, &
+                    & SOLUTION_VALUES_SOLID(dofNumber), &
                     & err,error,*999)
 !---
 
@@ -6664,16 +5942,16 @@ CONTAINS
                   & FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
 
                 ! Write 'FIELD_MESH_DISPLACEMENT_SET_TYPE'
-                IF(DIAGNOSTICS3) THEN
-                  NULLIFY( DUMMY_VALUES2 )
+                IF(diagnostics3) THEN
+                  NULLIFY( dummyValues2 )
                   CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_MESH_DISPLACEMENT_SET_TYPE,DUMMY_VALUES2,err,error,*999)
-                  NDOFS_TO_PRINT = SIZE(DUMMY_VALUES2,1)
-                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT,NDOFS_TO_PRINT,DUMMY_VALUES2, &
+                    & FIELD_MESH_DISPLACEMENT_SET_TYPE,dummyValues2,err,error,*999)
+                  numberDOFsToPrint = SIZE(dummyValues2,1)
+                  CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,dummyValues2, &
                     & '(" GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE = ",4(X,E13.6))',&
                     & '4(4(X,E13.6))',err,error,*999)
                   CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD_DARCY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_MESH_DISPLACEMENT_SET_TYPE,DUMMY_VALUES2,err,error,*999)
+                    & FIELD_MESH_DISPLACEMENT_SET_TYPE,dummyValues2,err,error,*999)
                 ENDIF
               ELSE
                 ! do nothing
@@ -6704,38 +5982,38 @@ CONTAINS
   !================================================================================================================================
 
   !>Store solution of previous subiteration iterate
-  SUBROUTINE Darcy_PreSolveStorePreviousIterate(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Darcy_PreSolveStorePreviousIterate(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solvers
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
-    REAL(DP) :: ALPHA
-    INTEGER(INTG) :: FIELD_VAR_TYPE,equations_set_idx
+    REAL(DP) :: alpha
+    INTEGER(INTG) :: variableType,equationsSetIdx
 
 
     ENTERS("Darcy_PreSolveStorePreviousIterate",err,error,*999)
 
-    NULLIFY(DEPENDENT_FIELD)
+    NULLIFY(dependentField)
     NULLIFY(SOLVER_EQUATIONS)
     NULLIFY(SOLVER_MAPPING)
     NULLIFY(EQUATIONS_SET)
     NULLIFY(vectorMapping)
-    NULLIFY(FIELD_VARIABLE)
+    NULLIFY(fieldVariable)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(ASSOCIATED(SOLVER)) THEN
-        IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
+        IF(SOLVER%globalNumber==solverNumberDarcy) THEN
           IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
             IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
               CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -6750,13 +6028,13 @@ CONTAINS
               CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
                 & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
                 & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                SOLVER_EQUATIONS=>SOLVER%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                     !loop over the equations sets
-                   DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
+                   DO equationsSetIdx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equationsSetIdx)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
                       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
                         CALL FlagError("Equations set specification is not allocated.",err,error,*999)
@@ -6773,9 +6051,9 @@ CONTAINS
                           & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                          DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
+                          dependentField=>EQUATIONS_SET%dependent%dependentField
 
-                          IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+                          IF(ASSOCIATED(dependentField)) THEN
                             write(*,*)'-------------------------------------------------------'
                             write(*,*)'+++     Storing previous subiteration iterate       +++'
                             write(*,*)'-------------------------------------------------------'
@@ -6784,20 +6062,20 @@ CONTAINS
                             IF(ASSOCIATED(vectorMapping)) THEN
                               SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                               CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                              FIELD_VARIABLE=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
+                              fieldVariable=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
                               ! '1' associated with linear matrix
                               CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                                   & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                                   & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                                FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
+                                fieldVariable=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
                               END SELECT
-                              IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-                                ALPHA = 1.0_DP
-                                CALL Field_ParameterSetsCopy(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
-                                  & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ALPHA,err,error,*999)
+                              IF(ASSOCIATED(fieldVariable)) THEN
+                                variableType=fieldVariable%variableType
+                                alpha = 1.0_DP
+                                CALL Field_ParameterSetsCopy(dependentField,variableType, &
+                                  & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,alpha,err,error,*999)
                               ELSE
-                                CALL FlagError("FIELD_VAR_TYPE is not associated.",err,error,*999)
+                                CALL FlagError("variableType is not associated.",err,error,*999)
                               ENDIF
                             ELSE
                               CALL FlagError("vectorMapping is not associated.",err,error,*999)
@@ -6855,38 +6133,38 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveUpdateAnalyticValues(SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP 
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: dependentField,GEOMETRIC_FIELD
     !    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     !    TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(VARYING_STRING) :: localError
-    !    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    !    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    !    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    !    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     !    REAL(DP), POINTER :: BOUNDARY_VALUES(:)
-    REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
+    REAL(DP), POINTER :: geometricParameters(:)
     INTEGER(INTG) :: numberOfDimensions
-    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP
+    TYPE(ControlLoopType), POINTER :: controlTimeLoop
 
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
+    REAL(DP) :: currentTime,timeIncrement
     !     REAL(DP) :: k_xx, k_yy, k_zz
-    INTEGER(INTG) :: eqnset_idx,loop_idx,variable_idx
-    INTEGER(INTG) :: VARIABLE_TYPE !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG) :: eqnset_idx,loopIdx,variableIdx
+    INTEGER(INTG) :: VARIABLETYPE !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
     REAL(DP) :: A1,D1
     !    INTEGER(INTG) :: FIELD_SET_TYPE !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
     !    INTEGER(INTG) :: DERIVATIVE_NUMBER !<The node derivative number
     !    INTEGER(INTG) :: COMPONENT_NUMBER !<The field variable component number
     !    INTEGER(INTG) :: totalNumberOfNodes !<The total number of (geometry) nodes
     !    INTEGER(INTG) :: LOCAL_NODE_NUMBER
-    !    INTEGER(INTG) :: equations_SET_IDX
+    !    INTEGER(INTG) :: equationsSetIdx
     !    INTEGER(INTG) :: equations_row_number
 
     ENTERS("Darcy_PreSolveUpdateAnalyticValues",err,error,*999)
@@ -6898,23 +6176,23 @@ CONTAINS
     CALL Solver_ControlLoopGet(SOLVER,CONTROL_LOOP,err,error,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-          CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+      controlTimeLoop=>CONTROL_LOOP
+      DO loopIdx=1,CONTROL_LOOP%controlLoopLevel
+        IF(controlTimeLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+          CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,timeIncrement,err,error,*999)
           EXIT
         ENDIF
         IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
+          controlTimeLoop=>controlTimeLoop%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
       ENDDO
 
       !     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      !       CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-      !write(*,*)'CURRENT_TIME = ',CURRENT_TIME
-      !write(*,*)'TIME_INCREMENT = ',TIME_INCREMENT
+      !       CALL ControlLoop_CurrentTimesGet(CONTROL_LOOP,currentTime,timeIncrement,err,error,*999)
+      !write(*,*)'currentTime = ',currentTime
+      !write(*,*)'timeIncrement = ',timeIncrement
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
           IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
@@ -6924,92 +6202,92 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            SOLVER_EQUATIONS=>SOLVER%solverEquations
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               !loop over all the equation sets and set the appropriate field variable type BCs and
               !the source field associated with each equation set
               DO eqnset_idx=1,SOLVER_equations%solverMapping%numberOfEquationsSets
                 SOLVER_MAPPING=>SOLVER_equations%solverMapping
-                EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(eqnset_idx)%EQUATIONS
+                EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(eqnset_idx)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
                   EQUATIONS_SET=>equations%equationsSet
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                      IF(EQUATIONS_SET%ANALYTIC%analyticFunctionType==EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)THEN
+                      IF(EQUATIONS_SET%analytic%analyticFunctionType==EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)THEN
                         !for this analytic case we copy the mass variable to the pressure variable
-                        DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-                        IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+                        dependentField=>EQUATIONS_SET%dependent%dependentField
+                        IF(ASSOCIATED(dependentField)) THEN
                           GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                             CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
                               & numberOfDimensions,err,error,*999)
-                            NULLIFY(GEOMETRIC_VARIABLE)
-                            NULLIFY(GEOMETRIC_PARAMETERS)
-                            CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
+                            NULLIFY(geometricVariable)
+                            NULLIFY(geometricParameters)
+                            CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
                             CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,&
-                              & GEOMETRIC_PARAMETERS,err,error,*999)
-                            DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
-                              !variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%variableType
-                              variable_type=FIELD_V_VARIABLE_TYPE
-                              FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%ptr
-                              IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                !                                DO component_idx=4,FIELD_VARIABLE%numberOfComponents
+                              & geometricParameters,err,error,*999)
+                            DO variableIdx=1,dependentField%numberOfVariables
+                              !variableType=dependentField%VARIABLES(2*eqnset_idx-1)%variableType
+                              variableType=FIELD_V_VARIABLE_TYPE
+                              fieldVariable=>dependentField%variableTypeMap(variableType)%ptr
+                              IF(ASSOCIATED(fieldVariable)) THEN
+                                !                                DO componentIdx=4,fieldVariable%numberOfComponents
 
 
-                                CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, &
-                                  & FIELD_VALUES_SET_TYPE,4,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                CALL Field_ParametersToFieldParametersCopy(dependentField,FIELD_V_VARIABLE_TYPE, &
+                                  & FIELD_VALUES_SET_TYPE,4,dependentField,FIELD_U_VARIABLE_TYPE, &
                                   & FIELD_VALUES_SET_TYPE,4,err,error,*999)
 
-                                !                                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== &
+                                !                                   IF(fieldVariable%COMPONENTS(componentIdx)%interpolationType== &
                                 !                                     & FIELD_NODE_BASED_INTERPOLATION) THEN
-                                !                                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
+                                !                                     DOMAIN=>fieldVariable%COMPONENTS(componentIdx)%DOMAIN
                                 !                                     IF(ASSOCIATED(DOMAIN)) THEN
                                 !                                       IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                                !                                         DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                                !                                         IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                                !                                         domainNodes=>DOMAIN%TOPOLOGY%NODES
+                                !                                         IF(ASSOCIATED(domainNodes)) THEN
                                 !                                           !Loop over the local nodes excluding the ghosts.
-                                !                                           DO node_idx=1,DOMAIN_NODES%numberOfNodes
-                                !                                           CALL Field_ParameterSetGetNode(DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, &
-                                !                                              & FIELD_VALUES_SET_TYPE,1,node_idx,4,MASS_INCREASE,err,error,*999)
-                                !                                           CALL Field_ParameterSetUpdateNode(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                !                                              & FIELD_VALUES_SET_TYPE,1,node_idx,4,0.1*MASS_INCREASE,err,error,*999)
+                                !                                           DO nodeIdx=1,domainNodes%numberOfNodes
+                                !                                           CALL Field_ParameterSetGetNode(dependentField,FIELD_V_VARIABLE_TYPE, &
+                                !                                              & FIELD_VALUES_SET_TYPE,1,nodeIdx,4,MASS_INCREASE,err,error,*999)
+                                !                                           CALL Field_ParameterSetUpdateNode(dependentField,FIELD_U_VARIABLE_TYPE, &
+                                !                                              & FIELD_VALUES_SET_TYPE,1,nodeIdx,4,0.1*MASS_INCREASE,err,error,*999)
                                 !                                           write(*,*) MASS_INCREASE
                                 !
                                 !                                             !!TODO \todo We should interpolate the geometric field here and the node position.
-                                ! !                                             DO dim_idx=1,numberOfDimensions
-                                ! !                                               local_ny= &
-                                ! !                                           & GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP(1,node_idx)
-                                ! !                                               X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
-                                ! !                                             ENDDO !dim_idx
+                                ! !                                             DO dimensionIdx=1,numberOfDimensions
+                                ! !                                               localDOFIdx= &
+                                ! !                                           & geometricVariable%COMPONENTS(dimensionIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP(1,nodeIdx)
+                                ! !                                               x(dimensionIdx)=geometricParameters(localDOFIdx)
+                                ! !                                             ENDDO !dimensionIdx
                                 ! !                                             !Loop over the derivatives
-                                ! !                                             DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                ! !                                               ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
-                                ! !                                               GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%globalDerivativeIndex(deriv_idx)
+                                ! !                                             DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%numberOfDerivatives
+                                ! !                                               analyticFunctionType=EQUATIONS_SET%analytic%analyticFunctionType
+                                ! !                                               globalDerivativeIndex=domainNodes%NODES(nodeIdx)%globalDerivativeIndex(derivativeIdx)
                                 ! ! !                                               CALL DIFFUSION_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X, &
-                                ! ! !                                                 & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX, &
-                                ! ! !                                                 & ANALYTIC_FUNCTION_TYPE,err,error,*999)
-                                ! !                                               local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                ! !                                                 & NODE_PARAM2DOF_MAP(deriv_idx,node_idx)
-                                ! !                                               CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                ! !                                                 & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
-                                ! ! !                                               BOUNDARY_CONDITION_CHECK_VARIABLE=SOLVER_equations%BOUNDARY_CONDITIONS% &
-                                ! ! !                                                 & BOUNDARY_CONDITIONS_variableTypeMap(variable_type)%ptr% &
-                                ! ! !                                                 & CONDITION_TYPES(local_ny)
-                                ! ! !                                               IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
-                                ! ! !                                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD, &
-                                ! ! !                                                  & variable_type,FIELD_VALUES_SET_TYPE,local_ny, &
+                                ! ! !                                                 & currentTime,variableType,globalDerivativeIndex, &
+                                ! ! !                                                 & analyticFunctionType,err,error,*999)
+                                ! !                                               localDOFIdx=fieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                                ! !                                                 & NODE_PARAM2DOF_MAP(derivativeIdx,nodeIdx)
+                                ! !                                               CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
+                                ! !                                                 & FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx,VALUE,err,error,*999)
+                                ! ! !                                               boundaryConditionCheckVariable=SOLVER_equations%boundaryConditions% &
+                                ! ! !                                                 & boundaryConditions_variableTypeMap(variableType)%ptr% &
+                                ! ! !                                                 & conditionTypes(localDOFIdx)
+                                ! ! !                                               IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED) THEN
+                                ! ! !                                                CALL Field_ParameterSetUpdateLocalDOF(dependentField, &
+                                ! ! !                                                  & variableType,FIELD_VALUES_SET_TYPE,localDOFIdx, &
                                 ! ! !                                                  & VALUE,err,error,*999)
                                 ! ! !                                               ENDIF
                                 ! !
-                                ! ! !                                              IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
-                                ! ! !                                                IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
+                                ! ! !                                              IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
+                                ! ! !                                                IF(domainNodes%NODES(nodeIdx)%boundaryNode) THEN
                                 ! !                                                   !If we are a boundary node then set the analytic value on the boundary
-                                ! ! !                                                  CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
+                                ! ! !                                                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,variableType,localDOFIdx, &
                                 ! ! !                                                    & BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
                                 ! ! !                                                ENDIF
                                 ! ! !                                              ENDIF
-                                ! !                                             ENDDO !deriv_idx
-                                !                                           ENDDO !node_idx
+                                ! !                                             ENDDO !derivativeIdx
+                                !                                           ENDDO !nodeIdx
                                 !                                         ELSE
                                 !                                           CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                                 !                                         ENDIF
@@ -7022,22 +6300,22 @@ CONTAINS
                                 !                                   ELSE
                                 !                                     CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                                 !                                   ENDIF
-                                !                                 ENDDO !component_idx
-                                CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type, &
+                                !                                 ENDDO !componentIdx
+                                CALL Field_ParameterSetUpdateStart(dependentField,variableType, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                                CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateFinish(dependentField,variableType, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                                CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateStart(dependentField,variableType, &
                                   & FIELD_VALUES_SET_TYPE,err,error,*999)
-                                CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateFinish(dependentField,variableType, &
                                   & FIELD_VALUES_SET_TYPE,err,error,*999)
                               ELSE
                                 CALL FlagError("Field variable is not associated.",err,error,*999)
                               ENDIF
 
-                            ENDDO !variable_idx
+                            ENDDO !variableIdx
                             CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
-                              & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS,err,error,*999)
+                              & FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
                           ELSE
                             CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
                           ENDIF
@@ -7071,45 +6349,45 @@ CONTAINS
                   !                   GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                   !                   IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                   !                     CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-                  !                     NULLIFY(GEOMETRIC_VARIABLE)
-                  !                     CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
+                  !                     NULLIFY(geometricVariable)
+                  !                     CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
                   !                     CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  !                       & GEOMETRIC_PARAMETERS,err,error,*999)
-                  !                       variable_type=FIELD_U_VARIABLE_TYPE
-                  !                       FIELD_VARIABLE=>sourceField%variableTypeMap(variable_type)%ptr
-                  !                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                  !                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                  !                           IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
-                  !                             DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
+                  !                       & geometricParameters,err,error,*999)
+                  !                       variableType=FIELD_U_VARIABLE_TYPE
+                  !                       fieldVariable=>sourceField%variableTypeMap(variableType)%ptr
+                  !                       IF(ASSOCIATED(fieldVariable)) THEN
+                  !                         DO componentIdx=1,fieldVariable%numberOfComponents
+                  !                           IF(fieldVariable%COMPONENTS(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
+                  !                             DOMAIN=>fieldVariable%COMPONENTS(componentIdx)%DOMAIN
                   !                             IF(ASSOCIATED(DOMAIN)) THEN
                   !                               IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                  !                                 DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                  !                                 IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                  !                                 domainNodes=>DOMAIN%TOPOLOGY%NODES
+                  !                                 IF(ASSOCIATED(domainNodes)) THEN
                   !                                   !Loop over the local nodes excluding the ghosts.
-                  !                                   DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                  !                                   DO nodeIdx=1,domainNodes%numberOfNodes
                   !                                     !!TODO \todo We should interpolate the geometric field here and the node position.
                   !                                     
-                  !                                       local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP(1,&
-                  !                                       & node_idx)
-                  !                                       X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
-                  !                                     ENDDO !dim_idx
+                  !                                       localDOFIdx=geometricVariable%COMPONENTS(dimensionIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP(1,&
+                  !                                       & nodeIdx)
+                  !                                       x(dimensionIdx)=geometricParameters(localDOFIdx)
+                  !                                     ENDDO !dimensionIdx
                   !                                     !Loop over the derivatives
-                  !                                     DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                  !                                       SELECT CASE(EQUATIONS_SET%ANALYTIC%analyticFunctionType)
+                  !                                     DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%numberOfDerivatives
+                  !                                       SELECT CASE(EQUATIONS_SET%analytic%analyticFunctionType)
                   !                                       CASE(EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1)
-                  !                                           VALUE_SOURCE=-1*A1*EXP(-1*CURRENT_TIME)*(X(1)*X(1)+X(2)*X(2)+X(3)*X(3)+6)
+                  !                                           VALUE_SOURCE=-1*A1*EXP(-1*currentTime)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3)+6)
                   !                                       CASE DEFAULT
                   !                                         localError="The analytic function type of "// &
-                  !                                           & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",err,error))//&
+                  !                                           & TRIM(NumberToVString(EQUATIONS_SET%analytic%analyticFunctionType,"*",err,error))//&
                   !                                           & " is invalid."
                   !                                         CALL FlagError(localError,err,error,*999)
                   !                                       END SELECT
-                  !                                       local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  !                                         & NODE_PARAM2DOF_MAP(deriv_idx,node_idx)
+                  !                                       localDOFIdx=fieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                  !                                         & NODE_PARAM2DOF_MAP(derivativeIdx,nodeIdx)
                   !                                       CALL Field_ParameterSetUpdateLocalDOF(sourceField,FIELD_U_VARIABLE_TYPE, &
-                  !                                         & FIELD_VALUES_SET_TYPE,local_ny,VALUE_SOURCE,err,error,*999)
-                  !                                     ENDDO !deriv_idx
-                  !                                   ENDDO !node_idx
+                  !                                         & FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE_SOURCE,err,error,*999)
+                  !                                     ENDDO !derivativeIdx
+                  !                                   ENDDO !nodeIdx
                   !                                 ELSE
                   !                                   CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                   !                                 ENDIF
@@ -7122,7 +6400,7 @@ CONTAINS
                   !                           ELSE
                   !                             CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                   !                           ENDIF
-                  !                         ENDDO !component_idx
+                  !                         ENDDO !componentIdxy
                   !                         CALL Field_ParameterSetUpdateStart(sourceField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   !                           & err,error,*999)
                   !                         CALL Field_ParameterSetUpdateFinish(sourceField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -7131,7 +6409,7 @@ CONTAINS
                   !                         CALL FlagError("Field variable is not associated.",err,error,*999)
                   !                       ENDIF
                   !                     CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  !                       & GEOMETRIC_PARAMETERS,err,error,*999)
+                  !                       & geometricParameters,err,error,*999)
                   !                   ELSE
                   !                     CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
                   !                   ENDIF
@@ -7175,23 +6453,23 @@ CONTAINS
   !================================================================================================================================
   !
   !> Monitor convergence of the Darcy solution
-  SUBROUTINE DARCY_EQUATION_MONITOR_CONVERGENCE(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Darcy_MonitorConvergence(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
-    CHARACTER(25) :: FILENAME
+    CHARACTER(25) :: filename
     TYPE(VARYING_STRING) :: FILEPATH
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -7201,32 +6479,32 @@ CONTAINS
     REAL(DP), PARAMETER :: RESIDUAL_TOLERANCE_RELATIVE=1.0E-05_DP
     REAL(DP), PARAMETER :: RESIDUAL_TOLERANCE_ABSOLUTE=1.0E-10_DP
 
-    INTEGER(INTG) :: FIELD_VAR_TYPE
-    INTEGER(INTG) :: dof_number,numberOfDofs,equations_set_idx
+    INTEGER(INTG) :: variableType
+    INTEGER(INTG) :: dofNumber,numberOfDofs,equationsSetIdx
     INTEGER(INTG) :: COMPUTATION_NODE_NUMBER
     INTEGER(INTG) :: FILEUNIT_N, FILEUNIT_N1
 
-    ENTERS("DARCY_EQUATION_MONITOR_CONVERGENCE",err,error,*999)
+    ENTERS("Darcy_MonitorConvergence",err,error,*999)
 
-    NULLIFY(DEPENDENT_FIELD)
+    NULLIFY(dependentField)
     NULLIFY(SOLVER_EQUATIONS)
     NULLIFY(SOLVER_MAPPING)
     NULLIFY(EQUATIONS_SET)
     NULLIFY(EQUATIONS)
     NULLIFY(vectorMapping)
-    NULLIFY(FIELD_VARIABLE)
+    NULLIFY(fieldVariable)
 
     NULLIFY(workGroup)
     CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
 
     CALL WorkGroup_GroupNodeNumberGet(workGroup,COMPUTATION_NODE_NUMBER,err,error,*999)
-    WRITE(FILENAME,'("Darcy_",I3.3,".conv")') COMPUTATION_NODE_NUMBER
-    FILEPATH = "./output/"//FILENAME
+    WRITE(filename,'("Darcy_",I3.3,".conv")') COMPUTATION_NODE_NUMBER
+    FILEPATH = "./output/"//filename
     OPEN(UNIT=23, FILE=CHAR(FILEPATH),STATUS='unknown',ACCESS='append')
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(ASSOCIATED(SOLVER)) THEN
-        IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
+        IF(SOLVER%globalNumber==solverNumberDarcy) THEN
           IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
             IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
               CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -7239,15 +6517,15 @@ CONTAINS
                 & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
                 ! do nothing
               CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                SOLVER_EQUATIONS=>SOLVER%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-!                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+!                     EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(1)%EQUATIONS
 !                     IF(ASSOCIATED(EQUATIONS)) THEN
 !                       EQUATIONS_SET=>equations%equationsSet
-                   DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
+                   DO equationsSetIdx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equationsSetIdx)%ptr
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
                           CALL FlagError("Equations set specification is not allocated.",err,error,*999)
@@ -7263,38 +6541,38 @@ CONTAINS
                           CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                               & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                               & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy monitor convergence ... ",err,error,*999)
-                            DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-                            IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy monitor convergence ... ",err,error,*999)
+                            dependentField=>EQUATIONS_SET%dependent%dependentField
+                            IF(ASSOCIATED(dependentField)) THEN
                               vectorMapping=>EQUATIONS_SET%equations%vectorEquations%vectorMapping
                               IF(ASSOCIATED(vectorMapping)) THEN
                                 SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                                 CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                                  FIELD_VARIABLE=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
+                                  fieldVariable=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
                                   ! '1' associated with linear matrix
                                 CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                                     & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                                     & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                                  FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
+                                  fieldVariable=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
                                 END SELECT
-                                IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                  FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
+                                IF(ASSOCIATED(fieldVariable)) THEN
+                                  variableType=fieldVariable%variableType
 
                                   !iter 1
                                   NULLIFY(ITERATION_VALUES_N)
-                                  CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataGet(dependentField,variableType, &
                                     & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ITERATION_VALUES_N,err,error,*999)
 
                                   !iter 2
                                   NULLIFY(ITERATION_VALUES_N1)
-                                  CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataGet(dependentField,variableType, &
                                     & FIELD_VALUES_SET_TYPE,ITERATION_VALUES_N1,err,error,*999)
 
                                   RESIDUAL_NORM = 0.0_DP
-                                  numberOfDofs = DEPENDENT_FIELD%variableTypeMap(FIELD_VAR_TYPE)%ptr%numberOfDofs
-                                  DO dof_number=1,numberOfDofs
+                                  numberOfDofs = dependentField%variableTypeMap(variableType)%ptr%numberOfDofs
+                                  DO dofNumber=1,numberOfDofs
                                     RESIDUAL_NORM = RESIDUAL_NORM + &
-                                      & ( ITERATION_VALUES_N1(dof_number) - ITERATION_VALUES_N(dof_number) )**2.0_DP
+                                      & ( ITERATION_VALUES_N1(dofNumber) - ITERATION_VALUES_N(dofNumber) )**2.0_DP
                                   END DO
                                   RESIDUAL_NORM = SQRT(RESIDUAL_NORM / numberOfDofs)
 
@@ -7326,38 +6604,38 @@ CONTAINS
                                       ENDIF
                                     ENDIF
                                   ELSE
-                                    CALL FlagError("DARCY_EQUATION_MONITOR_CONVERGENCE must be called "// &
+                                    CALL FlagError("Darcy_MonitorConvergence must be called "// &
                                         & "with a while control loop",err,error,*999)
                                   ENDIF
 
 
-!                                   SUBITERATION_NUMBER = CONTROL_LOOP%whileLoop%iterationNumber
+!                                   subIterationNumber = CONTROL_LOOP%whileLoop%iterationNumber
 !
-!                                   WRITE(FILENAME,'("Darcy_DOFs_N_",I2.2,".dat")') SUBITERATION_NUMBER
-!                                   FILEPATH = "./output/"//FILENAME
-!                                   FILEUNIT_N = 7777 + 2*SUBITERATION_NUMBER
+!                                   WRITE(filename,'("Darcy_DOFs_N_",I2.2,".dat")') subIterationNumber
+!                                   FILEPATH = "./output/"//filename
+!                                   FILEUNIT_N = 7777 + 2*subIterationNumber
 !                                   OPEN(UNIT=FILEUNIT_N,FILE=CHAR(FILEPATH),STATUS='unknown',ACCESS='append')
-!                                   DO dof_number=1,numberOfDofs
-!                                     WRITE(FILEUNIT_N,*) ITERATION_VALUES_N(dof_number)
+!                                   DO dofNumber=1,numberOfDofs
+!                                     WRITE(FILEUNIT_N,*) ITERATION_VALUES_N(dofNumber)
 !                                   END DO
 !
 !
-!                                   WRITE(FILENAME,'("Darcy_DOFs_N1_",I2.2,".dat")') SUBITERATION_NUMBER
-!                                   FILEPATH = "./output/"//FILENAME
-!                                   FILEUNIT_N1 = 7777 + 2*SUBITERATION_NUMBER+1
+!                                   WRITE(filename,'("Darcy_DOFs_N1_",I2.2,".dat")') subIterationNumber
+!                                   FILEPATH = "./output/"//filename
+!                                   FILEUNIT_N1 = 7777 + 2*subIterationNumber+1
 !                                   OPEN(UNIT=FILEUNIT_N1,FILE=CHAR(FILEPATH),STATUS='unknown',ACCESS='append')
-!                                   DO dof_number=1,numberOfDofs
-!                                     WRITE(FILEUNIT_N1,*) ITERATION_VALUES_N1(dof_number)
+!                                   DO dofNumber=1,numberOfDofs
+!                                     WRITE(FILEUNIT_N1,*) ITERATION_VALUES_N1(dofNumber)
 !                                   END DO
 
 
-                                  CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataRestore(dependentField,variableType, &
                                     & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ITERATION_VALUES_N,err,error,*999)
-                                  CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataRestore(dependentField,variableType, &
                                     & FIELD_VALUES_SET_TYPE,ITERATION_VALUES_N1,err,error,*999)
 
                                 ELSE
-                                  CALL FlagError("FIELD_VAR_TYPE is not associated.",err,error,*999)
+                                  CALL FlagError("variableType is not associated.",err,error,*999)
                                 ENDIF
                               ELSE
                                 CALL FlagError("vectorMapping is not associated.",err,error,*999)
@@ -7406,54 +6684,55 @@ CONTAINS
     CLOSE(FILEUNIT_N)
     CLOSE(FILEUNIT_N1)
 
-    EXITS("DARCY_EQUATION_MONITOR_CONVERGENCE")
+    EXITS("Darcy_MonitorConvergence")
     RETURN
-999 ERRORSEXITS("DARCY_EQUATION_MONITOR_CONVERGENCE",err,error)
+999 ERRORSEXITS("Darcy_MonitorConvergence",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_MONITOR_CONVERGENCE
+    
+  END SUBROUTINE Darcy_MonitorConvergence
 
   !
   !================================================================================================================================
   !
 
   !> Accelerate convergence of the Darcy solution
-  SUBROUTINE DARCY_EQUATION_ACCELERATE_CONVERGENCE(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Darcy_AccelerateConvergence(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP), POINTER :: ITERATION_VALUES_N(:),ITERATION_VALUES_N1(:)
     REAL(DP) :: RELAXATION_PARAM,ACCELERATED_VALUE
 
-    INTEGER(INTG) :: FIELD_VAR_TYPE
-    INTEGER(INTG) :: dof_number,numberOfDofs,equations_set_idx
+    INTEGER(INTG) :: variableType
+    INTEGER(INTG) :: dofNumber,numberOfDofs,equationsSetIdx
 
 
-    ENTERS("DARCY_EQUATION_ACCELERATE_CONVERGENCE",err,error,*999)
+    ENTERS("Darcy_AccelerateConvergence",err,error,*999)
 
-    NULLIFY(DEPENDENT_FIELD)
+    NULLIFY(dependentField)
     NULLIFY(SOLVER_EQUATIONS)
     NULLIFY(SOLVER_MAPPING)
     NULLIFY(EQUATIONS_SET)
     NULLIFY(EQUATIONS)
     NULLIFY(vectorMapping)
-    NULLIFY(FIELD_VARIABLE)
+    NULLIFY(fieldVariable)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(ASSOCIATED(SOLVER)) THEN
-        IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
+        IF(SOLVER%globalNumber==solverNumberDarcy) THEN
           IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
             IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
               CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -7466,13 +6745,13 @@ CONTAINS
                 & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
                 ! do nothing
               CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                SOLVER_EQUATIONS=>SOLVER%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                   DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-!                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+                   DO equationsSetIdx=1,SOLVER_MAPPING%numberOfEquationsSets
+                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equationsSetIdx)%ptr
+!                     EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(1)%EQUATIONS
 !                     IF(ASSOCIATED(EQUATIONS)) THEN
 !                       EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -7490,65 +6769,65 @@ CONTAINS
                           CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                               & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                               & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-!                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy accelerate convergence ... ",err,error,*999)
-                            DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-                            IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+!                             CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy accelerate convergence ... ",err,error,*999)
+                            dependentField=>EQUATIONS_SET%dependent%dependentField
+                            IF(ASSOCIATED(dependentField)) THEN
                               vectorMapping=>EQUATIONS_SET%equations%vectorEquations%vectorMapping
                               IF(ASSOCIATED(vectorMapping)) THEN
                                 SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                                 CASE(EQUATIONS_SET_ALE_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
-                                  FIELD_VARIABLE=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
+                                  fieldVariable=>vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
                                   ! '1' associated with linear matrix
                                 CASE(EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                                     & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                                     & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                                  FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
+                                  fieldVariable=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
                                 END SELECT
-                                IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                  FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
+                                IF(ASSOCIATED(fieldVariable)) THEN
+                                  variableType=fieldVariable%variableType
 
                                   !iter 1
                                   NULLIFY(ITERATION_VALUES_N)
-                                  CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataGet(dependentField,variableType, &
                                     & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ITERATION_VALUES_N,err,error,*999)
 
                                   !iter 2
                                   NULLIFY(ITERATION_VALUES_N1)
-                                  CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataGet(dependentField,variableType, &
                                     & FIELD_VALUES_SET_TYPE,ITERATION_VALUES_N1,err,error,*999)
 
 !                                   RESIDUAL_NORM = 0.0_DP
-                                  numberOfDofs = DEPENDENT_FIELD%variableTypeMap(FIELD_VAR_TYPE)%ptr%numberOfDofs
+                                  numberOfDofs = dependentField%variableTypeMap(variableType)%ptr%numberOfDofs
 
-!                                   DO dof_number=1,numberOfDofs
+!                                   DO dofNumber=1,numberOfDofs
 !                                     RESIDUAL_NORM = RESIDUAL_NORM + &
-!                                       & ( ITERATION_VALUES_N1(dof_number) - ITERATION_VALUES_N(dof_number) )**2.0_DP
+!                                       & ( ITERATION_VALUES_N1(dofNumber) - ITERATION_VALUES_N(dofNumber) )**2.0_DP
 !                                   END DO
 !                                   RESIDUAL_NORM = SQRT(RESIDUAL_NORM / numberOfDofs)
 
                                   RELAXATION_PARAM = 2.0_DP  !\ToDo Devise better way of determining optimal Aitken parameter
 
                                   IF( CONTROL_LOOP%whileLoop%iterationNumber>2 )THEN
-                                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy accelerate convergence ... ",err,error,*999)
-                                    DO dof_number=1,numberOfDofs
-                                      ACCELERATED_VALUE = ITERATION_VALUES_N(dof_number) &
-                                        & + RELAXATION_PARAM * ( ITERATION_VALUES_N1(dof_number) - ITERATION_VALUES_N(dof_number) )
-                                      CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD, &
-                                        & FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
+                                    CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy accelerate convergence ... ",err,error,*999)
+                                    DO dofNumber=1,numberOfDofs
+                                      ACCELERATED_VALUE = ITERATION_VALUES_N(dofNumber) &
+                                        & + RELAXATION_PARAM * ( ITERATION_VALUES_N1(dofNumber) - ITERATION_VALUES_N(dofNumber) )
+                                      CALL Field_ParameterSetUpdateLocalDOF(dependentField, &
+                                        & variableType,FIELD_VALUES_SET_TYPE,dofNumber, &
                                         & ACCELERATED_VALUE,err,error,*999)
                                     END DO
-                                    CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD, &
-                                      & FIELD_VAR_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-                                    CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD, &
-                                      & FIELD_VAR_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
+                                    CALL Field_ParameterSetUpdateStart(dependentField, &
+                                      & variableType, FIELD_VALUES_SET_TYPE,err,error,*999)
+                                    CALL Field_ParameterSetUpdateFinish(dependentField, &
+                                      & variableType, FIELD_VALUES_SET_TYPE,err,error,*999)
                                   END IF
-                                  CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataRestore(dependentField,variableType, &
                                     & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ITERATION_VALUES_N,err,error,*999)
-                                  CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
+                                  CALL Field_ParameterSetDataRestore(dependentField,variableType, &
                                     & FIELD_VALUES_SET_TYPE,ITERATION_VALUES_N1,err,error,*999)
 
                                 ELSE
-                                  CALL FlagError("FIELD_VAR_TYPE is not associated.",err,error,*999)
+                                  CALL FlagError("variableType is not associated.",err,error,*999)
                                 ENDIF
                               ELSE
                                 CALL FlagError("vectorMapping is not associated.",err,error,*999)
@@ -7593,78 +6872,74 @@ CONTAINS
       CALL FlagError("Control loop is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("DARCY_EQUATION_ACCELERATE_CONVERGENCE")
+    EXITS("Darcy_AccelerateConvergence")
     RETURN
-999 ERRORSEXITS("DARCY_EQUATION_ACCELERATE_CONVERGENCE",err,error)
+999 ERRORSEXITS("Darcy_AccelerateConvergence",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_ACCELERATE_CONVERGENCE
+    
+  END SUBROUTINE Darcy_AccelerateConvergence
 
   !
-  !================================================================================================================================
-  !
-
-
-
   !================================================================================================================================
   !
 
   !> Allows to set an explicit Darcy mass increase to test finite elasticity
   !> (and only then this function is called, but not for the coupled problem)
-  SUBROUTINE DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Darcy_PostSolveSetMassIncrease(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solvers
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_FINITE_ELASTICITY, SOLVER_DARCY  !<A pointer to the solvers
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_DARCY
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
+    TYPE(SolverType), POINTER :: SOLVER_FINITE_ELASTICITY, solverDarcy  !<A pointer to the solvers
+    TYPE(FieldType), POINTER :: dependentField_DARCY
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: equations_SET_DARCY !<A pointer to the equations set
-    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
+    TYPE(ControlLoopType), POINTER :: controlTimeLoop !<A pointer to the control time loop
     TYPE(ControlLoopType), POINTER :: ROOT_CONTROL_LOOP, CONTROL_LOOP_SOLID
     TYPE(VARYING_STRING) :: localError
 
-    REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:),SOLUTION_VALUES_SOLID(:)
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,ALPHA
+    REAL(DP), POINTER :: meshDisplacementValues(:),SOLUTION_VALUES_SOLID(:)
+    REAL(DP) :: currentTime,timeIncrement,alpha
 
-!     INTEGER(INTG) :: NUMBER_OF_COMPONENTS_DEPENDENT_FIELD_FINITE_ELASTICITY,NUMBER_OF_COMPONENTS_GEOMETRIC_FIELD_DARCY
-    INTEGER(INTG) :: dof_number,loop_idx,numberOfDofs
+!     INTEGER(INTG) :: NUMBER_OF_COMPONENTS_dependentField_FINITE_ELASTICITY,NUMBER_OF_COMPONENTS_GEOMETRIC_FIELD_DARCY
+    INTEGER(INTG) :: dofNumber,loopIdx,numberOfDofs
 
 
-    ENTERS("DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE",err,error,*999)
+    ENTERS("Darcy_PostSolveSetMassIncrease",err,error,*999)
 
     NULLIFY(SOLVER_FINITE_ELASTICITY)
-    NULLIFY(SOLVER_DARCY)
-    NULLIFY(MESH_DISPLACEMENT_VALUES)
+    NULLIFY(solverDarcy)
+    NULLIFY(meshDisplacementValues)
     NULLIFY(SOLUTION_VALUES_SOLID)
     NULLIFY(ROOT_CONTROL_LOOP)
     NULLIFY(CONTROL_LOOP_SOLID)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
-        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
-          CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+      controlTimeLoop=>CONTROL_LOOP
+      DO loopIdx=1,CONTROL_LOOP%controlLoopLevel
+        IF(controlTimeLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+          CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,timeIncrement,err,error,*999)
           EXIT
         ENDIF
         IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
+          controlTimeLoop=>controlTimeLoop%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
       ENDDO
 
-      IF(DIAGNOSTICS1) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE, &
+      IF(diagnostics1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE, &
           & "*******************************************************************************************************", &
           & err,error,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"CURRENT_TIME   = ",CURRENT_TIME,err,error,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"TIME_INCREMENT = ",TIME_INCREMENT,err,error,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE, &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"currentTime   = ",currentTime,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"timeIncrement = ",timeIncrement,err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE, &
           & "*******************************************************************************************************", &
           & err,error,*999)
       ENDIF
@@ -7689,17 +6964,17 @@ CONTAINS
             CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
               & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
               !--- Mass increase specified
-              IF(SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN  !It is called with 'SOLVER%globalNumber=SOLVER_NUMBER_DARCY', otherwise it doesn't work
+              IF(SOLVER%globalNumber==solverNumberDarcy) THEN  !It is called with 'SOLVER%globalNumber=solverNumberDarcy', otherwise it doesn't work
                 !--- Get the dependent field of the Darcy equations
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,SOLVER_NUMBER_DARCY,SOLVER_DARCY,err,error,*999)
-                SOLVER_EQUATIONS_DARCY=>SOLVER_DARCY%SOLVER_EQUATIONS
+                CALL Solvers_SolverGet(SOLVER%solvers,solverNumberDarcy,solverDarcy,err,error,*999)
+                SOLVER_EQUATIONS_DARCY=>solverDarcy%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DARCY)) THEN
                   SOLVER_MAPPING_DARCY=>SOLVER_EQUATIONS_DARCY%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DARCY)) THEN
                     EQUATIONS_SET_DARCY=>SOLVER_MAPPING_DARCY%equationsSets(1)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET_DARCY)) THEN
-                      DEPENDENT_FIELD_DARCY=>EQUATIONS_SET_DARCY%dependent%dependentField
-                      IF(ASSOCIATED(DEPENDENT_FIELD_DARCY)) THEN
+                      dependentField_DARCY=>EQUATIONS_SET_DARCY%dependent%dependentField
+                      IF(ASSOCIATED(dependentField_DARCY)) THEN
                         ! do nothing
                       ELSE
                         CALL FlagError("GEOMETRIC_FIELD_DARCY is not associated.",err,error,*999)
@@ -7716,25 +6991,25 @@ CONTAINS
 
                 ! Set the mass increase for Darcy dependent field (u, v, w; m)
 
-!                 ALPHA = 2.0E-03_DP
+!                 alpha = 2.0E-03_DP
 
-!                 ALPHA = 5.0E-04_DP * CURRENT_TIME / TIME_INCREMENT
+!                 alpha = 5.0E-04_DP * currentTime / timeIncrement
 
-                ALPHA = 5.0E-04_DP * SIN(2.0_DP * PI * CURRENT_TIME / TIME_INCREMENT / 20.0_DP)
+                alpha = 5.0E-04_DP * SIN(2.0_DP * PI * currentTime / timeIncrement / 20.0_DP)
 
-                write(*,*)'ALPHA = ',ALPHA
+                write(*,*)'alpha = ',alpha
 
-                numberOfDofs = DEPENDENT_FIELD_DARCY%variableTypeMap(FIELD_V_VARIABLE_TYPE)%ptr%numberOfDofs
+                numberOfDofs = dependentField_DARCY%variableTypeMap(FIELD_V_VARIABLE_TYPE)%ptr%numberOfDofs
 
-                DO dof_number = nint(3.0/4.0*numberOfDofs) + 1, numberOfDofs
+                DO dofNumber = nint(3.0/4.0*numberOfDofs) + 1, numberOfDofs
                   !'3/4' only works for equal order interpolation in (u,v,w) and p
-                  CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD_DARCY, &
-                    & FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-                    & ALPHA,err,error,*999)
+                  CALL Field_ParameterSetUpdateLocalDOF(dependentField_DARCY, &
+                    & FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dofNumber, &
+                    & alpha,err,error,*999)
                 END DO
-                CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD_DARCY, &
+                CALL Field_ParameterSetUpdateStart(dependentField_DARCY, &
                   & FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-                CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD_DARCY, &
+                CALL Field_ParameterSetUpdateFinish(dependentField_DARCY, &
                   & FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
 
               ELSE
@@ -7755,11 +7030,12 @@ CONTAINS
       CALL FlagError("Control loop is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE")
+    EXITS("Darcy_PostSolveSetMassIncrease")
     RETURN
-999 ERRORSEXITS("DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE",err,error)
+999 ERRORSEXITS("Darcy_PostSolveSetMassIncrease",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE
+    
+  END SUBROUTINE Darcy_PostSolveSetMassIncrease
 
   !
   !================================================================================================================================
@@ -7769,55 +7045,55 @@ CONTAINS
 
   !Adds a penalty term to the equilibrium equations to enforce impermeability at certain boundaries
   ! derived from: "FINITE_ELASTICITY_SURFACE_PRESSURE_RESIDUAL_EVALUATE"; same restrictions apply
-  SUBROUTINE DARCY_EQUATION_IMPERMEABLE_BC_VIA_PENALTY(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE Darcy_ImpermeableBCViaPenalty(EQUATIONS_SET,elementNumber,err,error,*)
+    
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equations_SET !<A pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: elementNumber
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    INTEGER(INTG) :: meshComponentNumber
+    INTEGER(INTG) :: elementFaceIdx,faceNumber,normalComponentIdx,gaussIdx
+    INTEGER(INTG) :: faceNumberOfGaussPoints
+    INTEGER(INTG) :: componentIdx1,elementBaseDOFIdx1,faceNodeIdx1
+    INTEGER(INTG) :: elementNodeDerivativeIdx1,elementDOFIdx1,elementNodeIdx1,parameterIdx1
+    INTEGER(INTG) :: faceParameterIdx1,faceNodeDerivativeIdx1
+    INTEGER(INTG) :: componentIdx2,elementBaseDOFIdx2,faceNodeIdx2
+    INTEGER(INTG) :: elementNodeDerivativeIdx2,elementDOFIdx2,elementNodeIdx2,parameterIdx2
+    INTEGER(INTG) :: faceParameterIdx2,faceNodeDerivativeIdx2
+    REAL(DP) :: gaussWeight,normalProjection1,normalProjection2, penaltyParameter
+    REAL(DP) :: dZdXi(3,3),dZdXiT(3,3),gFlat(3,3),gSharp(3,3),G,sqrtG, rowBasis, columnBasis, sum
+    LOGICAL :: IMPERMEABLE_BC
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField, independentField
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(DecompositionElementType), POINTER :: DECOMP_ELEMENT
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
-    TYPE(FieldInterpolationParametersType), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS
-    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT
-    TYPE(DecompositionFaceType), POINTER :: DECOMP_FACE
-    TYPE(DomainFaceType), POINTER :: DOMAIN_FACE
-    TYPE(BasisType), POINTER :: FACE_BASIS,DEPENDENT_BASIS
-    TYPE(QuadratureSchemeType), POINTER :: FACE_QUADRATURE_SCHEME
-    TYPE(FieldInterpolationParametersType), POINTER :: FACE_VELOCITY_INTERPOLATION_PARAMETERS
-    TYPE(FieldInterpolatedPointType), POINTER :: FACE_INTERPOLATED_POINT
-    INTEGER(INTG) :: MESH_COMPONENT_NUMBER
-    INTEGER(INTG) :: element_face_idx,face_number,normal_component_idx,gauss_idx
-    INTEGER(INTG) :: FACE_NUMBER_OF_GAUSS_POINTS
-    INTEGER(INTG) :: component_idx_1,element_base_dof_idx_1,face_node_idx_1
-    INTEGER(INTG) :: element_node_derivative_idx_1,element_dof_idx_1,element_node_idx_1,parameter_idx_1
-    INTEGER(INTG) :: face_parameter_idx_1,face_node_derivative_idx_1
-    INTEGER(INTG) :: component_idx_2,element_base_dof_idx_2,face_node_idx_2
-    INTEGER(INTG) :: element_node_derivative_idx_2,element_dof_idx_2,element_node_idx_2,parameter_idx_2
-    INTEGER(INTG) :: face_parameter_idx_2,face_node_derivative_idx_2
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint
+    TYPE(DecompositionFaceType), POINTER :: decompositionFace
+    TYPE(DomainFaceType), POINTER :: domainFace
+    TYPE(BasisType), POINTER :: faceBasis,dependentBasis
+    TYPE(QuadratureSchemeType), POINTER :: faceQuadratureScheme
+    TYPE(FieldInterpolationParametersType), POINTER :: faceVelocityInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: faceInterpPoint
 
-    REAL(DP) :: GAUSS_WEIGHT,NORMAL_PROJECTION_1,NORMAL_PROJECTION_2, PENALTY_PARAM
-    REAL(DP) :: DZDXI(3,3),DZDXIT(3,3),GIJL(3,3),GIJU(3,3),G,SQRT_G, PGM, PGN, SUM
-    LOGICAL :: IMPERMEABLE_BC
-
-    ENTERS("DARCY_EQUATION_IMPERMEABLE_BC_VIA_PENALTY",err,error,*999)
+    ENTERS("Darcy_ImpermeableBCViaPenalty",err,error,*999)
 
     !Make this routine conditional on (stiffnessMatrix%updateMatrix)
 
     NULLIFY(equations,dependentField,independentField)
-    NULLIFY(dynamicMatrices,stiffnessMatrix,DECOMPOSITION)
-    NULLIFY(DECOMP_ELEMENT)
-    NULLIFY(GEOMETRIC_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATED_POINT)
-    NULLIFY(DECOMP_FACE,DOMAIN_FACE)
-    NULLIFY(FACE_BASIS,DEPENDENT_BASIS,FACE_QUADRATURE_SCHEME,FACE_QUADRATURE_SCHEME)
-    NULLIFY(FACE_VELOCITY_INTERPOLATION_PARAMETERS,FACE_INTERPOLATED_POINT)
+    NULLIFY(dynamicMatrices,stiffnessMatrix,decomposition)
+    NULLIFY(decompositionElement)
+    NULLIFY(geometricInterpParameters,geometricInterpPoint)
+    NULLIFY(decompositionFace,domainFace)
+    NULLIFY(faceBasis,dependentBasis,faceQuadratureScheme)
+    NULLIFY(faceVelocityInterpParameters,faceInterpPoint)
 
-    PENALTY_PARAM = 1.0e04_DP
+    penaltyParameter = 1.0e04_DP
 
     !Grab pointers of interest
     EQUATIONS=>EQUATIONS_SET%EQUATIONS
@@ -7826,57 +7102,57 @@ CONTAINS
     dynamicMatrices=>vectorEquations%vectorMatrices%dynamicMatrices
     stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
     dependentField=>equations%interpolation%dependentField
-    DECOMPOSITION  =>dependentField%DECOMPOSITION
-    DECOMP_ELEMENT=>DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)
+    decomposition  =>dependentField%decomposition
+    decompositionElement=>decomposition%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
 
     independentField=>equations%interpolation%independentField
 
-!     MESH_COMPONENT_NUMBER=decomposition%meshComponentNumber
-    MESH_COMPONENT_NUMBER = vectorEquations%vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)% &
+!     meshComponentNumber=decomposition%meshComponentNumber
+    meshComponentNumber = vectorEquations%vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)% &
       & VARIABLE%COMPONENTS(1)%meshComponentNumber
 
-    DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
+    dependentBasis=>decomposition%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
 
-!     write(*,*)'ELEMENT_NUMBER = ',ELEMENT_NUMBER
+!     write(*,*)'elementNumber = ',elementNumber
 
     !Calculate penalty term to render surfaces impermeable: Loop over all faces
-    DO element_face_idx=1,DEPENDENT_BASIS%numberOfLocalFaces
-      face_number=DECOMP_ELEMENT%elementFaces(element_face_idx)
-      DECOMP_FACE=>DECOMPOSITION%TOPOLOGY%FACES%FACES(face_number)
+    DO elementFaceIdx=1,dependentBasis%numberOfLocalFaces
+      faceNumber=decompositionElement%elementFaces(elementFaceIdx)
+      decompositionFace=>decomposition%TOPOLOGY%FACES%FACES(faceNumber)
 
       !Check if it's a boundary face
-      IF(DECOMP_FACE%boundaryFace) THEN !!temporary until MESH_FACE (or equivalent) is available (decomp face includes ghost faces?)
+      IF(decompositionFace%boundaryFace) THEN !!temporary until MESH_FACE (or equivalent) is available (decomp face includes ghost faces?)
 
         !Grab normal xi direction of the face and the other two xi directions
-        normal_component_idx=ABS(DECOMP_FACE%xiNormalDirection)  ! if xi=0, this can be a negative number
-!         FACE_COMPONENTS=OTHER_XI_DIRECTIONS3(normal_component_idx,2:3,1)  !Two xi directions for the current face
+        normalComponentIdx=ABS(decompositionFace%xiNormalDirection)  ! if xi=0, this can be a negative number
+!         FACE_COMPONENTS=OTHER_XI_DIRECTIONS3(normalComponentIdx,2:3,1)  !Two xi directions for the current face
         !\todo: will FACE_COMPONENTS be a problem with sector elements? Check this.
 
         ! To find out which faces are set impermeable:
-        FACE_VELOCITY_INTERPOLATION_PARAMETERS=>equations%interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-        CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,face_number, &
-          & FACE_VELOCITY_INTERPOLATION_PARAMETERS,err,error,*999)
-        FACE_INTERPOLATED_POINT=>equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+        faceVelocityInterpParameters=>equations%interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+        CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,faceNumber, &
+          & faceVelocityInterpParameters,err,error,*999)
+        faceInterpPoint=>equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
 
 
         !Check if impermeable boundary condition is defined on the face
         IMPERMEABLE_BC=.FALSE.
-        IF(ANY(ABS(FACE_VELOCITY_INTERPOLATION_PARAMETERS%PARAMETERS(:,normal_component_idx))>ZERO_TOLERANCE)) THEN
+        IF(ANY(ABS(faceVelocityInterpParameters%PARAMETERS(:,normalComponentIdx))>ZERO_TOLERANCE)) THEN
           IMPERMEABLE_BC=.TRUE.
         ENDIF
 
         IF(IMPERMEABLE_BC) THEN
 
-!           write(*,*)'element_face_idx = ',element_face_idx
-!           write(*,*)'DECOMP_FACE%xiNormalDirection = ',DECOMP_FACE%xiNormalDirection
+!           write(*,*)'elementFaceIdx = ',elementFaceIdx
+!           write(*,*)'decompositionFace%xiNormalDirection = ',decompositionFace%xiNormalDirection
 
           !Grab some other pointers
-          DOMAIN_FACE=>DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%FACES%FACES(face_number)
-          FACE_BASIS=>DOMAIN_FACE%BASIS
-          FACE_QUADRATURE_SCHEME=>FACE_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-          FACE_NUMBER_OF_GAUSS_POINTS=FACE_QUADRATURE_SCHEME%numberOfGauss
+          domainFace=>decomposition%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%FACES%FACES(faceNumber)
+          faceBasis=>domainFace%BASIS
+          faceQuadratureScheme=>faceBasis%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+          faceNumberOfGaussPoints=faceQuadratureScheme%numberOfGauss
 
-          !A single FACE_BASIS and DEPENDENT_BASIS should suffice, since we only deal with terms
+          !A single faceBasis and dependentBasis should suffice, since we only deal with terms
           !  deriving from velocity test AND trial functions, and moreover use Galerkin,
           !  i.e. same basis functions for test and trial functions
 
@@ -7885,119 +7161,120 @@ CONTAINS
 ! Annoying issue here that p(appl) is interpolated using the face_basis, while dZdXI has to be evaluated
 ! using the 3D face interpolation... many variables are shared, probably supposed to be the same but I
 ! can't guarantee it and checking every single thing will be a fair bit of overhead
-          DO gauss_idx=1,FACE_NUMBER_OF_GAUSS_POINTS
-            GAUSS_WEIGHT=FACE_QUADRATURE_SCHEME%gaussWeights(gauss_idx)
-            !What happens with surface Jacobian ? SQRT_G ? - Apparently contained in normal calculation
+          DO gaussIdx=1,faceNumberOfGaussPoints
+            gaussWeight=faceQuadratureScheme%gaussWeights(gaussIdx)
+            !What happens with surface Jacobian ? sqrtG ? - Apparently contained in normal calculation
 
             !Use (deformed) Geometric field to obtain delx_j/delxi_M = dZdxi at the face gauss point
-            GEOMETRIC_INTERPOLATION_PARAMETERS=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-              & GEOMETRIC_INTERPOLATION_PARAMETERS,err,error,*999)
-            GEOMETRIC_INTERPOLATED_POINT=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-            CALL Field_InterpolateLocalFaceGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,element_face_idx,gauss_idx, &
-              & GEOMETRIC_INTERPOLATED_POINT,err,error,*999)
+            geometricInterpParameters=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
+              & geometricInterpParameters,err,error,*999)
+            geometricInterpPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+            CALL Field_InterpolateLocalFaceGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,elementFaceIdx,gaussIdx, &
+              & geometricInterpPoint,err,error,*999)
 
-            DZDXI=GEOMETRIC_INTERPOLATED_POINT%VALUES(1:3,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:3)) !(component,derivative)
+            dZdXi=geometricInterpPoint%values(1:3,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:3)) !(component,derivative)
 
-!             write(*,*)'gauss_idx = ',gauss_idx
-!             write(*,*)'GAUSS_COORDS = ',GEOMETRIC_INTERPOLATED_POINT%VALUES(1:3,NO_PART_DERIV) !(component,derivative)
+!             write(*,*)'gaussIdx = ',gaussIdx
+!             write(*,*)'GAUSS_COORDS = ',geometricInterpPoint%values(1:3,NO_PART_DERIV) !(component,derivative)
 
             !Calculate covariant metric tensor
-            CALL MatrixTranspose(DZDXI,DZDXIT,err,error,*999)
-            CALL MatrixProduct(DZDXIT,DZDXI,GIJL,err,error,*999) !g_ij = dZdXI' * dZdXI
-            CALL Invert(GIJL,GIJU,G,err,error,*999) !g^ij = inv(g_ij), G=DET(GIJL)
-            SQRT_G=SQRT(G)
+            CALL MatrixTranspose(dZdXi,dZdXiT,err,error,*999)
+            CALL MatrixProduct(dZdXiT,dZdXi,gFlat,err,error,*999) !g_ij = dZdXI' * dZdXI
+            CALL Invert(gFlat,gSharp,G,err,error,*999) !g^ij = inv(g_ij), G=DET(gFlat)
+            sqrtG=SQRT(G)
 
             !--- L o o p   1 : over element rows (3 velocity components) -----------------------------------
-            DO component_idx_1=1,3
-              !Calculate g^{normal_component_idx}M*dZ_j/dxi_M; this apparently includes the face Jacobian
-              CALL DotProduct(GIJU(normal_component_idx,:),DZDXI(component_idx_1,:),NORMAL_PROJECTION_1,err,error,*999)
+            DO componentIdx1=1,3
+              !Calculate g^{normalComponentIdx}M*dZ_j/dxi_M; this apparently includes the face Jacobian
+              CALL DotProduct(gSharp(normalComponentIdx,:),dZdXi(componentIdx1,:),normalProjection1,err,error,*999)
 
-              IF(DECOMP_FACE%xiNormalDirection<0) NORMAL_PROJECTION_1=-NORMAL_PROJECTION_1  !always outward normal
+              IF(decompositionFace%xiNormalDirection<0) normalProjection1=-normalProjection1  !always outward normal
 
-              IF(ABS(NORMAL_PROJECTION_1)<ZERO_TOLERANCE) CYCLE !Makes it a bit quicker
+              IF(ABS(normalProjection1)<ZERO_TOLERANCE) CYCLE !Makes it a bit quicker
 
-              element_base_dof_idx_1 = (component_idx_1-1) * DEPENDENT_BASIS%numberOfElementParameters
+              elementBaseDOFIdx1 = (componentIdx1-1) * dependentBasis%numberOfElementParameters
 
-              DO face_node_idx_1=1,FACE_BASIS%numberOfNodes !nnf
-                element_node_idx_1=DEPENDENT_BASIS%nodeNumbersInLocalFace(face_node_idx_1,element_face_idx) !nn
+              DO faceNodeIdx1=1,faceBasis%numberOfNodes !nnf
+                elementNodeIdx1=dependentBasis%nodeNumbersInLocalFace(faceNodeIdx1,elementFaceIdx) !nn
 
-                DO face_node_derivative_idx_1=1,FACE_BASIS%numberOfDerivatives(face_node_idx_1) !nkf
+                DO faceNodeDerivativeIdx1=1,faceBasis%numberOfDerivatives(faceNodeIdx1) !nkf
 
-                  element_node_derivative_idx_1=DEPENDENT_BASIS%derivativeNumbersInLocalFace(face_node_derivative_idx_1, &
-                    & face_node_idx_1,element_face_idx)
+                  elementNodeDerivativeIdx1=dependentBasis%derivativeNumbersInLocalFace(faceNodeDerivativeIdx1, &
+                    & faceNodeIdx1,elementFaceIdx)
 
-                  parameter_idx_1=DEPENDENT_BASIS%elementParameterIndex(element_node_derivative_idx_1,element_node_idx_1)
+                  parameterIdx1=dependentBasis%elementParameterIndex(elementNodeDerivativeIdx1,elementNodeIdx1)
 
-                  face_parameter_idx_1=FACE_BASIS%elementParameterIndex(face_node_derivative_idx_1,face_node_idx_1)
+                  faceParameterIdx1=faceBasis%elementParameterIndex(faceNodeDerivativeIdx1,faceNodeIdx1)
 
-                  element_dof_idx_1=element_base_dof_idx_1+parameter_idx_1
+                  elementDOFIdx1=elementBaseDOFIdx1+parameterIdx1
 
                   !--- L o o p   2 : over element columns (3 velocity components) -----------------------------------
-                  DO component_idx_2=1,3
+                  DO componentIdx2=1,3
                     !Calculate g^3M*dZ_j/dxi_M
-                    CALL DotProduct(GIJU(normal_component_idx,:),DZDXI(component_idx_2,:),NORMAL_PROJECTION_2,err,error,*999)
+                    CALL DotProduct(gSharp(normalComponentIdx,:),dZdXi(componentIdx2,:),normalProjection2,err,error,*999)
 
-                    IF(DECOMP_FACE%xiNormalDirection<0) NORMAL_PROJECTION_2=-NORMAL_PROJECTION_2  !always outward normal
+                    IF(decompositionFace%xiNormalDirection<0) normalProjection2=-normalProjection2  !always outward normal
 
-                    IF(ABS(NORMAL_PROJECTION_2)<ZERO_TOLERANCE) CYCLE !Makes it a bit quicker
+                    IF(ABS(normalProjection2)<ZERO_TOLERANCE) CYCLE !Makes it a bit quicker
 
-                    element_base_dof_idx_2 = (component_idx_2-1) * DEPENDENT_BASIS%numberOfElementParameters
+                    elementBaseDOFIdx2 = (componentIdx2-1) * dependentBasis%numberOfElementParameters
 
-                    DO face_node_idx_2=1,FACE_BASIS%numberOfNodes !nnf
-                      element_node_idx_2=DEPENDENT_BASIS%nodeNumbersInLocalFace(face_node_idx_2,element_face_idx) !nn
+                    DO faceNodeIdx2=1,faceBasis%numberOfNodes !nnf
+                      elementNodeIdx2=dependentBasis%nodeNumbersInLocalFace(faceNodeIdx2,elementFaceIdx) !nn
 
-                      DO face_node_derivative_idx_2=1,FACE_BASIS%numberOfDerivatives(face_node_idx_2) !nkf
+                      DO faceNodeDerivativeIdx2=1,faceBasis%numberOfDerivatives(faceNodeIdx2) !nkf
 
-                        element_node_derivative_idx_2=DEPENDENT_BASIS%derivativeNumbersInLocalFace(face_node_derivative_idx_2, &
-                          & face_node_idx_2, element_face_idx)
+                        elementNodeDerivativeIdx2=dependentBasis%derivativeNumbersInLocalFace(faceNodeDerivativeIdx2, &
+                          & faceNodeIdx2, elementFaceIdx)
 
-                        parameter_idx_2=DEPENDENT_BASIS%elementParameterIndex(element_node_derivative_idx_2,element_node_idx_2)
+                        parameterIdx2=dependentBasis%elementParameterIndex(elementNodeDerivativeIdx2,elementNodeIdx2)
 
-                        face_parameter_idx_2=FACE_BASIS%elementParameterIndex(face_node_derivative_idx_2,face_node_idx_2)
+                        faceParameterIdx2=faceBasis%elementParameterIndex(faceNodeDerivativeIdx2,faceNodeIdx2)
 
-                        element_dof_idx_2=element_base_dof_idx_2+parameter_idx_2
+                        elementDOFIdx2=elementBaseDOFIdx2+parameterIdx2
 
-                        SUM = 0.0_DP
+                        sum = 0.0_DP
 
-                        PGM=FACE_QUADRATURE_SCHEME%gaussBasisFunctions(face_parameter_idx_1,NO_PART_DERIV,gauss_idx)
-                        PGN=FACE_QUADRATURE_SCHEME%gaussBasisFunctions(face_parameter_idx_2,NO_PART_DERIV,gauss_idx)
+                        rowBasis=faceQuadratureScheme%gaussBasisFunctions(faceParameterIdx1,NO_PART_DERIV,gaussIdx)
+                        columnBasis=faceQuadratureScheme%gaussBasisFunctions(faceParameterIdx2,NO_PART_DERIV,gaussIdx)
 
-                        SUM = SUM + PENALTY_PARAM * PGM * NORMAL_PROJECTION_1 * SQRT_G * &
-                                                  & PGN * NORMAL_PROJECTION_2 * SQRT_G
+                        sum = sum + penaltyParameter * rowBasis * normalProjection1 * sqrtG * &
+                                                  & columnBasis * normalProjection2 * sqrtG
 
-                        stiffnessMatrix%elementMatrix%matrix(element_dof_idx_1,element_dof_idx_2) = &
-                          & stiffnessMatrix%elementMatrix%matrix(element_dof_idx_1,element_dof_idx_2) + &
-                          & SUM * GAUSS_WEIGHT
+                        stiffnessMatrix%elementMatrix%matrix(elementDOFIdx1,elementDOFIdx2) = &
+                          & stiffnessMatrix%elementMatrix%matrix(elementDOFIdx1,elementDOFIdx2) + &
+                          & sum * gaussWeight
 
-                      ENDDO !element_node_derivative_idx_2
-                    ENDDO !face_node_idx_2
-                  ENDDO !component_idx_2
+                      ENDDO !elementNodeDerivativeIdx2
+                    ENDDO !faceNodeIdx2
+                  ENDDO !componentIdx2
 
-                ENDDO !element_node_derivative_idx_1
-              ENDDO !face_node_idx_1
+                ENDDO !elementNodeDerivativeIdx1
+              ENDDO !faceNodeIdx1
 
-!               write(*,*)'component_idx_1 = ',component_idx_1
-!               write(*,*)'NORMAL_PROJECTION_1 = ',NORMAL_PROJECTION_1
+!               write(*,*)'componentIdx1 = ',componentIdx1
+!               write(*,*)'normalProjection1 = ',normalProjection1
 !               write(*,*)' '
 
-            ENDDO !component_idx_1
+            ENDDO !componentIdx1
 
-          ENDDO !gauss_idx
+          ENDDO !gaussIdx
         ENDIF !IMPERMEABLE_BC
       ENDIF !boundary face check
-    ENDDO !element_face_idx
+    ENDDO !elementFaceIdx
 
-    EXITS("DARCY_EQUATION_IMPERMEABLE_BC_VIA_PENALTY")
+    EXITS("Darcy_ImpermeableBCViaPenalty")
     RETURN
 
-999 ERRORSEXITS("DARCY_EQUATION_IMPERMEABLE_BC_VIA_PENALTY",err,error)
+999 ERRORSEXITS("Darcy_ImpermeableBCViaPenalty",err,error)
     RETURN 1
-  END SUBROUTINE DARCY_EQUATION_IMPERMEABLE_BC_VIA_PENALTY
+    
+  END SUBROUTINE Darcy_ImpermeableBCViaPenalty
 
   !
   !================================================================================================================================
   !
 
 
-END MODULE DARCY_EQUATIONS_ROUTINES
+END MODULE DarcyEquationsRoutines

@@ -56,7 +56,7 @@ MODULE InterfaceRoutines
   USE GeneratedMeshRoutines
   USE InputOutput
   USE InterfaceAccessRoutines
-  USE INTERFACE_CONDITIONS_ROUTINES
+  USE InterfaceConditionRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists

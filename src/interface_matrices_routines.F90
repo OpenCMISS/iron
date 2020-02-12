@@ -53,12 +53,10 @@ MODULE InterfaceMatricesRoutines
   USE FieldAccessRoutines
   USE InputOutput
   USE InterfaceAccessRoutines
-  USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingAccessRoutines
   USE InterfaceMatricesAccessRoutines
-  USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -73,31 +71,11 @@ MODULE InterfaceMatricesRoutines
 
   !Module parameters
 
-  !> \addtogroup InterfaceMatricesRoutines_InterfaceMatrixStructureTypes InterfaceMatricesRoutines::InterfaceMatrixStructureTypes
-  !> \brief Interface matrices structure (sparsity) types
-  !> \see InterfaceMatricesRoutines
-  !>@{
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_NO_STRUCTURE=1 !<No matrix structure - all elements can contain a value. \see InterfaceMatricesRoutines_InterfaceMatrixStructureTypes,InterfaceMatricesRoutines
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_FEM_STRUCTURE=2 !<Finite element matrix structure. \see InterfaceMatricesRoutines_InterfaceMatrixStructureTypes,InterfaceMatricesRoutines 
-  !>@}
-
-  !> \addtogroup InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes InterfaceMatricesRoutines::InterfaceMatricesSparsityTypes
-  !> \brief Interface matrices sparsity types
-  !> \see InterfaceMatricesRoutines
-  !>@{
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRICES_SPARSE_MATRICES=1 !<Use sparse interface matrices \see InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes,InterfaceMatricesRoutines
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRICES_FULL_MATRICES=2 !<Use fully populated interface matrices \see InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes,InterfaceMatricesRoutines
-  !>@}
-
   !Module types
 
   !Module variables
 
   !Interfaces
-
-  PUBLIC INTERFACE_MATRIX_NO_STRUCTURE,INTERFACE_MATRIX_FEM_STRUCTURE
-
-  PUBLIC INTERFACE_MATRICES_SPARSE_MATRICES,INTERFACE_MATRICES_FULL_MATRICES
 
   PUBLIC InterfaceMatrices_CreateFinish,InterfaceMatrices_CreateStart
 
@@ -123,98 +101,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finalise a interface matrix and deallocate all memory
-  SUBROUTINE InterfaceMatrix_Finalise(interfaceMatrix,err,error,*)
-
-    !Argument variables
-    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to finalise
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("InterfaceMatrix_Finalise",err,error,*999)
-
-    IF(ASSOCIATED(interfaceMatrix)) THEN
-      IF(ASSOCIATED(interfaceMatrix%matrix)) CALL DistributedMatrix_Destroy(interfaceMatrix%matrix,err,error,*999)
-      IF(ASSOCIATED(interfaceMatrix%matrixTranspose)) CALL DistributedMatrix_Destroy(interfaceMatrix%matrixTranspose, &
-        & err,error,*999)
-      CALL EquationsMatrices_ElementMatrixFinalise(interfaceMatrix%elementMatrix,err,error,*999)
-      DEALLOCATE(interfaceMatrix)
-    ENDIF
-    
-    EXITS("InterfaceMatrix_Finalise")
-    RETURN
-999 ERRORSEXITS("InterfaceMatrix_Finalise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceMatrix_Finalise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialise an interface matrix.
-  SUBROUTINE InterfaceMatrix_Initialise(interfaceMatrices,matrixNumber,err,error,*)
-
-    !Argument variables
-    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to initialise the interface matrix for
-    INTEGER(INTG) :: matrixNumber !<The matrix number in the interface matrices to initialise.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dummyErr
-    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
-    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
-    TYPE(VARYING_STRING) :: dummyError,localError
-
-    ENTERS("InterfaceMatrix_Initialise",err,error,*998)
-
-    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*998)
-    IF(matrixNumber<=0.OR.matrixNumber>interfaceMatrices%numberOfInterfaceMatrices) THEN
-      localError="The specified interface matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
-        & " is invalid. The matrix number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*998)
-    ENDIF
-    IF(ASSOCIATED(interfaceMatrices%matrices(matrixNumber)%ptr)) THEN
-      localError="Interface matrix for matrix number "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
-        & " is already associated."
-      CALL FlagError(localError,err,error,*998)
-    ENDIF
-
-    NULLIFY(interfaceMapping)
-    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)    
-    ALLOCATE(interfaceMatrices%matrices(matrixNumber)%ptr,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate interface matrix.",err,error,*999)
-    interfaceMatrix=>interfaceMatrices%matrices(matrixNumber)%ptr
-    interfaceMatrix%matrixNumber=matrixNumber
-    interfaceMatrix%interfaceMatrices=>interfaceMatrices
-    interfaceMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
-    interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
-    interfaceMatrix%updateMatrix=.TRUE.
-    interfaceMatrix%firstAssembly=.TRUE.
-    interfaceMatrix%hasTranspose=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%hasTranspose
-    interfaceMatrix%numberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%numberOfRows
-    interfaceMatrix%totalNumberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%totalNumberOfRows
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%interfaceMatrix=>interfaceMatrix
-    NULLIFY(interfaceMatrix%matrix)
-    NULLIFY(interfaceMatrix%matrixTranspose)
-    NULLIFY(interfaceMatrix%tempVector)
-    NULLIFY(interfaceMatrix%tempTransposeVector)
-    CALL EquationsMatrices_ElementMatrixInitialise(interfaceMatrix%elementMatrix,err,error,*999)
-   
-    EXITS("InterfaceMatrix_Initialise")
-    RETURN
-999 CALL InterfaceMatrix_Finalise(interfaceMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
-998 ERRORSEXITS("InterfaceMatrix_Initialise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceMatrix_Initialise
-
-  !
-  !================================================================================================================================
-  !
-
   !>Adds the element matrices into the interface matrices.
   SUBROUTINE InterfaceMatrices_ElementAdd(interfaceMatrices,err,error,*)
 
@@ -226,11 +112,6 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
     TYPE(InterfaceRHSType), POINTER :: rhsVector
-    TYPE(VARYING_STRING) :: localError
-    
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START("InterfaceMatrices_ElementAdd()")
-#endif
 
     ENTERS("InterfaceMatrices_ElementAdd",err,error,*999)
 
@@ -258,17 +139,15 @@ CONTAINS
       ENDIF
     ENDDO !matrixIdx
     NULLIFY(rhsVector)
-    CALL InterfaceMatrices_RHSVectorGet(interfaceMatrices,rhsVector,err,error,*999)
-    IF(rhsVector%updateVector) THEN
-      !Add the rhs element vector
-      CALL DistributedVector_ValuesAdd(rhsVector%rhsVector,rhsVector%elementVector%rowDOFS(1: &
-        & rhsVector%elementVector%numberOfRows),rhsVector%elementVector%vector(1:rhsVector% &
-        & elementVector%numberOfRows),err,error,*999)
+    CALL InterfaceMatrices_RHSVectorExists(interfaceMatrices,rhsVector,err,error,*999)
+    IF(ASSOCIATED(rhsVector)) THEN
+      IF(rhsVector%updateVector) THEN
+        !Add the rhs element vector
+        CALL DistributedVector_ValuesAdd(rhsVector%rhsVector,rhsVector%elementVector%rowDOFS(1: &
+          & rhsVector%elementVector%numberOfRows),rhsVector%elementVector%vector(1:rhsVector% &
+          & elementVector%numberOfRows),err,error,*999)
+      ENDIF
     ENDIF
-      
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ElementAdd()")
-#endif
     
     EXITS("InterfaceMatrices_ElementAdd")
     RETURN
@@ -326,13 +205,16 @@ CONTAINS
       CALL Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*999)
       IF(.NOT.ALLOCATED(meshConnectivity%elementConnectivity)) &
         & CALL FlagError("Interface element connectivity is not associated.",err,error,*999)
+      NULLIFY(colsFieldVariable)
+!!\todo: TEMPORARY: Needs generalising
+      CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,colsFieldVariable,err,error,*999)       
       !Calculate the row and columns for the interface equations matrices
       DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
         NULLIFY(interfaceMatrix)
         CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
-        rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable
-        colsFieldVariable=>interfaceMapping%lagrangeVariable !\todo: TEMPORARY: Needs generalising
-        rowsMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex
+        NULLIFY(interfaceMatrixRowsToVarMap)
+        CALL InterfaceMapping_MatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixRowsToVarMap,err,error,*999)
+        CALL InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixRowsToVarMap,rowMeshIdx,err,error,*999)
         IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
           !If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
           rowsElementNumber=InterfaceElementNumber
@@ -1061,8 +943,14 @@ CONTAINS
     DO matrixIdx=1,interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices
       NULLIFY(interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr)
       CALL InterfaceMatrix_Initialise(interfaceEquations%interfaceMatrices,matrixIdx,err,error,*999)
+      interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr%matrixCoefficient = &
+        & interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%matrixCoefficient
+      interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr%transposeMatrixCoefficient = &
+        & interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%transposeMatrixCoefficient
     ENDDO !matrixIdx
     CALL InterfaceMatrices_RHSInitialise(interfaceEquations%interfaceMatrices,err,error,*999)
+    interfaceEquatins%interfaceMatrices%rhsVector%rhsCoefficient= &
+      & interfaceMapping%rhsMapping%rhsCoefficient
        
     EXITS("InterfaceMatrices_Initialise")
     RETURN
@@ -1178,6 +1066,7 @@ CONTAINS
       & CALL FlagError("Interface matrices RHS vector is already associated.",err,error,*998)
     ALLOCATE(interfaceMatrices%rhsVector,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interface matrices RHS vector.",err,error,*999)
+    interfaceMatrices%rhsVector%rhsCoefficient=1.0_DP
     interfaceMatrices%rhsVector%updateVector=.TRUE.
     interfaceMatrices%rhsVector%firstAssembly=.TRUE.
     NULLIFY(interfaceMatrices%rhsVector%rhsVector)
@@ -1341,6 +1230,100 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrices_ValueInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalise a interface matrix and deallocate all memory
+  SUBROUTINE InterfaceMatrix_Finalise(interfaceMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("InterfaceMatrix_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(interfaceMatrix)) THEN
+      IF(ASSOCIATED(interfaceMatrix%matrix)) CALL DistributedMatrix_Destroy(interfaceMatrix%matrix,err,error,*999)
+      IF(ASSOCIATED(interfaceMatrix%matrixTranspose)) CALL DistributedMatrix_Destroy(interfaceMatrix%matrixTranspose, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(interfaceMatrix%elementMatrix,err,error,*999)
+      DEALLOCATE(interfaceMatrix)
+    ENDIF
+    
+    EXITS("InterfaceMatrix_Finalise")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_Finalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise an interface matrix.
+  SUBROUTINE InterfaceMatrix_Initialise(interfaceMatrices,matrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to initialise the interface matrix for
+    INTEGER(INTG) :: matrixNumber !<The matrix number in the interface matrices to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: dummyError,localError
+
+    ENTERS("InterfaceMatrix_Initialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*998)
+    IF(matrixNumber<=0.OR.matrixNumber>interfaceMatrices%numberOfInterfaceMatrices) THEN
+      localError="The specified interface matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The matrix number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+    IF(ASSOCIATED(interfaceMatrices%matrices(matrixNumber)%ptr)) THEN
+      localError="Interface matrix for matrix number "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is already associated."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)    
+    ALLOCATE(interfaceMatrices%matrices(matrixNumber)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface matrix.",err,error,*999)
+    interfaceMatrix=>interfaceMatrices%matrices(matrixNumber)%ptr
+    interfaceMatrix%matrixNumber=matrixNumber
+    interfaceMatrix%interfaceMatrices=>interfaceMatrices
+    interfaceMatrix%matrixCoefficient=1.0_DP
+    interfaceMatrixx%transposeMatrixCoefficient=1.0_DP
+    interfaceMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
+    interfaceMatrix%updateMatrix=.TRUE.
+    interfaceMatrix%firstAssembly=.TRUE.
+    interfaceMatrix%hasTranspose=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%hasTranspose
+    interfaceMatrix%numberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%numberOfRows
+    interfaceMatrix%totalNumberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%totalNumberOfRows
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%interfaceMatrix=>interfaceMatrix
+    NULLIFY(interfaceMatrix%matrix)
+    NULLIFY(interfaceMatrix%matrixTranspose)
+    NULLIFY(interfaceMatrix%tempVector)
+    NULLIFY(interfaceMatrix%tempTransposeVector)
+    CALL EquationsMatrices_ElementMatrixInitialise(interfaceMatrix%elementMatrix,err,error,*999)
+   
+    EXITS("InterfaceMatrix_Initialise")
+    RETURN
+999 CALL InterfaceMatrix_Finalise(interfaceMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceMatrix_Initialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_Initialise
 
   !
   !================================================================================================================================

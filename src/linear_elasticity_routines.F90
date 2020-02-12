@@ -47,7 +47,7 @@ MODULE LINEAR_ELASTICITY_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -57,7 +57,6 @@ MODULE LINEAR_ELASTICITY_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -66,9 +65,9 @@ MODULE LINEAR_ELASTICITY_ROUTINES
   USE Kinds
   USE Maths
   USE MatrixVector
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -112,7 +111,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1048,7 +1047,7 @@ CONTAINS
                                   !Default to version 1 of each node derivative
                                   CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
                                     & component_idx,local_ny,err,error,*999)
-                                  CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
+                                  CALL BoundaryConditions_SetLocalDOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
                                     & local_ny,BOUNDARY_CONDITION_FIXED,BC_VALUE,err,error,*999)
                                 ENDIF
                               ENDDO !deriv_idx
@@ -1865,19 +1864,19 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2214,19 +2213,19 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2560,19 +2559,20 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                  & err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2813,9 +2813,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("LINEAR_ELASTICITY_PROBLEM_SETUP",err,error,*999)
@@ -2869,7 +2869,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a linear solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)

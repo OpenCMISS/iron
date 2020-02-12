@@ -48,29 +48,28 @@ MODULE FINITE_ELASTICITY_DARCY_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE CoordinateSystemRoutines  
-  USE DARCY_EQUATIONS_ROUTINES
+  USE DarcyEquationsRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
-!   USE FittingRoutines !also in makefiles
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths  
   USE MatrixVector
   USE MeshRoutines
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -137,11 +136,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
+          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " is not valid for a finite elasticity Darcy  equation type of a multi physics equations set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -325,9 +324,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT,SOLID_SUB_LOOP,FLUID_SUB_LOOP,SUBITERATION_LOOP
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER, SOLVER_MAT_PROPERTIES, SOLVER_SOLID
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS, SOLVER_EQUATIONS_MAT_PROPERTIES, SOLVER_EQUATIONS_SOLID
-    TYPE(SOLVERS_TYPE), POINTER :: SOLID_SOLVERS,FLUID_SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER, SOLVER_MAT_PROPERTIES, SOLVER_SOLID
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS, SOLVER_EQUATIONS_MAT_PROPERTIES, SOLVER_EQUATIONS_SOLID
+    TYPE(SolversType), POINTER :: SOLID_SOLVERS,FLUID_SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("ELASTICITY_DARCY_PROBLEM_SETUP",ERR,ERROR,*999)
@@ -365,8 +364,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for an finite elasticity ALE Darcy  equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -386,43 +385,43 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
             !Sub-loops are finished when parent is finished
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+          CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation for the solid solver
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL SOLVERS_CREATE_START(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLID_SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(SOLID_SOLVERS,1,ERR,ERROR,*999)
             !
             !Set the first solver to be a nonlinear solver for the finite elasticity
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER_SOLID,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_SOLID,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
             !
             !Start the solvers creation for the fluid solvers
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,FLUID_SUB_LOOP,ERR,ERROR,*999)
             CALL SOLVERS_CREATE_START(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(FLUID_SOLVERS,2,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(FLUID_SOLVERS,2,ERR,ERROR,*999)
             !
             !Set the second solver to be a linear solver for the material update
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_LINEAR_TYPE,ERR,ERROR,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
             !
             !Set the third solver to be a linear solver for ALE Darcy
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,ERR,ERROR,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
@@ -437,8 +436,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(FLUID_SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -447,13 +446,13 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             !
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
             !
             !Get the finite elasticity solver and create the finite elasticity solver equations
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_SOLID,SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_SOLID,SOLVER_EQUATIONS_NONLINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_SOLID,SOLVER_EQUATIONS_STATIC,ERR,ERROR,*999)
@@ -463,7 +462,7 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
             !
             !Get the material-properties solver and create the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_QUASISTATIC, &
@@ -471,7 +470,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
             !
             !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_QUASISTATIC,ERR,ERROR,*999)
@@ -479,12 +478,12 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
             !
             !Finish the creation of the finite elasticity solver equations
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_SOLID,SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)             
             !
@@ -492,22 +491,22 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
             !
             !Finish the creation of the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_MAT_PROPERTIES,ERR,ERROR,*999)             
             !
             !Finish the creation of the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a finite elasticity ALE Darcy equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -524,8 +523,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for an finite elasticity ALE Darcy  equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -565,39 +564,39 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
             !Sub-loops are finished when parent is finished
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+          CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation for the solid solver
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUBITERATION_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL SOLVERS_CREATE_START(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLID_SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(SOLID_SOLVERS,1,ERR,ERROR,*999)
             !
             !Set the solid solver to be a nonlinear solver for the finite elasticity
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER_SOLID,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_SOLID,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
             !
             !Start the solvers creation for the fluid solvers
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,2,FLUID_SUB_LOOP,ERR,ERROR,*999)
             CALL SOLVERS_CREATE_START(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(FLUID_SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(FLUID_SOLVERS,1,ERR,ERROR,*999)
             !
             !Set the solver to be a first-order dynamic solver for Darcy
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
             CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,ERR,ERROR,*999)
             !Set solver defaults
@@ -618,8 +617,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(FLUID_SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -628,14 +627,14 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             !
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUBITERATION_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
             !
             !Get the finite elasticity solver and create the finite elasticity solver equations
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_SOLID,SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_SOLID,SOLVER_EQUATIONS_NONLINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_SOLID,SOLVER_EQUATIONS_STATIC,ERR,ERROR,*999)
@@ -645,7 +644,7 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
             !
             !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
@@ -653,13 +652,13 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUBITERATION_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
             !
             !Finish the creation of the finite elasticity solver equations
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_SOLID,SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)             
             !
@@ -667,17 +666,17 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
             !
             !Finish the creation of the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a finite elasticity ALE Darcy equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -694,8 +693,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for an finite elasticity ALE Darcy  equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -732,44 +731,44 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
             !Sub-loops are finished when parent is finished
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+          CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation for the solid solver
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUBITERATION_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL SOLVERS_CREATE_START(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLID_SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(SOLID_SOLVERS,1,ERR,ERROR,*999)
             !
             !Set the solid solver to be a nonlinear solver for the finite elasticity
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER_SOLID,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_SOLID,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
             !
             !Start the solvers creation for the fluid solvers
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,2,FLUID_SUB_LOOP,ERR,ERROR,*999)
             CALL SOLVERS_CREATE_START(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(FLUID_SOLVERS,2,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(FLUID_SOLVERS,2,ERR,ERROR,*999)
             !
             !Set the solver to be a linear solver for the material update
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_LINEAR_TYPE,ERR,ERROR,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_MAT_PROPERTIES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
             !
             !Set the other solver to be a first-order dynamic solver for Darcy
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
             CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,ERR,ERROR,*999)
             !Set solver defaults
@@ -790,8 +789,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(FLUID_SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -800,14 +799,14 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             !
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUBITERATION_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
             !
             !Get the finite elasticity solver and create the finite elasticity solver equations
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_SOLID,SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_SOLID,SOLVER_EQUATIONS_NONLINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_SOLID,SOLVER_EQUATIONS_STATIC,ERR,ERROR,*999)
@@ -817,7 +816,7 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
             !
             !Get the material-properties solver and create the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_EQUATIONS_QUASISTATIC, &
@@ -825,7 +824,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS_MAT_PROPERTIES,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
             !
             !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
@@ -833,13 +832,13 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUBITERATION_LOOP,ERR,ERROR,*999)
             CALL ControlLoop_SubLoopGet(SUBITERATION_LOOP,1,SOLID_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(SOLID_SUB_LOOP,SOLID_SOLVERS,ERR,ERROR,*999)
             !
             !Finish the creation of the finite elasticity solver equations
-            CALL SOLVERS_SOLVER_GET(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(SOLID_SOLVERS,1,SOLVER_SOLID,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_SOLID,SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_SOLID,ERR,ERROR,*999)             
             !
@@ -847,22 +846,22 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(FLUID_SUB_LOOP,FLUID_SOLVERS,ERR,ERROR,*999)
             !
             !Finish the creation of the material-properties solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,1,SOLVER_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_MAT_PROPERTIES,SOLVER_EQUATIONS_MAT_PROPERTIES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_MAT_PROPERTIES,ERR,ERROR,*999)             
             !
             !Finish the creation of the Darcy-ALE solver equations
-            CALL SOLVERS_SOLVER_GET(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(FLUID_SOLVERS,2,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a finite elasticity ALE Darcy equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a finite elasticity ALE Darcy equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -871,7 +870,7 @@ CONTAINS
       !   c a s e   d e f a u l t
       !-----------------------------------------------------------------
       CASE DEFAULT
-        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " does not equal a standard finite elasticity Darcy equation subtype."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
 
@@ -895,7 +894,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -920,11 +919,11 @@ CONTAINS
               ELSE IF(CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE) THEN
                 IF(SOLVER%globalNumber==1) THEN
 !                   IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-!                     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now working on material parameters",ERR,ERROR,*999)
+!                     CALL WriteString(GENERAL_OUTPUT_TYPE,"Now working on material parameters",ERR,ERROR,*999)
 !                   ENDIF
                 ELSE IF(SOLVER%globalNumber==2) THEN
                   IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now working on Darcy",ERR,ERROR,*999)
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"Now working on Darcy",ERR,ERROR,*999)
                   ENDIF
                 ENDIF
                 CALL Darcy_PreSolve(SOLVER,ERR,ERROR,*999)
@@ -938,11 +937,11 @@ CONTAINS
               ELSE IF(CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE) THEN
                 IF(SOLVER%globalNumber==1) THEN
                   IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now working on material parameters",ERR,ERROR,*999)
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"Now working on material parameters",ERR,ERROR,*999)
                   ENDIF
                 ELSE IF(SOLVER%globalNumber==2) THEN
                   IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now working on Darcy",ERR,ERROR,*999)
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"Now working on Darcy",ERR,ERROR,*999)
                   ENDIF
                 ENDIF
                 CALL Darcy_PreSolve(SOLVER,ERR,ERROR,*999)
@@ -951,7 +950,7 @@ CONTAINS
 
 
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a Darcy fluid type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -980,7 +979,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -1005,7 +1004,7 @@ CONTAINS
               CALL FiniteElasticity_PostSolve(solver,err,error,*999)
               CALL Darcy_PostSolve(SOLVER,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a finite elasticity Darcy type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -1039,7 +1038,7 @@ CONTAINS
 
     !Local Variables
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_DARCY
+    TYPE(SolverType), POINTER :: SOLVER_DARCY
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_DARCY
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -1056,39 +1055,39 @@ CONTAINS
           CASE(CONTROL_TIME_LOOP_TYPE)
             CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,ERR,ERROR,*999)
             IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"=============== Starting time step ===============",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"=============== Starting time step ===============",ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"CURRENT_TIME          = ",CURRENT_TIME,ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"TIME_INCREMENT        = ",TIME_INCREMENT,ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
             ENDIF
             IF(DIAGNOSTICS1) THEN
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"=============== Starting time step ===============",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"=============== Starting time step ===============",ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"CURRENT_TIME          = ",CURRENT_TIME,ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"TIME_INCREMENT        = ",TIME_INCREMENT,ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"==================================================",ERR,ERROR,*999)
             ENDIF
-            CALL DARCY_CONTROL_TIME_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
+            CALL Darcy_PreLoop(CONTROL_LOOP,ERR,ERROR,*999)
             CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
 
           CASE(CONTROL_WHILE_LOOP_TYPE)
             !Subiteration loop
             IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"++++ Starting subiteration ++++",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"++++ Starting subiteration ++++",ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"SUBITERATION_NUMBER       =   ", &
                 & CONTROL_LOOP%whileLoop%iterationNumber,ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
             ENDIF
             IF(DIAGNOSTICS1) THEN
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"++++ Starting subiteration ++++",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"++++ Starting subiteration ++++",ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"SUBITERATION_NUMBER       =   ", &
                 & CONTROL_LOOP%whileLoop%iterationNumber,ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"+++++++++++++++++++++++++++++++",ERR,ERROR,*999)
             ENDIF
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP,(/2,CONTROL_LOOP_NODE/),CONTROL_LOOP_DARCY,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP,(/2,CONTROL_LOOP_NODE/),CONTROL_LOOP_DARCY,ERR,ERROR,*999)
 
             IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
               CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -1098,11 +1097,11 @@ CONTAINS
             END IF
             SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
-                CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,1,SOLVER_DARCY,ERR,ERROR,*999)
+                CALL Solvers_SolverGet(CONTROL_LOOP_DARCY%solvers,1,SOLVER_DARCY,ERR,ERROR,*999)
               CASE(PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-                CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,2,SOLVER_DARCY,ERR,ERROR,*999)
+                CALL Solvers_SolverGet(CONTROL_LOOP_DARCY%solvers,2,SOLVER_DARCY,ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+                LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                   & " is not valid for ELASTICITY_DARCY_CONTROL_LOOP_PRE_LOOP."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -1111,30 +1110,30 @@ CONTAINS
 
           CASE(CONTROL_SIMPLE_TYPE)
             IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"-- Starting fluid solve iteration --",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"-- Starting fluid solve iteration --",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
             ENDIF
             IF(DIAGNOSTICS1) THEN
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"-- Starting fluid solve iteration --",ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"-- Starting fluid solve iteration --",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
             ENDIF
 
           CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
             IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"-- Starting solid solve iteration --",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"-- Starting solid solve iteration --",ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"LOAD INCREMENT NUMBER =           ", &
                 & CONTROL_LOOP%loadIncrementLoop%iterationNumber,ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
             ENDIF
             IF(DIAGNOSTICS1) THEN
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"-- Starting solid solve iteration --",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"-- Starting solid solve iteration --",ERR,ERROR,*999)
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"LOAD INCREMENT NUMBER =           ", &
                 & CONTROL_LOOP%loadIncrementLoop%iterationNumber,ERR,ERROR,*999)
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
             ENDIF
 
           CASE DEFAULT
@@ -1167,7 +1166,7 @@ CONTAINS
 
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_DARCY
+    TYPE(SolverType), POINTER :: SOLVER_DARCY
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_DARCY
 
     NULLIFY(SOLVER_DARCY)
@@ -1180,7 +1179,7 @@ CONTAINS
         SELECT CASE(CONTROL_LOOP%loopType)
         CASE(CONTROL_TIME_LOOP_TYPE)
           IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"End of time step",ERR,ERROR,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,"End of time step",ERR,ERROR,*999)
           ENDIF
         CASE(CONTROL_WHILE_LOOP_TYPE)
           IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
@@ -1193,35 +1192,35 @@ CONTAINS
           CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
             !subiteration
             IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"End of subiteration",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"End of subiteration",ERR,ERROR,*999)
             ENDIF
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP,(/2,CONTROL_LOOP_NODE/),CONTROL_LOOP_DARCY,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,1,SOLVER_DARCY,ERR,ERROR,*999)
-            !CALL DARCY_EQUATION_ACCELERATE_CONVERGENCE(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
-            CALL DARCY_EQUATION_MONITOR_CONVERGENCE(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
-            !CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP,(/2,CONTROL_LOOP_NODE/),CONTROL_LOOP_DARCY,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(CONTROL_LOOP_DARCY%solvers,1,SOLVER_DARCY,ERR,ERROR,*999)
+            !CALL Darcy_AccelerateConvergence(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
+            CALL Darcy_MonitorConvergence(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
+            !CALL Darcy_PostSolveOutputData(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
           CASE(PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
             !subiteration
             IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"End of subiteration",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"End of subiteration",ERR,ERROR,*999)
             ENDIF
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP,(/2,CONTROL_LOOP_NODE/),CONTROL_LOOP_DARCY,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_DARCY%SOLVERS,2,SOLVER_DARCY,ERR,ERROR,*999)
-            !CALL DARCY_EQUATION_ACCELERATE_CONVERGENCE(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
-            CALL DARCY_EQUATION_MONITOR_CONVERGENCE(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
-            !CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
+            CALL ControlLoop_Get(CONTROL_LOOP,(/2,CONTROL_LOOP_NODE/),CONTROL_LOOP_DARCY,ERR,ERROR,*999)
+            CALL Solvers_SolverGet(CONTROL_LOOP_DARCY%solvers,2,SOLVER_DARCY,ERR,ERROR,*999)
+            !CALL Darcy_AccelerateConvergence(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
+            CALL Darcy_MonitorConvergence(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
+            !CALL Darcy_PostSolveOutputData(CONTROL_LOOP,SOLVER_DARCY,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
               & " is not valid for a Darcy fluid type of a multi physics problem class with a while control loop."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(CONTROL_SIMPLE_TYPE)
           IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"End of fluid solve iteration",ERR,ERROR,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,"End of fluid solve iteration",ERR,ERROR,*999)
           ENDIF
         CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
           IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"End of solid solve iteration",ERR,ERROR,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,"End of solid solve iteration",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           !do nothing
@@ -1248,7 +1247,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -1273,11 +1272,11 @@ CONTAINS
               IF(SOLVER%globalNumber==1) THEN
                 CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)
               ELSE IF(SOLVER%globalNumber==2.OR.SOLVER%globalNumber==3) THEN
-                CALL DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+                CALL Darcy_PostSolveOutputData(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
               ENDIF
 
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a Darcy fluid type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT

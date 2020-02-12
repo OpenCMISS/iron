@@ -46,10 +46,10 @@
 
 MODULE MULTI_COMPARTMENT_TRANSPORT_ROUTINES
 
-  USE ADVECTION_DIFFUSION_EQUATION_ROUTINES
+  USE AdvectionDiffusionEquationsRoutines
   USE BaseRoutines
   USE BasisRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -58,21 +58,19 @@ MODULE MULTI_COMPARTMENT_TRANSPORT_ROUTINES
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
-!  USE FINITE_ELASTICITY_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
-!   USE FittingRoutines !also in makefiles
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths  
   USE MatrixVector
   USE MeshRoutines
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -240,9 +238,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_DIFFUSION, SOLVER_ADVECTION_DIFFUSION
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_DIFFUSION, SOLVER_EQUATIONS_ADVECTION_DIFFUSION
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER_DIFFUSION, SOLVER_ADVECTION_DIFFUSION
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_DIFFUSION, SOLVER_EQUATIONS_ADVECTION_DIFFUSION
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("MULTI_COMPARTMENT_TRANSPORT_PROBLEM_SETUP",ERR,ERROR,*999)
@@ -273,8 +271,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -290,8 +288,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -303,7 +301,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,ERR,ERROR,*999)
             !Set the solver to be a linear solver for the diffusion problem
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_DIFFUSION,ERR,ERROR,*999)
             CALL SOLVER_TYPE_SET(SOLVER_DIFFUSION,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
@@ -319,8 +317,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -350,13 +348,13 @@ CONTAINS
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_DIFFUSION,ERR,ERROR,*999)             
             !
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a multi-compartment transport equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a multi-compartment transport equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -365,7 +363,7 @@ CONTAINS
       !   c a s e   d e f a u l t
       !-----------------------------------------------------------------
       CASE DEFAULT
-        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " does not equal a standard multi-component transport equation subtype."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
 
@@ -389,13 +387,13 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -414,10 +412,10 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            SOLVER_EQUATIONS=>SOLVER%solverEquations
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-             EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+             EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(1)%EQUATIONS
              IF(ASSOCIATED(EQUATIONS)) THEN
               EQUATIONS_SET=>equations%equationsSet
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -438,7 +436,7 @@ CONTAINS
               ENDIF
              ENDIF
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a multi-compartment transport type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -466,23 +464,23 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(FieldType), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD,SOURCE_FIELD
 !    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
     TYPE(FieldVariableType), POINTER :: ANALYTIC_VARIABLE,FIELD_VARIABLE,GEOMETRIC_VARIABLE,MATERIALS_VARIABLE
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(DomainType), POINTER :: DOMAIN
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
 !    TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-!    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionVariableType), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
+!    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
 !    REAL(DP), POINTER :: BOUNDARY_VALUES(:)
     REAL(DP), POINTER :: ANALYTIC_PARAMETERS(:),GEOMETRIC_PARAMETERS(:),MATERIALS_PARAMETERS(:)
     INTEGER(INTG) :: numberOfDimensions,BOUNDARY_CONDITION_CHECK_VARIABLE
@@ -533,13 +531,13 @@ CONTAINS
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             !do nothing?! 
             CASE(PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                SOLVER_EQUATIONS=>SOLVER%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 !loop over all the equation sets and set the appropriate field variable type BCs and
                 !the source field associated with each equation set
                 DO eqnset_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfEquationsSets
                   SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                  EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(eqnset_idx)%EQUATIONS
+                  EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(eqnset_idx)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -584,52 +582,49 @@ CONTAINS
                                       IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                                         DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                         IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                                          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                                          NULLIFY(BOUNDARY_CONDITIONS_VARIABLE)
+                                          CALL BoundaryConditions_VariableGet(SOLVER_EQUATIONS%boundaryConditions, &
                                             & FIELD_VARIABLE,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
-                                          IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                                            !Loop over the local nodes excluding the ghosts.
-                                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
-                                              !!TODO \todo We should interpolate the geometric field here and the node position.
-                                              DO dim_idx=1,numberOfDimensions
-                                                !Default to version 1 of each node derivative
-                                                CALL FieldVariable_LocalNodeDofGet(GEOMETRIC_VARIABLE,1,1,node_idx, &
-                                                  & dim_idx,local_ny,err,error,*999)
-                                                X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
-                                              ENDDO !dim_idx
-                                              !Loop over the derivatives
-                                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                                ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
-                                                GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
-                                                  & globalDerivativeIndex
-                                                CALL Diffusion_AnalyticFunctionsEvaluate(EQUATIONS_SET, &
-                                                  & ANALYTIC_FUNCTION_TYPE,X,TANGENTS,NORMAL,CURRENT_TIME,variable_type, &
-                                                  & GLOBAL_DERIV_INDEX,component_idx,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS, &
+                                          !Loop over the local nodes excluding the ghosts.
+                                          DO node_idx=1,DOMAIN_NODES%numberOfNodes
+!!TODO \todo We should interpolate the geometric field here and the node position.
+                                            DO dim_idx=1,numberOfDimensions
+                                              !Default to version 1 of each node derivative
+                                              CALL FieldVariable_LocalNodeDofGet(GEOMETRIC_VARIABLE,1,1,node_idx, &
+                                                & dim_idx,local_ny,err,error,*999)
+                                              X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
+                                            ENDDO !dim_idx
+                                            !Loop over the derivatives
+                                            DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
+                                              ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%analyticFunctionType
+                                              GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
+                                                & globalDerivativeIndex
+                                              CALL Diffusion_AnalyticFunctionsEvaluate(EQUATIONS_SET, &
+                                                & ANALYTIC_FUNCTION_TYPE,X,TANGENTS,NORMAL,CURRENT_TIME,variable_type, &
+                                                & GLOBAL_DERIV_INDEX,component_idx,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS, &
+                                                & VALUE,ERR,ERROR,*999)
+                                              !Default to version 1 of each node derivative
+                                              CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
+                                                & component_idx,local_ny,err,error,*999)
+                                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
+                                                & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
+                                              BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
+                                                & conditionTypes(local_ny)
+                                              IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
+                                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD, & 
+                                                  & variable_type,FIELD_VALUES_SET_TYPE,local_ny, & 
                                                   & VALUE,ERR,ERROR,*999)
-                                                !Default to version 1 of each node derivative
-                                                CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
-                                                  & component_idx,local_ny,err,error,*999)
-                                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
-                                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
-                                                BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
-                                                  & CONDITION_TYPES(local_ny)
-                                                IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
-                                                 CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD, & 
-                                                   & variable_type,FIELD_VALUES_SET_TYPE,local_ny, & 
-                                                   & VALUE,ERR,ERROR,*999)
-                                                ENDIF
-
-!                                              IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
-!                                                IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
-!                                                  !If we are a boundary node then set the analytic value on the boundary
-!                                                  CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
-!                                                    & BOUNDARY_CONDITION_FIXED,VALUE,ERR,ERROR,*999)
-!                                                ENDIF
-!                                              ENDIF
-                                              ENDDO !deriv_idx
-                                            ENDDO !node_idx
-                                          ELSE
-                                            CALL FlagError("Boundary conditions variable is not associated.",ERR,ERROR,*999)
-                                          ENDIF
+                                              ENDIF
+                                              
+                                              !                                              IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
+                                              !                                                IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
+                                              !                                                  !If we are a boundary node then set the analytic value on the boundary
+                                              !                                                  CALL BoundaryConditions_SetLocalDOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
+                                              !                                                    & BOUNDARY_CONDITION_FIXED,VALUE,ERR,ERROR,*999)
+                                              !                                                ENDIF
+                                              !                                              ENDIF
+                                            ENDDO !deriv_idx
+                                          ENDDO !node_idx
                                         ELSE
                                           CALL FlagError("Domain topology nodes is not associated.",ERR,ERROR,*999)
                                         ENDIF
@@ -745,7 +740,7 @@ CONTAINS
                                         END SELECT
                                       CASE DEFAULT
                                         LOCAL_ERROR="The analytic function type of "// &
-                                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",ERR,ERROR))//&
+                                          & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",ERR,ERROR))//&
                                           & " is invalid."
                                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                       END SELECT
@@ -795,7 +790,7 @@ CONTAINS
                   CALL FlagError("Solver equations are not associated.",ERR,ERROR,*999)
                 END IF  
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a multi-physics coupled diffusion equation type of a multi-physics problem class."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -824,13 +819,13 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -855,10 +850,10 @@ CONTAINS
               IF(SOLVER%globalNumber==1) THEN
 !              CALL ADVECTION_DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
                   
-                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                   SOLVER_EQUATIONS=>SOLVER%solverEquations
                    IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                     SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                    EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+                    EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(1)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                      EQUATIONS_SET=>equations%equationsSet
                      IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -892,7 +887,7 @@ CONTAINS
 !              CALL DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a multi-compartment type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -921,7 +916,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -944,7 +939,7 @@ CONTAINS
                 !CALL ADVECTION_DIFFUSION_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
                 !CALL DIFFUSION_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                 & " is not valid for a multi-compartment transport type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT

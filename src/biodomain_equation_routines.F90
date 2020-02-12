@@ -47,7 +47,7 @@ MODULE BIODOMAIN_EQUATION_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -58,7 +58,6 @@ MODULE BIODOMAIN_EQUATION_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -67,9 +66,9 @@ MODULE BIODOMAIN_EQUATION_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -125,10 +124,10 @@ CONTAINS
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    TYPE(SolverType), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: FILENAME,LOCAL_ERROR,METHOD
     INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER,CURRENT_LOOP_ITERATION
 
@@ -153,7 +152,7 @@ CONTAINS
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)            
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
               !Loop over the equations sets associated with the solver
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -172,20 +171,20 @@ CONTAINS
                         IF(ASSOCIATED(TIME_LOOP_PARENT)) THEN
                           OUTPUT_ITERATION_NUMBER=TIME_LOOP_PARENT%outputNumber
                           CURRENT_LOOP_ITERATION=TIME_LOOP_PARENT%globalIterationNumber
-                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",err,error))// &
-                            & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP_PARENT%globalIterationNumber,"*",err,error))// &
-                            & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%iterationNumber,"*",err,error))
+                          FILENAME="Time_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",err,error))// &
+                            & "_"//TRIM(NumberToVString(TIME_LOOP_PARENT%globalIterationNumber,"*",err,error))// &
+                            & "_"//TRIM(NumberToVString(TIME_LOOP%iterationNumber,"*",err,error))
                         ELSE
                           OUTPUT_ITERATION_NUMBER=TIME_LOOP%outputNumber
                           CURRENT_LOOP_ITERATION=TIME_LOOP%globalIterationNumber
-                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",err,error))// &
-                            & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",err,error))
+                          FILENAME="Time_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",err,error))// &
+                            & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",err,error))
                         ENDIF
                       ELSE
                         OUTPUT_ITERATION_NUMBER=TIME_LOOP%outputNumber
                         CURRENT_LOOP_ITERATION=TIME_LOOP%globalIterationNumber
-                        FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",err,error))// &
-                          & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",err,error))
+                        FILENAME="Time_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",err,error))// &
+                          & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",err,error))
                       ENDIF
                       METHOD="FORTRAN"
                       IF(OUTPUT_ITERATION_NUMBER>0) THEN
@@ -195,7 +194,7 @@ CONTAINS
                       ENDIF
                     ELSE
                       LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                        & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",err,error))// &
+                        & TRIM(NumberToVString(equations_set_idx,"*",err,error))// &
                         & " in the solver mapping."
                       CALL FlagError(LOCAL_ERROR,err,error,*999)
                     ENDIF
@@ -217,7 +216,7 @@ CONTAINS
         CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
           !do nothing
         CASE DEFAULT
-          LOCAL_ERROR="The control loop type of "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",err,error))// &
+          LOCAL_ERROR="The control loop type of "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",err,error))// &
             & " is invalid."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -281,8 +280,8 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!Todo: CHECK VALID SETUP
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -323,7 +322,7 @@ CONTAINS
                   & err,error,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The third equations set specification of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+                  & TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                   & " is not valid for a monodomain equation set."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
@@ -369,7 +368,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
@@ -391,7 +390,7 @@ CONTAINS
                 CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,3,err,error,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The third equations set specification of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+                  & TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                   & " is not valid for a monodomain equation set."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
@@ -420,7 +419,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
@@ -510,7 +509,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -559,7 +558,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -612,18 +611,18 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               ENDIF
             CASE DEFAULT
-              LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+              LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                 & " is invalid for a bidomain equations set type."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The equation set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+            LOCAL_ERROR="The equation set type of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
               & " is invalid for a biodomain equations set class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
@@ -632,8 +631,8 @@ CONTAINS
             CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation"
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -817,7 +816,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -909,7 +908,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -986,7 +985,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -1026,13 +1025,13 @@ CONTAINS
                 CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                  LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               ENDIF
             CASE DEFAULT
-              LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+              LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                 " is not implemented for an equations set setup independent type."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -1040,7 +1039,7 @@ CONTAINS
             LOCAL_ERROR="Equations set setup independent type is not implemented for an equations set bidomain equation type"
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The equation set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+            LOCAL_ERROR="The equation set type of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
               & " is invalid for a biodomain equations set class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
@@ -1049,8 +1048,8 @@ CONTAINS
             CALL Field_CreateFinish(EQUATIONS_SET%INDEPENDENT%independentField,err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation"
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1143,7 +1142,7 @@ CONTAINS
               CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2*numberOfDimensions+2, &
                 & err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The equations set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+              LOCAL_ERROR="The equations set type of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
                 & " is invalid for a bioelectrics class."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -1184,8 +1183,8 @@ CONTAINS
             CALL FlagError("Equations set materials is not associated.",err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1196,8 +1195,8 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           !Do nothing
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1208,8 +1207,8 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1232,13 +1231,13 @@ CONTAINS
               CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_STATIC,err,error,*999)
             CASE DEFAULT
               LOCAL_ERROR="The third equations set specification of "// &
-                & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+                & TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                 & " is invalid for a bidomain equation."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE DEFAULT
             LOCAL_ERROR="The second equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
               & " is invalid for a bioelectrics class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
@@ -1254,27 +1253,27 @@ CONTAINS
             CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
             SELECT CASE(EQUATIONS_SET_SPEC_TYPE)
             CASE(EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE)
-              CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-              CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
             CASE(EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE)
               SELECT CASE(EQUATIONS_SET_SPEC_SUBTYPE)
               CASE(EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE)
-                CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-                CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+                CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE)
-                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_V_VARIABLE_TYPE], &
+                CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_V_VARIABLE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+                LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                   & " is invalid for a bidomain equation type."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             CASE DEFAULT
-              LOCAL_ERROR="The equations set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+              LOCAL_ERROR="The equations set type of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
                 & " is invalid for a bioelectrics class."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -1286,28 +1285,28 @@ CONTAINS
               !Set up matrix storage and structure
               IF(equations%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                 !Set up lumping
-                CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                   & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
               ELSE
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE], &
                     & err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The equations matrices sparsity type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                    & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               ENDIF
@@ -1317,53 +1316,53 @@ CONTAINS
               !Set up matrix storage and structure
               IF(equations%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                 !Set up lumping
-                CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                   & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
               ELSE
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE], &
                     & err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)                  
                 CASE DEFAULT
                   LOCAL_ERROR="The equations matrices sparsity type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                    & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               ENDIF
               CASE(EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                  CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                     & err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                  CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                  CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                     & err,error,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The equations matrices sparsity type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                    & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               CASE DEFAULT
-                LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+                LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
                   & " is invalid for a bidomain equation type."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             CASE DEFAULT
-              LOCAL_ERROR="The equations set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+              LOCAL_ERROR="The equations set type of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
                 & " is invalid for a bioelectrics class."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -1379,18 +1378,18 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+            LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
               & " is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+        LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
           & " is invalid for a bioelectric domain equation."
         CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
@@ -1451,11 +1450,11 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+            LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+          LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
             & " is not valid for a bioelectric monodomain equation type of an bioelectrics equations set class."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1476,7 +1475,7 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+            LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE)
@@ -1494,16 +1493,16 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+            LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
+          LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_SUBTYPE,"*",err,error))// &
             & " is not valid for a bioelectric bidomain equation type of an bioelectrics equations set class."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Equations set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
+        LOCAL_ERROR="Equations set type of "//TRIM(NumberToVString(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
           & " is not valid for a bioelectrics equations set class."
         CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
@@ -1603,20 +1602,20 @@ CONTAINS
   SUBROUTINE BIODOMAIN_PRE_SOLVE(SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver to perform the pre-solve actions for.
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver to perform the pre-solve actions for.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("BIODOMAIN_PRE_SOLVE",err,error,*999)
 
     IF(ASSOCIATED(SOLVER)) THEN
-      SOLVERS=>SOLVER%SOLVERS
+      SOLVERS=>SOLVER%solvers
       IF(ASSOCIATED(SOLVERS)) THEN
         CONTROL_LOOP=>SOLVERS%controlLoop
         IF(ASSOCIATED(CONTROL_LOOP)) THEN
@@ -1638,7 +1637,7 @@ CONTAINS
                 CASE(2)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NumberToVString(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Gudunov split monodomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -1652,12 +1651,12 @@ CONTAINS
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME+TIME_INCREMENT/2.0_DP,CURRENT_TIME+TIME_INCREMENT, &
                     & err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NumberToVString(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Strang split monodomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               CASE DEFAULT
-                LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+                LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
                   & " is invalid for a monodomain problem type."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
@@ -1672,7 +1671,7 @@ CONTAINS
                 CASE(3)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NumberToVString(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Gudunov split bidomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -1688,12 +1687,12 @@ CONTAINS
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME+TIME_INCREMENT/2.0_DP,CURRENT_TIME+TIME_INCREMENT, &
                     & err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NumberToVString(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Gudunov split bidomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               CASE DEFAULT
-                LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+                LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
                   & " is invalid for a bidomain problem type."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
@@ -1708,17 +1707,17 @@ CONTAINS
                 CASE(2)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NumberToVString(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a bioelectrics finite elasticity problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               CASE DEFAULT
-                LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+                LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
                   & " is invalid for a monodomain problem type."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             CASE DEFAULT
-              LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))// &
+              LOCAL_ERROR="The problem type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))// &
                 & " is invalid."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -1755,11 +1754,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
+    TYPE(CellMLEquationsType), POINTER :: CELLML_EQUATIONS
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    TYPE(SolverType), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     NULLIFY(CELLML_EQUATIONS)
@@ -1779,8 +1778,8 @@ CONTAINS
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Do nothing????
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1797,8 +1796,8 @@ CONTAINS
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1819,7 +1818,7 @@ CONTAINS
           CASE(PROBLEM_MONODOMAIN_EQUATION_TYPE)
             SELECT CASE(PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
               !Set the first solver to be a differential-algebraic equations solver
               NULLIFY(SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1839,7 +1838,7 @@ CONTAINS
               CALL SOLVER_DYNAMIC_RESTART_SET(SOLVER,.TRUE.,err,error,*999)
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
             CASE(PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,3,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,3,err,error,*999)
               !Set the first solver to be a differential-algebraic equations solver
               NULLIFY(SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1866,14 +1865,14 @@ CONTAINS
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
                 & " is invalid for a monodomain problem type of a bioelectric problem class."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE(PROBLEM_BIDOMAIN_EQUATION_TYPE)
             SELECT CASE(PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,3,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,3,err,error,*999)
               !Set the first solver to be a differential-algebraic equations solver
               NULLIFY(SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1900,7 +1899,7 @@ CONTAINS
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
             CASE(PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,4,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,4,err,error,*999)
               !Set the first solver to be a differential-algebraic equations solver
               NULLIFY(SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1934,12 +1933,12 @@ CONTAINS
              !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
                 & " is invalid for a monodomain problem type of a bioelectric problem class."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))// &
+            LOCAL_ERROR="The problem type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))// &
               & " is invalid for a bioelectric problem class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
@@ -1949,8 +1948,8 @@ CONTAINS
           !Finish the solvers creation
           CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -1991,7 +1990,7 @@ CONTAINS
             CASE(PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE)
               CALL SOLVERS_SOLVER_GET(SOLVERS,4,SOLVER,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))//  &
+              LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))//  &
                 & " is invalid for a bidomain problem type."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -2000,7 +1999,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
+            LOCAL_ERROR="The problem type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
               & " is invalid for a bioelectric problem class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
@@ -2036,7 +2035,7 @@ CONTAINS
             CASE(PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE)
               CALL SOLVERS_SOLVER_GET(SOLVERS,4,SOLVER,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))//  &
+              LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))//  &
                 & " is invalid for a bidomain problem type."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
@@ -2044,13 +2043,13 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
+            LOCAL_ERROR="The problem type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
               & " is invalid for a bioelectric problem class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
@@ -2071,7 +2070,7 @@ CONTAINS
           CASE(PROBLEM_MONODOMAIN_EQUATION_TYPE)
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Set the time dependence
             CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             !Set the linearity
@@ -2081,7 +2080,7 @@ CONTAINS
               NULLIFY(SOLVER)
               NULLIFY(CELLML_EQUATIONS)
               CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
-              CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
               !Set the linearity
@@ -2090,7 +2089,7 @@ CONTAINS
           CASE(PROBLEM_BIDOMAIN_EQUATION_TYPE)
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Set the time dependence
             CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             !Set the linearity
@@ -2100,14 +2099,14 @@ CONTAINS
               NULLIFY(SOLVER)
               NULLIFY(CELLML_EQUATIONS)
               CALL SOLVERS_SOLVER_GET(SOLVERS,4,SOLVER,err,error,*999)
-              CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
               !Set the linearity
               CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
+            LOCAL_ERROR="The problem type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
               & " is invalid for a bioelectric problem class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
@@ -2127,7 +2126,7 @@ CONTAINS
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             IF(PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE) THEN
               !Get the CellML equations for the second DAE solver
               NULLIFY(SOLVER)
@@ -2135,14 +2134,14 @@ CONTAINS
               CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
               CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             ENDIF
           CASE(PROBLEM_BIDOMAIN_EQUATION_TYPE)
             !Get the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             IF(PROBLEM%SPECIFICATION(3)==PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE) THEN
               !Get the CellML equations for the second DAE solver
               NULLIFY(SOLVER)
@@ -2150,21 +2149,21 @@ CONTAINS
               CALL SOLVERS_SOLVER_GET(SOLVERS,4,SOLVER,err,error,*999)
               CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
+            LOCAL_ERROR="The problem type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",err,error))//  &
               & " is invalid for a bioelectric problem class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT            
         CASE DEFAULT
-          LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+          LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a bioelectric equation."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+        LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
           & " is invalid for a bioelectric domain equation."
         CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
@@ -2412,12 +2411,12 @@ CONTAINS
           CASE(EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE)
           CASE(EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE)
           CASE DEFAULT
-            LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+            LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
               & " is not valid for a bioelectric domain type of a bioelectrics equations set class."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The equations set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
+          LOCAL_ERROR="The equations set type of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(2),"*",err,error))// &
             & " is not valid for a bioelectric domain type of a bioelectrics equations set class."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT

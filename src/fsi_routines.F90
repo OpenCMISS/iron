@@ -52,7 +52,6 @@ MODULE FSIRoutines
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
@@ -65,9 +64,8 @@ MODULE FSIRoutines
   USE Kinds
   USE NavierStokesEquationsRoutines
   USE ProblemAccessRoutines
-  USE PROBLEM_CONSTANTS
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE Types
@@ -151,11 +149,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FSI_ProblemSetup",err,error,*999)
@@ -217,7 +215,7 @@ CONTAINS
           SELECT CASE(problem%specification(3))       
           CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
             & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            CALL Solvers_NumberSet(solvers,3,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
             !Set the first solver to be an CellML Evaluator for time varying boundary conditions
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -245,7 +243,7 @@ CONTAINS
             CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
           CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
             & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            CALL Solvers_NumberSet(solvers,5,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,5,err,error,*999)
             !Set the first solver to be an CellML Evaluator for time varying boundary conditions
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -284,7 +282,7 @@ CONTAINS
             CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
           CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
             & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            CALL Solvers_NumberSet(solvers,3,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
             !Set the first solver to be an CellML Evaluator for time varying boundary conditions
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -327,7 +325,7 @@ CONTAINS
             & " is invalid for a finite elasticity navier stokes equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+      CASE(PROBLEM_SETUP_SolverEquationsType)
         SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the control loop
@@ -548,7 +546,7 @@ CONTAINS
   SUBROUTINE FSI_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -574,8 +572,8 @@ CONTAINS
       & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-      IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE.OR.solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-        IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+      IF(solver%solveType==SOLVER_DYNAMIC_TYPE.OR.solver%solveType==SOLVER_LINEAR_TYPE) THEN
+        IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
           CALL NavierStokes_PreSolveALEUpdateMesh(solver,err,error,*999)
         ENDIF
         !Pre solve for ALE NavierStokes equations set
@@ -604,7 +602,7 @@ CONTAINS
   SUBROUTINE FSI_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: Error !<The error string
     !Local Variables
@@ -614,10 +612,10 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_TYPE), POINTER :: dynamicSolver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: dynamicSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FSI_PostSolve",err,error,*999)
@@ -639,7 +637,7 @@ CONTAINS
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-      IF(solver%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
+      IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
         !Post solve for the linear solver
         NULLIFY(dynamicSolver)
         IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
@@ -650,12 +648,12 @@ CONTAINS
         ELSE
           CALL Solvers_SolverGet(solvers,4,dynamicSolver,err,error,*999)
         ENDIF
-        IF(ASSOCIATED(dynamicSolver%DYNAMIC_SOLVER)) THEN
-          dynamicSolver%DYNAMIC_SOLVER%ALE=.TRUE.
+        IF(ASSOCIATED(dynamicSolver%dynamicSolver)) THEN
+          dynamicSolver%dynamicSolver%ale=.TRUE.
         ELSE  
           CALL FlagError("Dynamic solver is not associated for ALE problem.",err,error,*999)
         END IF
-      ELSE IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+      ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
         !Post solve for the dynamic solver
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -664,7 +662,7 @@ CONTAINS
         equationsSetIdx=1
         fluidEquationsSetFound=.FALSE.
         DO WHILE(.NOT.fluidEquationsSetFound.AND.equationsSetIdx<=solverMapping%numberOfEquationsSets)
-          equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(equationsSetIdx)%equations
+          equations=>solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)%equations
           NULLIFY(equationsSet)
           CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
           IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
@@ -744,10 +742,10 @@ CONTAINS
     TYPE(InterfaceType), POINTER :: fsInterface
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_TYPE), POINTER :: dynamicSolver,linearSolver
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: dynamicSolverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: dynamicSolverMapping
+    TYPE(SolverType), POINTER :: dynamicSolver,linearSolver
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: dynamicSolverEquations
+    TYPE(SolverMappingType), POINTER :: dynamicSolverMapping
     TYPE(VARYING_STRING) :: method,solidFileName,fluidFileName,interfaceFileName
  
     ENTERS("FSI_PostLoop",err,error,*999)

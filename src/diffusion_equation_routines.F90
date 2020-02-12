@@ -48,7 +48,7 @@ MODULE DIFFUSION_EQUATION_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -62,7 +62,6 @@ MODULE DIFFUSION_EQUATION_ROUTINES
   USE EquationsMappingRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
@@ -72,9 +71,9 @@ MODULE DIFFUSION_EQUATION_ROUTINES
   USE Kinds
   USE MatrixVector
   USE MeshAccessRoutines
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE Timer
@@ -138,7 +137,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the boundary conditions for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -227,7 +226,7 @@ CONTAINS
                 IF(MOD(variableType,FIELD_NUMBER_OF_VARIABLE_SUBTYPES)==FIELD_U_VARIABLE_TYPE) THEN
                   IF(domainNodes%nodes(nodeIdx)%boundaryNode) THEN
                     !If we are a boundary node then set the analytic value on the boundary
-                    CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(boundaryConditions,dependentField,variableType,localDofIdx, &
+                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDofIdx, &
                       & BOUNDARY_CONDITION_FIXED,value,err,error,*999)
                   ELSE
                     CALL Field_ParameterSetUpdateLocalDof(dependentField,variableType,FIELD_VALUES_SET_TYPE,localDofIdx, &
@@ -286,7 +285,7 @@ CONTAINS
                   IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
                     IF(domainNodes%nodes(nodeIdx)%boundaryNode) THEN
                       !If we are a boundary node then set the analytic value on the boundary
-                      CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(boundaryConditions,dependentField,variableType, &
+                      CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
                         & localDofIdx,BOUNDARY_CONDITION_FIXED,initialValue,err,error,*999)
                     ELSE
                       !Set the initial condition.
@@ -2238,11 +2237,11 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+              CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
               SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))      
               CASE(EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-                CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_V_VARIABLE_TYPE,err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_V_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE,EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)
@@ -2251,7 +2250,7 @@ CONTAINS
                   & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,err,error,*999)
                 imy_matrix = EQUATIONS_SET_FIELD_DATA(1)
                 Ncompartments = EQUATIONS_SET_FIELD_DATA(2)    
-                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,Ncompartments-1,err,error,*999)
+                CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,Ncompartments-1,err,error,*999)
 
                 ALLOCATE(VARIABLE_TYPES(2*Ncompartments))
                 ALLOCATE(VARIABLE_U_TYPES(Ncompartments-1))
@@ -2266,20 +2265,22 @@ CONTAINS
                     VARIABLE_U_TYPES(num_var_count)=VARIABLE_TYPES(2*num_var-1)
                   ENDIF
                 ENDDO
-                CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix-1),err,error,*999)
-                CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,VARIABLE_U_TYPES,err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix),err,error,*999)
-                CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix-1),err,error,*999)
+                CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,VARIABLE_U_TYPES,err,error,*999)
+                CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,VARIABLE_TYPES(2*imy_matrix),err,error,*999)
+                CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CASE DEFAULT
-                CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               END SELECT
               IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE .OR. &
                 & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE .OR. &
                 & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE .OR. &
                 & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE .OR. &
                 & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE) THEN              
-                CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
               ENDIF
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
@@ -2287,22 +2288,22 @@ CONTAINS
               !Set up matrix storage and structure
               IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                 !Set up lumping
-                CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                   & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                   [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
               ELSE
                 SELECT CASE(EQUATIONS%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                   IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)THEN
                     ALLOCATE(COUPLING_MATRIX_STORAGE_TYPE(Ncompartments-1))
@@ -2311,10 +2312,10 @@ CONTAINS
                       COUPLING_MATRIX_STORAGE_TYPE(num_var)=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
                       COUPLING_MATRIX_STRUCTURE_TYPE(num_var)=EQUATIONS_MATRIX_FEM_STRUCTURE
                     ENDDO
-                    CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices, &
                       & COUPLING_MATRIX_STORAGE_TYPE, &
                       & err,error,*999)      
-                    CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices, &
                       COUPLING_MATRIX_STRUCTURE_TYPE,err,error,*999)
                   ENDIF
                 CASE DEFAULT
@@ -2918,34 +2919,34 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-              CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+              CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               !Set up matrix storage and structure
               IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                 !Set up lumping
-                CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                   & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
                 SELECT CASE(EQUATIONS%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
+                  CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
                     & err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices, &
                     & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                  CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE, &
+                  CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE, &
                     & err,error,*999)
                  CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
@@ -2955,19 +2956,19 @@ CONTAINS
               ELSE
                 SELECT CASE(EQUATIONS%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
+                  CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
                     & err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                     [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices, &
                     & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                  CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, &
+                  CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices, &
                     EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
                 CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
@@ -2977,7 +2978,7 @@ CONTAINS
               ENDIF
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               !Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+              CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
                 & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -3121,7 +3122,7 @@ CONTAINS
     CASE(PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE,PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE, &
       & PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"ALE diffusion pre solve... ",err,error,*999)
-      IF(solver%DYNAMIC_SOLVER%ALE) THEN
+      IF(solver%dynamicSolver%ale) THEN
         !First update mesh and calculate boundary velocity values
         CALL Diffusion_PreSolveALEUpdateMesh(controlLoop,solver,err,error,*999)
         !Then apply both normal and moving mesh boundary conditions
@@ -3157,16 +3158,16 @@ CONTAINS
 !     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
 ! !    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
 !     TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-!     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-!     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+!     TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+!     TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
 !     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
 !     TYPE(EquationsType), POINTER :: EQUATIONS
 !     TYPE(DomainType), POINTER :: DOMAIN
 !     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
 ! !    TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
 !     TYPE(VARYING_STRING) :: localError
-! !    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-! !    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+! !    TYPE(BoundaryConditionVariableType), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
+! !    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
 ! !    REAL(DP), POINTER :: BOUNDARY_VALUES(:)
 !     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
 !     INTEGER(INTG) :: numberOfDimensions,BOUNDARY_CONDITION_CHECK_VARIABLE
@@ -3199,10 +3200,10 @@ CONTAINS
 !         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
 !           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
 !             CASE(PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE)
-!                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+!                 SOLVER_EQUATIONS=>SOLVER%solverEquations
 !                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
 !                   SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-!                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+!                   EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(1)%EQUATIONS
 !                   IF(ASSOCIATED(EQUATIONS)) THEN
 !                     EQUATIONS_SET=>equations%equationsSet
 !                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -3249,9 +3250,9 @@ CONTAINS
 !                                                 & NODE_PARAM2DOF_MAP(deriv_idx,node_idx)
 !                                               CALL Field_ParameterSetUpdateLocalDof(DEPENDENT_FIELD,variable_type, &
 !                                                 & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
-!                                               BOUNDARY_CONDITION_CHECK_VARIABLE=SOLVER_EQUATIONS%BOUNDARY_CONDITIONS% &
+!                                               BOUNDARY_CONDITION_CHECK_VARIABLE=SOLVER_EQUATIONS%boundaryConditions% &
 !                                                 & BOUNDARY_CONDITIONS_variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr% & 
-!                                                 & CONDITION_TYPES(local_ny)
+!                                                 & conditionTypes(local_ny)
 !                                               IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
 !                                                CALL Field_ParameterSetUpdateLocalDof(DEPENDENT_FIELD, & 
 !                                                  & variable_type,FIELD_VALUES_SET_TYPE,local_ny, & 
@@ -3260,7 +3261,7 @@ CONTAINS
 ! !                                              IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
 ! !                                                IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
 !                                                   !If we are a boundary node then set the analytic value on the boundary
-! !                                                  CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
+! !                                                  CALL BoundaryConditions_SetLocalDOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
 ! !                                                    & BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
 ! !                                                ENDIF
 ! !                                              ENDIF
@@ -3320,10 +3321,10 @@ CONTAINS
 !             CASE(PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE)
 !             !do nothing?! 
 !             CASE(PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE)
-!                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+!                 SOLVER_EQUATIONS=>SOLVER%solverEquations
 !                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
 !                   SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-!                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+!                   EQUATIONS=>SOLVER_MAPPING%equationsSetToSolverMatricesMap(1)%EQUATIONS
 !                   IF(ASSOCIATED(EQUATIONS)) THEN
 !                     EQUATIONS_SET=>equations%equationsSet
 !                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -3370,9 +3371,9 @@ CONTAINS
 !                                                 & NODE_PARAM2DOF_MAP(deriv_idx,node_idx)
 !                                               CALL Field_ParameterSetUpdateLocalDof(DEPENDENT_FIELD,variable_type, &
 !                                                 & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
-!                                               BOUNDARY_CONDITION_CHECK_VARIABLE=SOLVER_EQUATIONS%BOUNDARY_CONDITIONS% &
+!                                               BOUNDARY_CONDITION_CHECK_VARIABLE=SOLVER_EQUATIONS%boundaryConditions% &
 !                                                 & BOUNDARY_CONDITIONS_variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr% & 
-!                                                 & CONDITION_TYPES(local_ny)
+!                                                 & conditionTypes(local_ny)
 !                                               IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
 !                                                CALL Field_ParameterSetUpdateLocalDof(DEPENDENT_FIELD, & 
 !                                                  & variable_type,FIELD_VALUES_SET_TYPE,local_ny, & 
@@ -3381,7 +3382,7 @@ CONTAINS
 ! !                                              IF(variable_type==FIELD_U_VARIABLE_TYPE .OR. variable_type==FIELD_V_VARIABLE_TYPE) THEN
 ! !                                                IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
 ! !                                                   If we are a boundary node then set the analytic value on the boundary
-! !                                                  CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
+! !                                                  CALL BoundaryConditions_SetLocalDOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
 ! !                                                    & BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
 ! !                                                ENDIF
 ! !                                              ENDIF
@@ -3482,8 +3483,8 @@ CONTAINS
       & dynamicVariableType,equationsSetIdx,globalDerivativeIndex,globalDofIdx,localDofIdx,nodeIdx,numberOfDimensions
     REAL(DP) :: A1,currentTime,D1,timeIncrement,normal(3),tangents(3,3),VALUE,X(3)
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -3496,8 +3497,8 @@ CONTAINS
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField,sourceField
     TYPE(FieldVariableType), POINTER :: dynamicVariable,geometricVariable,sourceVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Diffusion_PreSolveUpdateAnalyticValues",err,error,*999)
@@ -3696,8 +3697,8 @@ CONTAINS
     !Local Variables
     TYPE(FieldType), POINTER :: GEOMETRIC_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_ALE_DIFFUSION !<A pointer to the solvers
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
 
@@ -3736,7 +3737,7 @@ CONTAINS
               ! do nothing ???
             CASE(PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE,PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE, &
                   & PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                SOLVER_EQUATIONS=>SOLVER%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -3860,8 +3861,8 @@ CONTAINS
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_DIFFUSION_ONE !<A pointer to the solvers
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD_DIFFUSION_ONE
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_DIFFUSION_ONE !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_DIFFUSION_ONE !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_DIFFUSION_ONE !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING_DIFFUSION_ONE !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET_DIFFUSION_ONE !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
 
@@ -3892,8 +3893,8 @@ CONTAINS
               IF(SOLVER%globalNumber==1) THEN
                 !--- Get the dependent field of the diffusion-one equations
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"Store value diffusion-one dependent field at time, t ... ",err,error,*999)
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER_DIFFUSION_ONE,err,error,*999)
-                SOLVER_EQUATIONS_DIFFUSION_ONE=>SOLVER_DIFFUSION_ONE%SOLVER_EQUATIONS
+                CALL SOLVERS_SOLVER_GET(SOLVER%solvers,1,SOLVER_DIFFUSION_ONE,err,error,*999)
+                SOLVER_EQUATIONS_DIFFUSION_ONE=>SOLVER_DIFFUSION_ONE%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DIFFUSION_ONE)) THEN
                   SOLVER_MAPPING_DIFFUSION_ONE=>SOLVER_EQUATIONS_DIFFUSION_ONE%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DIFFUSION_ONE)) THEN
@@ -3942,8 +3943,8 @@ CONTAINS
                 !--- Get the dependent field of the diffusion equations
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"Store value of diffusion solution &
                    & (dependent field - V variable_type) at time, t ... ",err,error,*999)
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_DIFFUSION_ONE,err,error,*999)
-                SOLVER_EQUATIONS_DIFFUSION_ONE=>SOLVER_DIFFUSION_ONE%SOLVER_EQUATIONS
+                CALL SOLVERS_SOLVER_GET(SOLVER%solvers,2,SOLVER_DIFFUSION_ONE,err,error,*999)
+                SOLVER_EQUATIONS_DIFFUSION_ONE=>SOLVER_DIFFUSION_ONE%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DIFFUSION_ONE)) THEN
                   SOLVER_MAPPING_DIFFUSION_ONE=>SOLVER_EQUATIONS_DIFFUSION_ONE%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DIFFUSION_ONE)) THEN
@@ -4024,8 +4025,8 @@ CONTAINS
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_DIFFUSION_ONE, SOLVER_DIFFUSION_TWO  !<A pointer to the solvers
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD_DIFFUSION_TWO, SOURCE_FIELD_DIFFUSION_ONE
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_DIFFUSION_ONE, SOLVER_EQUATIONS_DIFFUSION_TWO  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_DIFFUSION_ONE, SOLVER_MAPPING_DIFFUSION_TWO !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_DIFFUSION_ONE, SOLVER_EQUATIONS_DIFFUSION_TWO  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING_DIFFUSION_ONE, SOLVER_MAPPING_DIFFUSION_TWO !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET_DIFFUSION_ONE, EQUATIONS_SET_DIFFUSION_TWO !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
 
@@ -4058,8 +4059,8 @@ CONTAINS
               IF(SOLVER%globalNumber==1) THEN
                 !--- Get the dependent field of the diffusion_two equations
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"Update diffusion-one source field ... ",err,error,*999)
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_DIFFUSION_TWO,err,error,*999)
-                SOLVER_EQUATIONS_DIFFUSION_TWO=>SOLVER_DIFFUSION_TWO%SOLVER_EQUATIONS
+                CALL SOLVERS_SOLVER_GET(SOLVER%solvers,2,SOLVER_DIFFUSION_TWO,err,error,*999)
+                SOLVER_EQUATIONS_DIFFUSION_TWO=>SOLVER_DIFFUSION_TWO%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DIFFUSION_TWO)) THEN
                   SOLVER_MAPPING_DIFFUSION_TWO=>SOLVER_EQUATIONS_DIFFUSION_TWO%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DIFFUSION_TWO)) THEN
@@ -4084,8 +4085,8 @@ CONTAINS
 
 
                 !--- Get the source field for the diffusion_one equations
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER_DIFFUSION_ONE,err,error,*999)
-                SOLVER_EQUATIONS_DIFFUSION_ONE=>SOLVER_DIFFUSION_ONE%SOLVER_EQUATIONS
+                CALL SOLVERS_SOLVER_GET(SOLVER%solvers,1,SOLVER_DIFFUSION_ONE,err,error,*999)
+                SOLVER_EQUATIONS_DIFFUSION_ONE=>SOLVER_DIFFUSION_ONE%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_DIFFUSION_ONE)) THEN
                   SOLVER_MAPPING_DIFFUSION_ONE=>SOLVER_EQUATIONS_DIFFUSION_ONE%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_DIFFUSION_ONE)) THEN
@@ -4218,8 +4219,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
 
@@ -4244,7 +4245,7 @@ CONTAINS
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE,PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE)
               CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -4967,8 +4968,8 @@ CONTAINS
     INTEGER(INTG) :: PROBLEM_SUBTYPE
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DIFFUSION_EQUATION_PROBLEM_LINEAR_SETUP",err,error,*999)
@@ -5027,7 +5028,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a first order dynamic solver 
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
@@ -5113,8 +5114,8 @@ CONTAINS
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DIFFUSION_EQUATION_PROBLEM_NONLINEAR_SETUP",err,error,*999)
@@ -5168,7 +5169,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a first order dynamic solver 
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
@@ -5261,7 +5262,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,materialsField
     TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,GEOMETRIC_VARIABLE
@@ -5796,9 +5797,9 @@ CONTAINS
     TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: FILENAME,localError,METHOD
     INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER,CURRENT_LOOP_ITERATION
 
@@ -5823,7 +5824,7 @@ CONTAINS
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)            
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               !Loop over the equations sets associated with the solver
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN

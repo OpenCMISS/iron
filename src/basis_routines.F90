@@ -2514,11 +2514,12 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate derivative numbers in local line.",err,error,*999)
       basis%derivativeNumbersInLocalLine=NO_PART_DERIV
       
-      ALLOCATE(basis%elementParametersInLocalLine(MAXVAL(basis%numberOfNodesXiC)**2,numberOfLocalLines),STAT=err)
+      ALLOCATE(basis%elementParametersInLocalLine(0:MAXVAL(basis%numberOfNodesXiC)**2,numberOfLocalLines),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate element parameters in local line.",err,error,*999)
       basis%elementParametersInLocalLine=1
+      basis%elementParametersInLocalLine(0,:)=1
       
-      ALLOCATE(BASIS%localFaceXiDirections(2,numberOfLocalFaces),STAT=ERR)
+      ALLOCATE(basis%localFaceXiDirections(2,numberOfLocalFaces),STAT=ERR)
       IF(err/=0) CALL FlagError("Could not allocate local face xi directions.",err,error,*999)
       ALLOCATE(basis%localFaceXiNormal(numberOfLocalFaces),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate local face xi direction.",err,error,*999)
@@ -2532,10 +2533,11 @@ CONTAINS
       basis%derivativeNumbersInLocalFace=NO_PART_DERIV
       basis%derivativeNumbersInLocalFace(0,:,:)=1
       
-      ALLOCATE(basis%elementParametersInLocalFace(MAXVAL(basis%numberOfNodesXiC)**2* &
+      ALLOCATE(basis%elementParametersInLocalFace(0:MAXVAL(basis%numberOfNodesXiC)**2* &
         & basis%maximumNumberOfDerivatives,numberOfLocalFaces),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate element parameters in local face.",err,error,*999)
       basis%elementParametersInLocalFace=1
+      basis%elementParametersInLocalFace(0,:)=1
       
       ALLOCATE(basis%nodeNumbersInLocalFace(MAX(maximumNodeExtent(2)*maximumNodeExtent(3), &
         & maximumNodeExtent(3)*maximumNodeExtent(1),maximumNodeExtent(2)*maximumNodeExtent(1)), &
@@ -2690,6 +2692,7 @@ CONTAINS
                   ENDIF
                 ENDDO !derivativeIdx
               ENDDO !localLineNodeIdx
+              basis%elementParametersInLocalLine(0,basis%numberOfLocalLines)=localLineParameter
               basis%localLineXiDirection(basis%numberOfLocalLines)=xiIdx1
               IF(localNodeIdx2==1) THEN
                 basis%localLineXiNormals(1,basis%numberOfLocalLines)=-xiIdx2
@@ -2778,6 +2781,7 @@ CONTAINS
               ENDDO !derivativeIdx
               basis%derivativeNumbersInLocalFace(0,localNodeIdx,localFaceIdx)=localFaceDerivative
             ENDDO !localNodeIdx
+            basis%elementParametersInLocalFace(0,localFaceIdx)=localFaceParameter
           ENDIF
         ENDDO !xiIdx1
       ENDDO !directionIdx

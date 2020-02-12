@@ -73,3 +73,19 @@
    CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",err,error,*999)
 #endif
 
+#ifdef WITH_NO_CHECKS
+#  define WITH_NO_PRECHECKS
+#  define WITH_NO_POSTCHECKS
+#endif  
+  
+#ifndef WITH_NO_PRECHECKS
+#  define WITH_PRECHECKS
+#endif
+
+#ifndef WITH_NO_POSTCHECKS
+#  define WITH_POSTCHECKS
+#endif
+
+#if defined WITH_PRECHECKS || defined WITH_POSTCHECKS
+#  define WITH_CHECKS
+#endif

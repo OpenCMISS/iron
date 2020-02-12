@@ -96,7 +96,7 @@ CONTAINS
       RETURN
     ENDIF
     
-    CALL FlagError( ERROR_DESCRIPTION // " (error number " // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) // ")", &
+    CALL FlagError( ERROR_DESCRIPTION // " (error number " // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) // ")", &
       & ERR, ERROR, *999 )
 
 999 ERRORSEXITS( "FieldMLUtil_CheckFieldMLSessionErrorVS", ERR, ERROR )
@@ -124,7 +124,7 @@ CONTAINS
       RETURN
     ENDIF
     
-    CALL FlagError( ERROR_DESCRIPTION // " (error number " // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) // ")", &
+    CALL FlagError( ERROR_DESCRIPTION // " (error number " // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) // ")", &
       & ERR, ERROR, *999 )
 
 999 ERRORSEXITS( "FIELDML_UTIL_CHECK_FIELDML_SESSION_ERRORC", ERR, ERROR )

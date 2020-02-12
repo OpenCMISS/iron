@@ -883,7 +883,7 @@ CONTAINS
 
     FML_ERR = Fieldml_ReadIntSlab( READER_HANDLE, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(ORDER) )
     IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
-      CALL FlagError( "Error reading order data"//"("// TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", &
+      CALL FlagError( "Error reading order data"//"("// TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", &
         & ERR, ERROR, *999 )
     ENDIF
 
@@ -1068,7 +1068,7 @@ CONTAINS
           & C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(RAW_BUFFER) )
         IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
           CALL FlagError( "Error reading connectivity for "//EVALUATOR_NAME//"("// &
-            & TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
+            & TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
         ENDIF
         CALL LIST_ITEM_GET( FIELDML_INFO%BASIS_HANDLES, KNOWN_BASIS_NUMBER, TEMP_BASIS_HANDLE, ERR, ERROR, *999 )
         IF( TEMP_BASIS_HANDLE == BASIS_REFERENCE_HANDLE ) THEN
@@ -1089,7 +1089,7 @@ CONTAINS
       FML_ERR = Fieldml_CloseReader( TEMP_POINTER )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
         CALL FlagError( "Error closing connectivity reader for "//EVALUATOR_NAME//"("// &
-          & TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
+          & TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
       ENDIF
       IF( ALLOCATED( CONNECTIVITY_ORDERS( KNOWN_BASIS_NUMBER )%ARRAY ) ) THEN
         DEALLOCATE( CONNECTIVITY_ORDERS( KNOWN_BASIS_NUMBER )%ARRAY )
@@ -1331,7 +1331,7 @@ CONTAINS
       OFFSETS(1) = OFFSETS(1) + 1
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
         CALL FlagError( "Cannot read nodal dofs from "//EVALUATOR_NAME//"("&
-          & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
+          & // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
       ENDIF
 
       DO COMPONENT_NUMBER = 1, FIELD_DIMENSIONS
@@ -1353,7 +1353,7 @@ CONTAINS
     FML_ERR = Fieldml_CloseReader( READER )
     IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
       CALL FlagError( "Error closing nodal dofs reader for "//EVALUATOR_NAME//"("&
-        & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
+        & // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
     ENDIF
 
     !TODO Set element and constant parameters

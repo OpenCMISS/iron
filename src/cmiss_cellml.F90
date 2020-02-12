@@ -1856,7 +1856,7 @@ CONTAINS
       IF(cellMLFieldMaps%sourceFieldInterpolationType/=fieldInterpolationType) THEN
         localError="The interpolation type of "//TRIM(NumberToVString(fieldInterpolationType,"*",err,error))// &
           & " for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
-          & " of variable type "//TRIM(NUMBER_TO_vSTRING(variableType,"*",err,error))// &
+          & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
           & " of field user number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
           & " does not match the interpolation type of "// &
           & TRIM(NumberToVString(cellMLFieldMaps%sourceFieldInterpolationType,"*",err,error))// &

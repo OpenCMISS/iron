@@ -1,6 +1,6 @@
 !> \file
 !> \author Chris Bradley
-!> \brief This module contains CMISS MPI routines.
+!> \brief This module contains OpenCMISS MPI routines.
 !>
 !> \section LICENSE
 !>
@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module contains CMISS MPI routines.
+!> This module contains OpenCMISS MPI routines.
 MODULE CmissMPI
   
   USE BaseRoutines
@@ -71,13 +71,13 @@ MODULE CmissMPI
 
   !Interfaces
 
-  INTERFACE MPI_ErrorCheck
-    MODULE PROCEDURE MPI_ERROR_CHECK
-  END INTERFACE MPI_ErrorCheck
+  INTERFACE MPI_ERROR_CHECK
+    MODULE PROCEDURE MPIErrorCheck
+  END INTERFACE MPI_ERROR_CHECK
+
+  PUBLIC MPIErrorCheck
 
   PUBLIC MPI_ERROR_CHECK
-
-  PUBLIC MPI_ErrorCheck
  
 CONTAINS
 
@@ -85,33 +85,34 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Checks to see if an MPI error has occured during an MPI call and flags a CMISS error it if it has.
-  SUBROUTINE MPI_ERROR_CHECK(ROUTINE,MPI_ERR_CODE,ERR,ERROR,*)
+  !>Checks to see if an MPI error has occured during an MPI call and flags a OpenCMISS error it if it has.
+  SUBROUTINE MPIErrorCheck(routine,MPIErrCode,err,error,*)
   
     !Argument Variables
-    CHARACTER(LEN=*) :: ROUTINE !<The name of the MPI routine that has just been called.
-    INTEGER(INTG), INTENT(IN) :: MPI_ERR_CODE !<The MPI error code returned from the MPI routine.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*) :: routine !<The name of the MPI routine that has just been called.
+    INTEGER(INTG), INTENT(IN) :: MPIErrCode !<The MPI error code returned from the MPI routine.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: MPI_IERROR, MPI_ERR_STR_LENGTH
-    CHARACTER(LEN=MAXSTRLEN) :: MPI_ERR_STR
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: MPIIerror, MPIErrStrLength
+    CHARACTER(LEN=MAXSTRLEN) :: MPIErrStr
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MPI_ERROR_CHECK",ERR,ERROR,*999)
+    ENTERS("MPIErrorCheck",err,error,*999)
 
-    IF(MPI_ERR_CODE/=MPI_SUCCESS) THEN
-      CALL MPI_ERROR_STRING(MPI_ERR_CODE,MPI_ERR_STR,MPI_ERR_STR_LENGTH,MPI_IERROR)
-      LOCAL_ERROR="MPI error "//TRIM(NUMBER_TO_VSTRING(MPI_ERR_CODE,"*",ERR,ERROR))//" ("// &
-        & MPI_ERR_STR(1:MPI_ERR_STR_LENGTH)//") in "//ROUTINE(1:LEN_TRIM(ROUTINE))
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    IF(MPIErrCode/=MPI_SUCCESS) THEN
+      CALL MPI_ERROR_STRING(MPIErrCode,MPIErrStr,MPIErrStrLength,MPIIerror)
+      localError="MPI error "//TRIM(NumberToVString(MPIErrCode,"*",err,error))//" ("// &
+        & MPIErrStr(1:MPIErrStrLength)//") in "//routine(1:LEN_TRIM(routine))
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    EXITS("MPI_ERROR_CHECK")
+    EXITS("MPIErrorCheck")
     RETURN
-999 ERRORSEXITS("MPI_ERROR_CHECK",ERR,ERROR)
+999 ERRORSEXITS("MPIErrorCheck",err,error)
     RETURN 1
-  END SUBROUTINE MPI_ERROR_CHECK
+    
+  END SUBROUTINE MPIErrorCheck
 
   !
   !================================================================================================================================

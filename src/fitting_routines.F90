@@ -47,18 +47,17 @@ MODULE FittingRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE DARCY_EQUATIONS_ROUTINES, ONLY: idebug1
+  USE DarcyEquationsRoutines, ONLY: idebug1
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -68,9 +67,9 @@ MODULE FittingRoutines
   USE Kinds
   USE MatrixVector
   USE Maths
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -134,7 +133,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField,sourceField
@@ -837,7 +836,8 @@ CONTAINS
             linearMatrices=>vectorMatrices%linearMatrices
             equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>vectorMatrices%rhsVector
-            sourceVector=>vectorMatrices%sourceVector
+            sourceVectors=>vectorMatrices%sourceVectors
+            sourceVector=>sourceVectors%sources(1)%ptr
             vectorMapping=>vectorEquations%vectorMapping
             linearMapping=>vectorMapping%linearMapping
             fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
@@ -1844,21 +1844,21 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -2688,19 +2688,19 @@ CONTAINS
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
                 CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                  CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                  CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                  CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                 CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
                     & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
@@ -3291,20 +3291,20 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -3375,7 +3375,7 @@ CONTAINS
     INTEGER(INTG) :: INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,INDEPENDENT_FIELD_NUMBER_OF_VARIABLES
     INTEGER(INTG) :: dependentFieldNumberOfVariables
     INTEGER(INTG) :: dimensionIdx
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
     TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
 !     TYPE(FieldType), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
     TYPE(EquationsType), POINTER :: equations
@@ -4012,22 +4012,23 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -4445,21 +4446,21 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -4576,9 +4577,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FITTING_PROBLEM_STANDARD_SETUP",err,error,*999)
@@ -4631,7 +4632,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL Solvers_CreateStart(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL Solvers_NumberSet(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a linear solver
             CALL Solvers_SolverGet(SOLVERS,1,SOLVER,err,error,*999)
             CALL Solver_TypeSet(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
@@ -4711,9 +4712,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop, controlLoopRoot
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_ProblemStaticSetup",err,error,*999)
@@ -4766,7 +4767,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
             !Set the solver to be a linear solver
             CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
             CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
@@ -4848,9 +4849,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FITTING_PROBLEM_VECTORDATA_SETUP",err,error,*999)
@@ -4911,7 +4912,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL Solvers_CreateStart(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL Solvers_NumberSet(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a linear solver
             CALL Solvers_SolverGet(SOLVERS,1,SOLVER,err,error,*999)
             CALL Solver_TypeSet(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
@@ -5096,13 +5097,13 @@ CONTAINS
   SUBROUTINE Fitting_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_PreSolve",err,error,*999)
@@ -5177,13 +5178,13 @@ CONTAINS
   SUBROUTINE Fitting_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_PostSolve",err,error,*999)
@@ -5248,15 +5249,15 @@ CONTAINS
   SUBROUTINE Fitting_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(ProblemType), POINTER :: problem  !<A pointer to the solver equations
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(SolversType), POINTER :: solvers
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
     REAL(DP) :: currentTime,timeIncrement
@@ -5293,7 +5294,7 @@ CONTAINS
             CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE)
               controlTimeLoop=>controlLoop
               CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,timeIncrement,err,error,*999)
-              solverEquations=>solver%SOLVER_EQUATIONS
+              solverEquations=>solver%solverEquations
               IF(ASSOCIATED(solverEquations)) THEN
                 solverMapping=>solverEquations%solverMapping
                 IF(ASSOCIATED(solverMapping)) THEN
@@ -5358,15 +5359,15 @@ CONTAINS
   SUBROUTINE Fitting_PreSolveUpdateInputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(SolversType), POINTER :: solvers
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(VARYING_STRING) :: localError
@@ -5414,10 +5415,10 @@ CONTAINS
               controlTimeLoop=>controlLoop
               CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,TimeIncrement,err,error,*999)
               CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
-              solverEquations=>solver%SOLVER_EQUATIONS
+              solverEquations=>solver%solverEquations
               IF(ASSOCIATED(solverEquations)) THEN
                 solverMapping=>solverEquations%solverMapping
-                equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%equations
+                equations=>solverMapping%equationsSetToSolverMatricesMap(1)%equations
                 IF(ASSOCIATED(equations)) THEN
                   equationsSet=>equations%equationsSet
                   IF(ASSOCIATED(equationsSet)) THEN

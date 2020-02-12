@@ -58,12 +58,12 @@ MODULE InputOutput
   
   !Module parameters
 
-  !> \addtogroup INPUT_OUTPUT_MatrixNameIndexFormat INPUT_OUTPUT::MatrixNameIndexFormat
+  !> \addtogroup InputOutput_MatrixNameIndexFormat InputOutput::MatrixNameIndexFormat
   !> \brief Output type parameter
-  !> \see INPUT_OUTPUT
+  !> \see InputOutput
   !>@{  
-  INTEGER(INTG), PARAMETER :: WRITE_STRING_MATRIX_NAME_ONLY=1 !<Write the matrix name with out any indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
-  INTEGER(INTG), PARAMETER :: WRITE_STRING_MATRIX_NAME_AND_INDICES=2 !<Write the matrix name together with the matrix indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
+  INTEGER(INTG), PARAMETER :: WRITE_STRING_MATRIX_NAME_ONLY=1 !<Write the matrix name with out any indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+  INTEGER(INTG), PARAMETER :: WRITE_STRING_MATRIX_NAME_AND_INDICES=2 !<Write the matrix name together with the matrix indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
   !>@}
 
   !Module types
@@ -106,238 +106,238 @@ MODULE InputOutput
 
   !>Write a string, value, string then a value to a given output stream
   INTERFACE WRITE_STRING_TWO_VALUE
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_VS
+    MODULE PROCEDURE WriteStringTwoValueCC
+    MODULE PROCEDURE WriteStringTwoValueCDP
+    MODULE PROCEDURE WriteStringTwoValueCIntg
+    MODULE PROCEDURE WriteStringTwoValueCL
+    MODULE PROCEDURE WriteStringTwoValueCSP
+    MODULE PROCEDURE WriteStringTwoValueCVS
+    MODULE PROCEDURE WriteStringTwoValueDPC
+    MODULE PROCEDURE WriteStringTwoValueDPDP
+    MODULE PROCEDURE WriteStringTwoValueDPIntg
+    MODULE PROCEDURE WriteStringTwoValueDPL
+    MODULE PROCEDURE WriteStringTwoValueDPSP
+    MODULE PROCEDURE WriteStringTwoValueDPVS
+    MODULE PROCEDURE WriteStringTwoValueIntgC
+    MODULE PROCEDURE WriteStringTwoValueIntgDP
+    MODULE PROCEDURE WriteStringTwoValueIntgIntg
+    MODULE PROCEDURE WriteStringTwoValueIntgL
+    MODULE PROCEDURE WriteStringTwoValueIntgSP
+    MODULE PROCEDURE WriteStringTwoValueIntgVS
+    MODULE PROCEDURE WriteStringTwoValueLC
+    MODULE PROCEDURE WriteStringTwoValueLDP
+    MODULE PROCEDURE WriteStringTwoValueLIntg
+    MODULE PROCEDURE WriteStringTwoValueLL
+    MODULE PROCEDURE WriteStringTwoValueLSP
+    MODULE PROCEDURE WriteStringTwoValueLVS
+    MODULE PROCEDURE WriteStringTwoValueSPC
+    MODULE PROCEDURE WriteStringTwoValueSPDP
+    MODULE PROCEDURE WriteStringTwoValueSPIntg
+    MODULE PROCEDURE WriteStringTwoValueSPL
+    MODULE PROCEDURE WriteStringTwoValueSPSP
+    MODULE PROCEDURE WriteStringTwoValueSPVS
+    MODULE PROCEDURE WriteStringTwoValueVSC
+    MODULE PROCEDURE WriteStringTwoValueVSDP
+    MODULE PROCEDURE WriteStringTwoValueVSIntg
+    MODULE PROCEDURE WriteStringTwoValueVSL
+    MODULE PROCEDURE WriteStringTwoValueVSSP
+    MODULE PROCEDURE WriteStringTwoValueVSVS
   END INTERFACE WRITE_STRING_TWO_VALUE
 
   !>Write a string, value, string then a value to a given output stream
   INTERFACE WriteStringTwoValue
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_C_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_DP_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_INTG_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_L_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_SP_VS
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_C
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_DP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_INTG
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_L
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_SP
-    MODULE PROCEDURE WRITE_STRING_TWO_VALUE_VS_VS
+    MODULE PROCEDURE WriteStringTwoValueCC
+    MODULE PROCEDURE WriteStringTwoValueCDP
+    MODULE PROCEDURE WriteStringTwoValueCIntg
+    MODULE PROCEDURE WriteStringTwoValueCL
+    MODULE PROCEDURE WriteStringTwoValueCSP
+    MODULE PROCEDURE WriteStringTwoValueCVS
+    MODULE PROCEDURE WriteStringTwoValueDPC
+    MODULE PROCEDURE WriteStringTwoValueDPDP
+    MODULE PROCEDURE WriteStringTwoValueDPIntg
+    MODULE PROCEDURE WriteStringTwoValueDPL
+    MODULE PROCEDURE WriteStringTwoValueDPSP
+    MODULE PROCEDURE WriteStringTwoValueDPVS
+    MODULE PROCEDURE WriteStringTwoValueIntgC
+    MODULE PROCEDURE WriteStringTwoValueIntgDP
+    MODULE PROCEDURE WriteStringTwoValueIntgIntg
+    MODULE PROCEDURE WriteStringTwoValueIntgL
+    MODULE PROCEDURE WriteStringTwoValueIntgSP
+    MODULE PROCEDURE WriteStringTwoValueIntgVS
+    MODULE PROCEDURE WriteStringTwoValueLC
+    MODULE PROCEDURE WriteStringTwoValueLDP
+    MODULE PROCEDURE WriteStringTwoValueLIntg
+    MODULE PROCEDURE WriteStringTwoValueLL
+    MODULE PROCEDURE WriteStringTwoValueLSP
+    MODULE PROCEDURE WriteStringTwoValueLVS
+    MODULE PROCEDURE WriteStringTwoValueSPC
+    MODULE PROCEDURE WriteStringTwoValueSPDP
+    MODULE PROCEDURE WriteStringTwoValueSPIntg
+    MODULE PROCEDURE WriteStringTwoValueSPL
+    MODULE PROCEDURE WriteStringTwoValueSPSP
+    MODULE PROCEDURE WriteStringTwoValueSPVS
+    MODULE PROCEDURE WriteStringTwoValueVSC
+    MODULE PROCEDURE WriteStringTwoValueVSDP
+    MODULE PROCEDURE WriteStringTwoValueVSIntg
+    MODULE PROCEDURE WriteStringTwoValueVSL
+    MODULE PROCEDURE WriteStringTwoValueVSSP
+    MODULE PROCEDURE WriteStringTwoValueVSVS
   END INTERFACE WriteStringTwoValue
 
   !>Write a string followed by a value formatted in a particular way to a specified output stream
   INTERFACE WRITE_STRING_FMT_VALUE
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_C
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_LINTG
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_L
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_VS
+    MODULE PROCEDURE WriteStringFmtValueC
+    MODULE PROCEDURE WriteStringFmtValueDP
+    MODULE PROCEDURE WriteStringFmtValueIntg
+    MODULE PROCEDURE WriteStringFmtValueLIntg
+    MODULE PROCEDURE WriteStringFmtValueL
+    MODULE PROCEDURE WriteStringFmtValueSP
+    MODULE PROCEDURE WriteStringFmtValueVS
   END INTERFACE WRITE_STRING_FMT_VALUE
   
   !>Write a string followed by a value formatted in a particular way to a specified output stream
   INTERFACE WriteStringFmtValue
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_C
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_LINTG
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_L
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_VALUE_VS
+    MODULE PROCEDURE WriteStringFmtValueC
+    MODULE PROCEDURE WriteStringFmtValueDP
+    MODULE PROCEDURE WriteStringFmtValueIntg
+    MODULE PROCEDURE WriteStringFmtValueLIntg
+    MODULE PROCEDURE WriteStringFmtValueL
+    MODULE PROCEDURE WriteStringFmtValueSP
+    MODULE PROCEDURE WriteStringFmtValueVS
   END INTERFACE WriteStringFmtValue
   
   !>Write a string, value, string then a value with the values formatted in a particular way to a given output stream
   INTERFACE WRITE_STRING_FMT_TWO_VALUE
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_VS
+    MODULE PROCEDURE WriteStringFmtTwoValueCC
+    MODULE PROCEDURE WriteStringFmtTwoValueCDP
+    MODULE PROCEDURE WriteStringFmtTwoValueCIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueCL
+    MODULE PROCEDURE WriteStringFmtTwoValueCSP
+    MODULE PROCEDURE WriteStringFmtTwoValueCVS
+    MODULE PROCEDURE WriteStringFmtTwoValueDPC
+    MODULE PROCEDURE WriteStringFmtTwoValueDPDP
+    MODULE PROCEDURE WriteStringFmtTwoValueDPIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueDPL
+    MODULE PROCEDURE WriteStringFmtTwoValueDPSP
+    MODULE PROCEDURE WriteStringFmtTwoValueDPVS
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgC
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgDP
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgL
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgSP
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgVS
+    MODULE PROCEDURE WriteStringFmtTwoValueLC
+    MODULE PROCEDURE WriteStringFmtTwoValueLDP
+    MODULE PROCEDURE WriteStringFmtTwoValueLIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueLL
+    MODULE PROCEDURE WriteStringFmtTwoValueLSP
+    MODULE PROCEDURE WriteStringFmtTwoValueLVS
+    MODULE PROCEDURE WriteStringFmtTwoValueSPC
+    MODULE PROCEDURE WriteStringFmtTwoValueSPDP
+    MODULE PROCEDURE WriteStringFmtTwoValueSPIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueSPL
+    MODULE PROCEDURE WriteStringFmtTwoValueSPSP
+    MODULE PROCEDURE WriteStringFmtTwoValueSPVS
+    MODULE PROCEDURE WriteStringFmtTwoValueVSC
+    MODULE PROCEDURE WriteStringFmtTwoValueVSDP
+    MODULE PROCEDURE WriteStringFmtTwoValueVSIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueVSL
+    MODULE PROCEDURE WriteStringFmtTwoValueVSSP
+    MODULE PROCEDURE WriteStringFmtTwoValueVSVS
   END INTERFACE WRITE_STRING_FMT_TWO_VALUE
 
   !>Write a string, value, string then a value with the values formatted in a particular way to a given output stream
   INTERFACE WriteStringFmtTwoValue
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_C_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_DP_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_INTG_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_L_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_SP_VS
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_C
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_DP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_INTG
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_L
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_SP
-    MODULE PROCEDURE WRITE_STRING_FMT_TWO_VALUE_VS_VS
+    MODULE PROCEDURE WriteStringFmtTwoValueCC
+    MODULE PROCEDURE WriteStringFmtTwoValueCDP
+    MODULE PROCEDURE WriteStringFmtTwoValueCIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueCL
+    MODULE PROCEDURE WriteStringFmtTwoValueCSP
+    MODULE PROCEDURE WriteStringFmtTwoValueCVS
+    MODULE PROCEDURE WriteStringFmtTwoValueDPC
+    MODULE PROCEDURE WriteStringFmtTwoValueDPDP
+    MODULE PROCEDURE WriteStringFmtTwoValueDPIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueDPL
+    MODULE PROCEDURE WriteStringFmtTwoValueDPSP
+    MODULE PROCEDURE WriteStringFmtTwoValueDPVS
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgC
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgDP
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgL
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgSP
+    MODULE PROCEDURE WriteStringFmtTwoValueIntgVS
+    MODULE PROCEDURE WriteStringFmtTwoValueLC
+    MODULE PROCEDURE WriteStringFmtTwoValueLDP
+    MODULE PROCEDURE WriteStringFmtTwoValueLIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueLL
+    MODULE PROCEDURE WriteStringFmtTwoValueLSP
+    MODULE PROCEDURE WriteStringFmtTwoValueLVS
+    MODULE PROCEDURE WriteStringFmtTwoValueSPC
+    MODULE PROCEDURE WriteStringFmtTwoValueSPDP
+    MODULE PROCEDURE WriteStringFmtTwoValueSPIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueSPL
+    MODULE PROCEDURE WriteStringFmtTwoValueSPSP
+    MODULE PROCEDURE WriteStringFmtTwoValueSPVS
+    MODULE PROCEDURE WriteStringFmtTwoValueVSC
+    MODULE PROCEDURE WriteStringFmtTwoValueVSDP
+    MODULE PROCEDURE WriteStringFmtTwoValueVSIntg
+    MODULE PROCEDURE WriteStringFmtTwoValueVSL
+    MODULE PROCEDURE WriteStringFmtTwoValueVSSP
+    MODULE PROCEDURE WriteStringFmtTwoValueVSVS
   END INTERFACE WriteStringFmtTwoValue
 
   !>Write a string followed by a vector to a specified output stream.
   INTERFACE WRITE_STRING_VECTOR
-    MODULE PROCEDURE WRITE_STRING_VECTOR_DP
-    MODULE PROCEDURE WRITE_STRING_VECTOR_INTG
-    MODULE PROCEDURE WRITE_STRING_VECTOR_LINTG
-    MODULE PROCEDURE WRITE_STRING_VECTOR_L
-    MODULE PROCEDURE WRITE_STRING_VECTOR_SP
+    MODULE PROCEDURE WriteStringVectorDP
+    MODULE PROCEDURE WriteStringVectorIntg
+    MODULE PROCEDURE WriteStringVectorLIntg
+    MODULE PROCEDURE WriteStringVectorL
+    MODULE PROCEDURE WriteStringVectorSP
   END INTERFACE WRITE_STRING_VECTOR
   
   !>Write a string followed by a vector to a specified output stream.
   INTERFACE WriteStringVector
-    MODULE PROCEDURE WRITE_STRING_VECTOR_DP
-    MODULE PROCEDURE WRITE_STRING_VECTOR_INTG
-    MODULE PROCEDURE WRITE_STRING_VECTOR_LINTG
-    MODULE PROCEDURE WRITE_STRING_VECTOR_L
-    MODULE PROCEDURE WRITE_STRING_VECTOR_SP
+    MODULE PROCEDURE WriteStringVectorDP
+    MODULE PROCEDURE WriteStringVectorIntg
+    MODULE PROCEDURE WriteStringVectorLIntg
+    MODULE PROCEDURE WriteStringVectorL
+    MODULE PROCEDURE WriteStringVectorSP
   END INTERFACE WriteStringVector
   
   !>Write a string followed by a indexed vector to a specified output stream.
   INTERFACE WRITE_STRING_IDX_VECTOR
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_DP
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_INTG
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_LINTG
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_L
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_SP
+    MODULE PROCEDURE WriteStringIdxVectorDP
+    MODULE PROCEDURE WriteStringIdxVectorIntg
+    MODULE PROCEDURE WriteStringIdxVectorLIntg
+    MODULE PROCEDURE WriteStringIdxVectorL
+    MODULE PROCEDURE WriteStringIdxVectorSP
   END INTERFACE WRITE_STRING_IDX_VECTOR
 
   !>Write a string followed by a indexed vector to a specified output stream.
   INTERFACE WriteStringIdxVector
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_DP
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_INTG
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_LINTG
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_L
-    MODULE PROCEDURE WRITE_STRING_IDX_VECTOR_SP
+    MODULE PROCEDURE WriteStringIdxVectorDP
+    MODULE PROCEDURE WriteStringIdxVectorIntg
+    MODULE PROCEDURE WriteStringIdxVectorLIntg
+    MODULE PROCEDURE WriteStringIdxVectorL
+    MODULE PROCEDURE WriteStringIdxVectorSP
   END INTERFACE WriteStringIdxVector
 
   !>Write a string followed by a matrix to a specified output stream
   INTERFACE WRITE_STRING_MATRIX
-    MODULE PROCEDURE WRITE_STRING_MATRIX_DP
-    MODULE PROCEDURE WRITE_STRING_MATRIX_INTG
-    MODULE PROCEDURE WRITE_STRING_MATRIX_LINTG
-    MODULE PROCEDURE WRITE_STRING_MATRIX_L
-    MODULE PROCEDURE WRITE_STRING_MATRIX_SP
+    MODULE PROCEDURE WriteStringMatrixDP
+    MODULE PROCEDURE WriteStringMatrixIntg
+    MODULE PROCEDURE WriteStringMatrixLIntg
+    MODULE PROCEDURE WriteStringMatrixL
+    MODULE PROCEDURE WriteStringMatrixSP
   END INTERFACE WRITE_STRING_MATRIX
 
   !>Write a string followed by a matrix to a specified output stream
   INTERFACE WriteStringMatrix
-    MODULE PROCEDURE WRITE_STRING_MATRIX_DP
-    MODULE PROCEDURE WRITE_STRING_MATRIX_INTG
-    MODULE PROCEDURE WRITE_STRING_MATRIX_LINTG
-    MODULE PROCEDURE WRITE_STRING_MATRIX_L
-    MODULE PROCEDURE WRITE_STRING_MATRIX_SP
+    MODULE PROCEDURE WriteStringMatrixDP
+    MODULE PROCEDURE WriteStringMatrixIntg
+    MODULE PROCEDURE WriteStringMatrixLIntg
+    MODULE PROCEDURE WriteStringMatrixL
+    MODULE PROCEDURE WriteStringMatrixSP
   END INTERFACE WriteStringMatrix
 
   PUBLIC WRITE_STRING_MATRIX_NAME_ONLY,WRITE_STRING_MATRIX_NAME_AND_INDICES
@@ -345,8 +345,21 @@ MODULE InputOutput
   PUBLIC WRITE_STRING,WRITE_STRING_VALUE,WRITE_STRING_TWO_VALUE,WRITE_STRING_FMT_VALUE,WRITE_STRING_FMT_TWO_VALUE, &
     & WRITE_STRING_VECTOR,WRITE_STRING_IDX_VECTOR,WRITE_STRING_MATRIX
 
-  PUBLIC WriteString,WriteStringValue,WriteStringTwoValue,WriteStringFmtValue,WriteStringFmtTwoValue,WriteStringVector, &
-    & WriteStringIdxVector,WriteStringMatrix
+  PUBLIC WriteString
+
+  PUBLIC WriteStringValue
+
+  PUBLIC WriteStringTwoValue
+
+  PUBLIC WriteStringFmtValue
+
+  PUBLIC WriteStringFmtTwoValue
+
+  PUBLIC WriteStringVector
+  
+  PUBLIC WriteStringIdxVector
+
+  PUBLIC WriteStringMatrix
 
   !Module variables
 
@@ -405,7 +418,7 @@ CONTAINS
   !
 
   !>Writes the first string followed by a formatted character value to the given output stream specified by id. Free format is used to format the value.
-  SUBROUTINE WriteStringValueC(id,firstString,VALUE,err,error,*)
+  SUBROUTINE WriteStringValueC(id,firstString,value,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
@@ -431,7 +444,7 @@ CONTAINS
   !
 
   !>Writes the first string followed by a formatted double precision value to the given output stream specified by ID. Free format is used to format the value.
-  SUBROUTINE WriteStringValueDP(id,firstString,VALUE,err,error,*)
+  SUBROUTINE WriteStringValueDP(id,firstString,value,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
@@ -473,7 +486,7 @@ CONTAINS
     localString=firstString//NumberToVString(value,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueIntg",err,error)
@@ -500,7 +513,7 @@ CONTAINS
     localString=firstString//NumberToVString(value,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueLIntg",err,error)
@@ -568,7 +581,7 @@ CONTAINS
   !
 
   !>Writes the first string followed by a formatted varying string value to the given output stream specified by ID. Free format is used to format the value.
-  SUBROUTINE WriteStringValueVS(id,firstString,VALUE,err,error,*)
+  SUBROUTINE WriteStringValueVS(id,firstString,value,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
@@ -597,3509 +610,3550 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_C_C(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueCC(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_C_C",err,error,*999)
+!    ENTERS("WriteStringTwoValueCC",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_C_C")
+!    EXITS("WriteStringTwoValueCC")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_C_C",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_C_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_C_C
+999 ERRORS("WriteStringTwoValueCC",err,error)
+!    EXITS("WriteStringTwoValueCC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueCC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_C_DP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueCDP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_C_DP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueCDP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_C_DP")
+!    EXITS("WriteStringTwoValueCDP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_C_DP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_C_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_C_DP
+999 ERRORS("WriteStringTwoValueCDP",err,error)
+!    EXITS("WriteStringTwoValueCDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueCDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_C_INTG(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueCIntg(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_C_INTG",err,error,*999)
+!    ENTERS("WriteStringTwoValueCIntg",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_C_INTG")
+!    EXITS("WriteStringTwoValueCIntg")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_C_INTG",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_C_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_C_INTG
+999 ERRORS("WriteStringTwoValueCIntg",err,error)
+!    EXITS("WriteStringTwoValueCIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueCIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_C_L(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueCL(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_C_L",err,error,*999)
+    !ENTERS("WriteStringTwoValueCL",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString=firstString//firstValue//secondString//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_C_L")
+    !EXITS("WriteStringTwoValueCL")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_C_L",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_C_L")
+999 ERRORS("WriteStringTwoValueCL",err,error)
+    !EXITS("WriteStringTwoValueCL")
+    
     RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_C_L
+  END SUBROUTINE WriteStringTwoValueCL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_C_SP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueCSP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_C_SP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueCSP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_C_SP")
+!    EXITS("WriteStringTwoValueCSP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_C_SP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_C_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_C_SP
+999 ERRORS("WriteStringTwoValueCSP",err,error)
+!    EXITS("WriteStringTwoValueCSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueCSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted varying string SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_C_VS(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted varying string secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueCVS(id,firstString,firstValue,secondString,secondValue,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_C_VS",err,error,*999)
+!    ENTERS("WriteStringTwoValueCVS",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_C_VS")
+!    EXITS("WriteStringTwoValueCVS")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_C_VS",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_C_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_C_VS
+999 ERRORS("WriteStringTwoValueCVS",err,error)
+!    EXITS("WriteStringTwoValueCVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueCVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_DP_C(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueDPC(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_DP_C",err,error,*999)
+!    ENTERS("WriteStringTwoValueDPC",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,"*",err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_C")
+!    EXITS("WriteStringTwoValueDPC")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_DP_C",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_DP_C
+999 ERRORS("WriteStringTwoValueDPC",err,error)
+!    EXITS("WriteStringTwoValueDPC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueDPC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_DP_DP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueDPDP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_DP_DP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueDPDP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_DP")
+!    EXITS("WriteStringTwoValueDPDP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_DP_DP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_DP_DP
+999 ERRORS("WriteStringTwoValueDPDP",err,error)
+!    EXITS("WriteStringTwoValueDPDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueDPDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_DP_INTG(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueDPIntg(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_DP_INTG",err,error,*999)
+!    ENTERS("WriteStringTwoValueDPIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_INTG")
+!    EXITS("WriteStringTwoValueDPIntg")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_DP_INTG",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_DP_INTG
+999 ERRORS("WriteStringTwoValueDPIntg",err,error)
+!    EXITS("WriteStringTwoValueDPIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueDPIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_DP_L(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueDPL(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits7
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_DP_L",err,error,*999)
+!    ENTERS("WriteStringTwoValueDPL",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString2=localString//secondString
+    localString=localString2//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_L")
+!    EXITS("WriteStringTwoValueDPL")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_DP_L",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_DP_L
+999 ERRORS("WriteStringTwoValueDPL",err,error)
+!    EXITS("WriteStringTwoValueDPL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueDPL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_DP_SP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueDPSP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_DP_SP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueDPSP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_SP")
+!    EXITS("WriteStringTwoValueDPSP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_DP_SP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_DP_SP
+999 ERRORS("WriteStringTwoValueDPSP",err,error)
+!    EXITS("WriteStringTwoValueDPSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueDPSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_DP_VS(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueDPVS(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_DP_VS",err,error,*999)
+!    ENTERS("WriteStringTwoValueDPVS",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,"*",err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_VS")
+!    EXITS("WriteStringTwoValueDPVS")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_DP_VS",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_DP_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_DP_VS
+999 ERRORS("WriteStringTwoValueDPVS",err,error)
+!    EXITS("WriteStringTwoValueDPVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueDPVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_C(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueIntgC(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_INTG_C",err,error,*999)
+!    ENTERS("WriteStringTwoValueIntgC",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,"*",err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_C")
+!    EXITS("WriteStringTwoValueIntgC")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_INTG_C",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_C
+999 ERRORS("WriteStringTwoValueIntgC",err,error)
+!    EXITS("WriteStringTwoValueIntgC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueIntgC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_DP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueIntgDP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_INTG_DP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueIntgDP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_DP")
+!    EXITS("WriteStringTwoValueIntgDP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_INTG_DP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_DP
+999 ERRORS("WriteStringTwoValueIntgDP",err,error)
+!    EXITS("WriteStringTwoValueIntgDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueIntgDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_INTG(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueIntgIntg(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_INTG_INTG",err,error,*999)
+!    ENTERS("WriteStringTwoValueIntgIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_INTG")
+!    EXITS("WriteStringTwoValueIntgIntg")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_INTG_INTG",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_INTG
+999 ERRORS("WriteStringTwoValueIntgIntg",err,error)
+!    EXITS("WriteStringTwoValueIntgIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueIntgIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_L(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueIntgL(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_INTG_L",err,error,*999)
+!    ENTERS("WriteStringTwoValueIntgL",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString2=localString//secondString
+    localString=localString2//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_L")
+!    EXITS("WriteStringTwoValueIntgL")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_INTG_L",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_L
+999 ERRORS("WriteStringTwoValueIntgL",err,error)
+!    EXITS("WriteStringTwoValueIntgL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueIntgL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_SP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueIntgSP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_INTG_SP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueIntgSP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_SP")
+!    EXITS("WriteStringTwoValueIntgSP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_INTG_SP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_SP
+999 ERRORS("WriteStringTwoValueIntgSP",err,error)
+!    EXITS("WriteStringTwoValueIntgSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueIntgSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_VS(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueIntgVS(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_INTG_VS",err,error,*999)
+!    ENTERS("WriteStringTwoValueIntgVS",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,"*",err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_VS")
+!    EXITS("WriteStringTwoValueIntgVS")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_INTG_VS",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_INTG_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_INTG_VS
+999 ERRORS("WriteStringTwoValueIntgVS",err,error)
+!    EXITS("WriteStringTwoValueIntgVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueIntgVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_L_C(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueLC(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_L_C",err,error,*999)
+!    ENTERS("WriteStringTwoValueLC",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//LogicalToVString(firstValue,err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_L_C")
+!    EXITS("WriteStringTwoValueLC")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_L_C",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_L_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_L_C
+999 ERRORS("WriteStringTwoValueLC",err,error)
+!    EXITS("WriteStringTwoValueLC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueLC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_L_DP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueLDP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_L_DP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueLDP",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_L_DP")
+!    EXITS("WriteStringTwoValueLDP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_L_DP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_L_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_L_DP
+999 ERRORS("WriteStringTwoValueLDP",err,error)
+!    EXITS("WriteStringTwoValueLDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueLDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_L_INTG(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueLIntg(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_L_INTG",err,error,*999)
+!    ENTERS("WriteStringTwoValueLIntg",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
-    localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=localString//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_L_INTG")
+!    EXITS("WriteStringTwoValueLIntg")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_L_INTG",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_L_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_L_INTG
+999 ERRORS("WriteStringTwoValueLIntg",err,error)
+!    EXITS("WriteStringTwoValueLIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueLIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_L_L(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueLL(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_L_L",err,error,*999)
+!    ENTERS("WriteStringTwoValueLL",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString2=localString//secondString
+    localString=localString2//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_L_INTG_L")
+!    EXITS("WriteStringTwoValueLL")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_L_L",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_L_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_L_L
+999 ERRORS("WriteStringTwoValueLL",err,error)
+!    EXITS("WriteStringTwoValueLL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueLL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_L_SP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueLSP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_L_SP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueLSP",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
-    localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=localString//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_L_SP")
+!    EXITS("WriteStringTwoValueLSP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_L_SP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_L_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_L_SP
+999 ERRORS("WriteStringTwoValueLSP",err,error)
+!    EXITS("WriteStringTwoValueLSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueLSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_L_VS(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueLVS(id,firstString,firstValue,secondString,secondValue,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_L_VS",err,error,*999)
+!    ENTERS("WriteStringTwoValueLVS",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//LogicalToVString(firstValue,err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_L_VS")
+!    EXITS("WriteStringTwoValueLVS")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_L_VS",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_L_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_L_VS
+999 ERRORS("WriteStringTwoValueLVS",err,error)
+!    EXITS("WriteStringTwoValueLVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueLVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_SP_C(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueSPC(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_SP_C",err,error,*999)
+!    ENTERS("WriteStringTwoValueSPC",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,"*",err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_C")
+!    EXITS("WriteStringTwoValueSPC")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_SP_C",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_SP_C
+999 ERRORS("WriteStringTwoValueSPC",err,error)
+!    EXITS("WriteStringTwoValueSPC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueSPC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_SP_DP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueSPDP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_SP_DP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueSPDP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_DP")
+!    EXITS("WriteStringTwoValueSPDP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_SP_DP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_SP_DP
+999 ERRORS("WriteStringTwoValueSPDP",err,error)
+!    EXITS("WriteStringTwoValueSPDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueSPDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_SP_INTG(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueSPIntg(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_SP_INTG",err,error,*999)
+!    ENTERS("WriteStringTwoValueSPIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_INTG")
+!    EXITS("WriteStringTwoValueSPIntg")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_SP_INTG",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_SP_INTG
+999 ERRORS("WriteStringTwoValueSPIntg",err,error)
+!    EXITS("WriteStringTwoValueSPIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueSPIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_SP_L(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueSPL(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_SP_L",err,error,*999)
+!    ENTERS("WriteStringTwoValueSPL",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
-    localString=localString//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString=localString//secondString//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_L")
+!    EXITS("WriteStringTwoValueSPL")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_SP_L",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_SP_L
+999 ERRORS("WriteStringTwoValueSPL",err,error)
+!    EXITS("WriteStringTwoValueSPL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueSPL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_SP_SP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueSPSP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_SP_SP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueSPSP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)
+    localString=firstString//NumberToVString(firstValue,"*",err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_SP")
+!    EXITS("WriteStringTwoValueSPSP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_SP_SP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_SP_SP
+999 ERRORS("WriteStringTwoValueSPSP",err,error)
+!    EXITS("WriteStringTwoValueSPSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueSPSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_SP_VS(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueSPVS(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_SP_VS",err,error,*999)
+!    ENTERS("WriteStringTwoValueSPVS",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,"*",err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_VS")
+!    EXITS("WriteStringTwoValueSPVS")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_SP_VS",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_SP_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_SP_VS
+999 ERRORS("WriteStringTwoValueSPVS",err,error)
+!    EXITS("WriteStringTwoValueSPVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueSPVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_VS_C(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueVSC(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_VS_C",err,error,*999)
+!    ENTERS("WriteStringTwoValueVSC",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_C")
+!    EXITS("WriteStringTwoValueVSC")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_VS_C",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_VS_C
+999 ERRORS("WriteStringTwoValueVSC",err,error)
+!    EXITS("WriteStringTwoValueVSC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueVSC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_VS_DP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueVSDP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_VS_DP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueVSDP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_DP")
+!    EXITS("WriteStringTwoValueVSDP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_VS_DP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_VS_DP
+999 ERRORS("WriteStringTwoValueVSDP",err,error)
+!    EXITS("WriteStringTwoValueVSDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueVSDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_VS_INTG(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueVSIntg(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_VS_INTG",err,error,*999)
+!    ENTERS("WriteStringTwoValueVSIntg",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_INTG")
+!    EXITS("WriteStringTwoValueVSIntg")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_VS_INTG",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_VS_INTG
+999 ERRORS("WriteStringTwoValueVSIntg",err,error)
+!    EXITS("WriteStringTwoValueVSIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueVSIntg
 
   !
   !================================================================================================================================
   !
   
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_VS_L(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueVSL(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_VS_L",err,error,*999)
+!    ENTERS("WriteStringTwoValueVSL",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString=firstString//firstValue//secondString//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_L")
+!    EXITS("WriteStringTwoValueVSL")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_VS_L",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_VS_L
+999 ERRORS("WriteStringTwoValueVSL",err,error)
+!    EXITS("WriteStringTwoValueVSL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueVSL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_VS_SP(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueVSSP(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_TWO_VALUE_VS_SP",err,error,*999)
+ !   ENTERS("WriteStringTwoValueVSSP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_SP")
+!    EXITS("WriteStringTwoValueVSSP")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_VS_SP",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_VS_SP
+999 ERRORS("WriteStringTwoValueVSSP",err,error)
+!    EXITS("WriteStringTwoValueVSSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueVSSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted varying string SECOND_VALUE to the given output stream specified by ID. Free format is used to format both values.
-  SUBROUTINE WRITE_STRING_TWO_VALUE_VS_VS(ID,firstString,FIRST_VALUE,SECOND_STRING,SECOND_VALUE,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted varying string secondValue to the given output stream specified by ID. Free format is used to format both values.
+  SUBROUTINE WriteStringTwoValueVSVS(id,firstString,firstValue,secondString,secondValue,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_TWO_VALUE_VS_VS",err,error,*999)
+!    ENTERS("WriteStringTwoValueVSVS",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_VS")
+!    EXITS("WriteStringTwoValueVSVS")
     RETURN
-999 ERRORS("WRITE_STRING_TWO_VALUE_VS_VS",err,error)
-!    EXITS("WRITE_STRING_TWO_VALUE_VS_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_TWO_VALUE_VS_VS
+999 ERRORS("WriteStringTwoValueVSVS",err,error)
+!    EXITS("WriteStringTwoValueVSVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringTwoValueVSVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_C(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueC(id,firstString,value,formatString,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    CHARACTER(LEN=*), INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_C",err,error,*999)
+!    ENTERS("WriteStringFmtValueC",err,error,*999)
         
-    localString=firstString(1:LEN_TRIM(firstString))//VALUE(1:LEN_TRIM(VALUE))
+    localString=firstString(1:LEN_TRIM(firstString))//value(1:LEN_TRIM(value))
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_C")
+!    EXITS("WriteStringFmtValueC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_C",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_C
+999 ERRORS("WriteStringFmtValueC",err,error)
+!    EXITS("WriteStringFmtValueC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_DP(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueDP(id,firstString,value,formatString,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    REAL(DP), INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_DP",err,error,*999)
+!    ENTERS("WriteStringFmtValueDP",err,error,*999)
         
-    localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(value,formatString,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_DP")
+!    EXITS("WriteStringFmtValueDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_DP
+999 ERRORS("WriteStringFmtValueDP",err,error)
+!    EXITS("WriteStringFmtValueDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueDP
   
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_INTG(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueIntg(id,firstString,value,formatString,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    INTEGER(INTG), INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtValueIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(value,formatString,err,error,adjust=.FALSE.)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_INTG")
+!    EXITS("WriteStringFmtValueIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_INTG
+999 ERRORS("WriteStringFmtValueIntg",err,error)
+!    EXITS("WriteStringFmtValueIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_LINTG(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
-
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueLIntg(id,firstString,value,formatString,err,error,*)
+7
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(LINTG), INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    INTEGER(LINTG), INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_LINTG",err,error,*999)
+!    ENTERS("WriteStringFmtValueLIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(value,formatString,err,error,adjust=.FALSE.)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_LINTG")
+!    EXITS("WriteStringFmtValueLIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_LINTG",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_LINTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_LINTG
+999 ERRORS("WriteStringFmtValueLIntg",err,error)
+!    EXITS("WriteStringFmtValueLIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueLIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_L(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueL(id,firstString,value,formatString,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    LOGICAL, INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_L",err,error,*999)
+!    ENTERS("WriteStringFmtValueL",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(VALUE,err,error)
+    localString=firstString//LogicalToVString(value,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_L")
+!    EXITS("WriteStringFmtValueL")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_L",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_L
+999 ERRORS("WriteStringFmtValueL",err,error)
+!    EXITS("WriteStringFmtValueL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_SP(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueSP(id,firstString,value,formatString,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    REAL(SP), INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_SP",err,error,*999)
+!    ENTERS("WriteStringFmtValueSP",err,error,*999)
         
-    localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(value,formatString,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_SP")
+!    EXITS("WriteStringFmtValueSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_SP
+999 ERRORS("WriteStringFmtValueSP",err,error)
+!    EXITS("WriteStringFmtValueSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the FIRST STRING followed by a formatted character VALUE to the given output stream specified by ID. FORMAT_STRING is used to format the value.
-  SUBROUTINE WRITE_STRING_FMT_VALUE_VS(ID,firstString,VALUE,FORMAT_STRING,err,error,*)
+  !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
+  SUBROUTINE WriteStringFmtValueVS(id,firstString,value,formatString,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: VALUE !<The value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FORMAT_STRING !<The format string to be used to format the value
+    TYPE(VARYING_STRING), INTENT(IN) :: value !<The value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: formatString !<The format string to be used to format the value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_VALUE_VS",err,error,*999)
+!    ENTERS("WriteStringFmtValueVS",err,error,*999)
         
-    localString=firstString//VALUE
+    localString=firstString//value
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_VALUE_VS")
+!    EXITS("WriteStringFmtValueVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_VALUE_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_VALUE_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_VALUE_VS
+999 ERRORS("WriteStringFmtValueVS",err,error)
+!    EXITS("WriteStringFmtValueVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtValueVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_C(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueCC(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_C",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueCC",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_C")
+!    EXITS("WriteStringFmtTwoValueCC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_C_C",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_C
+999 ERRORS("WriteStringFmtTwoValueCC",err,error)
+!    EXITS("WriteStringFmtTwoValueCC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueCC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_DP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueCDP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_DP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueCDP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_DP")
+!    EXITS("WriteStringFmtTwoValueCDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_C_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_DP
+999 ERRORS("WriteStringFmtTwoValueCDP",err,error)
+!    EXITS("WriteStringFmtTwoValueCDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueCDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_INTG(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueCIntg(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueCIntg",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_INTG")
+!    EXITS("WriteStringFmtTwoValueCIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_C_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_INTG
+999 ERRORS("WriteStringFmtTwoValueCIntg",err,error)
+!    EXITS("WriteStringFmtTwoValueCIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueCIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_L(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueCL(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_L",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueCL",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString=firstString//firstValue//secondString//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_L")
+!    EXITS("WriteStringFmtTwoValueCL")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_C_L",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_L
+999 ERRORS("WriteStringFmtTwoValueCL",err,error)
+!    EXITS("WriteStringFmtTwoValueCL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueCL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_SP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueCSP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_SP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueCSP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_SP")
+!    EXITS("WriteStringFmtTwoValueCSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_C_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_SP
+999 ERRORS("WriteStringFmtTwoValueCSP",err,error)
+!    EXITS("WriteStringFmtTwoValueCSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueCSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted character FIRST_VALUE and the the SECOND_STRING followed by a formatted varying string SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_VS(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted character firstValue and the the secondString followed by a formatted varying string secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueCVS(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    CHARACTER(LEN=*), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_VS",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueCVS",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_VS")
+!    EXITS("WriteStringFmtTwoValueCVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_C_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_C_VS
+999 ERRORS("WriteStringFmtTwoValueCVS",err,error)
+!    EXITS("WriteStringFmtTwoValueCVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueCVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_C(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueDPC(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_C",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueDPC",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_C")
+!    EXITS("WriteStringFmtTwoValueDPC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_DP_C",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_C
+999 ERRORS("WriteStringFmtTwoValueDPC",err,error)
+!    EXITS("WriteStringFmtTwoValueDPC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueDPC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_DP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueDPDP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_DP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueDPDP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_DP")
+!    EXITS("WriteStringFmtTwoValueDPDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_DP_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_DP
+999 ERRORS("WriteStringFmtTwoValueDPDP",err,error)
+!    EXITS("WriteStringFmtTwoValueDPDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueDPDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_INTG(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueDPIntg(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueDPIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_INTG")
+!    EXITS("WriteStringFmtTwoValueDPIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_DP_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_INTG
+999 ERRORS("WriteStringFmtTwoValueDPIntg",err,error)
+!    EXITS("WriteStringFmtTwoValueDPIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueDPIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_L(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueDPL(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_L",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueDPL",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString2=localString//secondString
+    localString=localString2//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_L")
+!    EXITS("WriteStringFmtTwoValueDPL")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_DP_L",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_L
+999 ERRORS("WriteStringFmtTwoValueDPL",err,error)
+!    EXITS("WriteStringFmtTwoValueDPL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueDPL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_SP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueDPSP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_SP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueDPSP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_SP")
+!    EXITS("WriteStringFmtTwoValueDPSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_DP_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_SP
+999 ERRORS("WriteStringFmtTwoValueDPSP",err,error)
+!    EXITS("WriteStringFmtTwoValueDPSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueDPSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted double precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_VS(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted double precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueDPVS(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(DP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(DP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_VS",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueDPVS",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_VS")
+!    EXITS("WriteStringFmtTwoValueDPVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_DP_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_DP_VS
+999 ERRORS("WriteStringFmtTwoValueDPVS",err,error)
+!    EXITS("WriteStringFmtTwoValueDPVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueDPVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_C(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueIntgC(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_C",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueIntgC",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_C")
+!    EXITS("WriteStringFmtTwoValueIntgC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_INTG_C",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_C
+999 ERRORS("WriteStringFmtTwoValueIntgC",err,error)
+!    EXITS("WriteStringFmtTwoValueIntgC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueIntgC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_DP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueIntgDP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_DP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueIntgDP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_DP")
+!    EXITS("WriteStringFmtTwoValueIntgDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_INTG_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_DP
+999 ERRORS("WriteStringFmtTwoValueIntgDP",err,error)
+!    EXITS("WriteStringFmtTwoValueIntgDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueIntgDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_INTG(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueIntgIntg(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueIntgIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_INTG")
+!    EXITS("WriteStringFmtTwoValueIntgIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_INTG_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_INTG
+999 ERRORS("WriteStringFmtTwoValueIntgIntg",err,error)
+!    EXITS("WriteStringFmtTwoValueIntgIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueIntgIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_L(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueIntgL(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_L",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueIntgL",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString2=localString//secondString
+    localString=localString2//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_L")
+!    EXITS("WriteStringFmtTwoValueIntgL")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_INTG_L",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_L
+999 ERRORS("WriteStringFmtTwoValueIntgL",err,error)
+!    EXITS("WriteStringFmtTwoValueIntgL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueIntgL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_SP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueIntgSP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_SP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueIntgSP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_SP")
+!    EXITS("WriteStringFmtTwoValueIntgSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_INTG_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_SP
+999 ERRORS("WriteStringFmtTwoValueIntgSP",err,error)
+!    EXITS("WriteStringFmtTwoValueIntgSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueIntgSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted integer FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_VS(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted integer firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueIntgVS(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
    
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    INTEGER(INTG), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_VS",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueIntgVS",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_VS")
+!    EXITS("WriteStringFmtTwoValueIntgVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_INTG_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_INTG_VS
+999 ERRORS("WriteStringFmtTwoValueIntgVS",err,error)
+!    EXITS("WriteStringFmtTwoValueIntgVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueIntgVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_C(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueLC(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_C",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueLC",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//LogicalToVString(firstValue,err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_C")
+!    EXITS("WriteStringFmtTwoValueLC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_L_C",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_C
+999 ERRORS("WriteStringFmtTwoValueLC",err,error)
+!    EXITS("WriteStringFmtTwoValueLC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueLC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_DP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueLDP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_DP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueLDP",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_DP")
+!    EXITS("WriteStringFmtTwoValueLDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_L_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_DP
+999 ERRORS("WriteStringFmtTwoValueLDP",err,error)
+!    EXITS("WriteStringFmtTwoValueLDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueLDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_INTG(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueLIntg(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueLIntg",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
-    localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=localString//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_INTG")
+!    EXITS("WriteStringFmtTwoValueLIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_L_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_INTG
+999 ERRORS("WriteStringFmtTwoValueLIntg",err,error)
+!    EXITS("WriteStringFmtTwoValueLIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueLIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_L(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueLL(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_L",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueLL",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString2=localString//secondString
+    localString=localString2//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_L_INTG_L")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_L_L",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_L
+999 ERRORS("WriteStringFmtTwoValueLL",err,error)
+!    EXITS("WriteStringFmtTwoValueLL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueLL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_SP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueLSP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_SP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueLSP",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)
+    localString=firstString//LogicalToVString(firstValue,err,error)
     IF(err/=0) GOTO 999
-    localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=localString//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_SP")
+!    EXITS("WriteStringFmtTwoValueLSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_L_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_SP
+999 ERRORS("WriteStringFmtTwoValueLSP",err,error)
+!    EXITS("WriteStringFmtTwoValueLSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueLSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted logical FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_VS(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted logical firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueLVS(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    LOGICAL, INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    LOGICAL, INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_VS",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueLVS",err,error,*999)
         
-    localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//LogicalToVString(firstValue,err,error)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_VS")
+!    EXITS("WriteStringFmtTwoValueLVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_L_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_L_VS
+999 ERRORS("WriteStringFmtTwoValueLVS",err,error)
+!    EXITS("WriteStringFmtTwoValueLVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueLVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_C(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueSPC(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_C",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueSPC",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_C")
+!    EXITS("WriteStringFmtTwoValueSPC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_SP_C",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_C
+999 ERRORS("WriteStringFmtTwoValueSPC",err,error)
+!    EXITS("WriteStringFmtTwoValueSPC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueSPC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_DP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueSPDP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
    
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_DP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueSPDP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_DP")
+!    EXITS("WriteStringFmtTwoValueSPDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_SP_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_DP
+999 ERRORS("WriteStringFmtTwoValueSPDP",err,error)
+!    EXITS("WriteStringFmtTwoValueSPDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueSPDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_INTG(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueSPIntg(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueSPIntg",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_INTG")
+!    EXITS("WriteStringFmtTwoValueSPIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_SP_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_INTG
+999 ERRORS("WriteStringFmtTwoValueSPIntg",err,error)
+!    EXITS("WriteStringFmtTwoValueSPIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueSPIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_L(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueSPL(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_L",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueSPL",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
-    localString=localString//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString=localString//secondString//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_L")
+!    EXITS("WriteStringFmtTwoValueSPL")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_SP_L",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_L
+999 ERRORS("WriteStringFmtTwoValueSPL",err,error)
+!    EXITS("WriteStringFmtTwoValueSPL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueSPL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_SP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueSPSP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_SP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueSPSP",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     !CPB 21/02/2007 AIX doesn't like concatenating vstrings and reassigning to itself so split this into two steps
-    localString2=localString//SECOND_STRING
-    localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString2=localString//secondString
+    localString=localString2//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_SP")
+!    EXITS("WriteStringFmtTwoValueSPSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_SP_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_SP
+999 ERRORS("WriteStringFmtTwoValueSPSP",err,error)
+!    EXITS("WriteStringFmtTwoValueSPSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueSPSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted single precision FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_VS(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted single precision firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueSPVS(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    REAL(SP), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    REAL(SP), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_VS",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueSPVS",err,error,*999)
         
-    localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
+    localString=firstString//NumberToVString(firstValue,firstFormat,err,error,adjust=.FALSE.)//secondString//secondValue
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_VS")
+!    EXITS("WriteStringFmtTwoValueSPVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_SP_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_SP_VS
+999 ERRORS("WriteStringFmtTwoValueSPVS",err,error)
+!    EXITS("WriteStringFmtTwoValueSPVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueSPVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted character SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_C(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted character secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueVSC(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_C",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueVSC",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_C")
+!    EXITS("WriteStringFmtTwoValueVSC")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_VS_C",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_C")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_C
+999 ERRORS("WriteStringFmtTwoValueVSC",err,error)
+!    EXITS("WriteStringFmtTwoValueVSC")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueVSC
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted double precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_DP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted double precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueVSDP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(DP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(DP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_DP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueVSDP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_DP")
+!    EXITS("WriteStringFmtTwoValueVSDP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_VS_DP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_DP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_DP
+999 ERRORS("WriteStringFmtTwoValueVSDP",err,error)
+!    EXITS("WriteStringFmtTwoValueVSDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueVSDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted integer SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_INTG(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE, &
-    & SECOND_FORMAT,err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted integer secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueVSIntg(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    INTEGER(INTG), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    INTEGER(INTG), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_INTG",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueVSIntg",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_INTG")
+!    EXITS("WriteStringFmtTwoValueVSIntg")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_VS_INTG",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_INTG")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_INTG
+999 ERRORS("WriteStringFmtTwoValueVSIntg",err,error)
+!    EXITS("WriteStringFmtTwoValueVSIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueVSIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted logical SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_L(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted logical secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueVSL(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    LOGICAL, INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    LOGICAL, INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_L",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueVSL",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
+    localString=firstString//firstValue//secondString//LogicalToVString(secondValue,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_L")
+!    EXITS("WriteStringFmtTwoValueVSL")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_VS_L",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_L")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_L
+999 ERRORS("WriteStringFmtTwoValueVSL",err,error)
+!    EXITS("WriteStringFmtTwoValueVSL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueVSL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted single precision SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_SP(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted single precision secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueVSSP(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    REAL(SP), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    REAL(SP), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
- !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_SP",err,error,*999)
+ !   ENTERS("WriteStringFmtTwoValueVSSP",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
+    localString=firstString//firstValue//secondString//NumberToVString(secondValue,secondFormat,err,error,adjust=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_SP")
+!    EXITS("WriteStringFmtTwoValueVSSP")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_VS_SP",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_SP")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_SP
+999 ERRORS("WriteStringFmtTwoValueVSSP",err,error)
+!    EXITS("WriteStringFmtTwoValueVSSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueVSSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the firstString followed by a formatted varying string FIRST_VALUE and the the SECOND_STRING followed by a formatted varying string SECOND_VALUE to the given output stream specified by ID. FIRST_FORMAT is used to format the first value and SECOND_FORMAT is used to format the second value.
-  SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_VS(ID,firstString,FIRST_VALUE,FIRST_FORMAT,SECOND_STRING,SECOND_VALUE,SECOND_FORMAT, &
-    & err,error,*)
+  !>Writes the firstString followed by a formatted varying string firstValue and the the secondString followed by a formatted varying string secondValue to the given output stream specified by ID. firstFormat is used to format the first value and secondFormat is used to format the second value.
+  SUBROUTINE WriteStringFmtTwoValueVSVS(id,firstString,firstValue,firstFormat,secondString,secondValue,secondFormat,err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: FIRST_VALUE !<The first value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used to format the first value
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_STRING !<The second string to be output
-    TYPE(VARYING_STRING), INTENT(IN) :: SECOND_VALUE !<The second value to be output
-    CHARACTER(LEN=*), INTENT(IN) :: SECOND_FORMAT !<The format string to be used to format the second value
+    TYPE(VARYING_STRING), INTENT(IN) :: firstValue !<The first value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used to format the first value
+    CHARACTER(LEN=*), INTENT(IN) :: secondString !<The second string to be output
+    TYPE(VARYING_STRING), INTENT(IN) :: secondValue !<The second value to be output
+    CHARACTER(LEN=*), INTENT(IN) :: secondFormat !<The format string to be used to format the second value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
 
-!    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_VS",err,error,*999)
+!    ENTERS("WriteStringFmtTwoValueVSVS",err,error,*999)
         
-    localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
+    localString=firstString//firstValue//secondString//secondValue
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(id,err,error,*999)
       
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_VS")
+!    EXITS("WriteStringFmtTwoValueVSVS")
     RETURN
-999 ERRORS("WRITE_STRING_FMT_TWO_VALUE_VS_VS",err,error)
-!    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_VS")
-    RETURN 1   
-  END SUBROUTINE WRITE_STRING_FMT_TWO_VALUE_VS_VS
+999 ERRORS("WriteStringFmtTwoValueVSVS",err,error)
+!    EXITS("WriteStringFmtTwoValueVSVS")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringFmtTwoValueVSVS
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given double precision VECTOR to the given output stream specified by ID. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_IDX and LAST_IDX are the extents of the data and DELTA is the NUMBER of indices to skip for each index.
-  SUBROUTINE WRITE_STRING_VECTOR_DP(ID,FIRST_IDX,DELTA,LAST_IDX,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT,REPEAT_FORMAT, &
-    & err,error,*)
+  !>Writes the given double precision vector to the given output stream specified by ID. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIdx and lastIdx are the extents of the data and delta is the number of indices to skip for each index.
+  SUBROUTINE WriteStringVectorDP(id,firstIdx,delta,lastIdx,numberFirst,numberRepeat,vector,firstFormat,repeatFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_IDX !<The first index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: LAST_IDX !<The last index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    REAL(DP), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIdx !<The first index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: lastIdx !<The last index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    REAL(DP), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
 
-!    ENTERS("WRITE_STRING_VECTOR_DP",err,error,*999)
+!    ENTERS("WriteStringVectorDP",err,error,*999)
         
-    current=FIRST_IDX
-    final=current+(NUMBER_FIRST-1)*DELTA
-    IF(final>LAST_IDX) final=LAST_IDX
+    current=firstIdx
+    final=current+(numberFirst-1)*delta
+    IF(final>lastIdx) final=lastIdx
 
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
-    DO WHILE(final<LAST_IDX) !more stuff to do
-      current=final+DELTA
-      final=final+NUMBER_REPEAT*DELTA
-      IF(final>LAST_IDX) final=LAST_IDX
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
-    ENDDO !final<LAST_IDX
+    WRITE(outputString,FMT=firstFormat) (vector(count),count=current,final,delta)
+    CALL WriteStr(id,err,error,*999)
+    DO WHILE(final<lastIdx) !more stuff to do
+      current=final+delta
+      final=final+numberRepeat*delta
+      IF(final>lastIdx) final=lastIdx
+      WRITE(outputString,FMT=repeatFormat) (vector(count),count=current,final,delta)
+      CALL WriteStr(id,err,error,*999)
+    ENDDO !final<lastIdx
 
-!    EXITS("WRITE_STRING_VECTOR_DP")
+!    EXITS("WriteStringVectorDP")
     RETURN
-999 ERRORS("WRITE_STRING_VECTOR_DP",err,error)
-!    EXITS("WRITE_STRING_VECTOR_DP")
+999 ERRORS("WriteStringVectorDP",err,error)
+!    EXITS("WriteStringVectorDP")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_VECTOR_DP
+    
+  END SUBROUTINE WriteStringVectorDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given integer VECTOR to the given output stream specified by ID. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_IDX and LAST_IDX are the extents of the data and DELTA is the NUMBER of indices to skip for each index.
-  SUBROUTINE WRITE_STRING_VECTOR_INTG(ID,FIRST_IDX,DELTA,LAST_IDX,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT,REPEAT_FORMAT, &
-    & err,error,*)
+  !>Writes the given integer vector to the given output stream specified by ID. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIdx and lastIdx are the extents of the data and delta is the number of indices to skip for each index.
+  SUBROUTINE WriteStringVectorIntg(id,firstIdx,delta,lastIdx,numberFirst,numberRepeat,vector,firstFormat,repeatFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_IDX !<The first index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: LAST_IDX !<The last index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    INTEGER(INTG), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIdx !<The first index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: lastIdx !<The last index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    INTEGER(INTG), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
 
-!    ENTERS("WRITE_STRING_VECTOR_INTG",err,error,*999)
+!    ENTERS("WriteStringVectorIntg",err,error,*999)
         
-    current=FIRST_IDX
-    final=current+(NUMBER_FIRST-1)*DELTA
-    IF(final>LAST_IDX) final=LAST_IDX
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
-    DO WHILE(final<LAST_IDX) !more stuff to do
-      current=final+DELTA
-      final=final+NUMBER_REPEAT*DELTA
-      IF(final>LAST_IDX) final=LAST_IDX
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
-    ENDDO !final<LAST_IDX
+    current=firstIdx
+    final=current+(numberFirst-1)*delta
+    IF(final>lastIdx) final=lastIdx
+    WRITE(outputString,FMT=firstFormat) (vector(count),count=current,final,delta)
+    CALL WriteStr(id,err,error,*999)
+    DO WHILE(final<lastIdx) !more stuff to do
+      current=final+delta
+      final=final+numberRepeat*delta
+      IF(final>lastIdx) final=lastIdx
+      WRITE(outputString,FMT=repeatFormat) (vector(count),count=current,final,delta)
+      CALL WriteStr(id,err,error,*999)
+    ENDDO !final<lastIdx
 
-!    EXITS("WRITE_STRING_VECTOR_INTG")
+!    EXITS("WriteStringVectorIntg")
     RETURN
-999 ERRORS("WRITE_STRING_VECTOR_INTG",err,error)
-!    EXITS("WRITE_STRING_VECTOR_INTG")
+999 ERRORS("WriteStringVectorIntg",err,error)
+!    EXITS("WriteStringVectorIntg")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_VECTOR_INTG
+    
+  END SUBROUTINE WriteStringVectorIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given integer VECTOR to the given output stream specified by ID. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_IDX and LAST_IDX are the extents of the data and DELTA is the NUMBER of indices to skip for each index.
-  SUBROUTINE WRITE_STRING_VECTOR_LINTG(ID,FIRST_IDX,DELTA,LAST_IDX,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT,REPEAT_FORMAT, &
-    & err,error,*)
+  !>Writes the given integer vector to the given output stream specified by ID. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIdx and lastIdx are the extents of the data and delta is the number of indices to skip for each index.
+  SUBROUTINE WriteStringVectorLIntg(id,firstIdx,delta,lastIdx,numberFirst,numberRepeat,vector,firstFormat,repeatFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_IDX !<The first index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: LAST_IDX !<The last index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    INTEGER(LINTG), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIdx !<The first index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: lastIdx !<The last index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    INTEGER(LINTG), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
 
-!    ENTERS("WRITE_STRING_VECTOR_LINTG",err,error,*999)
+!    ENTERS("WriteStringVectorLIntg",err,error,*999)
         
-    current=FIRST_IDX
-    final=current+(NUMBER_FIRST-1)*DELTA
-    IF(final>LAST_IDX) final=LAST_IDX
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
-    DO WHILE(final<LAST_IDX) !more stuff to do
-      current=final+DELTA
-      final=final+NUMBER_REPEAT*DELTA
-      IF(final>LAST_IDX) final=LAST_IDX
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
-    ENDDO !final<LAST_IDX
+    current=firstIdx
+    final=current+(numberFirst-1)*delta
+    IF(final>lastIdx) final=lastIdx
+    WRITE(outputString,FMT=firstFormat) (vector(count),count=current,final,delta)
+    CALL WriteStr(id,err,error,*999)
+    DO WHILE(final<lastIdx) !more stuff to do
+      current=final+delta
+      final=final+numberRepeat*delta
+      IF(final>lastIdx) final=lastIdx
+      WRITE(outputString,FMT=repeatFormat) (vector(count),count=current,final,delta)
+      CALL WriteStr(id,err,error,*999)
+    ENDDO !final<lastIdx
 
-!    EXITS("WRITE_STRING_VECTOR_LINTG")
+!    EXITS("WriteStringVectorLIntg")
     RETURN
-999 ERRORS("WRITE_STRING_VECTOR_LINTG",err,error)
-!    EXITS("WRITE_STRING_VECTOR_LINTG")
+999 ERRORS("WriteStringVectorLIntg",err,error)
+!    EXITS("WriteStringVectorLIntg")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_VECTOR_LINTG
+    
+  END SUBROUTINE WriteStringVectorLIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given logical VECTOR to the given output stream specified by ID. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_IDX and LAST_IDX are the extents of the data and DELTA is the NUMBER of indices to skip for each index.
-  SUBROUTINE WRITE_STRING_VECTOR_L(ID,FIRST_IDX,DELTA,LAST_IDX,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT,REPEAT_FORMAT, &
-    & err,error,*)
+  !>Writes the given logical vector to the given output stream specified by ID. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIdx and lastIdx are the extents of the data and delta is the number of indices to skip for each index.
+  SUBROUTINE WriteStringVectorL(id,firstIdx,delta,lastIdx,numberFirst,numberRepeat,vector,firstFormat,repeatFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_IDX !<The first index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: LAST_IDX !<The last index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    LOGICAL, INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIdx !<The first index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: lastIdx !<The last index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    LOGICAL, INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
 
-!    ENTERS("WRITE_STRING_VECTOR_L",err,error,*999)
+!    ENTERS("WriteStringVectorL",err,error,*999)
         
-    current=FIRST_IDX
-    final=current+(NUMBER_FIRST-1)*DELTA
-    IF(final>LAST_IDX) final=LAST_IDX
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
-    DO WHILE(final<LAST_IDX) !more stuff to do
-      current=final+DELTA
-      final=final+NUMBER_REPEAT*DELTA
-      IF(final>LAST_IDX) final=LAST_IDX
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
-    ENDDO !final<LAST_IDX
+    current=firstIdx
+    final=current+(numberFirst-1)*delta
+    IF(final>lastIdx) final=lastIdx
+    WRITE(outputString,FMT=firstFormat) (vector(count),count=current,final,delta)
+    CALL WriteStr(id,err,error,*999)
+    DO WHILE(final<lastIdx) !more stuff to do
+      current=final+delta
+      final=final+numberRepeat*delta
+      IF(final>lastIdx) final=lastIdx
+      WRITE(outputString,FMT=repeatFormat) (vector(count),count=current,final,delta)
+      CALL WriteStr(id,err,error,*999)
+    ENDDO !final<lastIdx
 
-!    EXITS("WRITE_STRING_VECTOR_L")
+!    EXITS("WriteStringVectorL")
     RETURN
-999 ERRORS("WRITE_STRING_VECTOR_L",err,error)
-!    EXITS("WRITE_STRING_VECTOR_L")
+999 ERRORS("WriteStringVectorL",err,error)
+!    EXITS("WriteStringVectorL")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_VECTOR_L
+    
+  END SUBROUTINE WriteStringVectorL
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given single precision VECTOR to the given output stream specified by ID. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_IDX and LAST_IDX are the extents of the data and DELTA is the NUMBER of indices to skip for each index.
-  SUBROUTINE WRITE_STRING_VECTOR_SP(ID,FIRST_IDX,DELTA,LAST_IDX,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT,REPEAT_FORMAT, &
-    & err,error,*)
+  !>Writes the given single precision vector to the given output stream specified by ID. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstIdx and lastIdx are the extents of the data and delta is the number of indices to skip for each index.
+  SUBROUTINE WriteStringVectorSP(id,firstIdx,delta,lastIdx,numberFirst,numberRepeat,vector,firstFormat,repeatFormat,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_IDX !<The first index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: LAST_IDX !<The last index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    REAL(SP), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstIdx !<The first index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: lastIdx !<The last index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    REAL(SP), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
 
-!    ENTERS("WRITE_STRING_VECTOR_SP",err,error,*999)
+!    ENTERS("WriteStringVectorSP",err,error,*999)
         
-    current=FIRST_IDX
-    final=current+(NUMBER_FIRST-1)*DELTA
-    IF(final>LAST_IDX) final=LAST_IDX
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
-    DO WHILE(final<LAST_IDX) !more stuff to do
-      current=final+DELTA
-      final=final+NUMBER_REPEAT*DELTA
-      IF(final>LAST_IDX) final=LAST_IDX
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
-    ENDDO !final<LAST_IDX
+    current=firstIdx
+    final=current+(numberFirst-1)*delta
+    IF(final>lastIdx) final=lastIdx
+    WRITE(outputString,FMT=firstFormat) (vector(count),count=current,final,delta)
+    CALL WriteStr(id,err,error,*999)
+    DO WHILE(final<lastIdx) !more stuff to do
+      current=final+delta
+      final=final+numberRepeat*delta
+      IF(final>lastIdx) final=lastIdx
+      WRITE(outputString,FMT=repeatFormat) (vector(count),count=current,final,delta)
+      CALL WriteStr(id,err,error,*999)
+    ENDDO !final<lastIdx
 
-!    EXITS("WRITE_STRING_VECTOR_SP")
+!    EXITS("WriteStringVectorSP")
     RETURN
-999 ERRORS("WRITE_STRING_VECTOR_SP",err,error)
-!    EXITS("WRITE_STRING_VECTOR_SP")
+999 ERRORS("WriteStringVectorSP",err,error)
+!    EXITS("WriteStringVectorSP")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_VECTOR_SP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Writes the given indexed double precision VECTOR to the given output stream specified by ID. NUM_INDICES is the number of indices and INDICES(i) contain the indices of the vector to write. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. DELTA is the number of actual indices to skip for each index.
-  SUBROUTINE WRITE_STRING_IDX_VECTOR_DP(ID,NUM_INDICES,INDICES,DELTA,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT, &
-    & REPEAT_FORMAT,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: NUM_INDICES !<The number of indices of the vector to output
-    INTEGER(INTG), INTENT(IN) :: INDICES(NUM_INDICES) !<INDICES(i). The i'th index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    REAL(DP), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) ::  current,count,number_to_do
-
-!    ENTERS("WRITE_STRING_IDX_VECTOR_DP",err,error,*999)
-        
-    number_to_do=NUM_INDICES
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
-    number_to_do=NUM_INDICES-NUMBER_FIRST
-    current=NUMBER_FIRST+1
-    DO WHILE(number_to_do>0) !more stuff to do
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
-        & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
-      current=current+NUMBER_REPEAT
-      number_to_do=number_to_do-NUMBER_REPEAT
-    ENDDO !number_to_do > 0
-
-!    EXITS("WRITE_STRING_IDX_VECTOR_DP")
-    RETURN
-999 ERRORS("WRITE_STRING_IDX_VECTOR_DP",err,error)
-!    EXITS("WRITE_STRING_IDX_VECTOR_DP")
-    RETURN 1
-  END SUBROUTINE WRITE_STRING_IDX_VECTOR_DP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Writes the given indexed integer VECTOR to the given output stream specified by ID. NUM_INDICES is the number of indices and INDICES(i) contain the indices of the vector to write. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. DELTA is the number of actual indices to skip for each index.
-  SUBROUTINE WRITE_STRING_IDX_VECTOR_INTG(ID,NUM_INDICES,INDICES,DELTA,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT, &
-    & REPEAT_FORMAT,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: NUM_INDICES !<The number of indices of the vector to output
-    INTEGER(INTG), INTENT(IN) :: INDICES(NUM_INDICES) !<INDICES(i). The i'th index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    INTEGER(INTG), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) ::  current,count,number_to_do
-
-!    ENTERS("WRITE_STRING_IDX_VECTOR_INTG",err,error,*999)
-        
-    number_to_do=NUM_INDICES
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
-    number_to_do=NUM_INDICES-NUMBER_FIRST
-    current=NUMBER_FIRST+1
-    DO WHILE(number_to_do>0) !more stuff to do
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
-        & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
-      current=current+NUMBER_REPEAT
-      number_to_do=number_to_do-NUMBER_REPEAT
-    ENDDO !number_to_do > 0
-
-!    EXITS("WRITE_STRING_IDX_VECTOR_INTG")
-    RETURN
-999 ERRORS("WRITE_STRING_IDX_VECTOR_INTG",err,error)
-!    EXITS("WRITE_STRING_IDX_VECTOR_INTG")
-    RETURN 1
-  END SUBROUTINE WRITE_STRING_IDX_VECTOR_INTG
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Writes the given indexed integer VECTOR to the given output stream specified by ID. NUM_INDICES is the number of indices and INDICES(i) contain the indices of the vector to write. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. DELTA is the number of actual indices to skip for each index.
-  SUBROUTINE WRITE_STRING_IDX_VECTOR_LINTG(ID,NUM_INDICES,INDICES,DELTA,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT, &
-    & REPEAT_FORMAT,err,error,*)
-
-    !#### Generic-Subroutine: WRITE_STRING_IDX_VECTOR_LINTG
-    !###  Description:
-    !###    
-    !###  Parent-subroutines: WRITE_STRING_IDX_VECTOR
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: NUM_INDICES !<The number of indices of the vector to output
-    INTEGER(INTG), INTENT(IN) :: INDICES(NUM_INDICES) !<INDICES(i). The i'th index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    INTEGER(LINTG), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) ::  current,count,number_to_do
-
-!    ENTERS("WRITE_STRING_IDX_VECTOR_LINTG",err,error,*999)
-        
-    number_to_do=NUM_INDICES
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
-    number_to_do=NUM_INDICES-NUMBER_FIRST
-    current=NUMBER_FIRST+1
-    DO WHILE(number_to_do>0) !more stuff to do
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
-        & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
-      current=current+NUMBER_REPEAT
-      number_to_do=number_to_do-NUMBER_REPEAT
-    ENDDO !number_to_do > 0
-
-!    EXITS("WRITE_STRING_IDX_VECTOR_LINTG")
-    RETURN
-999 ERRORS("WRITE_STRING_IDX_VECTOR_LINTG",err,error)
-!    EXITS("WRITE_STRING_IDX_VECTOR_LINTG")
-    RETURN 1
-  END SUBROUTINE WRITE_STRING_IDX_VECTOR_LINTG
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Writes the given indexed logical VECTOR to the given output stream specified by ID. NUM_INDICES is the number of indices and INDICES(i) contain the indices of the vector to write. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. DELTA is the number of actual indices to skip for each index.
-  SUBROUTINE WRITE_STRING_IDX_VECTOR_L(ID,NUM_INDICES,INDICES,DELTA,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT, &
-    & REPEAT_FORMAT,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: NUM_INDICES !<The number of indices of the vector to output
-    INTEGER(INTG), INTENT(IN) :: INDICES(NUM_INDICES) !<INDICES(i). The i'th index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    LOGICAL, INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) ::  current,count,number_to_do
-
-!    ENTERS("WRITE_STRING_IDX_VECTOR_L",err,error,*999)
-        
-    number_to_do=NUM_INDICES
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
-    number_to_do=NUM_INDICES-NUMBER_FIRST
-    current=NUMBER_FIRST+1
-    DO WHILE(number_to_do>0) !more stuff to do
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
-        & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
-      current=current+NUMBER_REPEAT
-      number_to_do=number_to_do-NUMBER_REPEAT
-    ENDDO !number_to_do > 0
-
-!    EXITS("WRITE_STRING_IDX_VECTOR_L")
-    RETURN
-999 ERRORS("WRITE_STRING_IDX_VECTOR_L",err,error)
-!    EXITS("WRITE_STRING_IDX_VECTOR_L")
-    RETURN 1
-  END SUBROUTINE WRITE_STRING_IDX_VECTOR_L
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Writes the given indexed single precision VECTOR to the given output stream specified by ID. NUM_INDICES is the number of indices and INDICES(i) contain the indices of the vector to write. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. DELTA is the number of actual indices to skip for each index.
-  SUBROUTINE WRITE_STRING_IDX_VECTOR_SP(ID,NUM_INDICES,INDICES,DELTA,NUMBER_FIRST,NUMBER_REPEAT,VECTOR,FIRST_FORMAT, &
-    & REPEAT_FORMAT,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: NUM_INDICES !<The number of indices of the vector to output
-    INTEGER(INTG), INTENT(IN) :: INDICES(NUM_INDICES) !<INDICES(i). The i'th index of the vector to output
-    INTEGER(INTG), INTENT(IN) :: DELTA !<The delta increment to be used when outputing the first through to the last vector index
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of vector elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of vector elements to be output on the second and subsequently repeated lines
-    REAL(SP), INTENT(IN) :: VECTOR(:) !<The vector to be output
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) ::  current,count,number_to_do
-
-!    ENTERS("WRITE_STRING_IDX_VECTOR_SP",err,error,*999)
-        
-    number_to_do=NUM_INDICES
-    WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
-    number_to_do=NUM_INDICES-NUMBER_FIRST
-    current=NUMBER_FIRST+1
-    DO WHILE(number_to_do>0) !more stuff to do
-      WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
-        & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
-      current=current+NUMBER_REPEAT
-      number_to_do=number_to_do-NUMBER_REPEAT
-    ENDDO !number_to_do > 0
-
-!    EXITS("WRITE_STRING_IDX_VECTOR_SP")
-    RETURN
-999 ERRORS("WRITE_STRING_IDX_VECTOR_SP",err,error)
-!    EXITS("WRITE_STRING_IDX_VECTOR_SP")
-    RETURN 1
-  END SUBROUTINE WRITE_STRING_IDX_VECTOR_SP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Writes the given double precision MATRIX to the given output stream specified by ID. The basic output is determined by the flag INDEX_FORMAT_TYPE. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is MATRIX_NAME_FORMAT concatenated named with the FIRST_FORMAT. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is MATRIX_NAME_FORMAT concatenated with ROW_INDEX_FORMAT and concatenated with FIRST_FORMAT. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_ROW/FIRST_COLUMN and LAST_ROW/LAST_COLUMN are the extents of the row/column and DELTA_ROW/DELTA_COLUMN is the NUMBER of indices to skip for each row/column index.
-  SUBROUTINE WRITE_STRING_MATRIX_DP(ID,FIRST_ROW,DELTA_ROW,LAST_ROW,FIRST_COLUMN,DELTA_COLUMN,LAST_COLUMN,NUMBER_FIRST, &
-    & NUMBER_REPEAT,MATRIX,INDEX_FORMAT_TYPE,MATRIX_NAME_FORMAT,ROW_INDEX_FORMAT,FIRST_FORMAT,REPEAT_FORMAT,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_ROW !<The first row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_ROW !<The delta row increment to be used when outputing the first through to the last matrix row
-    INTEGER(INTG), INTENT(IN) :: LAST_ROW !<The last row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_COLUMN !<The first column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_COLUMN !<The delta column increate to be used when outputing the first through to the last matrix column
-    INTEGER(INTG), INTENT(IN) :: LAST_COLUMN !<The last column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of matrix elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of matrix elements to be output on the second and subsequently repeated lines
-    REAL(DP), INTENT(IN) :: MATRIX(:,:) !<The matrix to be output
-    INTEGER(INTG), INTENT(IN) :: INDEX_FORMAT_TYPE !<The format type to be used for the matrix name and indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
-    CHARACTER(LEN=*), INTENT(IN) :: MATRIX_NAME_FORMAT !<The format string to be used to format the matrix name
-    CHARACTER(LEN=*), INTENT(IN) :: ROW_INDEX_FORMAT !<The format string to be used to format the row indices
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    INTEGER(INTG) ::  current_row,current_column,final_column,count
-    CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
-
-!    ENTERS("WRITE_STRING_MATRIX_DP",err,error,*999)
-
-    IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//FIRST_FORMAT
-    ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//ROW_INDEX_FORMAT//FIRST_FORMAT
-    ELSE
-      CALL FlagError("Invalid index format type",err,error,*999)
-    ENDIF
-    DO current_row=FIRST_ROW,LAST_ROW,DELTA_ROW
-      current_column=FIRST_COLUMN
-      final_column=current_column+(NUMBER_FIRST-1)*DELTA_COLUMN
-      IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-      IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-        WRITE(outputString,FMT=FORMAT_STR) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-        WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ENDIF
-      CALL WriteStr(ID,err,error,*999)
-      DO WHILE(final_column<LAST_COLUMN) !more stuff to do
-        current_column=final_column+DELTA_COLUMN
-        final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
-        IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-        WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
-      ENDDO !final_columnn<LAST_COLUMN
-    ENDDO !current_row
     
-!    EXITS("WRITE_STRING_MATRIX_DP")
-    RETURN
-999 ERRORS("WRITE_STRING_MATRIX_DP",err,error)
-!    EXITS("WRITE_STRING_MATRIX_DP")
-    RETURN 1
-  END SUBROUTINE WRITE_STRING_MATRIX_DP
+  END SUBROUTINE WriteStringVectorSP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given integer MATRIX to the given output stream specified by ID. The basic output is determined by the flag INDEX_FORMAT_TYPE. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is MATRIX_NAME_FORMAT concatenated named with the FIRST_FORMAT. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is MATRIX_NAME_FORMAT concatenated with ROW_INDEX_FORMAT and concatenated with FIRST_FORMAT. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_ROW/FIRST_COLUMN and LAST_ROW/LAST_COLUMN are the extents of the row/column and DELTA_ROW/DELTA_COLUMN is the NUMBER of indices to skip for each row/column index.
-  SUBROUTINE WRITE_STRING_MATRIX_INTG(ID,FIRST_ROW,DELTA_ROW,LAST_ROW,FIRST_COLUMN,DELTA_COLUMN,LAST_COLUMN,NUMBER_FIRST, &
-    & NUMBER_REPEAT,MATRIX,INDEX_FORMAT_TYPE,MATRIX_NAME_FORMAT,ROW_INDEX_FORMAT,FIRST_FORMAT,REPEAT_FORMAT,err,error,*)
-
-    !#### Generic-Subroutine: WRITE_STRING_MATRIX_INTG
-    !###  Description:
-    !###    
-    !###  Parent-subroutines: WRITE_STRING_MATRIX
+  !>Writes the given indexed double precision vector to the given output stream specified by ID. numIndices is the number of indices and indices(i) contain the indices of the vector to write. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. delta is the number of actual indices to skip for each index.
+  SUBROUTINE WriteStringIdxVectorDP(id,numIndices,indices,delta,numberFirst,numberRepeat,vector,firstFormat,repeatFormat, &
+    & err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_ROW !<The first row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_ROW !<The delta row increment to be used when outputing the first through to the last matrix row
-    INTEGER(INTG), INTENT(IN) :: LAST_ROW !<The last row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_COLUMN !<The first column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_COLUMN !<The delta column increate to be used when outputing the first through to the last matrix column
-    INTEGER(INTG), INTENT(IN) :: LAST_COLUMN !<The last column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of matrix elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of matrix elements to be output on the second and subsequently repeated lines
-    INTEGER(INTG), INTENT(IN) :: MATRIX(:,:) !<The matrix to be output
-    INTEGER(INTG), INTENT(IN) :: INDEX_FORMAT_TYPE !<The format type to be used for the matrix name and indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
-    CHARACTER(LEN=*), INTENT(IN) :: MATRIX_NAME_FORMAT !<The format string to be used to format the matrix name
-    CHARACTER(LEN=*), INTENT(IN) :: ROW_INDEX_FORMAT !<The format string to be used to format the row indices
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: numIndices !<The number of indices of the vector to output
+    INTEGER(INTG), INTENT(IN) :: indices(numIndices) !<indices(i). The i'th index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    REAL(DP), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) ::  current_row,current_column,final_column,count
-    CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    INTEGER(INTG) ::  current,count,numberToDo
 
-!    ENTERS("WRITE_STRING_MATRIX_INTG",err,error,*999)
+!    ENTERS("WriteStringIdxVectorDP",err,error,*999)
+        
+    numberToDo=numIndices
+    WRITE(outputString,FMT=firstFormat) (vector((indices(count)-1)*delta+1),count=1,MIN(numberFirst,numIndices))
+    CALL WriteStr(id,err,error,*999)
+    numberToDo=numIndices-numberFirst
+    current=numberFirst+1
+    DO WHILE(numberToDo>0) !more stuff to do
+      WRITE(outputString,FMT=repeatFormat) (vector((indices(count)-1)*delta+1),count=current,MIN(current+numberRepeat-1, &
+        & numIndices))
+      CALL WriteStr(id,err,error,*999)
+      current=current+numberRepeat
+      numberToDo=numberToDo-numberRepeat
+    ENDDO !numberToDo > 0
 
-    IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//FIRST_FORMAT
-    ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//ROW_INDEX_FORMAT//FIRST_FORMAT
-    ELSE
-      CALL FlagError("Invalid index format type",err,error,*999)
-    ENDIF
-    DO current_row=FIRST_ROW,LAST_ROW,DELTA_ROW
-      current_column=FIRST_COLUMN
-      final_column=current_column+(NUMBER_FIRST-1)*DELTA_COLUMN
-      IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-      IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-        WRITE(outputString,FMT=FORMAT_STR) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-        WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ENDIF
-      CALL WriteStr(ID,err,error,*999)
-      DO WHILE(final_column<LAST_COLUMN) !more stuff to do
-        current_column=final_column+DELTA_COLUMN
-        final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
-        IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-        WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
-      ENDDO !final_columnn<LAST_COLUMN
-    ENDDO !current_row
-    
-!    EXITS("WRITE_STRING_MATRIX_INTG")
+!    EXITS("WriteStringIdxVectorDP")
     RETURN
-999 ERRORS("WRITE_STRING_MATRIX_INTG",err,error)
-!    EXITS("WRITE_STRING_MATRIX_INTG")
+999 ERRORS("WriteStringIdxVectorDP",err,error)
+!    EXITS("WriteStringIdxVectorDP")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_MATRIX_INTG
+    
+  END SUBROUTINE WriteStringIdxVectorDP
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given long integer MATRIX to the given output stream specified by ID. The basic output is determined by the flag INDEX_FORMAT_TYPE. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is MATRIX_NAME_FORMAT concatenated named with the FIRST_FORMAT. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is MATRIX_NAME_FORMAT concatenated with ROW_INDEX_FORMAT and concatenated with FIRST_FORMAT. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_ROW/FIRST_COLUMN and LAST_ROW/LAST_COLUMN are the extents of the row/column and DELTA_ROW/DELTA_COLUMN is the NUMBER of indices to skip for each row/column index.
-
-  !>Writes the given long integer MATRIX to the given output stream specified by ID. The basic output is determined by the flag INDEX_FORMAT_TYPE. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is MATRIX_NAME_FORMAT concatenated named with the FIRST_FORMAT. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is MATRIX_NAME_FORMAT concatenated with ROW_INDEX_FORMAT and concatenated with FIRST_FORMAT. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_ROW/FIRST_COLUMN and LAST_ROW/LAST_COLUMN are the extents of the row/column and DELTA_ROW/DELTA_COLUMN is the NUMBER of indices to skip for each row/column index.
-  SUBROUTINE WRITE_STRING_MATRIX_LINTG(ID,FIRST_ROW,DELTA_ROW,LAST_ROW,FIRST_COLUMN,DELTA_COLUMN,LAST_COLUMN,NUMBER_FIRST, &
-    & NUMBER_REPEAT,MATRIX,INDEX_FORMAT_TYPE,MATRIX_NAME_FORMAT,ROW_INDEX_FORMAT,FIRST_FORMAT,REPEAT_FORMAT,err,error,*)
+  !>Writes the given indexed integer vector to the given output stream specified by ID. numIndices is the number of indices and indices(i) contain the indices of the vector to write. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. delta is the number of actual indices to skip for each index.
+  SUBROUTINE WriteStringIdxVectorIntg(id,numIndices,indices,delta,numberFirst,numberRepeat,vector,firstFormat,repeatFormat, &
+    & err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_ROW !<The first row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_ROW !<The delta row increment to be used when outputing the first through to the last matrix row
-    INTEGER(INTG), INTENT(IN) :: LAST_ROW !<The last row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_COLUMN !<The first column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_COLUMN !<The delta column increate to be used when outputing the first through to the last matrix column
-    INTEGER(INTG), INTENT(IN) :: LAST_COLUMN !<The last column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of matrix elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of matrix elements to be output on the second and subsequently repeated lines
-    INTEGER(LINTG), INTENT(IN) :: MATRIX(:,:) !<The matrix to be output
-    INTEGER(INTG), INTENT(IN) :: INDEX_FORMAT_TYPE !<The format type to be used for the matrix name and indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
-    CHARACTER(LEN=*), INTENT(IN) :: MATRIX_NAME_FORMAT !<The format string to be used to format the matrix name
-    CHARACTER(LEN=*), INTENT(IN) :: ROW_INDEX_FORMAT !<The format string to be used to format the row indices
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: numIndices !<The number of indices of the vector to output
+    INTEGER(INTG), INTENT(IN) :: indices(numIndices) !<indices(i). The i'th index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    INTEGER(INTG), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) ::  current_row,current_column,final_column,count
-    CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    INTEGER(INTG) ::  current,count,numberToDo
 
-!    ENTERS("WRITE_STRING_MATRIX_LINTG",err,error,*999)
+!    ENTERS("WriteStringIdxVectorIntg",err,error,*999)
+        
+    numberToDo=numIndices
+    WRITE(outputString,FMT=firstFormat) (vector((indices(count)-1)*delta+1),count=1,MIN(numberFirst,numIndices))
+    CALL WriteStr(id,err,error,*999)
+    numberToDo=numIndices-numberFirst
+    current=numberFirst+1
+    DO WHILE(numberToDo>0) !more stuff to do
+      WRITE(outputString,FMT=repeatFormat) (vector((indices(count)-1)*delta+1),count=current,MIN(current+numberRepeat-1, &
+        & numIndices))
+      CALL WriteStr(id,err,error,*999)
+      current=current+numberRepeat
+      numberToDo=numberToDo-numberRepeat
+    ENDDO !numberToDo > 0
 
-    IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//FIRST_FORMAT
-    ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//ROW_INDEX_FORMAT//FIRST_FORMAT
-    ELSE
-      CALL FlagError("Invalid index format type",err,error,*999)
-    ENDIF
-    DO current_row=FIRST_ROW,LAST_ROW,DELTA_ROW
-      current_column=FIRST_COLUMN
-      final_column=current_column+(NUMBER_FIRST-1)*DELTA_COLUMN
-      IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-      IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-        WRITE(outputString,FMT=FORMAT_STR) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-        WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ENDIF
-      CALL WriteStr(ID,err,error,*999)
-      DO WHILE(final_column<LAST_COLUMN) !more stuff to do
-        current_column=final_column+DELTA_COLUMN
-        final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
-        IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-        WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
-      ENDDO !final_columnn<LAST_COLUMN
-    ENDDO !current_row
-    
-!    EXITS("WRITE_STRING_MATRIX_LINTG")
+!    EXITS("WriteStringIdxVectorIntg")
     RETURN
-999 ERRORS("WRITE_STRING_MATRIX_LINTG",err,error)
-!    EXITS("WRITE_STRING_MATRIX_LINTG")
+999 ERRORS("WriteStringIdxVectorIntg",err,error)
+!    EXITS("WriteStringIdxVectorIntg")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_MATRIX_LINTG
+    
+  END SUBROUTINE WriteStringIdxVectorIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given logical MATRIX to the given output stream specified by ID. The basic output is determined by the flag INDEX_FORMAT_TYPE. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is MATRIX_NAME_FORMAT concatenated named with the FIRST_FORMAT. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is MATRIX_NAME_FORMAT concatenated with ROW_INDEX_FORMAT and concatenated with FIRST_FORMAT. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_ROW/FIRST_COLUMN and LAST_ROW/LAST_COLUMN are the extents of the row/column and DELTA_ROW/DELTA_COLUMN is the NUMBER of indices to skip for each row/column index.
-  SUBROUTINE WRITE_STRING_MATRIX_L(ID,FIRST_ROW,DELTA_ROW,LAST_ROW,FIRST_COLUMN,DELTA_COLUMN,LAST_COLUMN,NUMBER_FIRST, &
-    & NUMBER_REPEAT,MATRIX,INDEX_FORMAT_TYPE,MATRIX_NAME_FORMAT,ROW_INDEX_FORMAT,FIRST_FORMAT,REPEAT_FORMAT,err,error,*)
+  !>Writes the given indexed integer vector to the given output stream specified by ID. numIndices is the number of indices and indices(i) contain the indices of the vector to write. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. delta is the number of actual indices to skip for each index.
+  SUBROUTINE WriteStringIdxVectorLIntg(id,numIndices,indices,delta,numberFirst,numberRepeat,vector,firstFormat,repeatFormat, &
+    & err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_ROW !<The first row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_ROW !<The delta row increment to be used when outputing the first through to the last matrix row
-    INTEGER(INTG), INTENT(IN) :: LAST_ROW !<The last row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_COLUMN !<The first column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_COLUMN !<The delta column increate to be used when outputing the first through to the last matrix column
-    INTEGER(INTG), INTENT(IN) :: LAST_COLUMN !<The last column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of matrix elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of matrix elements to be output on the second and subsequently repeated lines
-    LOGICAL, INTENT(IN) :: MATRIX(:,:) !<The matrix to be output
-    INTEGER(INTG), INTENT(IN) :: INDEX_FORMAT_TYPE !<The format type to be used for the matrix name and indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
-    CHARACTER(LEN=*), INTENT(IN) :: MATRIX_NAME_FORMAT !<The format string to be used to format the matrix name
-    CHARACTER(LEN=*), INTENT(IN) :: ROW_INDEX_FORMAT !<The format string to be used to format the row indices
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: numIndices !<The number of indices of the vector to output
+    INTEGER(INTG), INTENT(IN) :: indices(numIndices) !<indices(i). The i'th index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    INTEGER(LINTG), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) ::  current_row,current_column,final_column,count
-    CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    INTEGER(INTG) ::  current,count,numberToDo
 
-!    ENTERS("WRITE_STRING_MATRIX_L",err,error,*999)
+!    ENTERS("WriteStringIdxVectorLIntg",err,error,*999)
+        
+    numberToDo=numIndices
+    WRITE(outputString,FMT=firstFormat) (vector((indices(count)-1)*delta+1),count=1,MIN(numberFirst,numIndices))
+    CALL WriteStr(id,err,error,*999)
+    numberToDo=numIndices-numberFirst
+    current=numberFirst+1
+    DO WHILE(numberToDo>0) !more stuff to do
+      WRITE(outputString,FMT=repeatFormat) (vector((indices(count)-1)*delta+1),count=current,MIN(current+numberRepeat-1, &
+        & numIndices))
+      CALL WriteStr(id,err,error,*999)
+      current=current+numberRepeat
+      numberToDo=numberToDo-numberRepeat
+    ENDDO !numberToDo > 0
 
-    IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//FIRST_FORMAT
-    ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//ROW_INDEX_FORMAT//FIRST_FORMAT
-    ELSE
-      CALL FlagError("Invalid index format type",err,error,*999)
-    ENDIF
-    DO current_row=FIRST_ROW,LAST_ROW,DELTA_ROW
-      current_column=FIRST_COLUMN
-      final_column=current_column+(NUMBER_FIRST-1)*DELTA_COLUMN
-      IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-      IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-        WRITE(outputString,FMT=FORMAT_STR) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-        WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ENDIF
-      CALL WriteStr(ID,err,error,*999)
-      DO WHILE(final_column<LAST_COLUMN) !more stuff to do
-        current_column=final_column+DELTA_COLUMN
-        final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
-        IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-        WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
-      ENDDO !final_columnn<LAST_COLUMN
-    ENDDO !current_row
-    
-!    EXITS("WRITE_STRING_MATRIX_L")
+!    EXITS("WriteStringIdxVectorLIntg")
     RETURN
-999 ERRORS("WRITE_STRING_MATRIX_L",err,error)
-!    EXITS("WRITE_STRING_MATRIX_L")
+999 ERRORS("WriteStringIdxVectorLIntg",err,error)
+!    EXITS("WriteStringIdxVectorLIntg")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_MATRIX_L
+    
+  END SUBROUTINE WriteStringIdxVectorLIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Writes the given single precision MATRIX to the given output stream specified by ID. The basic output is determined by the flag INDEX_FORMAT_TYPE. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is MATRIX_NAME_FORMAT concatenated named with the FIRST_FORMAT. If INDEX_FORMAT_TYPE is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is MATRIX_NAME_FORMAT concatenated with ROW_INDEX_FORMAT and concatenated with FIRST_FORMAT. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The FIRST_FORMAT is the format initially used, followed by the REPEAT_FORMAT which is repeated as many times as necessary. NUMBER_FIRST is the number of data items in the FIRST_FORMAT and NUMBER_REPEAT is the number of data items in the REPEAT_FORMAT. FIRST_ROW/FIRST_COLUMN and LAST_ROW/LAST_COLUMN are the extents of the row/column and DELTA_ROW/DELTA_COLUMN is the NUMBER of indices to skip for each row/column index.
-  SUBROUTINE WRITE_STRING_MATRIX_SP(ID,FIRST_ROW,DELTA_ROW,LAST_ROW,FIRST_COLUMN,DELTA_COLUMN,LAST_COLUMN,NUMBER_FIRST, &
-    & NUMBER_REPEAT,MATRIX,INDEX_FORMAT_TYPE,MATRIX_NAME_FORMAT,ROW_INDEX_FORMAT,FIRST_FORMAT,REPEAT_FORMAT,err,error,*)
+  !>Writes the given indexed logical vector to the given output stream specified by ID. numIndices is the number of indices and indices(i) contain the indices of the vector to write. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. delta is the number of actual indices to skip for each index.
+  SUBROUTINE WriteStringIdxVectorL(id,numIndices,indices,delta,numberFirst,numberRepeat,vector,firstFormat,repeatFormat, &
+    & err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
-    INTEGER(INTG), INTENT(IN) :: FIRST_ROW !<The first row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_ROW !<The delta row increment to be used when outputing the first through to the last matrix row
-    INTEGER(INTG), INTENT(IN) :: LAST_ROW !<The last row of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: FIRST_COLUMN !<The first column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: DELTA_COLUMN !<The delta column increate to be used when outputing the first through to the last matrix column
-    INTEGER(INTG), INTENT(IN) :: LAST_COLUMN !<The last column of the matrix to be output
-    INTEGER(INTG), INTENT(IN) :: NUMBER_FIRST !<The number of matrix elements to be output on the first line
-    INTEGER(INTG), INTENT(IN) :: NUMBER_REPEAT !<The number of matrix elements to be output on the second and subsequently repeated lines
-    REAL(SP), INTENT(IN) :: MATRIX(:,:) !<The matrix to be output
-    INTEGER(INTG), INTENT(IN) :: INDEX_FORMAT_TYPE !<The format type to be used for the matrix name and indices \see INPUT_OUTPUT_MatrixNameIndexFormat,INPUT_OUTPUT::MatrixNameIndexFormat
-    CHARACTER(LEN=*), INTENT(IN) :: MATRIX_NAME_FORMAT !<The format string to be used to format the matrix name
-    CHARACTER(LEN=*), INTENT(IN) :: ROW_INDEX_FORMAT !<The format string to be used to format the row indices
-    CHARACTER(LEN=*), INTENT(IN) :: FIRST_FORMAT !<The format string to be used for the first line of output
-    CHARACTER(LEN=*), INTENT(IN) :: REPEAT_FORMAT !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: numIndices !<The number of indices of the vector to output
+    INTEGER(INTG), INTENT(IN) :: indices(numIndices) !<indices(i). The i'th index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    LOGICAL, INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) ::  current_row,current_column,final_column,count
-    CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    INTEGER(INTG) ::  current,count,numberToDo
 
-!    ENTERS("WRITE_STRING_MATRIX_SP",err,error,*999)
+!    ENTERS("WriteStringIdxVectorL",err,error,*999)
+        
+    numberToDo=numIndices
+    WRITE(outputString,FMT=firstFormat) (vector((indices(count)-1)*delta+1),count=1,MIN(numberFirst,numIndices))
+    CALL WriteStr(id,err,error,*999)
+    numberToDo=numIndices-numberFirst
+    current=numberFirst+1
+    DO WHILE(numberToDo>0) !more stuff to do
+      WRITE(outputString,FMT=repeatFormat) (vector((indices(count)-1)*delta+1),count=current,MIN(current+numberRepeat-1, &
+        & numIndices))
+      CALL WriteStr(id,err,error,*999)
+      current=current+numberRepeat
+      numberToDo=numberToDo-numberRepeat
+    ENDDO !numberToDo > 0
 
-    IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//FIRST_FORMAT
-    ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-      FORMAT_STR=MATRIX_NAME_FORMAT//ROW_INDEX_FORMAT//FIRST_FORMAT
-    ELSE
-      CALL FlagError("Invalid index format type",err,error,*999)
-    ENDIF
-    DO current_row=FIRST_ROW,LAST_ROW,DELTA_ROW
-      current_column=FIRST_COLUMN
-      final_column=current_column+(NUMBER_FIRST-1)*DELTA_COLUMN
-      IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-      IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_ONLY) THEN
-        WRITE(outputString,FMT=FORMAT_STR) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
-        WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-      ENDIF
-      CALL WriteStr(ID,err,error,*999)
-      DO WHILE(final_column<LAST_COLUMN) !more stuff to do
-        current_column=final_column+DELTA_COLUMN
-        final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
-        IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
-        WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
-      ENDDO !final_columnn<LAST_COLUMN
-    ENDDO !current_row
-    
-!    EXITS("WRITE_STRING_MATRIX_SP")
+!    EXITS("WriteStringIdxVectorL")
     RETURN
-999 ERRORS("WRITE_STRING_MATRIX_SP",err,error)
-!    EXITS("WRITE_STRING_MATRIX_SP")
+999 ERRORS("WriteStringIdxVectorL",err,error)
+!    EXITS("WriteStringIdxVectorL")
     RETURN 1
-  END SUBROUTINE WRITE_STRING_MATRIX_SP
+    
+  END SUBROUTINE WriteStringIdxVectorL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given indexed single precision vector to the given output stream specified by ID. numIndices is the number of indices and indices(i) contain the indices of the vector to write. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. delta is the number of actual indices to skip for each index.
+  SUBROUTINE WriteStringIdxVectorSP(id,numIndices,indices,delta,numberFirst,numberRepeat,vector,firstFormat,repeatFormat, &
+    & err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: numIndices !<The number of indices of the vector to output
+    INTEGER(INTG), INTENT(IN) :: indices(numIndices) !<indices(i). The i'th index of the vector to output
+    INTEGER(INTG), INTENT(IN) :: delta !<The delta increment to be used when outputing the first through to the last vector index
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of vector elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of vector elements to be output on the second and subsequently repeated lines
+    REAL(SP), INTENT(IN) :: vector(:) !<The vector to be output
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  current,count,numberToDo
+
+!    ENTERS("WriteStringIdxVectorSP",err,error,*999)
+        
+    numberToDo=numIndices
+    WRITE(outputString,FMT=firstFormat) (vector((indices(count)-1)*delta+1),count=1,MIN(numberFirst,numIndices))
+    CALL WriteStr(id,err,error,*999)
+    numberToDo=numIndices-numberFirst
+    current=numberFirst+1
+    DO WHILE(numberToDo>0) !more stuff to do
+      WRITE(outputString,FMT=repeatFormat) (vector((indices(count)-1)*delta+1),count=current,MIN(current+numberRepeat-1, &
+        & numIndices))
+      CALL WriteStr(id,err,error,*999)
+      current=current+numberRepeat
+      numberToDo=numberToDo-numberRepeat
+    ENDDO !numberToDo > 0
+
+!    EXITS("WriteStringIdxVectorSP")
+    RETURN
+999 ERRORS("WriteStringIdxVectorSP",err,error)
+!    EXITS("WriteStringIdxVectorSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringIdxVectorSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given double precision matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is matrixNameFormat concatenated with rowIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixDP(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,rowIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    REAL(DP), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: rowIndexFormat !<The format string to be used to format the row indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalColumn,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixDP",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//rowIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentRow=firstRow,lastRow,deltaRow
+      currentColumn=firstColumn
+      finalColumn=currentColumn+(numberFirst-1)*deltaColumn
+      IF(finalColumn>lastColumn) finalColumn=lastColumn
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentRow,(matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalColumn<lastColumn) !more stuff to do
+        currentColumn=finalColumn+deltaColumn
+        finalColumn=finalColumn+numberRepeat*deltaColumn
+        IF(finalColumn>lastColumn) finalColumn=lastColumn
+        WRITE(outputString,FMT=repeatFormat) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalColumnn<lastColumn
+    ENDDO !currentRow
+    
+!    EXITS("WriteStringMatrixDP")
+    RETURN
+999 ERRORS("WriteStringMatrixDP",err,error)
+!    EXITS("WriteStringMatrixDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given integer matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is matrixNameFormat concatenated with rowIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixIntg(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,rowIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    INTEGER(INTG), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: rowIndexFormat !<The format string to be used to format the row indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalColumn,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixIntg",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//rowIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentRow=firstRow,lastRow,deltaRow
+      currentColumn=firstColumn
+      finalColumn=currentColumn+(numberFirst-1)*deltaColumn
+      IF(finalColumn>lastColumn) finalColumn=lastColumn
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentRow,(matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalColumn<lastColumn) !more stuff to do
+        currentColumn=finalColumn+deltaColumn
+        finalColumn=finalColumn+numberRepeat*deltaColumn
+        IF(finalColumn>lastColumn) finalColumn=lastColumn
+        WRITE(outputString,FMT=repeatFormat) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalColumnn<lastColumn
+    ENDDO !currentRow
+    
+!    EXITS("WriteStringMatrixIntg")
+    RETURN
+999 ERRORS("WriteStringMatrixIntg",err,error)
+!    EXITS("WriteStringMatrixIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given long integer matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is matrixNameFormat concatenated with rowIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixLIntg(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,rowIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    INTEGER(LINTG), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: rowIndexFormat !<The format string to be used to format the row indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalColumn,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixLIntg",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//rowIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentRow=firstRow,lastRow,deltaRow
+      currentColumn=firstColumn
+      finalColumn=currentColumn+(numberFirst-1)*deltaColumn
+      IF(finalColumn>lastColumn) finalColumn=lastColumn
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentRow,(matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalColumn<lastColumn) !more stuff to do
+        currentColumn=finalColumn+deltaColumn
+        finalColumn=finalColumn+numberRepeat*deltaColumn
+        IF(finalColumn>lastColumn) finalColumn=lastColumn
+        WRITE(outputString,FMT=repeatFormat) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalColumnn<lastColumn
+    ENDDO !currentRow
+    
+!    EXITS("WriteStringMatrixLIntg")
+    RETURN
+999 ERRORS("WriteStringMatrixLIntg",err,error)
+!    EXITS("WriteStringMatrixLIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixLIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given logical matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is matrixNameFormat concatenated with rowIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixL(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,rowIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    LOGICAL, INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: rowIndexFormat !<The format string to be used to format the row indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalColumn,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixL",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//rowIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentRow=firstRow,lastRow,deltaRow
+      currentColumn=firstColumn
+      finalColumn=currentColumn+(numberFirst-1)*deltaColumn
+      IF(finalColumn>lastColumn) finalColumn=lastColumn
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentRow,(matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalColumn<lastColumn) !more stuff to do
+        currentColumn=finalColumn+deltaColumn
+        finalColumn=finalColumn+numberRepeat*deltaColumn
+        IF(finalColumn>lastColumn) finalColumn=lastColumn
+        WRITE(outputString,FMT=repeatFormat) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalColumnn<lastColumn
+    ENDDO !currentRow
+    
+!    EXITS("WriteStringMatrixL")
+    RETURN
+999 ERRORS("WriteStringMatrixL",err,error)
+!    EXITS("WriteStringMatrixL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given single precision matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each row is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each row is matrixNameFormat concatenated with rowIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the row number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixSP(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,rowIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    REAL(SP), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: rowIndexFormat !<The format string to be used to format the row indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalColumn,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixSP",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//rowIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentRow=firstRow,lastRow,deltaRow
+      currentColumn=firstColumn
+      finalColumn=currentColumn+(numberFirst-1)*deltaColumn
+      IF(finalColumn>lastColumn) finalColumn=lastColumn
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentRow,(matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalColumn<lastColumn) !more stuff to do
+        currentColumn=finalColumn+deltaColumn
+        finalColumn=finalColumn+numberRepeat*deltaColumn
+        IF(finalColumn>lastColumn) finalColumn=lastColumn
+        WRITE(outputString,FMT=repeatFormat) (matrix(currentRow,count),count=currentColumn,finalColumn,deltaColumn)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalColumnn<lastColumn
+    ENDDO !currentRow
+    
+!    EXITS("WriteStringMatrixSP")
+    RETURN
+999 ERRORS("WriteStringMatrixSP",err,error)
+!    EXITS("WriteStringMatrixSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixSP
 
   !
   !================================================================================================================================

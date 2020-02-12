@@ -44,22 +44,22 @@
 !> This module handles all classical field class routines.
 MODULE ClassicalFieldRoutines
 
-  USE ADVECTION_EQUATION_ROUTINES
-  USE ADVECTION_DIFFUSION_EQUATION_ROUTINES
+  USE AdvectionEquationsRoutines
+  USE AdvectionDiffusionEquationsRoutines
   USE BaseRoutines
   USE ControlLoopAccessRoutines
   USE DIFFUSION_EQUATION_ROUTINES
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE HELMHOLTZ_EQUATIONS_ROUTINES
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE LaplaceEquationsRoutines
-  USE POISSON_EQUATIONS_ROUTINES
-  USE PROBLEM_CONSTANTS
+  USE PoissonEquationsRoutines
+  USE ProblemAccessRoutines
   USE REACTION_DIFFUSION_EQUATION_ROUTINES
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"
 
@@ -298,7 +298,7 @@ CONTAINS
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
       CALL HJ_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-      CALL POISSON_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL Poisson_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
       CALL HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
@@ -308,7 +308,7 @@ CONTAINS
     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL AdvectionDiffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-      CALL ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL Advection_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
       CALL ReactionDiffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
@@ -425,7 +425,7 @@ CONTAINS
     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
-      CALL ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL Advection_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
@@ -474,7 +474,7 @@ CONTAINS
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
       CALL HJ_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-      CALL POISSON_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Poisson_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
       CALL HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
@@ -570,7 +570,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -701,10 +701,8 @@ CONTAINS
     SELECT CASE(problem%specification(2))
     CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
       CALL Laplace_ProblemSetup(problem,problemSetup,err,error,*999)
-    CASE(PROBLEM_HJ_EQUATION_TYPE)
-      CALL HJ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_POISSON_EQUATION_TYPE)
-      CALL POISSON_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Poisson_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
       CALL HELMHOLTZ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_WAVE_EQUATION_TYPE)
@@ -712,13 +710,15 @@ CONTAINS
     CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
       CALL DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_ADVECTION_EQUATION_TYPE)
-      CALL ADVECTION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Advection_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE)
-      CALL ADVECTION_DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL AdvectionDiffusion_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
       CALL REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
+    CASE(PROBLEM_HJ_EQUATION_TYPE)
+      CALL HJ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
     CASE DEFAULT
       localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
         & " is not valid for a classical field problem class."
@@ -740,7 +740,7 @@ CONTAINS
   SUBROUTINE ClassicalField_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -802,7 +802,7 @@ CONTAINS
   SUBROUTINE ClassicalField_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

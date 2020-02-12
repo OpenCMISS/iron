@@ -2451,7 +2451,7 @@ CONTAINS
           ENDDO !blockRowIdx
         ENDDO !rowBlockIdx
       CASE DEFAULT
-        localError="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(matrixStorageType,"*",err,error))//" is invalid."
+        localError="The matrix storage type of "//TRIM(NumberToVString(matrixStorageType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)

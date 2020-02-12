@@ -50,7 +50,6 @@ MODULE EquationsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -696,7 +695,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the linearity for
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the equations. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the equations. \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -724,7 +723,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to set the linearity for
-    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1040,7 +1039,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<A pointer to the equations to get the field variable for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the field variable for. \see EquationsSetConstants_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the field variable for. \see EquationsSetRoutines_DerivedTypes.
     TYPE(FieldVariableType), POINTER, INTENT(INOUT) :: fieldVariable !<On return, the field variable for the derived variable type.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1261,7 +1260,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     INTEGER(INTG) :: matrixIndex,variableIndex
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
@@ -1301,8 +1300,10 @@ CONTAINS
     END IF
 
     !Now get Jacobian matrix using the matrix index
+    NULLIFY(residualVector)
+    CALL EquationsMatricesNonlinear(nonlinearMatrices,residualIndex,residualVector,err,error,*999)
     NULLIFY(jacobianMatrix)
-    CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIndex,jacobianMatrix,err,error,*999)
+    CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIndex,jacobianMatrix,err,error,*999)
 
     matrix=>jacobianMatrix%jacobian
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Jacobian matrix matrix is not associated.",err,error,*999)
@@ -1368,7 +1369,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see EquationsSetConstants_DynamicMatrixTypes,EquationsSetConstants
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see EquationsSetRoutines_DynamicMatrixTypes,EquationsSetRoutines
     TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code

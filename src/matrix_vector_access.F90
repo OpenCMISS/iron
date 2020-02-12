@@ -235,7 +235,9 @@ CONTAINS
     
     ENTERS("Matrix_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+#endif 
 
     IF(.NOT.matrix%matrixFinished) CALL FlagError("Matrix has not been finished.",err,error,*999)
     
@@ -261,7 +263,9 @@ CONTAINS
  
     ENTERS("Matrix_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+#endif    
 
     IF(matrix%matrixFinished) CALL FlagError("Matrix has already been finished.",err,error,*999)
     
@@ -288,7 +292,9 @@ CONTAINS
  
     ENTERS("Matrix_AssertIsINTGData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+#endif    
 
     IF(matrix%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
       localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))// &
@@ -319,7 +325,9 @@ CONTAINS
  
     ENTERS("Matrix_AssertIsSPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+#endif    
 
     IF(matrix%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
       localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))// &
@@ -350,7 +358,9 @@ CONTAINS
  
     ENTERS("Matrix_AssertIsDPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+#endif    
 
     IF(matrix%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
       localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))// &
@@ -381,7 +391,9 @@ CONTAINS
  
     ENTERS("Matrix_AssertIsLData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+#endif    
 
     IF(matrix%dataType/=MATRIX_VECTOR_L_TYPE) THEN
       localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))// &
@@ -438,7 +450,9 @@ CONTAINS
 
     ENTERS("Matrix_DataGetIntg",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(matrixData)) CALL FlagError("Matrix data is already associated.",err,error,*998)
+#endif    
     CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     CALL Matrix_AssertIsINTGData(matrix,err,error,*999)
     
@@ -468,7 +482,9 @@ CONTAINS
 
     ENTERS("Matrix_DataGetSP",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(matrixData)) CALL FlagError("Matrix data is already associated.",err,error,*998)
+#endif    
     CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     CALL Matrix_AssertIsSPData(matrix,err,error,*999)
     
@@ -498,7 +514,9 @@ CONTAINS
 
     ENTERS("Matrix_DataGetDP",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(matrixData)) CALL FlagError("Matrix data is already associated.",err,error,*998)
+#endif    
     CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     CALL Matrix_AssertIsDPData(matrix,err,error,*999)
     
@@ -528,7 +546,9 @@ CONTAINS
 
     ENTERS("Matrix_DataGetL",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(matrixData)) CALL FlagError("Matrix data is already associated.",err,error,*998)
+#endif    
     CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     CALL Matrix_AssertIsLData(matrix,err,error,*999)
     
@@ -750,8 +770,10 @@ CONTAINS
 
     ENTERS("Matrix_StorageLocationsGet",err,error,*997)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(rowIndices)) CALL FlagError("Row indicies is already associated.",err,error,*997)
     IF(ASSOCIATED(columnIndices)) CALL FlagError("Column indicies is already associated.",err,error,*998)
+#endif    
     CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     
     SELECT CASE(matrix%storageType)
@@ -810,9 +832,11 @@ CONTAINS
 
     ENTERS("Matrix_StorageTransposeLocationsGet",err,error,*997)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(rowIndicesT)) CALL FlagError("Row indicies is already associated.",err,error,*997)
     IF(ASSOCIATED(columnIndicesT)) CALL FlagError("Column indicies is already associated.",err,error,*998)
     IF(ASSOCIATED(dataSwivelT)) CALL FlagError("Data swivel is already associated.",err,error,*998)
+#endif    
     CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     
     SELECT CASE(matrix%storageType)
@@ -950,7 +974,9 @@ CONTAINS
  
     ENTERS("Vector_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.vector%vectorFinished) CALL FlagError("Vector has not been finished.",err,error,*999)
     
@@ -975,7 +1001,9 @@ CONTAINS
  
     ENTERS("Vector_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+#endif    
 
     IF(vector%vectorFinished) CALL FlagError("Vector has already been finished.",err,error,*999)
     
@@ -1002,7 +1030,9 @@ CONTAINS
  
     ENTERS("Vector_AssertIsINTGData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+#endif    
 
     IF(vector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
       localError="The vector data type of "//TRIM(NumberToVString(vector%dataType,"*",err,error))// &
@@ -1033,7 +1063,9 @@ CONTAINS
  
     ENTERS("Vector_AssertIsSPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+#endif    
 
     IF(vector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
       localError="The vector data type of "//TRIM(NumberToVString(vector%dataType,"*",err,error))// &
@@ -1064,7 +1096,9 @@ CONTAINS
  
     ENTERS("Vector_AssertIsDPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+#endif    
 
     IF(vector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
       localError="The vector data type of "//TRIM(NumberToVString(vector%dataType,"*",err,error))// &
@@ -1095,7 +1129,9 @@ CONTAINS
  
     ENTERS("Vector_AssertIsLData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+#endif    
 
     IF(vector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
       localError="The vector data type of "//TRIM(NumberToVString(vector%dataType,"*",err,error))// &
@@ -1126,7 +1162,9 @@ CONTAINS
 
     ENTERS("Vector_DataGetIntg",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorData)) CALL FlagError("Vector data is already associated.",err,error,*998)
+#endif    
     CALL Vector_AssertIsFinished(vector,err,error,*999)
     CALL Vector_AssertIsINTGData(vector,err,error,*999)
     
@@ -1156,7 +1194,9 @@ CONTAINS
 
     ENTERS("Vector_DataGetSP",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorData)) CALL FlagError("Vector data is already associated.",err,error,*998)
+#endif    
     CALL Vector_AssertIsFinished(vector,err,error,*999)
     CALL Vector_AssertIsSPData(vector,err,error,*999)
     
@@ -1186,7 +1226,9 @@ CONTAINS
 
     ENTERS("Vector_DataGetDP",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorData)) CALL FlagError("Vector data is already associated.",err,error,*998)
+#endif    
     CALL Vector_AssertIsFinished(vector,err,error,*999)
     CALL Vector_AssertIsDPData(vector,err,error,*999)
     
@@ -1216,7 +1258,9 @@ CONTAINS
 
     ENTERS("Vector_DataGetL",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorData)) CALL FlagError("Vector data is already associated.",err,error,*998)
+#endif    
     CALL Vector_AssertIsFinished(vector,err,error,*999)
     CALL Vector_AssertIsLData(vector,err,error,*999)
     

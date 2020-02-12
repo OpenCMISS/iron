@@ -65,7 +65,11 @@ MODULE EquationsAccessRoutines
 
   !Interfaces
 
-  PUBLIC Equations_AssertIsFinished, Equations_AssertNotFinished
+  PUBLIC Equations_AssertIsFinished,Equations_AssertNotFinished
+
+  PUBLIC Equations_AssertIsDynamic,Equations_AssertIsStatic
+
+  PUBLIC Equations_AssertIsLinear,Equations_AssertIsNonlinear
 
   PUBLIC Equations_EquationsSetGet
   
@@ -75,7 +79,7 @@ MODULE EquationsAccessRoutines
   
   PUBLIC Equations_VectorEquationsGet
 
-  PUBLIC EquationsInterpolation_DependentFieldCheck
+  PUBLIC EquationsInterpolation_DependentFieldExists
   
   PUBLIC EquationsInterpolation_DependentFieldGet
 
@@ -85,7 +89,7 @@ MODULE EquationsAccessRoutines
   
   PUBLIC EquationsInterpolation_DependentPointMetricsGet
   
-  PUBLIC EquationsInterpolation_FibreFieldCheck
+  PUBLIC EquationsInterpolation_FibreFieldExists
   
   PUBLIC EquationsInterpolation_FibreFieldGet
 
@@ -95,7 +99,7 @@ MODULE EquationsAccessRoutines
   
   PUBLIC EquationsInterpolation_FibrePointMetricsGet
   
-  PUBLIC EquationsInterpolation_GeometricFieldCheck
+  PUBLIC EquationsInterpolation_GeometricFieldExists
   
   PUBLIC EquationsInterpolation_GeometricFieldGet
 
@@ -105,7 +109,7 @@ MODULE EquationsAccessRoutines
   
   PUBLIC EquationsInterpolation_GeometricPointMetricsGet
   
-  PUBLIC EquationsInterpolation_IndependentFieldCheck
+  PUBLIC EquationsInterpolation_IndependentFieldExists
   
   PUBLIC EquationsInterpolation_IndependentFieldGet
 
@@ -115,7 +119,7 @@ MODULE EquationsAccessRoutines
   
   PUBLIC EquationsInterpolation_IndependentPointMetricsGet
   
-  PUBLIC EquationsInterpolation_MaterialsFieldCheck
+  PUBLIC EquationsInterpolation_MaterialsFieldExists
   
   PUBLIC EquationsInterpolation_MaterialsFieldGet
 
@@ -129,7 +133,7 @@ MODULE EquationsAccessRoutines
   
   PUBLIC EquationsInterpolation_PreviousDependentPointMetricsGet
   
-  PUBLIC EquationsInterpolation_SourceFieldCheck
+  PUBLIC EquationsInterpolation_SourceFieldExists
   
   PUBLIC EquationsInterpolation_SourceFieldGet
 
@@ -166,7 +170,9 @@ CONTAINS
     
     ENTERS("Equations_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.equations%equationsFinished) CALL FlagError("Equations has not been finished.",err,error,*999)
     
@@ -192,7 +198,9 @@ CONTAINS
  
     ENTERS("Equations_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
 
     IF(equations%equationsFinished) CALL FlagError("Equations has already been finished.",err,error,*999)
     
@@ -202,6 +210,138 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Equations_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an equations time dependence is dynamic
+  SUBROUTINE Equations_AssertIsDynamic(equations,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to assert the dynamic status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Equations_AssertIsDynamic",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
+
+    IF(equations%timeDependence/=EQUATIONS_FIRST_ORDER_DYNAMIC.AND. &
+      & equations%timeDependence/=EQUATIONS_SECOND_ORDER_DYNAMIC) THEN
+      localError="The equations time dependence type of "// &
+        & TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " does not correspond to first or second order dynamic equations."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Equations_AssertIsDynamic")
+    RETURN
+999 ERRORSEXITS("Equations_AssertIsDynamic",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_AssertIsDynamic
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an equations time dependence is static
+  SUBROUTINE Equations_AssertIsStatic(equations,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to assert the static status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Equations_AssertIsStatic",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
+
+    IF(equations%timeDependence/=EQUATIONS_STATIC.AND. &
+      & equations%timeDependence/=EQUATIONS_QUASISTATIC) THEN
+      localError="The equations time dependence type of "// &
+        & TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " does not correspond to static or quasi static equations."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Equations_AssertIsStatic")
+    RETURN
+999 ERRORSEXITS("Equations_AssertIsStatic",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_AssertIsStatic
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an equations linearity is linear
+  SUBROUTINE Equations_AssertIsLinear(equations,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to assert the linear status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Equations_AssertIsLinear",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#ENDIF    
+
+    IF(equations%linearity/=EQUATIONS_LINEAR) THEN
+      localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))// &
+        & " does not correspond to linear equations."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Equations_AssertIsLinear")
+    RETURN
+999 ERRORSEXITS("Equations_AssertIsLinear",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_AssertIsLinear
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an equations linearity is nonlinear
+  SUBROUTINE Equations_AssertIsNonlinear(equations,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to assert the nonlinear status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Equations_AssertIsNonlinear",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
+
+    IF(equations%linearity/=EQUATIONS_NONLINEAR) THEN
+      localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))// &
+        & " does not correspond to nonlinear equations."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Equations_AssertIsNonlinear")
+    RETURN
+999 ERRORSEXITS("Equations_AssertIsNonlinear",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_AssertIsNonlinear
 
   !
   !================================================================================================================================
@@ -219,11 +359,16 @@ CONTAINS
  
     ENTERS("Equations_EquationsSetGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
 
     equationsSet=>equations%equationsSet
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated for the equations.",err,error,*999)
+#endif    
        
     EXITS("Equations_EquationsSetGet")
     RETURN
@@ -249,11 +394,16 @@ CONTAINS
  
     ENTERS("Equations_InterpolationGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interpolation)) CALL FlagError("Interpolation is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif
 
     interpolation=>equations%interpolation
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interpolation)) CALL FlagError("Interpolation is not associated for the equations.",err,error,*999)
+#endif    
        
     EXITS("Equations_InterpolationGet")
     RETURN
@@ -279,11 +429,16 @@ CONTAINS
  
     ENTERS("Equations_ScalarEquationsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
 
     scalarEquations=>equations%scalarEquations
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated for the equations.",err,error,*999)
+#endif    
        
     EXITS("Equations_ScalarEquationsGet")
     RETURN
@@ -309,11 +464,16 @@ CONTAINS
  
     ENTERS("Equations_VectorEquationsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif    
 
     vectorEquations=>equations%vectorEquations
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated for the equations.",err,error,*999)
+#endif    
        
     EXITS("Equations_VectorEquationsGet")
     RETURN
@@ -337,10 +497,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_DependentParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentParameters)) CALL FlagError("Dependent parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%dependentInterpParameters)) &
@@ -351,13 +514,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     dependentParameters=>equationsInterpolation%dependentInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentParameters)) THEN
       localError="Equations interpolation dependent parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_DependentParametersGet")
     RETURN
@@ -373,7 +540,7 @@ CONTAINS
   !
 
   !>Checks the dependent field for an equations interpolation.
-  SUBROUTINE EquationsInterpolation_DependentFieldCheck(equationsInterpolation,dependentField,err,error,*)
+  SUBROUTINE EquationsInterpolation_DependentFieldExists(equationsInterpolation,dependentField,err,error,*)
 
     !Argument variables
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the dependent field for
@@ -382,21 +549,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsInterpolation_DependentFieldCheck",err,error,*998)
+    ENTERS("EquationsInterpolation_DependentFieldExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     dependentField=>equationsInterpolation%dependentField
        
-    EXITS("EquationsInterpolation_DependentFieldCheck")
+    EXITS("EquationsInterpolation_DependentFieldExists")
     RETURN
 999 NULLIFY(dependentField)
-998 ERRORS("EquationsInterpolation_DependentFieldCheck",err,error)
-    EXITS("EquationsInterpolation_DependentFieldCheck")
+998 ERRORS("EquationsInterpolation_DependentFieldExists",err,error)
+    EXITS("EquationsInterpolation_DependentFieldExists")
     RETURN 1
     
-  END SUBROUTINE EquationsInterpolation_DependentFieldCheck
+  END SUBROUTINE EquationsInterpolation_DependentFieldExists
 
   !
   !================================================================================================================================
@@ -414,12 +583,17 @@ CONTAINS
  
     ENTERS("EquationsInterpolation_DependentFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     dependentField=>equationsInterpolation%dependentField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentField)) &
       & CALL FlagError("Dependent field is not assocaited for the equations interpolation.",err,error,*999)
+#endif    
        
     EXITS("EquationsInterpolation_DependentFieldGet")
     RETURN
@@ -444,10 +618,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_DependentPointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentPoint)) CALL FlagError("Dependent point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%dependentInterpPoint)) &
@@ -458,13 +635,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     dependentPoint=>equationsInterpolation%dependentInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentPoint)) THEN
       localError="Equations interpolated dependent point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_DependentPointGet")
     RETURN
@@ -489,10 +670,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_DependentPointMetricsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentPointMetrics)) CALL FlagError("Dependent point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%dependentInterpPointMetrics)) &
@@ -503,13 +687,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     dependentPointMetrics=>equationsInterpolation%dependentInterpPointMetrics(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentPointMetrics)) THEN
       localError="Equations interpolated dependent point metrics is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_DependentPointMetricsGet")
     RETURN
@@ -525,7 +713,7 @@ CONTAINS
   !
 
   !>Checks the fibre field for an equations interpolation.
-  SUBROUTINE EquationsInterpolation_FibreFieldCheck(equationsInterpolation,fibreField,err,error,*)
+  SUBROUTINE EquationsInterpolation_FibreFieldExists(equationsInterpolation,fibreField,err,error,*)
 
     !Argument variables
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the fibre field for
@@ -534,21 +722,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsInterpolation_FibreFieldCheck",err,error,*998)
+    ENTERS("EquationsInterpolation_FibreFieldExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     fibreField=>equationsInterpolation%fibreField
        
-    EXITS("EquationsInterpolation_FibreFieldCheck")
+    EXITS("EquationsInterpolation_FibreFieldExists")
     RETURN
 999 NULLIFY(fibreField)
-998 ERRORS("EquationsInterpolation_FibreFieldCheck",err,error)
-    EXITS("EquationsInterpolation_FibreFieldCheck")
+998 ERRORS("EquationsInterpolation_FibreFieldExists",err,error)
+    EXITS("EquationsInterpolation_FibreFieldExists")
     RETURN 1
     
-  END SUBROUTINE EquationsInterpolation_FibreFieldCheck
+  END SUBROUTINE EquationsInterpolation_FibreFieldExists
 
   !
   !================================================================================================================================
@@ -566,12 +756,17 @@ CONTAINS
  
     ENTERS("EquationsInterpolation_FibreFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#enidf    
 
     fibreField=>equationsInterpolation%fibreField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(fibreField)) &
       & CALL FlagError("Fibre field is not assocaited for the equations interpolation.",err,error,*999)
+#endif    
        
     EXITS("EquationsInterpolation_FibreFieldGet")
     RETURN
@@ -596,10 +791,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_FibreParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fibreParameters)) CALL FlagError("Fibre parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%fibreInterpParameters)) &
@@ -610,13 +808,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     fibreParameters=>equationsInterpolation%fibreInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(fibreParameters)) THEN
       localError="Equations interpolation fibre parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_FibreParametersGet")
     RETURN
@@ -641,10 +843,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_FibrePointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fibrePoint)) CALL FlagError("Fibre point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%fibreInterpPoint)) &
@@ -655,13 +860,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     fibrePoint=>equationsInterpolation%fibreInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(fibrePoint)) THEN
       localError="Equations interpolated fibre point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_FibrePointGet")
     RETURN
@@ -686,10 +895,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_FibrePointMetricsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fibrePointMetrics)) CALL FlagError("Fibre point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%fibreInterpPointMetrics)) &
@@ -700,13 +912,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     fibrePointMetrics=>equationsInterpolation%fibreInterpPointMetrics(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(fibrePointMetrics)) THEN
       localError="Equations interpolated fibre point metrics is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_FibrePointMetricsGet")
     RETURN
@@ -722,7 +938,7 @@ CONTAINS
   !
 
   !>Checks the geometric field for an equations interpolation.
-  SUBROUTINE EquationsInterpolation_GeometricFieldCheck(equationsInterpolation,geometricField,err,error,*)
+  SUBROUTINE EquationsInterpolation_GeometricFieldExists(equationsInterpolation,geometricField,err,error,*)
 
     !Argument variables
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the geometric field for
@@ -731,21 +947,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsInterpolation_GeometricFieldCheck",err,error,*998)
+    ENTERS("EquationsInterpolation_GeometricFieldExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     geometricField=>equationsInterpolation%geometricField
        
-    EXITS("EquationsInterpolation_GeometricFieldCheck")
+    EXITS("EquationsInterpolation_GeometricFieldExists")
     RETURN
 999 NULLIFY(geometricField)
-998 ERRORS("EquationsInterpolation_GeometricFieldCheck",err,error)
-    EXITS("EquationsInterpolation_GeometricFieldCheck")
+998 ERRORS("EquationsInterpolation_GeometricFieldExists",err,error)
+    EXITS("EquationsInterpolation_GeometricFieldExists")
     RETURN 1
     
-  END SUBROUTINE EquationsInterpolation_GeometricFieldCheck
+  END SUBROUTINE EquationsInterpolation_GeometricFieldExists
 
   !
   !================================================================================================================================
@@ -763,12 +981,17 @@ CONTAINS
  
     ENTERS("EquationsInterpolation_GeometricFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     geometricField=>equationsInterpolation%geometricField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricField)) &
       & CALL FlagError("Geometric field is not assocaited for the equations interpolation.",err,error,*999)
+#endif    
        
     EXITS("EquationsInterpolation_GeometricFieldGet")
     RETURN
@@ -793,10 +1016,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_GeometricParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricParameters)) CALL FlagError("Geometric parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%geometricInterpParameters)) &
@@ -807,13 +1033,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     geometricParameters=>equationsInterpolation%geometricInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricParameters)) THEN
       localError="Equations interpolation geometric parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_GeometricParametersGet")
     RETURN
@@ -838,10 +1068,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_GeometricPointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricPoint)) CALL FlagError("Geometric point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%geometricInterpPoint)) &
@@ -852,13 +1085,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     geometricPoint=>equationsInterpolation%geometricInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricPoint)) THEN
       localError="Equations interpolated geometric point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_GeometricPointGet")
     RETURN
@@ -883,10 +1120,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_GeometricPointMetricsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricPointMetrics)) CALL FlagError("Geometric point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%geometricInterpPointMetrics)) &
@@ -897,14 +1137,18 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-
+#endif
+    
     geometricPointMetrics=>equationsInterpolation%geometricInterpPointMetrics(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricPointMetrics)) THEN
       localError="Equations interpolated geometric point metrics is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-       
+#endif
+    
     EXITS("EquationsInterpolation_GeometricPointMetricsGet")
     RETURN
 999 NULLIFY(geometricPointMetrics)
@@ -919,7 +1163,7 @@ CONTAINS
   !
 
   !>Checks the independent field for an equations interpolation.
-  SUBROUTINE EquationsInterpolation_IndependentFieldCheck(equationsInterpolation,independentField,err,error,*)
+  SUBROUTINE EquationsInterpolation_IndependentFieldExists(equationsInterpolation,independentField,err,error,*)
 
     !Argument variables
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the independent field for
@@ -928,21 +1172,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsInterpolation_IndependentFieldCheck",err,error,*998)
+    ENTERS("EquationsInterpolation_IndependentFieldExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(independentField)) CALL FlagError("Independent field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     independentField=>equationsInterpolation%independentField
        
-    EXITS("EquationsInterpolation_IndependentFieldCheck")
+    EXITS("EquationsInterpolation_IndependentFieldExists")
     RETURN
 999 NULLIFY(independentField)
-998 ERRORS("EquationsInterpolation_IndependentFieldCheck",err,error)
-    EXITS("EquationsInterpolation_IndependentFieldCheck")
+998 ERRORS("EquationsInterpolation_IndependentFieldExists",err,error)
+    EXITS("EquationsInterpolation_IndependentFieldExists")
     RETURN 1
     
-  END SUBROUTINE EquationsInterpolation_IndependentFieldCheck
+  END SUBROUTINE EquationsInterpolation_IndependentFieldExists
 
   !
   !================================================================================================================================
@@ -960,12 +1206,17 @@ CONTAINS
  
     ENTERS("EquationsInterpolation_IndependentFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(independentField)) CALL FlagError("Independent field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     independentField=>equationsInterpolation%independentField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(independentField)) &
       & CALL FlagError("Independent field is not assocaited for the equations interpolation.",err,error,*999)
+#endif    
        
     EXITS("EquationsInterpolation_IndependentFieldGet")
     RETURN
@@ -990,10 +1241,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_IndependentParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(independentParameters)) CALL FlagError("Independent parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%independentInterpParameters)) &
@@ -1004,13 +1258,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     independentParameters=>equationsInterpolation%independentInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(independentParameters)) THEN
       localError="Equations interpolation independent parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_IndependentParametersGet")
     RETURN
@@ -1035,10 +1293,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_IndependentPointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(independentPoint)) CALL FlagError("Independent point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%independentInterpPoint)) &
@@ -1049,13 +1310,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     independentPoint=>equationsInterpolation%independentInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(independentPoint)) THEN
       localError="Equations interpolated independent point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_IndependentPointGet")
     RETURN
@@ -1081,10 +1346,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_IndependentPointMetricsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(independentPointMetrics)) CALL FlagError("Independent point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%independentInterpPointMetrics)) &
@@ -1095,13 +1363,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     independentPointMetrics=>equationsInterpolation%independentInterpPointMetrics(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(independentPointMetrics)) THEN
       localError="Equations interpolated independent point metrics is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_IndependentPointMetricsGet")
     RETURN
@@ -1117,7 +1389,7 @@ CONTAINS
   !
 
   !>Checks the materials field for an equations interpolation.
-  SUBROUTINE EquationsInterpolation_MaterialsFieldCheck(equationsInterpolation,materialsField,err,error,*)
+  SUBROUTINE EquationsInterpolation_MaterialsFieldExists(equationsInterpolation,materialsField,err,error,*)
 
     !Argument variables
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the materials field for
@@ -1126,21 +1398,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsInterpolation_MaterialsFieldCheck",err,error,*998)
+    ENTERS("EquationsInterpolation_MaterialsFieldExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(materialsField)) CALL FlagError("Materials field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     materialsField=>equationsInterpolation%materialsField
        
-    EXITS("EquationsInterpolation_MaterialsFieldCheck")
+    EXITS("EquationsInterpolation_MaterialsFieldExists")
     RETURN
 999 NULLIFY(materialsField)
-998 ERRORS("EquationsInterpolation_MaterialsFieldCheck",err,error)
-    EXITS("EquationsInterpolation_MaterialsFieldCheck")
+998 ERRORS("EquationsInterpolation_MaterialsFieldExists",err,error)
+    EXITS("EquationsInterpolation_MaterialsFieldExists")
     RETURN 1
     
-  END SUBROUTINE EquationsInterpolation_MaterialsFieldCheck
+  END SUBROUTINE EquationsInterpolation_MaterialsFieldExists
 
   !
   !================================================================================================================================
@@ -1158,12 +1432,17 @@ CONTAINS
  
     ENTERS("EquationsInterpolation_MaterialsFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(materialsField)) CALL FlagError("Materials field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     materialsField=>equationsInterpolation%materialsField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(materialsField)) &
       & CALL FlagError("Materials field is not assocaited for the equations interpolation.",err,error,*999)
+#endif    
        
     EXITS("EquationsInterpolation_MaterialsFieldGet")
     RETURN
@@ -1188,10 +1467,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_MaterialsParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(materialsParameters)) CALL FlagError("Materials parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%materialsInterpParameters)) &
@@ -1202,13 +1484,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     materialsParameters=>equationsInterpolation%materialsInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(materialsParameters)) THEN
       localError="Equations interpolation materials parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_MaterialsParametersGet")
     RETURN
@@ -1233,10 +1519,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_MaterialsPointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(materialsPoint)) CALL FlagError("Materials point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%materialsInterpPoint)) &
@@ -1247,13 +1536,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     materialsPoint=>equationsInterpolation%materialsInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(materialsPoint)) THEN
       localError="Equations interpolated materials point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_MaterialsPointGet")
     RETURN
@@ -1279,10 +1572,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_PreviousDependentParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(prevDependentParameters)) CALL FlagError("Previous dependent parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%prevDependentInterpParameters)) &
@@ -1293,13 +1589,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     prevDependentParameters=>equationsInterpolation%prevDependentInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(prevDependentParameters)) THEN
       localError="Equations interpolation previous dependent parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_PreviousDependentParametersGet")
     RETURN
@@ -1324,10 +1624,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_PreviousDependentPointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(prevDependentPoint)) CALL FlagError("Previous dependent point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%prevDependentInterpPoint)) &
@@ -1338,13 +1641,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     prevDependentPoint=>equationsInterpolation%prevDependentInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(prevDependentPoint)) THEN
       localError="Equations interpolated previous dependent point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_PreviousDependentPointGet")
     RETURN
@@ -1370,10 +1677,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_PreviousDependentPointMetricsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(prevDependentPointMetrics)) CALL FlagError("Previous dependent point metrics is already associated.", &
       & err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
@@ -1385,13 +1695,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     prevDependentPointMetrics=>equationsInterpolation%prevDependentInterpPointMetrics(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(prevDependentPointMetrics)) THEN
       localError="Equations interpolated previous dependent point metrics is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_PreviousDependentPointMetricsGet")
     RETURN
@@ -1407,7 +1721,7 @@ CONTAINS
   !
 
   !>Checks the source field for an equations interpolation.
-  SUBROUTINE EquationsInterpolation_SourceFieldCheck(equationsInterpolation,sourceField,err,error,*)
+  SUBROUTINE EquationsInterpolation_SourceFieldExists(equationsInterpolation,sourceField,err,error,*)
 
     !Argument variables
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the source field for
@@ -1416,21 +1730,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsInterpolation_SourceFieldCheck",err,error,*998)
+    ENTERS("EquationsInterpolation_SourceFieldExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(sourceField)) CALL FlagError("Source field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     sourceField=>equationsInterpolation%sourceField
        
-    EXITS("EquationsInterpolation_SourceFieldCheck")
+    EXITS("EquationsInterpolation_SourceFieldExists")
     RETURN
 999 NULLIFY(sourceField)
-998 ERRORS("EquationsInterpolation_SourceFieldCheck",err,error)
-    EXITS("EquationsInterpolation_SourceFieldCheck")
+998 ERRORS("EquationsInterpolation_SourceFieldExists",err,error)
+    EXITS("EquationsInterpolation_SourceFieldExists")
     RETURN 1
     
-  END SUBROUTINE EquationsInterpolation_SourceFieldCheck
+  END SUBROUTINE EquationsInterpolation_SourceFieldExists
 
   !
   !================================================================================================================================
@@ -1448,12 +1764,17 @@ CONTAINS
  
     ENTERS("EquationsInterpolation_SourceFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(sourceField)) CALL FlagError("Source field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+#endif    
 
     sourceField=>equationsInterpolation%sourceField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourceField)) &
       & CALL FlagError("Source field is not assocaited for the equations interpolation.",err,error,*999)
+#endif    
        
     EXITS("EquationsInterpolation_SourceFieldGet")
     RETURN
@@ -1478,10 +1799,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_SourceParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(sourceParameters)) CALL FlagError("Source parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%sourceInterpParameters)) &
@@ -1492,13 +1816,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     sourceParameters=>equationsInterpolation%sourceInterpParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourceParameters)) THEN
       localError="Equations interpolation source parameters is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_SourceParametersGet")
     RETURN
@@ -1523,10 +1851,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsInterpolation_SourcePointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(sourcePoint)) CALL FlagError("Source point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equationsInterpolation%sourceInterpPoint)) &
@@ -1537,13 +1868,17 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     sourcePoint=>equationsInterpolation%sourceInterpPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourcePoint)) THEN
       localError="Equations interpolated source point is not associated for field variable type "// &
         & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsInterpolation_SourcePointGet")
     RETURN
@@ -1570,11 +1905,16 @@ CONTAINS
  
     ENTERS("EquationsScalar_EquationsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equations)) CALL FlagError("Equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*999)
+#endif    
 
     equations=>scalarEquations%equations
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated for the scalar equations.",err,error,*999)
+#endif    
        
     EXITS("EquationsScalar_EquationsGet")
     RETURN
@@ -1600,11 +1940,16 @@ CONTAINS
  
     ENTERS("EquationsScalar_ScalarMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(scalarMapping)) CALL FlagError("Scalar mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*999)
+#endif    
 
     scalarMapping=>scalarEquations%scalarMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar mapping is not associated for the scalar equations.",err,error,*999)
+#endif    
        
     EXITS("EquationsScalar_ScalarMappingGet")
     RETURN
@@ -1630,11 +1975,16 @@ CONTAINS
  
     ENTERS("EquationsScalar_ScalarMatricesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(scalarMatrices)) CALL FlagError("Scalar matrices is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*999)
+#endif    
 
     scalarMatrices=>scalarEquations%scalarMatrices
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(scalarMatrices)) CALL FlagError("Scalar matrices is not associated for the scalar equations.",err,error,*999)
+#endif    
        
     EXITS("EquationsScalar_ScalarMatricesGet")
     RETURN
@@ -1660,11 +2010,16 @@ CONTAINS
  
     ENTERS("EquationsVector_EquationsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equations)) CALL FlagError("Equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
+#endif    
 
     equations=>vectorEquations%equations
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated for the vector equations.",err,error,*999)
+#endif    
        
     EXITS("EquationsVector_EquationsGet")
     RETURN
@@ -1690,11 +2045,16 @@ CONTAINS
  
     ENTERS("EquationsVector_VectorMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
+#endif    
 
     vectorMapping=>vectorEquations%vectorMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated for the vector equations.",err,error,*999)
+#endif    
        
     EXITS("EquationsVector_VectorMappingGet")
     RETURN
@@ -1720,11 +2080,16 @@ CONTAINS
  
     ENTERS("EquationsVector_VectorMatricesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
+#endif    
 
     vectorMatrices=>vectorEquations%vectorMatrices
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated for the vector equations.",err,error,*999)
+#endif    
        
     EXITS("EquationsVector_VectorMatricesGet")
     RETURN

@@ -58,15 +58,51 @@ MODULE InterfaceConditionAccessRoutines
 
   !Module parameters
 
+
+  !> \addtogroup InterfaceConditions_Methods InterfaceConditions::Constants::Methods
+  !> \brief Interface condition methods.
+  !> \see InterfaceConditions
+  !>@{
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD=1 !<Lagrange multipliers interface condition method. \see InterfaceConditions_Methods,InterfaceConditions
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD=2 !<Augmented Lagrange multiplers interface condition method. \see InterfaceConditions_Methods,InterfaceConditions
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_PENALTY_METHOD=3 !<Penalty interface condition method. \see InterfaceConditions_Methods,InterfaceConditions
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_POINT_TO_POINT_METHOD=4 !<Point to point interface condition method. \see InterfaceConditions_Methods,InterfaceConditions
+  !>@}
+
+  !> \addtogroup InterfaceConditions_Operators InterfaceConditions::Constants::Operators
+  !> \brief Interface condition operators.
+  !> \see InterfaceConditions
+  !>@{
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR=1 !<Continuous field operator, i.e., lambda.(u_1-u_2). \see InterfaceConditions_Operators,InterfaceConditions 
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR=2 !<Continuous field normal operator, i.e., lambda(u_1.n_1-u_2.n_2). \see InterfaceConditions_Operators,InterfaceConditions 
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_FLS_CONTACT_OPERATOR=3 !<Frictionless contact operator, i.e., lambda.(x_1.n-x_2.n). \see InterfaceConditions_Operators,InterfaceConditions 
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR=4 !<Frictionless contact operator, reproject at each newton iteration and has geometric linearisation terms i.e., lambda.(x_1.n-x_2.n). \see InterfaceConditions_Operators,InterfaceConditions 
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_SOLID_FLUID_OPERATOR=5 !<Solid fluid operator, i.e., lambda.(v_f-du_s/dt). \see InterfaceConditions_Operators,InterfaceConditions 
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR=6 !<Solid fluid normal operator, i.e., lambda(v_f.n_f-du_s/dt.n_s). \see InterfaceConditions_Operators,InterfaceConditions 
+  !>@}
+
+
+  !> \addtogroup InterfaceConditions_OutputTypes InterfaceConditions::Constants::OutputTypes
+  !> \brief The interface conditions output types
+  !> \see InterfaceConditions,OpenCMISS_InterfaceConditionsConstants
+  !>@{
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_NO_OUTPUT=0 !<No output. \see InterfaceConditions_OutputTypes,InterfaceConditions
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_PROGRESS_OUTPUT=1 !<Progress information output. \see InterfaceConditions_OutputTypes,InterfaceConditions
+  !>@}
+
+  !> \addtogroup InterfaceConditions_IntegrationType InterfaceConditions::Constants::IntegrationType
+  !> \brief Interface condition IntegrationType.
+  !> \see InterfaceConditions
+  !>@{
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_GAUSS_INTEGRATION=1 !<Gauss points integration type, i.e. Loop over element Gauss points and sum up their contribution. \see InterfaceConditions_IntegrationType,InterfaceConditions 
+  INTEGER(INTG), PARAMETER :: INTERFACE_CONDITION_DATA_POINTS_INTEGRATION=2 !< Data points integration type i.e. Loop over data points and  sum up their contribution.\see InterfaceConditions_IntegrationType,InterfaceConditions 
+  !>@}
+  
   !Module types
 
   !Module variables
 
   !Interfaces
-
-  INTERFACE INTERFACE_CONDITION_EQUATIONS_GET
-    MODULE PROCEDURE InterfaceCondition_InterfaceEquationsGet
-  END INTERFACE INTERFACE_CONDITION_EQUATIONS_GET
 
   INTERFACE InterfaceCondition_LabelGet
     MODULE PROCEDURE InterfaceCondition_LabelGetC
@@ -78,17 +114,22 @@ MODULE InterfaceConditionAccessRoutines
     MODULE PROCEDURE InterfaceCondition_LabelSetVS
   END INTERFACE InterfaceCondition_LabelSet
 
-  INTERFACE INTERFACE_CONDITION_USER_NUMBER_FIND
-    MODULE PROCEDURE InterfaceCondition_UserNumberFind
-  END INTERFACE INTERFACE_CONDITION_USER_NUMBER_FIND
+  PUBLIC INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD, &
+    & INTERFACE_CONDITION_PENALTY_METHOD,INTERFACE_CONDITION_POINT_TO_POINT_METHOD
+
+  PUBLIC INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR,INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR, &
+    & INTERFACE_CONDITION_FLS_CONTACT_OPERATOR,INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR, &
+    & INTERFACE_CONDITION_SOLID_FLUID_OPERATOR,INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR
+
+  PUBLIC INTERFACE_CONDITION_NO_OUTPUT,INTERFACE_CONDITION_PROGRESS_OUTPUT
+
+  PUBLIC INTERFACE_CONDITION_GAUSS_INTEGRATION,INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
 
   PUBLIC InterfaceCondition_AssertIsFinished,InterfaceCondition_AssertNotFinished
 
   PUBLIC InterfaceCondition_InterfaceDependentGet
 
   PUBLIC InterfaceCondition_InterfaceEquationsGet
-
-  PUBLIC INTERFACE_CONDITION_EQUATIONS_GET
 
   PUBLIC InterfaceCondition_GeometricFieldGet
 
@@ -100,11 +141,11 @@ MODULE InterfaceConditionAccessRoutines
   
   PUBLIC InterfaceCondition_LagrangeFieldGet
 
+  PUBLIC InterfaceCondition_PenaltyFieldExists
+
   PUBLIC InterfaceCondition_PenaltyFieldGet
 
   PUBLIC InterfaceCondition_UserNumberFind
-
-  PUBLIC INTERFACE_CONDITION_USER_NUMBER_FIND
 
   PUBLIC InterfaceDependent_DependentVariableGet
   
@@ -132,7 +173,9 @@ CONTAINS
  
     ENTERS("InterfaceCondition_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.interfaceCondition%interfaceConditionFinished) THEN
       localError="Interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
@@ -163,7 +206,9 @@ CONTAINS
  
     ENTERS("InterfaceCondition_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
 
     IF(interfaceCondition%interfaceConditionFinished) THEN
       localError="Interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
@@ -194,12 +239,17 @@ CONTAINS
  
     ENTERS("InterfaceCondition_InterfaceDependentGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is already associated.",err,error,*998)
     CALL InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*999)
+#endif    
  
     interfaceDependent=>interfaceCondition%dependent
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceDependent)) &
       & CALL FlagError("Interface condition dependent is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceCondition_InterfaceDependentGet")
     RETURN
@@ -223,20 +273,24 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceCondition_InterfaceEquationsGet",err,error,*999)
+    ENTERS("InterfaceCondition_InterfaceEquationsGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.interfaceCondition%interfaceConditionFinished) &
-      & CALL FlagError("Interface condition has not been finished.",err,error,*999)
-    IF(ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is already associated.",err,error,*999)
-
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is already associated.",err,error,*998)
+    CALL InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*999)
+#endif    
+ 
     interfaceEquations=>interfaceCondition%interfaceEquations
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceEquations)) &
       & CALL FlagError("Interface condition equations is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceCondition_InterfaceEquationsGet")
     RETURN
-999 ERRORSEXITS("InterfaceCondition_InterfaceEquationsGet",err,error)
+999 NULLIFY(interfaceEquations)
+998 ERRORSEXITS("InterfaceCondition_InterfaceEquationsGet",err,error)
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_InterfaceEquationsGet
@@ -254,19 +308,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceCondition_GeometricFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("InterfaceCondition is not associated.",err,error,*999)
+#endif    
 
     geometricField=>interfaceCondition%geometry%geometricField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceCondition_GeometricFieldGet")
     RETURN
@@ -292,13 +353,16 @@ CONTAINS
  
     ENTERS("InterfaceCondition_InterfaceGet",err,error,*998)
 
-    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.interfaceCondition%interfaceConditionFinished) &
-      & CALL FlagError("Interface condition has not been finished.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
+    CALL InterfaceConditions_AssertIsFinished(interfaceCondition,err,error,*999)
+#endif    
  
     INTERFACE=>interfaceCondition%INTERFACE
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface condition interface is not associated.",err,error,*999)
+
+#ifdef WITH_POSTCHECKS      
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface condition interface is not associated.",err,error,*999)
+#endif      
        
     EXITS("InterfaceCondition_InterfaceGet")
     RETURN
@@ -325,7 +389,9 @@ CONTAINS
 
     ENTERS("InterfaceCondition_LabelGetC",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
     
     cLength=LEN(label)
     vsLength=LEN_TRIM(interfaceCondition%label)
@@ -358,7 +424,9 @@ CONTAINS
 
     ENTERS("InterfaceCondition_LabelGetVS",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
     
     label=VAR_STR(CHAR(interfaceCondition%label))
           
@@ -384,9 +452,10 @@ CONTAINS
     !Local Variables
 
     ENTERS("InterfaceCondition_LabelSetC",err,error,*999)
-
+    
+#ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(interfaceCondition%interfaceConditionFinished) CALL FlagError("Interface condition has been finished.",err,error,*999)
+#endif
     
     interfaceCondition%label=label
         
@@ -413,8 +482,9 @@ CONTAINS
 
     ENTERS("InterfaceCondition_LabelSetVS",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(interfaceCondition%interfaceConditionFinished) CALL FlagError("Interface condition has been finished.",err,error,*999)
+#endif    
     
     interfaceCondition%label=label
     
@@ -441,12 +511,17 @@ CONTAINS
  
     ENTERS("InterfaceCondition_InterfaceLagrangeGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface lagrange is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
 
     interfaceLagrange=>interfaceCondition%lagrange
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceLagrange)) &
       & CALL FlagError("Interface condition Lagrange is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceCondition_InterfaceLagrangeGet")
     RETURN
@@ -469,24 +544,31 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceCondition_LagrangeFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(lagrangeField)) CALL FlagError("Lagrange field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-
     IF(.NOT.ASSOCIATED(interfaceCondition%lagrange)) THEN
       localError="Lagrange is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
+    
     lagrangeField=>interfaceCondition%lagrange%lagrangeField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(lagrangeField)) THEN
       localError="Lagrange field is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceCondition_LagrangeFieldGet")
     RETURN
@@ -495,6 +577,45 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_LagrangeFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the penalty field exists for an interface condition.
+  SUBROUTINE InterfaceCondition_PenaltyFieldExists(interfaceCondition,penaltyField,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to check the penalty field for
+    TYPE(FieldType), POINTER :: penaltyField !<On exit, a pointer to the penalty field in the specified interface condition if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("InterfaceCondition_PenaltyFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(penaltyField)) CALL FlagError("Penalty field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceCondition%penalty)) THEN
+      localError="Penalty is not associated for interface condition number "// &
+      & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    penaltyField=>interfaceCondition%penalty%penaltyField
+       
+    EXITS("InterfaceCondition_PenaltyFieldExists")
+    RETURN
+999 NULLIFY(penaltyField)
+998 ERRORSEXITS("InterfaceCondition_PenaltyFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_PenaltyFieldExists
 
   !
   !================================================================================================================================
@@ -509,24 +630,31 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceCondition_PenaltyFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(penaltyField)) CALL FlagError("Penalty field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-
     IF(.NOT.ASSOCIATED(interfaceCondition%penalty)) THEN
       localError="Penalty is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
+    
     penaltyField=>interfaceCondition%penalty%penaltyField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(penaltyField)) THEN
       localError="Penalty field is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceCondition_PenaltyFieldGet")
     RETURN
@@ -551,30 +679,34 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: interfaceConditionIdx
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("InterfaceCondition_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(interface%interfaceConditions)) THEN
+    IF(.NOT.ASSOCIATED(INTERFACE%interfaceConditions)) THEN
       localError="The interface interface conditions are not associated for interface number "// &
         & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
-    NULLIFY(interfaceCondition)
     IF(ASSOCIATED(INTERFACE%interfaceConditions%interfaceConditions)) THEN
       DO interfaceConditionIdx=1,INTERFACE%interfaceConditions%numberOfInterfaceConditions
-        IF(ASSOCIATED(interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR)) THEN
-          IF(interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR%userNumber==userNumber) THEN
-            interfaceCondition=>interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR
-            EXIT
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(INTERFACE%interfaceConditions%interfaceConditions(interfaceConditionIdx)%ptr)) THEN
           localError="The interface condition pointer in interface conditions is not associated for interface condition index "// &
             & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
+        IF(INTERFACE%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR%userNumber==userNumber) THEN
+          interfaceCondition=>interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%ptr
+          EXIT
         ENDIF
       ENDDO !interfaceConditionIdx
     ENDIF
@@ -600,10 +732,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceDependent_EquationsSetGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS 
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is not associated.",err,error,*999)
     IF(variableIdx<0.OR.variableIdx>interfaceDependent%numberOfDependentVariables) THEN
@@ -614,13 +749,17 @@ CONTAINS
     ENDIF
     IF(.NOT.ASSOCIATED(interfaceDependent%equationsSets)) &
       & CALL FlagError("Interface dependent equations sets is not associated.",err,error,*999)
+#endif    
  
-    equationsSet=>interfaceDependent%equationsSets(variableIdx)%ptr      
+    equationsSet=>interfaceDependent%equationsSets(variableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       localError="The equations set for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)      
     ENDIF
+#endif    
        
     EXITS("InterfaceDependent_EquationsSetGet")
     RETURN
@@ -648,6 +787,7 @@ CONTAINS
  
     ENTERS("InterfaceDependent_DependentVariableGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is not associated.",err,error,*999)
     IF(variableIdx<0.OR.variableIdx>interfaceDependent%numberOfDependentVariables) THEN
@@ -658,13 +798,17 @@ CONTAINS
     ENDIF
     IF(.NOT.ASSOCIATED(interfaceDependent%fieldVariables)) &
       & CALL FlagError("Interface dependent field variables is not associated.",err,error,*999)
+#endif    
  
-    dependentVariable=>interfaceDependent%fieldVariables(variableIdx)%ptr      
+    dependentVariable=>interfaceDependent%fieldVariables(variableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentVariable)) THEN
       localError="The dependent field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)      
     ENDIF
+#endif    
        
     EXITS("InterfaceDependent_DependentVariableGet")
     RETURN
@@ -689,7 +833,9 @@ CONTAINS
  
     ENTERS("InterfaceLagrange_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.interfaceLagrange%lagrangeFinished) &
       & CALL FlagError("Interface Lagrange has not been finished.",err,error,*999)
@@ -716,7 +862,9 @@ CONTAINS
  
     ENTERS("InterfaceLagrange_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
+#endif    
 
     IF(interfaceLagrange%lagrangeFinished)  &
       & CALL FlagError("Interface Lagrange has already been finished.",err,error,*999)
@@ -744,11 +892,16 @@ CONTAINS
 
     ENTERS("InterfaceLagrange_LagrangeFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(lagrangeField)) CALL FlagError("Lagrange field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
+#endif    
 
     lagrangeField=>interfaceLagrange%lagrangeField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(lagrangeField)) CALL FlagError("The interface Lagrange Lagrange field is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceLagrange_LagrangeFieldGet")
     RETURN

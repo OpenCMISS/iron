@@ -145,11 +145,41 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DecompositionDataPoints_DataPointCheckExists
 
+  PUBLIC DecompositionDataPoints_ElementDataPointNumberGet
+
+  PUBLIC DecompositionDataPoints_ElementNumberOfDataPointsGet
+
   PUBLIC DecompositionDataPoints_LocalDataPointNumberGet
+
+  PUBLIC DecompositionElements_ElementAdjacentNumberGet
+
+  PUBLIC DecompositionElements_ElementBoundaryElementGet
 
   PUBLIC DecompositionElements_ElementCheckExists
 
+  PUBLIC DecompositionElements_ElementFaceNumberGet
+
+  PUBLIC DecompositionElements_ElementGet
+
+  PUBLIC DecompositionElements_ElementLineNumberGet
+
+  PUBLIC DecompositionElements_GlobalElementNumberGet
+
   PUBLIC DecompositionElements_LocalElementNumberGet
+
+  PUBLIC DecompositionElements_NumberOfElementsGet
+
+  PUBLIC DecompositionElements_TotalNumberOfElementsGet
+
+  PUBLIC DecompositionElements_UserElementNumberGet
+
+  PUBLIC DecompositionFaces_FaceGet
+
+  PUBLIC DecompositionFaces_FaceBoundaryFaceGet
+
+  PUBLIC DecompositionFaces_FaceXiNormalDiretionGet
+
+  PUBLIC DecompositionFaces_NumberOfFacesGet
 
   PUBLIC DecompositionTopology_DecompositionGet
 
@@ -169,8 +199,28 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Domain_MeshComponentNumberGet
 
+  PUBLIC DomainElement_BasisGet
+
+  PUBLIC DomainElement_ElementDerivativeGet
+  
+  PUBLIC DomainElement_ElementNodeGet
+
+  PUBLIC DomainElement_ElementVersionGet
+  
   PUBLIC DomainElements_BasisGet
 
+  PUBLIC DomainElements_DomainElementGet
+
+  PUBLIC DomainElements_ElementDerivativeGet
+
+  PUBLIC DomainElements_ElementNodeGet
+
+  PUBLIC DomainElements_ElementVersionGet
+
+  PUBLIC DomainElements_NumberOfElementsGet
+  
+  PUBLIC DomainElements_TotalNumberOfElementsGet
+  
   PUBLIC DomainFaces_BasisGet
 
   PUBLIC DomainFaces_FaceGet
@@ -187,9 +237,67 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainMappings_NodesMappingGet
 
+  PUBLIC DomainNode_BoundaryNodeGet
+
+  PUBLIC DomainNode_NodeDerivativeGet
+
+  PUBLIC DomainNode_GlobalNodeNumberGet
+
+  PUBLIC DomainNode_LocalNodeNumberGet
+
+  PUBLIC DomainNode_MeshNodeNumberGet
+
+  PUBLIC DomainNode_NodeFaceGet
+
+  PUBLIC DomainNode_NodeLineGet
+
+  PUBLIC DomainNode_NumberOfDerivativesGet
+
+  PUBLIC DomainNode_NumberOfNodeFacesGet
+
+  PUBLIC DomainNode_NumberOfNodeLinesGet
+
+  PUBLIC DomainNode_NumberOfSurroundingElementsGet
+
+  PUBLIC DomainNode_SurroundingElementGet
+
+  PUBLIC DomainNode_UserNodeNumberGet
+
+  PUBLIC DomainNodeDerivative_DerivativeGlobalIndexGet
+
+  PUBLIC DomainNodeDerivative_NumberOfVersionsGet
+
+  PUBLIC DomainNodeDerivative_PartialDerivativeIndexGet
+  
+  PUBLIC DomainNodeDerivative_VersionNumberGet
+  
+  PUBLIC DomainNodes_DerivativeGlobalIndexGet
+
+  PUBLIC DomainNodes_DerivativeNumberOfVersionsGet
+
+  PUBLIC DomainNodes_DerivativePartialIndexGet
+
+  PUBLIC DomainNodes_DerivativeVersionNumberGet
+
+  PUBLIC DomainNodes_GlobalNodeNumberGet
+
   PUBLIC DomainNodes_LocalNodeNumberGet
 
+  PUBLIC DomainNodes_NodeBoundaryNodeGet
+
   PUBLIC DomainNodes_NodeCheckExists
+
+  PUBLIC DomainNodes_NodeGet
+
+  PUBLIC DomainNodes_NodeNumberOfDerivativesGet
+
+  PUBLIC DomainNodes_NumberOfNodesGet
+
+  PUBLIC DomainNodes_TotalNumberOfNodesGet
+
+  PUBLIC DomainNodes_UserNodeNumberGet
+  
+  PUBLIC DomainNodes_VersionGet
 
   PUBLIC DomainTopology_DomainGet
 
@@ -223,7 +331,9 @@ CONTAINS
  
     ENTERS("Decomposer_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.decomposer%decomposerFinished) THEN
       localError="Decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
@@ -256,7 +366,9 @@ CONTAINS
  
     ENTERS("Decomposer_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+#endif    
 
     IF(decomposer%decomposerFinished) THEN
       localError="Decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
@@ -287,10 +399,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Decomposer_DecompositionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
@@ -312,8 +427,11 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     decomposition=>decomposer%decompositions(decompositionIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="The decomposition is not associated for decomposition index "// &
         & TRIM(NumberToVString(decompositionIndex,"*",err,error))// &
@@ -323,6 +441,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Decomposer_DecompositionGet")
     RETURN
@@ -345,15 +464,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Decomposer_DecomposerGraphGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+#endif    
 
     decomposerGraph=>decomposer%decomposerGraph
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposerGraph)) THEN
       localError="The decomposer graph is not associated for decomposer number "// &
         & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
@@ -362,6 +487,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Decomposer_DecomposerGraphGet")
     RETURN
@@ -384,20 +510,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Decomposer_RegionGet",err,error,*998 )
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+#endif    
 
     region=>decomposer%region
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(region)) THEN
       localError="The region associated with decomposer number "// &
         & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Decomposer_RegionGet")
     RETURN
@@ -426,6 +559,7 @@ CONTAINS
 
     ENTERS("Decomposer_UserNumberFind",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(decomposer)) CALL FlagError("Decomposer is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(region%decomposers)) THEN
@@ -433,7 +567,8 @@ CONTAINS
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-
+#endif
+    
     IF(ALLOCATED(region%decomposers%decomposers)) THEN
       DO decomposerIdx=1,region%decomposers%numberOfDecomposers
         IF(ASSOCIATED(region%decomposers%decomposers(decomposerIdx)%ptr)) THEN
@@ -473,12 +608,17 @@ CONTAINS
 
     ENTERS("DecomposerGraph_DecomposerGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS
     !Check input arguments
     IF(ASSOCIATED(decomposer)) CALL FlagError("Decomposer is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is not associated.",err,error,*999)
+#endif    
 
     decomposer=>decomposerGraph%decomposer
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("The decomposer is not associated for the decomposer graph.",err,error,*999)
+#endif    
  
     EXITS("DecomposerGraph_DecomposerGet")
     RETURN
@@ -506,6 +646,7 @@ CONTAINS
 
     ENTERS("DecomposerGraph_RootNodeGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(rootNode)) CALL FlagError("Root node is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is not associated.",err,error,*999)
@@ -534,8 +675,11 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     rootNode=>decomposerGraph%graphRoots(rootNodeIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(rootNode)) THEN
       localError="The root node is not associated for root node index "// &
         & TRIM(NumberToVString(rootNodeIndex,"*",err,error))// &
@@ -549,6 +693,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("DecomposerGraph_RootNodeGet")
     RETURN
@@ -575,16 +720,21 @@ CONTAINS
 
     ENTERS("DecomposerGraphLink_DecompositionGet",err,error,*998)
 
-    !Check input arguments
+#ifdef WITH_PRECHECKS    
+    !Check input arguments    
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(graphLink)) CALL FlagError("Graph link is not associated.",err,error,*999)
+#endif    
 
     decomposition=>graphLink%decomposition
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="The decomposition for the graph link is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
- 
+#endif
+    
     EXITS("DecomposerGraphLink_DecompositionGet")
     RETURN
 999 NULLIFY(decomposition)
@@ -610,15 +760,20 @@ CONTAINS
 
     ENTERS("DecomposerGraphLink_LinkedNodeGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(linkedNode)) CALL FlagError("Linked node is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(graphLink)) CALL FlagError("Graph link is not associated.",err,error,*999)
+#endif    
 
     linkedNode=>graphLink%linkedGraphNode
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(linkedNode)) THEN
       localError="The linked node for the graph link is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("DecomposerGraphLink_LinkedNodeGet")
     RETURN
@@ -641,19 +796,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecomposerGraphNode_DecomposerGraphGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(graphNode)) CALL FlagError("Graph node is not associated.",err,error,*999)
+#endif    
 
     decomposerGraph=>graphNode%decomposerGraph
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposerGraph)) THEN
       localError="The decomposer graph for the graph node is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("DecomposerGraphLink_DecomposerGraphGet")
     RETURN
@@ -676,19 +838,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecomposerGraphNode_DecompositionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(graphNode)) CALL FlagError("Graph node is not associated.",err,error,*999)
+#endif    
 
     decomposition=>graphNode%decomposition
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="The decomposition for the graph node is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("DecomposerGraphNode_DecompositionGet")
     RETURN
@@ -712,10 +881,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecomposerGraphNode_GraphLinkGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(graphLink)) CALL FlagError("Graph link is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(graphNode)) CALL FlagError("Graph node is not associated.",err,error,*999)
@@ -752,8 +924,11 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-
+#endif
+    
     graphLink=>graphNode%graphLinks(graphLinkIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(graphLink)) THEN
       localError="The graph link is not associated for graph link index "// &
         & TRIM(NumberToVString(graphLinkIndex,"*",err,error))// &
@@ -771,6 +946,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("DecomposerGraphNode_DecomposerGraphLinkGet")
     RETURN
@@ -796,7 +972,9 @@ CONTAINS
  
     ENTERS("Decomposition_AssertIsDecomposed",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.ASSOCIATED(decomposition%decomposer)) THEN
       localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
@@ -827,7 +1005,9 @@ CONTAINS
  
     ENTERS("Decomposition_AssertNotDecomposed",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endief    
 
     IF(ASSOCIATED(decomposition%decomposer)) THEN
       localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
@@ -858,7 +1038,9 @@ CONTAINS
  
     ENTERS("Decomposition_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.decomposition%decompositionFinished) THEN
       localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
@@ -889,7 +1071,9 @@ CONTAINS
  
     ENTERS("Decomposition_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     IF(decomposition%decompositionFinished) THEN
       localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
@@ -920,10 +1104,12 @@ CONTAINS
  
     ENTERS("Decomposition_CoordinateSystemGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*999)
-
+#endif
+    
     IF(ASSOCIATED(decomposition%region)) THEN
       coordinateSystem=>decomposition%region%coordinateSystem
     ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
@@ -931,9 +1117,11 @@ CONTAINS
     ELSE
       CALL FlagError("Decomposition is not associated with a region or an interface.",err,error,*999)
     ENDIF
- 
+
+#ifdef WITH_POSTCHECKS    
     !Check coordinate system is associated.
     IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+#endif    
     
     EXITS("Decomposition_CoordinateSystemGet")
     RETURN
@@ -958,15 +1146,19 @@ CONTAINS
  
     ENTERS("Decomposition_DecompositionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decompositions)) CALL FlagError("Decompositions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     !Get the decompositions
     decompositions=>decomposition%decompositions
-    
+
+#ifdef WITH_POSTCHECKS    
     !Check decompositions is associated.
     IF(.NOT.ASSOCIATED(decompositions)) CALL FlagError("Decomposition decompositions is not associated.",err,error,*999)
+#endif    
     
     EXITS("Decomposition_DecompositionsGet")
     RETURN
@@ -991,11 +1183,15 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: meshComponent
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Decomposition_DomainGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
+    IF(ASSOCIATED(domain)) CALL FlagError("Domain is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
     IF(meshComponentNumber<0.OR.meshComponentNumber>decomposition%numberOfComponents) THEN
       localError="The specified mesh component number of "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
@@ -1003,7 +1199,8 @@ CONTAINS
         & TRIM(NumberToVString(decomposition%numberOfComponents,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(ASSOCIATED(domain)) CALL FlagError("Domain is already associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(decomposition%domain)) CALL FlagError("Decomposition domain is not allocated.",err,error,*999)
+ #endif    
 
     !Get the domain
     IF(meshComponentNumber==0) THEN
@@ -1011,14 +1208,15 @@ CONTAINS
     ELSE
       meshComponent=meshComponentNumber
     ENDIF
-    IF(.NOT.ALLOCATED(decomposition%domain)) CALL FlagError("Decomposition domain is not allocated.",err,error,*999)
     domain=>decomposition%domain(meshComponent)%ptr
-    
+
+#ifdef WITH_POSTCHECKS    
     !Check domain is associated.
     IF(.NOT.ASSOCIATED(domain)) THEN
       localError="Domain is not associated for mesh component "//TRIM(NumberToVString(meshComponent,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Decomposition_DomainGet")
     RETURN
@@ -1040,20 +1238,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Decomposition_InterfaceGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
-    interface=>decomposition%INTERFACE
-    IF(.NOT.ASSOCIATED(interface)) THEN
+    INTERFACE=>decomposition%INTERFACE
+
+#ifdef WITH_POSTCHECKS      
+    IF(.NOT.ASSOCIATED(INTERFACE)) THEN
       localError="The interface for decomposition number "// &
         & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Decomposition_InterfaceGet")
     RETURN
@@ -1079,7 +1284,9 @@ CONTAINS
  
     ENTERS("Decomposition_IsInterfaceDecomposition",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     interfaceDecomposition = ASSOCIATED(decomposition%interface)
     
@@ -1106,7 +1313,9 @@ CONTAINS
  
     ENTERS("Decomposition_IsRegionDecomposition",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     regionDecomposition = ASSOCIATED(decomposition%region)
     
@@ -1130,19 +1339,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Decomposition_MeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
       
     mesh=>decomposition%mesh
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="The mesh associated with decomposition number "// &
         & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Decomposition_MeshGet")
     RETURN
@@ -1169,9 +1385,11 @@ CONTAINS
 
     ENTERS("Decomposition_RegionGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     IF(ASSOCIATED(decomposition%region)) THEN
       region=>decomposition%region
@@ -1182,12 +1400,15 @@ CONTAINS
         & " is not associated with a region or an interface."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(region)) THEN
       localError="The region associated with decomposition number "// &
         & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
- 
+#endif
+    
     EXITS("Decomposition_RegionGet")
     RETURN
 999 ERRORSEXITS("Decomposition_RegionGet",err,error)
@@ -1208,22 +1429,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
- 
+#endif
+    
     ENTERS("Decomposition_DecompositionTopologyGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
     IF(ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is already associated.",err,error,*999)
+#endif    
  
     !Get the decomposition topology
     decompositionTopology=>decomposition%topology
+
+#ifdef WITH_POSTCHECKS    
     !Check decompositionTopology is associated.
     IF(.NOT.ASSOCIATED(decompositionTopology)) THEN
       localError="Decomposition topology is not associated for decomposition "// &
         & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
     
     EXITS("Decomposition_DecompositionTopologyGet")
     RETURN
@@ -1251,6 +1479,7 @@ CONTAINS
 
     ENTERS("Decomposition_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
@@ -1259,20 +1488,20 @@ CONTAINS
         & " are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-     
+#endif
+    
     !Get the decomposition from the user number
     NULLIFY(decomposition)
     IF(ALLOCATED(mesh%decompositions%decompositions)) THEN
       DO decompositionIdx=1,mesh%decompositions%numberOfDecompositions
-        IF(ASSOCIATED(mesh%decompositions%decompositions(decompositionIdx)%ptr)) THEN
-          IF(mesh%decompositions%decompositions(decompositionIdx)%ptr%userNumber==userNumber) THEN
-            decomposition=>mesh%decompositions%decompositions(decompositionIdx)%ptr
-            EXIT
-          ENDIF
-        ELSE
+        IF(.NOT.ASSOCIATED(mesh%decompositions%decompositions(decompositionIdx)%ptr)) THEN
           localError="The decomposition pointer in mesh decompositions is not associated for decomposition index "// &
             & TRIM(NumberToVString(decompositionIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(mesh%decompositions%decompositions(decompositionIdx)%ptr%userNumber==userNumber) THEN
+          decomposition=>mesh%decompositions%decompositions(decompositionIdx)%ptr
+          EXIT
         ENDIF
       ENDDO !decompositionIdx
     ENDIF
@@ -1300,11 +1529,16 @@ CONTAINS
  
     ENTERS("Decomposition_WorkGroupGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
       
     workGroup=>decomposition%workGroup
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The decomposition work group is not associated.",err,error,*999)
+#endif    
        
     EXITS("Decomposition_WorkGroupGet")
     RETURN
@@ -1338,7 +1572,9 @@ CONTAINS
     userDataPointExists=.FALSE.
     localDataPointNumber=0
     ghostDataPoint=.FALSE.
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(treeNode)
     CALL Tree_Search(decompositionDataPoints%dataPointsTree,userDataPointNumber,treeNode,err,error,*999)
@@ -1360,6 +1596,121 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the local data point number corresponding to an element data point index for decomposition data points. 
+  SUBROUTINE DecompositionDataPoints_ElementDataPointNumberGet(decompositionDataPoints,elementDataPointIdx,localElementNumber, &
+    localDataPointNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<A pointer to the decomposition data points to get the local data point for
+    INTEGER(INTG), INTENT(IN) :: elementDataPointIdx !<The element data point index to get the local data point number for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element data point number containing the element data point to get the local data point number for
+    INTEGER(INTG), INTENT(OUT) :: localDataPointNumber !<On exit the local data point number corresponding to the element data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+
+    ENTERS("DecompositionDataPoints_ElementDataPointNumberGet",ERR,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(decompositionDataPoints%elementDataPoints)) &
+      & CALL FlagError("The element data points array is not allocated for the decomposition data points.",err,error,*999)
+    IF(localElementNumber<1.OR.localElementNumber>SIZE(decompositionDataPoints%elementDataPoints,1)) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " is invalid for the decomposition data points. The local element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(decompositionDataPoints%elementDataPoints,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(elementDataPointIdx<1.OR.elementDataPointIdx>decompositionDataPoints%elementDataPoints(localElementNumber)% &
+      & numberOfProjectedData) THEN
+      localError="The specified element data point index of "//TRIM(NumberToVString(elementDataPointIdx,"*",err,error))// &
+        & " is invalid for local element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " for the decomposition data points. The element data point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionDataPoints%elementDataPoints(localElementNumber)%numberOfProjectedData, &
+        & "*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(ALLOCATED(decompositionDataPoints%elementDataPoints(localElementNumber)%dataIndices)) THEN
+      localError="The data indices array is not allocated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition data points."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    localDataPointNumber=decompositionDataPoints%elementDataPoints(localElementNumber)%dataIndices(elementDataPointIdx)%localNumber
+    
+    EXITS("DecompositionDataPoints_ElementDataPointNumberGet")
+    RETURN
+999 ERRORS("DecompositionDataPoints_ElementDataPointNumberGet",err,error)
+    EXITS("DecompositionDataPoints_ElementDataPointNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionDataPoints_ElementDataPointNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of data points in a local element number for decomposition data points. 
+  SUBROUTINE DecompositionDataPoints_ElementNumberOfDataPointsGet(decompositionDataPoints,localElementNumber, &
+    numberOfElementDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<A pointer to the decomposition data points to get the number of data points for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element data point number to get the number of element data points for
+    INTEGER(INTG), INTENT(OUT) :: numberOfElementDataPoints !<On exit, the number of data points in the specified element in the decomposition data points.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+
+    ENTERS("DecompositionDataPoints_ElementNumberOfDataPointsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(decompositionDataPoints%elementDataPoints)) &
+      & CALL FlagError("The element data points array is not allocated for the decomposition data points.",err,error,*999)
+    IF(localElementNumber<1.OR.localElementNumber>SIZE(decompositionDataPoints%elementDataPoints,1)) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " is invalid for the decomposition data points. The local element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(decompositionDataPoints%elementDataPoints,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(elementDataPointIdx<1.OR.elementDataPointIdx>decompositionDataPoints%elementDataPoints(localElementNumber)% &
+      & numberOfProjectedData) THEN
+      localError="The specified element data point index of "//TRIM(NumberToVString(elementDataPointIdx,"*",err,error))// &
+        & " is invalid for local element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " for the decomposition data points. The element data point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionDataPoints%elementDataPoints(localElementNumber)%numberOfProjectedData, &
+        & "*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(ALLOCATED(decompositionDataPoints%elementDataPoints(localElementNumber)%dataIndices)) THEN
+      localError="The data indices array is not allocated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition data points."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    numberOfElementDataPoints=decompositionDataPoints%elementDataPoints(localElementNumber)%numberOfProjectedData
+    
+    EXITS("DecompositionDataPoints_ElementNumberOfDataPointsGet")
+    RETURN
+999 ERRORS("DecompositionDataPoints_ElementNumberOfDataPointsGet",err,error)
+    EXITS("DecompositionDataPoints_ElementNumberOfDataPointsGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionDataPoints_ElementNumberOfDataPointsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a local data point number that corresponds to a user data point number from a decomposition. An error will be raised if the user data point number does not exist.
   SUBROUTINE DecompositionDataPoints_LocalDataPointNumberGet(decompositionDataPoints,userDataPointNumber,localDataPointNumber, &
     & ghostDataPoint,err,error,*)
@@ -1373,14 +1724,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     LOGICAL :: dataPointExists
+#ifdef WITH_POSTCHECKS    
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
-
+#endif
+    
     ENTERS("DecompositionDataPoints_LocalDataPointNumberGet",err,error,*999)
 
     CALL DecompositionDataPoints_DataPointCheckExists(decompositionDataPoints,userDataPointNumber,dataPointExists, &
       & localDataPointNumber,ghostDataPoint,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.dataPointExists) THEN
       decompositionTopology=>decompositionDataPoints%decompositionTopology
       IF(ASSOCIATED(decompositionTopology)) THEN
@@ -1397,6 +1752,7 @@ CONTAINS
       ENDIF
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("DecompositionDataPoints_LocalDataPointNumberGet")
     RETURN
@@ -1406,6 +1762,94 @@ CONTAINS
 
   END SUBROUTINE DecompositionDataPoints_LocalDataPointNumberGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the adjacent element number corresponding to an xi coordinate index for a local element number in decomposition elements. 
+  SUBROUTINE DecompositionElements_ElementAdjacentNumberGet(decompositionElements,xiCoordinateIdx,localElementNumber, &
+    & adjacentElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the adjacent element number for
+    INTEGER(INTG), INTENT(IN) :: xiCoordinateIdx !<The xi coordinate index to get the adjacent element number for.
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the adjacent element number for.
+    INTEGER(INTG), INTENT(OUT) :: adjacentElementNumber !<On exit, the adjacent element number for the specified xi coordinate index in the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    INTEGER(INTG) :: numberOfXiCoordinates
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DecompositionElements_ElementAdjacentNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionElement)
+    CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+    IF(ALLOCATED(decompositionElement%adjacentElements)) THEN
+      localError="Adjacent elements is not allocated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    numberOfXiCoordinates=(SIZE(decompositionElement%adjacentElements,1)-1)/2
+    IF(xiCoordinateIdx<-numberOfXiCoordinates.OR.elementFaceNumber>numberOfXiCoordinates) THEN
+      localError="The specified xi coordinate index of "//TRIM(NumberToVString(xiCoordinateIdx,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " of the decomposition elements. The element face number should be >= "// &
+        & TRIM(NumberToVString(-numberOfXiCoordinates,"*",err,error))//" and <= "// &
+        & TRIM(NumberToVString(numberOfXiCoordinates,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    adjacentElementNumber=decompositionElements%elements(localElementNumber)%adjacentElements(xiCoordinateIdx)
+
+    EXITS("DecompositionElements_ElementAdjacentNumberGet")
+    RETURN
+999 ERRORS("DecompositionElements_ElementAdjacentNumberGet",err,error)
+    EXITS("DecompositionElements_ElementAdjacentNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementAdjacentNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary node status for a local element number from a decomposition. 
+  SUBROUTINE DecompositionElements_ElementBoundaryElementGet(decompositionElements,localElementNumber,boundaryElement,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the boundary element status for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the boundary element status for
+    LOGICAL, INTENT(OUT) :: boundaryElement !<On exit, the boundary element flag for the local element number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+#endif    
+
+    ENTERS("DecompositionElements_ElementBoundaryElementGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionElement)
+    CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+#endif
+
+    boundaryElement=decompositionElements%elements(localElementNumber)%boundaryElement
+
+    EXITS("DecompositionElements_ElementBoundaryElementGet")
+    RETURN
+999 ERRORS("DecompositionElements_ElementBoundaryElementGet",err,error)
+    EXITS("DecompositionElements_ElementBoundaryElementGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionElements_ElementBoundaryElementGet
+  
   !
   !================================================================================================================================
   !
@@ -1430,7 +1874,9 @@ CONTAINS
     elementExists=.FALSE.
     localElementNumber=0
     ghostElement=.FALSE.
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is not associated.",err,error,*999)
+#endif    
 
     NULLIFY(treeNode)
     CALL Tree_Search(decompositionElements%elementsTree,userElementNumber,treeNode,err,error,*999)
@@ -1451,6 +1897,192 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets an element for a local element number in decomposition elements 
+  SUBROUTINE DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElement !<A pointer to the decomposition elements to get the decomposition element for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the decomposition element for
+    TYPE(DecompositionElementType), POINTER, INTENT(OUT) :: decompositionElement !<On exit, a pointer to the specified decomposition element. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DecompositionElements_ElementGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(decompositionElement)) CALL FlagError("Decomposition element is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is not associated.",err,error,*999)
+    IF(localElementNumber<1.OR.localElementNumber>decompositionElements%totalNumberOfElements) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " is invalid. The local element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionElements%totalNumberOfElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decompositionElements%elements)) &
+      & CALL FlagError("The elements array is not allocated for the decomposition elements.",err,error,*999)
+#endif
+
+    decompositionElement=>decompositionElements%elements(localElementNumber)
+
+#if WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(decompositionElement)) THEN
+      localError="Decomposition element is not associated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,err,error))//" of the decomposition elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    EXITS("DecompositionElements_ElementGet")
+    RETURN
+999 NULLIFY(decompositionElement)
+998 ERRORSEXITS("DecompositionElements_ElementGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the local face number corresponding to an element face number for a local element number in decomposition elements. 
+  SUBROUTINE DecompositionElements_ElementFaceNumberGet(decompositionElements,elementFaceNumber,localElementNumber, &
+    & localFaceNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the face number for
+    INTEGER(INTG), INTENT(IN) :: elementFaceNumber !<The element face number to get the face number for.
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the face number for.
+    INTEGER(INTG), INTENT(OUT) :: localFaceNumber !<On exit, the local face number for the specified element face number in the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DecompositionElements_ElementFaceNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionElement)
+    CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+    IF(ALLOCATED(decompositionElement%elementFaces)) THEN
+      localError="Element faces is not allocated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(elementFaceNumber<0.OR.elementFaceNumber>SIZE(decompositionElement%elementFaces,1)) THEN
+      localError="The specified element face number of "//TRIM(NumberToVString(elementFaceNumber,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " of the decomposition elements. The element face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(decompositionElement%elementFaces,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    localFaceNumber=decompositionElements%elements(localElementNumber)%elementFaces(elementFaceNumber)
+
+    EXITS("DecompositionElements_ElementFaceNumberGet")
+    RETURN
+999 ERRORS("DecompositionElements_ElementFaceNumberGet",err,error)
+    EXITS("DecompositionElements_ElementFaceNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementFaceNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the global element number for a local element number in decomposition elements. 
+  SUBROUTINE DecompositionElements_GlobalElementNumberGet(decompositionElements,localElementNumber,globalElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the global element number for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the global element number for.
+    INTEGER(INTG), INTENT(OUT) :: globalElementNumber !<On exit, the global element number for the specified local element number in the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+#endif    
+
+    ENTERS("DecompositionElements_GlobalElementNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionElement)
+    CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+#endif
+
+    globalElementNumber=decompositionElements%elements(localElementNumber)%globalNumber
+
+    EXITS("DecompositionElements_GlobalElementNumberGet")
+    RETURN
+999 ERRORS("DecompositionElements_GlobalElementNumberGet",err,error)
+    EXITS("DecompositionElements_GlobalElementNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_GlobalElementNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the local line number corresponding to an element line number for a local element number in decomposition elements. 
+  SUBROUTINE DecompositionElements_ElementLineNumberGet(decompositionElements,elementLineNumber,localElementNumber, &
+    & localLineNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the line number for
+    INTEGER(INTG), INTENT(IN) :: elementLineNumber !<The element line number to get the line number for.
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the line number for.
+    INTEGER(INTG), INTENT(OUT) :: localLineNumber !<On exit, the local line number for the specified element line number in the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DecompositionElements_ElementLineNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionElement)
+    CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+    IF(ALLOCATED(decompositionElement%elementLines)) THEN
+      localError="Element lines is not allocated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(elementLineNumber<0.OR.elementLineNumber>SIZE(decompositionElement%elementLines,1)) THEN
+      localError="The specified element line number of "//TRIM(NumberToVString(elementLineNumber,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " of the decomposition elements. The element line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(decompositionElement%elementLines,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    localLineNumber=decompositionElements%elements(localElementNumber)%elementLines(elementLineNumber)
+
+    EXITS("DecompositionElements_ElementLineNumberGet")
+    RETURN
+999 ERRORS("DecompositionElements_ElementLineNumberGet",err,error)
+    EXITS("DecompositionElements_ElementLineNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementLineNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a local element number that corresponds to a user element number from a decomposition. An error will be raised if the user element number does not exist.
   SUBROUTINE DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
     & err,error,*)
@@ -1464,14 +2096,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     LOGICAL :: elementExists
+#ifdef WITH_POSTCHECKS    
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecompositionElements_LocalElementNumberGet",err,error,*999)
 
     CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,elementExists,localElementNumber, &
       & ghostElement,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.elementExists) THEN
       decompositionTopology=>decompositionElements%decompositionTopology
       IF(ASSOCIATED(decompositionTopology)) THEN
@@ -1488,6 +2124,7 @@ CONTAINS
       ENDIF
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("DecompositionElements_LocalElementNumberGet")
     RETURN
@@ -1496,6 +2133,252 @@ CONTAINS
 
   END SUBROUTINE DecompositionElements_LocalElementNumberGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of elements from a decomposition elements. 
+  SUBROUTINE DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the number of elements for
+    INTEGER(INTG), INTENT(OUT) :: numberOfElements !<On exit, the number of elements for the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionElements_NumberOfElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is not associated.",err,error,*999)
+#endif
+
+    numberOfElements=decompositionElements%numberOfElements
+
+    EXITS("DecompositionElements_NumberOfElementsGet")
+    RETURN
+999 ERRORS("DecompositionElements_NumberOfElementsGet",err,error)
+    EXITS("DecompositionElements_NumberOfElementsGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_NumberOfElementsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of elements from a decomposition elements. 
+  SUBROUTINE DecompositionElements_TotalNumberOfElementsGet(decompositionElements,totalNumberOfElements,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the number of elements for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfElements !<On exit, the total number of elements for the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionElements_TotalNumberOfElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is not associated.",err,error,*999)
+#endif
+
+    totalNumberOfElements=decompositionElements%totalNumberOfElements
+
+    EXITS("DecompositionElements_TotalNumberOfElementsGet")
+    RETURN
+999 ERRORS("DecompositionElements_TotalNumberOfElementsGet",err,error)
+    EXITS("DecompositionElements_TotalNumberOfElementsGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_TotalNumberOfElementsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the user element number for a local element number in decomposition elements. 
+  SUBROUTINE DecompositionElements_UserElementNumberGet(decompositionElements,localElementNumber,userElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the user element number for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the user element number for.
+    INTEGER(INTG), INTENT(OUT) :: userElementNumber !<On exit, the user element number for the specified local element number in the decomposition elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+#endif    
+
+    ENTERS("DecompositionElements_UserElementNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionElement)
+    CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+#endif
+
+    userElementNumber=decompositionElements%elements(localElementNumber)%userNumber
+
+    EXITS("DecompositionElements_UserElementNumberGet")
+    RETURN
+999 ERRORS("DecompositionElements_UserElementNumberGet",err,error)
+    EXITS("DecompositionElements_UserElementNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_UserElementNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a face for a local face number in decomposition faces 
+  SUBROUTINE DecompositionFaces_FaceGet(decompositionFaces,localFaceNumber,decompositionFace,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces !<A pointer to the decomposition faces to get the decomposition face for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the decomposition face for
+    TYPE(DecompositionFaceType), POINTER, INTENT(OUT) :: decompositionFace !<On exit, a pointer to the specified decomposition face. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DecompositionFaces_FaceGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(decompositionFace)) CALL FlagError("Decomposition face is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decompositionFacess)) CALL FlagError("Decomposition faces is not associated.",err,error,*999)
+    IF(localFaceNumber<1.OR.localFaceNumber>decompositionFaces%totalNumberOfFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionFacess%totalNumberOfFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decompositionFacess%faces)) &
+      & CALL FlagError("The faces array is not allocated for the decomposition faces.",err,error,*999)
+#endif
+
+    decompositionFace=>decompositionFaces%faces(localFaceNumber)
+
+#if WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(decompositionFace)) THEN
+      localError="Decomposition face is not associated for local face number "// &
+        & TRIM(NumberToVString(localFaceNumber,err,error))//" of the decomposition faces."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    EXITS("DecompositionFacess_FaceGet")
+    RETURN
+999 NULLIFY(decompositionFace)
+998 ERRORSEXITS("DecompositionFaces_FaceGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionFaces_FaceGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary face status for a local face number from a decomposition. 
+  SUBROUTINE DecompositionFaces_FaceBoundaryFaceGet(decompositionFaces,localFaceNumber,boundaryFace,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionFacessType), POINTER :: decompositionFacess !<A pointer to the decomposition faces to get the boundary face status for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the boundary face status for
+    LOGICAL, INTENT(OUT) :: boundaryFace !<On exit, the boundary face flag for the local face number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionFaceType), POINTER :: decompositionFace
+#endif    
+
+    ENTERS("DecompositionFaces_FaceBoundaryFaceGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionFace)
+    CALL DecompositionFaces_FaceGet(decompositionFacess,localFaceNumber,decompositionFace,err,error,*999)
+#endif
+
+    boundaryFace=decompositionFaces%faces(localFaceNumber)%boundaryFace
+
+    EXITS("DecompositionFaces_FaceBoundaryFaceGet")
+    RETURN
+999 ERRORS("DecompositionFacess_FaceBoundaryFaceGet",err,error)
+    EXITS("DecompositionFacess_FaceBoundaryFaceGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionFaces_FaceBoundaryFaceGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the xi normal direction for a local face number from a decomposition. 
+  SUBROUTINE DecompositionFaces_FaceXiNormalDirectionGet(decompositionFaces,localFaceNumber,faceXiNormalDirection,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionFacessType), POINTER :: decompositionFacess !<A pointer to the decomposition faces to get the xi normal direction for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the xi normal direction for
+    INTEGER(INTG), INTENT(OUT) :: faceXiNormalDirection !<On exit, the face xi normal direction for the local face number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionFaceType), POINTER :: decompositionFace
+#endif    
+
+    ENTERS("DecompositionFaces_FaceXiNormalDirectionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionFace)
+    CALL DecompositionFaces_FaceGet(decompositionFacess,localFaceNumber,decompositionFace,err,error,*999)
+#endif
+
+    faceXiNormalDirection=decompositionFaces%faces(localFaceNumber)%xiNormalDirection
+
+    EXITS("DecompositionFaces_FaceXiNormalDirectionGet")
+    RETURN
+999 ERRORS("DecompositionFacess_FaceXiNormalDirectionGet",err,error)
+    EXITS("DecompositionFacess_FaceXiNormalDirectionGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionFaces_FaceXiNormalDirectionGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of faces from a decomposition. 
+  SUBROUTINE DecompositionFaces_NumberOfFacesGet(decompositionFaces,numberOfFaces,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionFacessType), POINTER :: decompositionFacess !<A pointer to the decomposition faces to get the number of faces for
+    INTEGER(INTG), INTENT(OUT) :: numberOfFaces !<On exit, the number of faces in the decomposition faces.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionFaces_NumberOfFacesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition faces is not associated.",err,error,*999)
+#endif
+
+    numberOfFaces=decompositionFaces%numberOfFaces
+
+    EXITS("DecompositionFaces_NumberOfFacesGet")
+    RETURN
+999 ERRORS("DecompositionFacess_NumberOfFacesGet",err,error)
+    EXITS("DecompositionFacess_NumberOfFacesGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionFaces_NumberOfFacesGet
+  
   !
   !================================================================================================================================
   !
@@ -1512,14 +2395,19 @@ CONTAINS
  
     ENTERS("DecompositionTopology_DecompositionElementsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*998)
-
+#endif
+    
     !Get the decomposition elements
     decompositionElements=>decompositionTopology%elements
+
+#ifdef WITH_POSTCHECKS    
     !Check decomposition elements is associated.
     IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition topology elements is not associated.",err,error,*999)
+#endif    
     
     EXITS("DecompositionTopology_DecompositionElementsGet")
     RETURN
@@ -1546,15 +2434,20 @@ CONTAINS
  
     ENTERS("DecompositionTopology_DecompositionDataPointsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
+#endif    
 
     !Get the decomposition data points
     decompositionDataPoints=>decompositionTopology%dataPoints
+
+#ifdef WITH_POSTCHECKS    
     !Check decomposition data points is associated.
     IF(.NOT.ASSOCIATED(decompositionDataPoints)) &
       & CALL FlagError("Decomposition topology data points is not associated.",err,error,*999)
+#endif    
     
     EXITS("DecompositionTopology_DecompositionDataPointsGet")
     RETURN
@@ -1581,14 +2474,19 @@ CONTAINS
  
     ENTERS("DecompositionTopology_DecompositionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
+#endif    
 
     !Get the decomposition data points
     decomposition=>decompositionTopology%decomposition
+
+#ifdef WITH_POSTCHECKS    
     !Check decomposition is associated.
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition topology decomposition is not associated.",err,error,*999)
+#endif    
     
     EXITS("DecompositionTopology_DecompositionGet")
     RETURN
@@ -1615,14 +2513,19 @@ CONTAINS
  
     ENTERS("DecompositionTopology_DecompositionFacesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition faces is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
 
     !Get the decomposition faces
     decompositionFaces=>decompositionTopology%faces
+
+#ifdef WITH_POSTCHECKS    
     !Check decomposition faces is associated.
     IF(.NOT.ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition topology faces is not associated.",err,error,*999)
+#endif    
     
     EXITS("DecompositionTopology_DecompositionFacesGet")
     RETURN
@@ -1648,15 +2551,19 @@ CONTAINS
  
     ENTERS("DecompositionTopology_DecompositionLinesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition is not associated.",err,error,*999)
     IF(ASSOCIATED(decompositionLines)) CALL FlagError("Decomposition lines is already associated.",err,error,*999)
+#endif    
  
     !Get the decomposition lines
     decompositionLines=>decompositionTopology%lines
 
+#ifdef WITH_POSTCHECKS    
     !Check decomposition lines is associated.
     IF(.NOT.ASSOCIATED(decompositionLines)) CALL FlagError("Decomposition topology lines is not associated.",err,error,*999)
+#endif    
     
     EXITS("DecompositionTopology_DecompositionLinesGet")
     RETURN
@@ -1664,6 +2571,178 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DecompositionTopology_DecompositionLinesGet
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the basis for a domain element.
+  SUBROUTINE DomainElement_BasisGet(domainElement,basis,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementType), POINTER :: domainElement !<A pointer to the domain element to get the basis for
+    TYPE(BasisType), POINTER :: basis !<On return, a pointer to the basis for the domain element. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainElement_BasisGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainElement)) CALL FlagError("Domain element is not associated.",err,error,*999)
+#endif    
+      
+    basis=>domainElement%basis
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated for the domain element.",err,error,*999)
+#endif    
+    
+    EXITS("DomainElement_BasisGet")
+    RETURN
+999 NULLIFY(basis)
+998 ERRORSEXITS("DomainElement_BasisGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElement_BasisGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the global derivative index for a local node and derivative index in a domain element.
+  SUBROUTINE DomainElement_ElementDerivativeGet(domainElement,localDerivativeIdx,localNodeIdx,globalDerivativeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementType), POINTER :: domainElement !<A pointer to the domain element to get the global derivative index for
+    INTEGER(INTG), INTENT(IN) :: localDerivativeIdx !<The local derivative index to get the element global derivative index for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the global derivative index for
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIdx !<On return, the global derivative index for the local node and derivative index of the domain element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElement_ElementDerivativeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainElement)) CALL FlagError("Domain element is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementDerivatives)) &
+      & CALL FlagError("The element derivatives array is not allocated for the domain element.",err,error,*999)
+    IF(localDerivativeIdx<1.OR.localDerivativeIdx>SIZE(domainElement%elementDerivatives,1)) THEN
+      localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
+        & " is invalid. The local derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementDerivatives,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainElement%elementDerivatives,2)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementDerivatives,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    globalDerivativeIdx=domainElement%elementDerivatives(derivativeIdx,localNodeIdx)
+    
+    EXITS("DomainElement_ElementDerivativeGet")
+    RETURN
+999 ERRORSEXITS("DomainElement_ElementDerivativeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElement_ElementDerivativeGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the local element node number for a local node in a domain element.
+  SUBROUTINE DomainElement_ElementNodeGet(domainElement,localNodeIdx,localNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementType), POINTER :: domainElement !<A pointer to the domain element to get the local element node for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the local element node for
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On return, the local node number for the local node index of the domain element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElement_ElementNodeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainElement)) CALL FlagError("Domain element is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementNodes)) &
+      & CALL FlagError("The element nodes array is not allocated for the domain element.",err,error,*999)
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainElement%elementNodes,1)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementNodes,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    localNodeNumber=domainElement%elementNodes(localNodeIdx)
+    
+    EXITS("DomainElement_ElementNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainElement_ElementNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElement_ElementNodeGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the element version number for a local node and derivative index in a domain element.
+  SUBROUTINE DomainElement_ElementVersionGet(domainElement,localDerivativeIdx,localNodeIdx,versionNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementType), POINTER :: domainElement !<A pointer to the domain element to get the element version number for
+    INTEGER(INTG), INTENT(IN) :: localDerivativeIdx !<The local derivative index to get the element version number for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element version number for
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On return, the version number for the local node and derivative index of the domain element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElement_ElementVersionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainElement)) CALL FlagError("Domain element is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementVersions)) &
+      & CALL FlagError("The element versions array is not allocated for the domain element.",err,error,*999)
+    IF(localDerivativeIdx<1.OR.localDerivativeIdx>SIZE(domainElement%elementVersions,1)) THEN
+      localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
+        & " is invalid. The local derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementVersions,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainElement%elementVersions,2)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementVersions,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    versionNumber=domainElement%elementVersions(derivativeIdx,localNodeIdx)
+    
+    EXITS("DomainElement_ElementVersionGet")
+    RETURN
+999 ERRORSEXITS("DomainElement_ElementVersionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElement_ElementVersionGet
   
   !  
   !================================================================================================================================
@@ -1679,33 +2758,308 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainElementType), POINTER :: domainElement
+#endif
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("DomainElements_BasisGet",err,error,*999)
+    ENTERS("DomainElements_BasisGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
-    IF(localElementNumber<=0.OR.localElementNumber>domainElements%totalNumberOfElements) THEN
-      localError="The local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
-        & " is invalid. The local number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(domainElements%totalNumberOfElements,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(domainElements%elements)) CALL FlagError("Domain elements elements is not allocated.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
+    NULLIFY(domainElement)
+    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+#endif    
       
     basis=>domainElements%elements(localElementNumber)%basis
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis for local element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DomainElements_BasisGet")
     RETURN
-999 ERRORSEXITS("DomainElements_BasisGet",err,error)
+999 NULLIFY(basis)
+998 ERRORSEXITS("DomainElements_BasisGet",err,error)
     RETURN 1
     
   END SUBROUTINE DomainElements_BasisGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get a domain element for a local element number in the domain elements
+  SUBROUTINE DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the domain element for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the domain element for
+    TYPE(DomainElementType), POINTER, INTENT(OUT) :: domainElement !<On return, a pointer to the domain element for the element. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElements_DomainElementGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(domainElement)) CALL FlagError("Domain element is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
+    IF(localElementNumber<=0.OR.localElementNumber>domainElements%totalNumberOfElements) THEN
+      localError="The local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " is invalid. The local element number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainElements%totalNumberOfElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainElements%elements)) CALL FlagError("Domain elements elements is not allocated.",err,error,*999)
+#endif    
+      
+    domainElement=>domainElements%elements(localElementNumber)
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(domainElement)) THEN
+      localError="The domain element is not associated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("DomainElements_DomainElementGet")
+    RETURN
+999 NULLIFY(domainElement)
+998 ERRORSEXITS("DomainElements_DomainElementGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElements_DomainElementGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the element global derivative index for the local node and derivative index of an element in the domain.
+  SUBROUTINE DomainElements_ElementDerivativeGet(domainElements,localDerivativeIdx,localNodeIdx,localElementNumber, &
+    & globalDerivativeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the element global derivative index for
+    INTEGER(INTG), INTENT(IN) :: locaDerivativeIdx !<The local derivative index to get the element global derivative index for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element global derivative index for.
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the elment global derivative index for
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On return, the global derivative index for the local node and derivative index for the element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainElementType), POINTER :: domainElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElements_ElementDerivativeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainElement)
+    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementDerivatives)) THEN
+      localError="The element derivatives array is not allocated for element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localDerivativeIdx<1.OR.localDerivativeIdx>SIZE(domainElement%elementDerivatives,1)) THEN
+      localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & ". The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementDerivatives,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainElement%elementDerivatives,2)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & ". The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementDerivatives,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    globalDerivativeIndex=domainElements%elements(localElementNumber)%elementDerivatives(localDerivativeIdx,localNodeIdx)
+    
+    EXITS("DomainElements_ElementDerivativeGet")
+    RETURN
+999 ERRORSEXITS("DomainElements_ElementDerivativeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElements_ElementDerivativeGet
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the local node number for the local node index of an element in the domain.
+  SUBROUTINE DomainElements_ElementNodeGet(domainElements,localNodeIdx,localElementNumber,localNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the element basis for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element local node for.
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the local node for
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On return, the local node number for the local node index for the element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainElementType), POINTER :: domainElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElements_ElementNodeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainElement)
+    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementNodes)) THEN
+      localError="The element nodes array is not allocated for element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainElement%elementNodes,1)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & ". The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementNodes,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    localNodeNumber=domainElements%elements(localElementNumber)%elementNodes(localNodeIdx)
+    
+    EXITS("DomainElements_ElementNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainElements_ElementNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElements_ElementNodeGet
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the element version number for the local node and derivative index of an element in the domain.
+  SUBROUTINE DomainElements_ElementVersionGet(domainElements,localDerivativeIdx,localNodeIdx,localElementNumber, &
+    & versionNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the element version number for
+    INTEGER(INTG), INTENT(IN) :: locaDerivativeIdx !<The local derivative index to get the element version number for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element version number for.
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the elment version number for
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On return, the version number for the local node and derivative index for the element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainElementType), POINTER :: domainElement
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainElements_ElementVersionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainElement)
+    CALL DomainElements_DomainElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+    IF(.NOT.ALLOCATED(domainElement%elementVersions)) THEN
+      localError="The element versions array is not allocated for element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the domain elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localDerivativeIdx<1.OR.localDerivativeIdx>SIZE(domainElement%elementVersions,1)) THEN
+      localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & ". The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementVersions,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainElement%elementVersions,2)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & ". The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainElement%elementVersions,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    versionNumber=domainElements%elements(localElementNumber)%elementVersions(localDerivativeIdx,localNodeIdx)
+    
+    EXITS("DomainElements_ElementVersionGet")
+    RETURN
+999 ERRORSEXITS("DomainElements_ElementVersionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElements_ElementVersionGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of elements from a domain. 
+  SUBROUTINE DomainElements_NumberOfElementssGet(domainElements,numberOfElements,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the number of elements for
+    INTEGER(INTG), INTENT(OUT) :: numberOfElements !<On exit, the number of elements for the domain elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainElements_NumberOfElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
+#endif
+
+    numberOfElements=domainElements%numberOfElements
+
+    EXITS("DomainElements_NumberOfElementssGet")
+    RETURN
+999 ERRORSEXITS("DomainElements_NumberOfElementssGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainElements_NumberOfElementssGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of elements from a domain. 
+  SUBROUTINE DomainElements_TotalNumberOfElementssGet(domainElements,totalNumberOfElements,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the total number of elements for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfElements !<On exit, the total number of elements for the domain elements.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainElements_TotalNumberOfElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
+#endif
+
+    totalNumberOfElements=domainElements%totalNumberOfElements
+
+    EXITS("DomainElements_TotalNumberOfElementssGet")
+    RETURN
+999 ERRORSEXITS("DomainElements_TotalNumberOfElementssGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainElements_TotalNumberOfElementssGet
 
   !  
   !================================================================================================================================
@@ -1721,13 +3075,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DomainFaces_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
-    
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)    
     IF(localFaceNumber<=0.OR.localFaceNumber>domainFaces%numberOfFaces) THEN
       localError="The local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
         & " is invalid. The local number must be >= 1 and <= "// &
@@ -1735,13 +3091,17 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not allocated.",err,error,*999)
+#endif    
       
     basis=>domainFaces%faces(localFaceNumber)%basis
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DomainFaces_BasisGet")
     RETURN
@@ -1765,10 +3125,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DomainFaces_FaceGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(face)) CALL FlagError("Face is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
     IF(faceNumber<=0.OR.faceNumber>domainFaces%numberOfFaces) THEN
@@ -1778,12 +3141,16 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not associated.",err,error,*999)
+#endif    
       
     face=>domainFaces%faces(faceNumber)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(face)) THEN
       localError="Face number "//TRIM(NumberToVString(faceNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DomainFaces_FaceGet")
     RETURN
@@ -1807,13 +3174,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DomainLiness_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
-    
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)    
     IF(localLineNumber<=0.OR.localLineNumber>domainLines%numberOfLines) THEN
       localError="The local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
         & " is invalid. The local number must be >= 1 and <= "// &
@@ -1821,13 +3190,17 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not allocated.",err,error,*999)
+#endif    
       
     basis=>domainLines%lines(localLineNumber)%basis
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DomainLines_BasisGet")
     RETURN
@@ -1851,10 +3224,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DomainLines_LineGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(line)) CALL FlagError("Line is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
     IF(lineNumber<=0.OR.lineNumber>domainLines%numberOfLines) THEN
@@ -1864,12 +3240,16 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not associated.",err,error,*999)
+#endif    
       
     line=>domainLines%lines(lineNumber)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(line)) THEN
       localError="Line number "//TRIM(NumberToVString(lineNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DomainLines_LineGet")
     RETURN
@@ -1895,15 +3275,19 @@ CONTAINS
  
     ENTERS("Domain_DecompositionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+#endif    
 
     !Get the domain decomposition
     decomposition=>domain%decomposition
 
+#ifdef WITH_POSTCHECKS    
     !Check decomposition is associated.
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
     
     EXITS("Domain_DecompositionGet")
     RETURN
@@ -1929,15 +3313,19 @@ CONTAINS
  
     ENTERS("Domain_DomainMappingsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
     IF(ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is already associated.",err,error,*999)
+#endif    
 
     !Get the domain mappings
     domainMappings=>domain%mappings
 
+#ifdef WITH_POSTCHECKS    
     !Check domain mappings is associated.
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+#endif    
     
     EXITS("Domain_DomainMappingsGet")
     RETURN
@@ -1962,15 +3350,19 @@ CONTAINS
  
     ENTERS("Domain_DomainTopologyGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
     IF(ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is already associated.",err,error,*999)
+#endif    
 
     !Get the domain topology
     domainTopology=>domain%topology
 
+#ifdef WITH_POSTCHECKS    
     !Check domain topology is associated.
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
+#endif    
     
     EXITS("Domain_DomainTopologyGet")
     RETURN
@@ -1995,8 +3387,10 @@ CONTAINS
  
     ENTERS("Domain_MeshComponentNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+#endif    
 
     !Get the domain mesh component number
     meshComponentNumber=domain%meshComponentNumber
@@ -2013,7 +3407,7 @@ CONTAINS
   !
 
   !>Gets dofs from a domain mappings.
-  SUBROUTINE DomainMappings_DofsMappingGet(domainMappings,domainDofs,err,error,*)
+  SUBROUTINE DomainMappings_DOFsMappingGet(domainMappings,domainDofs,err,error,*)
 
     !Argument variables
     TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the dofs for.
@@ -2022,24 +3416,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainMappings_DofsMappingGet",err,error,*998)
+    ENTERS("DomainMappings_DOFsMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domainDofs)) CALL FlagError("Domain mapping dofs is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+#endif    
 
     !Get the domain dofs
     domainDofs=>domainMappings%dofs
+
+#ifdef WITH_POSTCHECKS    
     !Check domain dofs is associated.
     IF(.NOT.ASSOCIATED(domainDofs)) CALL FlagError("Domain mappings dofs is not associated.",err,error,*999)
+#endif    
     
-    EXITS("DomainMappings_DofsMappingGet")
+    EXITS("DomainMappings_DOFsMappingGet")
     RETURN
 999 NULLIFY(domainDofs)
-998 ERRORSEXITS("DomainMappings_DofsMappingGet",err,error)
+998 ERRORSEXITS("DomainMappings_DOFsMappingGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainMappings_DofsMappingGet
+  END SUBROUTINE DomainMappings_DOFsMappingGet
 
   !
   !================================================================================================================================
@@ -2057,14 +3456,19 @@ CONTAINS
  
     ENTERS("DomainMappings_DomainGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domain)) CALL FlagError("Domain is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+#endif    
 
     !Get the domain
     domain=>domainMappings%domain
+
+#ifdef WITH_POSTCHECKS    
     !Check domain is associated.
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain mappings domain is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainMappings_DomainGet")
     RETURN
@@ -2090,14 +3494,19 @@ CONTAINS
  
     ENTERS("DomainMappings_ElementsMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domainElements)) CALL FlagError("Domain mapping elements is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+#endi    
 
     !Get the domain elements
     domainElements=>domainMappings%elements
+
+#ifdef WITH_POSTCHECKS    
     !Check domain elements is associated.
     IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain mappings elements is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainMappings_ElementsMappingGet")
     RETURN
@@ -2123,14 +3532,19 @@ CONTAINS
  
     ENTERS("DomainMappings_NodesMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domainNodes)) CALL FlagError("Domain mapping nodes is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+#endif    
 
     !Get the domain nodes
     domainNodes=>domainMappings%nodes
+
+#ifdef WITH_POSTCHECKS    
     !Check domain nodes is associated.
     IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain mappings nodes is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainMappings_NodesMappingGet")
     RETURN
@@ -2140,6 +3554,868 @@ CONTAINS
     
   END SUBROUTINE DomainMappings_NodesMappingGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary node flag of a domain node. 
+  SUBROUTINE DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the boundary node flag for
+    LOGICAL, INTENT(OUT) :: boundaryNode !<On exit, the boundary node flag of the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNode_BoundaryNodeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    boundaryNode=domainNode%boundaryNode
+
+    EXITS("DomainNode_BoundaryNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_BoundaryNodeGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_BoundaryNodeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a node derivative for a domain node. 
+  SUBROUTINE DomainNode_NodeDerivativeGet(domainNode,derivativeIdx,domainNodeDerivative,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the node derivative for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the node deriviative for
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<On exit, a pointer the specified node derivative for the domain node. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNode_NodeDerivativeGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(domainNodeDerivative)) CALL FlagError("Domain node derivative is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(derivativeIdx<1.OR.derivativeIdx>domainNode%numberOfDerivatives) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfDerivatives,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%derivatives)) &
+      & CALL FlagError("Derivatives is not allocated for the domain node.",err,error,*999)
+#endif
+
+    domainNodeDerivative=>domainNode%derivatives(derivativeIdx)
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(domainNodeDerivative)) THEN
+      localError="The domain node derivative is not associated for derivative index "// &
+        & TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of the domain node."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    EXITS("DomainNode_NodeDerivativeGet")
+    RETURN
+999 NULLIFY(domainNodeDerivative)
+998 ERRORSEXITS("DomainNode_NodeDerivativeGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NodeDerivativeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a global node number of a domain node. 
+  SUBROUTINE DomainNode_GlobalNodeNumberGet(domainNode,globalNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the global node number for
+    INTEGER(INTG), INTENT(OUT) :: globalNodeNumber !<On exit, the global node number of the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNode_GlobalNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    globalNodeNumber=domainNode%globalNumber
+
+    EXITS("DomainNode_GlobalNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_GlobalNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_GlobalNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a local node number of a domain node. 
+  SUBROUTINE DomainNode_LocalNodeNumberGet(domainNode,localNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the local node number for
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On exit, the local node number of the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNode_LocalNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    localNodeNumber=domainNode%localNumber
+
+    EXITS("DomainNode_LocalNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_LocalNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_LocalNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a mesh node number of a domain node. 
+  SUBROUTINE DomainNode_MeshNodeNumberGet(domainNode,meshNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the mesh node number for
+    INTEGER(INTG), INTENT(OUT) :: meshNodeNumber !<On exit, the mesh node number of the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNode_MeshNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    meshNodeNumber=domainNode%meshNumber
+
+    EXITS("DomainNode_MeshNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_MeshNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_MeshNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a node face number for a domain node. 
+  SUBROUTINE DomainNode_NodeFaceGet(domainNode,nodeFaceIdx,nodeFaceNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the node face number for
+    INTEGER(INTG), INTENT(IN) :: nodeFaceIdx !<The node face index to get the node face number for
+    INTEGER(INTG), INTENT(OUT) :: nodeFaceNumber !<On exit, the specified node face number for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNode_NodeFaceGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(nodeFaceIdx<1.OR.nodeFaceIdx>domainNode%numberOfNodeFaces) THEN
+      localError="The specified node face index of "//TRIM(NumberToVString(nodeFaceIdx,"*",err,error))// &
+        & " is invalid. The node face index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfNodeFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%nodeFaces)) &
+      & CALL FlagError("Node faces is not allocated for the domain node.",err,error,*999)
+#endif
+
+    nodeFaceNumber=domainNode%nodeFaces(nodeFaceIdx)
+
+    EXITS("DomainNode_NodeFaceGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_NodeFaceGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NodeFaceGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a node line number for a domain node. 
+  SUBROUTINE DomainNode_NodeLineGet(domainNode,nodeLineIdx,nodeLineNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the node line number for
+    INTEGER(INTG), INTENT(IN) :: nodeLineIdx !<The node line index to get the node line number for
+    INTEGER(INTG), INTENT(OUT) :: nodeLineNumber !<On exit, the specified node line number for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNode_NodeLineGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(nodeLineIdx<1.OR.nodeLineIdx>domainNode%numberOfNodeLines) THEN
+      localError="The specified node line index of "//TRIM(NumberToVString(nodeLineIdx,"*",err,error))// &
+        & " is invalid. The node line index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfNodeLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%nodeLines)) &
+      & CALL FlagError("Node lines is not allocated for the domain node.",err,error,*999)
+#endif
+
+    nodeLineNumber=domainNode%nodeLines(nodeLineIdx)
+
+    EXITS("DomainNode_NodeLineGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_NodeLineGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NodeLineGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of derivatives for a domain node. 
+  SUBROUTINE DomainNode_NumberOfDerivativesGet(domainNode,numberOfDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On exit, the number of derivatives for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNode_NumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    numberOfDerivatives=domainNode%numberOfDerivatives
+
+    EXITS("DomainNode_NumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_NumberOfDerivativesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NumberOfDerivativesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of node faces for a domain node. 
+  SUBROUTINE DomainNode_NumberOfNodeFacesGet(domainNode,numberOfNodeFaces,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the number of node faces for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodeFaces !<On exit, the number of node faces for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNode_NumberOfNodeFacesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    numberOfNodeFaces=domainNode%numberOfNodeFaces
+
+    EXITS("DomainNode_NumberOfNodeFacesGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_NumberOfNodeFacesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NumberOfNodeFacesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of node lines for a domain node. 
+  SUBROUTINE DomainNode_NumberOfNodeLinesGet(domainNode,numberOfNodeLines,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the number of node lines for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodeLines !<On exit, the number of node lines for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNode_NumberOfNodeLinesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    numberOfNodeLines=domainNode%numberOfNodeLines
+
+    EXITS("DomainNode_NumberOfNodeLinesGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_NumberOfNodeLinesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NumberOfNodeLinesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of surrounding elements for a domain node. 
+  SUBROUTINE DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the number of surrounding elements for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSurroundingElements !<On exit, the number of surrounding for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNode_NumberOfSurroundingElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    numberOfSurroundingElements=domainNode%numberOfSurroundingElements
+
+    EXITS("DomainNode_NumberOfSurroundingElementsGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_NumberOfSurroundingElementsGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_NumberOfSurroundingElementsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a surrounding element number for a domain node. 
+  SUBROUTINE DomainNode_SurroundingElementGet(domainNode,surroundingElementIdx,surroundingElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the surrounding element number for
+    INTEGER(INTG), INTENT(IN) :: surroundingElementIdx !<The surrounding element index to get the surrounding element number for
+    INTEGER(INTG), INTENT(OUT) :: surroundingElementNumber !<On exit, the specified surrounding element number for the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNode_SurroundingElementGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(surroundingElementIdx<1.OR.surroundingElementIdx>domainNode%numberOfSurroundingElements) THEN
+      localError="The specified surrounding element index of "//TRIM(NumberToVString(surroundingElementIdx,"*",err,error))// &
+        & " is invalid. The surrounding element index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfSurroundingElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%surroundingElements)) &
+      & CALL FlagError("Surrounding elements is not allocated for the domain node.",err,error,*999)
+#endif
+
+    surroundingElementNumber=domainNode%surroundingElements(surroundingElementIdx)
+
+    EXITS("DomainNode_SurroundingElementGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_SurroundingElementGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_SurroundingElementGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a user node number of a domain node. 
+  SUBROUTINE DomainNode_UserNodeNumberGet(domainNode,userNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the user node number for
+    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On exit, the user node number of the domain node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNode_UserNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+#endif
+
+    userNodeNumber=domainNode%userNumber
+
+    EXITS("DomainNode_UserNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_UserNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_UserNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the derivative number for a domain node derivative. 
+  SUBROUTINE DomainNodeDerivative_DerivativeGlobalIndexGet(domainNodeDerivative,derivativeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<A pointer to the domain node derivative to get the derivative number for
+    INTEGER(INTG), INTENT(OUT) :: derivativeNumber !<On exit, the derivative number for the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNodeDerivative_DerivativeGlobalIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNodeDerivative)) CALL FlagError("Domain node derivative is not associated.",err,error,*999)
+#endif
+
+    derivativeNumber=domainNodeDerivative%globalDerivativeIndex
+
+    EXITS("DomainNodeDerivatives_DerivativeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodeDerivative_DerivativeGlobalIndexGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodeDerivative_DerivativeGlobalIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of versions for a domain node derivative. 
+  SUBROUTINE DomainNodeDerivative_NumberOfVersionsGet(domainNodeDerivative,numberOfVersions,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<A pointer to the domain node derivative to get the number of versions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On exit, the number of versions for the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNodeDerivative_NumberOfVersionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNodeDerivative)) CALL FlagError("Domain node derivative is not associated.",err,error,*999)
+#endif
+
+    numberOfVersions=domainNodeDerivative%numberOfVersions
+
+    EXITS("DomainNodeDerivatives_NumberOfVersionsGet")
+    RETURN
+999 ERRORSEXITS("DomainNodeDerivative_NumberOfVersionsGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodeDerivative_NumberOfVersionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the partial derivative index for a domain node derivative. 
+  SUBROUTINE DomainNodeDerivative_PartialDerivativeIndexGet(domainNodeDerivative,partialDerivativeIndex,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<A pointer to the domain node derivative to get the partial derivative index for
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeInde !<On exit, the partial derivative index for the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Mesh Variables
+
+    ENTERS("DomainNodeDerivative_ParitalDerivativeIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNodeDerivative)) CALL FlagError("Domain node derivative is not associated.",err,error,*999)
+#endif
+
+    partialDerivativeIndex=domainNodeDerivative%partialDerivativeIndex
+
+    EXITS("DomainNodeDerivatives_PartialDerivativeIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainNodeDerivative_PartialDerivativeIndexGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodeDerivative_PartialDerivativeIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a version number for a domain node derivative. 
+  SUBROUTINE DomainNodeDerivative_VersionNumberGet(domainNodeDerivative,versionIdx,versionNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<A pointer to the domain node derivative to get the version number for
+    INTEGER(INTG), INTENT(IN) :: versionIdx !<The surrounding element index to get the surrounding element number for
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On exit, the specified version number for the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNodeDerivative_VersionNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNodeDerivative)) CALL FlagError("Domain node derivative is not associated.",err,error,*999)
+    IF(versionIdx<1.OR.versionIdx>domainNodeDerivative%numberOfversions) THEN
+      localError="The specified version index of "//TRIM(NumberToVString(versionIdx,"*",err,error))// &
+        & " is invalid. The version index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNodeDerivative%numberOfVersions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%userVersionNumbers)) &
+      & CALL FlagError("User version numbers is not allocated for the domain node derivative.",err,error,*999)
+#endif
+
+    versionNumber=domainNodeDerivative%userVersionNumbers(versionIdx)
+
+    EXITS("DomainNodeDerivative_VersionNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodeDerivative_VersionNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodeDerivative_VersionNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the derivative number for a derivative index of local node number from a domain. 
+  SUBROUTINE DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,localNodeNumber,derivativeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the derivative number for
+    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the derivative number for
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<The local node number to get the derivative number for
+    INTEGER(INTG), INTENT(OUT) :: derivativeNumber !<On exit, the derivative number for the derivative index of the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNodes_DerivativeGlobalIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+    NULLIFY(domainNodeDerivative)
+    CALL DomainNode_NodeDerivativeGet(domainNode,derivativeIdx,domainNodeDerivative,err,error,*999)
+#endif
+
+    derivativeNumber=domainNodes%nodes(localNodeNumber)%derivatives(derivativeIdx)%globalDerivativeIndex
+
+    EXITS("DomainNodes_DerivativeGlobalIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_DerivativeGlobalIndexGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_DerivativeGlobalIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of versions for a derivative of local node number from a domain. 
+  SUBROUTINE DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,numberOfVersions,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the number of versions for
+    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the number of versions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On exit, the number of versions for the derivative index of the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative
+#endif    
+
+    ENTERS("DomainNodes_DerivativeNumberOfVersionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+    NULLIFY(domainNodeDerivative)
+    CALL DomainNode_NodeDerivativeGet(domainNode,derivativeId,domainNodeDerivative,err,error,*999)
+#endif
+
+    numberOfVersions=domainNodes%nodes(localNodeNumber)%derivatives(derivativeIdx)%numberOfVersions
+
+    EXITS("DomainNodes_DerivativeNumberOfVersionsGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_DerivativeNumberOfVersionssGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_DerivativeNumberOfVersionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the partial derivative index for a derivative index of local node number from a domain. 
+  SUBROUTINE DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIdx,localNodeNumber,partialDerivativeIndex,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the partial derivative index for
+    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the partial derivative index for
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<The local node number to get the partial derivative index for
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeIndex !<On exit, the partial derivative index for the derivative index of the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNodes_DerivativePartialIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+    NULLIFY(domainNodeDerivative)
+    CALL DomainNode_NodeDerivativeGet(domainNode,derivativeIdx,domainNodeDerivative,err,error,*999)
+#endif
+
+    partialDerivativeIndex=domainNodes%nodes(localNodeNumber)%derivatives(derivativeIdx)%partialDerivativeIndex
+
+    EXITS("DomainNodes_DerivativePartialIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_DerivativePartialIndexGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_DerivativePartialIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the version number for a derivative of local node number from a domain. 
+  SUBROUTINE DomainNodes_DerivativeVersionNumberGet(domainNodes,versionIdx,derivativeIdx,localNodeNumber,versionNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the version number for
+    INTEGER(INTG), INTENT(OUT) :: versionIdx !<The version index to get the version number for
+    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the version number for
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<The local node number to get the version number for
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On exit, the version number for the derivative version index of the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNodes_DerivativeVersionNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+    NULLIFY(domainNodeDerivative)
+    CALL DomainNode_NodeDerivativeGet(domainNode,derivativeIdx,domainNodeDerivative,err,error,*999)
+    IF(versionIdx<1.OR.versionIdx>domainNodeDerivative%numberOfVersions) THEN
+      localError="The specified version index of "//TRIM(NumberToVString(versionIdx,"*",err,error))// &
+        & " is invalid. The version index for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))//" should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNodeDerivative%numberOfVersions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNodeDerivative%userVersionNumbers)) THEN
+      localError="The user version numbers array is not allocated for derivative index "// &
+        & TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+        & TRIM(NumberToVString(localNodeNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    versionNumber=domainNodes%nodes(localNodeNumber)%derivatives(derivativeIdx)%userVersionNumbers(versionIdx)
+
+    EXITS("DomainNodes_DerivativeVersionNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_DerivativeVersionNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_DerivativeVersionNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a global node number that corresponds to a local node number from a domain. 
+  SUBROUTINE DomainNodes_GlobalNodeNumberGet(domainNodes,localNodeNumber,globalNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the global node number for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the global node number for
+    INTEGER(INTG), INTENT(OUT) :: globalNodeNumber !<On exit, the global node number corresponding to the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+#endif    
+
+    ENTERS("DomainNodes_GlobalNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+#endif
+
+    globalNodeNumber=domainNodes%nodes(localNodeNumber)%globalNumber
+
+    EXITS("DomainNodes_GlobalNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_GlobalNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_GlobalNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a local node number that corresponds to a user node number from a domain. An error will be raised if the user node number does not exist.
+  SUBROUTINE DomainNodes_LocalNodeNumberGet(domainNodes,userNodeNumber,localNodeNumber,ghostNode,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the node on
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On exit, the local number corresponding to the user node number.
+    LOGICAL, INTENT(OUT) :: ghostNode !<On exit, is .TRUE. if the local node is a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: nodeExists
+#ifdef WITH_POSTCHECKS    
+    INTEGER(INTG) :: meshComponentNumber
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainNodes_LocalNodeNumberGet",err,error,*999)
+
+    CALL DomainNodes_NodeCheckExists(domainNodes,userNodeNumber,nodeExists,localNodeNumber,ghostNode,err,error,*999)
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.nodeExists) THEN
+      domainTopology=>domainNodes%domainTopology
+      IF(ASSOCIATED(domainTopology)) THEN
+        domain=>domainTopology%domain
+        IF(ASSOCIATED(domain)) THEN
+          meshComponentNumber=domain%meshComponentNumber
+          decomposition=>domain%decomposition
+          IF(ASSOCIATED(decomposition)) THEN
+            localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+              & " does not exist in the domain from mesh component number "// &
+              & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of decomposition number "// &
+              & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
+          ELSE
+            localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+              & " does not exist in the domain from mesh component number "// &
+              & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//"."
+          ENDIF
+        ELSE
+          localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."
+        ENDIF
+      ELSE
+        localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."        
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    EXITS("DomainNodes_LocalNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_LocalNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_LocalNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary node stauts for a local node number from a domain. 
+  SUBROUTINE DomainNodes_NodeBoundaryNodeGet(domainNodes,localNodeNumber,boundaryNode,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the boundary node status for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the boundary node status for
+    LOGICAL, INTENT(OUT) :: boundaryNode !<On exit, the boundary node flag for the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+#endif    
+
+    ENTERS("DomainNodes_NodeBoundaryNodeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+#endif
+
+    boundaryNode=domainNodes%nodes(localNodeNumber)%boundaryNode
+
+    EXITS("DomainNodes_NodeBoundaryNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NodeBoundaryNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainNodes_NodeBoundaryNodeGet
+  
   !
   !================================================================================================================================
   !
@@ -2182,59 +4458,177 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets a local node number that corresponds to a user node number from a domain. An error will be raised if the user node number does not exist.
-  SUBROUTINE DomainNodes_LocalNodeNumberGet(domainNodes,userNodeNumber,localNodeNumber,ghostNode,err,error,*)
+  !>Gets a node for a local node number in domain nodes 
+  SUBROUTINE DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*)
 
     !Argument variables
-    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the node on
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get
-    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On exit, the local number corresponding to the user node number.
-    LOGICAL, INTENT(OUT) :: ghostNode !<On exit, is .TRUE. if the local node is a ghost node, .FALSE. if not.
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the domain node for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the domain node for
+    TYPE(DomainNodeType), POINTER, INTENT(OUT) :: domainNode !<On exit, a pointer to the specified domain node. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshComponentNumber
-    LOGICAL :: nodeExists
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainTopologyType), POINTER :: domainTopology
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("DomainNodes_LocalNodeNumberGet",err,error,*999)
+    ENTERS("DomainNodes_NodeGet",err,error,*998)
 
-    CALL DomainNodes_NodeCheckExists(domainNodes,userNodeNumber,nodeExists,localNodeNumber,ghostNode,err,error,*999)
-    IF(.NOT.nodeExists) THEN
-      domainTopology=>domainNodes%domainTopology
-      IF(ASSOCIATED(domainTopology)) THEN
-        domain=>domainTopology%domain
-        IF(ASSOCIATED(domain)) THEN
-          meshComponentNumber=domain%meshComponentNumber
-          decomposition=>domain%decomposition
-          IF(ASSOCIATED(decomposition)) THEN
-            localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
-              & " does not exist in the domain from mesh component number "// &
-              & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of decomposition number "// &
-              & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
-          ELSE
-            localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
-              & " does not exist in the domain from mesh component number "// &
-              & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//"."
-          ENDIF
-        ELSE
-          localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."
-        ENDIF
-      ELSE
-        localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."        
-      ENDIF
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(domainNode)) CALL FlagError("Domain node is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+    IF(localNodeNumber<1.OR.localNodeNumber>domainNodes%totalNumberOfNodes) THEN
+      localError="The specified local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " is invalid. The local node number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNodes%totalNumberOfNodes,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(.NOT.ALLOCATED(domainNodes%nodes)) CALL FlagError("The nodes array is not allocated for the domain nodes.",err,error,*999)
+#endif
 
-    EXITS("DomainNodes_LocalNodeNumberGet")
+    domainNode=>domainNodes%nodes(localNodeNumber)
+
+#if WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(domainNode)) THEN
+      localError="Domain node is not associated for local node number "//TRIM(NumberToVString(localNodeNumber,err,error))// &
+        & " of the domain nodes."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    EXITS("DomainNodes_NodeGet")
     RETURN
-999 ERRORSEXITS("DomainNodes_LocalNodeNumberGet",err,error)
+999 NULLIFY(domainNode)
+998 ERRORSEXITS("DomainNodes_NodeGet",err,error)
     RETURN 1
 
-  END SUBROUTINE DomainNodes_LocalNodeNumberGet
+  END SUBROUTINE DomainNodes_NodeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of derivatives for a local node number from a domain. 
+  SUBROUTINE DomainNodes_NodeNumberOfDerivativesGet(domainNodes,localNodeNumber,numberOfDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the number of derivatives for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatiaves !<On exit, the number of derivatives for the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+#endif    
+
+    ENTERS("DomainNodes_NodeNumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+#endif
+
+    numberOfDerivatives=domainNodes%nodes(localNodeNumber)%numberOfDerivatives
+
+    EXITS("DomainNodes_NodeNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NodeNumberOfDerivativesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_NodeNumberOfDerivativesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of nodes from a domain. 
+  SUBROUTINE DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On exit, the number of nodes for the domain nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNodes_NumberOfNodesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+#endif
+
+    numberOfNodes=domainNodes%numberOfNodes
+
+    EXITS("DomainNodes_NumberOfNodesGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NumberOfNodesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_NumberOfNodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of nodes from a domain. 
+  SUBROUTINE DomainNodes_TotalNumberOfNodessGet(domainNodes,totalNumberOfNodes,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the total number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfNodes !<On exit, the total number of nodes for the domain nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainNodes_TotalNumberOfNodesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+#endif
+
+    totalNumberOfNodes=domainNodes%totalNumberOfNodes
+
+    EXITS("DomainNodes_TotalNumberOfNodessGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_TotalNumberOfNodessGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_TotalNumberOfNodessGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a user node number that corresponds to a local node number from a domain. 
+  SUBROUTINE DomainNodes_UserNodeNumberGet(domainNodes,localNodeNumber,userNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the user node number for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the user node number for
+    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On exit, the user node number corresponding to the local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DomainNodeType), POINTER :: domainNode
+#endif    
+
+    ENTERS("DomainNodes_UserNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(domainNode)
+    CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+#endif
+
+    userNodeNumber=domainNodes%nodes(localNodeNumber)%userNumber
+
+    EXITS("DomainNodes_UserNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_UserNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_UserNodeNumberGet
 
   !
   !================================================================================================================================
@@ -2252,14 +4646,19 @@ CONTAINS
  
     ENTERS("DomainTopology_DomainGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domain)) CALL FlagError("Domain is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
+#endif    
 
     !Get the domain
     domain=>domainTopology%domain
+
+#ifdef WITH_POSTCHECKS    
     !Check domain is associated.
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain topology domain is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainTopology_DomainGet")
     RETURN
@@ -2274,7 +4673,7 @@ CONTAINS
   !
 
   !>Gets dofs from a domain topology.
-  SUBROUTINE DomainTopology_DomainDofsGet(domainTopology,domainDofs,err,error,*)
+  SUBROUTINE DomainTopology_DomainDOFsGet(domainTopology,domainDofs,err,error,*)
 
     !Argument variables
     TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the dofs for.
@@ -2283,24 +4682,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainTopology_DomainDofsGet",err,error,*998)
+    ENTERS("DomainTopology_DomainDOFsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domainDofs)) CALL FlagError("Domain dofs is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
+#endif    
 
     !Get the domain dofs
     domainDofs=>domainTopology%dofs
+
+#ifdef WITH_POSTCHECKS    
     !Check domain dofs is associated.
     IF(.NOT.ASSOCIATED(domainDofs)) CALL FlagError("Domain topology dofs is not associated.",err,error,*999)
+#endif    
     
-    EXITS("DomainTopology_DomainDofsGet")
+    EXITS("DomainTopology_DomainDOFsGet")
     RETURN
 999 NULLIFY(domainDofs)
-998 ERRORSEXITS("DomainTopology_DomainDofsGet",err,error)
+998 ERRORSEXITS("DomainTopology_DomainDOFsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainTopology_DomainDofsGet
+  END SUBROUTINE DomainTopology_DomainDOFsGet
 
   !
   !================================================================================================================================
@@ -2318,14 +4722,19 @@ CONTAINS
  
     ENTERS("DomainTopology_DomainElementsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domainElements)) CALL FlagError("Domain elements is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
+#endif    
 
     !Get the domain elements
     domainElements=>domainTopology%elements
+
+#ifdef WITH_POSTCHECKS    
     !Check domain elements is associated.
     IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain topology elements is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainTopology_DomainElementsGet")
     RETURN
@@ -2350,14 +4759,19 @@ CONTAINS
  
     ENTERS("DomainTopology_DomainLinesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
     IF(ASSOCIATED(domainLines)) CALL FlagError("Domain lines is already associated.",err,error,*999)
+#endif    
 
     !Get the domain lines
     domainLines=>domainTopology%lines
+
+#ifdef WITH_POSTCHECKS    
     !Check domain lines is associated.
     IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain topology lines is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainTopology_DomainLinesGet")
     RETURN
@@ -2382,14 +4796,19 @@ CONTAINS
  
     ENTERS("DomainTopology_DomainNodesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(domainNodes)) CALL FlagError("Domain lines is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
+#endif    
 
     !Get the domain nodes
     domainNodes=>domainTopology%nodes
+
+#ifdef WITH_POSTCHECKS    
     !Check domain nodes is associated.
     IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainTopology_DomainNodesGet")
     RETURN
@@ -2413,10 +4832,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DomainTopology_LocalElementBasisGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
     IF(localElementNumber<=0.OR.localElementNumber>domainTopology%elements%totalNumberOfElements) THEN
       localError="The local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
@@ -2428,13 +4850,17 @@ CONTAINS
     IF(.NOT.ASSOCIATED(domainTopology%elements)) CALL FlagError("Domain topology elements is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(domainTopology%elements%elements)) &
       & CALL FlagError("Domain topology elements elements is not associated.",err,error,*999)
+#endif    
        
     basis=>domainTopology%elements%elements(localElementNumber)%basis
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis for local element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DomainTopology_LocalElementBasisGet")
     RETURN
@@ -2459,14 +4885,19 @@ CONTAINS
  
     ENTERS("DomainTopology_DomainFacesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
     IF(ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is already associated.",err,error,*999)
+#endif    
 
     !Get the domain faces
     domainFaces=>domainTopology%faces
+
+#ifdef WITH_POSTCHECKS    
     !Check domain faces is associated.
     IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain topology faces is not associated.",err,error,*999)
+#endif    
     
     EXITS("DomainTopology_DomainFacesGet")
     RETURN

@@ -251,7 +251,9 @@ CONTAINS
  
     ENTERS("DistributedMatrix_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("Distributed matrix has not been finished.",err,error,*999)
     
@@ -277,7 +279,9 @@ CONTAINS
  
     ENTERS("DistributedMatrix_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     IF(distributedMatrix%matrixFinished) CALL FlagError("Distributed matrix has already been finished.",err,error,*999)
     
@@ -304,7 +308,9 @@ CONTAINS
  
     ENTERS("DistributedMatrix_AssertIsIntgData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     IF(distributedMatrix%dataType/=DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE) THEN
       localError="The distributed matrix data type of "//TRIM(NumberToVString(distributedMatrix%dataType,"*",err,error))// &
@@ -335,7 +341,9 @@ CONTAINS
  
     ENTERS("DistributedMatrix_AssertIsSPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     IF(distributedMatrix%dataType/=DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
       localError="The distributed matrix data type of "//TRIM(NumberToVString(distributedMatrix%dataType,"*",err,error))// &
@@ -366,7 +374,9 @@ CONTAINS
  
     ENTERS("DistributedMatrix_AssertIsDPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     IF(distributedMatrix%dataType/=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE) THEN
       localError="The distributed matrix data type of "//TRIM(NumberToVString(distributedMatrix%dataType,"*",err,error))// &
@@ -397,7 +407,9 @@ CONTAINS
  
     ENTERS("DistributedMatrix_AssertIsLData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     IF(distributedMatrix%dataType/=DISTRIBUTED_MATRIX_VECTOR_L_TYPE) THEN
       localError="The distributed matrix data type of "//TRIM(NumberToVString(distributedMatrix%dataType,"*",err,error))// &
@@ -430,7 +442,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_BlockSizeGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -468,11 +482,16 @@ CONTAINS
 
     ENTERS("DistributedMatrix_CMISSMatrixGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cmissMatrix)) CALL FlagError("CMISS matrix is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
     
     cmissMatrix=>distributedMatrix%cmiss
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cmissMatrix))  CALL FlagError("CMISS matrix is not associated for the distributed matrix.",err,error,*999)
+#endif    
      
     EXITS("DistributedMatrix_CMISSMatrixGet")
     RETURN
@@ -498,11 +517,16 @@ CONTAINS
 
     ENTERS("DistributedMatrix_ColumnMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(columnMapping)) CALL FlagError("Column mapping is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
     
     columnMapping=>distributedMatrix%columnDomainMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(columnMapping)) CALL FlagError("Column mapping is not associated for the distributed matrix.",err,error,*999)
+#endif    
      
     EXITS("DistributedMatrix_ColumnMappingGet")
     RETURN
@@ -558,7 +582,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DimensionsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -646,7 +672,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_NumberOfColumnsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -731,7 +759,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_MaxNumberOfRowsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -772,7 +802,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_NumberOfBlocksGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -813,7 +845,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_NumberOfGlobalRowsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -856,7 +890,9 @@ CONTAINS
 
     ENTERS("DistributedMatrix_NumberOfLocalRowsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -896,11 +932,16 @@ CONTAINS
 
     ENTERS("DistributedMatrix_PETScMatrixGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(petscMatrix)) CALL FlagError("PETSc matrix is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
     
     petscMatrix=>distributedMatrix%petsc
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(petscMatrix))  CALL FlagError("PETSc matrix is not associated for the distributed matrix.",err,error,*999)
+#endif    
      
     EXITS("DistributedMatrix_PETScMatrixGet")
     RETURN
@@ -926,11 +967,16 @@ CONTAINS
 
     ENTERS("DistributedMatrix_RowMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+#endif    
     
     rowMapping=>distributedMatrix%rowDomainMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(rowMapping))  CALL FlagError("Row mapping is not associated for the distributed matrix.",err,error,*999)
+#endif    
      
     EXITS("DistributedMatrix_RowMappingGet")
     RETURN
@@ -1085,12 +1131,17 @@ CONTAINS
 
     ENTERS("DistributedMatrixCMISS_DistributedMatrixGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is associated.",err,error,*998)    
     IF(.NOT.ASSOCIATED(cmissMatrix)) CALL FlagError("CMISS matrix is not associated.",err,error,*999)
+#endif    
     
     distributedMatrix=>cmissMatrix%distributedMatrix
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) &
       & CALL FlagError("Distributed matrix is not associated for the CMISS matrix.",err,error,*999)
+#endif    
      
     EXITS("DistributedMatrixCMISS_DistributedMatrixGet")
     RETURN
@@ -1116,12 +1167,17 @@ CONTAINS
 
     ENTERS("DistributedMatrixPETSc_DistributedMatrixGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is associated.",err,error,*998)    
     IF(.NOT.ASSOCIATED(petscMatrix)) CALL FlagError("PETSc matrix is not associated.",err,error,*999)
+#endif    
     
     distributedMatrix=>petscMatrix%distributedMatrix
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(distributedMatrix)) &
       & CALL FlagError("Distributed matrix is not associated for the PETSc matrix.",err,error,*999)
+#endif
      
     EXITS("DistributedMatrixPETSc_DistributedMatrixGet")
     RETURN
@@ -1146,7 +1202,9 @@ CONTAINS
  
     ENTERS("DistributedVector_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.distributedVector%vectorFinished) CALL FlagError("Distributed vector has not been finished.",err,error,*999)
     
@@ -1172,7 +1230,9 @@ CONTAINS
  
     ENTERS("DistributedVector_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
 
     IF(distributedVector%vectorFinished) CALL FlagError("Distributed vector has already been finished.",err,error,*999)
     
@@ -1199,7 +1259,9 @@ CONTAINS
  
     ENTERS("DistributedVector_AssertIsIntgData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
 
     IF(distributedVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE) THEN
       localError="The distributed vector data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
@@ -1230,7 +1292,9 @@ CONTAINS
  
     ENTERS("DistributedVector_AssertIsSPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
 
     IF(distributedVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
       localError="The distributed vector data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
@@ -1261,7 +1325,9 @@ CONTAINS
  
     ENTERS("DistributedVector_AssertIsDPData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
 
     IF(distributedVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE) THEN
       localError="The distributed vector data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
@@ -1292,7 +1358,9 @@ CONTAINS
  
     ENTERS("DistributedVector_AssertIsLData",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
 
     IF(distributedVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_L_TYPE) THEN
       localError="The distributed vector data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
@@ -1323,11 +1391,16 @@ CONTAINS
 
     ENTERS("DistributedVector_CMISSVectorGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cmissVector)) CALL FlagError("CMISS vector is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
     
     cmissVector=>distributedVector%cmiss
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cmissVector))  CALL FlagError("CMISS vector is not associated for the distributed vector.",err,error,*999)
+#endif    
      
     EXITS("DistributedVector_CMISSVectorGet")
     RETURN
@@ -1381,9 +1454,10 @@ CONTAINS
     ENTERS("DistributedVector_NumberOfGlobalRowsGet",err,error,*999)
 
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
-    
-    rowMapping=>distributedVector%domainMapping
+#ifdef WITH_PRECHECKS    
+    rowMapping=>distributedVector%domainMapping    
     IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+#endif    
     
     numberOfGlobalRows=rowMapping%numberOfGlobal
 
@@ -1412,9 +1486,10 @@ CONTAINS
     ENTERS("DistributedVector_NumberOfLocalRowsGet",err,error,*999)
 
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
-    
+#ifdef WITH_PRECHECKS    
     rowMapping=>distributedVector%domainMapping
     IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+#endif    
     
     numberOfLocalRows=rowMapping%numberOfLocal
 
@@ -1441,11 +1516,16 @@ CONTAINS
 
     ENTERS("DistributedVector_PETScVectorGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(petscVector)) CALL FlagError("PETSc vector is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
     
     petscVector=>distributedVector%petsc
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(petscVector))  CALL FlagError("PETSc vector is not associated for the distributed vector.",err,error,*999)
+#endif    
      
     EXITS("DistributedVector_PETScVectorGet")
     RETURN
@@ -1471,11 +1551,16 @@ CONTAINS
 
     ENTERS("DistributedVector_RowMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
+#endif    
     
     rowMapping=>distributedVector%domainMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+#endif    
      
     EXITS("DistributedVector_RowMappingGet")
     RETURN
@@ -1503,9 +1588,10 @@ CONTAINS
     ENTERS("DistributedVector_TotalNumberOfLocalRowsGet",err,error,*999)
 
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
-    
+#ifdef WITH_PRECHECKS    
     rowMapping=>distributedVector%domainMapping
     IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+#endif    
     
     totalNumberOfLocalRows=rowMapping%totalNumberOfLocal
 
@@ -1532,12 +1618,17 @@ CONTAINS
 
     ENTERS("DistributedVectorCMISS_DistributedVectorGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(cmissVector)) CALL FlagError("CMISS vector is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(cmissVector)) CALL FlagError("CMISS vector is not associated.",err,error,*999)
+#endif    
     
     distributedVector=>cmissVector%distributedVector
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) &
       & CALL FlagError("Distributed vector is not associated for the CMISS vector.",err,error,*999)
+#endif    
      
     EXITS("DistributedVectorCMISS_DistributedVectorGet")
     RETURN
@@ -1563,12 +1654,17 @@ CONTAINS
 
     ENTERS("DistributedVectorPETSc_DistributedVectorGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(petscVector)) CALL FlagError("PETSc vector is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(petscVector)) CALL FlagError("PETSc vector is not associated.",err,error,*999)
+#endif    
     
     distributedVector=>petscVector%distributedVector
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) &
       & CALL FlagError("Distributed vector is not associated for the PETSc vector.",err,error,*999)
+#endif    
      
     EXITS("DistributedVectorPETSc_DistributedVectorGet")
     RETURN

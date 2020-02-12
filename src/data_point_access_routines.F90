@@ -93,7 +93,9 @@ CONTAINS
  
     ENTERS("DataPoints_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.dataPoints%dataPointsFinished) THEN
       localError="Data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
@@ -131,7 +133,9 @@ CONTAINS
  
     ENTERS("DataPoints_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+#endif    
 
     IF(dataPoints%dataPointsFinished) THEN
       localError="Data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
@@ -166,24 +170,32 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DataPoints_CoordinateSystemGet",err,error,*998)
 
-    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*998)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*998)
+#endif    
     CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    
 
-    IF(ASSOCIATED(dataPoints%region)) THEN
+    IF(ASSOCIATED(dataPoints%region)) THEN      
       IF(.NOT.dataPoints%region%regionFinished) CALL FlagError("Data points region has not been finished.",err,error,*999)
       coordinateSystem=>dataPoints%region%coordinateSystem
+#ifdef WITH_POSTCHECKS      
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system for region number "// &
           & TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))//" is not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
     ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
       IF(.NOT.dataPoints%interface%interfaceFinished) CALL FlagError("Data points interface has not been finished.",err,error,*999)
-      coordinateSystem=>dataPoints%interface%coordinateSystem
+      coordinateSystem=>dataPoints%INTERFACE%coordinateSystem
+#ifdef WITH_POSTCHECKS      
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system for interface number "// &
           & TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
@@ -192,6 +204,7 @@ CONTAINS
         localError=localError//" is not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
     ELSE
       CALL FlagError("Data points is not associated with a region or an interface.",err,error,*999)
     ENDIF
@@ -218,11 +231,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DataPoints_DataProjectionIndexGet",err,error,*998)
 
-    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",ERR,ERROR,*998)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
     CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
     IF(.NOT.ASSOCIATED(dataPoints%dataProjections)) THEN
       localError="The data projections is not associated for data points number "// &
@@ -264,8 +280,11 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     dataProjection=>dataPoints%dataProjections%dataProjections(dataProjectionIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(ASSOCIATED(dataProjection)) THEN
       localError="The data projection is not associated for data projection index "// &
         & TRIM(NumberToVString(dataProjectionIndex,"*",err,error))//" of data points number "// &
@@ -280,6 +299,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
    
     EXITS("DataPoints_DataProjectionIndexGet")
     RETURN
@@ -303,14 +323,18 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataPoints_DataProjectionUserGet",err,error,*998)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
+#endif    
     CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
     
     CALL DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*999)
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dataProjection)) THEN
       localError="A data projection with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
@@ -324,6 +348,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("DataPoints_DataProjectionUserGet")
     RETURN
@@ -349,34 +374,33 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: setIdx
     TYPE(DataPointsType), POINTER :: setDataPoints
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DataPointSets_UserNumberFind",err,error,*998)
 
-    IF(ASSOCIATED(dataPointSets)) THEN
-      IF(ASSOCIATED(dataPoints)) THEN
-        CALL FlagError("Data points is already associated.",err,error,*998)
-      ELSE
-        NULLIFY(dataPoints)
-        IF(ALLOCATED(dataPointSets%dataPointSets)) THEN
-          setIdx=1
-          DO WHILE(setIdx<=SIZE(dataPointSets%dataPointSets,1))
-            setDataPoints=>dataPointSets%dataPointSets(setIdx)%ptr
-            IF(ASSOCIATED(setDataPoints)) THEN
-              IF(setDataPoints%userNumber==userNumber) THEN
-                dataPoints=>dataPointSets%dataPointSets(setIdx)%ptr
-                EXIT
-              ENDIF
-            ELSE
-              localError="The data point sets data points is not associated for set index "// &
-                & TRIM(NumberToVString(setIdx,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ENDDO
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dataPointSets)) CALL FlagError("Data point sets is not associated.",err,error,*999)
+#endif    
+    
+    NULLIFY(dataPoints)
+    IF(ALLOCATED(dataPointSets%dataPointSets)) THEN
+      setIdx=1
+      DO WHILE(setIdx<=SIZE(dataPointSets%dataPointSets,1))
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(dataPointSets%dataPointSets(setIdx)%ptr)) THEN
+          localError="The data point sets data points is not associated for set index "// &
+            & TRIM(NumberToVString(setIdx,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Data point sets is not associated.",err,error,*999)
+#endif        
+        IF(dataPointSets%dataPointSets(setIdx)%ptr%userNumber==userNumber) THEN
+          dataPoints=>dataPointSets%dataPointSets(setIdx)%ptr
+          EXIT
+        ENDIF
+      ENDDO
     ENDIF
     
     EXITS("DataPointSets_UserNumberFind")

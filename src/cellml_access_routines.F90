@@ -182,7 +182,9 @@ CONTAINS
  
     ENTERS("CellML_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellml)) CALL FlagError("CellML is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.cellml%cellmlFinished) THEN
       localError="CellML user number "//TRIM(NumberToVString(cellml%userNumber,"*",err,error))
@@ -215,7 +217,9 @@ CONTAINS
  
     ENTERS("CellML_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellml)) CALL FlagError("CellML is not associated.",err,error,*999)
+#endif    
 
     IF(cellml%cellmlFinished) THEN
       localError="CellML user number "//TRIM(NumberToVString(cellml%userNumber,"*",err,error))
@@ -245,15 +249,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLEnvironmentsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLEnvironments)) CALL FlagError("CellML environments is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML is not associated.",err,error,*999)
+#endif    
     
     cellMLEnvironments=>cellML%environments
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLEnvironments)) THEN
       localError="The environments for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))
       IF(ASSOCIATED(cellML%region)) &
@@ -261,6 +270,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLEnvironmentsGet")
     RETURN
@@ -283,15 +293,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLFieldMapsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLFieldMaps)) CALL FlagError("CellML field maps is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
     
     cellMLFieldMaps=>cellML%fieldMaps
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLFieldMaps)) THEN
       localError="The field maps for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))
       IF(ASSOCIATED(cellML%region)) &
@@ -299,6 +314,7 @@ CONTAINS
       localError=localError//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLFieldMapsGet")
     RETURN
@@ -321,15 +337,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLIntermediateFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLIntermediateField)) CALL FlagError("CellML intermediate field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
     
     cellMLIntermediateField=>cellML%intermediateField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLIntermediateField)) THEN
       localError="The intermediate field information for CellML user number "// &
         & TRIM(NumberToVString(cellML%userNumber,"*",err,error))
@@ -338,6 +359,7 @@ CONTAINS
       localError=localError//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLIntermediateFieldGet")
     RETURN
@@ -361,10 +383,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLModelGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLModel)) CALL FlagError("CellML model is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(cellML%models)) THEN
@@ -383,9 +408,11 @@ CONTAINS
         & TRIM(NumberToVString(cellML%numberOfModels,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     cellMLModel=>cellML%models(modelIndex)%ptr
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLModel)) THEN
       localError="The CellML model for model index "//TRIM(NumberToVString(modelIndex,"*",err,error))// &
         & " for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))
@@ -394,6 +421,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLModelGet")
     RETURN
@@ -416,15 +444,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLModelsFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
     
     cellMLModelsField=>cellML%modelsField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLModelsField)) THEN
       localError="The models field information for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))
       IF(ASSOCIATED(cellML%region)) &
@@ -432,6 +465,7 @@ CONTAINS
       localError=localError//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLModelsFieldGet")
     RETURN
@@ -454,15 +488,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLParametersFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLParametersField)) CALL FlagError("CellML parameters field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif
     
     cellMLParametersField=>cellML%parametersField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLParametersField)) THEN
       localError="The parameters field information for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))
       IF(ASSOCIATED(cellML%region)) &
@@ -470,6 +509,7 @@ CONTAINS
       localError=localError//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLParametersFieldGet")
     RETURN
@@ -492,15 +532,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_CellMLStateFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLStateField)) CALL FlagError("CellML state field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
     
     cellMLStateField=>cellML%stateField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLStateField)) THEN
       localError="The state field information for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))
       IF(ASSOCIATED(cellML%region)) &
@@ -508,6 +553,7 @@ CONTAINS
       localError=localError//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_CellMLStateFieldGet")
     RETURN
@@ -530,10 +576,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_IntermediateFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(intermediateField)) CALL FlagError("Intermediate field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(cellML%intermediateField)) THEN
@@ -544,10 +593,12 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     CALL CellMLIntermediateField_AssertIsFinished(cellML%intermediateField,err,error,*999)
     
     intermediateField=>cellML%intermediateField%intermediateField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(intermediateField)) THEN
       localError="The intermediate field is not associated for the intermediate field information for CellML user number "// &
         & TRIM(NumberToVString(cellML%userNumber,"*",err,error))
@@ -556,6 +607,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_IntermediateFieldGet")
     RETURN
@@ -578,10 +630,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_ModelsFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(modelsField)) CALL FlagError("Models field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(cellML%modelsField)) THEN
@@ -592,10 +647,12 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     CALL CellMLModelsField_AssertIsFinished(cellML%modelsField,err,error,*999)
     
     modelsField=>cellML%modelsField%modelsField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(modelsField)) THEN
       localError="The models field is not associated for the models field information for CellML user number "// &
         & TRIM(NumberToVString(cellML%userNumber,"*",err,error))
@@ -604,6 +661,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_ModelsFieldGet")
     RETURN
@@ -626,10 +684,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_ParametersFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parametersField)) CALL FlagError("Parameters field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(cellML%parametersField)) THEN
@@ -640,10 +701,12 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     CALL CellMLParametersField_AssertIsFinished(cellML%parametersField,err,error,*999)
     
     parametersField=>cellML%parametersField%parametersField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(parametersField)) THEN
       localError="The parameters field is not associated for the parameters field information for CellML user number "// &
         & TRIM(NumberToVString(cellML%userNumber,"*",err,error))
@@ -652,6 +715,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_ParametersFieldGet")
     RETURN
@@ -674,20 +738,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_RegionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
     
     region=>cellML%region
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(region)) THEN
       localError="The region for CellML user number "//TRIM(NumberToVString(cellML%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_RegionGet")
     RETURN
@@ -710,10 +780,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_StateFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(stateField)) CALL FlagError("State field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(cellML%stateField)) THEN
@@ -724,10 +797,12 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     CALL CellMLStateField_AssertIsFinished(cellML%stateField,err,error,*999)
     
     stateField=>cellML%stateField%stateField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(stateField)) THEN
       localError="The state field is not associated for the state field information for CellML user number "// &
         & TRIM(NumberToVString(cellML%userNumber,"*",err,error))
@@ -736,6 +811,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellML_StateFieldGet")
     RETURN
@@ -756,30 +832,35 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find.
     TYPE(RegionType), POINTER :: region !<A pointer to the region to find the CellML user number.
     TYPE(CellMLType), POINTER :: cellml !<On return a pointer to the CellML environment with the given user number. If no CellML environment with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: cellmlIdx
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellML_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(region%cellMLEnvironments)) CALL FlagError("Region CellML environments is not associated.",err,error,*999)
+#endif    
 
     NULLIFY(cellml)
     IF(ALLOCATED(region%cellMLEnvironments%environments)) THEN
       DO cellmlIdx=1,region%cellMLEnvironments%numberOfEnvironments
-        IF(ASSOCIATED(region%cellMLEnvironments%environments(cellmlIdx)%ptr)) THEN
-          IF(region%cellMLEnvironments%environments(cellmlIdx)%ptr%userNumber==userNumber) THEN
-            cellml=>region%cellMLEnvironments%environments(cellmlIdx)%ptr
-            EXIT
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(region%cellMLEnvironments%environments(cellmlIdx)%ptr)) THEN
           localError="The CellML pointer in the CellML environments is not associated for CellML index "// &
             & TRIM(NumberToVString(cellmlIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
+        IF(region%cellMLEnvironments%environments(cellmlIdx)%ptr%userNumber==userNumber) THEN
+          cellml=>region%cellMLEnvironments%environments(cellmlIdx)%ptr
+          EXIT
         ENDIF
       ENDDO !cellmlIdx
     ENDIF
@@ -807,7 +888,9 @@ CONTAINS
  
     ENTERS("CellMLFieldMaps_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellmlFieldMaps)) CALL FlagError("CellML field maps is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.cellmlFieldMaps%cellmlFieldMapsFinished) THEN
       localError="The CellML field maps"
@@ -844,7 +927,9 @@ CONTAINS
  
     ENTERS("CellMLFieldMaps_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLFieldMaps)) CALL FlagError("CellML field maps is not associated.",err,error,*999)
+#endif    
 
     IF(cellMLFieldMaps%cellMLFieldMapsFinished) THEN
       localError="The CellML field maps"
@@ -879,10 +964,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLFieldMaps_CellMLModelMapsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLModelMaps)) CALL FlagError("CellML model maps is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLFieldMaps)) CALL FlagError("CellML field maps is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(cellMLFieldMaps%modelMaps)) THEN
@@ -909,9 +997,11 @@ CONTAINS
         & TRIM(NumberToVString(SIZE(cellMLFieldMaps%modelMaps,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     cellMLModelMaps=>cellMLFieldMaps%modelMaps(modelIndex)%ptr
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLModelMaps)) THEN
       localError="The model maps for model index "//TRIM(NumberToVString(modelIndex,"*",err,error))// &
         & " of the CellML field maps"
@@ -924,6 +1014,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMLFieldMaps_CellMLModelMapsGet")
     RETURN
@@ -946,15 +1037,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
-
+#endif
+    
     ENTERS("CellMLFieldMaps_SourceFieldDomainGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(sourceFieldDomain)) CALL FlagError("Source field domain is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLFieldMaps)) CALL FlagError("CellML field maps is not associated.",err,error,*999)
+#endif    
     
     sourceFieldDomain=>cellMLFieldMaps%sourceFieldDomain
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourceFieldDomain)) THEN
       localError="The source field domain of the CellML field maps"
       IF(ASSOCIATED(cellMLFieldMaps%cellML)) THEN
@@ -966,6 +1062,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMLFieldMaps_SourceFieldDomainGet")
     RETURN
@@ -988,15 +1085,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLFieldMaps_SourceGeometricFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(sourceGeometricField)) CALL FlagError("Source geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLFieldMaps)) CALL FlagError("CellML field maps is not associated.",err,error,*999)
+#endif    
     
     sourceGeometricFIeld=>cellMLFieldMaps%sourceGeometricField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourceGeometricField)) THEN
       localError="The source geometric field of the CellML field maps"
       IF(ASSOCIATED(cellMLFieldMaps%cellML)) THEN
@@ -1008,6 +1110,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMLFieldMaps_SourceGeometricFieldGet")
     RETURN
@@ -1033,7 +1136,9 @@ CONTAINS
  
     ENTERS("CellMLIntermediateField_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLIntermediateField)) CALL FlagError("CellML intermediate field is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.cellMLIntermediateField%intermediateFieldFinished) THEN
       localError="The CellML intermediate field"
@@ -1071,7 +1176,9 @@ CONTAINS
  
     ENTERS("CellMLIntermediateField_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLIntermediateField)) CALL FlagError("CellML intermediate field is not associated.",err,error,*999)
+#endif    
 
     IF(cellMLIntermediateField%intermediateFieldFinished) THEN
       localError="The CellML intermediate field"
@@ -1109,13 +1216,17 @@ CONTAINS
 
     ENTERS("CellMLIntermediateField_CellMLGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLIntermediateField)) CALL FlagError("CellML intermediate field is not associated.",err,error,*999)
+#endif    
     
     cellML=>cellMLIntermediateField%cellML
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellML)) &
       & CALL FlagError("The CellML environment for the intermediate field information is not associated.",err,error,*999)
+#endif    
 
     EXITS("CellMIntermediateField_CellMLGet")
     RETURN
@@ -1138,15 +1249,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLIntermediateField_IntermediateFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS
     IF(ASSOCIATED(intermediateField)) CALL FlagError("Intermediate field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLIntermediateField)) CALL FlagError("CellML intermediate field is not associated.",err,error,*999)
+#endif    
     
     intermediateField=>cellMLIntermediateField%intermediateField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(intermediateField)) THEN
       localError="The intermediate field for the intermediate field information"
       IF(ASSOCIATED(cellMLIntermediateField%cellML)) THEN
@@ -1159,6 +1275,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMIntermediateField_IntermediateFieldGet")
     RETURN
@@ -1183,10 +1300,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLModelMaps_CellMLModelFromMapGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLModelFromMap)) CALL FlagError("CellML model from map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLModelMaps)) CALL FlagError("CellML model maps is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(cellMLModelMaps%fieldsMappedFrom)) THEN
@@ -1219,9 +1339,11 @@ CONTAINS
         & TRIM(NumberToVString(cellMLModelMaps%numberOfFieldsMappedFrom,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     cellMLModelFromMap=>cellMLModelMaps%fieldsMappedFrom(fromMapIndex)%ptr
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLModelFromMap)) THEN
       localError="The from model map for from map index "//TRIM(NumberToVString(fromMapIndex,"*",err,error))// &
         & " of the model maps of the CellML field maps"
@@ -1237,6 +1359,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMLModelMaps_CellMLModelFromMapGet")
     RETURN
@@ -1260,10 +1383,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLModelMaps_CellMLModelToMapGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLModelToMap)) CALL FlagError("CellML model to map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLModelMaps)) CALL FlagError("CellML model maps is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(cellMLModelMaps%fieldsMappedTo)) THEN
@@ -1296,9 +1422,11 @@ CONTAINS
         & TRIM(NumberToVString(cellMLModelMaps%numberOfFieldsMappedTo,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     cellMLModelToMap=>cellMLModelMaps%fieldsMappedTo(toMapIndex)%ptr
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLModelToMap)) THEN
       localError="The to model map for to map index "//TRIM(NumberToVString(toMapIndex,"*",err,error))// &
         & " of the model maps of the CellML field maps"
@@ -1314,6 +1442,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMLModelMaps_CellMLModelToMapGet")
     RETURN
@@ -1339,7 +1468,9 @@ CONTAINS
  
     ENTERS("CellMLModelsField_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.cellMLModelsField%modelsFieldFinished) THEN
       localError="The CellML models field"
@@ -1376,7 +1507,9 @@ CONTAINS
  
     ENTERS("CellMLModelsField_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
+#endif    
 
     IF(cellMLModelsField%modelsFieldFinished) THEN
       localError="The CellML models field"
@@ -1413,13 +1546,17 @@ CONTAINS
 
     ENTERS("CellMLModelsField_CellMLGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
+#endif    
     
     cellML=>cellMLModelsField%cellML
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellML)) &
       & CALL FlagError("The CellML environment for the models field information is not associated.",err,error,*999)
+#endif    
 
     EXITS("CellMModelsField_CellMLGet")
     RETURN
@@ -1442,15 +1579,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLModelsField_ModelsFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(modelsField)) CALL FlagError("Models field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
+#endif    
     
     modelsField=>cellMLModelsField%modelsField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(modelsField)) THEN
       localError="The models field for the models field information"
       IF(ASSOCIATED(cellMLModelsField%cellML)) THEN
@@ -1462,6 +1604,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMModelsField_ModelsFieldGet")
     RETURN
@@ -1487,7 +1630,9 @@ CONTAINS
  
     ENTERS("CellMLParametersField_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLParametersField)) CALL FlagError("CellML parameters field is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.cellMLParametersField%parametersFieldFinished) THEN
       localError="The CellML parameters field"
@@ -1525,7 +1670,9 @@ CONTAINS
  
     ENTERS("CellMLParametersField_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLParametersField)) CALL FlagError("CellML parameters field is not associated.",err,error,*999)
+#endif    
 
     IF(cellMLParametersField%parametersFieldFinished) THEN
       localError="The CellML parameters field"
@@ -1563,13 +1710,17 @@ CONTAINS
 
     ENTERS("CellMLParametersField_CellMLGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLParametersField)) CALL FlagError("CellML parameters field is not associated.",err,error,*999)
+#endif    
     
     cellML=>cellMLParametersField%cellML
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellML)) &
       & CALL FlagError("The CellML environment for the parameters field information is not associated.",err,error,*999)
+#endif    
 
     EXITS("CellMParametersField_CellMLGet")
     RETURN
@@ -1592,15 +1743,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLParametersField_ParametersFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parametersField)) CALL FlagError("Parameters field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLParametersField)) CALL FlagError("CellML parameters field is not associated.",err,error,*999)
+#endif    
     
     parametersField=>cellMLParametersField%parametersField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(parametersField)) THEN
       localError="The parameters field for the parameters field information"
       IF(ASSOCIATED(cellMLParametersField%cellML)) THEN
@@ -1613,6 +1769,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMParametersField_ParametersFieldGet")
     RETURN
@@ -1638,7 +1795,9 @@ CONTAINS
  
     ENTERS("CellMLStateField_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLStateField)) CALL FlagError("CellML state field is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.cellMLStateField%stateFieldFinished) THEN
       localError="The CellML state field"
@@ -1675,7 +1834,9 @@ CONTAINS
  
     ENTERS("CellMLStateField_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLStateField)) CALL FlagError("CellML state field is not associated.",err,error,*999)
+#endif    
 
     IF(cellMLStateField%stateFieldFinished) THEN
       localError="The CellML state field"
@@ -1712,13 +1873,17 @@ CONTAINS
 
     ENTERS("CellMLStateField_CellMLGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLStateField)) CALL FlagError("CellML state field is not associated.",err,error,*999)
+#endif    
     
     cellML=>cellMLStateField%cellML
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellML)) &
       & CALL FlagError("The CellML environment for the state field information is not associated.",err,error,*999)
+#endif    
 
     EXITS("CellMStateField_CellMLGet")
     RETURN
@@ -1741,15 +1906,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("CellMLStateField_StateFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(stateField)) CALL FlagError("State field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(cellMLStateField)) CALL FlagError("CellML state field is not associated.",err,error,*999)
+#endif    
     
     stateField=>cellMLStateField%stateField
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(stateField)) THEN
       localError="The state field for the state field information"
       IF(ASSOCIATED(cellMLStateField%cellML)) THEN
@@ -1761,6 +1931,7 @@ CONTAINS
       localError=localError//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     EXITS("CellMStateField_StateFieldGet")
     RETURN

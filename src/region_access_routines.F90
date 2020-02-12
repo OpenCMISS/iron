@@ -159,7 +159,9 @@ CONTAINS
  
     ENTERS("Region_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.region%regionFinished) THEN
       localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
@@ -189,8 +191,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("Region_AssertNotFinished",err,error,*999)
-
+    
+#ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
 
     IF(region%regionFinished) THEN
       localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
@@ -219,20 +223,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_CellMLGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
      
     NULLIFY(cellml)
     CALL CellML_UserNumberFind(userNumber,region,cellml,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellml)) THEN
       localError="A cellml environment with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " do not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_CellMLGet")
     RETURN
@@ -255,20 +266,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_CellMLEnvironmentsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLEnvironments)) CALL FlagError("CellML environments is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*999)
 
     cellMLEnvironments=>region%cellMLEnvironments
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(cellMLEnvironments)) THEN
       localError="The CellML environments is not associated for region number "// &
         & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_CellMLEnvironmentsGet")
     RETURN
@@ -291,24 +308,31 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_ContextGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-
     IF(.NOT.ASSOCIATED(region%regions)) THEN
       localError="Regions is not associated for region number "// &
         & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
+    
     context=>region%regions%context
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="The context is not associated for the regions for region number "// &
         & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_ContextGet")
     RETURN
@@ -331,20 +355,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Region_CoordinateSystemGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
 
     coordinateSystem=>region%coordinateSystem
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
       localError="The coordinate system for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_CoordinateSystemGet")
     RETURN
@@ -368,25 +399,34 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_DataPointsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(region%dataPointSets)) THEN
       localError="Region data point sets is not associated for region number "// &
         & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     NULLIFY(dataPoints)
     CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,dataPoints,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dataPoints)) THEN
       localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Region_DataPointsGet")
     RETURN
@@ -410,20 +450,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_DecomposerGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(decomposer)) CALL FlagError("Decomposer is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*999)
     
     NULLIFY(decomposer)
     CALL Decomposer_UserNumberFind(userNumber,region,decomposer,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposer)) THEN
       localError="A decomposer with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_DecomposerGet")
     RETURN
@@ -446,19 +493,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_DecomposersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(decomposers)) CALL FlagError("Decomposers is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
 
     decomposers=>region%decomposers
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(decomposers)) THEN
       localError="The decomposers for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Region_DecomposersGet")
     RETURN
@@ -482,20 +536,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_EquationsSetGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(equationsSet)
     CALL EquationsSet_UserNumberFind(userNumber,region,equationsSet,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       localError="An equations set with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_EquationsSetGet")
     RETURN
@@ -519,20 +580,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_FieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(field)
     CALL Field_UserNumberFind(userNumber,region,field,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(field)) THEN
       localError="A field with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_FieldGet")
     RETURN
@@ -555,19 +623,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_FieldsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fields)) CALL FlagError("Fields is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
 
     fields=>region%fields
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(fields)) THEN
       localError="The fields for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_FieldsGet")
     RETURN
@@ -591,20 +666,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_GeneratedMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(generatedMesh)
     CALL GeneratedMesh_UserNumberFind(userNumber,region,generatedMesh,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(generatedMesh)) THEN
       localError="A generated mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_GeneratedMeshGet")
     RETURN
@@ -628,15 +710,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Region_Get",err,error,*999)
 
     CALL Region_UserNumberFind(regions,userNumber,region,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(region)) THEN
       localError="A region with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
   
     EXITS("Region_Get")
     RETURN
@@ -659,20 +746,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_InterfaceGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
      
     NULLIFY(interface)
-    CALL Interface_UserNumberFind(userNumber,region,interface,err,error,*999)
-    IF(.NOT.ASSOCIATED(interface)) THEN
+    CALL Interface_UserNumberFind(userNumber,region,INTERFACE,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(INTERFACE)) THEN
       localError="An interface with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_InterfaceGet")
     RETURN
@@ -738,7 +832,9 @@ CONTAINS
 
     ENTERS("Region_LabelGetC",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
     
     cLength=LEN(label)
     vsLength=LEN_TRIM(region%label)
@@ -771,7 +867,9 @@ CONTAINS
 
     ENTERS("Region_LabelGetVS",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
     
     !CPB 20/2/07 The following line crashes the AIX compiler unless it has a VAR_STR(CHAR()) around it
     label=VAR_STR(CHAR(region%label))
@@ -797,20 +895,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_MeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(mesh)
     CALL Mesh_UserNumberFind(userNumber,region,mesh,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Region_MeshGet")
     RETURN
@@ -833,19 +938,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_MeshesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshes)) CALL FlagError("Meshes is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*999)
 
     meshes=>region%meshes
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshes)) THEN
       localError="The meshes for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Region_MeshesGet")
     RETURN
@@ -868,19 +980,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_NodesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
+#endif    
     CALL Region_AssertIsFinished(region,err,error,*998)
 
     nodes=>region%nodes
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(nodes)) THEN
       localError="The nodes for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Region_NodesGet")
     RETURN
@@ -903,19 +1022,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Region_RegionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(regions)) CALL FlagError("Regions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
     
-    regions=>region%regions   
+    regions=>region%regions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(regions)) THEN
       localError="Regions is not associated for region number "// &
         & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Region_RegionsGet")
     RETURN
@@ -940,23 +1066,22 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: regionIdx
-    TYPE(RegionType), POINTER :: worldRegion
     
     ENTERS("Region_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(regions)) CALL FlagError("Regions is not associated.",err,error,*999)
-    
-    worldRegion=>regions%worldRegion
-    IF(.NOT.ASSOCIATED(worldRegion)) CALL FlagError("World region is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(regions%worldRegion)) CALL FlagError("World region is not associated.",err,error,*999)
+#endif    
     
     NULLIFY(region)
     IF(userNumber==0) THEN
-      region=>worldRegion
+      region=>regions%worldRegion
     ELSE
-      IF(ASSOCIATED(worldRegion%subRegions)) THEN
-        DO regionIdx=1,worldRegion%numberOfSubRegions
-          CALL Region_UserNumberFindPtr(userNumber,worldRegion%subRegions(regionIdx)%ptr,region,err,error,*999)
+      IF(ASSOCIATED(regions%worldRegion%subRegions)) THEN
+        DO regionIdx=1,regions%worldRegion%numberOfSubRegions
+          CALL Region_UserNumberFindPtr(userNumber,regions%worldRegion%subRegions(regionIdx)%ptr,region,err,error,*999)
           IF(ASSOCIATED(region)) EXIT
         ENDDO !regionIdx
       ENDIF
@@ -987,8 +1112,10 @@ CONTAINS
 
     ENTERS("Region_UserNumberFindPtr",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(startRegion)) CALL FlagError("Start region is not associated",err,error,*999)
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
+#endif    
 
     NULLIFY(region)
     IF(startRegion%userNumber==userNumber) THEN
@@ -1025,7 +1152,9 @@ CONTAINS
 
     ENTERS("Region_UserNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
 
     userNumber=region%userNumber
   
@@ -1052,11 +1181,16 @@ CONTAINS
  
     ENTERS("Regions_WorldRegionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(worldRegion)) CALL FlagError("World region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(regions)) CALL FlagError("Regions is not associated.",err,error,*998)
+#endif    
 
-    worldRegion=>regions%worldREgion
+    worldRegion=>regions%worldRegion
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(worldRegion)) CALL FlagError("Regions world region is not associated.",err,error,*999)
+#endif    
        
     EXITS("Regions_WorldRegionGet")
     RETURN

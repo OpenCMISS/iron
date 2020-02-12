@@ -47,7 +47,7 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -60,7 +60,6 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -71,9 +70,9 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -563,34 +562,34 @@ CONTAINS
             CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
             !Create the equations mapping.
             CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-            CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-            CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-            CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-
-            CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+            CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+            CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices
             CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
             !Set up matrix storage and structure
             IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
               !Set up lumping
-              CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+              CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                 & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
-              CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+              CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                 & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
                 & err,error,*999)
-              CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+              CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                 [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
             ELSE
               SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                   & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                   & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                   & err,error,*999)
-                CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                   [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)                  
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
@@ -1051,11 +1050,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
+    TYPE(CellMLEquationsType), POINTER :: CELLML_EQUATIONS
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
     NULLIFY(CELLML_EQUATIONS)
@@ -1113,7 +1112,7 @@ CONTAINS
           CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
           SELECT CASE(PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,3,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,3,err,error,*999)
             !Set the first solver to be a differential-algebraic equations solver
             NULLIFY(SOLVER)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1139,7 +1138,7 @@ CONTAINS
             !Set solver defaults
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
           CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
             !Set the first solver to be a CELLML evaluator equations solver
             NULLIFY(SOLVER)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1158,7 +1157,7 @@ CONTAINS
             CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
           CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a dynamic solver 
             NULLIFY(SOLVER)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1276,7 +1275,7 @@ CONTAINS
             NULLIFY(CELLML_EQUATIONS)
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Set the time dependence
             CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             !Set the linearity
@@ -1285,7 +1284,7 @@ CONTAINS
             NULLIFY(SOLVER)
             NULLIFY(CELLML_EQUATIONS)
             CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
-            CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Set the time dependence
             CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             !Set the linearity
@@ -1297,7 +1296,7 @@ CONTAINS
             NULLIFY(CELLML_EQUATIONS)
             !Create the CellML equations for the first cellml evaluator solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Set the time dependence
             CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             !Set the linearity
@@ -1314,20 +1313,20 @@ CONTAINS
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             !Get the CellML equations for the second DAE solver
             NULLIFY(SOLVER)
             NULLIFY(CELLML_EQUATIONS)
             CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
             CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
           CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
             !Get the CellML equations for the first evaluator solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
             !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
           CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
@@ -1363,7 +1362,7 @@ CONTAINS
   SUBROUTINE ReactionDiffusion_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to perform the pre-solve actions for.
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to perform the pre-solve actions for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1423,14 +1422,14 @@ CONTAINS
   SUBROUTINE ReactionDiffusion_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(SOLVER_TYPE), POINTER :: pdeSolver
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverType), POINTER :: pdeSolver
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("ReactionDiffusion_PostSolve",err,error,*999)
@@ -1491,12 +1490,12 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
@@ -1524,7 +1523,7 @@ CONTAINS
             CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE, &
               & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
               CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -1610,13 +1609,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations 
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer to the solvers
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolversType), POINTER :: SOLVERS !<A pointer to the solvers
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
@@ -1629,10 +1628,10 @@ CONTAINS
       IF(ASSOCIATED(PROBLEM)) THEN
         SELECT CASE(PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-          SOLVERS=>CONTROL_LOOP%SOLVERS
+          SOLVERS=>CONTROL_LOOP%solvers
           IF(ASSOCIATED(SOLVERS)) THEN
             CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            SOLVER_EQUATIONS=>SOLVER%solverEquations
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN

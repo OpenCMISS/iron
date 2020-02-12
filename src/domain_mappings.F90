@@ -82,8 +82,22 @@ MODULE DomainMappings
   PUBLIC DomainGlobalMapping_Initialise
   
   PUBLIC DomainMapping_Finalise,DomainMapping_Initialise
+
+  PUBLIC DomainMapping_LocalToGlobalGet
   
   PUBLIC DomainMapping_LocalFromGlobalCalculate
+
+  PUBLIC DomainMapping_NumberOfBoundaryGet
+
+  PUBLIC DomainMapping_NumberOfInternalGet
+
+  PUBLIC DomainMapping_NumberOfGhostGet
+
+  PUBLIC DomainMapping_NumberOfGlobalGet
+
+  PUBLIC DomainMapping_NumberOfLocalGet
+
+  PUBLIC DomainMapping_TotalNumberOfLocalGet
 
   PUBLIC DomainMapping_WorkGroupGet,DomainMapping_WorkGroupSet
 
@@ -284,6 +298,48 @@ CONTAINS
     
   END SUBROUTINE DomainMapping_Initialise
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the global number from a local number for a domain mapping.
+  SUBROUTINE DomainMapping_LocalToGlobalGet(domainMapping,localNumber,globalNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the global number for
+    INTEGER(INTG), INTENT(IN) :: localNumber !<The local number to get the global number for
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, the global number corresponding to the local number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainMapping_LocalToGlobalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+    IF(localNumber<1.OR.localNumber>domainMapping%totalNumberOfLocal) THEN
+      localError="The specified local number of "//TRIM(NumberToVString(localNumber,"*",err,error))// &
+        & " is invalid for the domain mapping. The local number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%totalNumberOfLocal,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainMapping%localToGlobalMap)) &
+      & CALL FlagError("The local to global map array is not allocated for the domain mapping.",err,error,*999)
+#endif    
+
+    globalNumber=domainMapping%localToGlobalMap(localNumber)
+    
+    EXITS("DomainMapping_LocalToGlobalGet")
+    RETURN
+999 NULLIFY(workGroup)
+998 ERRORSEXITS("DomainMapping_LocalToGlobalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_LocalToGlobalGet
+  
   !
   !================================================================================================================================
   !
@@ -727,6 +783,209 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainMapping_LocalFromGlobalCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of boundary for a domain mapping.
+  SUBROUTINE DomainMapping_NumberOfBoundaryGet(domainMapping,numberOfBoundary,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of boundary for
+    INTEGER(INTG), INTENT(OUT) :: numberOfBoundary !<On exit, the number of boundary for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_NumberOfBoundaryGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfBoundary=domainMapping%numberOfBoundary
+    
+    EXITS("DomainMapping_NumberOfBoundaryGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberOfBoundaryGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberOfBoundaryGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of boundary for a domain mapping.
+  SUBROUTINE DomainMapping_NumberOfBoundaryGet(domainMapping,numberOfBoundary,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of boundary for
+    INTEGER(INTG), INTENT(OUT) :: numberOfBoundary !<On exit, the number of boundary for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_NumberOfBoundaryGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfBoundary=domainMapping%numberOfBoundary
+    
+    EXITS("DomainMapping_NumberOfBoundaryGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberOfBoundaryGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberOfBoundaryGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of internal for a domain mapping.
+  SUBROUTINE DomainMapping_NumberOfInternalGet(domainMapping,numberOfInternal,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of internal for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInternal !<On exit, the number of internal for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_NumberOfInternalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfInternal=domainMapping%numberOfInternal
+    
+    EXITS("DomainMapping_NumberOfInternalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberOfInternalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberOfInternalGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of ghost for a domain mapping.
+  SUBROUTINE DomainMapping_NumberOfGhostGet(domainMapping,numberOfGhost,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of ghost for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGhost !<On exit, the number of ghost for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_NumberOfGhostGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfGhost=domainMapping%numberOfGhost
+    
+    EXITS("DomainMapping_NumberOfGhostGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberOfGhostGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberOfGhostGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of global for a domain mapping.
+  SUBROUTINE DomainMapping_NumberOfGlobalGet(domainMapping,numberOfGlobal,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of global for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobal !<On exit, the number of global for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_NumberOfGlobalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfGlobal=domainMapping%numberOfGlobal
+    
+    EXITS("DomainMapping_NumberOfGlobalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberOfGlobalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberOfGlobalGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of local for a domain mapping.
+  SUBROUTINE DomainMapping_NumberOfLocalGet(domainMapping,numberOfLocal,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of local for
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocal !<On exit, the number of local for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_NumberOfLocalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfLocal=domainMapping%numberOfLocal
+    
+    EXITS("DomainMapping_NumberOfLocalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberOfLocalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberOfLocalGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of local for a domain mapping.
+  SUBROUTINE DomainMapping_TotalNumberOfLocalGet(domainMapping,totalNumberOfLocal,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the total number of local for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfLocal !<On exit, the total number of local for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_TotalNumberOfLocalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfLocal=domainMapping%totalNumberOfLocal
+    
+    EXITS("DomainMapping_TotalNumberOfLocalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_TotalNumberOfLocalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_TotalNumberOfLocalGet
   
   !
   !================================================================================================================================

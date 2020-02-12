@@ -70,7 +70,6 @@ set(IRON_Fortran_SRC
     equations_mapping_access_routines.F90
     equations_matrices_routines.F90
     equations_matrices_access_routines.F90
-    equations_set_constants.F90
     equations_set_routines.F90
     equations_set_access_routines.F90
     field_IO_routines.F90
@@ -90,7 +89,6 @@ set(IRON_Fortran_SRC
     #Helmholtz_TEMPLATE_equations_routines.F90
     history_routines.F90
     input_output.F90
-    interface_conditions_constants.F90
     interface_conditions_routines.F90
     interface_condition_access_routines.F90
     interface_equations_routines.F90
@@ -98,7 +96,6 @@ set(IRON_Fortran_SRC
     interface_mapping_routines.F90
     interface_mapping_access_routines.F90
     interface_matrices_access_routines.F90
-    interface_matrices_constants.F90
     interface_matrices_routines.F90
     interface_operators_routines.F90
     interface_routines.F90
@@ -125,7 +122,6 @@ set(IRON_Fortran_SRC
     opencmiss_iron.F90
     Poiseuille_equations_routines.F90
     Poisson_equations_routines.F90
-    problem_constants.F90
     problem_routines.F90
     problem_access_routines.F90
     profiling_routines.F90

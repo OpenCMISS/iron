@@ -1106,7 +1106,7 @@ CONTAINS
 
         FILE_ID=1030+idx_exnode
         !checking the next file
-        FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exnode,"*",ERR,ERROR))//".exnode"
+        FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exnode,"*",ERR,ERROR))//".exnode"
         !INQUIRE(FILE=CHAR(FILE_NAME), OPENED=FILE_OPEN)
         CALL FIELD_IO_FORTRAN_FILE_OPEN(FILE_ID, FILE_NAME, FILE_STATUS, ERR,ERROR,*999)
         SECTION_START=.FALSE.
@@ -1221,7 +1221,7 @@ CONTAINS
         IF(FILE_END) THEN
           FILE_ID=1030+idx_exnode
           !checking the next file
-          FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exnode,"*",ERR,ERROR))//".exnode"
+          FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exnode,"*",ERR,ERROR))//".exnode"
           CALL FIELD_IO_FORTRAN_FILE_OPEN(FILE_ID, FILE_NAME, FILE_STATUS, ERR,ERROR,*999)
           FILE_END=.FALSE.
           SECTION_START=.FALSE.
@@ -1713,7 +1713,7 @@ CONTAINS
     !BASES%numberOfBasisFunctions=0
     numberOfDimensions=REGION%coordinateSystem%numberOfDimensions
     FILE_STATUS="OLD"
-    CMISS_KEYWORD_SHAPE="Shape.  Dimension="//TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",ERR,ERROR))
+    CMISS_KEYWORD_SHAPE="Shape.  Dimension="//TRIM(NumberToVString(numberOfDimensions,"*",ERR,ERROR))
     CMISS_KEYWORD_ELEMENT="Element:"
     CMISS_KEYWORD_COMPONENTS="#Components="
     CMISS_KEYWORD_NODE="Node:"
@@ -1731,7 +1731,7 @@ CONTAINS
       idx_exelem=0
       idx_elem=0
       NUMBER_OF_COMPONENTS=0
-      FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exelem,"*",ERR,ERROR))//".exelem"
+      FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exelem,"*",ERR,ERROR))//".exelem"
       INQUIRE(FILE=CHAR(FILE_NAME), EXIST=FILE_EXIST)
       IF(.NOT.FILE_EXIST) THEN
         CALL FlagError("exelem files can be found, pls check again",ERR,ERROR,*999)
@@ -1811,7 +1811,7 @@ CONTAINS
         CALL FIELD_IO_FORTRAN_FILE_CLOSE(FILE_ID, ERR,ERROR,*999)
         !checking the next file
         idx_exelem=idx_exelem+1
-        FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exelem,"*",ERR,ERROR))//".exelem"
+        FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exelem,"*",ERR,ERROR))//".exelem"
         INQUIRE(FILE=CHAR(FILE_NAME), EXIST=FILE_EXIST)
       ENDDO !FILE_EXIST==.TRUE.
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Total number of exelment files = ",idx_exelem, ERR,ERROR,*999)
@@ -1846,7 +1846,7 @@ CONTAINS
       !the file name has to start from zero in a ascended order without break
       idx_exnode=0
       idx_node=0
-      FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exnode,"*",ERR,ERROR))//".exnode"
+      FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exnode,"*",ERR,ERROR))//".exnode"
       INQUIRE(FILE=CHAR(FILE_NAME), EXIST=FILE_EXIST)
       IF(.NOT.FILE_EXIST) THEN
         CALL FlagError("exnode files can be found, pls check again",ERR,ERROR,*999)
@@ -1865,7 +1865,7 @@ CONTAINS
         CALL FIELD_IO_FORTRAN_FILE_CLOSE(FILE_ID, ERR,ERROR,*999)
         !checking the next file
         idx_exnode=idx_exnode+1
-        FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exnode,"*",ERR,ERROR))//".exnode"
+        FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exnode,"*",ERR,ERROR))//".exnode"
         INQUIRE(FILE=CHAR(FILE_NAME), EXIST=FILE_EXIST)
       ENDDO !FILE_EXIST==.TRUE.
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Total number of exnode files = ",idx_exnode, ERR,ERROR,*999)
@@ -1889,7 +1889,7 @@ CONTAINS
       idx_node=1
       DO idx_exnode=0, NUMBER_OF_EXNODE_FILES-1
         FILE_ID=1030+idx_exnode
-        FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exnode,"*",ERR,ERROR))//".exnode"
+        FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exnode,"*",ERR,ERROR))//".exnode"
         CALL FIELD_IO_FORTRAN_FILE_OPEN(FILE_ID, FILE_NAME, FILE_STATUS, ERR,ERROR,*999)
         FILE_END=.FALSE.
         DO WHILE(.NOT.FILE_END)
@@ -1944,7 +1944,7 @@ CONTAINS
 
         FILE_ID=1030+idx_exelem
         !checking the next file
-        FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exelem,"*",ERR,ERROR))//".exelem"
+        FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exelem,"*",ERR,ERROR))//".exelem"
         CALL FIELD_IO_FORTRAN_FILE_OPEN(FILE_ID, FILE_NAME, FILE_STATUS, ERR,ERROR,*999)
         FIELD_SECTION=.FALSE.
         FILE_END=.FALSE.
@@ -2088,7 +2088,7 @@ CONTAINS
       DO idx_exelem=0, NUMBER_OF_EXELEM_FILES-1
 
          FILE_ID=1030+idx_exelem
-         FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exelem,"*",ERR,ERROR))//".exelem"
+         FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exelem,"*",ERR,ERROR))//".exelem"
          CALL FIELD_IO_FORTRAN_FILE_OPEN(FILE_ID, FILE_NAME, FILE_STATUS, ERR,ERROR,*999)
          START_OF_ELEMENT_SECTION=.FALSE.
          FILE_END=.FALSE.
@@ -2177,7 +2177,7 @@ CONTAINS
         IF(FILE_END) THEN
           FILE_ID=1030+idx_exelem
           !checking the next file
-          FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(idx_exelem,"*",ERR,ERROR))//".exelem"
+          FILE_NAME=NAME//".part"//TRIM(NumberToVString(idx_exelem,"*",ERR,ERROR))//".exelem"
           CALL FIELD_IO_FORTRAN_FILE_OPEN(FILE_ID, FILE_NAME, FILE_STATUS, ERR,ERROR,*999)
           FILE_END=.FALSE.
           SECTION_START=.FALSE.
@@ -2669,9 +2669,9 @@ CONTAINS
         DO scaleIndex1=1, NUM_OF_SCALING_FACTOR_SETS
           IF(BASIS%globalNumber == listScaleBases(scaleIndex1)%PTR%globalNumber) THEN
             IF(variable_ptr%FIELD%SCALINGS%scalingType /= listScaleFields(scaleIndex1)%PTR%SCALINGS%scalingType) THEN
-              CALL FLAG_WARNING("Fields "//TRIM(NUMBER_TO_VSTRING(listScaleFields(scaleIndex1)%PTR%userNumber,"*",ERR,ERROR))// &
-                  & " and "//TRIM(NUMBER_TO_VSTRING(variable_ptr%FIELD%userNumber,"*",ERR,ERROR))// &
-                  & " have components that use basis number "//TRIM(NUMBER_TO_VSTRING(BASIS%globalNumber,"*",ERR,ERROR))// &
+              CALL FLAG_WARNING("Fields "//TRIM(NumberToVString(listScaleFields(scaleIndex1)%PTR%userNumber,"*",ERR,ERROR))// &
+                  & " and "//TRIM(NumberToVString(variable_ptr%FIELD%userNumber,"*",ERR,ERROR))// &
+                  & " have components that use basis number "//TRIM(NumberToVString(BASIS%globalNumber,"*",ERR,ERROR))// &
                   & " but have different scaling types. ",ERR,ERROR,*999)
             ENDIF
             IF(variable_ptr%FIELD%SCALINGS%scalingType == listScaleFields(scaleIndex1)%PTR%SCALINGS%scalingType) THEN
@@ -2725,7 +2725,7 @@ CONTAINS
       CASE( BASIS_SIMPLEX_TYPE )
         CALL FieldIO_CalculateSimplexScaleAndNodeCounts(BASIS, num_scl, num_node, ERR, ERROR, *999 )
       CASE DEFAULT
-        CALL FlagError("Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented",&
+        CALL FlagError("Basis type "//TRIM(NumberToVString(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented",&
             &ERR,ERROR,*999)
       END SELECT
 
@@ -2760,7 +2760,7 @@ CONTAINS
           CALL FlagError( "can not get basis type of lagrange_hermite label" ,ERR, ERROR, *999 )
         ENDIF
       CASE DEFAULT
-        CALL FlagError( "Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE, "*" , ERR, ERROR ))//" is not implemented",&
+        CALL FlagError( "Basis type "//TRIM(NumberToVString(BASIS%TYPE, "*" , ERR, ERROR ))//" is not implemented",&
             &ERR,ERROR, *999)
       END SELECT
     ENDDO !scaleIndex
@@ -2820,7 +2820,7 @@ CONTAINS
       CASE( BASIS_SIMPLEX_TYPE )
         CALL FieldIO_CalculateSimplexScaleAndNodeCounts(BASIS, num_scl, num_node, ERR, ERROR, *999 )
       CASE DEFAULT
-        CALL FlagError("Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented",&
+        CALL FlagError("Basis type "//TRIM(NumberToVString(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented",&
             &ERR,ERROR,*999)
       END SELECT
       CALL REALLOCATE(numberOfDerivatives, num_node, &
@@ -3630,7 +3630,7 @@ CONTAINS
     !will be a secured way to get the number
     !myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     !IF(ERR/=0) GOTO 999
-    FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(myWorldComputationNodeNumber,"*",ERR,ERROR))//".exelem"
+    FILE_NAME=NAME//".part"//TRIM(NumberToVString(myWorldComputationNodeNumber,"*",ERR,ERROR))//".exelem"
     NUM_OF_SCALING_FACTOR_SETS=0
 
     IF(.NOT.ALLOCATED(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET)) THEN
@@ -4171,7 +4171,7 @@ CONTAINS
       !checking whether the list of fields in the same region
       DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
-          LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
+          LOCAL_ERROR ="No. "//TRIM(NumberToVString(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -4181,8 +4181,8 @@ CONTAINS
         ENDIF
 
         IF(FIELDS%FIELDS(num_field-1)%PTR%REGION%userNumber/=FIELDS%FIELDS(num_field)%PTR%REGION%userNumber) THEN
-          LOCAL_ERROR = "No. "//TRIM(NUMBER_TO_VSTRING(num_field-1,"*",ERR,ERROR))//" and "// &
-            & TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))//" fields are not in the same region"
+          LOCAL_ERROR = "No. "//TRIM(NumberToVString(num_field-1,"*",ERR,ERROR))//" and "// &
+            & TRIM(NumberToVString(num_field,"*",ERR,ERROR))//" fields are not in the same region"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ENDDO
@@ -4190,7 +4190,7 @@ CONTAINS
       !checking whether the list of fields in the same interface
       DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
-          LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
+          LOCAL_ERROR ="No. "//TRIM(NumberToVString(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -4201,8 +4201,8 @@ CONTAINS
 
         IF(FIELDS%FIELDS(num_field-1)%PTR%INTERFACE%userNumber/= &
           & FIELDS%FIELDS(num_field)%PTR%INTERFACE%userNumber) THEN
-          LOCAL_ERROR = "No. "//TRIM(NUMBER_TO_VSTRING(num_field-1,"*",ERR,ERROR))//" and "// &
-            & TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))//" fields are not in the same interface."
+          LOCAL_ERROR = "No. "//TRIM(NumberToVString(num_field-1,"*",ERR,ERROR))//" and "// &
+            & TRIM(NumberToVString(num_field,"*",ERR,ERROR))//" fields are not in the same interface."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ENDDO
@@ -4714,7 +4714,7 @@ CONTAINS
           FIELD_IO_LABEL_DERIVATIVE_INFO_GET=FIELD_IO_LABEL_DERIVATIVE_INFO_GET//", d3/ds4ds4ds4"
         CASE DEFAULT
           FIELD_IO_LABEL_DERIVATIVE_INFO_GET="real, add more details later, #Components="!&
-          !&//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_COMPONENTS,"*",ERR,ERROR))
+          !&//TRIM(NumberToVString(NUMBER_OF_COMPONENTS,"*",ERR,ERROR))
         END SELECT
       ENDDO ! dev_idx
     ENDIF !NUMBER_DERIVATIVES==1.AND.GROUP_DERIVATIVES(1)==NO_PART_DERIV
@@ -4952,13 +4952,13 @@ CONTAINS
         !CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
         !CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
         CASE DEFAULT
-          FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%componentNumber,"*",ERR,ERROR))
+          FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NumberToVString(COMPONENT%componentNumber,"*",ERR,ERROR))
         END SELECT
       CASE DEFAULT
-        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%componentNumber,"*",ERR,ERROR))
+        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NumberToVString(COMPONENT%componentNumber,"*",ERR,ERROR))
       END SELECT !CASE(VARIABLE%variableType)
       CASE DEFAULT
-        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%componentNumber,"*",ERR,ERROR))
+        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NumberToVString(COMPONENT%componentNumber,"*",ERR,ERROR))
     END SELECT
 
     EXITS("FIELD_IO_GET_COMPONENT_INFO_LABEL")
@@ -5090,7 +5090,7 @@ CONTAINS
   !  global_var_idx=0
   !
   !  CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
-  !  IF(LINE/=" "//"#Fields="//TRIM(NUMBER_TO_VSTRING(SUM(GROUP_FIELDS(1:NUM_OF_FIELDS)),"*",ERR,ERROR))) &
+  !  IF(LINE/=" "//"#Fields="//TRIM(NumberToVString(SUM(GROUP_FIELDS(1:NUM_OF_FIELDS)),"*",ERR,ERROR))) &
   !     & CALL FlagError("Fields number in the Header part do not match",ERR,ERROR,*999)
   !
   !  DO field_idx=1, NUM_OF_FIELDS
@@ -5100,14 +5100,14 @@ CONTAINS
   !     !   CALL FlagError("can not get field label",ERR,ERROR,*999)
   !     !ENDIF
   !     !CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
-  !     !IF(LINE/=TRIM(NUMBER_TO_VSTRING(field_idx,"*",ERR,ERROR))//") "//TRIM(LABEL)&
-  !     !&//" , #variables="//TRIM(NUMBER_TO_VSTRING(GROUP_FIELDS(field_idx),"*",ERR,ERROR)) &
+  !     !IF(LINE/=TRIM(NumberToVString(field_idx,"*",ERR,ERROR))//") "//TRIM(LABEL)&
+  !     !&//" , #variables="//TRIM(NumberToVString(GROUP_FIELDS(field_idx),"*",ERR,ERROR)) &
   !     !CALL FlagError("Variable number in the Header part do not match",ERR,ERROR,*999)
   !
   !     DO var_idx=1, GROUP_FIELDS(field_idx)
   !        global_var_idx=global_var_idx+1
   !        !write out the field information
-  !        LABEL="  "//TRIM(NUMBER_TO_VSTRING(global_var_idx,"*",ERR,ERROR))//") "&
+  !        LABEL="  "//TRIM(NumberToVString(global_var_idx,"*",ERR,ERROR))//") "&
   !        &//FIELD_IO_GET_FIELD_INFO_LABEL(NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%&
   !        &COMPONENTS(comp_idx1)%PTR, FIELD_IO_VARIABLE_LABEL,ERR,ERROR)
   !        IF(ERR/=0) THEN
@@ -5115,7 +5115,7 @@ CONTAINS
   !           GOTO 999
   !        ENDIF
   !        CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
-  !        IF(LINE/=TRIM(LABEL)//", #Components="//TRIM(NUMBER_TO_VSTRING(GROUP_VARIABLES(global_var_idx),"*",ERR,ERROR))) &
+  !        IF(LINE/=TRIM(LABEL)//", #Components="//TRIM(NumberToVString(GROUP_VARIABLES(global_var_idx),"*",ERR,ERROR))) &
   !           & CALL FlagError("Components number in the Header part do not match",ERR,ERROR,*999)
   !
   !
@@ -5151,8 +5151,8 @@ CONTAINS
   !           !write out the header
   !           CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
   !           !assemble the header
-  !           IF(LINE/=LINE//"  Value index= "//TRIM(NUMBER_TO_VSTRING(value_idx,"*",ERR,ERROR))&
-  !              &//", #Derivatives= "//TRIM(NUMBER_TO_VSTRING(NUM_OF_NODAL_DEV-1,"*",ERR,ERROR))//TRIM(LABEL)) &
+  !           IF(LINE/=LINE//"  Value index= "//TRIM(NumberToVString(value_idx,"*",ERR,ERROR))&
+  !              &//", #Derivatives= "//TRIM(NumberToVString(NUM_OF_NODAL_DEV-1,"*",ERR,ERROR))//TRIM(LABEL)) &
   !              & CALL FlagError("Value index in the Header part do not match",ERR,ERROR,*999)
   !           !increase the component index
   !           comp_idx1=comp_idx1+1
@@ -5463,7 +5463,7 @@ CONTAINS
     !get my own computianal node number--be careful the rank of process in the MPI pool
     !is not necessarily equal to numbering of computional node, so use method ComputationEnvironment_NodeNumberGet
     !will be a secured way to get the number
-    FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(myWorldComputationNodeNumber,"*",ERR,ERROR))//".exnode"
+    FILE_NAME=NAME//".part"//TRIM(NumberToVString(myWorldComputationNodeNumber,"*",ERR,ERROR))//".exnode"
     MAX_NUM_OF_NODAL_DERIVATIVES=0
 
     IF(.NOT.ALLOCATED(NODAL_INFO_SET%COMPONENT_INFO_SET)) THEN
@@ -5739,7 +5739,7 @@ CONTAINS
 
     ENTERS("FIELD_IO_FORTRAN_FILE_READ_DP",ERR,ERROR,*999)
 
-    DP_FMT="("//TRIM(NUMBER_TO_VSTRING(LEN_OF_DATA,"*",ERR,ERROR))//"ES)"
+    DP_FMT="("//TRIM(NumberToVString(LEN_OF_DATA,"*",ERR,ERROR))//"ES)"
     READ(FILE_ID, CHAR(DP_FMT), IOSTAT=IOS) REAL_DATA(1:LEN_OF_DATA)
 
     IF(IOS>=0)  THEN
@@ -5771,7 +5771,7 @@ CONTAINS
 
     ENTERS("FIELD_IO_FORTRAN_FILE_WRITE_DP",ERR,ERROR,*999)
 
-    !DP_FMT="(ES"//TRIM(NUMBER_TO_VSTRING(LEN_OF_DATA,"*",ERR,ERROR))//".0)"
+    !DP_FMT="(ES"//TRIM(NumberToVString(LEN_OF_DATA,"*",ERR,ERROR))//".0)"
     !WRITE(FILE_ID, CHAR(DP_FMT)) REAL_DATA(1:LEN_OF_DATA)
     WRITE(FILE_ID,*) REAL_DATA(1:LEN_OF_DATA)
 
@@ -5799,7 +5799,7 @@ CONTAINS
 
     ENTERS("FIELD_IO_FORTRAN_FILE_READ_INTG",ERR,ERROR,*999)
 
-    DP_FMT="("//TRIM(NUMBER_TO_VSTRING(LEN_OF_DATA,"*",ERR,ERROR))//"I)"
+    DP_FMT="("//TRIM(NumberToVString(LEN_OF_DATA,"*",ERR,ERROR))//"I)"
     READ(FILE_ID, CHAR(DP_FMT)) INTG_DATA(1:LEN_OF_DATA)
 
     EXITS("FIELD_IO_FORTRAN_FILE_READ_INTG")
@@ -5826,7 +5826,7 @@ CONTAINS
 
     ENTERS("FIELD_IO_FORTRAN_FILE_WRITE_INTG",ERR,ERROR,*999)
 
-    DP_FMT="(I"//TRIM(NUMBER_TO_VSTRING(LEN_OF_DATA,"*",ERR,ERROR))//")"
+    DP_FMT="(I"//TRIM(NumberToVString(LEN_OF_DATA,"*",ERR,ERROR))//")"
     WRITE(FILE_ID, CHAR(DP_FMT)) INTG_DATA(1:LEN_OF_DATA)
 
     EXITS("FIELD_IO_FORTRAN_FILE_WRITE_INTG")
@@ -6021,7 +6021,7 @@ CONTAINS
       !checking whether the list of fields in the same region
       DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
-          LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
+          LOCAL_ERROR ="No. "//TRIM(NumberToVString(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -6031,8 +6031,8 @@ CONTAINS
         ENDIF
 
         IF(FIELDS%FIELDS(num_field-1)%PTR%REGION%userNumber/=FIELDS%FIELDS(num_field)%PTR%REGION%userNumber) THEN
-          LOCAL_ERROR = "No. "//TRIM(NUMBER_TO_VSTRING(num_field-1,"*",ERR,ERROR))//" and "// &
-            & TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))//" fields are not in the same region"
+          LOCAL_ERROR = "No. "//TRIM(NumberToVString(num_field-1,"*",ERR,ERROR))//" and "// &
+            & TRIM(NumberToVString(num_field,"*",ERR,ERROR))//" fields are not in the same region"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ENDDO
@@ -6040,7 +6040,7 @@ CONTAINS
       !checking whether the list of fields in the same interface
       DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
-          LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
+          LOCAL_ERROR ="No. "//TRIM(NumberToVString(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -6051,8 +6051,8 @@ CONTAINS
 
         IF(FIELDS%FIELDS(num_field-1)%PTR%INTERFACE%userNumber/= &
           & FIELDS%FIELDS(num_field)%PTR%INTERFACE%userNumber) THEN
-          LOCAL_ERROR = "No. "//TRIM(NUMBER_TO_VSTRING(num_field-1,"*",ERR,ERROR))//" and "// &
-            & TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))//" fields are not in the same interface."
+          LOCAL_ERROR = "No. "//TRIM(NumberToVString(num_field-1,"*",ERR,ERROR))//" and "// &
+            & TRIM(NumberToVString(num_field,"*",ERR,ERROR))//" fields are not in the same interface."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ENDDO
@@ -6064,7 +6064,7 @@ CONTAINS
     !ENDIF
     !DO num_field =1, FIELDS%numberOfFields
     !  IF(FIELDS%FIELDS(num_field)%PTR%DECOMPOSITION/=DECOMPOSITION)
-    !    LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR)) //" field "&
+    !    LOCAL_ERROR ="No. "//TRIM(NumberToVString(num_field,"*",ERR,ERROR)) //" field "&
     !    & //" uses different decomposition method with the specified decomposition method,"//&
     !     & "which is not supported currently, ask Heye for more details"
     !    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)

@@ -47,7 +47,6 @@ MODULE ControlLoopAccessRoutines
   USE BaseRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-  USE PROBLEM_CONSTANTS
   USE Strings
   USE Types
   
@@ -247,8 +246,10 @@ CONTAINS
     
     ENTERS("ControlLoop_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-
+#endif
+    
     IF(.NOT.controlLoop%controlLoopFinished) CALL FlagError("Control loop has not been finished.",err,error,*999)
     
     EXITS("ControlLoop_AssertIsFinished")
@@ -273,7 +274,9 @@ CONTAINS
  
     ENTERS("ControlLoop_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     IF(controlLoop%controlLoopFinished) CALL FlagError("Control loop has already been finished.",err,error,*999)
     
@@ -299,7 +302,9 @@ CONTAINS
  
     ENTERS("ControlLoop_AssertIsFixedLoop",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     IF(controlLoop%loopType/=CONTROL_FIXED_LOOP_TYPE) &
       & CALL FlagError("The specified control loop is not a fixed control loop.",err,error,*999)
@@ -326,7 +331,9 @@ CONTAINS
  
     ENTERS("ControlLoop_AssertIsLoadIncrementLoop",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     IF(controlLoop%loopType/=CONTROL_LOAD_INCREMENT_LOOP_TYPE) &
       & CALL FlagError("The specified control loop is not a load increment control loop.",err,error,*999)
@@ -353,7 +360,9 @@ CONTAINS
  
     ENTERS("ControlLoop_AssertIsSimpleLoop",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     IF(controlLoop%loopType/=CONTROL_SIMPLE_TYPE) &
       & CALL FlagError("The specified control loop is not a simple control loop.",err,error,*999)
@@ -380,7 +389,9 @@ CONTAINS
  
     ENTERS("ControlLoop_AssertIsTimeLoop",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     IF(controlLoop%loopType/=CONTROL_TIME_LOOP_TYPE) &
       & CALL FlagError("The specified control loop is not a time control loop.",err,error,*999)
@@ -407,7 +418,9 @@ CONTAINS
  
     ENTERS("ControlLoop_AssertIsWhileLoop",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     IF(controlLoop%loopType/=CONTROL_WHILE_LOOP_TYPE) &
       & CALL FlagError("The specified control loop is not a while control loop.",err,error,*999)
@@ -459,10 +472,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: controlLoopIdx
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("ControlLoop_Get1",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoopRoot)) CALL FlagError("Control loop root is not associated.",err,error,*998)
     IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is already associated.",err,error,*998)      
     IF(.NOT.COUNT(controlLoopIdentifiers==CONTROL_LOOP_NODE)==1) THEN
@@ -477,27 +493,32 @@ CONTAINS
         & " and it should be "//TRIM(NumberToVString(CONTROL_LOOP_NODE,"*",err,error))//"."
       CALL FlagError(localError,err,error,*998)
     ENDIF
+#endif    
     
     controlLoop=>controlLoopRoot
     DO controlLoopIdx=1,SIZE(controlLoopIdentifiers,1)
       IF(controlLoopIdentifiers(controlLoopIdx)==CONTROL_LOOP_NODE) THEN
         EXIT
       ELSE
-        IF(controlLoopIdentifiers(controlLoopIdx)>0.AND. &
-          & controlLoopIdentifiers(controlLoopIdx)<=controlLoop%numberOfSubLoops) THEN
-          controlLoop=>controlLoop%subLoops(controlLoopIdentifiers(controlLoopIdx))%ptr
-          IF(.NOT.ASSOCIATED(controlLoop)) THEN
-            localError="Control sub loop number "//TRIM(NumberToVString(controlLoopIdentifiers(controlLoopIdx),"*",err,error))// &
-              & " at identifier index "//TRIM(NumberToVString(controlLoopIdx,"*",err,error))//" is not associated."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(controlLoopIdentifiers(controlLoopIdx)<=0.OR. &
+          & controlLoopIdentifiers(controlLoopIdx)>controlLoop%numberOfSubLoops) THEN
           localError="Invalid control loop identifier. The identifier at index "// &
             & TRIM(NumberToVString(controlLoopIdx,"*",err,error))//" is "// &
             & TRIM(NumberToVString(controlLoopIdentifiers(controlLoopIdx),"*",err,error))// &
             & ". The identifier must be between 1 and "//TRIM(NumberToVString(controlLoop%numberOfSubLoops,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
+#endif        
+        controlLoop=>controlLoop%subLoops(controlLoopIdentifiers(controlLoopIdx))%ptr
+
+#ifdef WITH_POSTCHECKS        
+        IF(.NOT.ASSOCIATED(controlLoop)) THEN
+          localError="Control sub loop number "//TRIM(NumberToVString(controlLoopIdentifiers(controlLoopIdx),"*",err,error))// &
+            & " at identifier index "//TRIM(NumberToVString(controlLoopIdx,"*",err,error))//" is not associated."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
       ENDIF
     ENDDO !controlLoopIdx
         
@@ -593,8 +614,7 @@ CONTAINS
 
     ENTERS("ControlLoop_CurrentTimeInformationGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    IF(.NOT.controlLoop%controlLoopFinished) CALL FlagError("Control loop has not been finished.",err,error,*999)
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
 
     !Find a time loop from either the specified control loop or the next time loop up the chain.
     controlLoopLevel=controlLoop%controlLoopLevel
@@ -605,16 +625,15 @@ CONTAINS
       ELSE
         IF(parentLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           timeLoop=>parentLoop%timeLoop
-          IF(ASSOCIATED(timeLoop)) THEN
-            currentTime=timeLoop%currentTime
-            timeIncrement=timeLoop%timeIncrement
-            startTime=timeLoop%startTime
-            stopTime=timeLoop%stopTime
-            currentIteration=timeLoop%iterationNumber
-            outputIteration=timeLoop%outputNumber
-          ELSE
-            CALL FlagError("Control loop time loop is not associated.",err,error,*999)
-          ENDIF
+#ifdef WITH_POSTCHECKS          
+          IF(.NOT.ASSOCIATED(timeLoop)) CALL FlagError("Control loop time loop is not associated.",err,error,*999)
+#endif          
+          currentTime=timeLoop%currentTime
+          timeIncrement=timeLoop%timeIncrement
+          startTime=timeLoop%startTime
+          stopTime=timeLoop%stopTime
+          currentIteration=timeLoop%iterationNumber
+          outputIteration=timeLoop%outputNumber
           EXIT
         ELSE
           parentLoop=>parentLoop%parentLoop
@@ -653,9 +672,8 @@ CONTAINS
 
     ENTERS("ControlLoop_CurrentWhileInformationGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    IF(.NOT.controlLoop%controlLoopFinished) CALL FlagError("Control loop has not been finished.",err,error,*999)
-
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+ 
     !Find a while loop from either the specified control loop or the next while loop up the chain.
     controlLoopLevel=controlLoop%controlLoopLevel
     parentLoop=>controlLoop
@@ -665,15 +683,14 @@ CONTAINS
       ELSE
         IF(parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
           whileLoop=>parentLoop%whileLoop
-          IF(ASSOCIATED(whileLoop)) THEN
-            currentIteration=whileLoop%iterationNumber
-            maximumIterations=whileLoop%maximumNumberOfIterations
-            absoluteTolerance=whileLoop%absoluteTolerance
-            relativeTolerance=whileLoop%relativeTolerance
-            continueLoop=whileLoop%continueLoop
-          ELSE
-            CALL FlagError("Control loop while loop is not associated.",err,error,*999)
-          ENDIF
+#ifdef WITH_POSTCHECKS          
+          IF(.NOT.ASSOCIATED(whileLoop)) CALL FlagError("Control loop while loop is not associated.",err,error,*999)
+#endif          
+          currentIteration=whileLoop%iterationNumber
+          maximumIterations=whileLoop%maximumNumberOfIterations
+          absoluteTolerance=whileLoop%absoluteTolerance
+          relativeTolerance=whileLoop%relativeTolerance
+          continueLoop=whileLoop%continueLoop
           EXIT
         ELSE
           parentLoop=>parentLoop%parentLoop
@@ -704,11 +721,16 @@ CONTAINS
  
     ENTERS("ControlLoop_FixedLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fixedLoop)) CALL FlagError("Fixed loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     fixedLoop=>controlLoop%fixedLoop
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(fixedLoop)) CALL FlagError("Control loop fixed loop is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_FixedLoopGet")
     RETURN
@@ -739,7 +761,9 @@ CONTAINS
  
     ENTERS("ControlLoop_IterationNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     SELECT CASE(controlLoop%loopType)
     CASE(CONTROL_SIMPLE_TYPE)
@@ -789,11 +813,16 @@ CONTAINS
  
     ENTERS("ControlLoop_LoadIncrementLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(loadIncrementLoop)) CALL FlagError("Load increment loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     loadIncrementLoop=>controlLoop%loadIncrementLoop
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(loadIncrementLoop)) CALL FlagError("Control loop load increment loop is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_LoadIncrementLoopGet")
     RETURN
@@ -820,7 +849,9 @@ CONTAINS
  
     ENTERS("ControlLoop_NumberOfIterationsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
     NULLIFY(timeLoop)
@@ -905,8 +936,10 @@ CONTAINS
  
     ENTERS("ControlLoop_ParentLoopCheck",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parentLoop)) CALL FlagError("Parent loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     parentLoop=>controlLoop%parentLoop
        
@@ -934,11 +967,16 @@ CONTAINS
  
     ENTERS("ControlLoop_ParentLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parentLoop)) CALL FlagError("Parent loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     parentLoop=>controlLoop%parentLoop
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(parentLoop)) CALL FlagError("Control loop parent loop is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_ParentLoopGet")
     RETURN
@@ -964,11 +1002,16 @@ CONTAINS
  
     ENTERS("ControlLoop_ProblemGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(problem)) CALL FlagError("Problem is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     problem=>controlLoop%problem
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Control loop problem is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_ProblemGet")
     RETURN
@@ -1021,11 +1064,16 @@ CONTAINS
  
     ENTERS("ControlLoop_SimpleLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(simpleLoop)) CALL FlagError("Simple loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     simpleLoop=>controlLoop%simpleLoop
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(simpleLoop)) CALL FlagError("Control loop simple loop is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_SimpleLoopGet")
     RETURN
@@ -1044,18 +1092,23 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the solvers for.
-    TYPE(SOLVERS_TYPE), POINTER :: solvers !<On exit, a pointer to the control loop solvers. Must not be associated on entry.
+    TYPE(SolversType), POINTER :: solvers !<On exit, a pointer to the control loop solvers. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
     ENTERS("ControlLoop_SolversGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(solvers)) CALL FlagError("Solvers is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
  
     solvers=>controlLoop%solvers
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Control loop solvers is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_SolversGet")
     RETURN
@@ -1079,10 +1132,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("ControlLoop_SubLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(subLoop)) CALL FlagError("Sub loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
     IF(subLoopIdx<=0.OR.subLoopIdx>controlLoop%numberOfSubLoops) THEN
@@ -1092,13 +1148,17 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(controlLoop%subLoops)) &
       & CALL FlagError("Control loop sub loops is not allocated.",err,error,*999)
+#endif    
 
     subLoop=>controlLoop%subLoops(subLoopIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(subLoop)) THEN
       localError="The sub loop for the specified sub loop index of "// &
         & TRIM(NumberToVString(subLoopIdx,"*",err,error))//" is not associated."      
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("ControlLoop_SubLoopGet")
     RETURN
@@ -1124,11 +1184,16 @@ CONTAINS
  
     ENTERS("ControlLoop_TimeLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(timeLoop)) CALL FlagError("Time loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     timeLoop=>controlLoop%timeLoop
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(timeLoop)) CALL FlagError("Control loop time loop is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_TimeLoopGet")
     RETURN
@@ -1154,11 +1219,16 @@ CONTAINS
  
     ENTERS("ControlLoop_WhileLoopGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(whileLoop)) CALL FlagError("While loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
 
     whileLoop=>controlLoop%whileLoop
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(whileLoop)) CALL FlagError("Control loop while loop is not associated.",err,error,*999)
+#endif    
        
     EXITS("ControlLoop_WhileLoopGet")
     RETURN

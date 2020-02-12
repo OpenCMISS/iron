@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,10 +42,10 @@
 !>
 
 !> This module is a CMISS buffer module to the PETSc library.
-MODULE CmissPetsc
+MODULE CMISSPetsc
   
   USE BaseRoutines
-  USE CmissPetscTypes
+  USE CMISSPetscTypes
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
@@ -63,22 +63,27 @@ MODULE CmissPetsc
   !Module parameters
 
   !Insert mode types
-  !> \addtogroup CmissPetsc_PetscMatInsertMode CmissPetsc::PetscMatInsertMode
+  !> \addtogroup CMISSPetsc_PetscMatInsertModes CMISSPetsc::Constants::PetscMatInsertModes
   !> \brief Types of PETSc matrix insert modes
-  !> \see CmissPetsc
+  !> \see CMISSPetsc
   !>@{
   InsertMode, PARAMETER :: PETSC_INSERT_VALUES = INSERT_VALUES !<Values set in a matrix will overwrite any previous values
   InsertMode, PARAMETER :: PETSC_ADD_VALUES = ADD_VALUES !<Values set in a matrix will add to any previous values
   !>@}
   
   !Scatter mode types
+  !> \addtogroup CMISSPetsc_PetscScatterModes CMISSPetsc::Constants::PetscScatterModes
+  !> \brief Types of PETSc matrix insert modes
+  !> \see CMISSPetsc
+  !>@{
   ScatterMode, PARAMETER :: PETSC_SCATTER_FORWARD = SCATTER_FORWARD
   ScatterMode, PARAMETER :: PETSC_SCATTER_REVERSE = SCATTER_REVERSE
+  !>@}
   
   !KSP types
-  !> \addtogroup CmissPetsc_PetscKSPTypes CmissPetsc::PetscKSPTypes
+  !> \addtogroup CMISSPetsc_PetscKSPTypes CMISSPetsc::Constants::PetscKSPTypes
   !> \brief Types of PETSc KSP (Krylov Subspace) solvers
-  !> \see CmissPetsc
+  !> \see CMISSPetsc
   !>@{
   KSPType, PARAMETER :: PETSC_KSPRICHARDSON = KSPRICHARDSON !<Preconditioned Richardson iterative solver
   KSPType, PARAMETER :: PETSC_KSPCHEBYSHEV = KSPCHEBYSHEV !<Preconditioned Chebyshev iterative solver
@@ -113,6 +118,10 @@ MODULE CmissPetsc
   !>@}
   
   !KSPConvergedReason types
+  !> \addtogroup CMISSPetsc_PetscKSPConvergedReasons CMISSPetsc::Constants::PetscKSPConvergedReasons
+  !> \brief Types of KSP converged reasons for PETSc KSP solvers
+  !> \see CMISSPetsc
+  !>@{
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_RTOL = KSP_CONVERGED_RTOL
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_ATOL = KSP_CONVERGED_ATOL
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_ITS = KSP_CONVERGED_ITS
@@ -130,30 +139,55 @@ MODULE CmissPetsc
   KSPConvergedReason, PARAMETER :: PETSC_KSP_DIVERGED_INDEFINITE_PC = KSP_DIVERGED_INDEFINITE_PC
   KSPConvergedReason, PARAMETER :: PETSC_KSP_DIVERGED_NANORINF = KSP_DIVERGED_NANORINF
   KSPConvergedReason, PARAMETER :: PETSC_KSP_DIVERGED_INDEFINITE_MAT = KSP_DIVERGED_INDEFINITE_MAT
+  !>@}
 
   !KSPNorm types
+  !> \addtogroup CMISSPetsc_PetscKSPNormTypes CMISSPetsc::Constants::PetscKSPNormTypes
+  !> \brief Types of KSP norm parameters for PETSc KSP solvers
+  !> \see CMISSPetsc
+  !>@{
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_NONE = KSP_NORM_NONE
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_PRECONDITIONED = KSP_NORM_PRECONDITIONED
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_UNPRECONDITIONED = KSP_NORM_UNPRECONDITIONED
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_NATURAL = KSP_NORM_NATURAL
+  !>@}
 
   !MatAssembly types
+  !> \addtogroup CMISSPetsc_PetscMatAssemblyTypes CMISSPetsc::Constants::PetscMatAssemblyTypes
+  !> \brief Types of Matrix assembly parameters for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatAssemblyType, PARAMETER :: PETSC_MAT_FLUSH_ASSEMBLY = MAT_FLUSH_ASSEMBLY
   MatAssemblyType, PARAMETER :: PETSC_MAT_FINAL_ASSEMBLY = MAT_FINAL_ASSEMBLY
+  !>@}
 
   !MatDuplicate types
+  !> \addtogroup CMISSPetsc_PetscMatFactorTypes CMISSPetsc::Constants::PetscMatFactorTypes
+  !> \brief Types of Matrix factor parameters for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatDuplicateOption, PARAMETER :: PETSC_MAT_DO_NOT_COPY_VALUES = MAT_DO_NOT_COPY_VALUES
   MatDuplicateOption, PARAMETER :: PETSC_MAT_COPY_VALUES = MAT_COPY_VALUES
   MatDuplicateOption, PARAMETER :: PETSC_MAT_SHARE_NONZERO_PATTERN = MAT_SHARE_NONZERO_PATTERN
+  !>@}
 
   !MatFactor types
+  !> \addtogroup CMISSPetsc_PetscMatFactorTypes CMISSPetsc::Constants::PetscMatFactorTypes
+  !> \brief Types of Matrix factor parameters for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_NONE = MAT_FACTOR_NONE
   MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_LU = MAT_FACTOR_LU
   MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_CHOLESKY = MAT_FACTOR_CHOLESKY
   MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ILU = MAT_FACTOR_ILU
   MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ICC = MAT_FACTOR_ICC
+  !>@}
 
   !MatInfo types
+  !> \addtogroup CMISSPetsc_PetscMatInfos CMISSPetsc::Constants::PetscMatInfos
+  !> \brief Matrix info parameters for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatInfo, PARAMETER :: PETSC_MAT_INFO_SIZE = MAT_INFO_SIZE
   MatInfo, PARAMETER :: PETSC_MAT_INFO_BLOCK_SIZE = MAT_INFO_BLOCK_SIZE
   MatInfo, PARAMETER :: PETSC_MAT_INFO_NZ_ALLOCATED = MAT_INFO_NZ_ALLOCATED
@@ -165,16 +199,22 @@ MODULE CmissPetsc
   MatInfo, PARAMETER :: PETSC_MAT_INFO_FILL_RATIO_GIVEN = MAT_INFO_FILL_RATIO_GIVEN
   MatInfo, PARAMETER :: PETSC_MAT_INFO_FILL_RATIO_NEEDED = MAT_INFO_FILL_RATIO_NEEDED
   MatInfo, PARAMETER :: PETSC_MAT_INFO_FACTOR_MALLOCS = MAT_INFO_FACTOR_MALLOCS  
+  !>@}
 
   !MatInfoType types
+  !> \addtogroup CMISSPetsc_PetscMatInfoTypes CMISSPetsc::Constants::PetscMatInfoTypes
+  !> \brief Types of matrix info for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatInfoType, PARAMETER :: PETSC_MAT_LOCAL = MAT_LOCAL
   MatInfoType, PARAMETER :: PETSC_MAT_GLOBAL_MAX = MAT_GLOBAL_MAX
   MatInfoType, PARAMETER :: PETSC_MAT_GLOBAL_SUM = MAT_GLOBAL_SUM
+  !>@}
   
   !MatOption types
-  !> \addtogroup CmissPetsc_PetscMatOptionTypes CmissPetsc::PetscMatOption
+  !> \addtogroup CMISSPetsc_PetscMatOptions CMISSPetsc::Constants::PetscMatOptions
   !> \brief Types of matrix options for PETSc matrices
-  !> \see CmissPetsc
+  !> \see CMISSPetsc
   !>@{
   MatOption, PARAMETER :: PETSC_MAT_ROW_ORIENTED = MAT_ROW_ORIENTED !<Matrix will be stored in a row orientated fashion.
   MatOption, PARAMETER :: PETSC_MAT_NEW_NONZERO_LOCATIONS = MAT_NEW_NONZERO_LOCATIONS !<Any additions or insertions that would generate a new nonzero location are ignored.
@@ -202,6 +242,10 @@ MODULE CmissPetsc
   !>@}
   
   !Matrix Solver Package types
+  !> \addtogroup CMISSPetsc_PetscMatSolverPackages CMISSPetsc::Constants::PetscMatSolverPackages
+  !> \brief Types of matrix solver packages for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_SUPERLU = MATSOLVERSUPERLU
   MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_SUPERLU_DIST = MATSOLVERSUPERLU_DIST
   MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_UMFPACK = MATSOLVERUMFPACK
@@ -216,31 +260,56 @@ MODULE CmissPetsc
   MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_CUSPARSE = MATSOLVERCUSPARSE
   MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_BSTRM = MATSOLVERBSTRM
   MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_SBSTRM = MATSOLVERSBSTRM
+  !>@}
   
   !MatStructure types
+  !> \addtogroup CMISSPetsc_PetscMatStructures CMISSPetsc::Constants::PetscMatStructures
+  !> \brief The matrix structure parameters for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatStructure, PARAMETER :: PETSC_DIFFERENT_NONZERO_PATTERN = DIFFERENT_NONZERO_PATTERN
   MatStructure, PARAMETER :: PETSC_SUBSET_NONZERO_PATTERN = SUBSET_NONZERO_PATTERN
   MatStructure, PARAMETER :: PETSC_SAME_NONZERO_PATTERN = SAME_NONZERO_PATTERN
+  !>@}
 
   !MatReuse types
+  !> \addtogroup CMISSPetsc_PetscMatReuses CMISSPetsc::Constants::PetscMatReuses
+  !> \brief The matrix reuse parameters for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatReuse, PARAMETER :: PETSC_MAT_INITIAL_MATRIX = MAT_INITIAL_MATRIX
   MatReuse, PARAMETER :: PETSC_MAT_REUSE_MATRIX = MAT_REUSE_MATRIX
   MatReuse, PARAMETER :: PETSC_MAT_IGNORE_MATRIX = MAT_IGNORE_MATRIX
+  !>@}
 
   !MatColoring types
+  !> \addtogroup CMISSPetsc_PetscMatColoringTypes CMISSPetsc::Constants::PetscMatColoringTypes
+  !> \brief The matrix colouring types for PETSc matrices
+  !> \see CMISSPetsc
+  !>@{
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_NATURAL = MATCOLORINGNATURAL
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_SL = MATCOLORINGSL
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_LF = MATCOLORINGLF
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_ID = MATCOLORINGID
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_GREEDY = MATCOLORINGGREEDY
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_JP = MATCOLORINGJP
+  !>@}
 
   !Norm types
+  !> \addtogroup CMISSPetsc_PetscNormTypes CMISSPetsc::Constants::PetscNormTypes
+  !> \brief Types of norms for PETSc
+  !> \see CMISSPetsc
+  !>@{
   NormType, PARAMETER :: PETSC_NORM_1 = NORM_1
   NormType, PARAMETER :: PETSC_NORM_2 = NORM_2
   NormType, PARAMETER :: PETSC_NORM_INFINITY = NORM_INFINITY
+  !>@}
   
   !PC types
+  !> \addtogroup CMISSPetsc_PetscPCypes CMISSPetsc::Constants::PetscPCTypes
+  !> \brief Types of preconditioners for PETSc KSP solvers.
+  !> \see CMISSPetsc
+  !>@{
   PCType, PARAMETER ::  PETSC_PCNONE = PCNONE
   PCType, PARAMETER ::  PETSC_PCJACOBI = PCJACOBI
   PCType, PARAMETER ::  PETSC_PCSOR = PCSOR
@@ -283,6 +352,7 @@ MODULE CmissPetsc
   PCType, PARAMETER ::  PETSC_PCBICGSTABCUSP = PCBICGSTABCUSP
   PCType, PARAMETER ::  PETSC_PCAINVCUSP = PCAINVCUSP
   PCType, PARAMETER ::  PETSC_PCBDDC = PCBDDC
+  !>@}
 
   !SNES types
   SNESType, PARAMETER :: PETSC_SNESNEWTONLS = SNESNEWTONLS
@@ -892,7 +962,7 @@ MODULE CmissPetsc
       USE Types
       MatFDColoring fdcoloring
       EXTERNAL ffunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE MatFDColoringSetFunction
     
@@ -962,7 +1032,7 @@ MODULE CmissPetsc
     SUBROUTINE SNESGetApplicationContext(snes,ctx,ierr)
       USE Types
       SNES snes
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE SNESGetApplicationContext
 
@@ -1019,7 +1089,7 @@ MODULE CmissPetsc
       USE Types
       SNES snes
       EXTERNAL mfunction
-      TYPE(SOLVER_TYPE), POINTER :: mctx
+      TYPE(SolverType), POINTER :: mctx
       EXTERNAL monitordestroy
       PetscInt ierr
     END SUBROUTINE SNESMonitorSet
@@ -1045,7 +1115,7 @@ MODULE CmissPetsc
     SUBROUTINE SNESSetApplicationContext(snes,ctx,ierr)
       USE Types
       SNES snes
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE SNESSetApplicationContext
 
@@ -1053,7 +1123,7 @@ MODULE CmissPetsc
       USE Types
       SNES snes
       EXTERNAL cfunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       EXTERNAL destroyFunction
       PetscInt ierr
     END SUBROUTINE SNESSetConvergenceTest
@@ -1068,7 +1138,7 @@ MODULE CmissPetsc
       SNES snes
       Vec f
       EXTERNAL ffunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE SNESSetFunction
 
@@ -1078,7 +1148,7 @@ MODULE CmissPetsc
       Mat A
       Mat B      
       EXTERNAL Jfunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE SNESSetJacobian
 
@@ -1246,7 +1316,7 @@ MODULE CmissPetsc
       USE Types
       Tao tao
       EXTERNAL GFunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE TaoSetGradientRoutine
 
@@ -1256,7 +1326,7 @@ MODULE CmissPetsc
       Mat H
       Mat Hpre
       EXTERNAL HFunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE TaoSetHessianRoutine
     
@@ -1264,7 +1334,7 @@ MODULE CmissPetsc
       USE Types
       Tao tao
       EXTERNAL mFunction
-      TYPE(SOLVER_TYPE), POINTER :: mctx
+      TYPE(SolverType), POINTER :: mctx
       PetscInt ierr
     END SUBROUTINE TaoSetMonitor
     
@@ -1272,7 +1342,7 @@ MODULE CmissPetsc
       USE Types
       Tao tao
       EXTERNAL OFunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE TaoSetObjectiveRoutine
 
@@ -1280,7 +1350,7 @@ MODULE CmissPetsc
       USE Types
       Tao tao
       EXTERNAL ogFunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE TaoSetObjectiveAndGradientRoutine
 
@@ -1288,7 +1358,7 @@ MODULE CmissPetsc
       USE Types
       Tao tao
       EXTERNAL oFunction
-      TYPE(SOLVER_TYPE), POINTER :: ctx
+      TYPE(SolverType), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE TaoSetSeparableObjectiveRoutine
     
@@ -1335,7 +1405,7 @@ MODULE CmissPetsc
       USE Types
       TS ts
       EXTERNAL mfunction
-      TYPE(SOLVER_TYPE), POINTER :: mctx
+      TYPE(SolverType), POINTER :: mctx
       EXTERNAL monitordestroy
       PetscInt ierr
     END SUBROUTINE TSMonitorSet
@@ -3697,7 +3767,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(PetscMatType), INTENT(INOUT) :: a !<The matrix to set the option for
-    MatOption, INTENT(IN) :: option !<The option to set \see CmissPetsc_PetscMatOptionTypes,CmissPetsc
+    MatOption, INTENT(IN) :: option !<The option to set \see CMISSPetsc_PetscMatOptionTypes,CMISSPetsc
     LOGICAL, INTENT(IN) :: flag !<The option flag to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3801,7 +3871,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: row !<The row index
     INTEGER(INTG), INTENT(IN) :: col !<The column index
     REAL(DP), INTENT(IN) :: value !<The value to set
-    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CmissPetsc_PetscMatInsertMode
+    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CMISSPetsc_PetscMatInsertMode
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3837,7 +3907,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: n !<The number of column indices
     INTEGER(INTG), INTENT(IN) :: nIndices(*) !<The column indices
     REAL(DP), INTENT(IN) :: values(*) !<The values to set
-    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CmissPetsc_PetscMatInsertMode
+    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CMISSPetsc_PetscMatInsertMode
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3869,7 +3939,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: row !<The row index
     INTEGER(INTG), INTENT(IN) :: col !<The column index
     REAL(DP), INTENT(IN) :: value !<The value to set
-    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CmissPetsc_PetscMatInsertMode
+    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CMISSPetsc_PetscMatInsertMode
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4376,7 +4446,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscMatFDColoringType), INTENT(INOUT) :: matFDColoring !<The matrix finite difference coloring to set
     EXTERNAL fFunction !<The external function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4730,7 +4800,7 @@ CONTAINS
     TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec
     TYPE(PetscMatType), INTENT(INOUT) :: j !<The PETSc J Mat
     TYPE(PetscMatType), INTENT(INOUT) :: b !<The PETSc B Mat
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+    TYPE(SolverType), POINTER :: ctx !<The passed through context
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -4855,7 +4925,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The SNES to get the context for
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<On exit, the solver data context to get
+    TYPE(SolverType), POINTER :: ctx !<On exit, the solver data context to get
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4985,7 +5055,7 @@ CONTAINS
     TYPE(PetscMatType), INTENT(INOUT) :: a !<The Jacobian matrix
     TYPE(PetscMatType), INTENT(INOUT) :: b !<The Jacobian preconditioning matrix
     EXTERNAL jFunction !<The external function to call
-!     TYPE(SOLVER_TYPE), POINTER :: CTX !<The solver data to pass to the function
+!     TYPE(SolverType), POINTER :: CTX !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5141,7 +5211,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The SNES to set from the command line options
     EXTERNAL :: mFunction !<The external monitor function to set
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the monitor function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the monitor function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5265,7 +5335,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The SNES to set the context for
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data context to set as a context
+    TYPE(SolverType), POINTER :: ctx !<The solver data context to set as a context
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5296,7 +5366,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The SNES to set the function for
     EXTERNAL cFunction !<The external function to call (OpenCMISS subroutine to calculate convergence)
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the convergence test function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the convergence test function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5359,7 +5429,7 @@ CONTAINS
     TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The SNES to set the function for
     TYPE(PetscVecType), INTENT(INOUT) :: f !<The residual vector
     EXTERNAL fFunction !<The external function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5427,7 +5497,7 @@ CONTAINS
     TYPE(PetscMatType), INTENT(INOUT) :: a !<The Jacobian matrix
     TYPE(PetscMatType), INTENT(INOUT) :: b !<The Jacobian preconditioning matrix
     EXTERNAL jFunction !<The external function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6300,7 +6370,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the gradient function for
     EXTERNAL gFunction !<The external function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6334,7 +6404,7 @@ CONTAINS
     TYPE(PetscMatType), INTENT(INOUT) :: H !<The matrix used for the Hessian
     TYPE(PetscMatType), INTENT(INOUT) :: Hpre !<The matrix used for the Hessian preconditioner
     EXTERNAL hFunction !<The external Hessian function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6366,7 +6436,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the monitor function for
     EXTERNAL mFunction !<The external monitor function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6398,7 +6468,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the objective function for
     EXTERNAL oFunction !<The external objective function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6430,7 +6500,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the objective and gradient function for
     EXTERNAL ogFunction !<The external objective and gradient function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6462,7 +6532,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the separable objective function for
     EXTERNAL oFunction !<The external separable objective function to call
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6730,7 +6800,7 @@ CONTAINS
     !Argument Variables
     TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to set the monitor for
     EXTERNAL :: mFunction !<The external monitor function to set
-    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the monitor function
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the monitor function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8296,14 +8366,14 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE CmissPetsc
+END MODULE CMISSPetsc
     
 !>Buffer routine to the PETSc SNESSetJacobian routine for MatFDColoring contexts. The buffer is required because we want to
 !>provide an interface so that we can pass a pointer to the solver for analytic Jacobian's. However, if we provided an interface
 !>the Fortran's strong typing rules would not let us pass the matfdcoloring.
 SUBROUTINE SNESSetJacobianBuffer(snes,A,B,jFunction,matFDColoring,err)
 
-  USE CmissPetscTypes
+  USE CMISSPetscTypes
   USE Kinds
 
   IMPLICIT NONE

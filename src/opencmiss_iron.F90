@@ -4,10 +4,8 @@
 !>
 !> \mainpage OpenCMISS Iron Documentation
 !>
-!> An open source interactive computer program for Continuum Mechanics, Image
-!analysis, Signal processing and System
-!> Identification. Target usage: Bioengineering application of finite element
-!analysis, boundary element and collocation
+!> An open source interactive computer program for Continuum Mechanics, Image analysis, Signal processing and System
+!> Identification. Target usage: Bioengineering application of finite element analysis, boundary element and collocation
 !> techniques.
 !>
 !> \section LICENSE
@@ -63,7 +61,7 @@ MODULE OpenCMISS_Iron
  USE BasisRoutines
  USE BasisAccessRoutines
  USE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
- USE BOUNDARY_CONDITIONS_ROUTINES
+ USE BoundaryConditionsRoutines
  USE CellMLAccessRoutines
  USE Cmiss
  USE CmissPetsc
@@ -86,7 +84,6 @@ MODULE OpenCMISS_Iron
  USE DistributedMatrixVector
  USE DistributedMatrixVectorAccessRoutines
  USE EquationsRoutines
- USE EquationsSetConstants
  USE EquationsSetRoutines
  USE EquationsSetAccessRoutines
  USE FieldRoutines
@@ -106,24 +103,22 @@ MODULE OpenCMISS_Iron
  USE InputOutput
  USE InterfaceRoutines
  USE InterfaceAccessRoutines
- USE INTERFACE_CONDITIONS_CONSTANTS
- USE INTERFACE_CONDITIONS_ROUTINES
+ USE InterfaceConditionRoutines
  USE InterfaceConditionAccessRoutines
  USE InterfaceEquationsRoutines
- USE INTERFACE_MATRICES_CONSTANTS
  USE InterfaceMatricesRoutines
+ USE InterfaceMatricesAccessRoutines
  USE ISO_C_BINDING
  USE ISO_VARYING_STRING
  USE Kinds
  USE MeshRoutines
  USE MeshAccessRoutines
  USE NodeRoutines
- USE PROBLEM_CONSTANTS
  USE ProblemRoutines
  USE ProblemAccessRoutines
  USE RegionRoutines
  USE RegionAccessRoutines
- USE SOLVER_ROUTINES
+ USE SolverRoutines
  USE SolverAccessRoutines
  USE Strings
  USE Types
@@ -148,7 +143,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on the boundary conditions for the equations set.
  TYPE cmfe_BoundaryConditionsType
    PRIVATE
-   TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+   TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
  END TYPE cmfe_BoundaryConditionsType
 
  !>Contains information on a CellML environment.
@@ -160,7 +155,7 @@ MODULE OpenCMISS_Iron
  !>Contains information about the CellML equations for a solver.
  TYPE cmfe_CellMLEquationsType
    PRIVATE
-   TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellmlEquations
+   TYPE(CellMLEquationsType), POINTER :: cellmlEquations
  END TYPE cmfe_CellMLEquationsType
 
  !>Contains information on a computation environment
@@ -341,13 +336,13 @@ MODULE OpenCMISS_Iron
  !>Contains information about a solver.
  TYPE cmfe_SolverType
    PRIVATE
-   TYPE(SOLVER_TYPE), POINTER :: solver
+   TYPE(SolverType), POINTER :: solver
  END TYPE cmfe_SolverType
 
  !>Contains information about the solver equations for a solver.
  TYPE cmfe_SolverEquationsType
    PRIVATE
-   TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+   TYPE(SolverEquationsType), POINTER :: solverEquations
  END TYPE cmfe_SolverEquationsType
 
  !>Contains information on a work group
@@ -899,7 +894,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! BOUNDARY_CONDITIONS_ROUTINES
+! BoundaryConditionsRoutines
 !
 !==================================================================================================================================
 
@@ -2710,14 +2705,14 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! EquationsSetConstants
+! EquationsSetRoutines
 !
 !==================================================================================================================================
 
  
  !Module parameters
  
- !> \addtogroup OpenCMISS_EquationsSetConstants OpenCMISS::Iron::EquationsSet::Constants
+ !> \addtogroup OpenCMISS_EquationsSetRoutines OpenCMISS::Iron::EquationsSet::Constants
  !> \brief Equations set constants.
  !>@{
  !> \addtogroup OpenCMISS_EquationsSetClasses OpenCMISS::Iron::EquationsSet::Classes
@@ -2930,13 +2925,13 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = &
-    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_POISSON_SUBTYPE = EQUATIONS_SET_GENERALISED_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE !<Quadratic source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE = &
     & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE !<Exponential source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = &
+    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
@@ -6221,7 +6216,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! PROBLEM_CONSTANTS_ROUTINES
+! ProblemRoutines
 !
 !==================================================================================================================================
 
@@ -6854,7 +6849,7 @@ MODULE OpenCMISS_Iron
 
 !==================================================================================================================================
 !
-! SOLVER_ROUTINES
+! SolverRoutines
 !
 !==================================================================================================================================
 
@@ -8482,7 +8477,7 @@ CONTAINS
     ENTERS("cmfe_BoundaryConditions_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_BoundaryConditions%boundaryConditions))  &
-      & CALL BOUNDARY_CONDITIONS_DESTROY(cmfe_BoundaryConditions%boundaryConditions,err,error,*999)
+      & CALL BoundaryConditions_Destroy(cmfe_BoundaryConditions%boundaryConditions,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_Finalise")
     RETURN
@@ -8581,7 +8576,7 @@ CONTAINS
     ENTERS("cmfe_CellMLEquations_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_CellMLEquations%cellmlEquations))  &
-      & CALL CELLML_EQUATIONS_DESTROY(cmfe_CellMLEquations%cellmlEquations,err,error,*999)
+      & CALL CellMLEquations_Destroy(cmfe_CellMLEquations%cellmlEquations,err,error,*999)
 
     EXITS("cmfe_CellMLEquations_Finalise")
     RETURN
@@ -13156,7 +13151,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! BOUNDARY_CONDITIONS_ROUTINES
+!! BoundaryConditionsRoutines
 !!
 !!==================================================================================================================================
 
@@ -13171,11 +13166,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
  
     ENTERS("cmfe_BoundaryConditions_DestroyNumber0",err,error,*999)
 
@@ -13189,7 +13184,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifier,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_DESTROY(boundaryConditions,err,error,*999)
+    CALL BoundaryConditions_Destroy(boundaryConditions,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_DestroyNumber0")
     RETURN
@@ -13214,11 +13209,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
  
     ENTERS("cmfe_BoundaryConditions_DestroyNumber1",err,error,*999)
 
@@ -13232,7 +13227,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_DESTROY(boundaryConditions,err,error,*999)
+    CALL BoundaryConditions_Destroy(boundaryConditions,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_DestroyNumber1")
     RETURN
@@ -13257,7 +13252,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_DestroyObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_DESTROY(boundaryConditions%boundaryConditions,err,error,*999)
+    CALL BoundaryConditions_Destroy(boundaryConditions%boundaryConditions,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_DestroyObj")
     RETURN
@@ -13289,12 +13284,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -13316,7 +13311,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_ADD_CONSTANT(boundaryConditions,dependentField,variableType,componentNumber, &
+    CALL BoundaryConditions_AddConstant(boundaryConditions,dependentField,variableType,componentNumber, &
       & condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_AddConstantNumber")
@@ -13347,7 +13342,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_AddConstantObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_ADD_CONSTANT(boundaryConditions%boundaryConditions,field%field,variableType,componentNumber, &
+    CALL BoundaryConditions_AddConstant(boundaryConditions%boundaryConditions,field%field,variableType,componentNumber, &
       & condition,value,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_AddConstantObj")
@@ -13381,12 +13376,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -13408,7 +13403,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_SET_CONSTANT(boundaryConditions,dependentField,variableType,componentNumber, &
+    CALL BoundaryConditions_SetConstant(boundaryConditions,dependentField,variableType,componentNumber, &
       & condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetConstantNumber")
@@ -13439,7 +13434,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_SetConstantObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_SET_CONSTANT(boundaryConditions%boundaryConditions,field%field,variableType,componentNumber, &
+    CALL BoundaryConditions_SetConstant(boundaryConditions%boundaryConditions,field%field,variableType,componentNumber, &
       & condition,value,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetConstantObj")
@@ -13473,12 +13468,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -13500,7 +13495,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_ADD_ELEMENT(boundaryConditions,dependentField,variableType,elementUserNumber, &
+    CALL BoundaryConditions_AddElement(boundaryConditions,dependentField,variableType,elementUserNumber, &
       & componentNumber,condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_AddElementNumber")
@@ -13533,7 +13528,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_AddElementObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_ADD_ELEMENT(boundaryConditions%boundaryConditions,field%field,variableType,elementUserNumber, &
+    CALL BoundaryConditions_AddElement(boundaryConditions%boundaryConditions,field%field,variableType,elementUserNumber, &
       & componentNumber,condition,value,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_AddElementObj")
@@ -13567,12 +13562,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -13594,7 +13589,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_SET_ELEMENT(boundaryConditions,dependentField,variableType,elementUserNumber, &
+    CALL BoundaryConditions_SetElement(boundaryConditions,dependentField,variableType,elementUserNumber, &
       & componentNumber,condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetElementNumber")
@@ -13627,7 +13622,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_SetElementObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_SET_ELEMENT(boundaryConditions%boundaryConditions,field%field,variableType,elementUserNumber, &
+    CALL BoundaryConditions_SetElement(boundaryConditions%boundaryConditions,field%field,variableType,elementUserNumber, &
       & componentNumber,condition,value,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetElementObj")
@@ -13664,12 +13659,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -13691,7 +13686,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_ADD_NODE(boundaryConditions,dependentField,variableType,versionNumber,derivativeNumber, &
+    CALL BoundaryConditions_AddNode(boundaryConditions,dependentField,variableType,versionNumber,derivativeNumber, &
       & nodeUserNumber,componentNumber,condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_AddNodeNumber")
@@ -13726,7 +13721,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_AddNodeObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_ADD_NODE(boundaryConditions%boundaryConditions,field%field,variableType,versionNumber, &
+    CALL BoundaryConditions_AddNode(boundaryConditions%boundaryConditions,field%field,variableType,versionNumber, &
       & derivativeNumber,nodeUserNumber,componentNumber,condition,value,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_AddNodeObj")
@@ -13763,12 +13758,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -13790,7 +13785,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifier,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_SET_NODE(boundaryConditions,dependentField,variableType,versionNumber,derivativeNumber, &
+    CALL BoundaryConditions_SetNode(boundaryConditions,dependentField,variableType,versionNumber,derivativeNumber, &
       & nodeUserNumber,componentNumber,condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetNodeNumber0")
@@ -13827,12 +13822,12 @@ CONTAINS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -13854,7 +13849,7 @@ CONTAINS
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverEquationsGet(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*999)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-    CALL BOUNDARY_CONDITIONS_SET_NODE(boundaryConditions,dependentField,variableType,versionNumber,derivativeNumber, &
+    CALL BoundaryConditions_SetNode(boundaryConditions,dependentField,variableType,versionNumber,derivativeNumber, &
       & nodeUserNumber,componentNumber,condition,VALUE,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetNodeNumber1")
@@ -13889,7 +13884,7 @@ CONTAINS
 
     ENTERS("cmfe_BoundaryConditions_SetNodeObj",err,error,*999)
 
-    CALL BOUNDARY_CONDITIONS_SET_NODE(boundaryConditions%boundaryConditions,field%field,variableType,versionNumber, &
+    CALL BoundaryConditions_SetNode(boundaryConditions%boundaryConditions,field%field,variableType,versionNumber, &
       & derivativeNumber,nodeUserNumber,componentNumber,condition,value,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_SetNodeObj")
@@ -13917,11 +13912,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OpenCMISS_BoundaryConditionSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_BoundaryConditions_NeumannSparsityTypeSetNumber0",err,error,*999)
 
@@ -13963,11 +13958,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OpenCMISS_BoundaryConditionSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_BoundaryConditions_NeumannSparsityTypeSetNumber1",err,error,*999)
 
@@ -14044,14 +14039,14 @@ CONTAINS
     REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint, applied to all but the first node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: field
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber",err,error,*999)
 
@@ -28390,15 +28385,15 @@ CONTAINS
 
   !>Setting Jacobian matrix calculation type for a matrix specified by user numbers.
   SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
-    & residualIndex,variableType,jacobianCalculationType,err)
+    & variableType,residualIndex,jacobianCalculationType,err)
     !DLLEXPORT(cmfe_Equations_JacobianCalculationTypeSetNumber)
     
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations to set the Jacobian calculation type for
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The type of Jacobian calculation. \see OpenCMISS_EquationsJacobianCalculated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -28426,7 +28421,7 @@ CONTAINS
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableType, &
+    CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,variableType,residualIndex, &
       & jacobianCalculationType,err,error,*999)
 
     EXITS("cmfe_Equations_JacobianCalculationTypeSetNumber")
@@ -28443,13 +28438,13 @@ CONTAINS
   !
 
   !>Setting Jacobian matrix calculation type for a matrix specified by obj.
-  SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetObj(equations,residualIndex,variableType,jacobianCalculationType,err)
+  SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetObj(equations,variableType,residualIndex,jacobianCalculationType,err)
     !DLLEXPORT(cmfe_Equations_JacobianCalculationTypeSetObj)
     
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The type of Jacobian calculation. \see OpenCMISS_EquationsJacobianCalculated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -28462,7 +28457,7 @@ CONTAINS
     CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableType, &
+    CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,variableType,residualIndex, &
       & jacobianCalculationType,err,error,*999)
 
     EXITS("cmfe_Equations_JacobianCalculationTypeSetObj")
@@ -28480,15 +28475,15 @@ CONTAINS
 
   !>Sets the Jacobian matrix finite difference step size type for a matrix specified by user numbers.
   SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
-    & residualIndex,variableType,jacobianFiniteDifferenceStepSize,err)
+    & variableType,residualIndex,jacobianFiniteDifferenceStepSize,err)
     !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber)
     
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations to set the Jacobian calculation type for
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -28516,7 +28511,7 @@ CONTAINS
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+    CALL EquationsMatricesVector_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,variableType,residualIndex, &
       & jacobianFiniteDifferenceStepSize,err,error,*999)
 
     EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber")
@@ -28533,14 +28528,14 @@ CONTAINS
   !
 
   !>Sets/changes the finite difference step size used for calculating the Jacobian
-  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj(equations,residualIndex,variableTYpe, &
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj(equations,variableTYpe,residualIndex, &
     & jacobianFiniteDifferenceStepSize,err)
     !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian finite difference step size for.
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
     REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -28553,7 +28548,7 @@ CONTAINS
     CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+    CALL EquationsMatricesVector_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,variableType,residualIndex, &
       & jacobianFiniteDifferenceStepSize,err,error,*999)
 
     EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj")
@@ -32018,7 +32013,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_SpecificationGet(equationsSet,equationsSetSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,0,equationsSetSpecification,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SpecificationGetNumber")
     RETURN
@@ -32045,7 +32040,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_SpecificationGetObj",err,error,*999)
 
-    CALL EquationsSet_SpecificationGet(equationsSet%equationsSet,equationsSetSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet%equationsSet,0,equationsSetSpecification,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SpecificationGetObj")
     RETURN
@@ -46110,7 +46105,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! INTERFACE_CONDITIONS_ROUTINES
+!! InterfaceConditionRoutines
 !!
 !!==================================================================================================================================
 
@@ -54778,11 +54773,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to calculate the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsAnalyticNumber0",err,error,*999)
 
@@ -54825,8 +54820,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsAnalyticNumber1",err,error,*999)
 
@@ -56237,7 +56232,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! SOLVER_ROUTINES
+!! SolverRoutines
 !!
 !!==================================================================================================================================
 
@@ -56261,13 +56256,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CellMLType), POINTER :: cellml
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_CellMLEquations_CellMLAddNumber0",err,error,*999)
 
@@ -56287,7 +56282,7 @@ CONTAINS
     CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_EQUATIONS_CELLML_ADD(cellMLEquations,cellml,cellMLIndex,err,error,*999)
+    CALL CellMLEquations_CellMLAdd(cellMLEquations,cellml,cellMLIndex,err,error,*999)
 
     EXITS("cmfe_CellMLEquations_CellMLAddNumber0")
     RETURN
@@ -56317,13 +56312,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CellMLType), POINTER :: cellml
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_CellMLEquations_CellMLAddNumber1",err,error,*999)
 
@@ -56343,7 +56338,7 @@ CONTAINS
     CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
-    CALL CELLML_EQUATIONS_CELLML_ADD(cellMLEquations,cellml,cellMLIndex,err,error,*999)
+    CALL CellMLEquations_CellMLAdd(cellMLEquations,cellml,cellMLIndex,err,error,*999)
 
     EXITS("cmfe_CellMLEquations_CellMLAddNumber1")
     RETURN
@@ -56370,7 +56365,7 @@ CONTAINS
 
     ENTERS("cmfe_CellMLEquations_CellMLAddObj",err,error,*999)
 
-    CALL CELLML_EQUATIONS_CELLML_ADD(cellMLEquations%cellmlEquations,CellML%cellML,cellMLIndex,err,error,*999)
+    CALL CellMLEquations_CellMLAdd(cellMLEquations%cellmlEquations,CellML%cellML,cellMLIndex,err,error,*999)
 
     EXITS("cmfe_CellMLEquations_CellMLAddObj")
     RETURN
@@ -56397,11 +56392,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_CellMLEquations_LinearityTypeGetNumber",err,error,*999)
 
@@ -56468,11 +56463,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_CellMLEquations_LinearityTypeSetNumber",err,error,*999)
 
@@ -56539,11 +56534,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber",err,error,*999)
 
@@ -56612,11 +56607,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber",err,error,*999)
 
@@ -56688,7 +56683,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_CellMLEquationsGetNumber0",err,error,*999)
 
@@ -56730,7 +56725,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_CellMLEquationsGetNumber1",err,error,*999)
 
@@ -56797,7 +56792,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAEEulerSolverTypeGetNumber0",err,error,*999)
 
@@ -56839,7 +56834,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_DAEEulerSolverTypeGetNumber1",err,error,*999)
 
@@ -56907,7 +56902,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAEEulerSolverTypeSetNumber0",err,error,*999)
 
@@ -56949,7 +56944,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAEEulerSolverTypeSetNumber1",err,error,*999)
 
@@ -57017,7 +57012,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAESolverTypeGetNumber0",err,error,*999)
 
@@ -57059,7 +57054,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_DAESolverTypeGetNumber1",err,error,*999)
 
@@ -57127,7 +57122,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAESolverTypeSetNumber0",err,error,*999)
 
@@ -57169,7 +57164,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAESolverTypeSetNumber1",err,error,*999)
 
@@ -57238,7 +57233,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_DAETimesSetNumber0",err,error,*999)
 
@@ -57281,7 +57276,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAETimesSetNumber1",err,error,*999)
 
@@ -57350,7 +57345,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAETimeStepSetNumber0",err,error,*999)
 
@@ -57392,7 +57387,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DAETimeStepSetNumber1",err,error,*999)
 
@@ -57459,7 +57454,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicDegreeGetNumber0",err,error,*999)
 
@@ -57500,7 +57495,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicDegreeGetNumber1",err,error,*999)
 
@@ -57567,7 +57562,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicDegreeSetNumber0",err,error,*999)
 
@@ -57608,7 +57603,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicDegreeSetNumber1",err,error,*999)
 
@@ -57676,7 +57671,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicLinearityTypeGetNumber0",err,error,*999)
 
@@ -57718,7 +57713,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicLinearityTypeGetNumber1",err,error,*999)
 
@@ -57786,7 +57781,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,nonlinearSolver
+    TYPE(SolverType), POINTER :: solver,nonlinearSolver
 
     ENTERS("cmfe_Solver_DynamicNonlinearSolverGetNumber0",err,error,*999)
 
@@ -57799,7 +57794,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET(solver,nonlinearSolver,err,error,*999)
+    CALL Solver_DynamicLinkedNonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
     !todo: get the solver index from nonlinear solver
     nonlinearSolverIndex=nonlinearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -57833,7 +57828,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,nonlinearSolver
+    TYPE(SolverType), POINTER :: solver,nonlinearSolver
 
     ENTERS("cmfe_Solver_DynamicNonlinearSolverGetNumber1",err,error,*999)
 
@@ -57846,7 +57841,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET(solver,nonlinearSolver,err,error,*999)
+    CALL Solver_DynamicLinkedNonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
     !todo: get the solver index from nonlinear solver
     nonlinearSolverIndex=nonlinearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -57876,7 +57871,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicNonlinearSolverGetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET(solver%solver,nonlinearSolver%solver,err,error,*999)
+    CALL Solver_DynamicLinkedNonlinearSolverGet(solver%solver,nonlinearSolver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicNonlinearSolverGetObj")
     RETURN
@@ -57906,7 +57901,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
+    TYPE(SolverType), POINTER :: solver,linearSolver
 
     ENTERS("cmfe_Solver_DynamicLinearSolverGetNumber0",err,error,*999)
 
@@ -57919,7 +57914,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
+    CALL Solver_DynamicLinkedLinearSolverGet(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
     linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -57952,7 +57947,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
+    TYPE(SolverType), POINTER :: solver,linearSolver
 
     ENTERS("cmfe_Solver_DynamicLinearSolverGetNumber1",err,error,*999)
 
@@ -57965,7 +57960,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_DYNAMIC_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
+    CALL Solver_DynamicLinkedLinearSolverGet(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
     linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -57993,7 +57988,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_DynamicLinearSolverGetObj",err,error,*999)
 
-    CALL SOLVER_DYNAMIC_LINEAR_SOLVER_GET(solver%solver,linearSolver%solver,err,error,*999)
+    CALL Solver_DynamicLinkedLinearSolverGet(solver%solver,linearSolver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_DynamicLinearSolverGetObj")
     RETURN
@@ -58022,7 +58017,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicSchemeSetNumber0",err,error,*999)
 
@@ -58063,7 +58058,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicSchemeSetNumber1",err,error,*999)
 
@@ -58129,7 +58124,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicThetaSetNumber00",err,error,*999)
 
@@ -58170,7 +58165,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicThetaSetNumber01",err,error,*999)
 
@@ -58211,7 +58206,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicThetaSetNumber10",err,error,*999)
 
@@ -58252,7 +58247,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicThetaSetNumber11",err,error,*999)
 
@@ -58347,7 +58342,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_DynamicTimesSetNumber0",err,error,*999)
 
@@ -58390,7 +58385,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_DynamicTimeSetNumber1",err,error,*999)
 
@@ -58459,7 +58454,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationArbitraryPathSetNumber",err,error,*999)
 
@@ -58528,7 +58523,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationClearNumber",err,error,*999)
 
@@ -58601,7 +58596,7 @@ CONTAINS
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationFieldSetNumber",err,error,*999)
 
@@ -58678,7 +58673,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationMatrixSetNumber0",err,error,*999)
 
@@ -58690,7 +58685,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL Solver_GeometricTransformationMatrixSet(solver,matrix,1,err,error,*999)
+    CALL Solver_GeometricTransformationMatrixSet(solver,1,matrix,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationMatrixSetNumber0")
     RETURN
@@ -58717,7 +58712,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_GeometricTransformationMatrixSetObj0",err,error,*999)
 
-    CALL Solver_GeometricTransformationMatrixSet(solver%solver,matrix,1,err,error,*999)
+    CALL Solver_GeometricTransformationMatrixSet(solver%solver,1,matrix,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationMatrixSetObj0")
     RETURN
@@ -58734,7 +58729,7 @@ CONTAINS
 
   !>Sets the full transformation matrix at a specific increment for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,matrix,loadIncrementIdx,err)
+    & solverIndex,loadIncrementIdx,matrix,err)
     !DLLEXPORT(cmfe_Solver_GeometricTransformationMatrixSetNumber1)
 
     !Argument variables
@@ -58742,14 +58737,14 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the matrix for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the matrix for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the matrix for.
-    REAL(DP), INTENT(IN) :: matrix(:,:) !<The full transformation matrix to set
     INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the matrix for.
+    REAL(DP), INTENT(IN) :: matrix(:,:) !<The full transformation matrix to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationMatrixSetNumber1",err,error,*999)
 
@@ -58761,7 +58756,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL Solver_GeometricTransformationMatrixSet(solver,matrix,loadIncrementIdx,err,error,*999)
+    CALL Solver_GeometricTransformationMatrixSet(solver,loadIncrementIdx,matrix,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationMatrixSetNumber1")
     RETURN
@@ -58777,19 +58772,19 @@ CONTAINS
   !
 
   !>Sets the full transformation matrix vector at a specific load increment for a geometric transformation solver identified by an object.
-  SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetObj1(solver,matrix,loadIncrementIdx,err)
+  SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetObj1(solver,loadIncrementIdx,matrix,err)
     !DLLEXPORT(cmfe_Solver_GeometricTransformationMatrixSetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the matrix for.
-    REAL(DP), INTENT(IN) :: matrix(:,:) !<The full transformation matrix to set
     INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the matrix for.
+    REAL(DP), INTENT(IN) :: matrix(:,:) !<The full transformation matrix to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationMatrixSetObj1",err,error,*999)
 
-    CALL Solver_GeometricTransformationMatrixSet(solver%solver,matrix,loadIncrementIdx,err,error,*999)
+    CALL Solver_GeometricTransformationMatrixSet(solver%solver,loadIncrementIdx,matrix,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationMatrixSetObj1")
     RETURN
@@ -58820,7 +58815,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber",err,error,*999)
 
@@ -58892,7 +58887,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationRotationSetNumber0",err,error,*999)
 
@@ -58904,7 +58899,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL Solver_GeometricTransformationRotationSet(solver,pivotPoint,axis,angle,1,err,error,*999)
+    CALL Solver_GeometricTransformationRotationSet(solver,1,pivotPoint,axis,angle,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationRotationSetNumber0")
     RETURN
@@ -58933,7 +58928,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_GeometricTransformationRotationSetObj0",err,error,*999)
 
-    CALL Solver_GeometricTransformationRotationSet(solver%solver,pivotPoint,axis,angle,1,err,error,*999)
+    CALL Solver_GeometricTransformationRotationSet(solver%solver,1,pivotPoint,axis,angle,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationRotationSetObj0")
     RETURN
@@ -58950,7 +58945,7 @@ CONTAINS
 
   !>Sets the rotation at a specific increment for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,pivotPoint,axis,angle,loadIncrementIdx,err)
+    & solverIndex,loadIncrementIdx,pivotPoint,axis,angle,err)
     !DLLEXPORT(cmfe_Solver_GeometricTransformationRotationSetNumber1)
 
     !Argument variables
@@ -58958,16 +58953,16 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the rotation for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the rotation for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the rotation for.
+    INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the rotation for.
     REAL(DP), INTENT(IN) :: pivotPoint(:) !<The pivot point to rotate about
     REAL(DP), INTENT(IN) :: axis(:) !<The axis to  to rotate around
     REAL(DP), INTENT(IN) :: angle !<The angle to rotate
-    INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the rotation for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationRotationSetNumber1",err,error,*999)
 
@@ -58979,7 +58974,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL Solver_GeometricTransformationRotationSet(solver,pivotPoint,axis,angle,loadIncrementIdx,err,error,*999)
+    CALL Solver_GeometricTransformationRotationSet(solver,loadIncrementIdx,pivotPoint,axis,angle,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationRotationSetNumber1")
     RETURN
@@ -58995,21 +58990,21 @@ CONTAINS
   !
 
   !>Sets the rotation at a specific load increment for a geometric transformation solver identified by an object.
-  SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetObj1(solver,pivotPoint,axis,angle,loadIncrementIdx,err)
+  SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetObj1(solver,loadIncrementIdx,pivotPoint,axis,angle,err)
     !DLLEXPORT(cmfe_Solver_GeometricTransformationRotationSetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the rotation for.
+    INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the rotation for.
     REAL(DP), INTENT(IN) :: pivotPoint(:) !<The pivot point to rotate about
     REAL(DP), INTENT(IN) :: axis(:) !<The axis to  to rotate around
     REAL(DP), INTENT(IN) :: angle !<The angle to rotate
-    INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the rotation for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationRotationSetObj1",err,error,*999)
 
-    CALL Solver_GeometricTransformationRotationSet(solver%solver,pivotPoint,axis,angle,loadIncrementIdx,err,error,*999)
+    CALL Solver_GeometricTransformationRotationSet(solver%solver,loadIncrementIdx,pivotPoint,axis,angle,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationRotationSetObj1")
     RETURN
@@ -59040,7 +59035,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationScalingsSetNumber",err,error,*999)
 
@@ -59110,7 +59105,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationTranslationSetNumber0",err,error,*999)
 
@@ -59122,7 +59117,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL Solver_GeometricTransformationTranslationSet(solver,translation,1,err,error,*999)
+    CALL Solver_GeometricTransformationTranslationSet(solver,1,translation,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationTranslationSetNumber0")
     RETURN
@@ -59149,7 +59144,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_GeometricTransformationTranslationSetObj0",err,error,*999)
 
-    CALL Solver_GeometricTransformationTranslationSet(solver%solver,translation,1,err,error,*999)
+    CALL Solver_GeometricTransformationTranslationSet(solver%solver,1,translation,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationTranslationSetObj0")
     RETURN
@@ -59166,7 +59161,7 @@ CONTAINS
 
   !>Sets the translation at a specific increment for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,translation,loadIncrementIdx,err)
+    & solverIndex,loadIncrementIdx,translation,err)
     !DLLEXPORT(cmfe_Solver_GeometricTransformationTranslationSetNumber1)
 
     !Argument variables
@@ -59174,14 +59169,14 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the translation for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the translation for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the translation for.
-    REAL(DP), INTENT(IN) :: translation(:) !<The translation components to set
     INTEGER(INTG), INTENT(IN) :: loadIncrementIdx !<The load increment index to set the translation for.
+    REAL(DP), INTENT(IN) :: translation(:) !<The translation components to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_GeometricTransformationTranslationSetNumber1",err,error,*999)
 
@@ -59193,7 +59188,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL Solver_GeometricTransformationTranslationSet(solver,translation,loadIncrementIdx,err,error,*999)
+    CALL Solver_GeometricTransformationTranslationSet(solver,loadIncrementIdx,translation,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationTranslationSetNumber1")
     RETURN
@@ -59209,7 +59204,7 @@ CONTAINS
   !
 
   !>Sets the translation vector at a specific load increment for a geometric transformation solver identified by an object.
-  SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetObj1(solver,translation,loadIncrementIdx,err)
+  SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetObj1(solver,loadIncrementIdx,translation,err)
     !DLLEXPORT(cmfe_Solver_GeometricTransformationTranslationSetObj1)
 
     !Argument variables
@@ -59221,7 +59216,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_GeometricTransformationTranslationSetObj1",err,error,*999)
 
-    CALL Solver_GeometricTransformationTranslationSet(solver%solver,translation,loadIncrementIdx,err,error,*999)
+    CALL Solver_GeometricTransformationTranslationSet(solver%solver,loadIncrementIdx,translation,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationTranslationSetObj1")
     RETURN
@@ -59251,7 +59246,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelGetCNumber0",err,error,*999)
 
@@ -59292,7 +59287,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelGetCNumber1",err,error,*999)
 
@@ -59359,7 +59354,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelGetVSNumber0",err,error,*999)
 
@@ -59400,7 +59395,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelGetVSNumber1",err,error,*999)
 
@@ -59467,7 +59462,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelSetCNumber0",err,error,*999)
 
@@ -59508,7 +59503,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelSetCNumber1",err,error,*999)
 
@@ -59575,7 +59570,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelSetVSNumber0",err,error,*999)
 
@@ -59616,7 +59611,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LabelSetVSNumber1",err,error,*999)
 
@@ -59684,7 +59679,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LibraryTypeGetNumber0",err,error,*999)
 
@@ -59726,7 +59721,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LibraryTypeGetNumber1",err,error,*999)
 
@@ -59793,7 +59788,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LibraryTypeSetNumber0",err,error,*999)
 
@@ -59835,7 +59830,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LibraryTypeSetNumber1",err,error,*999)
 
@@ -59902,7 +59897,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearDirectTypeSetNumber0",err,error,*999)
 
@@ -59914,7 +59909,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_DIRECT_TYPE_SET(solver,directSolverType,err,error,*999)
+    CALL Solver_LinearDirectTypeSet(solver,directSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearDirectTypeSetNumber0")
     RETURN
@@ -59944,7 +59939,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearDirectTypeSetNumber1",err,error,*999)
 
@@ -59956,7 +59951,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_DIRECT_TYPE_SET(solver,directSolverType,err,error,*999)
+    CALL Solver_LinearDirectTypeSet(solver,directSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearDirectTypeSetNumber1")
     RETURN
@@ -59981,7 +59976,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LinearDirectTypeSetObj",err,error,*999)
 
-    CALL SOLVER_LINEAR_DIRECT_TYPE_SET(solver%solver,directSolverType,err,error,*999)
+    CALL Solver_LinearDirectTypeSet(solver%solver,directSolverType,err,error,*999)
 
     EXITS("cmfe_Solver_LinearDirectTypeSetObj")
     RETURN
@@ -60065,7 +60060,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeAbsoluteToleranceSetNumber0",err,error,*999)
 
@@ -60108,7 +60103,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_LinearIterativeAbsoluteToleranceSetNumber1",err,error,*999)
 
@@ -60177,7 +60172,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeDivergenceToleranceSetNumber0",err,error,*999)
 
@@ -60220,7 +60215,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
    
     ENTERS("cmfe_Solver_LinearIterativeDivergenceToleranceSetNumber1",err,error,*999)
 
@@ -60289,7 +60284,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeGMRESRestartSetNumber0",err,error,*999)
 
@@ -60301,7 +60296,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_ITERATIVE_GMRES_RESTART_SET(solver,GMRESRestart,err,error,*999)
+    CALL Solver_LinearIterativeGMRESRestartSet(solver,GMRESRestart,err,error,*999)
 
     EXITS("cmfe_Solver_LinearIterativeGMRESRestartSetNumber0")
     RETURN
@@ -60332,7 +60327,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeGMRESRestartSetNumber1",err,error,*999)
 
@@ -60344,7 +60339,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_LINEAR_ITERATIVE_GMRES_RESTART_SET(solver,GMRESRestart,err,error,*999)
+    CALL Solver_LinearIterativeGMRESRestartSet(solver,GMRESRestart,err,error,*999)
 
     EXITS("cmfe_Solver_LinearIterativeGMRESRestartSetNumber1")
     RETURN
@@ -60370,7 +60365,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_LinearIterativeGMRESRestartSetObj",err,error,*999)
 
-    CALL SOLVER_LINEAR_ITERATIVE_GMRES_RESTART_SET(solver%solver,GMRESRestart,err,error,*999)
+    CALL Solver_LinearIterativeGMRESRestartSet(solver%solver,GMRESRestart,err,error,*999)
 
     EXITS("cmfe_Solver_LinearIterativeGMRESRestartSetObj")
     RETURN
@@ -60401,7 +60396,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeMaximumIterationsSetNumber0",err,error,*999)
 
@@ -60444,7 +60439,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeMaximumIterationsSetNumber1",err,error,*999)
 
@@ -60513,7 +60508,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativePreconditionerTypeSetNumber0",err,error,*999)
 
@@ -60556,7 +60551,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativePreconditionerTypeSetNumber1",err,error,*999)
 
@@ -60625,7 +60620,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeRelativeToleranceSetNumber0",err,error,*999)
 
@@ -60668,7 +60663,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeRelativeToleranceSetNumber1",err,error,*999)
 
@@ -60737,7 +60732,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeTypeSetNumber0",err,error,*999)
 
@@ -60779,7 +60774,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearIterativeTypeSetNumber1",err,error,*999)
 
@@ -60846,7 +60841,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_LinearTypeSetNumber0",err,error,*999)
 
@@ -60888,7 +60883,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_LinearTypeSetNumber1",err,error,*999)
 
@@ -60955,7 +60950,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonAbsoluteToleranceSetNumber0",err,error,*999)
 
@@ -60967,7 +60962,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_ABSOLUTE_TOLERANCE_SET(solver,absoluteTolerance,err,error,*999)
+    CALL Solver_NewtonAbsoluteToleranceSet(solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonAbsoluteToleranceSetNumber0")
     RETURN
@@ -60998,7 +60993,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonAbsoluteToleranceSetNumber1",err,error,*999)
 
@@ -61010,7 +61005,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_ABSOLUTE_TOLERANCE_SET(solver,absoluteTolerance,err,error,*999)
+    CALL Solver_NewtonAbsoluteToleranceSet(solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonAbsoluteToleranceSetNumber1")
     RETURN
@@ -61036,7 +61031,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonAbsoluteToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_ABSOLUTE_TOLERANCE_SET(solver%solver,absoluteTolerance,err,error,*999)
+    CALL Solver_NewtonAbsoluteToleranceSet(solver%solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonAbsoluteToleranceSetObj")
     RETURN
@@ -61066,7 +61061,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchMonitorOutputSetNumber0",err,error,*999)
 
@@ -61109,7 +61104,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchMonitorOutputSetNumber1",err,error,*999)
 
@@ -61178,7 +61173,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonJacobianCalculationTypeSetNumber0",err,error,*999)
 
@@ -61190,7 +61185,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_JACOBIAN_CALCULATION_TYPE_SET(solver,jacobianCalculationType,err,error,*999)
+    CALL Solver_NewtonJacobianCalculationTypeSet(solver,jacobianCalculationType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonJacobianCalculationTypeSetNumber0")
     RETURN
@@ -61221,7 +61216,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonJacobianCalculationTypeSetNumber1",err,error,*999)
 
@@ -61233,7 +61228,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_JACOBIAN_CALCULATION_TYPE_SET(solver,jacobianCalculationType,err,error,*999)
+    CALL Solver_NewtonJacobianCalculationTypeSet(solver,jacobianCalculationType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonJacobianCalculationTypeSetNumber1")
     RETURN
@@ -61259,7 +61254,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonJacobianCalculationTypeSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_JACOBIAN_CALCULATION_TYPE_SET(solver%solver,jacobianCalculationType,err,error,*999)
+    CALL Solver_NewtonJacobianCalculationTypeSet(solver%solver,jacobianCalculationType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonJacobianCalculationTypeSetObj")
     RETURN
@@ -61290,7 +61285,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
+    TYPE(SolverType), POINTER :: solver,linearSolver
 
     ENTERS("cmfe_Solver_NewtonLinearSolverGetNumber0",err,error,*999)
 
@@ -61336,7 +61331,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
+    TYPE(SolverType), POINTER :: solver,linearSolver
 
     ENTERS("cmfe_Solver_NewtonLinearSolverGetNumber1",err,error,*999)
 
@@ -61407,7 +61402,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
+    TYPE(SolverType), POINTER :: solver,cellMLSolver
 
     ENTERS("cmfe_Solver_NewtonCellMLSolverGetNumber0",err,error,*999)
 
@@ -61420,7 +61415,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
+    CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
     cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -61453,7 +61448,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
+    TYPE(SolverType), POINTER :: solver,cellMLSolver
 
     ENTERS("cmfe_Solver_NewtonCellMLSolverGetNumber1",err,error,*999)
 
@@ -61466,7 +61461,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
+    CALL Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
     cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -61495,7 +61490,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonCellMLSolverGetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_CELLML_SOLVER_GET(solver%solver,CellMLSolver%solver,err,error,*999)
+    CALL Solver_NewtonLinkedCellMLSolverGet(solver%solver,CellMLSolver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonCellMLSolverGetObj")
     RETURN
@@ -61525,7 +61520,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonConvergenceTestTypeSetNumber0",err,error,*999)
 
@@ -61568,7 +61563,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonConvergenceTestTypeSetNumber1",err,error,*999)
 
@@ -61637,7 +61632,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchAlphaSetNumber0",err,error,*999)
 
@@ -61649,7 +61644,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_ALPHA_SET(solver,alpha,err,error,*999)
+    CALL Solver_NewtonLinesearchAlphaSet(solver,alpha,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchAlphaSetNumber0")
     RETURN
@@ -61679,7 +61674,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchAlphaSetNumber1",err,error,*999)
 
@@ -61691,7 +61686,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_ALPHA_SET(solver,alpha,err,error,*999)
+    CALL Solver_NewtonLinesearchAlphaSet(solver,alpha,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchAlphaSetNumber1")
     RETURN
@@ -61716,7 +61711,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonLineSearchAlphaSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_LINESEARCH_ALPHA_SET(solver%solver,alpha,err,error,*999)
+    CALL Solver_NewtonLinesearchAlphaSet(solver%solver,alpha,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchAlphaSetObj")
     RETURN
@@ -61746,7 +61741,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchMaxStepSetNumber0",err,error,*999)
 
@@ -61758,7 +61753,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_MAXSTEP_SET(solver,maxStep,err,error,*999)
+    CALL Solver_NewtonLinesearchMaxStepSet(solver,maxStep,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchMaxStepSetNumber0")
     RETURN
@@ -61789,7 +61784,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchMaxStepSetNumber1",err,error,*999)
 
@@ -61801,7 +61796,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_MAXSTEP_SET(solver,maxStep,err,error,*999)
+    CALL Solver_NewtonLinesearchMaxStepSet(solver,maxStep,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchMaxStepSetNumber1")
     RETURN
@@ -61827,7 +61822,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonLineSearchMaxStepSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_LINESEARCH_MAXSTEP_SET(solver%solver,maxStep,err,error,*999)
+    CALL Solver_NewtonLinesearchMaxStepSet(solver%solver,maxStep,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchMaxStepSetObj")
     RETURN
@@ -61857,7 +61852,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
  
     ENTERS("cmfe_Solver_NewtonLineSearchStepTolSetNumber0",err,error,*999)
 
@@ -61869,7 +61864,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_STEPTOL_SET(solver,stepTol,err,error,*999)
+    CALL Solver_NewtonLinesearchStepToleranceSet(solver,stepTol,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchStepTolSetNumber0")
     RETURN
@@ -61900,7 +61895,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchStepTolSetNumber1",err,error,*999)
 
@@ -61912,7 +61907,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_STEPTOL_SET(solver,stepTol,err,error,*999)
+    CALL Solver_NewtonLinesearchStepToleranceSet(solver,stepTol,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchStepTolSetNumber1")
     RETURN
@@ -61938,7 +61933,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonLineSearchStepTolSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_LINESEARCH_STEPTOL_SET(solver%solver,stepTol,err,error,*999)
+    CALL Solver_NewtonLinesearchStepToleranceSet(solver%solver,stepTol,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchStepTolSetObj")
     RETURN
@@ -61968,7 +61963,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchTypeSetNumber0",err,error,*999)
 
@@ -61980,7 +61975,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_TYPE_SET(solver,lineSearchType,err,error,*999)
+    CALL Solver_NewtonLinesearchTypeSet(solver,lineSearchType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchTypeSetNumber0")
     RETURN
@@ -62010,7 +62005,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonLineSearchTypeSetNumber1",err,error,*999)
 
@@ -62022,7 +62017,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_LINESEARCH_TYPE_SET(solver,lineSearchType,err,error,*999)
+    CALL Solver_NewtonLinesearchTypeSet(solver,lineSearchType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchTypeSetNumber1")
     RETURN
@@ -62047,7 +62042,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonLineSearchTypeSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_LINESEARCH_TYPE_SET(solver%solver,lineSearchType,err,error,*999)
+    CALL Solver_NewtonLinesearchTypeSet(solver%solver,lineSearchType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLineSearchTypeSetObj")
     RETURN
@@ -62077,7 +62072,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonMaximumFunctionEvaluationsSetNumber0",err,error,*999)
 
@@ -62122,7 +62117,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonMaximumFunctionEvaluationsSetNumber1",err,error,*999)
 
@@ -62191,7 +62186,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonMaximumIterationsSetNumber0",err,error,*999)
 
@@ -62203,7 +62198,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_MAXIMUM_ITERATIONS_SET(solver,maximumIterations,err,error,*999)
+    CALL Solver_NewtonMaxNumberOfIterationsSet(solver,maximumIterations,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonMaximumIterationsSetNumber0")
     RETURN
@@ -62234,7 +62229,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonMaximumIterationsSetNumber1",err,error,*999)
 
@@ -62246,7 +62241,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_MAXIMUM_ITERATIONS_SET(solver,maximumIterations,err,error,*999)
+    CALL Solver_NewtonMaxNumberOfIterationsSet(solver,maximumIterations,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonMaximumIterationsSetNumber1")
     RETURN
@@ -62272,7 +62267,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonMaximumIterationsSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_MAXIMUM_ITERATIONS_SET(solver%solver,maximumIterations,err,error,*999)
+    CALL Solver_NewtonMaxNumberOfIterationsSet(solver%solver,maximumIterations,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonMaximumIterationsSetObj")
     RETURN
@@ -62302,7 +62297,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonRelativeToleranceSetNumber0",err,error,*999)
 
@@ -62314,7 +62309,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_RELATIVE_TOLERANCE_SET(solver,relativeTolerance,err,error,*999)
+    CALL Solver_NewtonRelativeToleranceSet(solver,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonRelativeToleranceSetNumber0")
     RETURN
@@ -62345,7 +62340,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonRelativeToleranceSetNumber1",err,error,*999)
 
@@ -62357,7 +62352,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_RELATIVE_TOLERANCE_SET(solver,relativeTolerance,err,error,*999)
+    CALL Solver_NewtonRelativeToleranceSet(solver,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonRelativeToleranceSetNumber1")
     RETURN
@@ -62383,7 +62378,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonRelativeToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_RELATIVE_TOLERANCE_SET(solver%solver,relativeTolerance,err,error,*999)
+    CALL Solver_NewtonRelativeToleranceSet(solver%solver,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonRelativeToleranceSetObj")
     RETURN
@@ -62413,7 +62408,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonSolutionToleranceSetNumber0",err,error,*999)
 
@@ -62425,7 +62420,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_SOLUTION_TOLERANCE_SET(solver,solutionTolerance,err,error,*999)
+    CALL Solver_NewtonSolutionToleranceSet(solver,solutionTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonSolutionToleranceSetNumber0")
     RETURN
@@ -62456,7 +62451,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonSolutionToleranceSetNumber1",err,error,*999)
 
@@ -62468,7 +62463,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_SOLUTION_TOLERANCE_SET(solver,solutionTolerance,err,error,*999)
+    CALL Solver_NewtonSolutionToleranceSet(solver,solutionTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonSolutionToleranceSetNumber1")
     RETURN
@@ -62494,7 +62489,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonSolutionToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_SOLUTION_TOLERANCE_SET(solver%solver,solutionTolerance,err,error,*999)
+    CALL Solver_NewtonSolutionToleranceSet(solver%solver,solutionTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonSolutionToleranceSetObj")
     RETURN
@@ -62524,7 +62519,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonTrustRegionDelta0SetNumber0",err,error,*999)
 
@@ -62536,7 +62531,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_TRUSTREGION_DELTA0_SET(solver,delta0,err,error,*999)
+    CALL Solver_NewtonTrustregionDelta0Set(solver,delta0,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTrustRegionDelta0SetNumber0")
     RETURN
@@ -62567,7 +62562,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonTrustRegionDelta0SetNumber1",err,error,*999)
 
@@ -62579,7 +62574,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_TRUSTREGION_DELTA0_SET(solver,delta0,err,error,*999)
+    CALL Solver_NewtonTrustregionDelta0Set(solver,delta0,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTrustRegionDelta0SetNumber1")
     RETURN
@@ -62606,7 +62601,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonTrustRegionDelta0SetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_TRUSTREGION_DELTA0_SET(solver%solver,delta0,err,error,*999)
+    CALL Solver_NewtonTrustregionDelta0Set(solver%solver,delta0,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTrustRegionDelta0SetObj")
     RETURN
@@ -62636,7 +62631,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonTrustRegionToleranceSetNumber0",err,error,*999)
 
@@ -62648,7 +62643,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_TRUSTREGION_TOLERANCE_SET(solver,tolerance,err,error,*999)
+    CALL Solver_NewtonTrustregionToleranceSet(solver,tolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTrustRegionToleranceSetNumber0")
     RETURN
@@ -62679,7 +62674,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonTrustRegionToleranceSetNumber1",err,error,*999)
 
@@ -62691,7 +62686,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_TRUSTREGION_TOLERANCE_SET(solver,tolerance,err,error,*999)
+    CALL Solver_NewtonTrustregionToleranceSet(solver,tolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTrustRegionToleranceSetNumber1")
     RETURN
@@ -62717,7 +62712,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonTrustRegionToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_TRUSTREGION_TOLERANCE_SET(solver%solver,tolerance,err,error,*999)
+    CALL Solver_NewtonTrustregionToleranceSet(solver%solver,tolerance,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTrustRegionToleranceSetObj")
     RETURN
@@ -62748,7 +62743,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonTypeSetNumber0",err,error,*999)
 
@@ -62760,7 +62755,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_TYPE_SET(solver,newtonSolveType,err,error,*999)
+    CALL Solver_NewtonTypeSet(solver,newtonSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTypeSetNumber0")
     RETURN
@@ -62790,7 +62785,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NewtonTypeSetNumber1",err,error,*999)
 
@@ -62802,7 +62797,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NEWTON_TYPE_SET(solver,newtonSolveType,err,error,*999)
+    CALL Solver_NewtonTypeSet(solver,newtonSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTypeSetNumber1")
     RETURN
@@ -62827,7 +62822,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NewtonTypeSetObj",err,error,*999)
 
-    CALL SOLVER_NEWTON_TYPE_SET(solver%solver,newtonSolveType,err,error,*999)
+    CALL Solver_NewtonTypeSet(solver%solver,newtonSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_NewtonTypeSetObj")
     RETURN
@@ -62856,7 +62851,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber0",err,error,*999)
 
@@ -62868,7 +62863,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_ABSOLUTE_TOLERANCE_SET(solver,absoluteTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonAbsoluteToleranceSet(solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber0")
     RETURN
@@ -62899,7 +62894,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber1",err,error,*999)
 
@@ -62911,7 +62906,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_ABSOLUTE_TOLERANCE_SET(solver,absoluteTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonAbsoluteToleranceSet(solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber1")
     RETURN
@@ -62937,7 +62932,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_ABSOLUTE_TOLERANCE_SET(solver%solver,absoluteTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonAbsoluteToleranceSetx(solver%solver,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonAbsoluteToleranceSetObj")
     RETURN
@@ -62968,7 +62963,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetNumber0",err,error,*999)
 
@@ -63011,7 +63006,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetNumber1",err,error,*999)
 
@@ -63080,7 +63075,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetNumber0",err,error,*999)
 
@@ -63123,7 +63118,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetNumber1",err,error,*999)
 
@@ -63192,7 +63187,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
+    TYPE(SolverType), POINTER :: solver,linearSolver
  
     ENTERS("cmfe_Solver_QuasiNewtonLinearSolverGetNumber0",err,error,*999)
 
@@ -63205,7 +63200,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
+    CALL Solver_QuasiNewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
     linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -63239,7 +63234,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
+    TYPE(SolverType), POINTER :: solver,linearSolver
 
     ENTERS("cmfe_Solver_QuasiNewtonLinearSolverGetNumber1",err,error,*999)
 
@@ -63252,7 +63247,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
+    CALL Solver_QuasiNewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
     linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -63281,7 +63276,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonLinearSolverGetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_LINEAR_SOLVER_GET(solver%solver,linearSolver%solver,err,error,*999)
+    CALL Solver_QuasiNewtonLinkedLinearSolverGet(solver%solver,linearSolver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLinearSolverGetObj")
     RETURN
@@ -63311,7 +63306,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
+    TYPE(SolverType), POINTER :: solver,cellMLSolver
 
     ENTERS("cmfe_Solver_QuasiNewtonCellMLSolverGetNumber0",err,error,*999)
 
@@ -63324,7 +63319,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
+    CALL Solver_QuasiNewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
     cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -63358,7 +63353,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
+    TYPE(SolverType), POINTER :: solver,cellMLSolver
 
     ENTERS("cmfe_Solver_QuasiNewtonCellMLSolverGetNumber1",err,error,*999)
 
@@ -63371,7 +63366,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
+    CALL Solver_QuasiNewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
     cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
@@ -63401,7 +63396,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonCellMLSolverGetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_CELLML_SOLVER_GET(solver%solver,CellMLSolver%solver,err,error,*999)
+    CALL Solver_QuasiNewtonLinkedCellMLSolverGet(solver%solver,CellMLSolver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonCellMLSolverGetObj")
     RETURN
@@ -63431,7 +63426,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber0",err,error,*999)
 
@@ -63474,7 +63469,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber1",err,error,*999)
 
@@ -63544,7 +63539,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber0",err,error,*999)
 
@@ -63556,7 +63551,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_MAXSTEP_SET(solver,maxStep,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchMaxStepSet(solver,maxStep,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber0")
     RETURN
@@ -63587,7 +63582,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber1",err,error,*999)
 
@@ -63599,7 +63594,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_MAXSTEP_SET(solver,maxStep,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchMaxStepSet(solver,maxStep,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber1")
     RETURN
@@ -63625,7 +63620,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchMaxStepSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_MAXSTEP_SET(solver%solver,maxStep,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchMaxStepSet(solver%solver,maxStep,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchMaxStepSetObj")
     RETURN
@@ -63656,7 +63651,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber0",err,error,*999)
 
@@ -63668,7 +63663,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_STEPTOL_SET(solver,stepTol,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchStepToleranceSet(solver,stepTol,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber0")
     RETURN
@@ -63699,7 +63694,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber1",err,error,*999)
 
@@ -63711,7 +63706,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_STEPTOL_SET(solver,stepTol,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchStepToleranceSet(solver,stepTol,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber1")
     RETURN
@@ -63737,7 +63732,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchStepTolSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_STEPTOL_SET(solver%solver,stepTol,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchStepToleranceSet(solver%solver,stepTol,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchStepTolSetObj")
     RETURN
@@ -63768,7 +63763,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber0",err,error,*999)
 
@@ -63780,7 +63775,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_TYPE_SET(solver,lineSearchType,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchTypeSet(solver,lineSearchType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber0")
     RETURN
@@ -63811,7 +63806,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber1",err,error,*999)
 
@@ -63823,7 +63818,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_TYPE_SET(solver,lineSearchType,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchTypeSet(solver,lineSearchType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber1")
     RETURN
@@ -63849,7 +63844,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonLineSearchTypeSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_LINESEARCH_TYPE_SET(solver%solver,lineSearchType,err,error,*999)
+    CALL Solver_QuasiNewtonLinesearchTypeSet(solver%solver,lineSearchType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLineSearchTypeSetObj")
     RETURN
@@ -63879,7 +63874,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetNumber0",err,error,*999)
 
@@ -63922,7 +63917,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetNumber1",err,error,*999)
 
@@ -63991,7 +63986,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber0",err,error,*999)
 
@@ -64003,7 +63998,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_MAXIMUM_ITERATIONS_SET(solver,maximumIterations,err,error,*999)
+    CALL Solver_QuasiNewtonMaxNumberOfIterationsSet(solver,maximumIterations,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber0")
     RETURN
@@ -64034,7 +64029,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber1",err,error,*999)
 
@@ -64046,7 +64041,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_MAXIMUM_ITERATIONS_SET(solver,maximumIterations,err,error,*999)
+    CALL Solver_QuasiNewtonMaxNumberOfIterationsSet(solver,maximumIterations,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber1")
     RETURN
@@ -64072,7 +64067,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonMaximumIterationsSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_MAXIMUM_ITERATIONS_SET(solver%SOLVER,maximumIterations,err,error,*999)
+    CALL Solver_QuasiNewtonMaxNumberOfIterationsSet(solver%solver,maximumIterations,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonMaximumIterationsSetObj")
     RETURN
@@ -64103,7 +64098,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber0",err,error,*999)
 
@@ -64115,7 +64110,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_RELATIVE_TOLERANCE_SET(solver,relativeTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonRelativeToleranceSet(solver,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber0")
     RETURN
@@ -64146,7 +64141,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber1",err,error,*999)
 
@@ -64158,7 +64153,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_RELATIVE_TOLERANCE_SET(solver,relativeTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonRelativeToleranceSet(solver,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber1")
     RETURN
@@ -64184,7 +64179,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonRelativeToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_RELATIVE_TOLERANCE_SET(solver%SOLVER,relativeTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonRelativeToleranceSet(solver%solver,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRelativeToleranceSetObj")
     RETURN
@@ -64215,7 +64210,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber0",err,error,*999)
 
@@ -64227,7 +64222,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_SOLUTION_TOLERANCE_SET(solver,solutionTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonSolutionToleranceSet(solver,solutionTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber0")
     RETURN
@@ -64258,7 +64253,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber1",err,error,*999)
 
@@ -64270,7 +64265,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_SOLUTION_TOLERANCE_SET(solver,solutionTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonSolutionToleranceSet(solver,solutionTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber1")
     RETURN
@@ -64296,7 +64291,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonSolutionToleranceSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_SOLUTION_TOLERANCE_SET(solver%SOLVER,solutionTolerance,err,error,*999)
+    CALL Solver_QuasiNewtonSolutionToleranceSet(solver%solver,solutionTolerance,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonSolutionToleranceSetObj")
     RETURN
@@ -64327,7 +64322,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber0",err,error,*999)
 
@@ -64339,7 +64334,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_TRUSTREGION_DELTA0_SET(solver,delta0,err,error,*999)
+    CALL Solver_QuasiNewtonTrustregionDelta0Set(solver,delta0,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber0")
     RETURN
@@ -64370,7 +64365,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber1",err,error,*999)
 
@@ -64382,7 +64377,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_TRUSTREGION_DELTA0_SET(solver,delta0,err,error,*999)
+    CALL Solver_QuasiNewtonTrustregionDelta0Set(solver,delta0,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber1")
     RETURN
@@ -64408,7 +64403,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonTrustRegionDelta0SetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_TRUSTREGION_DELTA0_SET(solver%SOLVER,delta0,err,error,*999)
+    CALL Solver_QuasiNewtonTrustregionDelta0Set(solver%solver,delta0,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonTrustRegionDelta0SetObj")
     RETURN
@@ -64439,7 +64434,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonTrustRegionToleranceSetNumber0",err,error,*999)
 
@@ -64482,7 +64477,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonTrustRegionToleranceSetNumber1",err,error,*999)
 
@@ -64551,7 +64546,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonRestartSetNumber0",err,error,*999)
 
@@ -64563,7 +64558,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_RESTART_SET(solver,quasiNewtonRestart,err,error,*999)
+    CALL Solver_QuasiNewtonRestartNumberSet(solver,quasiNewtonRestart,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRestartSetNumber0")
     RETURN
@@ -64593,7 +64588,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonRestartSetNumber1",err,error,*999)
 
@@ -64605,7 +64600,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_RESTART_SET(solver,quasiNewtonRestart,err,error,*999)
+    CALL Solver_QuasiNewtonRestartNumberSet(solver,quasiNewtonRestart,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRestartSetNumber1")
     RETURN
@@ -64630,7 +64625,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonRestartSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_RESTART_SET(solver%SOLVER,quasiNewtonRestart,err,error,*999)
+    CALL Solver_QuasiNewtonRestartNumberSet(solver%solver,quasiNewtonRestart,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRestartSetObj")
     RETURN
@@ -64660,7 +64655,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonRestartTypeSetNumber0",err,error,*999)
 
@@ -64672,7 +64667,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_RESTART_TYPE_SET(solver,quasiNewtonRestartType,err,error,*999)
+    CALL Solver_QuasiNewtonRestartTypeSet(solver,quasiNewtonRestartType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRestartTypeSetNumber0")
     RETURN
@@ -64703,7 +64698,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonRestartTypeSetNumber1",err,error,*999)
 
@@ -64715,7 +64710,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_RESTART_TYPE_SET(solver,quasiNewtonRestartType,err,error,*999)
+    CALL Solver_QuasiNewtonRestartTypeSet(solver,quasiNewtonRestartType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRestartTypeSetNumber1")
     RETURN
@@ -64741,7 +64736,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonRestartTypeSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_RESTART_TYPE_SET(solver%SOLVER,quasiNewtonRestartType,err,error,*999)
+    CALL Solver_QuasiNewtonRestartTypeSet(solver%solver,quasiNewtonRestartType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonRestartTypeSetObj")
     RETURN
@@ -64771,7 +64766,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonScaleTypeSetNumber0",err,error,*999)
 
@@ -64783,7 +64778,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_SCALE_TYPE_SET(solver,quasiNewtonScaleType,err,error,*999)
+    CALL Solver_QuasiNewtonScaleTypeSet(solver,quasiNewtonScaleType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonScaleTypeSetNumber0")
     RETURN
@@ -64813,7 +64808,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonScaleTypeSetNumber1",err,error,*999)
 
@@ -64825,7 +64820,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_SCALE_TYPE_SET(solver,quasiNewtonScaleType,err,error,*999)
+    CALL Solver_QuasiNewtonScaleTypeSet(solver,quasiNewtonScaleType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonScaleTypeSetNumber1")
     RETURN
@@ -64850,7 +64845,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonScaleTypeSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_SCALE_TYPE_SET(solver%SOLVER,quasiNewtonScaleType,err,error,*999)
+    CALL Solver_QuasiNewtonScaleTypeSet(solver%solver,quasiNewtonScaleType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonScaleTypeSetObj")
     RETURN
@@ -64880,7 +64875,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonSolveTypeSetNumber0",err,error,*999)
 
@@ -64892,7 +64887,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_SOLVE_TYPE_SET(solver,quasiNewtonSolveType,err,error,*999)
+    CALL Solver_QuasiNewtonSolveTypeSet(solver,quasiNewtonSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonSolveTypeSetNumber0")
     RETURN
@@ -64922,7 +64917,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonSolveTypeSetNumber1",err,error,*999)
 
@@ -64934,7 +64929,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_SOLVE_TYPE_SET(solver,quasiNewtonSolveType,err,error,*999)
+    CALL Solver_QuasiNewtonSolveTypeSet(solver,quasiNewtonSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonSolveTypeSetNumber1")
     RETURN
@@ -64959,7 +64954,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonSolveTypeSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_SOLVE_TYPE_SET(solver%SOLVER,quasiNewtonSolveType,err,error,*999)
+    CALL Solver_QuasiNewtonSolveTypeSet(solver%solver,quasiNewtonSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonSolveTypeSetObj")
     RETURN
@@ -64989,7 +64984,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonTypeSetNumber0",err,error,*999)
 
@@ -65001,7 +64996,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_TYPE_SET(solver,quasiNewtonType,err,error,*999)
+    CALL Solver_QuasiNewtonTypeSet(solver,quasiNewtonType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonTypeSetNumber0")
     RETURN
@@ -65031,7 +65026,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_QuasiNewtonTypeSetNumber1",err,error,*999)
 
@@ -65043,7 +65038,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_QUASI_NEWTON_TYPE_SET(solver,quasiNewtonType,err,error,*999)
+    CALL Solver_QuasiNewtonTypeSet(solver,quasiNewtonType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonTypeSetNumber1")
     RETURN
@@ -65068,7 +65063,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_QuasiNewtonTypeSetObj",err,error,*999)
 
-    CALL SOLVER_QUASI_NEWTON_TYPE_SET(solver%SOLVER,quasiNewtonType,err,error,*999)
+    CALL Solver_QuasiNewtonTypeSet(solver%solver,quasiNewtonType,err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonTypeSetObj")
     RETURN
@@ -65098,7 +65093,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NonlinearTypeSetNumber0",err,error,*999)
 
@@ -65110,7 +65105,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NONLINEAR_TYPE_SET(solver,nonlinearSolveType,err,error,*999)
+    CALL Solver_NonlinearTypeSet(solver,nonlinearSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_NonlinearTypeSetNumber0")
     RETURN
@@ -65140,7 +65135,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_NonlinearTypeSetNumber1",err,error,*999)
 
@@ -65152,7 +65147,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_NONLINEAR_TYPE_SET(solver,nonlinearSolveType,err,error,*999)
+    CALL Solver_NonlinearTypeSet(solver,nonlinearSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_NonlinearTypeSetNumber1")
     RETURN
@@ -65177,7 +65172,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_NonlinearTypeSetObj",err,error,*999)
 
-    CALL SOLVER_NONLINEAR_TYPE_SET(solver%SOLVER,nonlinearSolveType,err,error,*999)
+    CALL Solver_NonlinearTypeSet(solver%solver,nonlinearSolveType,err,error,*999)
 
     EXITS("cmfe_Solver_NonlinearTypeSetObj")
     RETURN
@@ -65207,7 +65202,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_OutputTypeSetNumber0",err,error,*999)
 
@@ -65219,7 +65214,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
-    CALL SOLVER_OUTPUT_TYPE_SET(solver,outputType,err,error,*999)
+    CALL Solver_OutputTypeSet(solver,outputType,err,error,*999)
 
     EXITS("cmfe_Solver_OutputTypeSetNumber0")
     RETURN
@@ -65249,7 +65244,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_OutputTypeSetNumber1",err,error,*999)
 
@@ -65261,7 +65256,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
-    CALL SOLVER_OUTPUT_TYPE_SET(solver,outputType,err,error,*999)
+    CALL Solver_OutputTypeSet(solver,outputType,err,error,*999)
 
     EXITS("cmfe_Solver_OutputTypeSetNumber1")
     RETURN
@@ -65286,7 +65281,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_OutputTypeSetObj",err,error,*999)
 
-    CALL SOLVER_OUTPUT_TYPE_SET(solver%SOLVER,outputType,err,error,*999)
+    CALL Solver_OutputTypeSet(solver%solver,outputType,err,error,*999)
 
     EXITS("cmfe_Solver_OutputTypeSetObj")
     RETURN
@@ -65316,7 +65311,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_SolverEquationsGetNumber0",err,error,*999)
 
@@ -65358,7 +65353,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
 
     ENTERS("cmfe_Solver_SolverEquationsGetNumber1",err,error,*999)
 
@@ -65395,7 +65390,7 @@ CONTAINS
 
     ENTERS("cmfe_Solver_SolverEquationsGetObj",err,error,*999)
 
-    CALL Solver_SolverEquationsGet(solver%SOLVER,solverEquations%solverEquations,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver%solver,solverEquations%solverEquations,err,error,*999)
 
     EXITS("cmfe_Solver_SolverEquationsGetObj")
     RETURN
@@ -65430,8 +65425,8 @@ CONTAINS
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_EquationsSetAddNumber0",err,error,*999)
 
@@ -65486,8 +65481,8 @@ CONTAINS
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_EquationsSetAddNumber1",err,error,*999)
 
@@ -65571,8 +65566,8 @@ CONTAINS
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: interfaceRegion
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_InterfaceConditionAddNumber0",err,error,*999)
 
@@ -65633,8 +65628,8 @@ CONTAINS
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: interfaceRegion
     TYPE(RegionsType), POINTER :: regions
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_InterfaceConditionAddNumber1",err,error,*999)
 
@@ -65716,8 +65711,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_SparsityTypeSetNumber0",err,error,*999)
 
@@ -65761,8 +65756,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_SparsityTypeSetNumber1",err,error,*999)
 
@@ -65831,8 +65826,9 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeGetNumber0",err,error,*999)
 
@@ -65841,12 +65837,14 @@ CONTAINS
     NULLIFY(problem)
     NULLIFY(solver)
     NULLIFY(solverEquations)
+    NULLIFY(solverMatrices)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SymmetryTypeGetNumber0")
     RETURN
@@ -65876,8 +65874,9 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeGetNumber1",err,error,*999)
 
@@ -65886,12 +65885,14 @@ CONTAINS
     NULLIFY(problem)
     NULLIFY(solver)
     NULLIFY(solverEquations)
+    NULLIFY(solverMatrices)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SymmetryTypeGetNumber1")
     RETURN
@@ -65913,10 +65914,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeGetObj",err,error,*999)
 
-    CALL SolverEquations_SymmetryTypeGet(solverEquations%solverEquations,symmetryType,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryType,err,error,*999)
 
     EXITS("cmfe_SolverEquations_SymmetryTypeGetObj")
     RETURN
@@ -65946,8 +65950,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeSetNumber0",err,error,*999)
 
@@ -65991,8 +65995,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_SymmetryTypeSetNumber1",err,error,*999)
 
@@ -66060,15 +66064,13 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber0",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(problems)
     NULLIFY(problem)
-    NULLIFY(solver)
     NULLIFY(solverEquations)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
@@ -66104,7 +66106,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber1",err,error,*999)
 
@@ -66172,8 +66174,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsCreateStartNumber0",err,error,*999)
 
@@ -66216,8 +66218,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsCreateStartNumber1",err,error,*999)
 
@@ -66289,7 +66291,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsGetNumber0",err,error,*999)
 
@@ -66332,7 +66334,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsGetNumber1",err,error,*999)
 
@@ -66394,10 +66396,14 @@ CONTAINS
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the number of matrices for
     INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of matrices for the solver equations
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_NumberOfMatricesGet",err,error,*999)
 
-    CALL SolverEquations_NumberOfMatricesGet(solverEquations%solverEquations,numberOfMatrices,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
 
     EXITS("cmfe_SolverEquations_NumberOfMatricesGet")
     RETURN
@@ -66411,19 +66417,23 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get a solver matrix from the solver equations matrices
-  SUBROUTINE cmfe_SolverEquations_MatrixGet(solverEquations,matrixIndex,matrix,err)
+  !>Get a solver distributed matrix from the solver equations matrices
+  SUBROUTINE cmfe_SolverEquations_MatrixGet(solverEquations,matrixIndex,distributedMatrix,err)
     !DLLEXPORT(cmfe_SolverEquations_MatrixGet)
 
     !Argument variables
-    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the matrix for
+    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the distributed matrix for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The solver matrix index to get
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested solver matrix
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: distributedMatrix !<On return, the requested solver distributed matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_MatrixGet",err,error,*999)
 
-    CALL SolverEquations_MatrixGet(solverEquations%solverEquations,matrixIndex,matrix%distributedMatrix,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_SolverDistributedMatrixGet(solverMatrices,matrixIndex,distributedMatrix%distributedMatrix,err,error,*999)
 
     EXITS("cmfe_SolverEquations_MatrixGet")
     RETURN
@@ -66437,18 +66447,22 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the Jacobian matrix from the solver equations matrices for nonlinear solver equations
-  SUBROUTINE cmfe_SolverEquations_JacobianMatrixGet(solverEquations,matrix,err)
+  !>Get the Jacobian distributed matrix from the solver equations matrices for nonlinear solver equations
+  SUBROUTINE cmfe_SolverEquations_JacobianMatrixGet(solverEquations,distributedMatrix,err)
     !DLLEXPORT(cmfe_SolverEquations_JacobianMatrixGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the Jacobian matrix for
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the solver equations Jacobian matrix
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: distributedMatrix !<On return, the solver equations Jacobian distributed matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_JacobianMatrixGet",err,error,*999)
 
-    CALL SolverEquations_JacobianMatrixGet(solverEquations%solverEquations,matrix%distributedMatrix,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,distributedMatrix%distributedMatrix,err,error,*999)
 
     EXITS("cmfe_SolverEquations_JacobianMatrixGet")
     RETURN
@@ -66462,19 +66476,23 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the vector assiciated with a solver matrix from the solver equations matrices
-  SUBROUTINE cmfe_SolverEquations_VectorGet(solverEquations,matrixIndex,vector,err)
+  !>Get the distributed vector assiciated with a solver matrix from the solver equations matrices
+  SUBROUTINE cmfe_SolverEquations_VectorGet(solverEquations,matrixIndex,distributedVector,err)
     !DLLEXPORT(cmfe_SolverEquations_VectorGet)
 
     !Argument variables
-    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the vector for
+    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the distributed vector for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The solver matrix index to get the vector for
-    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: vector !<On return, the requested solver matrix vector
+    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: distributedVector !<On return, the requested solver matrix distributed vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_VectorGet",err,error,*999)
 
-    CALL SolverEquations_VectorGet(solverEquations%solverEquations,matrixIndex,vector%distributedVector,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_SolverDistributedVectorGet(solverMatrices,matrixIndex,distributedVector%distributedVector,err,error,*999)
 
     EXITS("cmfe_SolverEquations_VectorGet")
     RETURN
@@ -66488,18 +66506,22 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the residual vector from the solver equations for nonlinear problems
+  !>Get the residual distributed vector from the solver equations for nonlinear problems
   SUBROUTINE cmfe_SolverEquations_ResidualVectorGet(solverEquations,residualVector,err)
     !DLLEXPORT(cmfe_SolverEquations_ResidualVectorGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the residual vector for
-    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: residualVector !<On return, the solver residual vector
+    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: residualVector !<On return, the solver residual distributed vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_ResidualVectorGet",err,error,*999)
 
-    CALL SolverEquations_ResidualVectorGet(solverEquations%solverEquations,residualVector%distributedVector,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector%distributedVector,err,error,*999)
 
     EXITS("cmfe_SolverEquations_ResidualVectorGet")
     RETURN
@@ -66513,18 +66535,22 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the right hand side vector from the solver equations
+  !>Get the right hand side distributed vector from the solver equations
   SUBROUTINE cmfe_SolverEquations_RHSVectorGet(solverEquations,rhsVector,err)
     !DLLEXPORT(cmfe_SolverEquations_RhsVectorGet)
 
     !Argument variables
-    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the right hand side vector for
-    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: rhsVector !<On return, the solver right hand side vector
+    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the right hand side distributed vector for
+    TYPE(cmfe_DistributedVectorType), INTENT(INOUT) :: rhsVector !<On return, the solver right hand side distributed vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
 
     ENTERS("cmfe_SolverEquations_RHSVectorGet",err,error,*999)
 
-    CALL SolverEquations_RHSVectorGet(solverEquations%solverEquations,rhsVector%distributedVector,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations%solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMatrices_RHSDistributedVectorGet(solverMatrices,rhsVector%distributedVector,err,error,*999)
 
     EXITS("cmfe_SolverEquations_RHSVectorGet")
     RETURN

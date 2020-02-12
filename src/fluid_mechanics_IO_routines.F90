@@ -48,13 +48,13 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
 
   USE BaseRoutines
   USE Constants
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE TYPES
+  USE Kinds
+  USE Types
   
 #include "macros.h"
 #include "dllexport.h"
@@ -166,6 +166,9 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
 
 
   !Module variables
+
+
+!!TODO: all these need to be removed as they are not thread safe!  
 
   TYPE (ARRAY_PROBLEM_BASE) BASE_INFO
   TYPE (ARRAY_MESH) MESH_INFO(3)

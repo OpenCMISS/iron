@@ -50,7 +50,7 @@ MODULE REACTION_DIFFUSION_IO_ROUTINES
  USE ComputationRoutines
  USE ComputationAccessRoutines
  USE ContextAccessRoutines
- USE EquationsSetConstants
+ USE EquationsSetAccessRoutines
  USE FieldRoutines
  USE FieldAccessRoutines
  USE InputOutput

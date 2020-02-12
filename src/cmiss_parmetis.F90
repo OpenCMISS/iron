@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,7 +42,7 @@
 !>
 
 !> This module is a CMISS buffer module to the ParMETIS library.
-MODULE CmissParMETIS
+MODULE CMISSParMETIS
   
   USE BaseRoutines
   USE Kinds
@@ -84,7 +84,6 @@ MODULE CmissParMETIS
       INTEGER(INTG) :: edgecut
       INTEGER(INTG) :: part(*)
       INTEGER(INTG) :: comm
-
       INTEGER(INTG) :: ParMETIS_V3_PartKway
     END FUNCTION ParMETIS_V3_PartKWay
 
@@ -109,7 +108,6 @@ MODULE CmissParMETIS
       INTEGER(INTG) :: edgecut
       INTEGER(INTG) :: part(*)
       INTEGER(INTG) :: comm
-
       INTEGER(INTG) :: ParMETIS_V3_PartMeshKway
     END FUNCTION ParMETIS_V3_PartMeshKway
     
@@ -211,4 +209,4 @@ CONTAINS
   !================================================================================================================================
   !
     
-END MODULE CmissParMETIS
+END MODULE CMISSParMETIS

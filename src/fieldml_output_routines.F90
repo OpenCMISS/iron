@@ -144,11 +144,11 @@ CONTAINS
     SUFFIX = ""
     DO I = 1, SIZE( COLLAPSE_INFO )
       IF( COLLAPSE_INFO( I ) == BASIS_XI_COLLAPSED ) THEN
-        SUFFIX = SUFFIX // "_xi"//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//"C"
+        SUFFIX = SUFFIX // "_xi"//TRIM(NumberToVString(i,"*",ERR,ERROR))//"C"
       ELSEIF( COLLAPSE_INFO( I ) == BASIS_COLLAPSED_AT_XI0 ) THEN
-        SUFFIX = SUFFIX // "_xi"//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//"0"
+        SUFFIX = SUFFIX // "_xi"//TRIM(NumberToVString(i,"*",ERR,ERROR))//"0"
       ELSEIF( COLLAPSE_INFO( I ) == BASIS_COLLAPSED_AT_XI1 ) THEN
-        SUFFIX = SUFFIX // "_xi"//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//"1"
+        SUFFIX = SUFFIX // "_xi"//TRIM(NumberToVString(i,"*",ERR,ERROR))//"1"
       ENDIF
     ENDDO
   
@@ -1115,7 +1115,7 @@ CONTAINS
 
       CALL FIELDML_OUTPUT_GET_SIMPLE_BASIS_NAME( FIELDML_INFO%FML_HANDLE, EVALUATOR_HANDLE, NAME, ERR, ERROR, *999 )
       
-      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NUMBER_TO_VSTRING(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
+      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NumberToVString(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
         & ".parameters"
       
       AGGREGATE_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, cchar(REFERENCE_NAME), &
@@ -1142,7 +1142,7 @@ CONTAINS
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot set bind for basis dofs for"//REFERENCE_NAME//".", &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
       
-      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NUMBER_TO_VSTRING(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
+      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NumberToVString(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
         & ".evaluator"
       
       valueType = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, EVALUATOR_HANDLE )
@@ -1178,7 +1178,7 @@ CONTAINS
 
       CALL FIELDML_OUTPUT_GET_SIMPLE_BASIS_NAME( FIELDML_INFO%FML_HANDLE, EVALUATOR_HANDLE, NAME, ERR, ERROR, *999 )
       
-      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NUMBER_TO_VSTRING(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
+      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NumberToVString(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
         & ".parameters"
       
       AGGREGATE_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, cchar(REFERENCE_NAME), &
@@ -1205,7 +1205,7 @@ CONTAINS
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot set bind for basis dofs for"//REFERENCE_NAME//".", &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
       
-      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NUMBER_TO_VSTRING(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
+      REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NumberToVString(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
         & ".evaluator"
       
       valueType = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, EVALUATOR_HANDLE )
@@ -1332,7 +1332,7 @@ CONTAINS
     CONNECTIVITY_COUNT = 0
     BASIS_COUNT = 0
     
-    COMPONENT_NAME = BASE_NAME//".component"//TRIM(NUMBER_TO_VSTRING(COMPONENT_NUMBER,"*",ERR,ERROR))
+    COMPONENT_NAME = BASE_NAME//".component"//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))
     
     TYPE_HANDLE = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%NODE_DOFS_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get node dofs FieldML type.", FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1478,7 +1478,7 @@ CONTAINS
         FML_ERR = Fieldml_WriteIntSlab( WRITER, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(IBUFFER) )
         IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
           CALL FlagError( var_str("I/O error while writing connectivity data for ")//BASE_NAME//"("&
-            & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", &
+            & // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", &
             & ERR, ERROR, *999 )
         ENDIF
         OFFSETS(1) = OFFSETS(1) + 1
@@ -1662,7 +1662,7 @@ CONTAINS
       FML_ERR = Fieldml_WriteDoubleSlab( WRITER, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(DBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
         CALL FlagError( var_str("I/O error while writing nodal parameter values for ")//BASE_NAME//"("// &
-          & TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999 )
+          & TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999 )
       ENDIF
       OFFSETS(1) = OFFSETS(1) + 1
     ENDDO
@@ -1799,7 +1799,7 @@ CONTAINS
       FML_ERR = Fieldml_WriteDoubleSlab( WRITER, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(DBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
         CALL FlagError( var_str("I/O error while writing element parameter values for")//BASE_NAME//"("&
-          & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999 )
+          & // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999 )
       ENDIF
       OFFSETS(1) = OFFSETS(1) + 1
     ENDDO
@@ -1945,7 +1945,7 @@ CONTAINS
       FML_ERR = Fieldml_WriteDoubleSlab( WRITER, C_LOC(OFFSETS), C_LOC(SINGLE_SIZE), C_LOC(DBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
         CALL FlagError( var_str("I/O error while writing constant parameter values for ")//BASE_NAME//"(" &
-        & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999)
+        & // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999)
       ENDIF
       FML_ERR = Fieldml_CloseWriter( WRITER )
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot close constant parameter writer for "//BASE_NAME//".dofs.constant.data", &
@@ -1965,7 +1965,7 @@ CONTAINS
       FML_ERR = Fieldml_WriteIntSlab( WRITER, C_LOC(OFFSETS), C_LOC(SINGLE_SIZE), C_LOC(IBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
         CALL FlagError( var_str("I/O while writing constant parameter values for ")//BASE_NAME//"(" &
-          & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
+          & // TRIM(NumberToVString(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
       ENDIF
       FML_ERR = Fieldml_CloseWriter( WRITER )
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot close constant parameter writer for "//BASE_NAME//".dofs.constant.data", &

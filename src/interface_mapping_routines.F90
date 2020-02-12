@@ -48,15 +48,14 @@ MODULE InterfaceMappingRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
-  USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
   USE InterfaceMappingAccessRoutines
   USE InterfaceMatricesAccessRoutines
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -77,6 +76,8 @@ MODULE InterfaceMappingRoutines
   PUBLIC InterfaceMapping_LagrangeVariableTypeSet
 
   PUBLIC InterfaceMapping_MatrixCoefficientsSet
+
+  PUBLIC InterfaceMapping_TransposeMatrixCoefficientsSet
 
   PUBLIC InterfaceMapping_MatricesColumnMeshIndicesSet,InterfaceMapping_MatricesRowMeshIndicesSet
 
@@ -102,7 +103,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,dofIdx,matrixIdx,meshIdx,variableIdx,numberOfInterfaceMatrices
+    INTEGER(INTG) :: columnIdx,dofIdx,matrixIdx,meshIdx,variableIdx,numberOfDOFs,numberOfGlobalDOFs,numberOfInterfaceMatrices, &
+      & totalNumberOfDOFs,variableType
+    REAL(DP) :: matrixCoefficient,transposeMatrixCoefficient
+    LOGICAL :: hasTranspose
+    TYPE(DomainType), POINTER :: domain
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: lagrangeField
     TYPE(FieldVariableType), POINTER :: fieldVariable,lagrangeVariable
@@ -112,6 +117,7 @@ CONTAINS
     TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixRowsToVarMap
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceMapping_Calculate",err,error,*999)
@@ -138,18 +144,18 @@ CONTAINS
       interfaceMapping%lagrangeVariableType=createValuesCache%lagrangeVariableType
       interfaceMapping%lagrangeVariable=>lagrangeVariable
       !Set the number of columns in the interface matrices
-      interfaceMapping%numberOfColumns=lagrangeVariable%numberOfDofs
-      interfaceMapping%totalNumberOfColumns=lagrangeVariable%totalNumberOfDofs
-      interfaceMapping%numberOfGlobalColumns=lagrangeVariable%numberOfGlobalDofs
+      CALL FieldVariable_NumberOfDOFsGet(lagrangeVariable,interfaceMapping%numberOfColumns,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(lagrangeVariable,interfaceMapping%totalNumberOfColumns,err,error,*999)
+      CALL FieldVariable_NumberOfGlobalDOFsGet(langrrangeVariable,interfaceMapping%numberOfGlobalColumns,err,error,*999)
       !Set the column dofs mapping
-      interfaceMapping%columnDOFSMapping=>lagrangeVariable%domainMapping
-      ALLOCATE(interfaceMapping%lagrangeDOFToColumnMap(lagrangeVariable%totalNumberOfDofs),STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate Lagrange dof to column map.",err,error,*999)
+      CALL FieldVariable_DomainMappingGet(lagrangeVariable,interfaceMapping%columnDOFsMapping,err,error,*999)
+      ALLOCATE(interfaceMapping%lagrangeDOFToColumnMap(interfaceMapping%totalNumberOfDofs),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate Lagrange DOF to column map.",err,error,*999)
       !1-1 mapping for now
-      DO dofIdx=1,lagrangeVariable%totalNumberOfDofs
-        columnIdx=lagrangeVariable%domainMapping%localToGlobalMap(dofIdx)
+      DO dofIdx=1,interfaceMapping%totalNumberOfDofs
+        CALL DomainMapping_LocalToGlobalGet(interfaceMapping%columnsDOFsMapping,dofIdx,columnIdx,err,error,*999)
         interfaceMapping%lagrangeDOFToColumnMap(dofIdx)=columnIdx
-      ENDDO
+      ENDDO !dofIdx
       !Set the number of interface matrices
       interfaceMapping%numberOfInterfaceMatrices=createValuesCache%numberOfInterfaceMatrices
       ALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMapping%numberOfInterfaceMatrices),STAT=err)
@@ -159,13 +165,15 @@ CONTAINS
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
         numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
       CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-        !Number of interface matrices whose rows/columns are related to Dependent/Lagrange variables and not Lagrange/Lagrange variables (last interface matrix is Lagrange/Lagrange (Penalty matrix)
+        !Number of interface matrices whose rows/columns are related to Dependent/Lagrange variables and not
+        !Lagrange/Lagrange variables (last interface matrix is Lagrange/Lagrange (Penalty matrix)
         numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices-1 
       END SELECT
       DO matrixIdx=1,numberOfInterfaceMatrices
         !Initialise and setup the interface matrix
+        NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr)
         CALL InterfaceMapping_MatrixToVarMapInitialise(interfaceMapping,matrixIdx,err,error,*999)
-        meshIdx=createValuesCache%matrixRowFieldVariableIndices(matrixIdx)
+        CALL InterfaceMappingCVC_RowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
         NULLIFY(equationsSet)
         NULLIFY(fieldVariable)
         DO variableIdx=1,interfaceDependent%numberOfDependentVariables
@@ -183,56 +191,75 @@ CONTAINS
           localError="Dependent variable for mesh index "//TRIM(NumberToVString(meshIdx,"*",err,error))//" could not be found."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%equationsSet=>equationsSet
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableType=fieldVariable%variableType
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable=>fieldVariable
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex=meshIdx
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%matrixCoefficient= &
-          & interfaceMapping%createValuesCache%matrixCoefficients(matrixIdx)
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%hasTranspose= &
-          & interfaceMapping%createValuesCache%hasTranspose(matrixIdx)
+        CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+        CALL FieldVariable_NumberOfDOFsGet(fieldVariable,numberOfDOFs,err,error,*999)
+        CALL FieldVariable_TotalNumberOfDOFsGet(fieldVariable,totalNumberOfDOFs,err,error,*999)
+        CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*999)
+        CALL InterfaceMappingCVC_MatrixCoefficientGet(createValuesCache,matrixIdx,matrixCoefficient,err,error,*999)
+        CALL InterfaceMappingCVC_TransposeMatrixCoefficientGet(createValuesCache,matrixIdx,transposeMatrixCoefficient, &
+          & err,error,*999)
+        CALL InterfaceMappingCVS_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
+        NULLIFY(interfaceMatrixRowsToVarMap)
+        CALL InterfaceMapping_InterfaceMatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixRowsToVarMap,err,error,*999)
+        interfaceMatrixRowsToVarMap%equationsSet=>equationsSet
+        interfaceMatrixRowsToVarMap%variableType=variableType
+        interfaceMatrixRowsToVarMap%variable=>fieldVariable
+        interfaceMatrixRowsToVarMap%meshIndex=meshIdx
+        interfaceMatrixRowsToVarMap%matrixCoefficient=matrixCoefficient
+        interfaceMatrixRowsToVarMap%hasTranspose=hasTranspose
+        IF(hasTranspose) &
+          & interfaceMatrixRowsToVarMap%transposeMatrixCoefficient=transposeMatrixCoefficient
         !Set the number of rows
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%numberOfRows=fieldVariable%numberOfDofs
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%totalNumberOfRows=fieldVariable%totalNumberOfDofs
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%numberOfGlobalRows=fieldVariable%numberOfGlobalDofs
+        interfaceMatrixRowsToVarMap%numberOfRows=numberOfDOFs
+        interfaceMatrixRowsToVarMap%totalNumberOfRows=totalNumberOfDOFs
+        interfaceMatrixRowsToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
         !Set the row mapping
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%rowDOFsMapping=>fieldVariable%domainMapping
-        ALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableDOFToRowMap(fieldVariable%totalNumberOfDofs), &
-          & STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate variable dof to row map.",err,error,*999)
+        interfaceMatrixRowsToVarMap%rowDOFsMapping=>domainMapping
+        ALLOCATE(interfaceMatrixRowsToVarMap%variableDOFToRowMap(totalNumberOfDOFs),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate variable DOF to row map.",err,error,*999)
         !1-1 mapping for now
         DO dofIdx=1,fieldVariable%totalNumberOfDofs
-          interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableDOFToRowMap(dofIdx)=dofIdx
+          interfaceMatrixRowsToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
         ENDDO !dofIdx
       ENDDO !matrixIdx
       IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD) THEN
         !Sets up the Lagrange-(Penalty) interface matrix mapping and calculate the row mappings
         matrixIdx = interfaceMapping%numberOfInterfaceMatrices !last of the interface matrices
         !Initialise and setup the interface matrix
+        NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr)
         CALL InterfaceMapping_MatrixToVarMapInitialise(interfaceMapping,matrixIdx,err,error,*999)
-        meshIdx=createValuesCache%matrixRowFieldVariableIndices(matrixIdx)
+        CALL InterfaceMappingCVC_RowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
         NULLIFY(lagrangeVariable)
         CALL Field_VariableGet(lagrangeField,createValuesCache%lagrangeVariableType,lagrangeVariable,err,error,*999)
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%interfaceEquations=>interfaceEquations
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableType=lagrangeVariable%variableType
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%VARIABLE=>lagrangeVariable
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex=meshIdx
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%matrixCoefficient= &
-          & interfaceMapping%createValuesCache%matrixCoefficients(matrixIdx)
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%hasTranspose= &
-          & interfaceMapping%createValuesCache%hasTranspose(matrixIdx)
+        CALL FieldVariable_VariableTypeGet(lagrangeVariable,variableType,err,error,*999)
+        CALL FieldVariable_NumberOfDOFsGet(lagrangeVariable,numberOfDOFs,err,error,*999)
+        CALL FieldVariable_TotalNumberOfDOFsGet(lagrangeVariable,totalNumberOfDOFs,err,error,*999)
+        CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(lagrangeVariable,domainMapping,err,error,*999)
+        CALL InterfaceMappingCVC_MatrixCoefficientGet(createValuesCache,matrixIdx,matrixCoefficient,err,error,*999)
+        CALL InterfaceMappingCVC_TransposeMatrixCoefficientGet(createValuesCache,matrixIdx,transposeMatrixCoefficient, &
+          & err,error,*999)
+        CALL InterfaceMappingCVS_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
+        interfaceMatrixRowsToVarMap%interfaceEquations=>interfaceEquations
+        interfaceMatrixRowsToVarMap%variableType=variableType
+        interfaceMatrixRowsToVarMap%variable=>lagrangeVariable
+        interfaceMatrixRowsToVarMap%meshIndex=meshIdx
+        interfaceMatrixRowsToVarMap%matrixCoefficient=matrixCoefficient
+        interfaceMatrixRowsToVarMap%hasTranspose=hasTranspose
         !Set the number of rows
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%numberOfRows=lagrangeVariable%numberOfDofs
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%totalNumberOfRows=lagrangeVariable%totalNumberOfDofs
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%numberOfGlobalRows=lagrangeVariable%numberOfGlobalDofs
+        interfaceMatrixRowsToVarMap%numberOfRows=numberOfDOFs
+        interfaceMatrixRowsToVarMap%totalNumberOfRows=totalNumberOfDOFs
+        interfaceMatrixRowsToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
         !Set the row mapping
-        interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%rowDOFsMapping=>lagrangeVariable%domainMapping
-        ALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableDOFToRowMap(lagrangeVariable%totalNumberOfDofs),&
-          & STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate variable dof to row map.",err,error,*999)
+        interfaceMatrixRowsToVarMap%rowDOFsMapping=>domainMapping
+        ALLOCATE(interfaceMatrixRowsToVarMap%variableDOFToRowMap(totalNumberOfDofs),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate variable DOF to row map.",err,error,*999)
         !1-1 mapping for now
-        DO dofIdx=1,lagrangeVariable%totalNumberOfDofs
-          interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableDOFToRowMap(dofIdx)=dofIdx
+        DO dofIdx=1,totalNumberOfDofs
+          interfaceMatrixRowsToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
         ENDDO !dofIdx
       ENDIF
       !Calculate RHS mappings
@@ -243,15 +270,20 @@ CONTAINS
         rhsMapping%rhsVariableType=createValuesCache%rhsLagrangeVariableType
         NULLIFY(lagrangeVariable)
         CALL Field_VariableGet(lagrangeField,createValuesCache%rhsLagrangeVariableType,lagrangeVariable,err,error,*999)
+        CALL FieldVariable_NumberOfDOFsGet(lagrangeVariable,numberOfDOFs,err,error,*999)
+        CALL FieldVariable_TotalNumberOfDOFsGet(lagrangeVariable,totalNumberOfDOFs,err,error,*999)
+        CALL FieldVariable_NumberOfGlobalDOFsGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(lagrangeVariable,domainMapping,err,error,*999)         
         rhsMapping%rhsVariable=>lagrangeVariable
-        rhsMapping%rhsVariableMapping=>lagrangeVariable%domainMapping
+        rhsMapping%rhsVariableMapping=>domainMapping
         rhsMapping%rhsCoefficient=createValuesCache%rhsCoefficient
         !Allocate and set up the row mappings
-        ALLOCATE(rhsMapping%rhsDOFToInterfaceRowMap(lagrangeVariable%totalNumberOfDofs),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate rhs dof to interface row map.",err,error,*999)
+        ALLOCATE(rhsMapping%rhsDOFToInterfaceRowMap(totalNumberOfDofs),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate RHS DOF to interface row map.",err,error,*999)
         ALLOCATE(rhsMapping%interfaceRowToRHSDOFMap(interfaceMapping%totalNumberOfColumns),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate interface row to dof map.",err,error,*999)
-        DO dofIdx=1,lagrangeVariable%totalNumberOfDofs
+        IF(err/=0) CALL FlagError("Could not allocate interface row to RHS DOF map.",err,error,*999)
+        DO dofIdx=1,totalNumberOfDofs
           !1-1 mapping for now
           columnIdx=dofIdx
           rhsMapping%rhsDOFToInterfaceRowMap(dofIdx)=columnIdx
@@ -322,18 +354,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("InterfaceMapping_CreateStart",err,error,*999)
+    ENTERS("InterfaceMapping_CreateStart",err,error,*998)
 
-    IF(ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is already associated.",err,error,*999)
+    IF(ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is already associated.",err,error,*998)
     CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
 
-    NULLIFY(interfaceMapping)
     CALL InterfaceMapping_Initialise(interfaceEquations,err,error,*999)
     interfaceMapping=>interfaceEquations%interfaceMapping
    
     EXITS("InterfaceMapping_CreateStart")
     RETURN
-999 ERRORSEXITS("InterfaceMapping_CreateStart",err,error)    
+999 NULLIFY(interfaceMapping)
+998 ERRORSEXITS("InterfaceMapping_CreateStart",err,error)    
     RETURN 1
    
   END SUBROUTINE InterfaceMapping_CreateStart
@@ -355,11 +387,10 @@ CONTAINS
 
     IF(ASSOCIATED(createValuesCache)) THEN
       IF(ALLOCATED(createValuesCache%matrixCoefficients)) DEALLOCATE(createValuesCache%matrixCoefficients)
+      IF(ALLOCATED(createValuesCache%transposeMatrixCoefficients)) DEALLOCATE(createValuesCache%transposeMatrixCoefficients)
       IF(ALLOCATED(createValuesCache%hasTranspose)) DEALLOCATE(createValuesCache%hasTranspose)
-      IF(ALLOCATED(createValuesCache%matrixRowFieldVariableIndices))  &
-        & DEALLOCATE(createValuesCache%matrixRowFieldVariableIndices)
-      IF(ALLOCATED(createValuesCache%matrixColFieldVariableIndices)) &
-        & DEALLOCATE(createValuesCache%matrixColFieldVariableIndices)
+      IF(ALLOCATED(createValuesCache%matrixRowFieldVariableIndices)) DEALLOCATE(createValuesCache%matrixRowFieldVariableIndices)
+      IF(ALLOCATED(createValuesCache%matrixColFieldVariableIndices)) DEALLOCATE(createValuesCache%matrixColFieldVariableIndices)
       DEALLOCATE(createValuesCache)
     ENDIF
        
@@ -417,12 +448,10 @@ CONTAINS
       SELECT CASE(interfaceCondition%method)
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
         !Default the number of interface matrices to the number of added dependent variables
-        interfaceMapping%createValuesCache%numberOfInterfaceMatrices= &
-          interfaceDependent%numberOfDependentVariables
+        interfaceMapping%createValuesCache%numberOfInterfaceMatrices=interfaceDependent%numberOfDependentVariables
       CASE(INTERFACE_CONDITION_PENALTY_METHOD)
         !Default the number of interface matrices to the number of added dependent variables plus a single Lagrange variable
-        interfaceMapping%createValuesCache%numberOfInterfaceMatrices= &
-          interfaceDependent%numberOfDependentVariables+1
+        interfaceMapping%createValuesCache%numberOfInterfaceMatrices=interfaceDependent%numberOfDependentVariables+1
       END SELECT
       !Default the Lagrange variable to the first Lagrange variable
       interfaceMapping%createValuesCache%lagrangeVariableType=0
@@ -434,20 +463,19 @@ CONTAINS
       ENDDO !variableTypeIdx
       IF(interfaceMapping%createValuesCache%lagrangeVariableType==0) &
         & CALL FlagError("Could not find a Lagrange variable type in the Lagrange field.",err,error,*999)
-      !Default the RHS Lagrange variable to the second Lagrange variable
-      DO variableTypeIdx2=variableTypeIdx+1,FIELD_NUMBER_OF_VARIABLE_TYPES
-        IF(ASSOCIATED(lagrangeField%variableTypeMap(variableTypeIdx2)%ptr)) THEN
-          interfaceMapping%createValuesCache%rhsLagrangeVariableType=variableTypeIdx2
-          EXIT
-        ENDIF
-      ENDDO !variableTypeIdx2
+      !Default the RHS Lagrange variable to zero
+      interfaceMapping%createValuesCache%rhsLagrangeVariableType=0
       IF(interfaceMapping%createValuesCache%rhsLagrangeVariableType==0) &
         & CALL FlagError("Could not find a RHS Lagrange variable type in the Lagrange field.",err,error,*999)
       ALLOCATE(interfaceMapping%createValuesCache%matrixCoefficients(interfaceMapping%createValuesCache% &
         & numberOfInterfaceMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate create values cache matrix coefficients.",err,error,*999)
-      !Default the interface matrices coefficients to add.
+      ALLOCATE(interfaceMapping%createValuesCache%transposeMatrixCoefficients(interfaceMapping%createValuesCache% &
+        & numberOfInterfaceMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate create values cache transpose matrix coefficients.",err,error,*999)
+       !Default the interface matrices coefficients to add.
       interfaceMapping%createValuesCache%matrixCoefficients=1.0_DP
+      interfaceMapping%createValuesCache%tranposeMatrixCoefficients=1.0_DP
       interfaceMapping%createValuesCache%rhsCoefficient=1.0_DP
       ALLOCATE(interfaceMapping%createValuesCache%hasTranspose(interfaceMapping%createValuesCache% &
         & numberOfInterfaceMatrices),STAT=err)
@@ -535,7 +563,7 @@ CONTAINS
       IF(ALLOCATED(interfaceMapping%lagrangeDOFToColumnMap)) DEALLOCATE(interfaceMapping%lagrangeDOFToColumnMap)
       IF(ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) THEN
         DO matrixIdx=1,SIZE(interfaceMapping%interfaceMatrixRowsToVarMaps,1)
-          CALL InterfaceMapping_MatrixToVarMapFinalise(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx), &
+          CALL InterfaceMapping_MatrixToVarMapFinalise(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr, &
             & err,error,*999)
         ENDDO !matrixIdx
         DEALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps)
@@ -582,6 +610,7 @@ CONTAINS
     interfaceEquations%interfaceMapping%totalNumberOfColumns=0
     interfaceEquations%interfaceMapping%numberOfGlobalColumns=0
     NULLIFY(interfaceEquations%interfaceMapping%columnDOFSMapping)
+    NULLIFY(interfaceEquations%interfaceMapping%lagrangeDOFToColumnMap)
     interfaceEquations%interfaceMapping%numberOfInterfaceMatrices=0
     NULLIFY(interfaceEquations%interfaceMapping%rhsMapping)
     NULLIFY(interfaceEquations%interfaceMapping%createValuesCache)
@@ -661,16 +690,18 @@ CONTAINS
   SUBROUTINE InterfaceMapping_MatrixToVarMapFinalise(interfaceMatrixToVarMap,err,error,*)
 
     !Argument variables
-    TYPE(InterfaceMatrixToVarMapType) :: interfaceMatrixToVarMap !<The interface matrix to var map to finalise
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<The interface matrix to var map to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
   
     ENTERS("InterfaceMapping_MatrixToVarMapFinalise",err,error,*999)
 
-    IF(ALLOCATED(interfaceMatrixToVarMap%variableDOFToRowMap)) &
-      & DEALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap)
-    
+    IF(ASSOCIATED(interfaceMatrixToVarMap)) THEN
+      IF(ALLOCATED(interfaceMatrixToVarMap%variableDOFToRowMap)) DEALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap)
+      DEALLOCATE(interfaceMatrixToVarMap)
+    ENDIF
+      
     EXITS("InterfaceMapping_MatrixToVarMapFinalise")
     RETURN
 999 ERRORSEXITS("InterfaceMapping_MatrixToVarMapFinalise",err,error)
@@ -698,25 +729,33 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) &
       & CALL FlagError("Interface mapping matrix rows to var maps is not allocated.",err,error,*999)
-    IF(matrixIdx<=0.OR.matrixIdX>interfaceMapping%numberOfInterfaceMatrices) THEN
+    IF(matrixIdx<=0.OR.matrixIdx>interfaceMapping%numberOfInterfaceMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid. The index must be >= 1 and <= "// &
         & TRIM(NumberToVString(interfaceMapping%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%matrixNumber=matrixIdx
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%interfaceMatrix)
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%equationsSet)
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variableType=0
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable)
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex=0
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%matrixCoefficient=0.0_DP
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%hasTranspose=.FALSE.
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%numberOfRows=0
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%totalNumberOfRows=0
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%numberOfGlobalRows=0
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%rowDOFsMapping)          
+    IF(ASSOCIATED(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr)) THEN
+      localError="The interface matrix rows to variable map is already associated for matrix index "// &
+        & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    ALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface matrix rows to variable map.",err,error,*999)
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%matrixNumber=matrixIdx
+    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%interfaceMatrix)
+    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%equationsSet)
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%variableType=0
+    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%variable)
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%meshIndex=0
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%matrixCoefficient=0.0_DP
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%hasTranspose=.FALSE.
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%numberOfRows=0
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%totalNumberOfRows=0
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%numberOfGlobalRows=0
+    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%rowDOFsMapping)          
+    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%variableDOFToRowMap)          
     
     EXITS("InterfaceMapping_MatrixToVarMapInitialise")
     RETURN
@@ -756,10 +795,10 @@ CONTAINS
     SELECT CASE(interfaceCondition%method)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check that the number of supplied coefficients matches the number of interface matrices
-      IF(SIZE(matrixCoefficients,1)/=createValuesCache%numberOfInterfaceMatrices) THEN
-        localError="Invalid size of matrix coefficeints. The size of the supplied array of "// &
+      IF(SIZE(matrixCoefficients,1)<createValuesCache%numberOfInterfaceMatrices) THEN
+        localError="The size of the supplied array of matrix coefficients of "// &
           & TRIM(NumberToVString(SIZE(matrixCoefficients,1),"*",err,error))// &
-          & " must match the number of interface matrices of "// &
+          & "is invalid. The size must be >="// &
           & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -781,6 +820,63 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMapping_MatrixCoefficientsSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the coefficients for the transpose interface matrices. 
+  SUBROUTINE InterfaceMapping_TransposeMatrixCoefficientsSet(interfaceMapping,transposeMatrixCoefficients,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping.
+    REAL(DP), INTENT(IN) :: transposeMatrixCoefficients(:) !<The transpose interface matrix coefficients
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
+    TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("InterfaceMapping_TransposeMatrixCoefficientsSet",err,error,*999)
+
+    CALL InterfaceMapping_AssertNotFinished(interfaceMapping,err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL InterfaceMapping_CreateValuesCacheGet(interfaceMapping,createValuesCache,err,error,*999)
+    NULLIFY(interfaceEquations)
+    CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
+    NULLIFY(interfaceCondition)
+    CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
+    SELECT CASE(interfaceCondition%method)
+    CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+      !Check that the number of supplied coefficients matches the number of interface matrices
+      IF(SIZE(transposeMatrixCoefficients,1)<createValuesCache%numberOfInterfaceMatrices) THEN
+        localError="The size of the supplied transpose matrix coefficients array of "// &
+          & TRIM(NumberToVString(SIZE(transposeMatrixCoefficients,1),"*",err,error))// &
+          & "is invalid. The size should be >= "// &
+          & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      createValuesCache%transposeMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)= &
+        & transposeMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)
+    CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("InterfaceMapping_TransposeMatrixCoefficientsSet")
+    RETURN
+999 ERRORSEXITS("InterfaceMapping_TransposeMatrixCoefficientsSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMapping_TransposeMatrixCoefficientsSet
 
   !
   !================================================================================================================================
@@ -887,8 +983,7 @@ CONTAINS
           ENDIF
         ENDDO !meshIdx2
         IF(.NOT.found) THEN
-          localError="The supplied mesh index of "// &
-            & TRIM(NumberToVString(rowMeshIndices(meshIdx),"*",err,error))// &
+          localError="The supplied mesh index of "//TRIM(NumberToVString(rowMeshIndices(meshIdx),"*",err,error))// &
             & " at position "//TRIM(NumberToVString(meshIdx,"*",err,error))// &
             & " has not been added as a dependent variable to the interface condition."
           CALL FlagError(localError,err,error,*999)
@@ -896,8 +991,7 @@ CONTAINS
         !Check that the mesh index has not been repeated.
         DO meshIdx3=meshIdx+1,createValuesCache%numberOfInterfaceMatrices
           IF(rowMeshIndices(meshIdx)==rowMeshIndices(meshIdx3)) THEN
-            localError="The supplied mesh index of "// &
-              & TRIM(NumberToVString(rowMeshIndices(meshIdx),"*",err,error))// &
+            localError="The supplied mesh index of "//TRIM(NumberToVString(rowMeshIndices(meshIdx),"*",err,error))// &
               & " at position "//TRIM(NumberToVString(meshIdx,"*",err,error))// &
               & " has been repeated at position "//TRIM(NumberToVString(meshIdx3,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
@@ -937,11 +1031,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,matrixIdx2,variableIdx,numberOfDependentVariables
-    INTEGER(INTG), ALLOCATABLE :: oldMatrixRowFieldVariableIndices(:)
-    LOGICAL :: FOUND
-    LOGICAL, ALLOCATABLE :: oldMatrixTranspose(:)
-    REAL(DP), ALLOCATABLE :: oldMatrixCoefficients(:)
+    INTEGER(INTG) :: matrixIdx,matrixIdx2,meshIdx,numberOfDependentVariables,variableIdx
+    INTEGER(INTG), ALLOCATABLE :: newMatrixRowFieldVariableIndices(:)
+    REAL(DP), ALLOCATABLE :: newMatrixCoefficients(:)
+    REAL(DP), ALLOCATABLE :: newTransposeMatrixCoefficients(:)
+    LOGICAL :: found
+    LOGICAL, ALLOCATABLE :: newMatrixTranspose(:)
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
@@ -983,71 +1078,49 @@ CONTAINS
       ENDIF
       !If we need to reallocate and reset all the create values cache arrays and change the number of matrices
       IF(numberOfInterfaceMatrices/=createValuesCache%numberOfInterfaceMatrices) THEN
-        ALLOCATE(oldMatrixCoefficients(createValuesCache%numberOfInterfaceMatrices),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate old matrix coefficients.",err,error,*999)
-        ALLOCATE(oldMatrixTranspose(createValuesCache%numberOfInterfaceMatrices),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate old matrix transpose.",err,error,*999)
-        ALLOCATE(oldMatrixRowFieldVariableIndices(createValuesCache%numberOfInterfaceMatrices),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate old matrix row field indexes.",err,error,*999)
-        oldMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)= &
+        ALLOCATE(newMatrixCoefficients(createValuesCache%numberOfInterfaceMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new matrix coefficients.",err,error,*999)
+        ALLOCATE(newTransposeMatrixCoefficients(createValuesCache%numberOfInterfaceMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new transpose matrix coefficients.",err,error,*999)
+        ALLOCATE(newMatrixTranspose(createValuesCache%numberOfInterfaceMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new matrix transpose.",err,error,*999)
+        ALLOCATE(newMatrixRowFieldVariableIndices(createValuesCache%numberOfInterfaceMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new matrix row field indexes.",err,error,*999)
+        newMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)= &
           createValuesCache%matrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)
-        oldMatrixTranspose(1:createValuesCache%numberOfInterfaceMatrices)= &
+        newTransposeMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)= &
+          createValuesCache%transposeMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)
+        newMatrixTranspose(1:createValuesCache%numberOfInterfaceMatrices)= &
           & createValuesCache%hasTranspose(1:createValuesCache%numberOfInterfaceMatrices)
-        oldMatrixRowFieldVariableIndices(1:createValuesCache%numberOfInterfaceMatrices)= &
-          & createValuesCache%matrixRowFieldVariableIndices(1:createValuesCache% &
-          & numberOfInterfaceMatrices)
-        IF(ALLOCATED(createValuesCache%matrixCoefficients)) DEALLOCATE(createValuesCache%matrixCoefficients)
-        IF(ALLOCATED(createValuesCache%hasTranspose)) DEALLOCATE(createValuesCache%hasTranspose)
-        IF(ALLOCATED(createValuesCache%matrixRowFieldVariableIndices)) &
-          & DEALLOCATE(createValuesCache%matrixRowFieldVariableIndices)
-        ALLOCATE(createValuesCache%matrixCoefficients(numberOfInterfaceMatrices),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate matrix coefficients.",err,error,*999)
-        ALLOCATE(createValuesCache%hasTranspose(numberOfInterfaceMatrices),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate matrix tranpose.",err,error,*999)
-        ALLOCATE(createValuesCache%matrixRowFieldVariableIndices(numberOfInterfaceMatrices),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate matrix row field variable indexes.",err,error,*999)
+        newMatrixRowFieldVariableIndices(1:createValuesCache%numberOfInterfaceMatrices)= &
+          & createValuesCache%matrixRowFieldVariableIndices(1:createValuesCache%numberOfInterfaceMatrices)
         IF(numberOfInterfaceMatrices>createValuesCache%numberOfInterfaceMatrices) THEN
-          createValuesCache%matrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)= &
-            & oldMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)
-          createValuesCache%matrixCoefficients(createValuesCache%numberOfInterfaceMatrices+1:numberOfInterfaceMatrices)=1.0_DP
-          createValuesCache%hasTranspose(1:createValuesCache%numberOfInterfaceMatrices)= &
-            & oldMatrixTranspose(1:createValuesCache%numberOfInterfaceMatrices)
-          createValuesCache%hasTranspose(createValuesCache%numberOfInterfaceMatrices+1:numberOfInterfaceMatrices)=.TRUE.
-          createValuesCache%matrixRowFieldVariableIndices(1:createValuesCache% &
-            & numberOfInterfaceMatrices)=oldMatrixRowFieldVariableIndices(1:createValuesCache%numberOfInterfaceMatrices)
           !Loop through in mesh index order and set the default matrix to variable map to be in mesh index order
           DO matrixIdx=createValuesCache%numberOfInterfaceMatrices+1,numberOfInterfaceMatrices
             createValuesCache%matrixRowFieldVariableIndices(matrixIdx)=0
             DO variableIdx=1,interfaceDependent%numberOfDependentVariables
               found=.FALSE.
               DO matrixIdx2=1,createValuesCache%numberOfInterfaceMatrices
-                IF(interfaceDependent%variableMeshIndices(variableIdx)== &
-                  & createValuesCache%matrixRowFieldVariableIndices(matrixIdx2)) THEN
+                CALL InterfaceMappingCVC_MatrixRowVariableIndexGet(createValuesCache,matrixIdx2,meshIdx,err,error,*999)
+                IF(interfaceDependent%variableMeshIndices(variableIdx)==meshIdx) THEN
                   found=.TRUE.
                   EXIT
                 ENDIF
               ENDDO !matrixIdx2
-              IF(.NOT.found) &
-                & createValuesCache%matrixRowFieldVariableIndices(matrixIdx)= &
-                & interfaceDependent%variableMeshIndices(variableIdx)
+              IF(.NOT.found) newMatrixRowFieldVariableIndices(matrixIdx)=interfaceDependent%variableMeshIndices(variableIdx)
             ENDDO !variableIdx2
-            IF(createValuesCache%matrixRowFieldVariableIndices(matrixIdx)==0) THEN
+            IF(newMatrixRowFieldVariableIndices(matrixIdx)==0) THEN
               localError="Could not map an interface mesh index for interface matrix "// &
                 & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDDO !matrixIdx
-        ELSE
-          createValuesCache%matrixCoefficients(1:numberOfInterfaceMatrices)= &
-            & oldMatrixCoefficients(1:numberOfInterfaceMatrices)
-          createValuesCache%hasTranspose(1:numberOfInterfaceMatrices)= &
-            & oldMatrixTranspose(1:numberOfInterfaceMatrices)
-          createValuesCache%matrixRowFieldVariableIndices(1:numberOfInterfaceMatrices)= &
-            & oldMatrixRowFieldVariableIndices(1:numberOfInterfaceMatrices)
         ENDIF
-        IF(ALLOCATED(oldMatrixCoefficients)) DEALLOCATE(oldMatrixCoefficients)
-        IF(ALLOCATED(oldMatrixTranspose)) DEALLOCATE(oldMatrixTranspose)
-        IF(ALLOCATED(oldMatrixRowFieldVariableIndices)) DEALLOCATE(oldMatrixRowFieldVariableIndices)
+        CALL MOVE_ALLOC(newMatrixCoefficients,createValuesCache%matrixCoefficients)
+        CALL MOVE_ALLOC(newTransposeMatrixCoefficients,createValuesCache%transposeMatrixCoefficients)
+        CALL MOVE_ALLOC(newMatrixTranspose,createValuesCache%matrixTranspose)
+        CALL MOVE_ALLOC(newMatrixRowFieldVariableIndices,createValuesCache%matrixRowFieldVariableIndices)
+        createValuesCache%numberOfInterfaceMatrices=numberOfInterfaceMatrices
       ENDIF
     CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -1061,9 +1134,10 @@ CONTAINS
        
     EXITS("InterfaceMapping_NumberOfMatricesSet")
     RETURN
-999 IF(ALLOCATED(oldMatrixCoefficients)) DEALLOCATE(oldMatrixCoefficients)
-    IF(ALLOCATED(oldMatrixTranspose)) DEALLOCATE(oldMatrixTranspose)
-    IF(ALLOCATED(oldMatrixRowFieldVariableIndices)) DEALLOCATE(oldMatrixRowFieldVariableIndices)
+999 IF(ALLOCATED(newMatrixCoefficients)) DEALLOCATE(newMatrixCoefficients)
+    IF(ALLOCATED(newTransposeMatrixCoefficients)) DEALLOCATE(newTransposeMatrixCoefficients)
+    IF(ALLOCATED(newMatrixTranspose)) DEALLOCATE(newMatrixTranspose)
+    IF(ALLOCATED(newMatrixRowFieldVariableIndices)) DEALLOCATE(newMatrixRowFieldVariableIndices)
     ERRORSEXITS("InterfaceMapping_NumberOfMatricesSet",err,error)
     RETURN 1
     
@@ -1100,10 +1174,10 @@ CONTAINS
     SELECT CASE(interfaceCondition%method)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check that the number of supplied coefficients matches the number of interface matrices
-      IF(SIZE(matrixTranspose,1)/=createValuesCache%numberOfInterfaceMatrices) THEN
-        localError="Invalid size of matrix tranpose. The size of the supplied array of "// &
+      IF(SIZE(matrixTranspose,1)<createValuesCache%numberOfInterfaceMatrices) THEN
+        localError="The size of the supplied matrix transpose array of "// &
           & TRIM(NumberToVString(SIZE(matrixTranspose,1),"*",err,error))// &
-          & " must match the number of interface matrices of "// &
+          & "is invalid. The size should be >= "// &
           & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -1175,8 +1249,8 @@ CONTAINS
     ENTERS("InterfaceMapping_RHSMappingFinalise",err,error,*999)
 
     IF(ASSOCIATED(rhsMapping)) THEN
-      IF(ALLOCATED(rhsMapping%rhsDOFToInterfaceRowMap)) DEALLOCATE(rhsMapping%rhsDOFToInterfaceRowMap)
-      IF(ALLOCATED(rhsMapping%interfaceRowToRHSDOFMap)) DEALLOCATE(rhsMapping%interfaceRowToRHSDOFMap)
+      IF(ASSOCIATED(rhsMapping%rhsDOFToInterfaceRowMap)) DEALLOCATE(rhsMapping%rhsDOFToInterfaceRowMap)
+      IF(ASSOCIATED(rhsMapping%interfaceRowToRHSDOFMap)) DEALLOCATE(rhsMapping%interfaceRowToRHSDOFMap)
       DEALLOCATE(rhsMapping)
     ENDIF
        
@@ -1215,6 +1289,8 @@ CONTAINS
     NULLIFY(interfaceMapping%rhsMapping%rhsVariable)
     NULLIFY(interfaceMapping%rhsMapping%rhsVariableMapping)
     interfaceMapping%rhsMapping%rhsCoefficient=1.0_DP
+    NULLIFY(interfaceMapping%rhsMapping%rhsDOFToInterfaceRowMap)
+    NULLIFY(interfaceMapping%interfaceRowToRHSDOFMap)
        
     EXITS("InterfaceMapping_RHSMappingInitialise")
     RETURN
@@ -1241,6 +1317,7 @@ CONTAINS
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(FieldType), POINTER :: lagrangeField
+    TYPE(FieldVariableType), POINTER :: lagrangeVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceMapping_RHSVariableTypeSet",err,error,*999)
@@ -1267,17 +1344,8 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         ENDIF
         !Check the RHS variable number is defined on the Lagrange field
-        IF(rhsVariableType<=0.OR.rhsVariableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
-            & " is invalid. The number must either be zero or >= 1 and <= "// &
-            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-        IF(.NOT.ASSOCIATED(lagrangeField%variableTypeMap(rhsVariableType)%ptr)) THEN
-          localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
-            & " is not defined on the Lagrange field."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
+        NULLIFY(rhsVariable)
+        CALL Field_VariableGet(lagrangeField,rhsVariableType,rhsVariable,err,error,*999)
         createValuesCache%rhsLagrangeVariableType=rhsVariableType
       CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
         CALL FlagError("Not implemented.",err,error,*999)

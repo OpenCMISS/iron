@@ -30,7 +30,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Soroush Safaei, Chris Bradley
+!> Contributor(s): David Ladd, Soroush Safaei, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -46,11 +46,11 @@
 !>
 
 !>This module handles all characteristic equation routines.
-MODULE CHARACTERISTIC_EQUATION_ROUTINES
+MODULE CharacteristicEquationsRoutines
 
   USE BaseRoutines
   USE BasisRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE DistributedMatrixVector
@@ -61,7 +61,6 @@ MODULE CHARACTERISTIC_EQUATION_ROUTINES
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -73,9 +72,9 @@ MODULE CHARACTERISTIC_EQUATION_ROUTINES
   USE Maths
   USE MatrixVector
   USE MeshRoutines
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE Timer
   USE Types
 
@@ -114,48 +113,39 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
+    INTEGER(INTG) :: esSpecification(3)
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Characteristic_EquationsSetSolutionMethodSet",err,error,*999)
+
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(equationsSet%specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(equationsSet%specification(3))
-      CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)                                
-        SELECT CASE(solutionMethod)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
-          equationsSet%solutionMethod=EQUATIONS_SET_NODAL_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)                                
+      SELECT CASE(solutionMethod)
+      CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
+        equationsSet%solutionMethod=EQUATIONS_SET_NODAL_SOLUTION_METHOD
+      CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The third equations set specification of "// &
-          & TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-          & " is not valid for a characteristic type of a fluid mechanics equations set."
+        localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a characteristic type of a fluid mechanics equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("Characteristic_EquationsSetSolutionMethodSet")
     RETURN
@@ -183,31 +173,27 @@ CONTAINS
 
     ENTERS("Characteristic_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-          & err,error,*999)
-      END IF
-      subtype=specification(3)
-      SELECT CASE(subtype)
-      CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-        !ok
-      CASE DEFAULT
-        localError="The third equations set specification of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
-          & " is not valid for a characteristic type of a fluid mechanics equations set."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      !Set full specification
-      IF(ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(equationsSet%specification(3),stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-      END IF
-      equationsSet%specification(1:3)=[EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE,subtype]
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)
+    IF(SIZE(specification,1)<3) THEN
+      localError="The size of the specified specification array of "// &
+        & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
     END IF
+    
+    subtype=specification(3)
+    SELECT CASE(subtype)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
+        & " is not valid for a characteristic type of a fluid mechanics equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !Set full specification
+    ALLOCATE(equationsSet%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
+    equationsSet%specification(1:3)=[EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE,subtype]
 
     EXITS("Characteristic_EquationsSetSpecificationSet")
     RETURN
@@ -230,6 +216,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
+    INTEGER(INTG) :: componentIdx,geometricScalingType,geometricMeshComponent,geometricComponentNumber
+    INTEGER(INTG) :: dependentFieldNumberOfVariables,dependentFieldNumberOfComponents
+    INTEGER(INTG) :: independentFieldNumberOfVariables,independentFieldNumberOfComponents
+    INTEGER(INTG) :: materialsFieldNumberOfVariables,materialsFieldNumberOfComponents1,materialsFieldNumberOfComponents2
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -238,604 +228,507 @@ CONTAINS
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsSetEquationsSetFieldType), POINTER :: equationsEquationsSetField
     TYPE(FieldType), POINTER :: equationsSetField
-    INTEGER(INTG) :: componentIdx,geometricScalingType,geometricMeshComponent,geometricComponentNumber
-    INTEGER(INTG) :: dependentFieldNumberOfVariables,dependentFieldNumberOfComponents
-    INTEGER(INTG) :: independentFieldNumberOfVariables,independentFieldNumberOfComponents
-    INTEGER(INTG) :: materialsFieldNumberOfVariables,materialsFieldNumberOfComponents1,materialsFieldNumberOfComponents2
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Characteristic_EquationsSetSetup",err,error,*999)
 
-    NULLIFY(equations)
-    NULLIFY(vectorMapping)
-    NULLIFY(vectorMatrices)
-    NULLIFY(equationsMaterials)
-    NULLIFY(geometricDecomposition)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(equationsSet%specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-          & err,error,*999)
-      END IF
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+     
+    NULLIFY(region)
+    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+    
+    SELECT CASE(equationsSetSetup%setupType)
+    CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
+      !-----------------------------------------------------------------
+      ! I n i t i a l   s e t u p
+      !-----------------------------------------------------------------
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-        SELECT CASE(equationsSetSetup%setupType)
-        !-----------------------------------------------------------------
-        ! I n i t i a l   s e t u p
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-          SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-            SELECT CASE(equationsSetSetup%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              CALL Characteristic_EquationsSetSolutionMethodSet(equationsSet, &
-                & EQUATIONS_SET_NODAL_SOLUTION_METHOD,err,error,*999)
-              equationsSet%solutionMethod=EQUATIONS_SET_NODAL_SOLUTION_METHOD
-              equationsEquationsSetField=>equationsSet%equationsSetField
-              IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
-                !Create the auto created equations set field field for SUPG element metrics
-                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
-                  & equationsEquationsSetField%equationsSetFieldField,ERR,ERROR,*999)
-                equationsSetField=>equationsEquationsSetField%equationsSetFieldField
-                CALL Field_LabelSet(equationsSetField,"Equations Set Field",ERR,ERROR,*999)
-                CALL Field_TypeSetAndLock(equationsSetField,FIELD_GENERAL_TYPE,&
-                  & ERR,ERROR,*999)
-                CALL Field_NumberOfVariablesSet(equationsSetField, &
-                  & 1,ERR,ERROR,*999)
-                CALL Field_VariableTypesSetAndLock(equationsSetField,&
-                  & [FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                CALL Field_VariableLabelSet(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                  & "W2Initialise",ERR,ERROR,*999)
-                CALL Field_DataTypeSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSetField,&
-                  & FIELD_U_VARIABLE_TYPE,1,ERR,ERROR,*999)
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(equationsSet%equationsSetField%equationsSetFieldAutoCreated) THEN
-                CALL Field_CreateFinish(equationsSet%equationsSetField%equationsSetFieldField,ERR,ERROR,*999)
-                CALL Field_ComponentValuesInitialise(equationsSet%equationsSetField%equationsSetFieldField, &
-                 & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1.0_DP,ERR,ERROR,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType, &
-                & "*",err,error))// " for a setup type of "//TRIM(NumberToVString(equationsSetSetup% &
-                & setupType,"*",err,error))// " is not implemented for a characteristic equations set."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE DEFAULT
-            localError="The third equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-              & " is invalid for a characteristic equations set."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          CALL Characteristic_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_NODAL_SOLUTION_METHOD,err,error,*999)
+          NULLIFY(equationsEquationsSetField)
+          CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsEquationsSetField,err,error,*999)
+          IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
+            !Create the auto created equations set field field for SUPG element metrics
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsEquationsSetField%equationsSetFieldField, &
+              & err,error,*999)
+            NULLIFY(equationsSetField)
+            CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+            CALL Field_LabelSet(equationsSetField,"Equations Set Field",err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSetField,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesSet(equationsSetField,1,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSetField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableLabelSet(equationsSetField,FIELD_U_VARIABLE_TYPE,"W2Initialise",err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%equationsSetField%equationsSetFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsSet%equationsSetField%equationsSetFieldField,err,error,*999)
+            CALL Field_ComponentValuesInitialise(equationsSet%equationsSetField%equationsSetFieldField, &
+              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType, &
+            & "*",err,error))// " for a setup type of "//TRIM(NumberToVString(equationsSetSetup% &
+            & setupType,"*",err,error))// " is not implemented for a characteristic equations set."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
         !-----------------------------------------------------------------
         ! G e o m e t r i c   f i e l d
         !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
-          SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-            SELECT CASE(equationsSetSetup%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              equationsEquationsSetField=>equationsSet%equationsSetField
-              equationsSetField=>equationsEquationsSetField%equationsSetFieldField
-              IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
-                CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition,ERR,ERROR,*999)
-                CALL Field_DecompositionSetAndLock(equationsSetField,&
-                  & geometricDecomposition,ERR,ERROR,*999)
-                CALL Field_GeometricFieldSetAndLock(equationsSetField,& 
-                  & equationsSet%GEOMETRY%geometricField,ERR,ERROR,*999)
-                CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                  & 1,geometricComponentNumber,ERR,ERROR,*999)                
-                CALL Field_ComponentMeshComponentSetAndLock(equationsSetField, &
-                  & FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,ERR,ERROR,*999)
-                CALL Field_ComponentInterpolationSetAndLock(equationsSetField, &
-                  & FIELD_U_VARIABLE_TYPE,1,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
-                !Default the field scaling to that of the geometric field
-                CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,ERR,ERROR,*999)
-                CALL Field_ScalingTypeSet(equationsSet%equationsSetField%equationsSetFieldField,geometricScalingType, &
-                  & ERR,ERROR,*999)
-              ELSE
-                !Do nothing
-              ENDIF
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              ! do nothing
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",ERR,ERROR))// &
-                & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",ERR,ERROR))// &
-                & " is invalid for a characteristic equation."
-              CALL FlagError(localError,ERR,ERROR,*999)
-            END SELECT
-          CASE DEFAULT
-            localError="The third equations set specification of "// &
-              & TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-              & " is invalid for a characteristic equations set."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          NULLIFY(equationsEquationsSetField)
+          CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsEquationsSetField,err,error,*999)
+          NULLIFY(equationsSetField)
+          CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
+          NULLIFY(geometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+          IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsSetField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsSetField,geometricField,err,error,*999)
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+            CALL Field_ComponentMeshComponentSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber, &
+              & err,error,*999)
+            CALL Field_ComponentInterpolationSetAndLock(equationsSetField,FIELD_U_VARIABLE_TYPE,1,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            !Default the field scaling to that of the geometric field
+            CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsSet%equationsSetField%equationsSetFieldField,geometricScalingType,err,error,*999)
+          ELSE
+            !Do nothing
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          ! do nothing
+        CASE DEFAULT
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a characteristic equation."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
         !-----------------------------------------------------------------
         ! D e p e n d e n t   f i e l d
         !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-          SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-            SELECT CASE(equationsSetSetup%actionType)
-            !Set start action
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              IF(equationsSet%DEPENDENT%dependentFieldAutoCreated) THEN
-                !Create the auto created dependent field
-                !start field creation with name 'DEPENDENT_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
-                  & equationsSet%dependent%dependentField,err,error,*999)
-                !start creation of a new field
-                CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
-                !label the field
-                CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
-                !define new created field to be dependent
-                CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DEPENDENT_TYPE,err,error,*999)
-                !look for decomposition rule already defined
-                CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition, &
-                  & err,error,*999)
-                !apply decomposition rule found on new created field
-                CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField, &
-                  & geometricDecomposition,err,error,*999)
-                !point new field to geometric field
-                CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,equationsSet%GEOMETRY% &
-                  & geometricField,err,error,*999)
-                !set number of variables to 5 (U,DELUDELN,V,U1,U2)=>(Q,A;dQ,dA;W;pCellML;Pressure)
-                dependentFieldNumberOfVariables=5
-                CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField, &
-                  & dependentFieldNumberOfVariables,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE], &
-                  & err,error,*999)
-                ! set dimension
-                CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                ! set data type
-                CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                ! number of components for U,DELUDELN=2 (Q,A)
-                dependentFieldNumberOfComponents=2
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_U_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, &
-                 & FIELD_V_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, &
-                 & FIELD_U1_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField, &
-                 & FIELD_U2_VARIABLE_TYPE,dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, & 
-                  & 1,geometricMeshComponent,err,error,*999)
-                !Default to the geometric interpolation setup for U,dUdN
-                DO componentIdx=1,dependentFieldNumberOfComponents
-                  CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField, & 
-                    & FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField, & 
-                    & FIELD_V_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField, & 
-                    & FIELD_U1_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField, & 
-                    & FIELD_U2_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
-                END DO
-                SELECT CASE(equationsSet%solutionMethod)
-                !Specify nodal solution method
-                CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
-                  ! (U, dUdN); 2 components (Q,A)
-                  DO componentIdx=1,dependentFieldNumberOfComponents
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                      & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                      & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                      & FIELD_V_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                      & FIELD_U1_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                      & FIELD_U2_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  ENDDO
-                  CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType, &
-                    & err,error,*999)
-                  CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType, &
-                    & err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of " &
-                    & //TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              ELSE 
-                !Check the user specified field
-                CALL Field_TypeCheck(equationsSetSetup%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeCheck(equationsSetSetup%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                dependentFieldNumberOfVariables=5 ! U,dUdN,V,U1,U2
-                CALL Field_NumberOfVariablesCheck(equationsSetSetup%FIELD,dependentFieldNumberOfVariables,err,error,*999)
-                CALL Field_VariableTypesCheck(equationsSetSetup%FIELD,[FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE] &
-                  & ,err,error,*999)
-                CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE, & 
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE, & 
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_U1_VARIABLE_TYPE, & 
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_U2_VARIABLE_TYPE, & 
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                !calculate number of components (Q,A) for U and dUdN
-                dependentFieldNumberOfComponents=2
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE, &
-                  & dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & dependentFieldNumberOfComponents,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U2_VARIABLE_TYPE, &
-                  & dependentFieldNumberOfComponents,err,error,*999)
-                SELECT CASE(equationsSet%solutionMethod)
-                CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
-                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_U1_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_U2_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod, &
-                    & "*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              ENDIF
-            !Specify finish action
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(equationsSet%DEPENDENT%dependentFieldAutoCreated) THEN
-                CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
-              ENDIF
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        dependentFieldNumberOfVariables=5
+        dependentFieldNumberOfComponents=2
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+            !Create the auto created dependent field
+            !start field creation with name 'Dependent Field'
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
+            !start creation of a new field
+            CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
+            !label the field
+            CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
+            !define new created field to be dependent
+            CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            !look for decomposition rule already defined
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            !apply decomposition rule found on new created field
+            CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
+            !point new field to geometric field
+            CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
+            !set number of variables to 5 (U,DELUDELN,V,U1,U2)=>(Q,A;dQ,dA;W;pCellML;Pressure)
+            CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,dependentFieldNumberOfVariables, &
+              & err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE], &
+              & err,error,*999)
+            ! set dimension
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            ! set data type
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, &
+              & FIELD_DP_TYPE,err,error,*999)
+            ! number of components for U,DELUDELN=2 (Q,A)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+            !Default to the geometric interpolation setup for U,dUdN
+            DO componentIdx=1,dependentFieldNumberOfComponents
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                & geometricMeshComponent,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & componentIdx,geometricMeshComponent,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE,componentIdx, &
+                & geometricMeshComponent,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,componentIdx, &
+                & geometricMeshComponent,err,error,*999)
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE,componentIdx, &
+                & geometricMeshComponent,err,error,*999)
+            ENDDO !componentIdx
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
+              !Specify nodal solution method
+              ! (U, dUdN); 2 components (Q,A)
+              DO componentIdx=1,dependentFieldNumberOfComponents
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_V_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_U1_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+                  & FIELD_U2_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              ENDDO
+              CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType, &
+                & err,error,*999)
+              CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType, &
+                & err,error,*999)
             CASE DEFAULT
-              localError="The third equations set specification of "// &
-                & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-                & " is invalid for a characteristic equations set."
+              localError="The solution method of " &
+                & //TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-          CASE DEFAULT
-            localError="The third equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-              & " is invalid for a characteristic equations set."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+          ELSE 
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,dependentFieldNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE] &
+              & ,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, & 
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE, & 
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE, & 
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE, & 
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            !calculate number of components (Q,A) for U and dUdN
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE, &
+              & dependentFieldNumberOfComponents,err,error,*999)
+            SELECT CASE(equationsSet%solutionMethod)
+            CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod, &
+                & "*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDIF
+          !Specify finish action
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The third equations set specification of "// &
+            & TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
+            & " is invalid for a characteristic equations set."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
         !-----------------------------------------------------------------
         ! I n d e p e n d e n t   f i e l d
         !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
-          SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-            SELECT CASE(equationsSetSetup%actionType)
-            !Set start action
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              independentFieldNumberOfVariables=1   !set number of variables to 1 (W)
-              independentFieldNumberOfComponents=2 !normalDirection for wave relative to node for W1,W2
-              IF(equationsSet%INDEPENDENT%independentFieldAutoCreated) THEN
-                !Create the auto created independent field
-                !start field creation with name 'INDEPENDENT_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
-                  & equationsSet%INDEPENDENT%independentField,err,error,*999)
-                !start creation of a new field
-                CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_GENERAL_TYPE,err,error,*999)
-                !label the field
-                CALL Field_LabelSet(equationsSet%INDEPENDENT%independentField,"Independent Field",err,error, & 
-                  & *999)
-                !define new created field to be independent
-                CALL Field_DependentTypeSetAndLock(equationsSet%INDEPENDENT%independentField, &
-                  & FIELD_INDEPENDENT_TYPE,err,error,*999)
-                !look for decomposition rule already defined
-                CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition, &
-                  & err,error,*999)
-                !apply decomposition rule found on new created field
-                CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%independentField, &
-                  & geometricDecomposition,err,error,*999)
-                !point new field to geometric field
-                CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%independentField, &
-                  & equationsSet%GEOMETRY%geometricField,err,error,*999)
-                CALL Field_NumberOfVariablesSetAndLock(equationsSet%INDEPENDENT%independentField, &
-                  & independentFieldNumberOfVariables,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(equationsSet%INDEPENDENT%independentField, & 
-                  & [FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL Field_DimensionSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                !characteristic normal direction (normalWave) is +/- 1
-                CALL Field_DataTypeSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                !calculate number of components with one component for each dimension
-                CALL Field_NumberOfComponentsSetAndLock(equationsSet%INDEPENDENT%independentField, & 
-                  & FIELD_U_VARIABLE_TYPE,independentFieldNumberOfComponents,err,error,*999)
-                CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, & 
-                  & 1,geometricMeshComponent,err,error,*999)
-                !Default to the geometric interpolation setup
-                DO componentIdx=1,independentFieldNumberOfComponents
-                  CALL Field_ComponentMeshComponentSet(equationsSet%INDEPENDENT%independentField, & 
-                    & FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
-                END DO
-                SELECT CASE(equationsSet%solutionMethod)
-                CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
-                  DO componentIdx=1,independentFieldNumberOfComponents
-                    CALL Field_ComponentInterpolationSetAndLock(equationsSet%INDEPENDENT%independentField, &
-                      & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                  END DO !componentIdx
-                  CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType, &
-                    & err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of " &
-                    & //TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT 
-              ELSE
-                !Check the user specified field
-                CALL Field_TypeCheck(equationsSetSetup%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeCheck(equationsSetSetup%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL Field_NumberOfVariablesCheck(equationsSetSetup%FIELD,independentFieldNumberOfVariables,err,error,*999)
-                CALL Field_VariableTypesCheck(equationsSetSetup%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & err,error,*999)
-                CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & independentFieldNumberOfComponents,err,error,*999)
-              ENDIF    
-            !Specify finish action
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              IF(equationsSet%INDEPENDENT%independentFieldAutoCreated) THEN
-                CALL Field_CreateFinish(equationsSet%INDEPENDENT%independentField,err,error,*999)
-              ENDIF
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        independentFieldNumberOfVariables=1 !set number of variables to 1 (W)
+        independentFieldNumberOfComponents=2 !normalDirection for wave relative to node for W1,W2
+        SELECT CASE(equationsSetSetup%actionType)
+        CASE(EQUATIONS_SET_SETUP_START_ACTION)
+          IF(equationsSet%INDEPENDENT%independentFieldAutoCreated) THEN
+            !Create the auto created independent field
+            !start field creation with name 'Independent Field'
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%INDEPENDENT%independentField, &
+              & err,error,*999)
+            !start creation of a new field
+            CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_GENERAL_TYPE,err,error,*999)
+            !label the field
+            CALL Field_LabelSet(equationsSet%INDEPENDENT%independentField,"Independent Field",err,error,*999)
+            !define new created field to be independent
+            CALL Field_DependentTypeSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            !look for decomposition rule already defined
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            !apply decomposition rule found on new created field
+            CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%independentField,geometricDecomposition,err,error,*999)
+            !point new field to geometric field
+            CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%independentField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsSet%INDEPENDENT%independentField,independentFieldNumberOfVariables, &
+              & err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSet%INDEPENDENT%independentField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            !characteristic normal direction (normalWave) is +/- 1
+            CALL Field_DataTypeSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
+              & err,error,*999)
+            !calculate number of components with one component for each dimension
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
+              & independentFieldNumberOfComponents,err,error,*999)
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+            !Default to the geometric interpolation setup
+            DO componentIdx=1,independentFieldNumberOfComponents
+              CALL Field_ComponentMeshComponentSet(equationsSet%INDEPENDENT%independentField,FIELD_U_VARIABLE_TYPE, &
+                & componentIdx,geometricMeshComponent,err,error,*999)
+            ENDDO !componentIdx
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)          
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
+              DO componentIdx=1,independentFieldNumberOfComponents
+                CALL Field_ComponentInterpolationSetAndLock(equationsSet%INDEPENDENT%independentField, &
+                  & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              ENDDO !componentIdx
+              CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
             CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
-                & " is invalid for a standard characteristic equations set"
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-          CASE DEFAULT
-            localError="The third equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-              & " is invalid for a standard characteristic equations set."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        !-----------------------------------------------------------------
-        ! M a t e r i a l s   f i e l d 
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-          SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-            materialsFieldNumberOfVariables=2 ! U type-7 constant / V type-3 variable
-            materialsFieldNumberOfComponents1=8
-            materialsFieldNumberOfComponents2=3
-            SELECT CASE(equationsSetSetup%actionType)
-            !Specify start action
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              equationsMaterials=>equationsSet%MATERIALS
-              IF(ASSOCIATED(equationsMaterials)) THEN
-                IF(equationsMaterials%materialsFieldAutoCreated) THEN
-                  !Create the auto created materials field
-                  !start field creation with name 'MATERIAL_FIELD'
-                  CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, & 
-                    & equationsSet%MATERIALS%materialsField,err,error,*999)
-                  CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
-                  !label the field
-                  CALL Field_LabelSet(equationsMaterials%materialsField,"Materials Field",err,error,*999)
-                  CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE, &
-                    & err,error,*999)
-                  CALL Field_DecompositionGet(equationsSet%GEOMETRY%geometricField,geometricDecomposition, & 
-                    & err,error,*999)
-                  !apply decomposition rule found on new created field
-                  CALL Field_DecompositionSetAndLock(equationsSet%MATERIALS%materialsField, & 
-                    & geometricDecomposition,err,error,*999)
-                  !point new field to geometric field
-                  CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,equationsSet%GEOMETRY% &
-                    & geometricField,err,error,*999)
-                  CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField, & 
-                    & materialsFieldNumberOfVariables,err,error,*999)
-                  CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField, & 
-                    & [FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE],err,error,*999)
-                  CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & materialsFieldNumberOfComponents1,err,error,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & materialsFieldNumberOfComponents2,err,error,*999)
-                  CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%geometricField, & 
-                    & FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & 1,geometricComponentNumber,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
-                    & 1,geometricComponentNumber,err,error,*999)
-                  DO componentIdx=1,materialsFieldNumberOfComponents1 !(MU,RHO,alpha,pressureExternal,LengthScale,TimeScale,MassScale)
-                    CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                      & componentIdx,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
-                  ENDDO
-                  DO componentIdx=1,materialsFieldNumberOfComponents2 !(A0,E,H0)
-                    CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
-                      & componentIdx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
-                  ENDDO
-                  !Default the field scaling to that of the geometric field
-                  CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,err,error,*999)
-                  CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
-                ELSE
-                  !Check the user specified field
-                  CALL Field_TypeCheck(equationsSetSetup%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                  CALL Field_DependentTypeCheck(equationsSetSetup%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL Field_NumberOfVariablesCheck(equationsSetSetup%FIELD,materialsFieldNumberOfVariables,err,error,*999)
-                  CALL Field_VariableTypesCheck(equationsSetSetup%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE], &
-                    & err,error,*999)
-                  ! U-variable
-                  CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE, & 
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE, & 
-                    & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & materialsFieldNumberOfComponents1,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE, &
-                    & materialsFieldNumberOfComponents2,err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set materials is not associated.",err,error,*999)
-              END IF
-              !Specify start action
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              equationsMaterials=>equationsSet%MATERIALS
-              IF(ASSOCIATED(equationsMaterials)) THEN
-                IF(equationsMaterials%materialsFieldAutoCreated) THEN
-                  !Finish creating the materials field
-                  CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
-                  ! Should be initialized from example file
-                ENDIF
-              ELSE
-                CALL FlagError("Equations set materials is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*", & 
-                & err,error))//" for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*", & 
-                & err,error))//" is invalid for characteristic equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE DEFAULT
-            localError="The third equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-              & " is invalid for a characteristic equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        !-----------------------------------------------------------------
-        ! E q u a t i o n s    t y p e
-        !-----------------------------------------------------------------
-        CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
-          SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-            SELECT CASE(equationsSetSetup%actionType)
-            CASE(EQUATIONS_SET_SETUP_START_ACTION)
-              CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
-              CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
-              CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-              SELECT CASE(equationsSet%solutionMethod)
-              CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
-                !Finish the creation of the equations
-                CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-                CALL Equations_CreateFinish(equations,err,error,*999)
-                NULLIFY(vectorEquations)
-                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE, & 
-                  & err,error,*999)
-                CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-                !Create the equations matrices
-                CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                SELECT CASE(equations%sparsityType)
-                CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-                    & err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
-                    & err,error,*999)
-                CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
-                    & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices, & 
-                    & [EQUATIONS_MATRIX_NODAL_STRUCTURE],err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, & 
-                    & MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                  CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, & 
-                    & EQUATIONS_MATRIX_NODAL_STRUCTURE,err,error,*999)
-                CASE DEFAULT
-                  localError="The equations matrices sparsity type of "// &
-                    & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-                !Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
-                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
-               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod, &
-                  & "*",err,error))//" is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE DEFAULT
-              localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
-                & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
-                & " is invalid for a characteristics equation."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE DEFAULT
-            localError="The third equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-              & " is invalid for a characteristics equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+          ELSE
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,independentFieldNumberOfVariables,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
+              & independentFieldNumberOfComponents,err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+          IF(equationsSet%INDEPENDENT%independentFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsSet%INDEPENDENT%independentField,err,error,*999)
+          ENDIF
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
-            & " is invalid for a characteristics equation set."
+          localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+            & " is invalid for a standard characteristic equations set"
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The third equations set specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-          & " does not equal a characteristics equation set."
+        localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+          & " is invalid for a standard characteristic equations set."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-
+    CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
+      !-----------------------------------------------------------------
+      ! M a t e r i a l s   f i e l d 
+      !-----------------------------------------------------------------
+      NULLIFY(equationsMaterials)
+      CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      materialsFieldNumberOfVariables=2 ! U type-7 constant / V type-3 variable
+      materialsFieldNumberOfComponents1=8
+      materialsFieldNumberOfComponents2=3
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        IF(equationsMaterials%materialsFieldAutoCreated) THEN
+          !Create the auto created materials field
+          !start field creation with name 'Materials Field'
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%materials%materialsField,err,error,*999)
+          CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
+          !label the field
+          CALL Field_LabelSet(equationsMaterials%materialsField,"Materials Field",err,error,*999)
+          CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+          !apply decomposition rule found on new created field
+          CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
+          !point new field to geometric field
+          CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
+          CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField,materialsFieldNumberOfVariables,err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE], &
+            & err,error,*999)
+          CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            & err,error,*999)
+          CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+            & materialsFieldNumberOfComponents1,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+            & materialsFieldNumberOfComponents2,err,error,*999)
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+          CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,1, &
+            & geometricComponentNumber,err,error,*999)
+          CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE,1, &
+            & geometricComponentNumber,err,error,*999)
+          DO componentIdx=1,materialsFieldNumberOfComponents1 !(mu,rho,alpha,pressureExternal,LengthScale,TimeScale,MassScale)
+            CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+          ENDDO !componentIdx
+          DO componentIdx=1,materialsFieldNumberOfComponents2 !(A0,E,H0)
+            CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_V_VARIABLE_TYPE, &
+              & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+          ENDDO !componentIdx
+          !Default the field scaling to that of the geometric field
+          CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+          CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
+        ELSE
+          !Check the user specified field
+          CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,materialsFieldNumberOfVariables,err,error,*999)
+          CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE],err,error,*999)
+          ! U-variable
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,materialsFieldNumberOfComponents1, &
+            & err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,materialsFieldNumberOfComponents2, &
+            & err,error,*999)
+        ENDIF
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsMaterials%materialsFieldAutoCreated) THEN
+          !Finish creating the materials field
+          CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
+          !Should be initialized from example file \TODO: No, should be initialised here.
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*", & 
+          & err,error))//" for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*", & 
+          & err,error))//" is invalid for characteristic equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
+      !-----------------------------------------------------------------
+      ! E q u a t i o n s 
+      !-----------------------------------------------------------------
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
+        NULLIFY(equations)
+        CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+        CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
+        CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)          
+        SELECT CASE(solutionMethod)
+        CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
+          !Finish the creation of the equations
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          CALL Equations_CreateFinish(equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          !Create the equations mapping.
+          NULLIFY(vectorMapping)
+          CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+          CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
+          CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
+          CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+          CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+          !Create the equations matrices
+          CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+          CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+          SELECT CASE(sparsityType)
+          CASE(EQUATIONS_MATRICES_FULL_MATRICES)
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+            CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+          CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_NODAL_STRUCTURE],err,error,*999)
+            CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+            CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_NODAL_STRUCTURE,err,error,*999)
+          CASE DEFAULT
+            localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+          !Use the analytic Jacobian calculation
+          CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
+            & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
+        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a characteristics equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+        & " is invalid for a characteristics equation set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
     EXITS("Characteristic_EquationsSetSetup")
     RETURN
 999 ERRORSEXITS("Characteristic_EquationsSetSetup",err,error)
@@ -856,137 +749,159 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainType), POINTER :: domain
+    INTEGER(INTG) :: derivativeIdx,versionIdx,versionIdx2,componentIdx,rowIdx,columnIdx,componentIdx2,numberOfVersions
+    REAL(DP) :: qBif(4),aBif(4),a0Param(4),eParam(4),h0Param(4),beta(4),w(2,4),normalWave(2,4),sum,rho
+    REAL(DP), POINTER :: dependentParameters(:),independentParameters(:),materialsParameters(:)
+    LOGICAL :: boundaryNode,update,updateMatrix,updateResidual
+    TYPE(DomainType), POINTER :: dependentDomain
+    TYPE(DomainNodesType), POINTER :: dependentDomainNodes
+    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: materialsField,dependentField,independentField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: dependentUVariable,dependentVVariable,independentVariable,materialsUVariable, &
+      & materialsVVariable
     TYPE(VARYING_STRING) :: localError
-    REAL(DP), POINTER :: dependentParameters(:),independentParameters(:),materialsParameters(:)
-    REAL(DP) :: Q_BIF(4),A_BIF(4),A0_PARAM(4),E_PARAM(4),H0_PARAM(4),Beta(4),W(2,4),normalWave(2,4),SUM,rho
-    INTEGER(INTG) :: derivativeIdx,versionIdx,versionIdx2,componentIdx,rowIdx,columnIdx,componentIdx2,numberOfVersions
-    LOGICAL :: updateStiffnessMatrix,updateNonlinearResidual,boundaryNode
 
     ENTERS("Characteristic_NodalResidualEvaluate",err,error,*999)
+  
+    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
+
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Poisson equation type of a classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     NULLIFY(equations)
+    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
-    NULLIFY(vectorMapping)
-    NULLIFY(vectorMatrices)
-    NULLIFY(linearMapping)
-    NULLIFY(linearMatrices)
-    NULLIFY(nonlinearMapping)
-    NULLIFY(nonlinearMatrices)
-    NULLIFY(stiffnessMatrix)
-    NULLIFY(dependentField)
-    NULLIFY(independentField)
-    NULLIFY(materialsField)
-    NULLIFY(domain)
-    NULLIFY(domainNodes)
-    NULLIFY(dependentParameters)
-    NULLIFY(independentParameters)
-    NULLIFY(materialsParameters)
-    NULLIFY(fieldVariable)
-
-    updateStiffnessMatrix=.FALSE.
-    updateNonlinearResidual=.FALSE.
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-    domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
-    IF(ASSOCIATED(domain)) THEN
-      domainNodes=>domain%TOPOLOGY%NODES
-    ELSE
-      CALL FlagError("Domain is not associated.",err,error,*999)
-    ENDIF
+    NULLIFY(vectorMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    NULLIFY(linearMapping)
+    CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+    NULLIFY(residualMapping)
+    CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    NULLIFY(residualVector)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
+    updateResidual=residualVector%updateVector
+    NULLIFY(linearMatrices)
+    CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+    NULLIFY(stiffnessMatrix)
+    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
+    updateMatrix=stiffnessMatrix%updateMatrix
 
-    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)/=3) &
-      & CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-      & err,error,*999)
-    SELECT CASE(equationsSet%specification(3))
-    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-      !Set General and Specific Pointers
-      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999) 
-      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)       
-      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-      CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-      CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
-      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
-      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-      stiffnessMatrix%nodalMatrix%matrix=0.0_DP
-      nonlinearMatrices%NodalResidual%vector=0.0_DP
-      IF(ASSOCIATED(stiffnessMatrix)) updateStiffnessMatrix=stiffnessMatrix%updateMatrix
-      IF(ASSOCIATED(nonlinearMatrices)) updateNonlinearResidual=nonlinearMatrices%updateResidual
+    update=(updateMatrix.OR.updateResidual)
+
+    IF(update) THEN
+
+      NULLIFY(dependentField)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      NULLIFY(materialsField)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+      NULLIFY(independentField)
+      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+
+      NULLIFY(dependentUVariable)
+      CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentUVariable,err,error,*999)
+      NULLIFY(dependentVVariable)
+      CALL Field_VariableGet(dependentField,FIELD_V_VARIABLE_TYPE,dependentVVariable,err,error,*999)
+      NULLIFY(dependentDecomposition)
+      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+      NULLIFY(dependentDecompositionTopology)
+      CALL Decomposition_DecompositionTopologyGet(dependentDecomposition,dependentDecompositionTopology,err,error,*999)
+      NULLIFY(dependentDecompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(dependentDecompositionTopology,dependentDecompositionElements, &
+        & err,error,*999)
+      NULLIFY(dependentDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+      NULLIFY(dependentDomainTopology)
+      CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+      NULLIFY(dependentDomainNodes)
+      CALL DomainTopology_DomainNodesGet(dependentDomainTopology,dependentDomainNodes,err,error,*999)
+       
+      NULLIFY(materialsUVariable)
+      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsUVariable,err,error,*999)
+      NULLIFY(materialsVVariable)
+      CALL Field_VariableGet(materialsField,FIELD_V_VARIABLE_TYPE,materialsVVariable,err,error,*999)
+
+      NULLIFY(independentVariable)
+      CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
 
       derivativeIdx=1
       normalWave=0.0_DP
-      numberOfVersions=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivativeIdx)%numberOfVersions
-      boundaryNode=dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR% &
-        & TOPOLOGY%NODES%NODES(nodeNumber)%boundaryNode
-
+      CALL DomainNodes_DerivativeNumberOfVersionsGet(dependentDomainNodes,derivativeIdx,nodeNumber,numberOfVersions,err,error,*999)
+      CALL DomainNodes_NodeBoundaryNodeGet(dependentDomainNodes,nodeNumber,boundaryNode,err,error,*999)
+ 
       !Get normal wave direction for nodes
       DO componentIdx=1,2
         DO versionIdx=1,numberOfVersions
-          CALL Field_ParameterSetGetLocalNode(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-           & versionIdx,derivativeIdx,nodeNumber,componentIdx,normalWave(componentIdx,versionIdx),err,error,*999)  
-        ENDDO
-      ENDDO
+          CALL FieldVariable_ParameterSetGetLocalNode(independentVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+            & nodeNumber,componentIdx,normalWave(componentIdx,versionIdx),err,error,*999)  
+        ENDDO !versionIdx
+      ENDDO !componentIdx
 
       !!!-- F i n d   B r a n c h   N o d e s --!!!
       IF(ABS(normalWave(1,1))>0 .OR. ABS(normalWave(2,1))>0) THEN
         IF(.NOT. boundaryNode) THEN
 
           !Get material constants
-          CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
+          CALL FieldVariable_ParameterSetGetConstant(materialsUVariable,FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
           !Get node-based material parameters
           DO versionIdx=1,numberOfVersions
-            CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,1,A0_PARAM(versionIdx),err,error,*999)  
-            CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,2,E_PARAM(versionIdx),err,error,*999)                
-            CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,3,H0_PARAM(versionIdx),err,error,*999)                
-            beta(versionIdx)=(4.0_DP*SQRT(PI)*E_PARAM(versionIdx)*H0_PARAM(versionIdx))/(3.0_DP*A0_PARAM(versionIdx))     
-          ENDDO
+            CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,1,a0Param(versionIdx),err,error,*999)  
+            CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,2,eParam(versionIdx),err,error,*999)                
+            CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,3,h0Param(versionIdx),err,error,*999)                
+            beta(versionIdx)=(4.0_DP*SQRT(PI)*eParam(versionIdx)*h0Param(versionIdx))/(3.0_DP*a0Param(versionIdx))     
+          ENDDO !versionIdx
 
           DO versionIdx=1,numberOfVersions
             !Get current Q & A Values at the node
-            CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,1,Q_BIF(versionIdx),err,error,*999)                
-            CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,2,A_BIF(versionIdx),err,error,*999)                
+            CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,1,qBif(versionIdx),err,error,*999)                
+            CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,2,aBif(versionIdx),err,error,*999)                
             !Set as upwind field values
-            CALL Field_ParameterSetUpdateLocalNode(dependentField,FIELD_U_VARIABLE_TYPE, &
-             & FIELD_UPWIND_VALUES_SET_TYPE,versionIdx,1,nodeNumber,1,Q_BIF(versionIdx),ERR,ERROR,*999)            
-            CALL Field_ParameterSetUpdateLocalNode(dependentField,FIELD_U_VARIABLE_TYPE, &
-             & FIELD_UPWIND_VALUES_SET_TYPE,versionIdx,1,nodeNumber,2,A_BIF(versionIdx),ERR,ERROR,*999)            
+            CALL FieldVariable_ParameterSetUpdateLocalNode(dependentUVariable,FIELD_UPWIND_VALUES_SET_TYPE,versionIdx,1, &
+              & nodeNumber,1,qBif(versionIdx),err,error,*999)            
+            CALL FieldVariable_ParameterSetUpdateLocalNode(dependentUVariable,FIELD_UPWIND_VALUES_SET_TYPE,versionIdx,1, &
+              & nodeNumber,2,aBif(versionIdx),err,error,*999)
             ! If A goes negative during nonlinear iteration, set to A0
-            IF (A_BIF(versionIdx) < A0_PARAM(versionIdx)*0.001_DP) A_BIF(versionIdx) = A0_PARAM(versionIdx)*0.001_DP
-          ENDDO
+            IF (aBif(versionIdx) < a0Param(versionIdx)*0.001_DP) aBif(versionIdx) = a0Param(versionIdx)*0.001_DP
+          ENDDO !versionIdx
 
           !Get extrapolated W for the node
           DO componentIdx=1,2
             DO versionIdx=1,numberOfVersions
-              CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & versionIdx,derivativeIdx,nodeNumber,componentIdx,W(componentIdx,versionIdx),err,error,*999)                
-            ENDDO
-          ENDDO
+              CALL FieldVariable_ParameterSetGetLocalNode(dependentVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeNumber,componentIdx,w(componentIdx,versionIdx),err,error,*999)                
+            ENDDO !versionIdx
+          ENDDO !componentIdx
 
           !!!-- S T I F F N E S S  M A T R I X  --!!!
-          IF(updateStiffnessMatrix) THEN
+          IF(updateMatrix) THEN
             !Conservation of Mass
             rowIdx=numberOfVersions+1
             columnIdx=0
@@ -996,57 +911,51 @@ CONTAINS
                   columnIdx=columnIdx+1
                   stiffnessMatrix%nodalMatrix%matrix(rowIdx,columnIdx)=normalWave(componentIdx,versionIdx)
                 ENDIF
-              ENDDO
-            ENDDO
+              ENDDO !versionIdx
+            ENDDO !componentIdx
           ENDIF
 
           !!!-- N O N L I N E A R   V E C T O R --!!!
-          IF(updateNonlinearResidual) THEN
+          IF(updateResidual) THEN
             rowIdx=0
             !Characteristics Equations
             DO componentIdx=1,2
               DO versionIdx=1,numberOfVersions
                 IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                   rowIdx=rowIdx+1
-                  nonlinearMatrices%NodalResidual%vector(rowIdx)=(Q_BIF(versionIdx)/A_BIF(versionIdx)) &
-                    & +normalWave(componentIdx,versionIdx)*4.0_DP*SQRT(Beta(versionIdx)/(2.0_DP*rho))* &
-                    & (A_BIF(versionIdx)**0.25_DP - A0_PARAM(versionIdx)**0.25_DP)-W(componentIdx,versionIdx)
+                  residualVector%nodalResidual%vector(rowIdx)=(qBif(versionIdx)/aBif(versionIdx)) &
+                    & +normalWave(componentIdx,versionIdx)*4.0_DP*SQRT(beta(versionIdx)/(2.0_DP*rho))* &
+                    & (aBif(versionIdx)**0.25_DP - a0Param(versionIdx)**0.25_DP)-w(componentIdx,versionIdx)
                 ENDIF
-              ENDDO
-            ENDDO
+              ENDDO !versionIdx
+            ENDDO !componentIdx
             !Continuity of Total Pressure
             DO componentIdx=1,2
               DO versionIdx=1,numberOfVersions
                 IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                   rowIdx=rowIdx+1
                   IF(versionIdx==1) THEN
-                    SUM=0.0_DP
+                    sum=0.0_DP
                     DO componentIdx2=1,2
                       DO versionIdx2=1,numberOfVersions
-                        SUM=SUM+normalWave(componentIdx2,versionIdx2)*Q_BIF(versionIdx2)
-                      ENDDO
-                    ENDDO
-                    nonlinearMatrices%NodalResidual%vector(rowIdx)=SUM
+                        sum=sum+normalWave(componentIdx2,versionIdx2)*qBif(versionIdx2)
+                      ENDDO !versionIdx
+                    ENDDO !componentIdx
+                    residualVector%nodalResidual%vector(rowIdx)=sum
                   ELSE
-                    nonlinearMatrices%NodalResidual%vector(rowIdx)= &
-                      & (rho/2.0_DP*((Q_BIF(1)/A_BIF(1))**2.0_DP) + Beta(1)*(SQRT(A_BIF(1)) - SQRT(A0_PARAM(1)))) - &
-                      & (rho/2.0_DP*((Q_BIF(versionIdx)/A_BIF(versionIdx))**2.0_DP) + &
-                      & Beta(versionIdx)*(SQRT(A_BIF(versionIdx)) - SQRT(A0_PARAM(versionIdx))))
+                    residualVector%nodalResidual%vector(rowIdx)= &
+                      & (rho/2.0_DP*((qBif(1)/aBif(1))**2.0_DP) + beta(1)*(SQRT(aBif(1)) - SQRT(a0Param(1)))) - &
+                      & (rho/2.0_DP*((qBif(versionIdx)/aBif(versionIdx))**2.0_DP) + &
+                      & beta(versionIdx)*(SQRT(aBif(versionIdx)) - SQRT(a0Param(versionIdx))))
                   ENDIF
                 ENDIF
-              ENDDO
-            ENDDO
+              ENDDO !versionIdx
+            ENDDO !componentIdx
           ENDIF
-
         ENDIF
       ENDIF !Find branch nodes
 
-    CASE DEFAULT
-      localError="The third equations set specification of "// &
-        & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-        & " is not valid for a characteristic type of a fluid mechanics equations set."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
+    ENDIF !update
     
     EXITS("Characteristic_NodalResidualEvaluate")
     RETURN
@@ -1068,148 +977,146 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainType), POINTER :: domain
+    INTEGER(INTG) :: columnIdx,columnIdx2,componentIdx,derivativeIdx,endRow,esSpecification(3),numberOfVersions,localDOFIdx, &
+      & rowIdx,startColumn2,startRow,versionIdx
+    REAL(DP) :: qBif(4),aBif(4),a0Param(4),eParam(4),h0Param(4),beta(4),w(2,4),normalWave(2,4),rho
+    REAL(DP), POINTER :: independentParameters(:)
+    LOGICAL :: update,updateMatrix,boundaryNode
+    TYPE(DomainType), POINTER :: dependentDomain
+    TYPE(DomainNodesType), POINTER :: dependentDomainNodes
+    TYPE(DomainTopologyType), POINTER :: dependentDomainNodes
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
-    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(FieldType), POINTER :: materialsField,dependentField,independentField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: dependentUVariable,dependentVVariable,independentVariable,materialsUVariable, &
+      & materialsVVariable
     TYPE(VARYING_STRING) :: localError
-    REAL(DP), POINTER :: dependentParameters(:),independentParameters(:),materialsParameters(:)
-    REAL(DP) :: Q_BIF(4),A_BIF(4),A0_PARAM(4),E_PARAM(4),H0_PARAM(4),Beta(4),W(2,4),normalWave(2,4),rho
-    INTEGER(INTG) :: numberOfVersions,local_ny,startColumn2
-    INTEGER(INTG) :: derivativeIdx,versionIdx,rowIdx,columnIdx,columnIdx2,startRow,endRow,componentIdx
-    LOGICAL :: updateJacobianMatrix,boundaryNode
 
     ENTERS("Characteristic_NodalJacobianEvaluate",err,error,*999)
+  
+    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
+
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Poisson equation type of a classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     NULLIFY(equations)
+    CALL EquationSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
-    NULLIFY(vectorMapping)
-    NULLIFY(vectorMatrices)
-    NULLIFY(linearMapping)
-    NULLIFY(linearMatrices)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    NULLIFY(residualMapping)
+    CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    NULLIFY(residualVector)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
     NULLIFY(jacobianMatrix)
-    NULLIFY(dependentField)
-    NULLIFY(independentField)
-    NULLIFY(materialsField)
-    NULLIFY(domain)
-    NULLIFY(domainNodes)
-    NULLIFY(dependentParameters)
-    NULLIFY(independentParameters)
-    NULLIFY(materialsParameters)
-    NULLIFY(fieldVariable)
+    CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,1,jacobianMatrix,err,error,*999)
+    updateMatrix=jacobianMatrix%updateJacobian
+ 
+    update=(updateMatrix)
 
-    updateJacobianMatrix=.FALSE.
+    IF(update) THEN
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      equations=>equationsSet%EQUATIONS
-      IF(ASSOCIATED(equations)) THEN
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        dependentField=>equations%equationsSet%dependent%dependentField
-        IF(ASSOCIATED(dependentField)) THEN
-          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
-          IF(ASSOCIATED(domain)) THEN
-            domainNodes=>domain%TOPOLOGY%NODES
-          ELSE
-            CALL FlagError("Domain is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Dependent Field is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+      NULLIFY(dependentField)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      NULLIFY(materialsField)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+      NULLIFY(independentField)
+      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
 
-    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)/=3) &
-      & CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-      & err,error,*999)
-    SELECT CASE(equationsSet%specification(3))
-    CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
-      !Set General and Specific Pointers
-      independentField=>equations%equationsSet%INDEPENDENT%independentField
-      materialsField=>equations%interpolation%materialsField
-      vectorMatrices=>vectorEquations%vectorMatrices
-      vectorMapping=>vectorEquations%vectorMapping
-      linearMatrices=>vectorMatrices%linearMatrices
-      nonlinearMatrices=>vectorMatrices%nonlinearMatrices
-      nonlinearMapping=>vectorMapping%nonlinearMapping
-      linearMapping=>vectorMapping%linearMapping
-      jacobianMatrix=>nonlinearMatrices%jacobians(1)%PTR
-      jacobianMatrix%NodalJacobian%matrix=0.0_DP
-      IF(ASSOCIATED(jacobianMatrix)) updateJacobianMatrix=jacobianMatrix%updateJacobian
+      NULLIFY(dependentUVariable)
+      CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentUVariable,err,error,*999)
+      NULLIFY(dependentVVariable)
+      CALL Field_VariableGet(dependentField,FIELD_V_VARIABLE_TYPE,dependentVVariable,err,error,*999)
+      NULLIFY(dependentDecomposition)
+      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+      NULLIFY(dependentDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+      NULLIFY(dependentDomainTopology)
+      CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+      NULLIFY(dependentDomainNodes)
+      CALL DomainTopology_DomainNodesGet(dependentDomainTopology,dependentDomainNodes,err,error,*999)
+      
+      NULLIFY(materialsUVariable)
+      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsUVariable,err,error,*999)
+      NULLIFY(materialsVVariable)
+      CALL Field_VariableGet(materialsField,FIELD_V_VARIABLE_TYPE,materialsVVariable,err,error,*999)
+
+      NULLIFY(independentVariable)
+      CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
 
       derivativeIdx=1
       normalWave=0.0_DP
-      numberOfVersions=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivativeIdx)%numberOfVersions
-      boundaryNode=dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR% &
-        & TOPOLOGY%NODES%NODES(nodeNumber)%boundaryNode
+      CALL DomainNodes_DerivativeNumberOfVersionsGet(dependentDomainNodes,derivativeIdx,nodeNumber,numberOfVersions,err,error,*999)
+      CALL DomainNodes_NodeBoundaryNodeGet(dependentDomainNodes,nodeNumber,boundaryNode,err,error,*999)
 
       !Get normal wave direction for nodes
-      CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-        & independentParameters,err,error,*999)
-      fieldVariable=>independentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR
+      CALL FieldVariable_ParameterSetDataGet(independentVariable,FIELD_VALUES_SET_TYPE,independentParameters,err,error,*999)
       DO componentIdx=1,2
         DO versionIdx=1,numberOfVersions
-          CALL FieldVariable_LocalNodeDOFGet(fieldVariable,versionIdx,derivativeIdx,nodeNumber,componentIdx, &
-            & local_ny,err,error,*999)
-          normalWave(componentIdx,versionIdx)=independentParameters(local_ny)
-        ENDDO
-      ENDDO
-      CALL Field_ParameterSetDataRestore(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-        & independentParameters,err,error,*999)
+          CALL FieldVariable_LocalNodeDOFGet(dependentUVariable,versionIdx,derivativeIdx,nodeNumber,componentIdx, &
+            & localDOFIdx,err,error,*999)
+          normalWave(componentIdx,versionIdx)=independentParameters(localDOFIdx)
+        ENDDO !versionIdx
+      ENDDO !componentIdx
+      CALL FieldVariable_ParameterSetDataRestore(independentVariable,FIELD_VALUES_SET_TYPE,independentParameters,err,error,*999)
 
       !!!-- F i n d   B r a n c h   N o d e s --!!!
       IF(ABS(normalWave(1,1))>0 .OR. ABS(normalWave(2,1))>0) THEN
         IF(.NOT. boundaryNode) THEN
 
           !Get material constants
-          CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
+          CALL FieldVariable_ParameterSetGetConstant(materialsUVariable,FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
           !Get node-based material parameters
           DO versionIdx=1,numberOfVersions
-            CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,1,A0_PARAM(versionIdx),err,error,*999)  
-            CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,2,E_PARAM(versionIdx),err,error,*999)                
-            CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,3,H0_PARAM(versionIdx),err,error,*999)                
-            beta(versionIdx)=(4.0_DP*SQRT(PI)*E_PARAM(versionIdx)*H0_PARAM(versionIdx))/(3.0_DP*A0_PARAM(versionIdx))     
-          ENDDO
+            CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,1,a0Param(versionIdx),err,error,*999)  
+            CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,2,eParam(versionIdx),err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,3,h0Param(versionIdx),err,error,*999)
+            beta(versionIdx)=(4.0_DP*SQRT(PI)*eParam(versionIdx)*h0Param(versionIdx))/(3.0_DP*a0Param(versionIdx))     
+          ENDDO !versionIdx
 
           !Get current Q & A Values at the node
           DO versionIdx=1,numberOfVersions
-            CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,1,Q_BIF(versionIdx),err,error,*999)                
-            CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & versionIdx,derivativeIdx,nodeNumber,2,A_BIF(versionIdx),err,error,*999)                
+            CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,1,qBif(versionIdx),err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeNumber,2,aBif(versionIdx),err,error,*999)                
             ! If A goes negative during nonlinear iteration, set to A0
-            IF (A_BIF(versionIdx) < A0_PARAM(versionIdx)*0.001_DP) A_BIF(versionIdx) = A0_PARAM(versionIdx)*0.001_DP
-          ENDDO
+            IF (aBif(versionIdx) < a0Param(versionIdx)*0.001_DP) aBif(versionIdx) = a0Param(versionIdx)*0.001_DP
+          ENDDO !versionIdx
 
           !Get extrapolated W for the node
           DO componentIdx=1,2
             DO versionIdx=1,numberOfVersions
-              CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & versionIdx,derivativeIdx,nodeNumber,componentIdx,W(componentIdx,versionIdx),err,error,*999)                
-            ENDDO
-          ENDDO
+              CALL FieldVariable_ParameterSetGetLocalNode(dependentVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeNumber,componentIdx,w(componentIdx,versionIdx),err,error,*999)                
+            ENDDO !versionIdx
+          ENDDO !componentIdx
 
           !!!--  J A C O B I A N   M A T R I X  --!!!
-          IF(updateJacobianMatrix) THEN
+          IF(updateMatrix) THEN
             ! Characteristic equations (dW/dU)
             columnIdx=0
             rowIdx=0
@@ -1218,21 +1125,21 @@ CONTAINS
                 IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                   columnIdx=columnIdx+1
                   rowIdx=rowIdx+1
-                  jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx)=1.0_DP/A_BIF(versionIdx)
+                  jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx)=1.0_DP/aBif(versionIdx)
                 ENDIF                
-              ENDDO
-            ENDDO
+              ENDDO !versionIdx
+            ENDDO !componentIdx
             rowIdx=0
             DO componentIdx=1,2
               DO versionIdx=1,numberOfVersions
                 IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                   columnIdx=columnIdx+1
                   rowIdx=rowIdx+1
-                  jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx)=(-Q_BIF(versionIdx)/(A_BIF(versionIdx)**2)) &
-                    & +normalWave(componentIdx,versionIdx)*SQRT(Beta(versionIdx)/(2.0_DP*rho))*(A_BIF(versionIdx)**(-0.75_DP))
+                  jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx)=(-qBif(versionIdx)/(aBif(versionIdx)**2)) &
+                    & +normalWave(componentIdx,versionIdx)*SQRT(beta(versionIdx)/(2.0_DP*rho))*(aBif(versionIdx)**(-0.75_DP))
                 ENDIF
-              ENDDO
-            ENDDO
+              ENDDO !versionIdx
+            ENDDO !componentIdx
 
             !Conservation of Mass
             rowIdx=numberOfVersions+1
@@ -1241,10 +1148,10 @@ CONTAINS
               DO versionIdx=1,numberOfVersions
                 IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                   columnIdx=columnIdx+1
-                  jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx)=normalWave(componentIdx,versionIdx)
+                  jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx)=normalWave(componentIdx,versionIdx)
                 ENDIF                
-              ENDDO
-            ENDDO
+              ENDDO !versionIdx
+            ENDDO !componentIdx
 
             !Continuity of Total Pressure (dP/dU)
             startRow=numberOfVersions+2
@@ -1258,41 +1165,32 @@ CONTAINS
                   IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                     IF(columnIdx==1) THEN
                       ! dP/dQ
-                      jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx)=rho* &
-                        & (Q_BIF(1)/(A_BIF(1)**2.0_DP))
+                      jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx)=rho*(qBif(1)/(aBif(1)**2.0_DP))
                       ! dP/dA
-                      jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx2)= &
-                        & Beta(1)/(2.0_DP*SQRT(A_BIF(1))) - &
-                        & (rho)*((Q_BIF(1)**2.0_DP)/(A_BIF(1)**3.0_DP))
+                      jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx2)=beta(1)/(2.0_DP*SQRT(aBif(1))) - &
+                        & (rho)*((qBif(1)**2.0_DP)/(aBif(1)**3.0_DP))
                     ELSE IF(columnIdx2==rowIdx) THEN
                       ! dP/dQ
-                      jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx)=-rho* &
-                        & (Q_BIF(versionIdx)/(A_BIF(versionIdx)**2.0_DP))
+                      jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx)=-rho*(qBif(versionIdx)/(aBif(versionIdx)**2.0_DP))
                       ! dP/dA
-                      jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx2)= &
-                        & -Beta(versionIdx)/(2.0_DP*SQRT(A_BIF(versionIdx))) + &
-                        & (rho)*((Q_BIF(versionIdx)**2.0_DP)/(A_BIF(versionIdx)**3.0_DP))
+                      jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx2)=-beta(versionIdx)/(2.0_DP*SQRT(aBif(versionIdx))) + &
+                        & (rho)*((qBif(versionIdx)**2.0_DP)/(aBif(versionIdx)**3.0_DP))
                     ELSE
-                      jacobianMatrix%NodalJacobian%matrix(rowIdx,versionIdx)=0.0_DP
-                      jacobianMatrix%NodalJacobian%matrix(rowIdx,columnIdx)=0.0_DP
+                      jacobianMatrix%nodalJacobian%matrix(rowIdx,versionIdx)=0.0_DP
+                      jacobianMatrix%nodalJacobian%matrix(rowIdx,columnIdx)=0.0_DP
                     ENDIF
                     columnIdx=columnIdx+1
                     columnIdx2=columnIdx2+1
                   ENDIF
-                ENDDO
-              ENDDO
-            ENDDO
+                ENDDO !versionIdx
+              ENDDO !componentIdx
+            ENDDO !rowIdx
 
           ENDIF
         ENDIF
       ENDIF !Find branch nodes
 
-    CASE DEFAULT
-      localError="The third equations set specification of "// &
-        & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(3),"*",err,error))// &
-        & " is not valid for a Navier-Stokes equation type of a fluid mechanics equations set class."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
+    ENDIF !update
        
     EXITS("Characteristic_NodalJacobianEvaluate")
     RETURN
@@ -1306,246 +1204,270 @@ CONTAINS
   !
 
   !>Extrapolate W for branch nodes and boundaries .
-  SUBROUTINE Characteristic_Extrapolate(solver,currentTime,timeIncrement,ERR,ERROR,*)
+  SUBROUTINE Characteristic_Extrapolate(solver,currentTime,timeIncrement,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER 
+    TYPE(SolverType), POINTER :: solver 
     REAL(DP), INTENT(IN) :: currentTime
     REAL(DP), INTENT(IN) :: timeIncrement
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     TYPE(BasisType), POINTER :: dependentBasis,materialsBasis
     TYPE(DomainType), POINTER :: dependentDomain,materialsDomain
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
     TYPE(FieldType), POINTER ::  dependentField,materialsField,independentField,geometricField
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    REAL(DP) :: W(2,4),Q_EX(4),A_EX(4),XI(1),A0_PARAM(4),H0_PARAM(4),E_PARAM(4),Beta(4),normalWave(2,4),elementLengths(4)
-    REAL(DP) :: A0_EX(4),H0_EX(4),E_EX(4),Beta_EX(4),f(4),l,friction
-    REAL(DP) :: QPrevious,APrevious,rho,lambda(4)
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    REAL(DP) :: w(2,4),qEx(4),aEx(4),xi(1),a0Param(4),h0Param(4),eParam(4),beta(4),normalWave(2,4),elementLengths(4)
+    REAL(DP) :: a0Ex(4),h0Ex(4),eEx(4),betaEx(4),f(4),l,friction
+    REAL(DP) :: qPrevious,aPrevious,rho,lambda(4)
     REAL(DP) :: elementLength,extrapolationDistance
     INTEGER(INTG) :: nodeIdx,versionIdx,derivativeIdx,elementIdx,elementNumber,versionElementNumber(4),lineNumber
     INTEGER(INTG) :: elementNodeIdx,elementNodeNumber,elementNodeVersion,numberOfVersions,componentIdx,numberOfLocalNodes
     LOGICAL :: overExtrapolated
 
-    ENTERS("Characteristic_Extrapolate",ERR,ERROR,*999)
+    ENTERS("Characteristic_Extrapolate",err,error,*999)
 
-    NULLIFY(dependentBasis)
-    NULLIFY(materialsBasis)
-    NULLIFY(dependentDomain)
-    NULLIFY(materialsDomain)
-    NULLIFY(equationsSet)
-    NULLIFY(equations)
-    NULLIFY(geometricField)
-    NULLIFY(dependentField)
-    NULLIFY(independentField)
-    NULLIFY(materialsField)
     NULLIFY(solverEquations)
+    CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
     NULLIFY(solverMapping)
+    CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(independentField)
+    CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+    NULLIFY(materialsField)
+    CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
 
-    IF(ASSOCIATED(SOLVER)) THEN
-      solverEquations=>solver%SOLVER_EQUATIONS
-      IF(ASSOCIATED(solverEquations)) THEN
-        solverMapping=>solverEquations%solverMapping
-        IF(ASSOCIATED(solverMapping)) THEN
-          equationsSet=>solverMapping%equationsSets(1)%PTR
-          IF(ASSOCIATED(equationsSet)) THEN
-            equations=>equationsSet%EQUATIONS
-            IF(ASSOCIATED(equations)) THEN
-              !Set General and Specific Pointer
-              geometricField=>equationsSet%GEOMETRY%geometricField
-              dependentField=>equationsSet%dependent%dependentField
-              independentField=>equationsSet%INDEPENDENT%independentField
-              materialsField=>equations%interpolation%materialsField
-              dependentDomain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
-              materialsDomain=>materialsField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
+    NULLIFY(geometricParameters)
+    CALL Field_GeometricParametersGet(geometricField,geometricParameters,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    NULLIFY(geometricDecomposition)
+    CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+    NULLIFY(geometricDecompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(geometricDecomposition,geometricDecompositionTopology,err,error,*999)
+    NULLIFY(geometricDecompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(geometricDecompositionTopology,geometricDecompositionElements, &
+        & err,error,*999)
+    
+    NULLIFY(dependentUVariable)
+    CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentUVariable,err,error,*999)
+    NULLIFY(dependentVVariable)
+    CALL Field_VariableGet(dependentField,FIELD_V_VARIABLE_TYPE,dependentVVariable,err,error,*999)
+    NULLIFY(dependentDecomposition)
+    CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+    NULLIFY(dependentDomain)
+    CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+    NULLIFY(dependentDomainTopology)
+    CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+    NULLIFY(dependentDomainNodes)
+    CALL DomainTopology_DomainNodesGet(dependentDomainTopology,dependentDomainNodes,err,error,*999)
+    CALL DomainNodes_NumberOfNodesGet(dependentDomainNodes,numberOfLocalNodes,err,error,*999)
+    NULLIFY(dependentDomainElements)
+    CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
 
-              numberOfLocalNodes=dependentDomain%TOPOLOGY%NODES%numberOfNodes
-              derivativeIdx=1
+    NULLIFY(materialsUVariable)
+    CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsUVariable,err,error,*999)
+    NULLIFY(materialsVVariable)
+    CALL Field_VariableGet(materialsField,FIELD_V_VARIABLE_TYPE,materialsVVariable,err,error,*999)
+    NULLIFY(materialsDecomposition)
+    CALL Field_DecompositionGet(materialsField,materialsDecomposition,err,error,*999)
+    NULLIFY(materialsDomain)
+    CALL Decomposition_DomainGet(materialsDecomposition,0,materialsDomain,err,error,*999)
+    NULLIFY(materialsDomainTopology)
+    CALL Domain_DomainTopologyGet(materialsDomain,materialsDomainTopology,err,error,*999)
+    NULLIFY(materialsDomainNodes)
+    CALL DomainTopology_DomainNodesGet(materialsDomainTopology,materialsDomainNodes,err,error,*999)
+    NULLIFY(materialsDomainElements)
+    CALL DomainTopology_DomainElementsGet(materialsDomainTopology,materialsDomainElements,err,error,*999)
+    
+    NULLIFY(independentVariable)
+    CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
 
-              !!!--  L o o p   O v e r   L o c a l  N o d e s  --!!!
-              DO nodeIdx=1,numberOfLocalNodes
-                numberOfVersions=dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
+    NULLIFY(equationsInterpolation)
+    CALL Equations_EquationsInterpolationGet(equations,equationsInterpolation,err,error,*999)
+    NULLIFY(dependentUInterpParams)
+    CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+      & dependentUInterpParameters,err,error,*999)
+    NULLIFY(dependentUInterpPoint)
+    CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,dependentUInterpPoint, &
+      & err,error,*999)
+    NULLIFY(materialsVInterpParamters)
+    CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
+      & materialsVInterpParameters,err,error,*999)
+    NULLIFY(materialsVInterpPoint)
+    CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE,materialsVInterpPoint, &
+      & err,error,*999)
+    
+    derivativeIdx=1
+    
+    !--  L o o p   O v e r   L o c a l  N o d e s  --!
+    DO nodeIdx=1,numberOfLocalNodes
 
-                !Get normal wave direction
-                normalWave=0.0_DP
-                DO componentIdx=1,2
-                  DO versionIdx=1,numberOfVersions
-                    CALL Field_ParameterSetGetLocalNode(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,versionIdx, &
-                     & derivativeIdx,nodeIdx,componentIdx,normalWave(componentIdx,versionIdx),err,error,*999)
-                  ENDDO
-                ENDDO
+      CALL DomainNodes_DerivativeNumberOfVersionsGet(dependentDomainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+      CALL DomainNodes_NodeNumberOfSurroundingElementsGet(dependentDomainNodes,nodeIdx,numberOfSurroundingElements,err,error,*999)
 
-                !!!-- F i n d   B r a n c h   a n d   B o u n d a r y    N o d e s --!!!
-                IF(ABS(normalWave(1,1)) > ZERO_TOLERANCE .OR. ABS(normalWave(2,1))> ZERO_TOLERANCE) THEN
-                  !Get constant material parameters
-                  CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
+      !Get normal wave direction
+      normalWave=0.0_DP
+      DO componentIdx=1,2
+        DO versionIdx=1,numberOfVersions
+          CALL FieldVariable_ParameterSetGetLocalNode(independentVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+            & nodeIdx,componentIdx,normalWave(componentIdx,versionIdx),err,error,*999)
+        ENDDO !versionIdx
+      ENDDO !componentIdx
 
-                  overExtrapolated = .FALSE.
-                  !!!-- G e t   E l e m e n t   L e n g t h s --!!!
-                  elementLengths = 0.0_DP
-                  DO elementIdx=1,dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%numberOfSurroundingElements
-                    elementNumber=dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%surroundingElements(elementIdx)
-                    ! Get the line lengths to extrapolate at equidistant points from the branch node
-                    lineNumber = geometricField%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%elementLines(1)
-                    elementLength = geometricField%geometricFieldParameters%LENGTHS(lineNumber)
-                    !Loop over the nodes on this (surrounding) element
-                    dependentBasis=>dependentDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                    materialsBasis=>materialsDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                    DO elementNodeIdx=1,dependentBasis%numberOfNodes
-                      elementNodeNumber=dependentDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%elementNodes(elementNodeIdx)
-                      !Check that this node is the same as the current iterative node
-                      IF(elementNodeNumber==nodeIdx) THEN
-                        !Loop over the versions to find the element index that matches the version
-                        DO versionIdx=1,numberOfVersions
-                          !Version number for the local element node
-                          elementNodeVersion=dependentDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%&
-                            & elementVersions(1,elementNodeIdx)
-                          IF(elementNodeVersion==versionIdx) THEN
-                            versionElementNumber(versionIdx)=elementNumber
-                            elementLengths(versionIdx) = elementLength
-                          ENDIF
-                        ENDDO
-                      ENDIF
-                    ENDDO
-                  ENDDO
-
-                  !!!-- E x t r a p o l a t e   Q   a n d   A    V a l u e s --!!!
-                  ! --------------------------------------------------------------
-                  ! Extrapolate along the characteristic curve a distance x - lambda*dt from node location (x) to get 
-                  ! values for W(t) from Q,A(t-delta(t)). Note that since the characteristic solver runs before the 
-                  ! Navier-Stokes solver, 'previous' values are still in the 'current' field at this time-step as the 
-                  ! time integration occurs as part of the Navier-Stokes solution.
-                  DO componentIdx=1,2
-                    DO versionIdx=1,numberOfVersions                         
-                      IF(ABS(normalWave(componentIdx,versionIdx))> ZERO_TOLERANCE) THEN
-
-                        ! Get materials values at node
-                        CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE, &
-                         & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,1,A0_PARAM(versionIdx),err,error,*999)            
-                        CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE, &
-                         & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,2,E_PARAM(versionIdx),err,error,*999)            
-                        CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE, &
-                         & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,3,H0_PARAM(versionIdx),err,error,*999)            
-                        Beta(versionIdx) = (4.0_DP*SQRT(PI)*E_PARAM(versionIdx)*H0_PARAM(versionIdx))/ &
-                          & (3.0_DP*A0_PARAM(versionIdx))
-
-                        ! Get previous Q,A values at node
-                        CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,1,QPrevious,err,error,*999)            
-                        CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,2,APrevious,err,error,*999)            
-
-                        ! Calculate wave speed
-                        lambda(versionIdx) = QPrevious/APrevious + normalWave(componentIdx,versionIdx)* &
-                         & (APrevious**0.25)*SQRT(Beta(versionIdx)/(2.0_DP*rho))
-                        ! Check that lambda(1) > 0, lambda(2) < 0
-                        IF (lambda(versionIdx)*normalWave(componentIdx,versionIdx) < 0.0_DP) THEN
-                          CALL FlagError("Subcritical 1D system violated.",ERR,ERROR,*999)
-                        ENDIF
-
-                        ! Calculate extrapolation distance and xi location
-                        extrapolationDistance = (timeIncrement)*lambda(versionIdx)
-                        !  Convert to xi-space within the element
-                        IF((normalWave(componentIdx,versionIdx)>ZERO_TOLERANCE)) THEN
-                          ! Parent branch / outlet boundary
-                          XI(1)=1.0_DP - extrapolationDistance/(elementLengths(versionIdx))
-                        ELSE
-                          ! Daughter branch / inlet boundary
-                          XI(1)=0.0_DP - extrapolationDistance/(elementLengths(versionIdx))
-                        ENDIF
-                        IF (XI(1) > 1.0_DP .OR. XI(1) < 0.0_DP) THEN
-                          CALL FLAG_WARNING("1D extrapolation location outside of element xi space. Reduce time increment", &
-                           & ERR,ERROR,*999)
-                          overExtrapolated = .TRUE.
-                        ENDIF
-
-                        ! Get Q,A values at extrapolated xi locations
-                        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE, &
-                         & versionElementNumber(versionIdx),EQUATIONS%interpolation% &
-                         & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        CALL Field_InterpolateXi(NO_PART_DERIV,XI,EQUATIONS%interpolation% &
-                          & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        Q_EX(versionIdx)=EQUATIONS%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
-                          & PTR%VALUES(1,NO_PART_DERIV)
-                        A_EX(versionIdx)=EQUATIONS%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
-                          & PTR%VALUES(2,NO_PART_DERIV)
-                        ! Get spatially varying material values at extrapolated xi locations
-                        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE, &
-                          & versionElementNumber(versionIdx),EQUATIONS%interpolation% &
-                          & materialsInterpParameters(FIELD_V_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        CALL Field_InterpolateXi(NO_PART_DERIV,XI,EQUATIONS%interpolation% &
-                          & materialsInterpPoint(FIELD_V_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        A0_EX(versionIdx)=EQUATIONS%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)% &
-                          & PTR%VALUES(1,NO_PART_DERIV)
-                        E_EX(versionIdx)=EQUATIONS%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)% &
-                          & PTR%VALUES(2,NO_PART_DERIV)
-                        H0_EX(versionIdx)=EQUATIONS%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)% &
-                          & PTR%VALUES(3,NO_PART_DERIV)
-                        Beta_EX(versionIdx) = (4.0_DP*SQRT(PI)*E_EX(versionIdx)*H0_EX(versionIdx))/ &
-                          & (3.0_DP*A0_EX(versionIdx))
-                        ! Calculate friction term if necessary
-                        f(versionIdx) = -Q_EX(versionIdx)/(A_EX(versionIdx)**2.0_DP)
-                      ENDIF
-                    ENDDO
-                  ENDDO
-
-                  !Calculate W
-                  W(:,:)=0.0_DP
-                  DO componentIdx=1,2
-                    DO versionIdx=1,numberOfVersions
-                      IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
-                        ! W(t+delta(t)) = W_extrap(t)
-                        W(componentIdx,versionIdx)= ((Q_EX(versionIdx)/A_EX(versionIdx))+ &
-                          & normalWave(componentIdx,versionIdx)*4.0_DP*SQRT(Beta_EX(versionIdx)/(2.0_DP*rho))* &
-                          & (A_EX(versionIdx)**(0.25_DP) - (A0_EX(versionIdx))**(0.25_DP)))
-
-                        ! Add friction term if not neglected
-                        l = (1.0_DP/(Q_EX(versionIdx)/A_EX(versionIdx) +  &
-                          & normalWave(componentIdx,versionIdx)*A_EX(versionIdx)**0.25_DP*SQRT(Beta_EX(versionIdx)/(2.0_DP*rho))))
-                        friction = timeIncrement*l*f(versionIdx)
-!                        W(componentIdx,versionIdx)= W(componentIdx,versionIdx) + friction
-
-                        ! Check extrapolated wave speed is coherent
-                        lambda(versionIdx) = Q_EX(versionIdx)/A_EX(versionIdx) + normalWave(componentIdx,versionIdx)* &
-                         & (A_EX(versionIdx)**0.25)*SQRT(Beta(versionIdx)/(2.0_DP*rho))
-                        IF (lambda(versionIdx)*normalWave(componentIdx,versionIdx) < -ZERO_TOLERANCE ) THEN
-                          CALL FlagError("Subcritical 1D system violated.",ERR,ERROR,*999)
-                        ENDIF
-
-                        IF (.NOT. overExtrapolated) THEN
-                          CALL Field_ParameterSetUpdateLocalNode(dependentField,FIELD_V_VARIABLE_TYPE, &
-                           & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,componentIdx,W(componentIdx,versionIdx), &
-                           & err,error,*999)
-                        ENDIF
-                      ENDIF
-                    ENDDO
-                  ENDDO
-                ENDIF ! branch or boundary node
-              ENDDO !Loop over nodes
-
-            ELSE
-              CALL FlagError("Equations are not associated.",ERR,ERROR,*999)
+      !-- F i n d   B r a n c h   a n d   B o u n d a r y    N o d e s --!
+      IF(ABS(normalWave(1,1)) > ZERO_TOLERANCE .OR. ABS(normalWave(2,1))> ZERO_TOLERANCE) THEN
+        !Get constant material parameters
+        CALL FieldVariable_ParameterSetGetConstant(materialsUVariable,FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
+        
+        overExtrapolated = .FALSE.
+        !-- G e t   E l e m e n t   L e n g t h s --!
+        elementLengths = 0.0_DP
+        DO elementIdx=1,numberOfSurroundingElements
+          CALL DomainNodes_NodeSurroundingElementGet(dependentDomainNodes,elementIdx,nodesIdx,elementNumber,err,error,*999)
+          CALL DecompositionElements_ElementLineNumberGet(geometricDecompositionElements,1,elementNumber,lineNumber,err,error,*999)
+          ! Get the line lengths to extrapolate at equidistant points from the branch node
+          CALL FieldGeometricParameters_LineLengthGet(geometricParameters,lineNumber,elementLength,err,error,*999)
+          !Loop over the nodes on this (surrounding) element
+          NULLIFY(dependentBasis)
+          CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+          NULLIFY(materialBasis)
+          CALL DomainElements_BasisGet(materialsDomainElements,elementNumber,materialsBasis,err,error,*999)
+          CALL Basis_NumberOfNodesGet(dependentBasis,numberOfElementNodes,err,error,*999)
+          DO elementNodeIdx=1,numberOfElementNodes
+            CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNodeIdx,elementNumber,elementNodeNumber, &
+              & err,error,*999)
+            !Check that this node is the same as the current iterative node
+            IF(elementNodeNumber==nodeIdx) THEN
+              !Loop over the versions to find the element index that matches the version
+              DO versionIdx=1,numberOfVersions
+                !Version number for the local element node
+                CALL DomainElements_ElementVersionGet(dependentDomainElements,1,elementNodeIdx,elementNumber,elementNodeVersion, &
+                  & err,error,*999)
+                IF(elementNodeVersion==versionIdx) THEN
+                  versionElementNumber(versionIdx)=elementNumber
+                  elementLengths(versionIdx) = elementLength
+                ENDIF
+              ENDDO !versionIDx
             ENDIF
-          ELSE
-            CALL FlagError("Solver equations are not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solvers is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-    ENDIF
+          ENDDO !elementNodeIdx
+        ENDDO !elementIdx
+
+        !-- E x t r a p o l a t e   Q   a n d   A    V a l u e s --!
+        ! --------------------------------------------------------------
+        ! Extrapolate along the characteristic curve a distance x - lambda*dt from node location (x) to get 
+        ! values for w(t) from Q,A(t-delta(t)). Note that since the characteristic solver runs before the 
+        ! Navier-Stokes solver, 'previous' values are still in the 'current' field at this time-step as the 
+        ! time integration occurs as part of the Navier-Stokes solution.
+        DO componentIdx=1,2
+          DO versionIdx=1,numberOfVersions                         
+            IF(ABS(normalWave(componentIdx,versionIdx))> ZERO_TOLERANCE) THEN
+              
+              ! Get materials values at node
+              CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,1,a0Param(versionIdx),err,error,*999)
+              CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,2,eParam(versionIdx),err,error,*999)            
+              CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,3,h0Param(versionIdx),err,error,*999)
+              beta(versionIdx) = (4.0_DP*SQRT(PI)*eParam(versionIdx)*h0Param(versionIdx))/(3.0_DP*a0Param(versionIdx))
+
+              ! Get previous Q,A values at node
+              CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,1,qPrevious,err,error,*999)
+              CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,2,aPrevious,err,error,*999)
+              
+              ! Calculate wave speed
+              lambda(versionIdx) = qPrevious/aPrevious + normalWave(componentIdx,versionIdx)*(aPrevious**0.25)* &
+                & SQRT(beta(versionIdx)/(2.0_DP*rho))
+              ! Check that lambda(1) > 0, lambda(2) < 0
+              IF (lambda(versionIdx)*normalWave(componentIdx,versionIdx) < 0.0_DP) THEN
+                CALL FlagError("Subcritical 1D system violated.",err,error,*999)
+              ENDIF
+              
+              ! Calculate extrapolation distance and xi location
+              extrapolationDistance = (timeIncrement)*lambda(versionIdx)
+              !  Convert to xi-space within the element
+              IF((normalWave(componentIdx,versionIdx)>ZERO_TOLERANCE)) THEN
+                ! Parent branch / outlet boundary
+                xi(1)=1.0_DP - extrapolationDistance/(elementLengths(versionIdx))
+              ELSE
+                ! Daughter branch / inlet boundary
+                xi(1)=0.0_DP - extrapolationDistance/(elementLengths(versionIdx))
+              ENDIF
+              IF (xi(1) > 1.0_DP .OR. xi(1) < 0.0_DP) THEN
+                CALL FlagWarning("1D extrapolation location outside of element xi space. Reduce time increment.", &
+                  & err,error,*999)
+                overExtrapolated = .TRUE.
+              ENDIF
+              
+              ! Get Q,A values at extrapolated xi locations
+              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,versionElementNumber(versionIdx), &
+                & dependentUInterpParameters,err,error,*999)
+              CALL Field_InterpolateXi(NO_PART_DERIV,xi,dependentUInterpPoint,err,error,*999)
+              qEx(versionIdx)=dependentUInterpParameters%values(1,NO_PART_DERIV)
+              aEx(versionIdx)=dependentUInterpParameters%values(2,NO_PART_DERIV)
+              ! Get spatially varying material values at extrapolated xi locations
+              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,versionElementNumber(versionIdx), &
+                & materialsVInterpParameters,err,error,*999)
+              CALL Field_InterpolateXi(NO_PART_DERIV,xi,matrieralsVInterpPoint,err,error,*999)
+              a0Ex(versionIdx)=materialsVInterpParameters%values(1,NO_PART_DERIV)
+              eEx(versionIdx)=materialsVInterpParameters%values(2,NO_PART_DERIV)
+              h0Ex(versionIdx)=materialsVInterpParameters%values(3,NO_PART_DERIV)
+              betaEx(versionIdx) = (4.0_DP*SQRT(PI)*eEx(versionIdx)*h0Ex(versionIdx))/(3.0_DP*a0Ex(versionIdx))
+              ! Calculate friction term if necessary
+              f(versionIdx) = -qEx(versionIdx)/(aEx(versionIdx)**2.0_DP)
+            ENDIF
+          ENDDO !versionIdx
+        ENDDO !componentIdx
+
+        !Calculate W
+        w(:,:)=0.0_DP
+        DO componentIdx=1,2
+          DO versionIdx=1,numberOfVersions
+            IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
+              ! w(t+delta(t)) = W_extrap(t)
+              w(componentIdx,versionIdx)= ((qEx(versionIdx)/aEx(versionIdx))+ &
+                & normalWave(componentIdx,versionIdx)*4.0_DP*SQRT(betaEx(versionIdx)/(2.0_DP*rho))* &
+                & (aEx(versionIdx)**(0.25_DP) - (a0Ex(versionIdx))**(0.25_DP)))
+              
+              ! Add friction term if not neglected
+              l = (1.0_DP/(qEx(versionIdx)/aEx(versionIdx) +  &
+                & normalWave(componentIdx,versionIdx)*aEx(versionIdx)**0.25_DP*SQRT(betaEx(versionIdx)/(2.0_DP*rho))))
+              friction = timeIncrement*l*f(versionIdx)
+              !w(componentIdx,versionIdx)= w(componentIdx,versionIdx) + friction
+              
+              ! Check extrapolated wave speed is coherent
+              lambda(versionIdx) = qEx(versionIdx)/aEx(versionIdx) + normalWave(componentIdx,versionIdx)* &
+                & (aEx(versionIdx)**0.25)*SQRT(beta(versionIdx)/(2.0_DP*rho))
+              IF (lambda(versionIdx)*normalWave(componentIdx,versionIdx) < -ZERO_TOLERANCE ) THEN
+                CALL FlagError("Subcritical 1D system violated.",err,error,*999)
+              ENDIF
+              
+              IF (.NOT. overExtrapolated) THEN
+                CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                  & nodeIdx,componentIdx,w(componentIdx,versionIdx),err,error,*999)
+              ENDIF
+            ENDIF
+          ENDDO !versionIdx
+        ENDDO !componentIdx
+      ENDIF ! branch or boundary node
+    ENDDO !Loop over nodes
 
     EXITS("Characteristic_Extrapolate")
     RETURN
-999 ERRORSEXITS("Characteristic_Extrapolate",ERR,ERROR)
+999 ERRORSEXITS("Characteristic_Extrapolate",err,error)
     RETURN 1
     
   END SUBROUTINE Characteristic_Extrapolate
@@ -1555,94 +1477,107 @@ CONTAINS
   !
 
   !>Calculate Characteristic (W) values based on dependent field values
-  SUBROUTINE Characteristic_PrimitiveToCharacteristic(equationsSet,ERR,ERROR,*)
+  SUBROUTINE Characteristic_PrimitiveToCharacteristic(equationsSet,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer the equations set
     INTEGER(INTG), INTENT(OUT) :: ERR
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
     !Local Variables
-    TYPE(FieldType), POINTER ::  dependentField,materialsField,independentField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(VARYING_STRING) :: localError
-    INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfVersions
-    REAL(DP) :: qCurrent(4), aCurrent(4),W(2,4)
-    REAL(DP) :: normalWave,A0_PARAM,E_PARAM,H0_PARAM,Beta
+    INTEGER(INTG) :: componentIdx,derivativeIdx,esSpecification(3),nodeIdx,numberOfNodes,numberOfVersions,versionIdx
+    REAL(DP) :: a0Param,aCurrent(4),beta,eParam,h0Param,normalWave,qCurrent(4),w(2,4)
     LOGICAL :: boundaryNode
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainToplogy
+    TYPE(FieldType), POINTER ::  dependentField,materialsField,independentField
+    TYPE(FieldVariableType), POINTER :: dependentUVariable,dependentVVariable,independentVariable,materialsVVariable
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Characteristic_PrimitiveToCharacteristic",ERR,ERROR,*999)
+    ENTERS("Characteristic_PrimitiveToCharacteristic",err,error,*999)
 
+    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
+
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a call to Characteristic_PrimitiveToCharacteristic."
+    END SELECT
+    
     NULLIFY(dependentField)
-    NULLIFY(independentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(materialsField)
-    NULLIFY(fieldVariable)
+    CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+    NULLIFY(independentField)
+    CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      SELECT CASE(equationsSet%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_Coupled1D0D_NAVIER_STOKES_SUBTYPE, &
-         & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE)
-        dependentField=>equationsSet%dependent%dependentField
-        independentField=>equationsSet%INDEPENDENT%independentField
-        materialsField=>equationsSet%MATERIALS%materialsField
-      CASE DEFAULT
-        localError="The third equations set specification of "// &
-          & TRIM(NumberToVString(equationsSet%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a call to Characteristic_PrimitiveToCharacteristic"
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+    NULLIFY(dependentUVariable)
+    CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentUVariable,err,error,*999)
+    NULLIFY(dependentVVariable)
+    CALL Field_VariableGet(dependentField,FIELD_V_VARIABLE_TYPE,dependentVVariable,err,error,*999)
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+    NULLIFY(domain)
+    CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainNodes)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
 
-    domainNodes=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR%TOPOLOGY%NODES
-
-    !!!--  L o o p   O v e r   L o c a l  N o d e s  --!!!
-    DO nodeIdx=1,domainNodes%numberOfNodes
-      nodeNumber = domainNodes%NODES(nodeIdx)%localNumber
+    NULLIFY(materialsVVariable)
+    CALL Field_VariableGet(materialsField,FIELD_V_VARIABLE_TYPE,materialsVVariable,err,error,*999)
+    
+    NULLIFY(independentVariable)
+    CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
+    
+    !--  L o o p   O v e r   L o c a l  N o d e s  --!!!
+    CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+    DO nodeIdx=1,numberOfNodes
       derivativeIdx = 1
-      numberOfVersions=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivativeIdx)%numberOfVersions      
-      boundaryNode=domainNodes%NODES(nodeNumber)%boundaryNode
-      !!!-- F i n d    B r a n c h    N o d e s --!!!
+      CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+      CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+      !-- F i n d    B r a n c h    N o d e s --!!!
       IF(numberOfVersions > 1 .AND. .NOT. boundaryNode) THEN
         DO componentIdx=1,2
           DO versionIdx=1,numberOfVersions
-            CALL Field_ParameterSetGetLocalNode(independentField,FIELD_U_VARIABLE_TYPE, &
-             & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeNumber,componentIdx,normalWave,err,error,*999)            
+            CALL FieldVariable_ParameterSetGetLocalNode(independentVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+              & nodeIdx,componentIdx,normalWave,err,error,*999)
             IF(ABS(normalWave)>ZERO_TOLERANCE) THEN
               !Get material parameters
-              CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & versionIdx,derivativeIdx,nodeNumber,1,A0_PARAM,err,error,*999)  
-              CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & versionIdx,derivativeIdx,nodeNumber,2,E_PARAM,err,error,*999)                
-              CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & versionIdx,derivativeIdx,nodeNumber,3,H0_PARAM,err,error,*999)                
-              Beta=(4.0_DP*SQRT(PI)*E_PARAM*H0_PARAM)/(3.0_DP*A0_PARAM)     
+              CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,1,a0Param,err,error,*999)  
+              CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,2,eParam,err,error,*999)                
+              CALL FieldVariable_ParameterSetGetLocalNode(materialsVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,3,h0Param,err,error,*999)
+              beta=(4.0_DP*SQRT(PI)*eParam*h0Param)/(3.0_DP*a0Param)     
 
               ! Get current Q,A values
-              CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & versionIdx,derivativeIdx,nodeNumber,1,qCurrent(versionIdx),err,error,*999)         
-              CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & versionIdx,derivativeIdx,nodeNumber,2,aCurrent(versionIdx),err,error,*999)
+              CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,1,qCurrent(versionIdx),err,error,*999)         
+              CALL FieldVariable_ParameterSetGetLocalNode(dependentUVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,2,aCurrent(versionIdx),err,error,*999)
 
               ! Calculate the characteristic based on current Q,A values
-              W(componentIdx,versionIdx)= ((qCurrent(versionIdx)/aCurrent(versionIdx))+ &
-               & normalWave*4.0_DP*SQRT(((Beta)))*(aCurrent(versionIdx)**(0.25_DP) - (A0_PARAM)**(0.25_DP)))
-
+              w(componentIdx,versionIdx)= ((qCurrent(versionIdx)/aCurrent(versionIdx))+ &
+                & normalWave*4.0_DP*SQRT(((beta)))*(aCurrent(versionIdx)**(0.25_DP) - (a0Param)**(0.25_DP)))
+              
               !Update W values
-              fieldVariable=>dependentField%variableTypeMap(FIELD_V_VARIABLE_TYPE)%PTR
-              CALL Field_ParameterSetUpdateLocalNode(dependentField,FIELD_V_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeNumber,componentIdx, &
-                & W(componentIdx,versionIdx),ERR,ERROR,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVVariable,FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx, &
+                & nodeIdx,componentIdx,w(componentIdx,versionIdx),err,error,*999)
             ENDIF
-          ENDDO
-        ENDDO 
+          ENDDO !versionIdx
+        ENDDO !componentIdx
       ENDIF ! branch check
-    ENDDO ! Loop over nodes
+    ENDDO !nodeIdx
 
     EXITS("Characteristic_PrimitiveToCharacteristic")
     RETURN
-999 ERRORSEXITS("Characteristic_PrimitiveToCharacteristic",ERR,ERROR)
+999 ERRORSEXITS("Characteristic_PrimitiveToCharacteristic",err,error)
     RETURN 1
     
   END SUBROUTINE Characteristic_PrimitiveToCharacteristic
@@ -1651,4 +1586,4 @@ CONTAINS
   !================================================================================================================================
   !      
 
-END MODULE CHARACTERISTIC_EQUATION_ROUTINES
+END MODULE CharacteristicEquationsRoutines

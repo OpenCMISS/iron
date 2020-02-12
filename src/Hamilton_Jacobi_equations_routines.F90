@@ -47,7 +47,7 @@ MODULE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -57,7 +57,6 @@ MODULE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -66,9 +65,9 @@ MODULE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE Kinds
   USE MatrixVector
   USE Maths
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -119,7 +118,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -184,7 +183,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       VALUE=2.0_DP
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -200,13 +199,13 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    localError="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",err,error))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
                                     CALL FlagError(localError,err,error,*999)
                                   END SELECT
@@ -224,7 +223,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       VALUE=-SIN(X(1))*SINH(X(2))
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -240,13 +239,13 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       !CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    localError="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",err,error))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
                                     CALL FlagError(localError,err,error,*999)
                                   END SELECT
@@ -272,7 +271,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2_S3)
                                       VALUE=0.0_DP
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -296,13 +295,13 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2_S3)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    localError="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",err,error))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
                                     CALL FlagError(localError,err,error,*999)
                                   END SELECT
@@ -328,7 +327,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2_S3)
                                       VALUE=-SIN(X(1))*SINH(X(2))
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -352,19 +351,19 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2_S3)
                                       !CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    localError="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",err,error))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
                                     CALL FlagError(localError,err,error,*999)
                                   END SELECT
                                 CASE DEFAULT
                                   localError="The analytic function type of "// &
-                                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",err,error))// &
+                                    & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",err,error))// &
                                     & " is invalid."
                                   CALL FlagError(localError,err,error,*999)
                                 END SELECT
@@ -376,7 +375,7 @@ CONTAINS
                                 IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
                                   IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
                                     !If we are a boundary node then set the analytic value on the boundary
-                                    CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
+                                    CALL BoundaryConditions_SetLocalDOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
                                       & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
                                   ENDIF
                                 ENDIF
@@ -579,7 +578,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GENERALISED_HJ_SUBTYPE)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Hamilton-Jacobi equation type of a classical field equations set class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -749,7 +748,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GENERALISED_HJ_SUBTYPE)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Hamilton-Jacobi equation type of a classical field equations set class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -798,7 +797,7 @@ CONTAINS
       CASE(EQUATIONS_SET_GENERALISED_HJ_SUBTYPE)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a Hamilton-Jacobi equation type of a classical field equation set class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -854,7 +853,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_GENERALISED_HJ_SUBTYPE)        
@@ -874,11 +873,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a Hamilton-Jacobi equation type of an classical field equations set class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -994,8 +993,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1066,7 +1065,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -1103,7 +1102,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -1113,8 +1112,8 @@ CONTAINS
               CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%dependentField,err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1244,8 +1243,8 @@ CONTAINS
             ENDIF                                    
             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1256,8 +1255,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1275,9 +1274,9 @@ CONTAINS
                   !Check that we are in 2D
                   IF(numberOfDimensions/=2) THEN
                     localError="The number of geometric dimensions of "// &
-                      & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
+                      & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                       & " is invalid. The analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
                       & " requires that there be 2 geometric dimensions."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
@@ -1288,9 +1287,9 @@ CONTAINS
                   !Check that we are in 2D
                   IF(numberOfDimensions/=2) THEN
                     localError="The number of geometric dimensions of "// &
-                      & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
+                      & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                       & " is invalid. The analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
                       & " requires that there be 2 geometric dimensions."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
@@ -1301,9 +1300,9 @@ CONTAINS
                   !Check that we are in 3D
                   IF(numberOfDimensions/=3) THEN
                     localError="The number of geometric dimensions of "// &
-                      & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
+                      & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                       & " is invalid. The analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
                       & " requires that there be 3 geometric dimensions."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
@@ -1314,9 +1313,9 @@ CONTAINS
                   !Check that we are in 3D
                   IF(numberOfDimensions/=3) THEN
                     localError="The number of geometric dimensions of "// &
-                      & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
+                      & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                       & " is invalid. The analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
                       & " requires that there be 3 geometric dimensions."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
@@ -1325,7 +1324,7 @@ CONTAINS
                   EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_HJ_EQUATION_THREE_DIM_2
                 CASE DEFAULT
                   localError="The specified analytic function type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
+                    & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
                     & " is invalid for a standard Hamilton-Jacobi equation."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
@@ -1347,8 +1346,8 @@ CONTAINS
               CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1369,21 +1368,22 @@ CONTAINS
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,equationsMapping,err,error,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(equationsMapping,1,err,error,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(equationsMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(equationsMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(equationsMapping,1,err,error,*999)
+              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(equationsMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(equationsMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(equationsMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                  & err,error,*999)
+                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
@@ -1400,23 +1400,23 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%solutionMethod,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
             & " is invalid for a standard Hamilton-Jacobi equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " does not equal a standard Hamilton-Jacobi equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -1459,7 +1459,7 @@ CONTAINS
       CASE(PROBLEM_GENERALISED_HJ_SUBTYPE)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a Hamilton-Jacobi equation type of a classical field problem class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1540,9 +1540,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("HJ_EQUATION_PROBLEM_STANDARD_SETUP",err,error,*999)
@@ -1566,8 +1566,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing???
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1582,8 +1582,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1595,7 +1595,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a linear solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
@@ -1607,8 +1607,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
                 & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1637,18 +1637,18 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
               & " is invalid for a standard Hamilton-Jacobi equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
        CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
             & " is invalid for a standard Hamilton-Jacobi equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " does not equal a standard Hamilton-Jacobi equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF

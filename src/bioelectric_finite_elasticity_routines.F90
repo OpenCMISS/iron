@@ -59,7 +59,7 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE EquationsMappingRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
-  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -68,9 +68,9 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Types
 
@@ -140,11 +140,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
+          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " is not valid for a bioelectrics finite elasticity equation type of a multi physics equations set class."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -281,10 +281,10 @@ CONTAINS
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(ControlLoopType), POINTER :: MONODOMAIN_SUB_LOOP,ELASTICITY_SUB_LOOP
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS,MONODOMAIN_SOLVERS,ELASTICITY_SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(CellMLEquationsType), POINTER :: CELLML_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS,MONODOMAIN_SOLVERS,ELASTICITY_SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP",ERR,ERROR,*999)
@@ -321,8 +321,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -361,8 +361,8 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)
             !Sub-loops are finished when parent is finished
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -376,7 +376,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(MONODOMAIN_SOLVERS,2,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(MONODOMAIN_SOLVERS,2,ERR,ERROR,*999)
             !Set the first solver to be a differential-algebraic equations solver
             NULLIFY(SOLVER)
             CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,1,SOLVER,ERR,ERROR,*999)
@@ -398,7 +398,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(ELASTICITY_SOLVERS,1,ERR,ERROR,*999)
+            CALL Solvers_NumberOfSolversSet(ELASTICITY_SOLVERS,1,ERR,ERROR,*999)
             !Set the finite elasticity solver to be a nonlinear solver
             NULLIFY(SOLVER)
             CALL SOLVERS_SOLVER_GET(ELASTICITY_SOLVERS,1,SOLVER,ERR,ERROR,*999)
@@ -417,12 +417,12 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(ELASTICITY_SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
                 & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+        CASE(PROBLEM_SETUP_SolverEquationsType)
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
@@ -477,8 +477,8 @@ CONTAINS
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -493,7 +493,7 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
@@ -505,20 +505,20 @@ CONTAINS
             CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
             !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,ERR,ERROR,*999)
+            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a bioelectrics finite elasticity equation."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " does not equal a transient monodomain quasistatic finite elasticity equation subtype."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -542,7 +542,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -569,7 +569,7 @@ CONTAINS
             CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
               CALL FiniteElasticity_PreSolve(solver,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Control loop loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -580,12 +580,12 @@ CONTAINS
             CASE(CONTROL_WHILE_LOOP_TYPE)
               CALL FiniteElasticity_PreSolve(solver,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Control loop loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
               & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -615,7 +615,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -637,7 +637,7 @@ CONTAINS
           CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
             & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
             & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-            SELECT CASE(SOLVER%SOLVE_TYPE)
+            SELECT CASE(SOLVER%solveType)
             CASE(SOLVER_DAE_TYPE)
               CALL BIOELECTRIC_POST_SOLVE(SOLVER,ERR,ERROR,*999)
             CASE(SOLVER_DYNAMIC_TYPE)
@@ -645,12 +645,12 @@ CONTAINS
             CASE(SOLVER_NONLINEAR_TYPE)
               CALL FiniteElasticity_PostSolve(solver,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Solver solve type "//TRIM(NUMBER_TO_VSTRING(SOLVER%SOLVE_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Solver solve type "//TRIM(NumberToVString(SOLVER%solveType,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
               & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -712,7 +712,7 @@ CONTAINS
                 CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The third problem specification of "// &
-                  & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                   & " is not valid for bioelectric finite elasticity problem."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
@@ -727,19 +727,19 @@ CONTAINS
                 CALL BioelectricFiniteElasticity_ForceLengthVelocityRelation(CONTROL_LOOP,ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The third problem specification of "// &
-                  & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
                   & " is not valid for bioelectric finite elasticity problem."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
               CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Control loop loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
                 & " is not valid for bioelectric finite elasticity problem type."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
             LOCAL_ERROR="The second problem specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
               & " is not valid for a multi physics problem."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -775,10 +775,10 @@ CONTAINS
     !Local Variables
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(BasisType), POINTER :: DEPENDENT_BASIS
     TYPE(EquationsType), POINTER :: equations
@@ -835,25 +835,25 @@ CONTAINS
                   geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                   IF(.NOT.ASSOCIATED(geometricField)) THEN
                     LOCAL_ERROR="Geometric field is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   dependentField=>EQUATIONS_SET%dependent%dependentField
                   IF(.NOT.ASSOCIATED(dependentField)) THEN
                     LOCAL_ERROR="Dependent field is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   independentField=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(independentField)) THEN
                     LOCAL_ERROR="Independent field is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   EQUATIONS=>EQUATIONS_SET%EQUATIONS
                   IF(.NOT.ASSOCIATED(EQUATIONS)) THEN
                     LOCAL_ERROR="Equations is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   NULLIFY(vectorEquations)
@@ -865,12 +865,12 @@ CONTAINS
                   fibreField=>equations%interpolation%fibreField
                   IF(.NOT.ASSOCIATED(fibreField)) THEN
                     LOCAL_ERROR="Fibre field is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ELSE
                   LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                    & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                    & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO !equations_set_idx
@@ -964,7 +964,7 @@ CONTAINS
           CALL Field_ParameterSetUpdateFinish(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
         CASE DEFAULT
-          LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="Control loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
             & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -998,10 +998,10 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_PARENT
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(BasisType), POINTER :: DEPENDENT_BASIS
     TYPE(EquationsType), POINTER :: EQUATIONS
@@ -1018,7 +1018,7 @@ CONTAINS
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS
     INTEGER(INTG) :: meshComponentNumber,numberOfElements
     INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx
-    INTEGER(INTG) :: ITERATION_NUMBER,MAXIMUM_NUMBER_OF_ITERATIONS
+    INTEGER(INTG) :: ITERATION_NUMBER,maximumNumberOfIterations
     REAL(DP) :: LENGTH_HS,LENGTH_HS_0,ACTIVE_STRESS,FIBRE_STRETCH,FIBRE_STRETCH_OLD
     REAL(DP) :: FACTOR_LENGTH,FACTOR_VELO,SARCO_LENGTH,VELOCITY,VELOCITY_MAX,TIME_STEP,kappa,A,S,d,c
 
@@ -1067,18 +1067,18 @@ CONTAINS
                   dependentField=>EQUATIONS_SET%dependent%dependentField
                   IF(.NOT.ASSOCIATED(dependentField)) THEN
                     LOCAL_ERROR="Dependent field is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   independentField=>EQUATIONS_SET%INDEPENDENT%independentField
                   IF(.NOT.ASSOCIATED(independentField)) THEN
                     LOCAL_ERROR="Independent field is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ELSE
                   LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                    & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
+                    & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO !equations_set_idx
@@ -1101,7 +1101,7 @@ CONTAINS
             & 3,VELOCITY_MAX,ERR,ERROR,*999)
 
           ITERATION_NUMBER=CONTROL_LOOP%whileLoop%iterationNumber
-          MAXIMUM_NUMBER_OF_ITERATIONS=CONTROL_LOOP%whileLoop%maximumNumberOfIterations
+          maximumNumberOfIterations=CONTROL_LOOP%whileLoop%maximumNumberOfIterations
           !in the first iteration store the unaltered homogenized active stress field 
           IF(ITERATION_NUMBER==1) THEN
             CALL Field_ParameterSetsCopy(independentField,FIELD_U_VARIABLE_TYPE, &
@@ -1190,15 +1190,15 @@ CONTAINS
                 CALL FLAG_WARNING('Exceeded maximum contraction velocity (shortening).',ERR,ERROR,*999)
 !                VELOCITY=VELOCITY_MAX
                 !damping
-                IF(ITERATION_NUMBER<(MAXIMUM_NUMBER_OF_ITERATIONS/2)) THEN
-                  VELOCITY=VELOCITY*1.0_DP/DBLE((MAXIMUM_NUMBER_OF_ITERATIONS/2)-ITERATION_NUMBER)
+                IF(ITERATION_NUMBER<(maximumNumberOfIterations/2)) THEN
+                  VELOCITY=VELOCITY*1.0_DP/DBLE((maximumNumberOfIterations/2)-ITERATION_NUMBER)
                 ENDIF
               ELSEIF(VELOCITY>(ABS(VELOCITY_MAX))) THEN
                 CALL FLAG_WARNING('Exceeded maximum contraction velocity (lengthening).',ERR,ERROR,*999)
 !!!                VELOCITY=-VELOCITY_MAX
 !                !damping
-!                IF(ITERATION_NUMBER<(MAXIMUM_NUMBER_OF_ITERATIONS/2)) THEN
-!                  VELOCITY=VELOCITY*1.0_DP/DBLE((MAXIMUM_NUMBER_OF_ITERATIONS/2)-ITERATION_NUMBER)
+!                IF(ITERATION_NUMBER<(maximumNumberOfIterations/2)) THEN
+!                  VELOCITY=VELOCITY*1.0_DP/DBLE((maximumNumberOfIterations/2)-ITERATION_NUMBER)
 !                ENDIF
               ENDIF
 
@@ -1249,17 +1249,17 @@ CONTAINS
 !!!!          VELOCITY=0.0_DP
 
 !!!!          !damping
-!!!!          IF(ITERATION_NUMBER<(MAXIMUM_NUMBER_OF_ITERATIONS/2)) THEN
-!!!!            VELOCITY=VELOCITY*1.0_DP/DBLE((MAXIMUM_NUMBER_OF_ITERATIONS/2)-ITERATION_NUMBER)
+!!!!          IF(ITERATION_NUMBER<(maximumNumberOfIterations/2)) THEN
+!!!!            VELOCITY=VELOCITY*1.0_DP/DBLE((maximumNumberOfIterations/2)-ITERATION_NUMBER)
 !!!!          ENDIF
 
-!!!          LOCAL_ERROR="######### VELOCITY: "//TRIM(NUMBER_TO_VSTRING(VELOCITY,"*",ERR,ERROR))//" #########"
+!!!          LOCAL_ERROR="######### VELOCITY: "//TRIM(NumberToVString(VELOCITY,"*",ERR,ERROR))//" #########"
 !!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
-!!!          LOCAL_ERROR="######### VELOCITY AVERAGE: "//TRIM(NUMBER_TO_VSTRING(VELOCITY_AVERAGE,"*",ERR,ERROR))//" #########"
+!!!          LOCAL_ERROR="######### VELOCITY AVERAGE: "//TRIM(NumberToVString(VELOCITY_AVERAGE,"*",ERR,ERROR))//" #########"
 !!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
-!!!          LOCAL_ERROR="######### STRETCH: "//TRIM(NUMBER_TO_VSTRING(FIBRE_STRETCH,"*",ERR,ERROR))//" #########"
+!!!          LOCAL_ERROR="######### STRETCH: "//TRIM(NumberToVString(FIBRE_STRETCH,"*",ERR,ERROR))//" #########"
 !!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
-!!!          LOCAL_ERROR="######### OLD STRETCH: "//TRIM(NUMBER_TO_VSTRING(FIBRE_STRETCH_OLD,"*",ERR,ERROR))//" #########"
+!!!          LOCAL_ERROR="######### OLD STRETCH: "//TRIM(NumberToVString(FIBRE_STRETCH_OLD,"*",ERR,ERROR))//" #########"
 !!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
 
 
@@ -1321,7 +1321,7 @@ CONTAINS
           CALL Field_ParameterSetUpdateFinish(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
         CASE DEFAULT
-          LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="Control loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
             & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -1359,10 +1359,10 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: FILENAME,LOCAL_ERROR,METHOD
     TYPE(ControlLoopType), POINTER :: ELASTICITY_SUB_LOOP,BIOELECTRIC_SUB_LOOP
 
@@ -1385,7 +1385,7 @@ CONTAINS
               !the monodomain time loop - output of the monodomain fields
               CALL BIODOMAIN_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
                 & " is not valid for a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -1426,13 +1426,13 @@ CONTAINS
                       dependentField=>EQUATIONS_SET%dependent%dependentField
                       NULLIFY(DEPENDENT_REGION)
                       CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
-                      FILENAME="MainTime_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                        & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
+                      FILENAME="MainTime_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
+                        & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                       METHOD="FORTRAN"
                       CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                        & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
                         & " in the solver mapping."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
@@ -1466,8 +1466,8 @@ CONTAINS
                         dependentField=>EQUATIONS_SET%dependent%dependentField
                         NULLIFY(DEPENDENT_REGION)
                         CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
-                        FILENAME="MainTime_M_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                          & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
+                        FILENAME="MainTime_M_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
+                          & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                         METHOD="FORTRAN"
                         CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
                         
@@ -1475,7 +1475,7 @@ CONTAINS
                         
                       ELSE
                         LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                          & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
+                          & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
                           & " in the solver mapping."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
@@ -1524,10 +1524,10 @@ CONTAINS
     INTEGER(INTG) :: equations_set_idx,numberOfNodes,dof_idx,node_idx
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
+    TYPE(SolversType), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FieldVariableType), POINTER :: FIELD_VAR
     REAL(DP) :: x1,x2,x3,y1,y2,y3,my_sum
@@ -1563,7 +1563,7 @@ CONTAINS
                     dependentField=>EQUATIONS_SET%dependent%dependentField
                   ELSE
                     LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                      & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
+                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
                       & " in the solver mapping."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
@@ -1664,12 +1664,12 @@ CONTAINS
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    TYPE(SolversType), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
     TYPE(FieldType), POINTER :: independent_Field_ELASTICITY,GEOMETRIC_FIELD_MONODOMAIN,GEOMETRIC_FIELD_ELASTICITY
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_MONODOMAIN,DEPENDENT_FIELD_ELASTICITY
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT
@@ -1738,7 +1738,7 @@ CONTAINS
               CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -1766,7 +1766,7 @@ CONTAINS
               CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -1795,10 +1795,10 @@ CONTAINS
                     & FIELD_VALUES_SET_TYPE,component_idx,GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                     & component_idx,ERR,ERROR,*999)
                 ELSE
-                  LOCAL_ERROR="The interpolation type of component number "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR, &
-                    & ERROR))//" of field number "//TRIM(NUMBER_TO_VSTRING(GEOMETRIC_FIELD_MONODOMAIN%userNumber,"*",ERR, &
+                  LOCAL_ERROR="The interpolation type of component number "//TRIM(NumberToVString(component_idx,"*",ERR, &
+                    & ERROR))//" of field number "//TRIM(NumberToVString(GEOMETRIC_FIELD_MONODOMAIN%userNumber,"*",ERR, &
                     & ERROR))//" does not coincide with the interpolation type of field number " &
-                    & //TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_ELASTICITY%userNumber,"*",ERR,ERROR))//"."
+                    & //TRIM(NumberToVString(DEPENDENT_FIELD_ELASTICITY%userNumber,"*",ERR,ERROR))//"."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO
@@ -1812,7 +1812,7 @@ CONTAINS
               CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -1849,7 +1849,7 @@ CONTAINS
               CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -2099,7 +2099,7 @@ CONTAINS
                           XI(1)=XI(1)+1.0_DP/(REAL(nodes_in_Xi_1))
                         ELSE
                           LOCAL_ERROR="The start element index is incorrect. The index is "// &
-                            & TRIM(NUMBER_TO_VSTRING(start_elem,"*",ERR,ERROR))// &
+                            & TRIM(NumberToVString(start_elem,"*",ERR,ERROR))// &
                             & " and should be zero or one." 
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         ENDIF
@@ -2280,7 +2280,7 @@ CONTAINS
               CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -2317,7 +2317,7 @@ CONTAINS
               CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+              SOLVER_EQUATIONS=>SOLVER%solverEquations
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -2476,7 +2476,7 @@ CONTAINS
                           XI(1)=XI(1)+1.0_DP/(REAL(nodes_in_Xi_1))
                         ELSE
                           LOCAL_ERROR="The start element index is incorrect. The index is "// &
-                            & TRIM(NUMBER_TO_VSTRING(start_elem,"*",ERR,ERROR))// &
+                            & TRIM(NumberToVString(start_elem,"*",ERR,ERROR))// &
                             & " and should be zero or one." 
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         ENDIF
@@ -2537,13 +2537,13 @@ CONTAINS
 
             CASE DEFAULT
               LOCAL_ERROR="The third problem specification of "// &
-                & TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(2),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(PROBLEM%specification(2),"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity of a multi physics problem."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
             LOCAL_ERROR="The second problem specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(2),"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(PROBLEM%specification(2),"*",ERR,ERROR))// &
               & " is not valid for a multi physics problem."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
@@ -2580,11 +2580,11 @@ CONTAINS
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    TYPE(SolversType), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
     TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_ELASTICITY
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING,NODES_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -2635,7 +2635,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            SOLVER_EQUATIONS=>SOLVER%solverEquations
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -2660,7 +2660,7 @@ CONTAINS
             CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            SOLVER_EQUATIONS=>SOLVER%solverEquations
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -2873,7 +2873,7 @@ CONTAINS
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="Independent field interpolation is not implemented for problem subtype " &
-            & //TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))
+            & //TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
@@ -2906,12 +2906,12 @@ CONTAINS
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_MONODOMAIN
     TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    TYPE(SolversType), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
     TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN
     TYPE(FieldVariableType), POINTER :: FIELD_VAR_IND_M
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     TYPE(DomainMappingType), POINTER :: NODES_MAPPING
     INTEGER(INTG) :: node_idx,dof_idx
@@ -3027,7 +3027,7 @@ CONTAINS
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
             !The second solver is associated with the diffusion part of the monodomain equation
             CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            SOLVER_EQUATIONS=>SOLVER%solverEquations
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN

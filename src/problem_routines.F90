@@ -55,7 +55,6 @@ MODULE ProblemRoutines
   USE ElasticityRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
@@ -64,19 +63,18 @@ MODULE ProblemRoutines
   USE FittingRoutines
   USE FluidMechanicsRoutines
   USE InputOutput
-  USE INTERFACE_CONDITIONS_CONSTANTS
-  USE INTERFACE_CONDITIONS_ROUTINES
+  USE InterfaceConditionRoutines
+  USE InterfaceConditionAccessRoutines
   USE InterfaceRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MULTI_PHYSICS_ROUTINES
-  USE PROBLEM_CONSTANTS
   USE ProblemAccessRoutines
   USE REACTION_DIFFUSION_EQUATION_ROUTINES
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
-  USE SOLVER_MATRICES_ROUTINES
+  USE SolverMatricesRoutines
   USE SolverMatricesAccessRoutines
   USE Strings
   USE Timer
@@ -208,20 +206,19 @@ CONTAINS
   SUBROUTINE Problem_CellMLEquationsSolve(cellMLEquations,err,error,*)
 
    !Argument variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer to the CellML equations to solve
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations !<A pointer to the CellML equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_CellMLEquationsSolve",err,error,*999)
-    
-    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is not associated.",err,error,*999)
-    IF(.NOT.cellMLEquations%CELLML_EQUATIONS_FINISHED) CALL FlagError("CellML equations have not been finished.",err,error,*999)
 
+    CALL CellMLEquations_AssertNotFinished(cellMLEquations,err,error,*999)
+ 
     NULLIFY(solver)
     CALL CellMLEquations_SolverGet(cellMLEquations,solver,err,error,*999)
     IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
@@ -350,8 +347,8 @@ CONTAINS
     TYPE(ControlLoopTimeType), POINTER :: timeLoop
     TYPE(ControlLoopWhileType), POINTER :: whileLoop
     TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_ControlLoopSolve",err,error,*999)
@@ -388,7 +385,7 @@ CONTAINS
         !If there are no sub loops then solve.
         NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-        DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+        DO solverIdx=1,solvers%numberOfSolvers
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
           
@@ -422,7 +419,7 @@ CONTAINS
           !If there are no sub loops then solve
           NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+          DO solverIdx=1,solvers%numberOfSolvers
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
             
@@ -482,7 +479,7 @@ CONTAINS
           !If there are no sub loops then solve.
           NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+          DO solverIdx=1,solvers%numberOfSolvers
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
             
@@ -528,11 +525,11 @@ CONTAINS
           !If there are no sub loops then solve
           NULLIFY(solvers)
           CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+          DO solverIdx=1,solvers%numberOfSolvers
             NULLIFY(solver)
             CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-            IF(ASSOCIATED(solver%SOLVER_EQUATIONS)) &
-              & CALL Problem_SolverLoadIncrementApply(solver%SOLVER_EQUATIONS,1,1,err,error,*999)
+            IF(ASSOCIATED(solver%solverEquations)) &
+              & CALL Problem_SolverLoadIncrementApply(solver%solverEquations,1,1,err,error,*999)
             
             CALL Problem_SolverSolve(solver,err,error,*999)
             
@@ -577,12 +574,12 @@ CONTAINS
             !If there are no sub loops then solve
             NULLIFY(solvers)
             CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-            DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+            DO solverIdx=1,solvers%numberOfSolvers
               NULLIFY(solver)
               CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
               !Apply incremented boundary conditions here => 
-              IF(ASSOCIATED(solver%SOLVER_EQUATIONS)) &
-                & CALL Problem_SolverLoadIncrementApply(solver%SOLVER_EQUATIONS,loadIncrementLoop%iterationNumber, &
+              IF(ASSOCIATED(solver%solverEquations)) &
+                & CALL Problem_SolverLoadIncrementApply(solver%solverEquations,loadIncrementLoop%iterationNumber, &
                 & loadIncrementLoop%maximumNumberOfIterations,err,error,*999)
               
               CALL Problem_SolverSolve(solver,err,error,*999)
@@ -909,6 +906,7 @@ CONTAINS
     problem%globalNumber=0
     problem%problemFinished=.FALSE.
     NULLIFY(problem%problems)
+    problem%specificationLength=0
     NULLIFY(problem%workGroup)
     NULLIFY(problem%controlLoop)
        
@@ -1086,20 +1084,20 @@ CONTAINS
   SUBROUTINE Problem_SolverJacobianEvaluate(solver,err,error,*)
 
    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to evaluate the Jacobian for
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to evaluate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,solverMatrixIdx
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(SOLVER_TYPE), POINTER :: cellMLSolver,linkingSolver
-    TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
-    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-    TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+    TYPE(SolverType), POINTER :: cellMLSolver,linkingSolver
+    TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverJacobianEvaluate",err,error,*999)
@@ -1117,35 +1115,35 @@ CONTAINS
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver vector values:",err,error,*999)
-      DO solverMatrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+      DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solverMatrixIdx,err,error,*999)
-        CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrix%SOLVER_VECTOR,err,error,*999)
+        CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrix%solverVector,err,error,*999)
       ENDDO !solverMatrixIdx
     ENDIF
     !Check if the nonlinear solver is linked to a dynamic solver 
-    linkingSolver=>solver%LINKING_SOLVER
+    linkingSolver=>solver%linkingSolver
     IF(ASSOCIATED(linkingSolver)) THEN
-      IF(linkingSolver%SOLVE_TYPE/=SOLVER_DYNAMIC_TYPE) &
+      IF(linkingSolver%solveType/=SOLVER_DYNAMIC_TYPE) &
         & CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
       !Update the field values from the dynamic factor * current solver values AND add in mean predicted displacements/
       CALL Solver_VariablesDynamicNonlinearUpdate(solver,err,error,*999)
       !check for a linked CellML solver 
       NULLIFY(nonlinearSolver)
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
-      SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
+      SELECT CASE(nonlinearSolver%nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
         NULLIFY(newtonSolver)
         CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-        cellMLSolver=>newtonSolver%CELLML_EVALUATOR_SOLVER
+        cellMLSolver=>newtonSolver%cellMLEvaluatorSolver
       CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
         NULLIFY(quasiNewtonSolver)
         CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-        cellMLSolver=>quasiNewtonSolver%CELLML_EVALUATOR_SOLVER
+        cellMLSolver=>quasiNewtonSolver%cellMLEvaluatorSolver
       CASE DEFAULT
         localError="Linked CellML solver is not implemented for nonlinear solver type " &
-          & //TRIM(NumberToVString(nonlinearSolver%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
+          & //TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
@@ -1164,9 +1162,9 @@ CONTAINS
       CALL SOLVER_VARIABLES_FIELD_UPDATE(solver,err,error,*999)
       !check for a linked CellML solver 
 !!TODO: This should be generalised for nonlinear solvers in general and not just Newton solvers.
-      newtonSolver=>solver%NONLINEAR_SOLVER%NEWTON_SOLVER
+      newtonSolver=>solver%nonlinearSolver%newtonSolver
       IF(.NOT.ASSOCIATED(newtonSolver)) CALL FlagError("Nonlinear solver Newton solver is not associated.",err,error,*999)
-      cellMLSolver=>newtonSolver%CELLML_EVALUATOR_SOLVER
+      cellMLSolver=>newtonSolver%cellMLEvaluatorSolver
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
       !Calculate the Jacobian
       DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
@@ -1201,21 +1199,21 @@ CONTAINS
   SUBROUTINE Problem_SolverResidualEvaluate(solver,err,error,*)
 
    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to evaluate the residual for
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,solverMatrixIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
-    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-    TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
-    TYPE(SOLVER_TYPE), POINTER :: cellMLSolver,linkingSolver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix    
+    TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+    TYPE(SolverType), POINTER :: cellMLSolver,linkingSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix    
     TYPE(VARYING_STRING) :: localError
     
     NULLIFY(cellMLSolver)
@@ -1236,17 +1234,17 @@ CONTAINS
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver vector values:",err,error,*999)
-      DO solverMatrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+      DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solverMatrixIdx,err,error,*999)
-        CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrix%SOLVER_VECTOR,err,error,*999)
+        CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrix%solverVector,err,error,*999)
       ENDDO !solverMatrixIdx
     ENDIF
     !Check if the nonlinear solver is linked to a dynamic solver 
-    linkingSolver=>solver%LINKING_SOLVER
+    linkingSolver=>solver%linkingSolver
     IF(ASSOCIATED(linkingSolver)) THEN
-      IF(linkingSolver%SOLVE_TYPE/=SOLVER_DYNAMIC_TYPE) &
+      IF(linkingSolver%solveType/=SOLVER_DYNAMIC_TYPE) &
         & CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
       !Update the field values from the dynamic factor*current solver values AND add in predicted displacements
       CALL Solver_VariablesDynamicNonlinearUpdate(solver,err,error,*999)
@@ -1255,18 +1253,18 @@ CONTAINS
       !check for a linked CellML solver
       NULLIFY(nonlinearSolver)
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
-      SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
+      SELECT CASE(nonlinearSolver%nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
         NULLIFY(newtonSolver)
         CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-        cellMLSolver=>newtonSolver%CELLML_EVALUATOR_SOLVER
+        cellMLSolver=>newtonSolver%cellMLEvaluatorSolver
       CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
         NULLIFY(quasiNewtonSolver)
         CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-        cellMLSolver=>quasiNewtonSolver%CELLML_EVALUATOR_SOLVER
+        cellMLSolver=>quasiNewtonSolver%cellMLEvaluatorSolver
       CASE DEFAULT
         localError="Linked CellML solver is not implemented for nonlinear solver type " &
-          & //TRIM(NumberToVString(nonlinearSolver%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
+          & //TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
@@ -1299,18 +1297,18 @@ CONTAINS
       !check for a linked CellML solver
       NULLIFY(nonlinearSolver)
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
-      SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
+      SELECT CASE(nonlinearSolver%nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
         NULLIFY(newtonSolver)
         CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-        cellMLSolver=>newtonSolver%CELLML_EVALUATOR_SOLVER
+        cellMLSolver=>newtonSolver%cellMLEvaluatorSolver
       CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
         NULLIFY(quasiNewtonSolver)
         CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-        cellMLSolver=>quasiNewtonSolver%CELLML_EVALUATOR_SOLVER
+        cellMLSolver=>quasiNewtonSolver%cellMLEvaluatorSolver
       CASE DEFAULT
         localError="Linked CellML solver is not implemented for nonlinear solver type " &
-          & //TRIM(NumberToVString(nonlinearSolver%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
+          & //TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       IF(ASSOCIATED(cellMLSolver)) CALL Solver_Solve(cellMLSolver,err,error,*999)
@@ -1360,15 +1358,15 @@ CONTAINS
   SUBROUTINE Problem_PreResidualEvaluate(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer the solver to pre-evaluate the residual for
+    TYPE(SolverType), POINTER :: solver !<A pointer the solver to pre-evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Problem_PreResidualEvaluate",err,error,*999)
@@ -1478,15 +1476,15 @@ CONTAINS
   SUBROUTINE Problem_PostResidualEvaluate(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer the solver to post-evaluate the residual for
+    TYPE(SolverType), POINTER :: solver !<A pointer the solver to post-evaluate the residual for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Problem_PostResidualEvaluate",err,error,*999)
@@ -1694,13 +1692,13 @@ CONTAINS
   SUBROUTINE Problem_SolverLoadIncrementApply(solverEquations,iterationNumber,maximumNumberOfIterations,err,error,*)
     
     !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(IN) :: iterationNumber !<The current load increment iteration index
     INTEGER(INTG), INTENT(IN) :: maximumNumberOfIterations !<Final index for load increment loop
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(EquationsSetType), POINTER :: equationsSet
     INTEGER(INTG) :: equationsSetIdx
 
@@ -1714,7 +1712,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_LoadIncrementApply(equationsSet,solverEquations%BOUNDARY_CONDITIONS,iterationNumber, &
+      CALL EquationsSet_LoadIncrementApply(equationsSet,solverEquations%boundaryConditions,iterationNumber, &
         & maximumNumberOfIterations,err,error,*999)
     ENDDO !equationsSetIdx
     
@@ -1856,7 +1854,7 @@ CONTAINS
   SUBROUTINE Problem_SolverPreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1919,7 +1917,7 @@ CONTAINS
   SUBROUTINE Problem_SolverPostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1981,11 +1979,11 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsSolve(solverEquations,err,error,*)
 
    !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverEquationsSolve",err,error,*999)
@@ -2053,7 +2051,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsDynamicLinearSolve(solverEquations,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2061,8 +2059,8 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverMappingType), POINTER :: solverMapping
     
     ENTERS("Problem_SolverEquationsDynamicLinearSolve",err,error,*999)
     
@@ -2093,7 +2091,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
    
     EXITS("Problem_SolverEquationsDynamicLinearSolve")
@@ -2111,7 +2109,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsDynamicNonlinearSolve(solverEquations,err,error,*)
     
    !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2121,9 +2119,9 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverEquationsDynamicNonlinearSolve",err,error,*999)
@@ -2145,8 +2143,8 @@ CONTAINS
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
       !Set the equations set times
       CALL EquationsSet_TimesSet(equationsSet,currentTime,timeIncrement,err,error,*999)
-      IF(dynamicSolver%restart.OR..NOT.dynamicSolver%SOLVER_INITIALISED) THEN!.OR.dynamicSolver%FSI) THEN
-        !If we need to restart or we haven't initialised yet or we have an FSI scheme, make sure the equations sets are up to date
+      IF(dynamicSolver%restart.OR..NOT.dynamicSolver%solverInitialised) THEN
+        !If we need to restart or we haven't initialised yet, make sure the equations sets are up to date
         NULLIFY(equations)
         CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
         SELECT CASE(equations%linearity)
@@ -2192,7 +2190,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsQuasistaticLinearSolve(solverEquations,err,error,*)
     
    !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2200,8 +2198,8 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverMappingType), POINTER :: solverMapping
      
     ENTERS("Problem_SolverEquationsQuasistaticLinearSolve",err,error,*999)
     
@@ -2231,7 +2229,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
    
     EXITS("Problem_SolverEquationsQuasistaticLinearSolve")
@@ -2250,7 +2248,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsQuasistaticNonlinearSolve(solverEquations,err,error,*)
     
     !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2259,8 +2257,8 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("Problem_SolverEquationsQuasistaticNonlinearSolve",err,error,*999)
@@ -2296,9 +2294,9 @@ CONTAINS
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-        CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
       CASE(EQUATIONS_NONLINEAR)
-        CALL EquationsSet_NonlinearRHSUpdate(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_NonlinearRHSUpdate(equationsSet,solverEquations%boundaryConditions,err,error,*999)
       CASE DEFAULT
         localError="The equations linearity type of "// &
           & TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
@@ -2322,7 +2320,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsStaticLinearSolve(solverEquations,err,error,*)
 
    !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2330,8 +2328,8 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverMappingType), POINTER :: solverMapping
     
 #ifdef TAUPROF
     CHARACTER(12) :: CVAR
@@ -2388,7 +2386,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equations)
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+      CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('EquationsSet_Backsubstitute()')
@@ -2409,7 +2407,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsStaticNonlinearSolve(solverEquations,err,error,*)
     
    !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to solve
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2417,8 +2415,8 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
@@ -2466,9 +2464,9 @@ CONTAINS
       CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-        CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_Backsubstitute(equationsSet,solverEquations%boundaryConditions,err,error,*999)
       CASE(EQUATIONS_NONLINEAR)
-        CALL EquationsSet_NonlinearRHSUpdate(equationsSet,solverEquations%BOUNDARY_CONDITIONS,err,error,*999)
+        CALL EquationsSet_NonlinearRHSUpdate(equationsSet,solverEquations%boundaryConditions,err,error,*999)
       CASE DEFAULT
         localError="The equations linearity type of "// &
           & TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
@@ -2492,7 +2490,7 @@ CONTAINS
   SUBROUTINE Problem_SolverSolve(solver,err,error,*)
 
    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to solve
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2519,15 +2517,15 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('Solve')
 #endif
     
-    IF(ASSOCIATED(solver%SOLVER_EQUATIONS)) THEN
+    IF(ASSOCIATED(solver%solverEquations)) THEN
       !A solver with solver equations.
-      CALL Problem_SolverEquationsSolve(solver%SOLVER_EQUATIONS,err,error,*999)
+      CALL Problem_SolverEquationsSolve(solver%solverEquations,err,error,*999)
     ELSE
       !Check for other equations.
-      IF(ASSOCIATED(solver%CELLML_EQUATIONS)) THEN
+      IF(ASSOCIATED(solver%cellMLEquations)) THEN
         !A solver with CellML equations.
-        CALL Problem_CellMLEquationsSolve(solver%CELLML_EQUATIONS,err,error,*999)
-      ELSEIF(solver%SOLVE_TYPE==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
+        CALL Problem_CellMLEquationsSolve(solver%cellMLEquations,err,error,*999)
+      ELSEIF(solver%solveType==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
         CALL Problem_SolverGeometricTransformationSolve(solver%geometricTransformationSolver,err,error,*999)
       ELSE
         !Do nothing now. 
@@ -2591,13 +2589,13 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsBoundaryConditionsAnalytic(solverEquations,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to get the boundary conditions for
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations to get the boundary conditions for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(EquationsSetType), POINTER :: equationsSet
 
     ENTERS("Problem_SolverEquationsBoundaryConditionsAnalytic",err,error,*999)
@@ -2739,7 +2737,7 @@ CONTAINS
     !Local Variables
     TYPE(FieldParameterSetType), POINTER :: boundaryConditionsParameterSet
     TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SolverType), POINTER :: solver
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
     TYPE(ControlLoopSimpleType), POINTER :: simpleLoop
@@ -2900,7 +2898,7 @@ CONTAINS
   SUBROUTINE Problem_SolverNonlinearMonitor(solver,iterationNumber,residualNorm,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to monitor
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to monitor
     INTEGER(INTG), INTENT(IN) :: iterationNumber !<The number of iterations
     REAL(DP), INTENT(IN) :: residualNorm !<The residual norm
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2909,9 +2907,9 @@ CONTAINS
     INTEGER(INTG) :: interfaceConditionIdx
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceType), POINTER :: interface
     LOGICAL :: reproject
@@ -2934,7 +2932,7 @@ CONTAINS
       SELECT CASE(problem%specification(2))
       CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_TYPE)
         !Output meshes at iterations
-        IF(solver%SOLVE_TYPE==SOLVER_NONLINEAR_TYPE) THEN
+        IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
           NULLIFY(nonlinearSolver)
           CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
           CALL Problem_SolverNewtonFieldsOutput(solver,iterationNumber,err,error,*999)
@@ -2975,7 +2973,7 @@ CONTAINS
           ENDDO !interfaceConditionIdx
         ENDIF !Reproject
         !Output meshes at iterations
-        IF(solver%SOLVE_TYPE==SOLVER_NONLINEAR_TYPE) THEN
+        IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
           NULLIFY(nonlinearSolver)
           CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
           CALL Problem_SolverNewtonFieldsOutput(solver,iterationNumber,err,error,*999)
@@ -2994,12 +2992,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     !Nonlinear solve monitor--progress output if required
-    IF(solver%SOLVE_TYPE==SOLVER_NONLINEAR_TYPE) THEN
+    IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
       NULLIFY(nonlinearSolver)
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
       CALL SOLVER_NONLINEAR_MONITOR(nonlinearSolver,iterationNumber,residualNorm,err,error,*999)
     ELSE
-      localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+      localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
         & " does not correspond to a nonlinear solver."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -3020,14 +3018,14 @@ CONTAINS
   SUBROUTINE Problem_SolverNewtonFieldsOutput(solver,iterationNumber,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to solver to output the fields for
+    TYPE(SolverType), POINTER :: solver !<A pointer to solver to output the fields for
     INTEGER(INTG), INTENT(IN) :: iterationNumber !<Iteration number
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: load_step
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping 
+    TYPE(SolverMappingType), POINTER :: solverMapping 
     TYPE(VARYING_STRING) :: directory
     
     INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledElementNumber, &
@@ -3044,7 +3042,7 @@ CONTAINS
     TYPE(DataProjectionType), POINTER :: dataProjection
 
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SolverEquationsType), POINTER :: solverEquations
 
     INTEGER(INTG) :: IUNIT
     CHARACTER(LEN=100) :: filenameOutput,groupname
@@ -3098,7 +3096,7 @@ CONTAINS
         !     ENDIF
         !   ENDDO
         
-        !   load_step=solver%SOLVERS%controlLoop%loadIncrementLoop%iterationNumber
+        !   load_step=solver%solvers%controlLoop%loadIncrementLoop%iterationNumber
         
         !   IF((iterationNumber > 0).OR.(load_step > 1))THEN
         !     solve_call = solve_call - 1
@@ -3256,7 +3254,7 @@ CONTAINS
   SUBROUTINE Problem_SolverOptimiserMonitor(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to monitor
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to monitor
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3344,8 +3342,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: problemClass,specificationIdx
     TYPE(VARYING_STRING) :: localError
-    INTEGER(INTG) :: problemClass
 
     ENTERS("Problem_SpecificationSet",err,error,*999)
 
@@ -3376,6 +3374,13 @@ CONTAINS
       localError="The first problems specification of "//TRIM(NumberToVstring(problemClass,"*",err,error))//" is not valid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+    !Set the specification length
+    problem%specificationLength=0
+    DO specificationIdx=1,SIZE(problem%specification,1)
+      IF(problem%specification(specificationIdx)>0) THEN
+        problem%specificationLength=specificationIdx
+      ENDIF
+    ENDDO !specificationIdx
 
     EXITS("Problem_SpecificationSet")
     RETURN
@@ -3525,9 +3530,9 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
-  USE SOLVER_MATRICES_ROUTINES
+  USE SolverMatricesRoutines
   USE SolverMatricesAccessRoutines
   USE Strings
   USE Types
@@ -3539,17 +3544,17 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   TYPE(PetscVecType), INTENT(INOUT) :: X !<The PETSc x Vec
   TYPE(PetscMatType), INTENT(INOUT) :: A !<The PETSc A Mat
   TYPE(PetscMatType), INTENT(INOUT) :: B !<The PETSc B Mat
-  TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
   TYPE(DistributedVectorType), POINTER :: solverVector
-  TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
-  TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-  TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
-  TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-  TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-  TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+  TYPE(NewtonSolverType), POINTER :: newtonSolver
+  TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+  TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+  TYPE(SolverEquationsType), POINTER :: solverEquations
+  TYPE(SolverMatricesType), POINTER :: solverMatrices
+  TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
   IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*998)
@@ -3558,9 +3563,9 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*999)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-  IF(solverMatrices%NUMBER_OF_MATRICES/=1) THEN
+  IF(solverMatrices%numberOfMatrices/=1) THEN
     localError="The number of solver matrices of "// &
-      & TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))// &
+      & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
       & " is invalid. There should be 1 solver matrix."
     CALL FlagError(localError,err,error,*998)
   ENDIF
@@ -3568,7 +3573,7 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   NULLIFY(solverMatrix)
   CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
   NULLIFY(solverVector)
-  CALL SolverMatrix_SolverVectorGet(solverMatrix,solverVector,err,error,*999)
+  CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
   
   CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
   
@@ -3580,17 +3585,17 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   CALL Solver_AssertIsNonlinear(ctx,err,error,*999)
   NULLIFY(nonlinearSolver)
   CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*999)
-  SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
+  SELECT CASE(nonlinearSolver%nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
     NULLIFY(newtonSolver)
     CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-    newtonSolver%TOTAL_NUMBER_OF_JACOBIAN_EVALUATIONS=newtonSolver%TOTAL_NUMBER_OF_JACOBIAN_EVALUATIONS+1
+    newtonSolver%totalNumberOfJacobianEvaluations=newtonSolver%totalNumberOfJacobianEvaluations+1
   CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
     NULLIFY(quasiNewtonSolver)
     CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-    quasiNewtonSolver%TOTAL_NUMBER_OF_JACOBIAN_EVALUATIONS=quasiNewtonSolver%TOTAL_NUMBER_OF_JACOBIAN_EVALUATIONS+1
+    quasiNewtonSolver%totalNumberOfJacobianEvaluations=quasiNewtonSolver%totalNumberOfJacobianEvaluations+1
   CASE DEFAULT
-    localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolver%NONLINEAR_SOLVE_TYPE,"*",err,error))// &
+    localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))// &
       & " is invalid."
     CALL FlagError(localError,err,error,*999)
   END SELECT
@@ -3618,8 +3623,8 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
-  USE SOLVER_MATRICES_ROUTINES
-  USE SOLVER_ROUTINES
+  USE SolverMatricesRoutines
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMatricesAccessRoutines
   USE Strings
@@ -3632,18 +3637,18 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec
   TYPE(PetscMatType), INTENT(INOUT) :: A !<The PETSc A Mat
   TYPE(PetscMatType), INTENT(INOUT) :: B !<The PETSc B Mat
-  TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
-  TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
-  TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-  TYPE(NEWTON_LINESEARCH_SOLVER_TYPE), POINTER :: linesearchSolver
-  TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
-  TYPE(QUASI_NEWTON_LINESEARCH_SOLVER_TYPE), POINTER :: quasiNewtonLinesearchSolver
-  TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-  TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-  TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+  TYPE(NewtonSolverType), POINTER :: newtonSolver
+  TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+  TYPE(NewtonLinesearchSolverType), POINTER :: linesearchSolver
+  TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+  TYPE(QuasiNewtonLinesearchSolverType), POINTER :: quasiNewtonLinesearchSolver
+  TYPE(SolverEquationsType), POINTER :: solverEquations
+  TYPE(SolverMatricesType), POINTER :: solverMatrices
+  TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(PetscMatFDColoringType), POINTER :: jacobianMatFDColoring
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
@@ -3656,9 +3661,9 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*999)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-  IF(solverMatrices%NUMBER_OF_MATRICES/=1) THEN
+  IF(solverMatrices%numberOfMatrices/=1) THEN
     localError="The number of solver matrices of "// &
-      & TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))// &
+      & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
       & " is invalid. There should be 1 solver matrix."
     CALL FlagError(localError,err,error,*998)
   ENDIF
@@ -3667,23 +3672,23 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)  
   SELECT CASE(solverEquations%sparsityType)
   CASE(SOLVER_SPARSE_MATRICES)
-    SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
+    SELECT CASE(nonlinearSolver%nonlinearSolveType)
     CASE(SOLVER_NONLINEAR_NEWTON)
       NULLIFY(newtonSolver)
       CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-      linesearchSolver=>newtonSolver%LINESEARCH_SOLVER
+      linesearchSolver=>newtonSolver%linesearchSolver
       IF(.NOT.ASSOCIATED(linesearchSolver)) CALL FlagError("Newton solver linesearch solver is not associated.",err,error,*999)
       jacobianMatFDColoring=>linesearchSolver%jacobianMatFDColoring
     CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
       NULLIFY(quasiNewtonSolver)
       CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-      quasiNewtonLinesearchSolver=>quasiNewtonSolver%LINESEARCH_SOLVER
+      quasiNewtonLinesearchSolver=>quasiNewtonSolver%linesearchSolver
       IF(.NOT.ASSOCIATED(quasiNewtonLinesearchSolver)) &
         & CALL FlagError("Quasi-Newton solver linesearch solver is not associated.",err,error,*999)
       jacobianMatFDColoring=>quasiNewtonLinesearchSolver%jacobianMatFDColoring
     CASE DEFAULT
       localError="The nonlinear solver type of "// &
-        & TRIM(NumberToVString(nonlinearSolver%NONLINEAR_SOLVE_TYPE,"*",err,error))// &
+        & TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -3723,7 +3728,7 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMatricesAccessRoutines
   USE Strings
@@ -3735,14 +3740,14 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
   TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The PETSc tao type
   TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec type
   REAL(DP), INTENT(OUT) :: f !<On exit, the evaluated objective
-  TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
   TYPE(DistributedVectorType), POINTER :: solverVector
-  TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-  TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-  TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+  TYPE(SolverEquationsType), POINTER :: solverEquations
+  TYPE(SolverMatricesType), POINTER :: solverMatrices
+  TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
   IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*997)
@@ -3752,15 +3757,15 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
   CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*999)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)  
-  IF(solverMatrices%NUMBER_OF_MATRICES/=1) THEN
-    localError="The number of solver matrices of "//TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))// &
+  IF(solverMatrices%numberOfMatrices/=1) THEN
+    localError="The number of solver matrices of "//TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
       & " is invalid. There should be 1 solver matrix."
     CALL FlagError(localError,err,error,*997)          
   ENDIF
   NULLIFY(solverMatrix)
   CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
   NULLIFY(solverVector)
-  CALL SolverMatrix_SolverVectorGet(solverMatrix,solverVector,err,error,*999)
+  CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
 
   CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
     
@@ -3794,7 +3799,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMatricesAccessRoutines
   USE Strings
@@ -3806,17 +3811,17 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The PETSc snes type
   TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec type
   TYPE(PetscVecType), INTENT(INOUT) :: f !<The PETSc f Vec type
-  TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
   TYPE(DistributedVectorType), POINTER :: residualVector,solverVector
-  TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
-  TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-  TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
-  TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-  TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-  TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+  TYPE(NewtonSolverType), POINTER :: newtonSolver
+  TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+  TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+  TYPE(SolverEquationsType), POINTER :: solverEquations
+  TYPE(SolverMatricesType), POINTER :: solverMatrices
+  TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
   IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*997)
@@ -3824,7 +3829,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
 
   NULLIFY(nonlinearSolver)
   CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*997)
-  SELECT CASE(nonLinearSolver%NONLINEAR_SOLVE_TYPE)
+  SELECT CASE(nonLinearSolver%nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
     NULLIFY(newtonSolver)
     CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*997)
@@ -3832,7 +3837,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
     NULLIFY(quasiNewtonSolver)
     CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*997)
   CASE DEFAULT
-    localError="The nonlinear solver type of "//TRIM(NumberToVString(nonLinearSolver%NONLINEAR_SOLVE_TYPE,"*",err,error))// &
+    localError="The nonlinear solver type of "//TRIM(NumberToVString(nonLinearSolver%nonlinearSolveType,"*",err,error))// &
       & " is invalid."
     CALL FlagError(localError,err,error,*997)
   END SELECT
@@ -3840,18 +3845,18 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*997)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*997)
-  IF(solverMatrices%NUMBER_OF_MATRICES/=1) THEN
+  IF(solverMatrices%numberOfMatrices/=1) THEN
     localError="The number of solver matrices of "// &
-      & TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))// &
+      & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
       & " is invalid. There should be 1 solver matrix."
     CALL FlagError(localError,err,error,*997)          
   ENDIF
   NULLIFY(solverMatrix)
   CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*997)
   NULLIFY(solverVector)
-  CALL SolverMatrix_SolverVectorGet(solverMatrix,solverVector,err,error,*997)
+  CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*997)
   NULLIFY(residualVector)
-  CALL SolverMatrices_ResidualVectorGet(solverMatrices,residualVector,err,error,*997)
+  CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*997)
   
   CALL DistributedVector_OverrideSetOn(solverVector,X,err,error,*998)
   CALL DistributedVector_OverrideSetOn(residualVector,F,err,error,*999)                
@@ -3862,11 +3867,11 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   CALL DistributedVector_OverrideSetOff(solverVector,err,error,*998)
   
 !!TODO: move this to Problem_SolverResidualEvaluate or elsewhere?
-  SELECT CASE(nonLinearSolver%NONLINEAR_SOLVE_TYPE)
+  SELECT CASE(nonLinearSolver%nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
-    newtonSolver%TOTAL_NUMBER_OF_FUNCTION_EVALUATIONS=newtonSolver%TOTAL_NUMBER_OF_FUNCTION_EVALUATIONS+1
+    newtonSolver%totalNumberOfFunctionEvaluations=newtonSolver%totalNumberOfFunctionEvaluations+1
   CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
-    quasiNewtonSolver%TOTAL_NUMBER_OF_FUNCTION_EVALUATIONS=quasiNewtonSolver%TOTAL_NUMBER_OF_FUNCTION_EVALUATIONS+1
+    quasiNewtonSolver%totalNumberOfFunctionEvaluations=quasiNewtonSolver%totalNumberOfFunctionEvaluations+1
   CASE DEFAULT
     !Do nothing?
   END SELECT
@@ -3896,7 +3901,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Strings
   USE Types
@@ -3910,13 +3915,13 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   REAL(DP), INTENT(INOUT) :: gnorm !<The 2-norm of current step
   REAL(DP), INTENT(INOUT) :: fnorm !<The 2-norm of function
   INTEGER(INTG), INTENT(INOUT) :: reason !<The reason for convergence/divergence
-  TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   TYPE(PetscVecType) :: x,f,y,w,g
-  TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
-  TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-  TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
+  TYPE(NewtonSolverType), POINTER :: newtonSolver
+  TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+  TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
   TYPE(PetscSnesLinesearchType) :: lineSearch
   REAL(DP) :: energy,normalisedEnergy
   TYPE(VARYING_STRING) :: error,localError
@@ -3927,7 +3932,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   NULLIFY(nonlinearSolver)
   CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*999)
   
-  SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
+  SELECT CASE(nonlinearSolver%nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
     NULLIFY(newtonSolver)
     CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
@@ -3954,7 +3959,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
         ELSE
           normalisedEnergy=energy/newtonSolver%convergenceTest%energyFirstIter
           newtonSolver%convergenceTest%normalisedEnergy=normalisedEnergy
-          IF(ABS(normalisedEnergy)<newtonSolver%ABSOLUTE_TOLERANCE) THEN
+          IF(ABS(normalisedEnergy)<newtonSolver%absoluteTolerance) THEN
             reason=PETSC_SNES_CONVERGED_FNORM_ABS
             newtonSolver%convergenceTest%energyFirstIter=0.0_DP
             newtonSolver%convergenceTest%normalisedEnergy=0.0_DP
@@ -3998,7 +4003,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
         ELSE
           normalisedEnergy=energy/quasiNewtonSolver%convergenceTest%energyFirstIter
           quasiNewtonSolver%convergenceTest%normalisedEnergy=normalisedEnergy
-          IF(ABS(normalisedEnergy)<quasiNewtonSolver%ABSOLUTE_TOLERANCE) THEN
+          IF(ABS(normalisedEnergy)<quasiNewtonSolver%absoluteTolerance) THEN
             reason=PETSC_SNES_CONVERGED_FNORM_ABS
             quasiNewtonSolver%convergenceTest%energyFirstIter=0.0_DP
             quasiNewtonSolver%convergenceTest%normalisedEnergy=0.0_DP
@@ -4057,7 +4062,7 @@ SUBROUTINE Problem_SolverDAECellMLRHSPetsc(ts,time,states,rates,ctx,err)
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   TYPE(CellMLType), POINTER :: cellML
-  TYPE(SOLVER_TYPE), POINTER :: solver
+  TYPE(SolverType), POINTER :: solver
   TYPE(VARYING_STRING) :: error
   INTEGER(INTG) :: dofIdx
   REAL(DP), POINTER :: stateData(:)
@@ -4114,7 +4119,7 @@ SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm
   TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The PETSc snes type
   INTEGER(INTG), INTENT(INOUT) :: iterationNumber !<The iteration number
   REAL(DP), INTENT(INOUT) :: residualNorm !<The residual norm
-  TYPE(SOLVER_TYPE), POINTER :: context !<The passed through context
+  TYPE(SolverType), POINTER :: context !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   TYPE(VARYING_STRING) :: error
@@ -4150,7 +4155,7 @@ SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,context,err)
   
   !Argument variables
   TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The PETSc tao type
-  TYPE(SOLVER_TYPE), POINTER :: context !<The passed through context (solver)
+  TYPE(SolverType), POINTER :: context !<The passed through context (solver)
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   TYPE(VARYING_STRING) :: error

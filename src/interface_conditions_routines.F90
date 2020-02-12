@@ -42,7 +42,7 @@
 !>
 
 !>This module contains all interface conditions routines.
-MODULE INTERFACE_CONDITIONS_ROUTINES
+MODULE InterfaceConditionRoutines
 
   USE BaseRoutines
   USE BasisRoutines
@@ -51,7 +51,6 @@ MODULE INTERFACE_CONDITIONS_ROUTINES
   USE FieldAccessRoutines
   USE InputOutput
   USE InterfaceAccessRoutines
-  USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsRoutines
   USE InterfaceEquationsAccessRoutines
@@ -1993,7 +1992,7 @@ CONTAINS
 
     !Argument variables
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the interface condition. \see INTERFACE_CONDITIONS_CONSTANTS_OutputTypes,INTERFACE_CONDITIONS_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the interface condition. \see InterfaceCondition_OutputTypes,InterfaceCondition
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2022,7 +2021,7 @@ CONTAINS
 
     !Argument variables
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to set the output type for
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see INTERFACE_CONDITIONS_CONSTANTS_OutputTypes,INTERFACE_CONDITIONS_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see InterfaceCondition_OutputTypes,InterfaceCondition
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2429,4 +2428,4 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE INTERFACE_CONDITIONS_ROUTINES
+END MODULE InterfaceConditionRoutines

@@ -101,19 +101,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_BasisFunctionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     basisFunctions=>context%basisFunctions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basisFunctions)) THEN
       localError="The basis functions for context number "// &
         & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Context_BasisFunctionsGet")
     RETURN
@@ -137,19 +144,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_ComptationEnvironmentGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     computationEnvironment=>context%computationEnvironment
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(computationEnvironment)) THEN
       localError="The computation environment for context number "// &
         & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Context_ComputationEnvironmentGet")
     RETURN
@@ -173,19 +187,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_ContextsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(contexts)) CALL FlagError("Contexts is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     contexts=>context%contexts
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(contexts)) THEN
       localError="The contexts for context number "// &
         & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Context_ContextsGet")
     RETURN
@@ -209,19 +230,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_CoordinateSystemsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     coordinateSystems=>context%coordinateSystems
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystems)) THEN
       localError="The coordinate systems for context number "// &
         & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Context_CoordinateSystemsGet")
     RETURN
@@ -245,19 +273,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_ProblemsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(problems)) CALL FlagError("Problems is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     problems=>context%problems
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(problems)) THEN
       localError="The problems for context number "// &
         & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Context_ProblemsGet")
     RETURN
@@ -281,18 +316,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_RandomSeedsGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
-    
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)    
     IF(SIZE(randomSeeds,1)<SIZE(context%cmissRandomSeeds,1)) THEN
       localError="The size of the supplied random seeds array of "// &
         & TRIM(NumberToVString(SIZE(randomSeeds,1),"*",err,error))//" is too small. The size must be >= "// &
         & TRIM(NumberToVString(SIZE(context%cmissRandomSeeds,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     randomSeeds(1:SIZE(context%cmissRandomSeeds,1))=context%cmissRandomSeeds(1:SIZE(context%cmissRandomSeeds,1))
   
@@ -320,7 +358,9 @@ CONTAINS
 
     ENTERS("Context_RandomSeedsSizeGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     randomSeedsSize=SIZE(context%cmissRandomSeeds,1)
     
@@ -344,19 +384,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_RegionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(regions)) CALL FlagError("Regions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
     
     regions=>context%regions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(regions)) THEN
       localError="The regions for context number "// &
         & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
  
     EXITS("Context_RegionsGet")
     RETURN
@@ -382,20 +429,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: contextIdx
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Context_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*999)
+#endif
+    
     IF(contexts%numberOfContexts>0) THEN
-      IF(.NOT.ALLOCATED(contexts%contexts)) CALL FlagError("Contexts contexts is not allocated.",err,error,*999)   
+#ifdef WITH_PRECHECKS      
+      IF(.NOT.ALLOCATED(contexts%contexts)) CALL FlagError("Contexts contexts is not allocated.",err,error,*999)
+#endif      
       NULLIFY(context)
       DO contextIdx=1,contexts%numberOfContexts
+#ifdef WITH_PRECHECKS        
         IF(.NOT.ASSOCIATED(contexts%contexts(contextIdx)%ptr)) THEN
           localError="The context pointer in contexts is not associated for context index "// &
             & TRIM(NumberToVString(contextIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
+#endif        
         IF(contexts%contexts(contextIdx)%ptr%userNumber==userNumber) THEN
           context=>contexts%contexts(contextIdx)%ptr
           EXIT
@@ -426,7 +482,9 @@ CONTAINS
 
     ENTERS("Context_UserNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
 
     userNumber=context%userNumber
   
@@ -451,15 +509,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Context_Get",err,error,*999)
 
     CALL Context_UserNumberFind(contexts,userNumber,context,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="A context with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
   
     EXITS("Context_Get")
     RETURN

@@ -47,7 +47,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -66,7 +66,6 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -84,9 +83,9 @@ MODULE FINITE_ELASTICITY_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE ProfilingRoutines
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE SolverMatricesAccessRoutines
@@ -167,7 +166,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*)
     !Argument variables
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local variables
@@ -251,7 +250,7 @@ CONTAINS
                         CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
-                          CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
+                          CALL BoundaryConditions_SetNode(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(INNER_NORMAL_XI),BOUNDARY_CONDITION_PRESSURE_INCREMENTED,PIN,err,error,*999)
                         ENDIF
                       ENDDO
@@ -263,7 +262,7 @@ CONTAINS
                         CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
-                          CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
+                          CALL BoundaryConditions_SetNode(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(OUTER_NORMAL_XI),BOUNDARY_CONDITION_PRESSURE_INCREMENTED,POUT,err,error,*999)
                         ENDIF
                       ENDDO
@@ -277,7 +276,7 @@ CONTAINS
                           CALL FieldVariable_UserNodeDOFGet(GEOMETRIC_VARIABLE,1,1,user_node,3,local_ny,ghostDOF,err,error,*999)
                           DEFORMED_Z=GEOMETRIC_PARAMETERS(local_ny)*LAMBDA
                           !Default to version 1 of each node derivative
-                          CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
+                          CALL BoundaryConditions_SetNode(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(TOP_NORMAL_XI),BOUNDARY_CONDITION_FIXED,DEFORMED_Z,err,error,*999)
                         ENDIF
                       ENDDO
@@ -288,7 +287,7 @@ CONTAINS
                         CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
-                          CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
+                          CALL BoundaryConditions_SetNode(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(BOTTOM_NORMAL_XI),BOUNDARY_CONDITION_FIXED,0.0_DP,err,error,*999)
                         ENDIF
                       ENDDO
@@ -306,14 +305,14 @@ CONTAINS
                           X(2)=GEOMETRIC_PARAMETERS(local_ny)
                           IF(ABS(X(1))<1E-7_DP) THEN
                             !Default to version 1 of each node derivative
-                            CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
+                            CALL BoundaryConditions_SetNode(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
                               & user_node,1,BOUNDARY_CONDITION_FIXED,0.0_DP,err,error,*999)
                             
                             X_FIXED=.TRUE.
                           ENDIF
                           IF(ABS(X(2))<1E-7_DP) THEN
                             !Default to version 1 of each node derivative
-                            CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
+                            CALL BoundaryConditions_SetNode(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
                               & user_node,2,BOUNDARY_CONDITION_FIXED,0.0_DP,err,error,*999)
 
                             Y_FIXED=.TRUE.
@@ -2270,8 +2269,8 @@ CONTAINS
       & jgwSubMatrix(3,3),jgwdPhiColdZ,Jxxi,Jzxi,p,phiRow,sigma(6),spatialC(6,6),sum1,tempVec(3)
     LOGICAL :: haveDensity,haveHydrostaticPressure,haveSurfacePressure
     TYPE(BasisType), POINTER :: dependentBasis,rowComponentBasis
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -2286,7 +2285,7 @@ CONTAINS
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField,materialsField
     TYPE(FieldInterpolationParametersType), POINTER :: densityInterpParameters,dependentInterpParameters, &
@@ -2324,8 +2323,10 @@ CONTAINS
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    NULLIFY(residualVector)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
     NULLIFY(jacobianMatrix)
-    CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,1,jacobianMatrix,err,error,*999)
+    CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,1,jacobianMatrix,err,error,*999)
     
     IF(jacobianMatrix%updateJacobian) THEN
       NULLIFY(region)
@@ -2385,9 +2386,10 @@ CONTAINS
       IF(haveHydrostaticPressure) pressureComponent=numberOfComponents
       
       boundaryConditions=>equationsSet%boundaryConditions
-      CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
-      totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE)+ &
-        & boundaryConditionsVariable%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
+      NULLIFY(boundaryConditionsVariable)
+      CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
+      totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
+        & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
 
       haveSurfacePressure=decompositionElements%elements(elementNumber)%boundaryElement.AND. &
         & totalNumberofSurfacePressureConditions>0
@@ -2799,8 +2801,8 @@ CONTAINS
     REAL(DP) :: Jznu,JGW,SUM1,SUM2
     TYPE(QuadratureSchemePtrType) :: QUADRATURE_SCHEMES(4)
     TYPE(BasisType), POINTER :: DEPENDENT_BASIS
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionVariableType), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
+    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint, &
       & materialsInterpPoint,dependentInterpPoint,independentInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics, &
@@ -2810,7 +2812,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD,FIBRE_FIELD,independentField
     TYPE(FieldVariableType), POINTER :: fieldVariable
@@ -2871,10 +2873,11 @@ CONTAINS
           PRESSURE_COMPONENT=fieldVariable%numberOfComponents
 
           BOUNDARY_CONDITIONS=>EQUATIONS_SET%boundaryConditions
-          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,EQUATIONS_SET%equations%vectorEquations%vectorMapping% &
+          NULLIFY(BOUNDARY_CONDITIONS_VARIABLE)
+          CALL BoundaryConditions_VariableGet(BOUNDARY_CONDITIONS,EQUATIONS_SET%equations%vectorEquations%vectorMapping% &
             & rhsMapping%rhsVariable,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
-          TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS=BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE)+ &
-            & BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
+          TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS=BOUNDARY_CONDITIONS_VARIABLE%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
+            & BOUNDARY_CONDITIONS_VARIABLE%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
         
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
             & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
@@ -3314,8 +3317,8 @@ CONTAINS
     LOGICAL :: incompressible,darcyDependent,darcyDensity,haveDensity,haveHydrostaticPressure,haveSurfacePressure, &
       & updateResidual,updateMass,updateRHS
     TYPE(BasisType), POINTER :: columnComponentBasis,dependentBasis,rowComponentBasis
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -3442,9 +3445,10 @@ CONTAINS
       & equationsSetSubtype/=EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE
     
     boundaryConditions=>equationsSet%boundaryConditions
-    CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
-    totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE)+ &
-      & boundaryConditionsVariable%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
+    NULLIFY(boundaryConditionsVariable)
+    CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
+    totalNumberOfSurfacePressureConditions=boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
+      & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
     
     haveSurfacePressure=decompositionElements%elements(elementNumber)%boundaryElement.AND. &
       & totalNumberofSurfacePressureConditions>0
@@ -4028,8 +4032,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(BasisType), POINTER :: DEPENDENT_BASIS,COMPONENT_BASIS,dependentBasis
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    TYPE(BoundaryConditionVariableType), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
+    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
@@ -4155,10 +4159,11 @@ CONTAINS
       !\todo: see if we can separate this residual evaluation from the pressure boundary conditions somehow
       !so that the equations set doesn't need to maintain a pointer to the boundary conditions
       BOUNDARY_CONDITIONS=>EQUATIONS_SET%boundaryConditions
-      CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,EQUATIONS_SET%equations%vectorEquations%vectorMapping% &
+      NULLIFY(BOUNDARY_CONDITIONS_VARIABLE)
+      CALL BoundaryConditions_VariableGet(BOUNDARY_CONDITIONS,EQUATIONS_SET%equations%vectorEquations%vectorMapping% &
         & rhsMapping%rhsVariable,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
-      TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS=BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE)+ &
-        & BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
+      TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS=BOUNDARY_CONDITIONS_VARIABLE%dofCounts(BOUNDARY_CONDITION_PRESSURE)+ &
+        & BOUNDARY_CONDITIONS_VARIABLE%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
 
       NULLIFY(vectorMatrices)
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
@@ -6575,7 +6580,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetConstants_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetRoutines_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -6616,10 +6621,10 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField,geometricField
     TYPE(ProblemType), POINTER :: problem
     TYPE(RegionType), POINTER :: region
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: filename,method
     
     ENTERS("FiniteElasticity_PostLoop",err,error,*999)
@@ -7811,7 +7816,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldInterpolationParametersType), POINTER :: DEPENDENT_INTERPOLATION_PARAMETERS
     TYPE(FieldInterpolationParametersType), POINTER :: PRESSURE_INTERPOLATION_PARAMETERS
@@ -13654,68 +13659,68 @@ CONTAINS
                 & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
                 & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE)
                 !Residual vector also depends on the fluid pressure variable
-                CALL EquationsMapping_ResidualVariablesNumberSet(vectorMapping,2,err,error,*999)
-                CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping, &
+                CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,2,err,error,*999)
+                CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping, &
                   & [FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE],err,error,*999)
               CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
                 & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                 !Single residual variable
-                CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 !Set dynamic for mass matrix
-                CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-                CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.FALSE.,.FALSE.,err,error,*999)
+                CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.FALSE.,.FALSE.,err,error,*999)
               CASE DEFAULT
                 !Single residual variable
-                CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
               END SELECT
-              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,0,err,error,*999)
-              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,0,err,error,*999)
+              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               ! set structure and storage types
                SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
                   & err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
                 CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
                   & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                   IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                     !Set up lumping
-                    CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                       & [EQUATIONS_MATRIX_LUMPED],err,error,*999)
-                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                       & [DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
-                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                       [EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
                   ELSE
-                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                    CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                       & err,error,*999)
                   ENDIF
                 CASE DEFAULT
                   !Do nothing
                 END SELECT
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, & 
+                CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices, & 
                   & MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, & 
+                CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices, & 
                   & EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
                 CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
                   & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                   IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                     !Set up lumping
-                    CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
                       & [EQUATIONS_MATRIX_LUMPED],err,error,*999)
-                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                       & [DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
-                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                    CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
                       [EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
                   ELSE
-                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, & 
+                    CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, & 
                       & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, & 
+                    CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, & 
                       & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                   ENDIF
                 CASE DEFAULT
@@ -13728,7 +13733,7 @@ CONTAINS
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               !Set Jacobian matrices calculation type to default finite difference. 
-              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+              CALL EquationsMatricesVector_JacobianCalculationTypeSet(vectorMatrices,FIELD_U_VARIABLE_TYPE,1, &
                 & EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -14105,11 +14110,11 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVER_TYPE), POINTER :: CELLML_SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: SOLVER
+    TYPE(SolverType), POINTER :: CELLML_SOLVER
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(CellMLEquationsType), POINTER :: CELLML_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR,localError
     INTEGER(INTG) :: PROBLEM_SUBTYPE
 
@@ -14187,14 +14192,14 @@ CONTAINS
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
             SELECT CASE(PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
               !Set the solver to be a nonlinear solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)              
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
               !Set the first solver to be an CellML Evaluator for time varying boundary conditions
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
@@ -14209,7 +14214,7 @@ CONTAINS
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,3,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,3,err,error,*999)
               !Set the first solver to be an CellML Evaluator for time varying boundary conditions
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
@@ -14229,7 +14234,7 @@ CONTAINS
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
             CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
               !Set the first solver to be an CellML Evaluator for time varying boundary conditions
               NULLIFY(SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -14249,7 +14254,7 @@ CONTAINS
               CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_NEWMARK1_SCHEME,err,error,*999)
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
-              CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
               !Set the first solver to be an ODE integrator for growth
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
@@ -14267,7 +14272,7 @@ CONTAINS
               !Link the CellML evaluator solver to the solver
               CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
               !Set the solver to be a nonlinear solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
@@ -14279,7 +14284,7 @@ CONTAINS
               !Link the CellML evaluator solver to the solver
               CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
             CASE(PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE)
-              CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+              CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
               !Set the first solver to be a DAE solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
@@ -14394,21 +14399,21 @@ CONTAINS
               !Get the CellML solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
             CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
               !Get the CellML solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
               !Get the CellML BC solver 
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
               !Get the CellML Growth solver
@@ -14416,7 +14421,7 @@ CONTAINS
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
               NULLIFY(CELLML_EQUATIONS)
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
@@ -14425,13 +14430,13 @@ CONTAINS
               !Get the CellML evaluator solver
               CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_STATIC,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
               !Get the CellML integrator solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               NULLIFY(CELLML_SOLVER)
               NULLIFY(CELLML_EQUATIONS)
               !Get the nonlinear solver
@@ -14439,14 +14444,14 @@ CONTAINS
               !Get the CellML evaluator solver
               CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
-              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS, &
+              CALL CellMLEquations_CreateStart(CELLML_SOLVER,CELLML_EQUATIONS, &
               & err,error,*999)
             CASE(PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE)
               !Create the CellML equations for the first DAE solver
               NULLIFY(SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               NULLIFY(CELLML_EQUATIONS)
-              CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
             CASE DEFAULT
               LOCAL_ERROR="The third problem specification of "//TRIM(NumberToVString(PROBLEM_SUBTYPE,"*",err,error))// &
                 & " is not valid for a finite elasticity type of an elasticity problem."
@@ -14462,14 +14467,14 @@ CONTAINS
               !Get the CellML equations for the CellML evaluator solver
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
               !Get the CellML BC evaluator solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Get the CellML equations for the CellML evaluator solver
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
               !Get the CellML growth integration solver
               NULLIFY(CELLML_SOLVER)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,CELLML_SOLVER,err,error,*999)
@@ -14477,7 +14482,7 @@ CONTAINS
               NULLIFY(CELLML_EQUATIONS)
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               !Get the nonlinear solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -14486,14 +14491,14 @@ CONTAINS
               !Get the CellML equations for the CellML evaluator solver
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
               !Get the CellML integrator solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Get the CellML equations for the CellML evaluator solver
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
               NULLIFY(CELLML_SOLVER)
               NULLIFY(CELLML_EQUATIONS)
               !Get the nonlinear solver
@@ -14503,13 +14508,13 @@ CONTAINS
               !Get the CellML equations for the CellML evaluator solver
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             CASE(PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE)
               !Get the CellML equations for the first DAE solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
-              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
             CASE DEFAULT
               localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a finite elasticity type of an elasticity problem class."
@@ -14555,9 +14560,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: nonlinearSolver,transformationSolver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SolverType), POINTER :: nonlinearSolver,transformationSolver
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
+    TYPE(SolversType), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     INTEGER(INTG) :: PROBLEM_SUBTYPE
 
@@ -14616,7 +14621,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
             !Set the first solver to be a geometric transformation solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,transformationSolver,err,error,*999)
             CALL SOLVER_TYPE_SET(transformationSolver,SOLVER_GEOMETRIC_TRANSFORMATION_TYPE,err,error,*999)
@@ -14710,7 +14715,7 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
+            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a nonlinear solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,nonlinearSolver,err,error,*999)
             CALL SOLVER_TYPE_SET(nonlinearSolver,SOLVER_NONLINEAR_TYPE,err,error,*999)
@@ -14727,7 +14732,7 @@ CONTAINS
               & " is invalid for a finite elasticity problem."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+        CASE(PROBLEM_SETUP_SolverEquationsType)
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
@@ -14915,7 +14920,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver!<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -14924,9 +14929,9 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,independentField
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVER_TYPE), POINTER :: nonlinearSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverType), POINTER :: nonlinearSolver
  
     ENTERS("FiniteElasticity_PostSolve",err,error,*999)
     
@@ -15032,7 +15037,7 @@ CONTAINS
     CASE(PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE)
       IF(ASSOCIATED(solver%DAE_SOLVER)) THEN
         !do nothing
-      ELSE IF(ASSOCIATED(solver%NONLINEAR_SOLVER)) THEN
+      ELSE IF(ASSOCIATED(solver%nonlinearSolver)) THEN
         CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
       END IF
     CASE DEFAULT
@@ -15055,14 +15060,14 @@ CONTAINS
   SUBROUTINE FiniteElasticity_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS,solverEquations  !<A pointer to the solver equations
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS,solverEquations  !<A pointer to the solver equations
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET,equationsSet !<A pointer to the equations set
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING,solverMapping !<A pointer to the solver mapping
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING,solverMapping !<A pointer to the solver mapping
     TYPE(ControlLoopType), POINTER :: TIME_LOOP !<A pointer to the control time loop.
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: LOCAL_ERROR,localError
@@ -15096,7 +15101,7 @@ CONTAINS
       & PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE, &
       & PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE)
-      SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+      SOLVER_EQUATIONS=>SOLVER%solverEquations
       IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
         SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -15153,7 +15158,7 @@ CONTAINS
     CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-      SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+      SOLVER_EQUATIONS=>SOLVER%solverEquations
       IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
         SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -15231,7 +15236,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_SOLID !<A pointer to the solid solver
+    TYPE(SolverType), POINTER :: SOLVER_SOLID !<A pointer to the solid solver
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_SOLID
     TYPE(FieldType), POINTER :: independentField
 
@@ -15254,17 +15259,17 @@ CONTAINS
         CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE)
           ! could do this in one line with problem_solver_get but the dependence on problem_routines causes a circular dependence
           CALL CONTROL_LOOP_GET(CONTROL_LOOP,[1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
-          CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%SOLVERS,1,SOLVER_SOLID,err,error,*999)
+          CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%solvers,1,SOLVER_SOLID,err,error,*999)
           !--- 3.0 For Standard Elasticity Darcy: Update the boundary conditions of the solid
           CALL FiniteElasticity_PreSolveUpdateBoundaryConditions(SOLVER_SOLID,err,error,*999)
         CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
           CALL CONTROL_LOOP_GET(CONTROL_LOOP,[1,1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
-          CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%SOLVERS,1,SOLVER_SOLID,err,error,*999)
+          CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%solvers,1,SOLVER_SOLID,err,error,*999)
             !--- 3.0 For Standard Elasticity Darcy: Update the boundary conditions of the solid
           CALL FiniteElasticity_PreSolveUpdateBoundaryConditions(SOLVER_SOLID,err,error,*999)
         CASE(PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
           CALL CONTROL_LOOP_GET(CONTROL_LOOP,[1,CONTROL_LOOP_NODE],CONTROL_LOOP_SOLID,err,error,*999)
-          CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%SOLVERS,1,SOLVER_SOLID,err,error,*999)
+          CALL SOLVERS_SOLVER_GET(CONTROL_LOOP_SOLID%solvers,1,SOLVER_SOLID,err,error,*999)
           !--- For PGM: Get the displacement field
           CALL FiniteElasticity_PreSolveGetSolidDisplacement(CONTROL_LOOP,SOLVER_SOLID,err,error,*999)
         CASE DEFAULT
@@ -15296,10 +15301,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(RegionType), POINTER :: region
     TYPE(FieldsType), POINTER :: fields
     INTEGER(INTG) :: solverIdx,equationsSetIdx,incrementIdx,outputNumber
@@ -15313,14 +15318,14 @@ CONTAINS
       outputNumber=controlLoop%loadIncrementLoop%outputNumber
       IF(outputNumber>0) THEN
         IF(MOD(incrementIdx,outputNumber)==0) THEN
-          solvers=>controlLoop%SOLVERS
+          solvers=>controlLoop%solvers
           IF(ASSOCIATED(solvers)) THEN
-            DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
-              solver=>solvers%SOLVERS(solverIdx)%ptr
+            DO solverIdx=1,solvers%numberOfSolvers
+              solver=>solvers%solvers(solverIdx)%ptr
               IF(ASSOCIATED(solver)) THEN
-                solverEquations=>SOLVER%SOLVER_EQUATIONS
+                solverEquations=>SOLVER%solverEquations
                 IF(ASSOCIATED(solverEquations)) THEN
-                  solverMapping=>SOLVER%SOLVER_EQUATIONS%solverMapping
+                  solverMapping=>SOLVER%solverEquations%solverMapping
                   IF(ASSOCIATED(solverMapping)) THEN
                     DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
                       region=>solverMapping%equationsSets(equationsSetIdx)%ptr%REGION
@@ -15366,7 +15371,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -15378,11 +15383,11 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_TYPE), POINTER :: cellMLSolver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+    TYPE(SolverType), POINTER :: cellMLSolver
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("FiniteElasticity_PreSolve",err,error,*999)
@@ -15450,7 +15455,7 @@ CONTAINS
             CALL FiniteElasticity_StressStrainCalculate(equationsSet,EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
               & dependentVariable,err,error,*999)
             !check for a linked CellML solver
-            cellMLSolver=>solver%NONLINEAR_SOLVER%NEWTON_SOLVER%CELLML_EVALUATOR_SOLVER
+            cellMLSolver=>solver%nonlinearSolver%newtonSolver%cellMLEvaluatorSolver
             IF(ASSOCIATED(cellMLSolver)) THEN
               !evaluate the constiutive equation in CellML
               CALL Solver_Solve(cellMLSolver,err,error,*999)
@@ -15486,7 +15491,7 @@ CONTAINS
       NULLIFY(solverMatrices)
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       
-      DO solverMatrixIdx=1,solverMapping%NUMBER_OF_SOLVER_MATRICES
+      DO solverMatrixIdx=1,solverMapping%numberOfSolverMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         solverMatrix%updateMatrix=.TRUE.
@@ -15513,15 +15518,15 @@ CONTAINS
   SUBROUTINE FINITE_ELASTICITY_EVALUATE_EVOLUTION_LAW(SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SolverMatricesType), POINTER :: SOLVER_MATRICES
+    TYPE(SolverMatrixType), POINTER :: SOLVER_MATRIX
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     INTEGER(INTG) :: solver_matrix_idx,equations_set_idx
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
@@ -15575,7 +15580,7 @@ CONTAINS
     NULLIFY(INDEPENDENT_INTERPOLATED_POINT)
 
     !compute the deformation gradient tensor at the Gauss point
-    SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+    SOLVER_EQUATIONS=>SOLVER%solverEquations
     IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
       SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
       IF(ASSOCIATED(SOLVER_MAPPING)) THEN
@@ -15946,15 +15951,15 @@ CONTAINS
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
+    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER_FINITE_ELASTICITY  !<A pointer to the solvers
+    TYPE(SolverType), POINTER :: SOLVER_FINITE_ELASTICITY  !<A pointer to the solvers
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD_FINITE_ELASTICITY
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_FINITE_ELASTICITY  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_FINITE_ELASTICITY  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY !<A pointer to the solver mapping
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET_FINITE_ELASTICITY !<A pointer to the equations set
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP
@@ -16003,8 +16008,8 @@ CONTAINS
             CASE(PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
               !--- Motion: read in from a file
               IF(SOLVER%globalNumber==1) THEN
-                CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER_FINITE_ELASTICITY,err,error,*999)
-                SOLVER_EQUATIONS_FINITE_ELASTICITY=>SOLVER_FINITE_ELASTICITY%SOLVER_EQUATIONS
+                CALL SOLVERS_SOLVER_GET(SOLVER%solvers,1,SOLVER_FINITE_ELASTICITY,err,error,*999)
+                SOLVER_EQUATIONS_FINITE_ELASTICITY=>SOLVER_FINITE_ELASTICITY%solverEquations
                 IF(ASSOCIATED(SOLVER_EQUATIONS_FINITE_ELASTICITY)) THEN
                   SOLVER_MAPPING_FINITE_ELASTICITY=>SOLVER_EQUATIONS_FINITE_ELASTICITY%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING_FINITE_ELASTICITY)) THEN
@@ -16080,12 +16085,12 @@ CONTAINS
   SUBROUTINE FiniteElasticity_PreSolveUpdateBoundaryConditions(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop!<A pointer to the control loop to solve.
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
@@ -16094,8 +16099,8 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(FieldType), POINTER :: dependentField, geometricField
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
  
     REAL(DP) :: currentTime,timeIncrement,alpha
     REAL(DP), POINTER :: GEOMETRIC_FIELD_VALUES(:) 
@@ -16130,7 +16135,7 @@ CONTAINS
         & CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
       SELECT CASE(problem%specification(3))
       CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-        equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%equations
+        equations=>solverMapping%equationsSetToSolverMatricesMap(1)%equations
         IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations are not associated.",err,error,*999)
         NULLIFY(equationsSet)
         CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
@@ -16150,67 +16155,64 @@ CONTAINS
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
           CALL Field_VariableGet(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,fieldVariable,err,error,*999)
-          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
-          IF(ASSOCIATED(boundaryConditionsVariable)) THEN
-            IF(boundaryConditionsVariable%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE)>0) THEN
+          NULLIFY(boundaryConditionsVariable)
+          CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
+          IF(boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE)>0) THEN
               
-              IF(DIAGNOSTICS1) THEN
-                CALL Field_ParameterSetDataGet(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
-                  & CURRENT_PRESSURE_VALUES,err,error,*999)
-                NDOFS_TO_PRINT = SIZE(CURRENT_PRESSURE_VALUES,1)
-                CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                  & NDOFS_TO_PRINT,CURRENT_PRESSURE_VALUES, &
-                  & '(" DEP_FIELD,FIELD_U_VAR_TYPE,FIELD_PRESSURE_VAL_SET_TYPE (before) = ",4(X,E13.6))',&
-                  & '4(4(X,E13.6))',err,error,*999)
-                CALL Field_ParameterSetDataRestore(dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_PRESSURE_VALUES_SET_TYPE,CURRENT_PRESSURE_VALUES,err,error,*999)
-              ENDIF
-              
-              DEPENDENT_NUMBER_OF_DOFS=dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%PTR%numberOfDofs
-
-              ALLOCATE(NEW_PRESSURE_VALUES(DEPENDENT_NUMBER_OF_DOFS))
-              
-              !Linear increase of cavity pressure: just a test example prototype
-              !\todo: general time-dependent boundary condition input method?
-              ALPHA = ( currentTime + timeIncrement ) / currentTime
-              NEW_PRESSURE_VALUES(1:DEPENDENT_NUMBER_OF_DOFS) = ALPHA * CURRENT_PRESSURE_VALUES(1:DEPENDENT_NUMBER_OF_DOFS)
-              
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity update pressure BCs",err,error,*999)
-              DO dof_number=1,DEPENDENT_NUMBER_OF_DOFS
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
-                  & dof_number,NEW_PRESSURE_VALUES(dof_number), err,error,*999)
-              ENDDO
-              CALL Field_ParameterSetUpdateStart(dependentField,FIELD_DELUDELN_VARIABLE_TYPE, FIELD_PRESSURE_VALUES_SET_TYPE, &
-                & err,error,*999)
-              CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_DELUDELN_VARIABLE_TYPE, FIELD_PRESSURE_VALUES_SET_TYPE, &
-                & err,error,*999)
-              
-              DEALLOCATE(NEW_PRESSURE_VALUES)
-              
-              IF(DIAGNOSTICS1) THEN
-                NULLIFY( DUMMY_VALUES1 )
-                CALL Field_ParameterSetDataGet(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
-                  & DUMMY_VALUES1,err,error,*999)
-                NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
-                CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                  & NDOFS_TO_PRINT,DUMMY_VALUES1, &
-                  & '(" DEP_FIELD,FIELD_U_VAR_TYPE,FIELD_PRESSURE_VAL_SET_TYPE (after) = ",4(X,E13.6))', &
-                  & '4(4(X,E13.6))',err,error,*999)
-                CALL Field_ParameterSetDataRestore(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
-                  & DUMMY_VALUES1,err,error,*999)
-              ENDIF
-              CALL Field_ParameterSetDataRestore(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+            IF(DIAGNOSTICS1) THEN
+              CALL Field_ParameterSetDataGet(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
                 & CURRENT_PRESSURE_VALUES,err,error,*999)
-            ENDIF !Pressure_condition_used
-          ELSE
-            CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
-          END IF
+              NDOFS_TO_PRINT = SIZE(CURRENT_PRESSURE_VALUES,1)
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
+                & NDOFS_TO_PRINT,CURRENT_PRESSURE_VALUES, &
+                & '(" DEP_FIELD,FIELD_U_VAR_TYPE,FIELD_PRESSURE_VAL_SET_TYPE (before) = ",4(X,E13.6))',&
+                & '4(4(X,E13.6))',err,error,*999)
+              CALL Field_ParameterSetDataRestore(dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & FIELD_PRESSURE_VALUES_SET_TYPE,CURRENT_PRESSURE_VALUES,err,error,*999)
+            ENDIF
+            
+            DEPENDENT_NUMBER_OF_DOFS=dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%PTR%numberOfDofs
+
+            ALLOCATE(NEW_PRESSURE_VALUES(DEPENDENT_NUMBER_OF_DOFS))
+            
+            !Linear increase of cavity pressure: just a test example prototype
+            !\todo: general time-dependent boundary condition input method?
+            ALPHA = ( currentTime + timeIncrement ) / currentTime
+            NEW_PRESSURE_VALUES(1:DEPENDENT_NUMBER_OF_DOFS) = ALPHA * CURRENT_PRESSURE_VALUES(1:DEPENDENT_NUMBER_OF_DOFS)
+            
+            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity update pressure BCs",err,error,*999)
+            DO dof_number=1,DEPENDENT_NUMBER_OF_DOFS
+              CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                & dof_number,NEW_PRESSURE_VALUES(dof_number), err,error,*999)
+            ENDDO
+            CALL Field_ParameterSetUpdateStart(dependentField,FIELD_DELUDELN_VARIABLE_TYPE, FIELD_PRESSURE_VALUES_SET_TYPE, &
+              & err,error,*999)
+            CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_DELUDELN_VARIABLE_TYPE, FIELD_PRESSURE_VALUES_SET_TYPE, &
+              & err,error,*999)
+            
+            DEALLOCATE(NEW_PRESSURE_VALUES)
+            
+            IF(DIAGNOSTICS1) THEN
+              NULLIFY( DUMMY_VALUES1 )
+              CALL Field_ParameterSetDataGet(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                & DUMMY_VALUES1,err,error,*999)
+              NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
+                & NDOFS_TO_PRINT,DUMMY_VALUES1, &
+                & '(" DEP_FIELD,FIELD_U_VAR_TYPE,FIELD_PRESSURE_VAL_SET_TYPE (after) = ",4(X,E13.6))', &
+                & '4(4(X,E13.6))',err,error,*999)
+              CALL Field_ParameterSetDataRestore(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                & DUMMY_VALUES1,err,error,*999)
+            ENDIF
+            CALL Field_ParameterSetDataRestore(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_PRESSURE_VALUES_SET_TYPE, &
+              & CURRENT_PRESSURE_VALUES,err,error,*999)
+          ENDIF !Pressure_condition_used
         CASE DEFAULT
           ! do nothing 
         END SELECT
         
       CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
-        equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%equations
+        equations=>solverMapping%equationsSetToSolverMatricesMap(1)%equations
         IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations are not associated.",err,error,*999)
         NULLIFY(equationsSet)
         CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
@@ -16237,96 +16239,93 @@ CONTAINS
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
           CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
-          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
-          IF(ASSOCIATED(boundaryConditionsVariable)) THEN
-            IF(DIAGNOSTICS1) THEN
-              NULLIFY( DUMMY_VALUES1 )
-              CALL Field_ParameterSetDataGet(dependentField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
-              NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
-              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                & NDOFS_TO_PRINT,DUMMY_VALUES1, &
-                & '(" dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE (bef) = ",4(X,E13.6))',&
-                & '4(4(X,E13.6))',err,error,*999)
-              CALL Field_ParameterSetDataRestore(dependentField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
-            ENDIF
-            
-            ! requires solid dependent field and geometry to be interpolated identically !!!
-            ! assumes that DOFs for dependent and geometric field are stored in the same order
-            ! How does this routine take into account the BC value ???
-            ALPHA = 0.10_DP * SIN( 2.0_DP * PI * currentTime / 4.0_DP )
-            CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & FIELD_MESH_DISPLACEMENT_SET_TYPE,ALPHA,err,error,*999)
-            
-            NULLIFY(GEOMETRIC_FIELD_VALUES)
-            CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_FIELD_VALUES, &
-              & err,error,*999)
-            
-            GEOMETRY_NUMBER_OF_DOFS=geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR%numberOfDofs
-            DO dof_number=1,GEOMETRY_NUMBER_OF_DOFS
-              BOUNDARY_CONDITION_CHECK_VARIABLE=boundaryConditionsVariable%CONDITION_TYPES(dof_number)
-              IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL .OR. &
-                & BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
-                !--- To obtain absolute positions, add nodal coordinates on top of mesh displacement
-                CALL Field_ParameterSetAddLocalDOF(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
-                  & dof_number,GEOMETRIC_FIELD_VALUES(dof_number),err,error,*999)
-              ELSE
-                ! do nothing ???
-              END IF
-            END DO
-            
-            NULLIFY(MESH_POSITION_VALUES)
-            CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
-              & MESH_POSITION_VALUES,err,error,*999)
-            
-            DEPENDENT_NUMBER_OF_DOFS=dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR%numberOfDofs
-            DO dof_number=1,DEPENDENT_NUMBER_OF_DOFS
-              BOUNDARY_CONDITION_CHECK_VARIABLE=boundaryConditionsVariable%CONDITION_TYPES(dof_number)
-              IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL .OR. &
-                & BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
-                
-                !Update FIELD_BOUNDARY_CONDITIONS_SET_TYPE or FIELD_VALUES_SET_TYPE
-                !(so it is one or the other, but not both) depending on whether or not load increments are used
-                IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
-                    & dof_number,MESH_POSITION_VALUES(dof_number),err,error,*999)
-                ELSE
-                  !--- Update the dependent field with the new absolute position
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
-                    & MESH_POSITION_VALUES(dof_number),err,error,*999)
-                ENDIF
-                
-              ELSE
-                ! do nothing ???
-              END IF
-            END DO
-            
-            IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
-              CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
-                & err,error,*999)
-              CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
-                & err,error,*999)
+          NULLIFY(boundaryConditionsVariable)
+          CALL BoundaryConditions_VariableGet(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
+          IF(DIAGNOSTICS1) THEN
+            NULLIFY( DUMMY_VALUES1 )
+            CALL Field_ParameterSetDataGet(dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
+            NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
+              & NDOFS_TO_PRINT,DUMMY_VALUES1, &
+              & '(" dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE (bef) = ",4(X,E13.6))',&
+              & '4(4(X,E13.6))',err,error,*999)
+            CALL Field_ParameterSetDataRestore(dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VALUES_SET_TYPE,DUMMY_VALUES1,err,error,*999)
+          ENDIF
+          
+          ! requires solid dependent field and geometry to be interpolated identically !!!
+          ! assumes that DOFs for dependent and geometric field are stored in the same order
+          ! How does this routine take into account the BC value ???
+          ALPHA = 0.10_DP * SIN( 2.0_DP * PI * currentTime / 4.0_DP )
+          CALL Field_ParameterSetsCopy(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & FIELD_MESH_DISPLACEMENT_SET_TYPE,ALPHA,err,error,*999)
+          
+          NULLIFY(GEOMETRIC_FIELD_VALUES)
+          CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_FIELD_VALUES, &
+            & err,error,*999)
+          
+          GEOMETRY_NUMBER_OF_DOFS=geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR%numberOfDofs
+          DO dof_number=1,GEOMETRY_NUMBER_OF_DOFS
+            BOUNDARY_CONDITION_CHECK_VARIABLE=boundaryConditionsVariable%conditionTypes(dof_number)
+            IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL .OR. &
+              & BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
+              !--- To obtain absolute positions, add nodal coordinates on top of mesh displacement
+              CALL Field_ParameterSetAddLocalDOF(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
+                & dof_number,GEOMETRIC_FIELD_VALUES(dof_number),err,error,*999)
             ELSE
-              CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-              CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
-            ENDIF
+              ! do nothing ???
+            END IF
+          END DO
             
-            IF(DIAGNOSTICS1) THEN
-              NULLIFY( DUMMY_VALUES1 )
-              CALL Field_ParameterSetDataGet(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,DUMMY_VALUES1, &
-                & err,error,*999)
-              NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
-              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
-                & NDOFS_TO_PRINT,DUMMY_VALUES1, &
-                & '(" dependentField,FIELD_U_VAR_TYPE,FIELD_VALUES_SET_TYPE (after) = ",4(X,E13.6))', &
-                & '4(4(X,E13.6))',err,error,*999)
-              CALL Field_ParameterSetDataRestore(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,DUMMY_VALUES1, &
-                & err,error,*999)
-            ENDIF
+          NULLIFY(MESH_POSITION_VALUES)
+          CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
+            & MESH_POSITION_VALUES,err,error,*999)
+          
+          DEPENDENT_NUMBER_OF_DOFS=dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR%numberOfDofs
+          DO dof_number=1,DEPENDENT_NUMBER_OF_DOFS
+            BOUNDARY_CONDITION_CHECK_VARIABLE=boundaryConditionsVariable%conditionTypes(dof_number)
+            IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL .OR. &
+              & BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
+              
+              !Update FIELD_BOUNDARY_CONDITIONS_SET_TYPE or FIELD_VALUES_SET_TYPE
+              !(so it is one or the other, but not both) depending on whether or not load increments are used
+              IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
+                CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                  & dof_number,MESH_POSITION_VALUES(dof_number),err,error,*999)
+              ELSE
+                !--- Update the dependent field with the new absolute position
+                CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,dof_number, &
+                  & MESH_POSITION_VALUES(dof_number),err,error,*999)
+              ENDIF
+              
+            ELSE
+              ! do nothing ???
+            END IF
+          END DO
+            
+          IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED) THEN
+            CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+              & err,error,*999)
+            CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+              & err,error,*999)
           ELSE
-            CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
-          END IF
+            CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
+            CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE, FIELD_VALUES_SET_TYPE,err,error,*999)
+          ENDIF
+          
+          IF(DIAGNOSTICS1) THEN
+            NULLIFY( DUMMY_VALUES1 )
+            CALL Field_ParameterSetDataGet(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,DUMMY_VALUES1, &
+              & err,error,*999)
+            NDOFS_TO_PRINT = SIZE(DUMMY_VALUES1,1)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NDOFS_TO_PRINT,NDOFS_TO_PRINT, &
+              & NDOFS_TO_PRINT,DUMMY_VALUES1, &
+              & '(" dependentField,FIELD_U_VAR_TYPE,FIELD_VALUES_SET_TYPE (after) = ",4(X,E13.6))', &
+              & '4(4(X,E13.6))',err,error,*999)
+            CALL Field_ParameterSetDataRestore(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,DUMMY_VALUES1, &
+              & err,error,*999)
+          ENDIF
           CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
           CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
         CASE DEFAULT
@@ -16485,12 +16484,12 @@ CONTAINS
   !
 
   !> Apply load increments to the gravity vector
-  SUBROUTINE FINITE_ELASTICITY_LOAD_INCREMENT_APPLY(EQUATIONS_SET,ITERATION_NUMBER,MAXIMUM_NUMBER_OF_ITERATIONS,err,error,*)
+  SUBROUTINE FINITE_ELASTICITY_LOAD_INCREMENT_APPLY(EQUATIONS_SET,ITERATION_NUMBER,maximumNumberOfIterations,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
     INTEGER(INTG), INTENT(IN) :: ITERATION_NUMBER !<The current load increment iteration index
-    INTEGER(INTG), INTENT(IN) :: MAXIMUM_NUMBER_OF_ITERATIONS !<Final index for load increment loop
+    INTEGER(INTG), INTENT(IN) :: maximumNumberOfIterations !<Final index for load increment loop
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -16506,14 +16505,14 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS)) THEN
         SOURCE_FIELD=>equations%interpolation%sourceField
         IF(ASSOCIATED(SOURCE_FIELD)) THEN
-          IF(MAXIMUM_NUMBER_OF_ITERATIONS>1) THEN
+          IF(maximumNumberOfIterations>1) THEN
             IF(ITERATION_NUMBER==1) THEN
               !Setup initial values parameter set
               CALL Field_ParameterSetEnsureCreated(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INITIAL_VALUES_SET_TYPE,err,error,*999)
               CALL Field_ParameterSetsCopy(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & FIELD_INITIAL_VALUES_SET_TYPE,1.0_DP,err,error,*999)
             ENDIF
-            INCREMENT=REAL(ITERATION_NUMBER)/REAL(MAXIMUM_NUMBER_OF_ITERATIONS)
+            INCREMENT=REAL(ITERATION_NUMBER)/REAL(maximumNumberOfIterations)
             CALL Field_ParameterSetsCopy(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_INITIAL_VALUES_SET_TYPE, &
                 & FIELD_VALUES_SET_TYPE,INCREMENT,err,error,*999)
           ENDIF

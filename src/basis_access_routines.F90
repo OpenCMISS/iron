@@ -201,6 +201,22 @@ MODULE BasisAccessRoutines
   PUBLIC Basis_CollapsedXiGet
 
   PUBLIC Basis_ContextGet
+
+  PUBLIC Basis_ElementParameterGet
+
+  PUBLIC Basis_FaceBasisGet
+
+  PUBLIC Basis_FaceElementParameterGet
+
+  PUBLIC Basis_FaceNodeNumberGet
+
+  PUBLIC Basis_FaceNodeDerivativeNumberGet
+
+  PUBLIC Basis_FaceNodeNumberOfDerivativesGet
+
+  PUBLIC Basis_FaceNumberOfNodesGet
+
+  PUBLIC Basis_FaceXiNormalGet
   
   PUBLIC Basis_FamilyNumberFind
 
@@ -208,9 +224,27 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_InterpolationXiGet
 
+  PUBLIC Basis_LineBasisGet
+
+  PUBLIC Basis_LineElementParameterGet
+
+  PUBLIC Basis_LineNodeNumberGet
+
+  PUBLIC Basis_LineNodeNumberOfDerivativesGet
+
+  PUBLIC Basis_LineNumberOfNodesGet
+
+  PUBLIC Basis_LineXiNormalsGet
+
   PUBLIC Basis_LocalFaceNumberGet
 
   PUBLIC Basis_LocalLineNumberGet
+
+  PUBLIC Basis_NodeNumberOfDerivativesGet
+
+  PUBLIC Basis_NumberOfLocalFacesGet
+
+  PUBLIC Basis_NumberOfLocalLinesGet
 
   PUBLIC Basis_NumberOfLocalNodesGet
 
@@ -232,7 +266,14 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_UserNumberGet
 
+  PUBLIC BasisQuadratureScheme_GaussBasisFunctionGet
+
+  PUBLIC BasisQuadratureScheme_GaussPositionGet
+
+  PUBLIC BasisQuadratureScheme_GaussWeightGet
+
   PUBLIC BasisQuadratureScheme_NumberOfGaussGet
+  
 
 CONTAINS
 
@@ -252,7 +293,9 @@ CONTAINS
  
     ENTERS("Basis_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.basis%basisFinished) THEN
       localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
@@ -283,7 +326,9 @@ CONTAINS
  
     ENTERS("Basis_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+#endif    
 
     IF(basis%basisFinished) THEN
       localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
@@ -314,7 +359,9 @@ CONTAINS
  
     ENTERS("Basis_AssertIsLHTPBasis",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+#endif    
 
     IF(basis%TYPE/=BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
       localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
@@ -345,7 +392,9 @@ CONTAINS
  
     ENTERS("Basis_AssertIsSimplexBasis",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+#endif    
 
     IF(basis%TYPE/=BASIS_SIMPLEX_TYPE) THEN
       localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
@@ -373,20 +422,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_BasisFunctionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is already associated.",err,error,*998)
     CALL Basis_AssertIsFinished(basis,err,error,*998)
+#endif    
     
     basisFunctions=>basis%basisFunctions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basisFunctions)) THEN
       localError="Basis functions is not associated for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-      
+#endif
+    
     EXITS("Basis_BasisFunctionsGet")
     RETURN
 999 NULLIFY(basisFunctions)
@@ -408,10 +464,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_CollapsedXiGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(SIZE(collapsedXi,1)<SIZE(basis%collapsedXi)) THEN
       localError="The size of collapsed xi is too small. The supplied size is "// &
@@ -419,8 +478,9 @@ CONTAINS
         & TRIM(NumberToVString(SIZE(basis%collapsedXi,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
-    collapsedXi=basis%collapsedXi
+    collapsedXi(1:basis%numberOfXi)=basis%collapsedXi(1:basis%numberOfXi)
     
     EXITS("Basis_CollapsedXiGet")
     RETURN
@@ -442,24 +502,31 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Basis_ContextGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-
     IF(.NOT.ASSOCIATED(basis%basisFunctions)) THEN
       localError="Basis functions is not associated for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
+    
     context=>basis%basisFunctions%context
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="The context is not associated for the basis functions for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Basis_ContextGet")
     RETURN
@@ -468,6 +535,491 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_ContextGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the basis element parameter for a local node and derivative in a basis.
+  SUBROUTINE Basis_ElementParameterGet(basis,localDerivativeIdx,localNodeIdx,elementParameterIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the element parameter for
+    INTEGER(INTG), INTENT(IN) :: localDerivativeIdx !<The local derivative index to get the element parameter for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element parameter for
+    INTEGER(INTG), INTENT(OUT) :: elementParameterIdx !<On exit, the element parameter index for the local node and derivative in the basis.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_ElementParameterGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(localNodeIdx<1.OR.localNodeIdx>basis%numberOfNodes) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfDerivatives)) THEN
+      localError="The number of derivatives array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localDerivativeIdx<1.OR.localDerivativeIdx>basis%numberOfDerivatives(localNodeIdx)) THEN
+      localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
+        & " is invalid. The local derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfDerivatives,"*",err,error))// &
+        & " for local node index "//TRIM(NumberToVString(localNodeIdx,"*",err,error))//" of basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%elementParameterIndex)) THEN
+      localError="The element parameter index array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    elementParameterIdx=basis%elementParameterIndex(localDerivativeIdx,localNodeIdx)
+    
+    EXITS("Basis_ElementParameterGet")
+    RETURN
+999 ERRORSEXITS("Basis_ElementParameterGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_ElementParameterGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the basis for a local face in a basis.
+  SUBROUTINE Basis_FaceBasisGet(basis,localFaceNumber,faceBasis,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the face basis for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the face basis for
+    TYPE(BasisType), POINTER :: faceBasis !<On exit, a pointer to the basis for the specified local face. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceBasisGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(faceBasis)) CALL FlagError("Face Basis is already associated.",err,error,*998)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face basis for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%localFaceBasis)) THEN
+      localError="The local face basis array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    faceBasis=>basis%localFaceBasis(localFaceNumber)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(faceBasis)) THEN
+      localError="The face basis is not associated for local face number "// &
+        & TRIM(NumberToVString(localFaceNumber,"*",err,error))//" of basis number "
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("Basis_FaceBasisGet")
+    RETURN
+999 NULLIFY(faceBasis)
+998 ERRORSEXITS("Basis_FaceBasisGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceBasisGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the basis element parameter for a face parameter in a local face in a basis.
+  SUBROUTINE Basis_FaceElementParameterGet(basis,faceParameterIdx,localFaceNumber,elementParameterIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the element parameter for
+    INTEGER(INTG), INTENT(IN) :: faceParameterIdx !<The face parameter index to get the equivalent element parameter for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the element parameter for
+    INTEGER(INTG), INTENT(OUT) :: elementParameterIdx !<On exit, the equivalent element parameter index for the face parameter index on the local face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceElementParameterGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face element parameters for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%elementParametersInLocalFace)) THEN
+      localError="The element parameters in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(faceParameterIdx<1.OR.faceParameterIdx>basis%elementParametersInLocalFace(0,localFaceNumber)) THEN
+      localError="The specified face parameter index of "//TRIM(NumberToVString(faceParameterIdx,"*",err,error))// &
+        & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The face parameter index should be >=1 and <= "// &
+        & TRIM(NumberToVString(basis%elementParametersInLocalFace(0,localFaceNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    elementParameterIdx=basis%elementParametersInLocalFace(faceParameterIdx,localFaceNumber)
+    
+    EXITS("Basis_FaceElementParameterGet")
+    RETURN
+999 ERRORSEXITS("Basis_FaceElementParameterGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceElementParameterGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element local node number for a face node number in a local face in a basis.
+  SUBROUTINE Basis_FaceNodeNumberGet(basis,localFaceNodeIdx,localFaceNumber,localElementNodeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the node number for
+    INTEGER(INTG), INTENT(IN) :: localFaceNodeIdx !<The face node index to get the equivalent element node index for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the element node index for
+    INTEGER(INTG), INTENT(OUT) :: localElementNodeIdx !<On exit, the equivalent element node index for the face node index on the local face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face node numbers for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%nodeNumbersInLocalFace)) THEN
+      localError="The node numbers in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalFace)) THEN
+      localError="The number of nodes in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localFaceNodeIdx<1.OR.localFaceNodeIdx>basis%numberOfNodesInLocalFace(localFaceNumber)) THEN
+      localError="The specified local face node index of "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
+        & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodesInLocalFace(localFaceNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    localElementNodeIdx=basis%nodeNumbersInLocalFace(localFaceNodeIdx,localFaceNumber)
+    
+    EXITS("Basis_FaceNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("Basis_FaceNodeNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element local derivative index for a face derivative and node index in a local face in a basis.
+  SUBROUTINE Basis_FaceNodeDerivativeNumberGet(basis,localFaceDerivativeIdx,localFaceNodeIdx,localFaceNumber, &
+    & localElementDerivativeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the element derivative index for
+    INTEGER(INTG), INTENT(IN) :: localFaceDerivativeIdx !<The face derivative index to get the equivalent element derivative index for
+    INTEGER(INTG), INTENT(IN) :: localFaceNodeIdx !<The face node index to get the element derivative index for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the element derivative index for
+    INTEGER(INTG), INTENT(OUT) :: localElementDerivativeIdx !<On exit, the equivalent element derivative index for the face node and derivative index on the local face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceNodeDerivativeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face node numbers for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%derivativeNumbersInLocalFace)) THEN
+      localError="The derivative numbers in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalFace)) THEN
+      localError="The number of nodes in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localFaceNodeIdx<1.OR.localFaceNodeIdx>basis%numberOfNodesInLocalFace(localFaceNumber)) THEN
+      localError="The specified local face node index of "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
+        & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face node index should be >=1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodesInLocalFace(localFaceNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localFaceDerivativeIdx<1.OR. &
+      & localFaceDerivativeIdx>basis%derivativeNumbersInLocalFace(0,localFaceNodeIdx,localFaceNumber)) THEN
+      localError="The specified local face derivative index of "//TRIM(NumberToVString(localFaceDerivativeIdx,"*",err,error))// &
+        & " is invalid for local face node index "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
+        & " of local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%derivativeNumbersInLocalFace(0,localFaceNodeIdxlocalFaceNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    localElementDerivativeIdx=basis%derivativeNumbersInLocalFace(localFaceDerivativeIdx,localFaceNodeIdx,localFaceNumber)
+    
+    EXITS("Basis_FaceNodeDerivativeNumberGet")
+    RETURN
+999 ERRORSEXITS("Basis_FaceNodeDerivativeNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceNodeDerivativeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of face derivatives for a face  node index in a local face in a basis.
+  SUBROUTINE Basis_FaceNodeNumberOfDerivativesGet(basis,localFaceNodeIdx,localFaceNumber,numberOfNodeDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of node derivatives for
+    INTEGER(INTG), INTENT(IN) :: localFaceNodeIdx !<The face node index to get the number of derivatives for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodeDerivatives !<On exit, the numbe of node derivatives for the face node index on the local face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceNodeNumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face node numbers of derivatives for a basis with > 1 xi directions. The specified basis "// &
+        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%derivativeNumbersInLocalFace)) THEN
+      localError="The derivative numbers in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalFace)) THEN
+      localError="The number of nodes in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localFaceNodeIdx<1.OR.localFaceNodeIdx>basis%numberOfNodesInLocalFace(localFaceNumber)) THEN
+      localError="The specified local face node index of "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
+        & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face node index should be >=1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodesInLocalFace(localFaceNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfNodeDerivatives=basis%derivativeNumbersInLocalFace(0,localFaceNodeIdx,localFaceNumber)
+    
+    EXITS("Basis_FaceNodeNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("Basis_FaceNodeNumberOfDerivativesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceNodeNumberOfDerivativesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of nodes for a local face in a basis.
+  SUBROUTINE Basis_FaceNumberOfNodesGet(basis,localFaceNumber,numberOfNodes,err,error,*)
+    
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of face nodes for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On exit, the number of nodes for the local face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceNumberOfNodesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face number of nodes for a basis with > 1 xi directions. The specified basis "// &
+        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalFace)) THEN
+      localError="The number of nodes in local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfNodes=basis%numberOfNodesInLocalFace(localFaceNumber)
+    
+    EXITS("Basis_FaceNumberOfNodesGet")
+    RETURN
+999 ERRORSEXITS("Basis_FaceNumberOfNodesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceNumberOfNodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the xi normal direction for a local face in a basis.
+  SUBROUTINE Basis_FaceXiNormalGet(basis,localFaceNumber,faceXiNormal,err,error,*)
+    
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the xi normal direction for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the xi normal direction for
+    INTEGER(INTG), INTENT(OUT) :: faceXiNormal !<On exit, the xi normal direction for the local face. \see Constants_ElementNormalXiDirections
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_FaceXiNormalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the face xi normal for a basis with > 1 xi directions. The specified basis "// &
+        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localFaceNumber<0.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%localFaceXiNormal)) THEN
+      localError="The local face xi normal array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    faceXiNormal=basis%localFaceXiNormal(localFaceNumber)
+    
+    EXITS("Basis_FaceXiNormalGet")
+    RETURN
+999 ERRORSEXITS("Basis_FaceXiNormalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_FaceXiNormalGet
 
   !
   !================================================================================================================================
@@ -486,51 +1038,57 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: basisIdx,subBasisIdx
-   TYPE(VARYING_STRING) :: localError
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("Basis_FamilyNumberFind",err,error,*999)
-    
-    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
+    ENTERS("Basis_FamilyNumberFind",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is not associated.",err,error,*999)
+#endif    
     
-    NULLIFY(basis)
     IF(ALLOCATED(basisFunctions%bases)) THEN
       BasisLoop: DO basisIdx=1,basisFunctions%numberOfBasisFunctions
-        IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr)) THEN
-          IF(basisFunctions%bases(basisIdx)%ptr%userNumber==userNumber) THEN
-            IF(familyNumber==0) THEN
-              basis=>basisFunctions%bases(basisIdx)%ptr
-              EXIT BasisLoop
-            ELSE
-!!TODO: \todo This only works for one level of sub-bases at the moment
-              IF(ALLOCATED(basisFunctions%bases(basisIdx)%ptr%subBases)) THEN
-                SubBasisLoop: DO subBasisIdx=1,basisFunctions%bases(basisIdx)%ptr%numberOfSubBases
-                  IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr)) THEN
-                    IF(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr%familyNumber==familyNumber) THEN
-                      basis=>basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr
-                      EXIT BasisLoop
-                    ENDIF
-                  ELSE
-                    localError="The sub basis is not associated for sub-basis index "// &
-                      & TRIM(NumberToVString(subBasisIdx,"*",err,error))//" of basis index "// &
-                      & TRIM(NumberToVString(basisIdx,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*999)
-                  ENDIF
-                ENDDO SubBasisLoop !subBasisIdx
-              ENDIF
-            ENDIF
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(basisFunctions%bases(basisIdx)%ptr)) THEN
           localError="The basis is not associated for basis index "//&
             & TRIM(NumberToVString(basisIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
+        IF(basisFunctions%bases(basisIdx)%ptr%userNumber==userNumber) THEN
+          IF(familyNumber==0) THEN
+            basis=>basisFunctions%bases(basisIdx)%ptr
+            EXIT BasisLoop
+          ELSE
+!!TODO: \todo This only works for one level of sub-bases at the moment
+            IF(ALLOCATED(basisFunctions%bases(basisIdx)%ptr%subBases)) THEN
+              SubBasisLoop: DO subBasisIdx=1,basisFunctions%bases(basisIdx)%ptr%numberOfSubBases
+#ifdef WITH_PRECHECKS                
+                IF(.NOT.ASSOCIATED(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr)) THEN
+                  localError="The sub basis is not associated for sub-basis index "// &
+                    & TRIM(NumberToVString(subBasisIdx,"*",err,error))//" of basis index "// &
+                    & TRIM(NumberToVString(basisIdx,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+#endif                
+                IF(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr%familyNumber==familyNumber) THEN
+                  basis=>basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr
+                  EXIT BasisLoop
+                ENDIF
+              ENDDO SubBasisLoop !subBasisIdx
+            ENDIF
+          ENDIF
         ENDIF
       ENDDO BasisLoop !basisIdx
     ENDIF
         
     EXITS("Basis_FamilyNumberFind")
     RETURN
-999 ERRORSEXITS("Basis_FamilyNumberFind",err,error)
+999 NULLIFY(basis)
+998 ERRORSEXITS("Basis_FamilyNumberFind",err,error)
     RETURN 1
     
   END SUBROUTINE Basis_FamilyNumberFind
@@ -549,15 +1107,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_Get",err,error,*999)
 
     CALL Basis_UserNumberFind(basisFunctions,userNumber,basis,err,error,*999)
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="A basis with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
   
     EXITS("Basis_Get")
     RETURN
@@ -579,10 +1141,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_InterpolationXiGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(SIZE(interpolationXi,1)<SIZE(basis%interpolationXi,1)) THEN
       localError="The size of interpolation xi is too small. The supplied size is "// &
@@ -590,6 +1155,7 @@ CONTAINS
         & TRIM(NumberToVString(SIZE(basis%interpolationXi,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     interpolationXi(1:SIZE(basis%interpolationXi,1))=basis%interpolationXi(1:SIZE(basis%interpolationXi,1))
     
@@ -599,6 +1165,426 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_InterpolationXiGet  
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the basis for a local line in a basis.
+  SUBROUTINE Basis_LineBasisGet(basis,localLineNumber,lineBasis,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the line basis for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the line basis for
+    TYPE(BasisType), POINTER :: lineBasis !<On exit, a pointer to the basis for the specified local line. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineBasisGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(lineBasis)) CALL FlagError("Line Basis is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%localLineBasis)) THEN
+      localError="The local line basis array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    lineBasis=>basis%localLineBasis(localLineNumber)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(lineBasis)) THEN
+      localError="The line basis is not associated for local line number "// &
+        & TRIM(NumberToVString(localLineNumber,"*",err,error))//" of basis number "
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("Basis_LineBasisGet")
+    RETURN
+999 NULLIFY(lineBasis)
+998 ERRORSEXITS("Basis_LineBasisGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineBasisGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the basis element parameter for a line parameter in a local line in a basis.
+  SUBROUTINE Basis_LineElementParameterGet(basis,lineParameterIdx,localLineNumber,elementParameterIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the element parameter for
+    INTEGER(INTG), INTENT(IN) :: lineParameterIdx !<The line parameter index to get the equivalent element parameter for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the element parameter for
+    INTEGER(INTG), INTENT(OUT) :: elementParameterIdx !<On exit, the equivalent element parameter index for the line parameter index on the local line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineElementParameterGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the line element parameters for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%elementParametersInLocalLine)) THEN
+      localError="The element parameters in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(lineParameterIdx<1.OR.lineParameterIdx>basis%elementParametersInLocalLine(0,localLineNumber)) THEN
+      localError="The specified line parameter index of "//TRIM(NumberToVString(lineParameterIdx,"*",err,error))// &
+        & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The line parameter index should be >=1 and <= "// &
+        & TRIM(NumberToVString(basis%elementParametersInLocalLine(0,localLineNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    elementParameterIdx=basis%elementParametersInLocalLine(lineParameterIdx,localLineNumber)
+    
+    EXITS("Basis_LineElementParameterGet")
+    RETURN
+999 ERRORSEXITS("Basis_LineElementParameterGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineElementParameterGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element local node number for a line node number in a local line in a basis.
+  SUBROUTINE Basis_LineNodeNumberGet(basis,localLineNodeIdx,localLineNumber,localElementNodeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the node number for
+    INTEGER(INTG), INTENT(IN) :: localLineNodeIdx !<The line node index to get the equivalent element node index for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the element node index for
+    INTEGER(INTG), INTENT(OUT) :: localElementNodeIdx !<On exit, the equivalent element node index for the line node index on the local line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the line node numbers for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%nodeNumbersInLocalLine)) THEN
+      localError="The node numbers in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalLine)) THEN
+      localError="The number of nodes in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localLineNodeIdx<1.OR.localLineNodeIdx>basis%numberOfNodesInLocalLine(localLineNumber)) THEN
+      localError="The specified local line node index of "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
+        & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodesInLocalLine(localLineNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    localElementNodeIdx=basis%nodeNumbersInLocalLine(localLineNodeIdx,localLineNumber)
+    
+    EXITS("Basis_LineNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("Basis_LineNodeNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element local derivative index for a line derivative and node index in a local line in a basis.
+  SUBROUTINE Basis_LineNodeDerivativeNumberGet(basis,localLineDerivativeIdx,localLineNodeIdx,localLineNumber, &
+    & localElementDerivativeIdx,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the element derivative index for
+    INTEGER(INTG), INTENT(IN) :: localLineDerivativeIdx !<The line derivative index to get the equivalent element derivative index for
+    INTEGER(INTG), INTENT(IN) :: localLineNodeIdx !<The line node index to get the element derivative index for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the element derivative index for
+    INTEGER(INTG), INTENT(OUT) :: localElementDerivativeIdx !<On exit, the equivalent element derivative index for the line node and derivative index on the local line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineNodeDerivativeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the line node numbers for a basis with > 1 xi directions. The specified basis number of "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))// &
+        & " xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%derivativeNumbersInLocalLine)) THEN
+      localError="The derivative numbers in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalLine)) THEN
+      localError="The number of nodes in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localLineNodeIdx<1.OR.localLineNodeIdx>basis%numberOfNodesInLocalLine(localLineNumber)) THEN
+      localError="The specified local line node index of "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
+        & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line node index should be >=1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodesInLocalLine(localLineNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localLineDerivativeIdx<1.OR. &
+      & localLineDerivativeIdx>basis%derivativeNumbersInLocalLine(0,localLineNodeIdx,localLineNumber)) THEN
+      localError="The specified local line derivative index of "//TRIM(NumberToVString(localLineDerivativeIdx,"*",err,error))// &
+        & " is invalid for local line node index "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
+        & " of local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%derivativeNumbersInLocalLine(0,localLineNodeIdxlocalLineNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    localElementDerivativeIdx=basis%derivativeNumbersInLocalLine(localLineDerivativeIdx,localLineNodeIdx,localLineNumber)
+    
+    EXITS("Basis_LineNodeDerivativeNumberGet")
+    RETURN
+999 ERRORSEXITS("Basis_LineNodeDerivativeNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineNodeDerivativeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of line derivatives for a line  node index in a local line in a basis.
+  SUBROUTINE Basis_LineNodeNumberOfDerivativesGet(basis,localLineNodeIdx,localLineNumber,numberOfNodeDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of node derivatives for
+    INTEGER(INTG), INTENT(IN) :: localLineNodeIdx !<The line node index to get the number of derivatives for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodeDerivatives !<On exit, the numbe of node derivatives for the line node index on the local line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineNodeNumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the line node numbers of derivatives for a basis with > 1 xi directions. The specified basis "// &
+        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%derivativeNumbersInLocalLine)) THEN
+      localError="The derivative numbers in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalLine)) THEN
+      localError="The number of nodes in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localLineNodeIdx<1.OR.localLineNodeIdx>basis%numberOfNodesInLocalLine(localLineNumber)) THEN
+      localError="The specified local line node index of "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
+        & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line node index should be >=1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfNodesInLocalLine(localLineNumber),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfNodeDerivatives=basis%derivativeNumbersInLocalLine(0,localLineNodeIdx,localLineNumber)
+    
+    EXITS("Basis_LineNodeNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("Basis_LineNodeNumberOfDerivativesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineNodeNumberOfDerivativesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of nodes for a local line in a basis.
+  SUBROUTINE Basis_LineNumberOfNodesGet(basis,localLineNumber,numberOfNodes,err,error,*)
+    
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of line nodes for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On exit, the number of nodes for the local line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineNumberOfNodesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the line number of nodes for a basis with > 1 xi directions. The specified basis "// &
+        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalLine)) THEN
+      localError="The number of nodes in local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfNodes=basis%numberOfNodesInLocalLine(localLineNumber)
+    
+    EXITS("Basis_LineNumberOfNodesGet")
+    RETURN
+999 ERRORSEXITS("Basis_LineNumberOfNodesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineNumberOfNodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the xi normal direction for a local line in a basis.
+  SUBROUTINE Basis_LineXiNormalGet(basis,localLineNumber,lineXiNormal,err,error,*)
+    
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the xi normal direction for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the xi normal direction for
+    INTEGER(INTG), INTENT(OUT) :: lineXiNormal !<On exit, the xi normal direction for the local line. \see Constants_ElementNormalXiDirections
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineXiNormalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%numberOfXi<2) THEN
+      localError="Can only get the line xi normal for a basis with > 1 xi directions. The specified basis "// &
+        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%localLineXiNormal)) THEN
+      localError="The local line xi normal array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    lineXiNormal=basis%localLineXiNormal(localLineNumber)
+    
+    EXITS("Basis_LineXiNormalGet")
+    RETURN
+999 ERRORSEXITS("Basis_LineXiNormalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineXiNormalGet
 
   !
   !================================================================================================================================
@@ -614,20 +1600,32 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_LocalFaceNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(normalXiDirection < -basis%numberOfXiCoordinates .OR. normalXiDirection > basis%numberOfXiCoordinates) THEN
       localError="The specified normal xi direction of "//TRIM(NumberToVString(normalXiDirection,"*",err,error))// &
-        & " is invalid the normal xi direction must be >= "// &
+        & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The normal xi direction must be >= "// &
         & TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
         & " and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(.NOT.ALLOCATED(basis%xiNormalLocalFace)) THEN
+      localError="The xi normal local face array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,error,*999)
+    ENDIF
+#endif   
 
     localFaceNumber=basis%xiNormalLocalFace(normalXiDirection)
+
+#ifdef WITH_POSTCHECKS    
     IF(localFaceNumber<1.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
       localError="The local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))//" for xi normal direction "// &
         & TRIM(NumberToVString(normalXiDirection,"*",err,error))//" of basis number "// &
@@ -635,6 +1633,7 @@ CONTAINS
         & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("Basis_LocalFaceNumberGet")
     RETURN
@@ -657,32 +1656,44 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#if WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_LocalLineNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
-    IF(.NOT.SIZE(normalXiDirections,1)==2) THEN
+    IF(SIZE(normalXiDirections,1)<2) THEN
       localError="The specified number of normal xi directions of "// &
-        & TRIM(NumberToVString(SIZE(normalXiDirections,1),"*",err,error))//" is invalid. There should be 2 normal xi directions."
+        & TRIM(NumberToVString(SIZE(normalXiDirections,1),"*",err,error))// &
+        & " is invalid. There should be at least 2 normal xi directions."
       CALL FlagError(localError,err,error,*999)
     END IF
     IF(normalXiDirections(1) < -basis%numberOfXiCoordinates .OR. normalXiDirections(1) > basis%numberOfXiCoordinates) THEN
       localError="The first specified normal xi direction of "//TRIM(NumberToVString(normalXiDirections(1),"*",err,error))// &
-        & " is invalid the normal xi direction must be >= "// &
-        & TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
+        & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The normal xi direction must be >= "//TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
         & " and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(normalXiDirections(2) < -basis%numberOfXiCoordinates .OR. normalXiDirections(2) > basis%numberOfXiCoordinates) THEN
       localError="The second specified normal xi direction of "//TRIM(NumberToVString(normalXiDirections(2),"*",err,error))// &
-        & " is invalid the normal xi direction must be >= "// &
-        & TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
+        & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The normal xi direction must be >= "//TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
         & " and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(.NOT.ALLOCATED(basis%xiNormalsLocalLine)) THEN
+      localError="The xi normals local line array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,error,*999)
+    ENDIF
+#endif    
 
     localLineNumber=basis%xiNormalsLocalLine(normalXiDirections(1),normalXiDirections(2))
+
+#ifdef WITH_POSTCHECKS    
     IF(localLineNumber<1.OR.localLineNumber>basis%numberOfLocalLines) THEN
       localError="The local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))//" for xi normal directions "// &
         & TRIM(NumberToVString(normalXiDirections(1),"*",err,error))//","// &
@@ -691,6 +1702,7 @@ CONTAINS
         & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("Basis_LocalLineNumberGet")
     RETURN
@@ -698,6 +1710,108 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_LocalLineNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of derivatives for a local nodes in the specified basis 
+  SUBROUTINE Basis_NodeNumberOfDerivativesGet(basis,localNodeIdx,numberOfDerivatives,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of derivatives
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On return, the number of derivatives at the local node in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("Basis_NodeNumberOfDerivativesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(localNodeIdx<1.OR.localNodeIdx>basis%numberOfNodes) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local node index should be >=1 and <= "//TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)     
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfDerivatives)) THEN
+      localError="The number of derivatives array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+   
+    numberOfDerivatives=basis%numberOfDerivatives(localNodeIdx)
+    
+    EXITS("Basis_NodeNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("Basis_NodeNumberOfDerivativesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NodeNumberOfDerivativesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of local faces in the specified basis
+  SUBROUTINE Basis_NumberOfLocalFacesGet(basis,numberOfLocalFaces,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of faces for
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalFaces !<On return, the number of local faces in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_NumberOfLocalFacesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
+   
+    numberOfLocalFaces=basis%numberOfLocalFaces
+    
+    EXITS("Basis_NumberOfLocalFacesGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfLocalFacesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfLocalFacesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of local lines in the specified basis
+  SUBROUTINE Basis_NumberOfLocalLinesGet(basis,numberOfLocalLines,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of lines for
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalLines !<On return, the number of local lines in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_NumberOfLocalLinesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
+   
+    numberOfLocalLines=basis%numberOfLocalLines
+    
+    EXITS("Basis_NumberOfLocalLinesGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfLocalLinesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfLocalLinesGet
 
   !
   !================================================================================================================================
@@ -715,7 +1829,9 @@ CONTAINS
     
     ENTERS("Basis_NumberOfLocalNodesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
    
     numberOfLocalNodes=basis%numberOfNodes
     
@@ -742,7 +1858,9 @@ CONTAINS
     
     ENTERS("Basis_NumberOfXiGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
     
     numberOfXi=basis%numberOfXi
    
@@ -801,37 +1919,45 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: gaussPointIdx
     TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_QuadratureGaussXiGet1",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)
-    NULLIFY(quadratureScheme)
-    CALL Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*999)
     IF(SIZE(gaussXi,1)<basis%numberOfXi) THEN
       localError="The number of xi values to return of "//TRIM(NumberToVString(SIZE(gaussXi,1),"*",err,error))// &
         & " is invalid and needs to be >= "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" for the specified basis."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+#endif    
+    NULLIFY(quadratureScheme)
+    CALL Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*999)    
     IF(SIZE(gaussPointNumbers,1)==0) THEN !Return all Gauss point xi locations.
+#ifdef WITH_PRECHECKS      
       IF(SIZE(gaussXi,2)<quadratureScheme%numberOfGauss) THEN
         localError="The number of Gauss Points to return the xi values for of "// &
           & TRIM(NumberToVString(SIZE(gaussXi,2),"*",err,error))//" is invalid and needs to be >= "// &
           & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       gaussXi(1:basis%numberOfXi,quadratureScheme%numberOfGauss)= &
         & quadratureScheme%gaussPositions(1:basis%numberOfXi,quadratureScheme%numberOfGauss)
     ELSE !Return only specified Gauss point xi locations.
+#ifdef WITH_PRECHECKS      
       IF(SIZE(gaussXi,2)<SIZE(gaussPointNumbers,1)) THEN
         localError="The number of Gauss Points to return the xi values for of "// &
           & TRIM(NumberToVString(SIZE(gaussXi,2),"*",err,error))//" is invalid and needs to be >= "// &
           & TRIM(NumberToVString(SIZE(gaussPointNumbers,1),"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
+#endif      
       DO gaussPointIdx=1,SIZE(gaussPointNumbers)
+#ifdef WITH_PRECHECKS        
         IF(gaussPointNumbers(gaussPointIdx)<1.OR.gaussPointNumbers(gaussPointIdx)>quadratureScheme%numberOfGauss) THEN
           localError="The specified Gauss point number of "// &
             & TRIM(NumberToVString(gaussPointNumbers(gaussPointIdx),"*",err,error))// &
@@ -842,6 +1968,7 @@ CONTAINS
             & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
+#endif        
         gaussXi(1:basis%numberOfXi,gaussPointIdx)= &
           & quadratureScheme%gaussPositions(1:basis%numberOfXi,gaussPointNumbers(gaussPointIdx))
       ENDDO !gaussPointIdx
@@ -867,10 +1994,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_QuadratureNumberOfGaussXiGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)    
     IF(SIZE(quadratureNumberOfGaussXi,1)<SIZE(basis%quadrature%numberOfGaussXi,1)) THEN
@@ -879,6 +2009,7 @@ CONTAINS
         & TRIM(NumberToVString(SIZE(basis%quadrature%numberOfGaussXi,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     quadratureNumberOfGaussXi=basis%quadrature%numberOfGaussXi
      
@@ -905,8 +2036,10 @@ CONTAINS
     
     ENTERS("Basis_QuadratureOrderGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+#endif    
     
     quadratureOrder=basis%quadrature%gaussOrder
       
@@ -931,10 +2064,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_QuadratureSchemeGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is already associated.",err,error,*998)
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(quadratureSchemeIdx<1.OR.quadratureSchemeIdx>BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES) THEN
@@ -945,13 +2081,17 @@ CONTAINS
     END IF
     IF(.NOT.ALLOCATED(basis%quadrature%quadratureSchemeMap)) &
       & CALL FlagError("Basis quadrature scheme map has not been allocated.",err,error,*999)
+#endif    
 
     quadratureScheme=>basis%quadrature%quadratureSchemeMap(quadratureSchemeIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(quadratureScheme)) THEN
       localError="The quadrature scheme for the quadrature scheme index of "// &
         & TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("Basis_QuadratureSchemeGet")
     RETURN
@@ -974,16 +2114,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Basis_QuadratureTypeGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(.NOT.ASSOCIATED(basis%quadrature%basis)) THEN
       localError="The basis quadrature basis is not associated for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     quadratureType=basis%quadrature%type
    
@@ -1010,7 +2154,9 @@ CONTAINS
     
     ENTERS("Basis_TypeGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
     
     type=basis%type
     
@@ -1063,7 +2209,9 @@ CONTAINS
 
     ENTERS("Basis_UserNumberGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+#endif    
 
     userNumber=basis%userNumber
   
@@ -1074,6 +2222,151 @@ CONTAINS
     
   END SUBROUTINE Basis_UserNumberGet
 
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the Gauss basis function for Gauss point in a basis quadrature scheme.  
+  SUBROUTINE BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,elementParameterIdx,partialDerivativeIdx, &
+    & gaussIdx,gaussBasisFunction,err,error,*)
+
+    !Argument variables
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme !<The basis quadrature scheme to get the Gauss position for.
+    INTEGER(INTG), INTENT(IN) :: elementParameterIdx !<The element parameter index to get the Gauss basis function for.
+    INTEGER(INTG), INTENT(IN) :: partialDerivativeIdx !<The partial derivative index to get the Gauss basis function for.
+    INTEGER(INTG), INTENT(IN) :: gaussIdx !<The Gauss point index to get the Gauss position for.
+    REAL(DP), INTENT(OUT) :: gaussBasisFunction !<On exit, the specified Gauss basis function for the Gauss point in the quadrature scheme.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("BasisQuadratureScheme_GaussPositionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(quadratureScheme%gaussBasisFunctions)) &
+      & CALL FLagError("Gauss basis functions are not allocated for the quadrature scheme.",err,error,*999)
+    IF(elementParameterIdx<1.OR.elementParameterIdx>SIZE(quadratureScheme%gaussBasisFunctions,1)) THEN
+      localError="The specified element parameter index of "//TRIM(NumberToVString(elementParameterIdx,"*",err,error))// &
+        & " is invalid. The element parameter index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(quadratureScheme%gaussBasisFunctions,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(partialDerivativeIdx<1.OR.partialDerivativeIdx>SIZE(quadratureScheme%gaussBasisFunctions,2)) THEN
+      localError="The specified partial derivative index of "//TRIM(NumberToVString(partialDerivativeIdx,"*",err,error))// &
+        & " is invalid. The partial derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(quadratureScheme%gaussBasisFunctions,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(gaussIdx<1.OR.gaussIdx>quadratureScheme%numberOfGauss) THEN
+      localError="The specified Gauss point index of "//TRIM(NumberToVString(gaussIdx,"*",err,error))// &
+        & " is invalid. The Gauss point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    gaussBasisFunction=quadratureScheme%gaussBasisFunctions(elementParameterIdx,partialDerivativeIdx,gaussIdx)
+    
+    EXITS("BasisQuadratureScheme_GaussPositionGet")
+    RETURN
+999 ERRORSEXITS("BasisQuadratureScheme_GaussPositionGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE BasisQuadratureScheme_GaussPositionGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the Gauss position for Gauss point in a basis quadrature scheme.  
+  SUBROUTINE BasisQuadratureScheme_GaussPositionGet(quadratureScheme,gaussIdx,gaussPosition,err,error,*)
+
+    !Argument variables
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme !<The basis quadrature scheme to get the Gauss position for.
+    INTEGER(INTG), INTENT(IN) :: gaussIdx !<The Gauss point index to get the Gauss position for.
+    REAL(DP), INTENT(OUT) :: gaussPosition(:) !<gaussPosition(xiCoordinateIdx). On exit, the Gauss position for the Gauss point in the quadrature scheme.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("BasisQuadratureScheme_GaussPositionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
+    IF(gaussIdx<1.OR.gaussIdx>quadratureScheme%numberOfGauss) THEN
+      localError="The specified Gauss point index of "//TRIM(NumberToVString(gaussIdx,"*",err,error))// &
+        & " is invalid. The Gauss point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(quadratureScheme%gaussPositions)) &
+      & CALL FLagError("Gauss positions are not allocated for the quadrature scheme.",err,error,*999)
+    IF(SIZE(gaussPosition,1)<SIZE(quadratureScheme%gaussPositions,1)) THEN
+      localError="The size of the specified Gauss position array of "// &
+        & TRIM(NumberToVString(SIZE(gaussPosition,1),"*",err,error)//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(SIZE(quadratureScheme%gaussPositions,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    gaussPosition(1:SIZE(quadratureScheme%gaussPositions,1))= &
+      & quadratureScheme%gaussPositions(1:SIZE(quadratureScheme%gaussPositions,1),gaussIdx)
+    
+    EXITS("BasisQuadratureScheme_GaussPositionGet")
+    RETURN
+999 ERRORSEXITS("BasisQuadratureScheme_GaussPositionGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE BasisQuadratureScheme_GaussPositionGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the Gauss weight for Gauss point in a basis quadrature scheme.  
+  SUBROUTINE BasisQuadratureScheme_GaussWeightGet(quadratureScheme,gaussIdx,gaussWeight,err,error,*)
+
+    !Argument variables
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme !<The basis quadrature scheme to get the Gauss weight for.
+    INTEGER(INTG), INTENT(IN) :: gaussIdx !<The Gauss point index to get the Gauss weight for.
+    REAL(DP), INTENT(OUT) :: gaussWeight !<On exit, the Gauss wieght for the Gauss point in the quadrature scheme.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("BasisQuadratureScheme_GaussWeightGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
+    IF(gaussIdx<1.OR.gaussIdx>quadratureScheme%numberOfGauss) THEN
+      localError="The specified Gauss point index of "//TRIM(NumberToVString(gaussIdx,"*",err,error))// &
+        & " is invalid. The Gauss point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(quadratureScheme%numberOfGauss,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(quadratureScheme%gaussWeights)) &
+      & CALL FLagError("Gauss weights are not allocated for the quadrature scheme.",err,error,*999)
+#endif    
+
+    gaussWeight=quadratureScheme%gaussWeights(gaussIdx)
+    
+    EXITS("BasisQuadratureScheme_GaussWeightGet")
+    RETURN
+999 ERRORSEXITS("BasisQuadratureScheme_GaussWeightGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE BasisQuadratureScheme_GaussWeightGet
+  
   !
   !================================================================================================================================
   !
@@ -1090,7 +2383,9 @@ CONTAINS
     
     ENTERS("BasisQuadratureScheme_NumberOfGaussGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
+#endif    
 
     numberOfGauss=quadratureScheme%numberOfGauss
     

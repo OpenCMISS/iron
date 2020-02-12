@@ -46,24 +46,24 @@ MODULE HELMHOLTZ_EQUATIONS_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
-  USE EquationsSetConstants
+  USE EquationsMappingRoutines
+  USE EquationsMatricesRoutines
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
-  USE NODE_ROUTINES
-  USE PROBLEM_CONSTANTS
+  USE NodeRoutines
+  USE ProblemAccessRoutines
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE Timer
   USE Types
 
@@ -114,7 +114,7 @@ CONTAINS
 
           
         CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
             & " is not valid for a Helmholtz equation type of a classical field equations set class."
           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -153,7 +153,7 @@ CONTAINS
       CASE(EQUATIONS_SET_NO_SOURCE_HELMHOLTZ_SUBTYPE)
         CALL HELMHOLTZ_EQUATION_EQUATIONS_SET_LINEAR_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)        
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of a classical field equation set class."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -201,11 +201,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
+          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of an classical field equations set class."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -299,12 +299,12 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
         CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a standard Helmholtz equation."
           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        LOCAL_ERROR="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
           & " does not equal a linear Helmholtz equation subtype."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
@@ -340,7 +340,7 @@ CONTAINS
       CASE(PROBLEM_NO_SOURCE_HELMHOLTZ_SUBTYPE)
         CALL HELMHOLTZ_EQUATION_PROBLEM_LINEAR_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of a classical field problem class."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -378,7 +378,7 @@ CONTAINS
         PROBLEM%TYPE=PROBLEM_HELMHOLTZ_EQUATION_TYPE
         PROBLEM%SUBTYPE=PROBLEM_NO_SOURCE_HELMHOLTZ_SUBTYPE     
       CASE DEFAULT
-        LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(PROBLEM_SUBTYPE,"*",ERR,ERROR))// &
           & " is not valid for a Helmholtz equation type of a classical field problem class."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
@@ -417,12 +417,12 @@ CONTAINS
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
             & " is invalid for a linear Helmholtz equation."
           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
           & " does not equal a linear Helmholtz equation subtype."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF

@@ -168,12 +168,17 @@ CONTAINS
  
     ENTERS("InterfaceDomainInterpolation_DependentFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainInterpolation)) CALL FlagError("Interface domain interpolation is not associated.",err,error,*999)
+#endif    
 
     dependentField=>domainInterpolation%dependentField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentField)) &
       & CALL FlagError("Interface domain interpolation dependent field is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceDomainInterface_DependentFieldGet")
     RETURN
@@ -199,10 +204,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceDomainInterpolation_DependentInterpSetGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dependentInterpolationSet)) CALL FlagError("Dependent interpolation set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainInterpolation)) CALL FlagError("Interface domain interpolation is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(domainInterpolation%dependentInterpolation)) &
@@ -213,13 +221,17 @@ CONTAINS
         & TRIM(NumberToVString(domainInterpolation%numberOfDependentInterpolationSets,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     dependentInterpolationSet=>domainInterpolation%dependentInterpolation(interpolationSetIdx)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dependentInterpolationSet)) THEN
       localError="The dependent interpolation set is not associated for interpolation set index "// &
         & TRIM(NumberToVString(interpolationSetIdx,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceDomainInterface_DependentInterpSetGet")
     RETURN
@@ -246,12 +258,17 @@ CONTAINS
  
     ENTERS("InterfaceDomainInterpolation_GeometricFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainInterpolation)) CALL FlagError("Interface domain interpolation is not associated.",err,error,*999)
+#endif    
 
     geometricField=>domainInterpolation%geometricField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricField)) &
       & CALL FlagError("Interface domain interpolation geometric field is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceDomainInterface_GeometricFieldGet")
     RETURN
@@ -277,10 +294,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif 
  
     ENTERS("InterfaceDomainInterpolation_GeometricInterpSetGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(geometricInterpolationSet)) CALL FlagError("Geometric interpolation set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainInterpolation)) CALL FlagError("Interface domain interpolation is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(domainInterpolation%geometricInterpolation)) &
@@ -291,13 +311,17 @@ CONTAINS
         & TRIM(NumberToVString(domainInterpolation%numberOfGeometricInterpolationSets,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     geometricInterpolationSet=>domainInterpolation%geometricInterpolation(interpolationSetIdx)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(geometricInterpolationSet)) THEN
       localError="The geometric interpolation set is not associated for interpolation set index "// &
         & TRIM(NumberToVString(interpolationSetIdx,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceDomainInterface_GeometricInterpSetGet")
     RETURN
@@ -324,12 +348,17 @@ CONTAINS
  
     ENTERS("InterfaceDomainInterpolation_PenaltyFieldGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(penaltyField)) CALL FlagError("Penalty field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainInterpolation)) CALL FlagError("Domain interpolation is not associated.",err,error,*999)
+#endif    
 
     penaltyField=>domainInterpolation%penaltyField
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(penaltyField)) &
       & CALL FlagError("Interface domain interpolation penalty field is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceDomainInterface_PenaltyFieldGet")
     RETURN
@@ -355,10 +384,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("InterfaceDomainInterpolation_PenaltyInterpSetGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(penaltyInterpolationSet)) CALL FlagError("Penalty interpolation set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainInterpolation)) CALL FlagError("Interface domain interpolation is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(domainInterpolation%penaltyInterpolation)) &
@@ -369,13 +401,17 @@ CONTAINS
         & TRIM(NumberToVString(domainInterpolation%numberOfPenaltyInterpolationSets,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     penaltyInterpolationSet=>domainInterpolation%penaltyInterpolation(interpolationSetIdx)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(penaltyInterpolationSet)) THEN
       localError="The penalty interpolation set is not associated for interpolation set index "// &
         & TRIM(NumberToVString(interpolationSetIdx,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceDomainInterface_PenaltyInterpSetGet")
     RETURN
@@ -401,7 +437,9 @@ CONTAINS
  
     ENTERS("InterfaceEquations_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.interfaceEquations%interfaceEquationsFinished) &
       & CALL FlagError("Interface equations has not been finished.",err,error,*999)
@@ -428,7 +466,9 @@ CONTAINS
  
     ENTERS("InterfaceEquations_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+#endif    
 
     IF(interfaceEquations%interfaceEquationsFinished) &
       & CALL FlagError("Interface equations has already been finished.",err,error,*999)
@@ -456,12 +496,17 @@ CONTAINS
  
     ENTERS("InterfaceEquations_EquationsInterpolationGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+#endif    
 
     equationsInterpolation=>interfaceEquations%interpolation
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsInterpolation)) &
       & CALL FlagError("Interface equations interpolation is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceEquations_EquationsInterpolationGet")
     RETURN
@@ -488,12 +533,17 @@ CONTAINS
  
     ENTERS("InterfaceEquations_InterfaceConditionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+#endif    
 
     interfaceCondition=>interfaceEquations%interfaceCondition
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) &
       & CALL FlagError("Interface equations interface condition is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceEquations_InterfaceConditionGet")
     RETURN
@@ -519,12 +569,17 @@ CONTAINS
  
     ENTERS("InterfaceEquations_InterfaceMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+#endif    
 
     interfaceMapping=>interfaceEquations%interfaceMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceMapping)) &
       & CALL FlagError("Interface equations interface mapping is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceEquations_InterfaceMappingGet")
     RETURN
@@ -550,12 +605,17 @@ CONTAINS
  
     ENTERS("InterfaceEquations_InterfaceMatricesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+#endif    
 
     interfaceMatrices=>interfaceEquations%interfaceMatrices
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceMatrices)) &
       & CALL FlagError("Interface equations interface matrices is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceEquations_InterfaceMatricesGet")
     RETURN
@@ -582,13 +642,18 @@ CONTAINS
  
     ENTERS("InterfaceEquationsInterpolation_InterfaceInterpGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceInterpolation)) CALL FlagError("Interface interpolation is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquationsInterpolation)) &
       & CALL FlagError("Interface equations interpolation is not associated.",err,error,*999)
+#endif    
 
     interfaceInterpolation=>interfaceEquationsInterpolation%interfaceInterpolation
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceInterpolation)) &
       & CALL FlagError("Interface equations interpolation interface interpolation is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceEquationsInterface_InterfaceInterpGet")
     RETURN
@@ -614,10 +679,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceEquationsInterpolation_VariableInterpGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(variableInterpolation)) CALL FlagError("Variable interpolation is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquationsInterpolation)) &
       & CALL FlagError("Interface equations interpolation is not associated.",err,error,*999)
@@ -629,13 +697,17 @@ CONTAINS
         & TRIM(NumberToVString(SIZE(interfaceEquationsInterpolation%variableInterpolation,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     variableInterpolation=>interfaceEquationsInterpolation%variableInterpolation(variableIdx)
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(variableInterpolation)) THEN
       localError="The interface equations interpolation variable interpolation is not associated for variable index "// &
         & TRIM(NumberToVString(variableIdx,"*",err,error))//"."
       CALL FlagError("Interface equations interpolation interface interpolation is not associated.",err,error,*999)
     ENDIF
+#endif    
        
     EXITS("InterfaceEquationsInterface_VariableInterpGet")
     RETURN
@@ -661,10 +733,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceInterpolationSet_InterpolationParametersGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interpolationParameters)) CALL FlagError("Interpolation parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceInterpolationSet)) CALL FlagError("Interface interpolation set is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceInterpolationSet%interpolationParameters)) &
@@ -675,10 +750,14 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     interpolationParameters=>interfaceInterpolationSet%interpolationParameters(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interpolationParameters)) &
       & CALL FlagError("Interface interpolation set interpolation parameters is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceInterpolationSet_InterpolationParametersGet")
     RETURN
@@ -704,10 +783,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceInterpolationSet_InterpolatedPointGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interpolatedPoint)) CALL FlagError("Interpolated point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceInterpolationSet)) CALL FlagError("Interface interpolation set is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceInterpolationSet%interpolatedPoint)) &
@@ -718,10 +800,14 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     interpolatedPoint=>interfaceInterpolationSet%interpolatedPoint(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interpolatedPoint)) &
       & CALL FlagError("Interface interpolation set interpolated point is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceInterpolationSet_InterpolatedPointGet")
     RETURN
@@ -747,10 +833,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("InterfaceInterpolationSet_InterpolatedPointMetricsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interpolatedPointMetrics)) CALL FlagError("Interpolated point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceInterpolationSet)) CALL FlagError("Interface interpolation set is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceInterpolationSet%interpolatedPointMetrics)) &
@@ -761,10 +850,14 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
 
     interpolatedPointMetrics=>interfaceInterpolationSet%interpolatedPointMetrics(variableType)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interpolatedPointMetrics)) &
       & CALL FlagError("Interface interpolation set interpolated point metrics is not associated.",err,error,*999)
+#endif    
        
     EXITS("InterfaceInterpolationSet_InterpolatedPointMetricsGet")
     RETURN

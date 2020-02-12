@@ -47,7 +47,7 @@ MODULE LaplaceEquationsRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BOUNDARY_CONDITIONS_ROUTINES
+  USE BoundaryConditionsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -61,7 +61,6 @@ MODULE LaplaceEquationsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -71,9 +70,8 @@ MODULE LaplaceEquationsRoutines
   USE Maths  
   USE MatrixVector
   USE ProblemAccessRoutines
-  USE PROBLEM_CONSTANTS
   USE Strings
-  USE SOLVER_ROUTINES
+  USE SolverRoutines
   USE SolverAccessRoutines
   USE Timer
   USE Types
@@ -119,14 +117,16 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,derivativeIdx,dimensionIdx, &
-      & globalDerivativeIndex,localDOF,nodeIdx,numberOfComponents,numberOfDimensions,variableIdx,variableType
+      & globalDerivativeIndex,localDOF,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
+      & numberOfVariables,variableIdx,variableType
     REAL(DP) :: value,x(3)
     REAL(DP), POINTER :: geometricParameters(:)
+    LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
@@ -138,24 +138,22 @@ CONTAINS
 
     NULLIFY(geometricParameters)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
     
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(geometricField)
     CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-    CALL Field_ParameterSetDataGet(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,geometricParameters, &
-      & err,error,*999)
-    DO variableIdx=1,dependentField%numberOfVariables
-      variableType=dependentField%variables(variableIdx)%variableType
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)    
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
-      CALL Field_VariableGet(dependentField,variableType,dependentVariable,err,error,*999)
-      CALL Field_ParameterSetCreate(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsurCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
       DO componentIdx=1,numberOfComponents
         CALL FieldVariable_ComponentInterpolationGet(dependentVariable,componentIdx,componentInterpolationType,err,error,*999)
@@ -167,17 +165,19 @@ CONTAINS
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)         
         NULLIFY(domainNodes)
         CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         !Loop over the local nodes excluding the ghosts.
-        DO nodeIdx=1,domainNodes%numberOfNodes
+        DO nodeIdx=1,numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
           DO dimensionIdx=1,numberOfDimensions
             !Default to version 1 of each node derivative
             CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOF,err,error,*999)
             x(dimensionIdx)=geometricParameters(localDOF)
           ENDDO !dimensionIdx
+          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           !Loop over the derivatives
-          DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
-            globalDerivativeIndex=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%globalDerivativeIndex
+          DO derivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
             SELECT CASE(analyticFunctionType)
             CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
               !u=x^2+2.x.y-y^2
@@ -369,23 +369,23 @@ CONTAINS
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-            CALL Field_ParameterSetUpdateLocalNode(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-              & 1,derivativeIdx,nodeIdx,componentIdx,value,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+              & 1,derivativeIdx,nodeIdx,componentIdx,VALUE,err,error,*999)
             IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-              IF(domainNodes%nodes(nodeIdx)%boundaryNode) THEN
+              CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+              IF(boundaryNode) THEN
                 !If we are a boundary node then set the analytic value on the boundary
                 CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
-                  & localDOF,BOUNDARY_CONDITION_FIXED,value,err,error,*999)
+                  & localDOF,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
               ENDIF
             ENDIF
           ENDDO !derivativeIdx
         ENDDO !nodeIdx
       ENDDO !componentIdx
-      CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVarible_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
-    CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-      & geometricParameters,err,error,*999)
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     
     EXITS("Laplace_BoundaryConditionsAnalyticCalculate")
     RETURN
@@ -408,18 +408,20 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error          !<The error string
     !Local Variables
     INTEGER(INTG) columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,dependentVariableType, &
-      & gaussPointIdx,numberOfDimensions,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,xiIdx1,xiIdx2,xiIdx3
-    REAL(DP) :: columnBasisFunctions(3),conductivityMaterial(3,3),conductivity(3,3),conductivityTemp(3,3),jacobianGaussWeight,sum, &
-      & kValue(3),rowBasisFunctions(3)
+      & esSpecification(3),gaussPointIdx,numberOfColsElementParameters,numberOfDimensions, &
+      & numberOfRowsElementParameters,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,xiIdx
+    REAL(DP) :: colsdPhidXi(3),conductivityMaterial(3,3),conductivity(3,3),conductivityTemp(3,3),jacobianGaussWeight,sum, &
+      & kValue(3),rowsdPhidXi(3)
     REAL(DP) :: dNudXi(3,3),dXidNu(3,3),dXdNu(3,3),dNudx(3,3)
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisType), POINTER :: colsBasis,geometricBasis,rowsBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
-    TYPE(DomainType), POINTER :: dependentDomain,geometricDomain 
-    TYPE(DomainElementsType), POINTER :: dependentDomainElements,geometricDomainElements
-    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology,geometricDomainTopology
+    TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain
+    TYPE(DomainElementsType), POINTER :: colsDomainElements,geometricDomainElements,rowsDomainElements
+    TYPE(DomainTopologyType), POINTER :: colsDomainTopology,geometricDomainTopology,rowsDomainElements
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLinearType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
@@ -427,35 +429,50 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField,fibreField
-    TYPE(FieldVariableType), POINTER :: dependentVariable
-    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpParameters,fibreInterpParameters,geometricInterpParameters, &
-      & independentInterpParameters,materialsInterpParameters
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
+    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters,geometricInterpParameters, &
+      & independentInterpParameters,materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,independentInterpPoint,materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
-    TYPE(VARYING_STRING) :: localError
-    
+    TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,geometricQuadratureScheme,rowsQuadratureScheme
+    TYPE(VARYING_STRING) :: localError    
 
     ENTERS("Laplace_FiniteElementCalculate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<3) &
-      & CALL FlagError("Equations set specification must have three entries for a Laplace type equations set.", &
-      & err,error,*999)
+    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
+
+    !Get the fields and check the equations
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(materialsField)
+    NULLIFY(fibreField)
+    NULLIFY(independentField)
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
+      !Do nothing
+    CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+      CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
+    CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
+      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Laplace equation type of a classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    NULLIFY(geometricField)
-    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
     NULLIFY(equationsInterpolation)
     CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(lhsMapping)
+    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
     NULLIFY(linearMapping)
     CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -466,35 +483,7 @@ CONTAINS
     CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-   
-    NULLIFY(materialsField)
-    NULLIFY(fibreField)
-    NULLIFY(independentField)
-    SELECT CASE(equationsSet%specification(3))
-    CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
-      !Do nothing
-    CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
-      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
-      CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
-    CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
-      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
-    CASE DEFAULT
-      localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-        & " is not valid for a Laplace equation type of a classical field equations set class."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
 
-    NULLIFY(dependentDecomposition)
-    CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
-    NULLIFY(dependentDomain)
-    CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
-    NULLIFY(dependentDomainTopology)
-    CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
-    NULLIFY(dependentDomainElements)
-    CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
-    NULLIFY(dependentBasis)
-    CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
-    
     NULLIFY(geometricDecomposition)
     CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
     NULLIFY(geometricDomain)
@@ -505,13 +494,31 @@ CONTAINS
     CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
     NULLIFY(geometricBasis)
     CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+    CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
 
-    NULLIFY(dependentVariable)
-    CALL EquationsMappingLinear_LinearVariableGet(linearMapping,1,dependentVariable,err,error,*999)
-    dependentVariableType=dependentVariable%variableType
+    NULLIFY(dependentDecomposition)
+    CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+    NULLIFY(dependentColDomain)
+    CALL Decomposition_DomainGet(dependentDecomposition,0,dependentColDomain,err,error,*999)
+    NULLIFY(dependentColDomainTopology)
+    CALL Domain_DomainTopologyGet(dependentColDomain,dependentColDomainTopology,err,error,*999)
+    NULLIFY(dependentColDomainElements)
+    CALL DomainTopology_DomainElementsGet(dependentColDomainTopology,dependentColDomainElements,err,error,*999)
+    NULLIFY(dependentColBasis)
+    CALL DomainElements_BasisGet(dependentColDomainElements,elementNumber,dependentColBasis,err,error,*999)
+    
+    NULLIFY(rowsVariable)
+    CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+    CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
 
-    NULLIFY(quadratureScheme)
-    CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
+    NULLIFY(colsVariable)
+    CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+    CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
+
+    NULLIFY(geometricQuadratureScheme)
+    CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
 
     NULLIFY(geometricInterpParameters)
     CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -527,7 +534,7 @@ CONTAINS
     NULLIFY(fibreInterpPoint)
     NULLIFY(materialsInterpParameters)
     NULLIFY(materialsInterpPoint)
-    IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+    IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
       CALL EquationsInterpolation_FibreParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & fibreInterpParameters,err,error,*999)
       CALL EquationsInterpolation_FibrePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -540,7 +547,7 @@ CONTAINS
     
     NULLIFY(independentInterpParameters)
     NULLIFY(independentInterpPoint)
-    IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+    IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
       CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & independentInterpParameters,err,error,*999)
       CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -549,133 +556,114 @@ CONTAINS
    
     CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
     
-    IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+    IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsInterpParameters,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,fibreInterpParameters,err,error,*999)
     ENDIF
-    IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+    IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,independentInterpParameters,err,error,*999)
     ENDIF
-    
+
+    CALL BasisQuadratureScheme_NumberOfGaussGet(geometricQuadratureScheme,numberOfGauss,err,error,*999)
     !Loop over gauss points
-    DO gaussPointIdx=1,quadratureScheme%numberOfGauss
+    DO gaussPointIdx=1,numberOfGauss
       
       CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
         & err,error,*999)
-      CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,geometricInterpPointMetrics,err,error,*999)
-
-      IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+      CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
+      
+      IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
           & err,error,*999)
 
-        !conductivity in material coordinates 
-        conductivityMaterial=0.0_DP
-        SELECT CASE(numberOfDimensions)
-        CASE(1)
-          conductivityMaterial(1,1)=materialsInterpPoint%values(1,1)
-        CASE(2)
-          conductivityMaterial(1,1)=materialsInterpPoint%values(1,1)
-          conductivityMaterial(2,2)=materialsInterpPoint%values(2,1)
-          conductivityMaterial(1,2)=materialsInterpPoint%values(3,1)
-          conductivityMaterial(2,1)=conductivityMaterial(1,2)
-        CASE(3)
-          conductivityMaterial(1,1)=materialsInterpPoint%values(1,1)
-          conductivityMaterial(2,2)=materialsInterpPoint%values(2,1)
-          conductivityMaterial(3,3)=materialsInterpPoint%values(3,1)
-          conductivityMaterial(1,2)=materialsInterpPoint%values(4,1)
-          conductivityMaterial(2,1)=conductivityMaterial(1,2)
-          conductivityMaterial(2,3)=materialsInterpPoint%values(5,1)
-          conductivityMaterial(3,2)=conductivityMaterial(2,3)
-          conductivityMaterial(1,3)=materialsInterpPoint%values(6,1)
-          conductivityMaterial(3,1)=conductivityMaterial(1,3)
-        CASE DEFAULT
-          localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-  
-        !rotate the conductivity from material coordinates into xi-space to get the effective conductivity
-        dNudX=0.0_RP
-        dXdNu=0.0_RP
-        dNudXi=0.0_RP
-        dXidNu=0.0_RP
-        CALL CoordinateSystem_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
-          & dNudx(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
-          & dNudXi(1:numberOfDimensions,1:numberOfDimensions),dXidNu(1:numberOfDimensions,1:numberOfDimensions), &
-          & err,error,*999)
-        
-        conductivityTemp=0.0_RP
-        conductivity=0.0_RP
-        CALL MatrixProduct(dNudXi(1:numberOfDimensions,1:numberOfDimensions), &
-          & conductivityMaterial(1:numberOfDimensions,1:numberOfDimensions), &
-          & conductivityTemp(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
-        CALL MatrixProduct(conductivityTemp(1:numberOfDimensions,1:numberOfDimensions), &
-          & dXidNu(1:numberOfDimensions,1:numberOfDimensions), &
-          & conductivity(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
-
+        CALL CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint, &
+          & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
       ENDIF
-      IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+      IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,independentInterpPoint, &
           & err,error,*999)
         kValue(1)=independentInterpPoint%values(1,NO_PART_DERIV)
-        IF(dependentVariable%numberOfComponents>1) kValue(2)=independentInterpPoint%values(2,NO_PART_DERIV)
-        IF(dependentVariable%numberOfComponents>2) kValue(3)=independentInterpPoint%values(3,NO_PART_DERIV)
+        IF(numberOfComponents>1) kValue(2)=independentInterpPoint%values(2,NO_PART_DERIV)
+        IF(numberOfComponents>2) kValue(3)=independentInterpPoint%values(3,NO_PART_DERIV)
       ENDIF
             
       !Calculate Jacobian and Gauss weight.
 !!TODO: Think about symmetric problems. 
-      jacobianGaussWeight=geometricInterpPointMetrics%jacobian*quadratureScheme%gaussWeights(gaussPointIdx)
+      CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+      CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+      jacobianGaussWeight=jacobian*gaussWeight
       
       !Loop over field components
       rowElementDOFIdx=0          
-      DO rowComponentIdx=1,dependentVariable%numberOfComponents
+      DO rowComponentIdx=1,numberOfRowsComponents
+        NULLIFY(rowsDomain)
+        CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+        NULLIFY(rowsDomainTopology)
+        CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+        NULLIFY(rowsDomainElements)
+        CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+        NULLIFY(rowsBasis)
+        CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+        CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
         !Loop over element rows
-        DO rowElementParameterIdx=1,dependentBasis%numberOfElementParameters
+        DO rowElementParameterIdx=1,numberOfRowsElementParameters
           rowElementDOFIdx=rowElementDOFIdx+1
+          DO xiIdx=1,numberOfXi
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
+              & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx,rowsdPhidXi(xiIdx1),err,error,*999)
+          ENDDO !xiIdx
           columnElementDOFIdx=0
           IF(equationsMatrix%updateMatrix) THEN
             !Loop over element columns
-            DO columnComponentIdx=1,dependentVariable%numberOfComponents
-              DO columnElementParameterIdx=1,dependentBasis%numberOfElementParameters
+            DO columnComponentIdx=1,numberOfColsComponents
+              NULLIFY(colsDomain)
+              CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+              NULLIFY(colsDomainTopology)
+              CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+              NULLIFY(colsDomainElements)
+              CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+              NULLIFY(colsBasis)
+              CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+              CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
+              CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+              DO columnElementParameterIdx=1,numberOfColsElementParameters
                 columnElementDOFIdx=columnElementDOFIdx+1
-                DO xiIdx1=1,dependentBasis%numberOfXi
-                  rowBasisFunctions(xiIdx1)=quadratureScheme%gaussBasisFunctions(rowElementParameterIdx, &
-                    & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx)
-                  columnBasisFunctions(xiIdx1)=quadratureScheme%gaussBasisFunctions(columnElementParameterIdx, &
-                    & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx)
+                DO xiIdx1=1,numberOfXi
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
+                    & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx,colsdPhidXi(xiIdx1),err,error,*999)
                 ENDDO !xiIdx1
-
                 sum=0.0_DP
-                SELECT CASE(equationsSet%specification(3))
+                SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
-                  DO rowXiIdx=1,dependentBasis%numberOfXi
-                    DO columnXiIdx=1,dependentBasis%numberOfXi
-                      sum=sum+rowBasisFunctions(rowXiIdx)*columnBasisFunctions(columnXiIdx)* &
+                  DO rowXiIdx=1,numberOfXi
+                    DO columnXiIdx=1,numberOfXi
+                      sum=sum+rowsdPhidXi(rowXiIdx)*colsdPhidXi(columnXiIdx)* &
                         & geometricInterpPointMetrics%gu(rowXiIdx,columnXiIdx)
                     ENDDO !columnXiIdx
                   ENDDO !rowXiIdx
                 CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
-                  DO xiIdx1=1,dependentBasis%numberOfXi
-                    DO xiIdx2=1,dependentBasis%numberOfXi
-                      DO xiIdx3=1,dependentBasis%numberOfXi
-                        sum=sum+conductivity(xiIdx1,xiIdx1)*columnBasisFunctions(xiIdx1)*rowBasisFunctions(xiIdx3)* &
-                          & geometricInterpPointMetrics%gu(xiIdx1,xiIdx3)
-                      ENDDO !xiIdx3
-                    ENDDO !xiIdx2
-                  ENDDO !xiIdx1
+                  DO rowIdx=1,numberOfXi
+                    DO columnXiIdx=1,numberOfXi
+                      DO xiIdx=1,numberOfXi
+                        sum=sum+conductivity(rowXiIdx,xiIdx)*rowsdPhidXi(rowIdx)*colsdPhidXi(columnXiIdx)* &
+                          & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
+                      ENDDO !xiIdx
+                    ENDDO !columnXiIdx
+                  ENDDO !rowXiIdx
                 CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
                   IF(rowComponentIdx==columnComponentIdx) THEN 
-                    DO rowXiIdx=1,dependentBasis%numberOfXi
-                      DO columnXiIdx=1,dependentBasis%numberOfXi
-                        sum=sum+kValue(rowComponentIdx)*rowBasisFunctions(rowXiIdx)*columnBasisFunctions(columnXiIdx)* &
+                    DO rowXiIdx=1,numberOfXi
+                      DO columnXiIdx=1,numberOfXi
+                        sum=sum+kValue(rowComponentIdx)*rowsdPhidXi(rowXiIdx)*colsdPhidXi(columnXiIdx)* &
                           & geometricInterpPointMetrics%gu(rowXiIdx,columnXiIdx)
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
                   ENDIF
                 CASE DEFAULT
-                  localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
+                  localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
                     & " is not valid for a Laplace equation type of a classical field equations set class."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
@@ -690,39 +678,57 @@ CONTAINS
         ENDDO !rowElementParameterIdx
       ENDDO !rowComponentIdx
       
-#ifdef TAUPROF
-      CALL TAU_PHASE_STOP(GAUSS_POINT_LOOP_PHASE)
-#endif
-      
     ENDDO !gaussPointIdx
           
     !Scale factor adjustment
     IF(dependentField%scalings%scalingType/=FIELD_NO_SCALING) THEN
-      NULLIFY(dependentInterpParameters)
-      CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,dependentVariableType, &
-        & dependentInterpParameters,err,error,*999)      
-      CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,dependentInterpParameters,err,error,*999)
+      NULLIFY(rowsInterpParameters)
+      CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsInterpParameters, &
+        & err,error,*999)
+      NULLIFY(colsInterpParameters)
+      CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
+        & err,error,*999)
+      CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,rowsInterpParameters,err,error,*999)
+      CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters,err,error,*999)
       !Loop over element rows
       rowElementDOFIdx=0          
-      DO rowComponentIdx=1,dependentVariable%numberOfComponents
-        DO rowElementParameterIdx=1,dependentBasis%numberOfElementParameters
+      DO rowComponentIdx=1,numberOfRowsComponents
+        NULLIFY(rowsDomain)
+        CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+        NULLIFY(rowsDomainTopology)
+        CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+        NULLIFY(rowsDomainElements)
+        CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+        NULLIFY(rowsBasis)
+        CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+        CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+        DO rowElementParameterIdx=1,numberOfRowsElementParameters
           rowElementDOFIdx=rowElementDOFIdx+1                    
           columnElementDOFIdx=0
           IF(equationsMatrix%updateMatrix) THEN
             !Loop over element columns
-            DO columnComponentIdx=1,dependentVariable%numberOfComponents
-              DO columnElementParameterIdx=1,dependentBasis%numberOfElementParameters
+            DO columnComponentIdx=1,numberOfColsComponents
+              NULLIFY(colsDomain)
+              CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+              NULLIFY(colsDomainTopology)
+              CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+              NULLIFY(colsDomainElements)
+              CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+              NULLIFY(colsBasis)
+              CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+              CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+              DO columnElementParameterIdx=1,numberOfColsElementParameters
                 columnElementDOFIdx=columnElementDOFIdx+1
                 equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                   & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
-                  & dependentInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
-                  & dependentInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
+                  & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
+                  & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
               ENDDO !columnElementParameterIdx
             ENDDO !columnComponentIdx
           ENDIF !update matrix
           IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)= &
             & rhsVector%elementVector%vector(rowElementDOFIdx)* &
-            & dependentInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
+            & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
         ENDDO !rowElementParameterIdx
       ENDDO !rowComponentIdx
     ENDIF ! scale factors
@@ -747,8 +753,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables %
-    INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfDependentComponents,numberOfDimensions, &
-      & numberOfIndependentComponents,numberOfMaterialsComponents
+    INTEGER(INTG) :: componentIdx,esSpecification,geometricMeshComponent,geometricScalingType, &
+      & numberOfDependentComponents,numberOfDimensions,numberOfIndependentComponents,numberOfMaterialsComponents
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
@@ -759,21 +765,16 @@ CONTAINS
     
     ENTERS("Laplace_EquationsSetSetup",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) &
-      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<3) &
-      & CALL FlagError("Equations set specification must have at least three entries for a Laplace type equations set.", &
-      & err,error,*999)
+    CALL EquationSet_SpecificationGet(equationSet,3,esSpecification,err,error,999)
 
-    SELECT CASE(equationsSet%specification(3))
+    SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE, &
       & EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE, &
       & EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
       !ok
     CASE DEFAULT
       localError="The third equations set specification of "// &
-        & TRIM(NumberToVstring(equationsSet%specification(3),"*",err,error))// &
+        & TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
         & " is not valid for a Laplace type of a classical field equations set."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -794,7 +795,7 @@ CONTAINS
           & " is invalid for a standard Laplace equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      SELECT CASE(equationsSet%specification(3))
+      SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
         CALL EquationsSet_LabelSet(equationsSet,"Standard Laplace equations set",err,error,*999)       
       CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
@@ -803,7 +804,7 @@ CONTAINS
         CALL EquationsSet_LabelSet(equationsSet,"Moving mesh Laplace equations set",err,error,*999)               
       CASE DEFAULT
         localError="The third equations set specification of "// &
-          & TRIM(NumberToVstring(equationsSet%specification(3),"*",err,error))// &
+          & TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
           & " is not valid for a Laplace type of a classical field equations set."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -844,7 +845,7 @@ CONTAINS
             & FIELD_DP_TYPE,err,error,*999)
           CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
             & FIELD_DP_TYPE,err,error,*999)
-          IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+          IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
             numberOfDependentComponents=numberOfDimensions
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
@@ -911,7 +912,7 @@ CONTAINS
             & err,error,*999)
           CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
           CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-          IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+          IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
             numberOfDependentComponents=numberOfDimensions
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
@@ -922,10 +923,10 @@ CONTAINS
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
               & err,error,*999)
           ENDIF
-          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
-            & numberOfDependentComponents,err,error,*999)
-          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
-            & numberOfDependentComponents,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfDependentComponents, &
+            & err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfDependentComponents, &
+            & err,error,*999)
           SELECT CASE(equationsSet%solutionMethod)
           CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
             DO componentIdx=1,numberOfDependentComponents
@@ -965,7 +966,7 @@ CONTAINS
       !
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
-        IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+        IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
           NULLIFY(geometricField)
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
           CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -1021,7 +1022,7 @@ CONTAINS
           ENDIF
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        IF(equationsSet%specification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
+        IF(esSpecification(3)==EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE) THEN
           IF(equationsSet%independent%independentFieldAutoCreated) &
             & CALL Field_CreateFinish(equationsSet%independent%independentField,err,error,*999)
           CALL Field_ParameterSetCreate(equationsSet%independent%independentField,FIELD_U_VARIABLE_TYPE, & 
@@ -1049,7 +1050,7 @@ CONTAINS
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
-        IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+        IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
           IF(equationsSet%materials%materialsFieldAutoCreated) THEN
             !Create the auto created materials field
             CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsSet%materials%materialsField, &
@@ -1058,21 +1059,12 @@ CONTAINS
             CALL Field_TypeSetAndLock(equationsSet%materials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
             NULLIFY(geometricDecomposition)
             CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
-            CALL Field_DecompositionSetAndLock(equationsSet%materials%materialsField,geometricDecomposition, &
-              & err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsSet%materials%materialsField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%materials%materialsField,geometricField,err,error,*999)
             CALL Field_NumberOfVariablesSetAndLock(equationsSet%materials%materialsField,1,err,error,*999)
-            CALL Field_VariableTypesSetAndLock(equationsSet%materials%materialsField,[FIELD_U_VARIABLE_TYPE], &
-              & err,error,*999)
-            CALL Field_VariableLabelSet(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE,"conductivity", &
-              & err,error,*999)
-            IF(numberOfDimensions==1) THEN
-              numberOfMaterialsComponents=1
-            ELSEIF(numberOfDimensions==2) THEN
-              numberOfMaterialsComponents=3
-            ELSEIF(numberOfDimensions==3) THEN
-              numberOfMaterialsComponents=6
-            ENDIF
+            CALL Field_VariableTypesSetAndLock(equationsSet%materials%materialsField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+            CALL Field_VariableLabelSet(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE,"Conductivity",err,error,*999)
+            numberOfMaterialComponents=NUMBER_OF_VOIGT(numberOfDimensions)
             !Set the number of materials components
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & numberOfMaterialsComponents,err,error,*999)        
@@ -1084,7 +1076,8 @@ CONTAINS
               CALL Field_ComponentMeshComponentSet(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE,1, &
                 & geometricMeshComponent,err,error,*999)
             ENDDO !components_idx            
-            SELECT CASE(equationsSet%solutionMethod)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)          
+            SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               DO componentIdx=1,numberOfMaterialsComponents                
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%materials%materialsField, &
@@ -1097,31 +1090,27 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
+            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
           ELSE
             !Check the user specified field
             CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
             CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            IF(numberOfDimensions==1) THEN
-              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-            ELSEIF(numberOfDimensions==2) THEN
-              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,3,err,error,*999)
-            ELSEIF(numberOfDimensions==3) THEN
-              CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,6,err,error,*999)
-            ENDIF
-            SELECT CASE(equationsSet%solutionMethod)
+            numberOfMaterialComponents=NUMBER_OF_VOIGT(numberOfDimensions)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfMaterialComponents, &
+              & err,error,*999)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)          
+            SELECT CASE(solutionMethod)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !do nothing
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -1135,22 +1124,22 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              localError="The solution method of "//TRIM(NumberToVString(equationsSet%solutionMethod,"*",err,error))// &
-                & " is invalid."
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ENDIF
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
+        IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) THEN
           IF(equationsSet%materials%materialsFieldAutoCreated) THEN
             CALL Field_CreateFinish(equationsSet%materials%materialsField,err,error,*999)
-            !Default conductivity values to 1.0
+            !Default conductivity values to 1.0 on the diagonal, 0.0 elsewhere
             CALL Field_NumberOfComponentsGet(equationsSet%geometry%geometricField,FIELD_U_VARIABLE_TYPE, &
               & numberOfDimensions,err,error,*999)
             DO componentIdx=1,numberOfDimensions
+              componentNumber=TENSOR_TO_VOIGT(componentIdx,componentIdx,numberOfDimensions)
               CALL Field_ComponentValuesInitialise(equationsSet%materials%materialsField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+                & FIELD_VALUES_SET_TYPE,componentNumber,1.0_DP,err,error,*999)
             ENDDO !componentIdx
           ENDIF
         ENDIF
@@ -1263,7 +1252,7 @@ CONTAINS
       ! Equations setup
       !
       CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
-      IF(equationsSet%specification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) &
+      IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE) &
         & CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1283,22 +1272,22 @@ CONTAINS
           !Create the equations mapping.
           NULLIFY(vectorMapping)
           CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-          CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
-          CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+          CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+          CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
             & err,error,*999)
-          CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
           NULLIFY(vectorMatrices)
           CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
           SELECT CASE(equations%sparsityType)
           CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-            CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
               & err,error,*999)
           CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
-            CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
               & err,error,*999)
-            CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
+            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
               & err,error,*999)
           CASE DEFAULT
             localError="The equations matrices sparsity type of "// &
@@ -1353,18 +1342,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: esSpecification(3)
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Laplace_EquationsSetSolutionMethodSet",err,error,*999)
+
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) &
-      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<3) &
-      & CALL FlagError("Equations set specification must have three entries for a Laplace type equations set.", &
-      & err,error,*999)
-    
-    SELECT CASE(equationsSet%specification(3))
+    SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE, &
       & EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE, &
       & EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
@@ -1386,7 +1371,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE DEFAULT
-      localError="Equations set subtype of "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
+      localError="Equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
         & " is not valid for a Laplace equation type of an classical field equations set class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1460,25 +1445,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
-    TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Laplace_ProblemSetup",err,error,*999)
 
-   IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)    
-    IF(.NOT.ALLOCATED(problem%specification)) &
-      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<3) &
-      & CALL FlagError("Problem specification must have three entries for a Laplace problem.",err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
-    SELECT CASE(problem%specIfication(3))
+    SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STANDARD_LAPLACE_SUBTYPE)
       !ok
     CASE DEFAULT
-      localError="The third problem specification of "//TRIM(NumberToVstring(problem%specification(3),"*",err,error))// &
+      localError="The third problem specification of "//TRIM(NumberToVstring(pSpecification(3),"*",err,error))// &
         & " is not valid for a Laplace type of a classical field problem."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1623,8 +1605,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Laplace_ProblemSpecificationSet",err,error,*999)
 

@@ -68,33 +68,13 @@ MODULE InterfaceAccessRoutines
 
   !Interfaces
 
-  INTERFACE INTERFACE_COORDINATE_SYSTEM_GET
-    MODULE PROCEDURE Interface_CoordinateSystemGet
-  END INTERFACE INTERFACE_COORDINATE_SYSTEM_GET
-
-  INTERFACE INTERFACE_DATA_POINTS_GET
-    MODULE PROCEDURE Interface_DataPointsGet
-  END INTERFACE INTERFACE_DATA_POINTS_GET
-
-  INTERFACE INTERFACE_NODES_GET
-    MODULE PROCEDURE Interface_NodesGet
-  END INTERFACE INTERFACE_NODES_GET
-
-  INTERFACE INTERFACE_USER_NUMBER_FIND
-    MODULE PROCEDURE Interface_UserNumberFind
-  END INTERFACE INTERFACE_USER_NUMBER_FIND
-
   PUBLIC Interface_AssertIsFinished,Interface_AssertNotFinished
 
   PUBLIC Interface_CoordinateSystemGet
 
-  PUBLIC INTERFACE_COORDINATE_SYSTEM_GET
-
   PUBLIC Interface_CoupledMeshGet
 
   PUBLIC Interface_DataPointsGet
-
-  PUBLIC INTERFACE_DATA_POINTS_GET
 
   PUBLIC Interface_FieldGet
 
@@ -110,19 +90,17 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_NodesGet
 
-  PUBLIC INTERFACE_NODES_GET
-
   PUBLIC Interface_ParentRegionGet
 
   PUBLIC Interface_PointsConnectivityGet
 
   PUBLIC Interface_UserNumberFind
 
-  PUBLIC INTERFACE_USER_NUMBER_FIND
-
   PUBLIC InterfaceMeshConnectivity_AssertIsFinished,InterfaceMeshConnectivity_AssertNotFinished
 
   PUBLIC InterfaceMeshConnectivity_BasisGet
+
+  PUBLIC InterfaceMeshConnectivity_CoupledElementNumberGet
 
   PUBLIC InterfaceMeshConnectivity_InterfaceGet
 
@@ -154,7 +132,9 @@ CONTAINS
  
     ENTERS("Interface_AssertIsFinished",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.interface%interfaceFinished) THEN
       localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -187,7 +167,9 @@ CONTAINS
  
     ENTERS("Interface_AssertNotFinished",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
+#endif    
 
     IF(interface%interfaceFinished) THEN
       localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -208,7 +190,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the coordinate system of an interface. \see OPENCMISS::Iron::cmfe_Interface_CoordinateSystemGet
+  !>Returns the coordinate system of an interface. \see OpenCMISS::Iron::cmfe_Interface_CoordinateSystemGet
   SUBROUTINE Interface_CoordinateSystemGet(interface,coordinateSystem,err,error,*)
 
     !Argument variables
@@ -217,23 +199,30 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Interface_CoordinateSystemGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
     IF(.NOT.INTERFACE%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*999)
-    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*999)
+#endif    
 
     coordinateSystem=>interface%coordinateSystem
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
       localError="Coordinate system is not associated for interface number "// &
-        & TRIM(NumberToVString(interface%userNumber,"*",err,error))
+        & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
       IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
         & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
       localError=localError//"."
-     CALL FlagError(localError,err,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif   
     
     EXITS("Interface_CoordinateSystemGet")
     RETURN
@@ -256,10 +245,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_CoupledMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(coupledMesh)) CALL FlagError("Coupled mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
     IF(coupledMeshIndex<1.OR.coupledMeshIndex>interface%numberOfCoupledMeshes) THEN
@@ -280,8 +272,11 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-
+#endif
+    
     coupledMesh=>interface%coupledMeshes(coupledMeshIndex)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(coupledMesh)) THEN
       localError="The coupled mesh for coupled mesh index "//TRIM(NumberToVString(coupledMeshIndex,"*",err,error))// &
         & " is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
@@ -290,6 +285,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("Interface_CoupledMeshGet")
     RETURN
@@ -303,7 +299,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the data points for a given user number in an interface. \see OPENCMISS::Iron::cmfe_Interface_DataPointsGet
+  !>Returns a pointer to the data points for a given user number in an interface. \see OpenCMISS::Iron::cmfe_Interface_DataPointsGet
   SUBROUTINE Interface_DataPointsGet(interface,userNumber,dataPoints,err,error,*)
 
     !Argument variables
@@ -313,17 +309,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_DataPointsGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interface%dataPointSets)) CALL FlagError("Interface data point sets is not associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+    IF(.NOT.ASSOCIATED(INTERFACE%dataPointSets)) CALL FlagError("Interface data point sets is not associated.",err,error,*999)
+#endif    
 
     NULLIFY(dataPoints)
     CALL DataPointSets_UserNumberFind(INTERFACE%dataPointSets,userNumber,dataPoints,err,error,*999)
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dataPoints)) THEN
       localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -332,6 +332,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("Interface_DataPointsGet")
     RETURN
@@ -345,7 +346,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a field for a given user number in an interface. \see OPENCMISS::Iron::cmfe_Interface_FieldGet
+  !>Returns a pointer to a field for a given user number in an interface. \see OpenCMISS::Iron::cmfe_Interface_FieldGet
   SUBROUTINE Interface_FieldGet(interface,userNumber,field,err,error,*)
 
     !Argument variables
@@ -355,17 +356,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_FieldGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interface%fields)) CALL FlagError("Interface fields is not associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+    IF(.NOT.ASSOCIATED(INTERFACE%fields)) CALL FlagError("Interface fields is not associated.",err,error,*998)
+#endif    
 
     NULLIFY(field)
-    CALL Field_UserNumberFind(userNumber,interface,field,err,error,*999)
+    CALL Field_UserNumberFind(userNumber,INTERFACE,field,err,error,*999)
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(field)) THEN
       localError="A field with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -374,6 +379,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Interface_FieldGet")
     RETURN
@@ -387,7 +393,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a interface condition for a given user number in an interface. \see OPENCMISS::Iron::cmfe_Interface_InterfaceConditionGet
+  !>Returns a pointer to a interface condition for a given user number in an interface. \see OpenCMISS::Iron::cmfe_Interface_InterfaceConditionGet
   SUBROUTINE Interface_InterfaceConditionGet(interface,userNumber,interfaceCondition,err,error,*)
 
     !Argument variables
@@ -397,18 +403,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_InterfaceConditionGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
     IF(.NOT.ASSOCIATED(interface%interfaceConditions)) &
       & CALL FlagError("Interface interface conditions is not associated.",err,error,*998)
+#endif    
 
     NULLIFY(interfaceCondition)
-    CALL InterfaceCondition_UserNumberFind(userNumber,interface,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_UserNumberFind(userNumber,INTERFACE,interfaceCondition,err,error,*999)
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceCondition)) THEN
       localError="An interface Condition with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -417,6 +427,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Interface_InterfaceConditionGet")
     RETURN
@@ -439,14 +450,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_InterfacesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaces)) CALL FlagError("Interfaces is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
+#endif    
 
     interfaces=>interface%interfaces
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaces)) THEN
       localError="Interfaces is not associated for interface number "// &
         & TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -455,6 +472,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Interface_InterfacesGet")
     RETURN
@@ -468,7 +486,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the mesh for a given user number in a interface. \see OPENCMISS::Iron::cmfe_Interface_MeshGet
+  !>Returns a pointer to the mesh for a given user number in a interface. \see OpenCMISS::Iron::cmfe_Interface_MeshGet
   SUBROUTINE Interface_MeshGet(interface,userNumber,mesh,err,error,*)
 
     !Argument variables
@@ -478,16 +496,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_MeshGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
     
     NULLIFY(mesh)
-    CALL Mesh_UserNumberFind(userNumber,interface,mesh,err,error,*999)
+    CALL Mesh_UserNumberFind(userNumber,INTERFACE,mesh,err,error,*999)
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " does not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -496,6 +518,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Interface_MeshGet")
     RETURN
@@ -518,15 +541,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_MeshConnectivityGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshConnectivity)) CALL FlagError("Mesh connectivity is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
     
     meshConnectivity=>interface%meshConnectivity
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshConnectivity)) THEN
       localError="Mesh connectivity is not associated on intereface number "// &
         & TRIM(NumberToVString(interface%userNumber,"*",err,error))
@@ -535,6 +563,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Interface_MeshConnectivityGet")
     RETURN
@@ -557,14 +586,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_MeshesGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(meshes)) CALL FlagError("Meshes is already associated.",err,error,*998)
-    CALL Interface_AssertIsFinished(interface,err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
  
     meshes=>interface%meshes
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(meshes)) THEN
       localError="Meshes is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
       IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
@@ -572,6 +607,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Interface_MeshesGet")
     RETURN
@@ -585,7 +621,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the nodes for a interface. \see OPENCMISS::Iron::cmfe_InterfaceNodesGet
+  !>Returns a pointer to the nodes for a interface. \see OpenCMISS::Iron::cmfe_Interface_NodesGet
   SUBROUTINE Interface_NodesGet(interface,nodes,err,error,*)
 
     !Argument variables
@@ -594,15 +630,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("Interface_NodesGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+#endif    
 
     nodes=>interface%nodes
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(nodes)) THEN
       localError="Nodes is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
       IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
@@ -610,6 +651,7 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("Interface_NodesGet")
     RETURN
@@ -632,20 +674,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_ParentRegionGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parentRegion)) CALL FlagError("Parent region is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
+#endif    
  
     parentRegion=>interface%parentRegion
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(parentRegion)) THEN
       localError="The parent region for interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-       
+#endif
+    
     EXITS("Interface_ParentRegionGet")
     RETURN
 999 NULLIFY(parentRegion)
@@ -667,20 +716,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Interface_PointConnectivityGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(pointsConnectivity)) CALL FlagError("Point connectivity is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
-    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*999)
-    
+#endif    
+    CALL Interface_AssertIsFinished(INTERFACE,err,error,*999)
+     
     pointsConnectivity=>interface%pointsConnectivity
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(pointsConnectivity)) THEN
       localError="Points connectivity is not associated on intereface number "// &
         & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Interface_PointsConnectivityGet")
     RETURN
@@ -705,32 +760,37 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: interfaceIdx
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("Interface_UserNumberFind",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     !Check input arguments
+    IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(parentRegion)) CALL FlagError("Parent region is not associated.",err,error,*999)
-    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(parentRegion%interfaces)) THEN
       localError="The interfaces on parent region number "// &
         & TRIM(NumberToVString(parentRegion%userNumber,"*",err,error))//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     !Get the interface from the user number
     NULLIFY(INTERFACE)
     IF(ALLOCATED(parentRegion%interfaces%interfaces)) THEN
       DO interfaceIdx=1,parentRegion%interfaces%numberOfInterfaces
-        IF(ASSOCIATED(parentRegion%interfaces%interfaces(interfaceIdx)%ptr)) THEN
-          IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%userNumber==userNumber) THEN
-            INTERFACE=>parentRegion%interfaces%interfaces(interfaceIdx)%ptr
-            EXIT
-          ENDIF
-        ELSE
+#ifdef WITH_PRECHECKS        
+        IF(.NOT.ASSOCIATED(parentRegion%interfaces%interfaces(interfaceIdx)%ptr)) THEN
           localError="The interface pointer in interfaces is not associated for interface index "// &
             & TRIM(NumberToVString(interfaceIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
+        ENDIF
+#endif        
+        IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%userNumber==userNumber) THEN
+          INTERFACE=>parentRegion%interfaces%interfaces(interfaceIdx)%ptr
+          EXIT
         ENDIF
       ENDDO !interfaceIdx
     ENDIF
@@ -758,7 +818,9 @@ CONTAINS
  
     ENTERS("InterfaceMeshConnectivity_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.interfaceMeshConnectivity%meshConnectivityFinished) THEN
       localError="Interface mesh connectivity "
@@ -795,7 +857,9 @@ CONTAINS
  
     ENTERS("InterfaceMeshConnectivity_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
 
     IF(interfaceMeshConnectivity%meshConnectivityFinished) THEN
       localError="Interface mesh connectivity "
@@ -832,13 +896,18 @@ CONTAINS
  
     ENTERS("InterfaceMeshConnectivity_BasisGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
       & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
 
     basis=>interfaceMeshConnectivity%basis
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(basis)) &
       & CALL FlagError("The interface mesh connectivity basis is not associated.",err,error,*999)
+#endif    
     
     EXITS("InterfaceMeshConnectivity_BasisGet")
     RETURN
@@ -847,6 +916,56 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMeshConnectivity_BasisGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the coupled element number for an interface element number and a couple mesh index for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_CoupledElementNumberGet(interfaceMeshConnectivity,interfaceElementNumber, &
+    & meshIndex,coupledElementNumber,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the coupled element for
+    INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The interface element number to get the coupled element number for
+    INTEGER(INTG), INTENT(IN) :: meshIndex !<The mesh index to get the coupled element number for.
+    INTEGER(INTG), INTENT(OUT) :: coupledElementNumber !<On exit, the coupled element number in the mesh.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfaceMeshConnectivity_CoupledElementNumberGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+    IF(interfaceElementNumber<1.OR.interfaceElementNumber>interfaceMeshConnectivity%numberOfInterfaceElements) THEN
+      localError="The specified interface element number of "//TRIM(NumberToVString(interfaceElementNumber,"*",err,error))// &
+        & " is invalid. The interface element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfInterfaceElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(meshIndex<1.OR.meshIndex>interfaceMeshConnectivity%numberOfCoupledMeshes) THEN
+      localError="The specified mesh index of "//TRIM(NumberToVString(meshIndex,"*",err,error))// &
+        & " is invalid. The mesh index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfCoupledMeshes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMeshConnectivity%elementConnectivity)) &
+      & CALL FlagError("The element connectivity array is not allocated for the interface mesh connectivity.",err,error,*999)
+#endif    
+
+    coupledElementNumber=interfaceMeshConnectivity%elementConnectivity(interfaceElementNumber,meshIndex)
+    
+    EXITS("InterfaceMeshConnectivity_CoupledElementNumberGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMeshConnectivity_CoupledElementNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_CoupledElementNumberGet
 
   !
   !=================================================================================================================================
@@ -864,13 +983,18 @@ CONTAINS
  
     ENTERS("InterfaceMeshConnectivity_InterfaceGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
       & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
 
     INTERFACE=>interfaceMeshConnectivity%INTERFACE
+
+#ifdef WITH_POSTCHECKS      
     IF(.NOT.ASSOCIATED(INTERFACE)) &
       & CALL FlagError("The interface mesh connectivity interface is not associated.",err,error,*999)
+#endif    
     
     EXITS("InterfaceMeshConnectivity_InterfaceGet")
     RETURN
@@ -896,13 +1020,18 @@ CONTAINS
  
     ENTERS("InterfaceMeshConnectivity_InterfaceMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceMesh)) CALL FlagError("Interface mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
       & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
 
     interfaceMesh=>interfaceMeshConnectivity%interfaceMesh
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceMesh)) &
       & CALL FlagError("The interface mesh connectivity interface mesh is not associated.",err,error,*999)
+#endif    
     
     EXITS("InterfaceMeshConnectivity_InterfaceMeshGet")
     RETURN
@@ -928,8 +1057,10 @@ CONTAINS
  
     ENTERS("InterfacePointsConnectivity_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
       & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.interfacePointsConnectivity%pointsConnectivityFinished) THEN
       localError="Interface points connectivity "
@@ -967,8 +1098,10 @@ CONTAINS
  
     ENTERS("InterfacePointsConnectivity_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
       & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+#endif    
 
     IF(interfacePointsConnectivity%pointsConnectivityFinished) THEN
       localError="Interface points connectivity "
@@ -1006,13 +1139,18 @@ CONTAINS
  
     ENTERS("InterfacePointsConnectivity_DataPointsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
       & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+#endif    
 
     dataPoints=>interfacePointsConnectivity%dataPoints
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dataPoints)) &
       & CALL FlagError("The interface points connectivity data points is not associated.",err,error,*999)
+#endif    
     
     EXITS("InterfacePointsConnectivity_DataPointsGet")
     RETURN
@@ -1038,13 +1176,18 @@ CONTAINS
  
     ENTERS("InterfacePointsConnectivity_InterfaceGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
       & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+#endif    
 
     INTERFACE=>interfacePointsConnectivity%INTERFACE
+
+#ifdef WITH_POSTCHECKS      
     IF(.NOT.ASSOCIATED(INTERFACE)) &
       & CALL FlagError("The interface points connectivity interface is not associated.",err,error,*999)
+#endif    
     
     EXITS("InterfacePointsConnectivity_InterfaceGet")
     RETURN
@@ -1070,13 +1213,18 @@ CONTAINS
  
     ENTERS("InterfacePointsConnectivity_InterfaceMeshGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceMesh)) CALL FlagError("Interface mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
       & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+#endif    
 
     interfaceMesh=>interfacePointsConnectivity%interfaceMesh
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceMesh)) &
       & CALL FlagError("The interface points connectivity interface mesh is not associated.",err,error,*999)
+#endif    
     
     EXITS("InterfacePointsConnectivity_InterfaceMeshGet")
     RETURN
