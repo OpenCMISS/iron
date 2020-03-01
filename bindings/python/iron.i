@@ -93,6 +93,7 @@
     temp_obj = PyUnicode_AsUTF8String($input);
     if (temp_obj != NULL) {
       $2 = PyString_AsString(temp_obj);
+      Py_XDECREF(temp_obj);
     } else {
       PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
       return NULL;
@@ -100,7 +101,7 @@
   } else {
     PyErr_SetString(PyExc_ValueError,"Expected a string");
     return NULL;
-  }
+  }  
 }
 
 /* String output */
@@ -198,6 +199,10 @@
 /* Input array of strings */
 %typemap(in,numinputs=1) (const int NumStrings, const int StringLength, const char *DummyStringList)(int len, int i, Py_ssize_t max_strlen, PyObject *o) {
   max_strlen = 0;
+  PyObject *temp_obj;
+  const char *str;
+  int l=0;
+
   if (!PySequence_Check($input)) {
     PyErr_SetString(PyExc_TypeError,"Expected a sequence");
     return NULL;
@@ -205,13 +210,23 @@
   len = PyObject_Length($input);
   for (i =0; i < len; i++) {
     o = PySequence_GetItem($input,i);
-    if (!PyString_Check(o)) {
+    if (PyString_Check(o)) {
+        l = PyString_Size(o)+1;
+    }
+    else if (PyUnicode_Check(o)) {
+%#if PY_VERSION_HEX < 0x03030000
+        l = PyUnicode_GetSize(o)+1;
+%#else
+        l = PyUnicode_GetLength(o)+1;
+%#endif
+    }
+    else {
       Py_XDECREF(o);
       PyErr_SetString(PyExc_ValueError,"Expected a sequence of strings");
       return NULL;
     } 
-    if (PyString_Size(o) > max_strlen) {
-      max_strlen = PyString_Size(o);
+    if (l > max_strlen) {
+      max_strlen = l;
     }
     Py_DECREF(o);
   }
@@ -223,7 +238,38 @@
   } else {
     for (i=0; i < len; i++) {
       o = PySequence_GetItem($input,i);
-      strncpy($3+i*max_strlen, PyString_AsString(o), PyString_Size(o)+1);
+
+      if (PyString_Check(o)) 
+      {
+          l = PyString_Size(o)+1;
+          str = PyString_AsString(o);
+      } 
+      else if (PyUnicode_Check(o)) 
+      {
+%#if PY_VERSION_HEX < 0x03030000
+         l = PyUnicode_GetSize(o)+1;
+%#else
+         l = PyUnicode_GetLength(o)+1;
+%#endif
+         temp_obj = PyUnicode_AsUTF8String(o);
+         if (temp_obj) {
+             str = PyString_AsString(temp_obj);
+         } 
+         else 
+         {
+             PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
+             Py_XDECREF(o);
+             return NULL;
+        }
+    }
+    else 
+    {
+         PyErr_SetString(PyExc_ValueError,"Expected a string");
+         Py_XDECREF(o);
+         return NULL;
+    }  
+
+      strncpy($3+i*max_strlen, str,l);
       Py_DECREF(o);
     }
   }
