@@ -461,9 +461,9 @@ CONTAINS
             
             !Precompute the number of iterations from total time span and time increment if it was not specified explicitely 
             IF(TIME_LOOP%NUMBER_OF_ITERATIONS==0) THEN
-              TIME_LOOP%NUMBER_OF_ITERATIONS=CEILING((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT)
+              TIME_LOOP%NUMBER_OF_ITERATIONS=NINT((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT)
             !If number of iterations was specified but does not match TIME_INCREMENT, e.g. TIME_INCREMENT is still at the default value, compute correct TIME_INCREMENT
-            ELSE IF(CEILING((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT) &
+            ELSE IF(NINT((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT) &
               & /= TIME_LOOP%NUMBER_OF_ITERATIONS) THEN
               TIME_LOOP%TIME_INCREMENT = (TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%NUMBER_OF_ITERATIONS
             ENDIF
