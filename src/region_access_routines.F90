@@ -460,7 +460,7 @@ CONTAINS
 
     !Argument variables
     TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the nodes for
-    TYPE(NODES_TYPE), POINTER :: nodes !<On exit, a pointer to the nodes for the region. Must not be associated on entry.
+    TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the nodes for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

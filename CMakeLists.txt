@@ -77,17 +77,32 @@ option(WITH_SCALAPACK "Build iron with SCALAPACK integration" ON)
 option(WITH_PETSC "Build iron with PETSC integration" ON)
 option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
 option(WITH_PROFILING "${PROJECT_NAME} - Build with profiling flags" OFF)
-CMAKE_DEPENDENT_OPTION(WITH_DIAGNOSTICS "Build iron with diagnostics support" ON
-                       "IS_DEBUG_BUILD" OFF)
+#CMAKE_DEPENDENT_OPTION(WITH_DIAGNOSTICS "Build iron with diagnostics support" ON "IS_DEBUG_BUILD" OFF)
+
+if(NOT DEFINED WITH_DIAGNOSTICS)
+    set(WITH_DIAGNOSTICS OFF)
+else()
+        set(WITH_DIAGNOSTICS ${WITH_DIAGNOSTICS})
+endif()
+OPTION(WITH_DIAGNOSTICS "Build iron with diagnostics support" OFF)
+
 option(PRINT_CONFIG_SUMMARY "Show a summary of the configuration." TRUE)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # Handle instrumentation choices.
-set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
-if (DEFINED FE_INSTRUMENTATION)
-    set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+#set(${OC_INSTRUMENTATION} ${${OC_INSTRUMENTATION}} PARENT_SCOPE)
+set(IRON_INSTRUMENTATION ${OPENCMISS_INSTRUMENTATION})
+
+if(NOT DEFINED OPENCMISS_INSTRUMENTATION)
+  set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
+  if (DEFINED FE_INSTRUMENTATION)
+      set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+  endif ()
+  set(OPENCMISS_INSTRUMENTATION ${IRON_INSTRUMENTATION})
 endif ()
-set(OPENCMISS_INSTRUMENTATION ${IRON_INSTRUMENTATION})
+
+
+message(STATUS "Iron::Instrumentation: ${OPENCMISS_INSTRUMENTATION}")
 
 # Bindings options
 find_program(VIRTUALENV_EXEC virtualenv)

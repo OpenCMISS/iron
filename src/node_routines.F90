@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,15 +42,15 @@
 !>
 
 !> This module handles all node routines.
-MODULE NODE_ROUTINES
+MODULE NodeRoutines
 
   USE BaseRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE STRINGS
-  USE TREES
-  USE TYPES
+  USE Kinds
+  USE Strings
+  USE Trees
+  USE Types
 
 #include "macros.h"  
 
@@ -66,43 +66,89 @@ MODULE NODE_ROUTINES
 
   !Interfaces
 
-  !>Starts the process of creating nodes for an interface or region
+  INTERFACE NODE_CHECK_EXISTS
+    MODULE PROCEDURE Node_CheckExists
+  END INTERFACE NODE_CHECK_EXISTS
+
   INTERFACE NODES_CREATE_START
-    MODULE PROCEDURE NODES_CREATE_START_REGION
-    MODULE PROCEDURE NODES_CREATE_START_INTERFACE
-  END INTERFACE !NODES_CREATE_START
+    MODULE PROCEDURE Nodes_CreateStartRegion
+    MODULE PROCEDURE Nodes_CreateStartInterface
+  END INTERFACE NODES_CREATE_START
+
+  !>Starts the process of creating nodes for an interface or region
+  INTERFACE Nodes_CreateStart
+    MODULE PROCEDURE Nodes_CreateStartRegion
+    MODULE PROCEDURE Nodes_CreateStartInterface
+  END INTERFACE Nodes_CreateStart
+
+  INTERFACE NODES_CREATE_FINISH
+    MODULE PROCEDURE Nodes_CreateFinish
+  END INTERFACE NODES_CREATE_FINISH
 
   !>Initialises nodes for an interface or region
-  INTERFACE NODES_INITIALISE
-    MODULE PROCEDURE NODES_INITIALISE_REGION
-    MODULE PROCEDURE NODES_INITIALISE_INTERFACE
-  END INTERFACE !NODES_INITIALIES
+  INTERFACE Nodes_Initialise
+    MODULE PROCEDURE Nodes_InitialiseRegion
+    MODULE PROCEDURE Nodes_InitialiseInterface
+  END INTERFACE Nodes_Initialise
+
+  INTERFACE NODES_LABEL_GET
+    MODULE PROCEDURE Nodes_LabelGetC
+    MODULE PROCEDURE Nodes_LabelGetVS
+  END INTERFACE NODES_LABEL_GET
 
   !>Gets the label for a node identified by a given global number.
-  INTERFACE NODES_LABEL_GET
-    MODULE PROCEDURE NODES_LABEL_GET_C
-    MODULE PROCEDURE NODES_LABEL_GET_VS
-  END INTERFACE !NODES_LABEL_SET
+  INTERFACE Nodes_LabelGet
+    MODULE PROCEDURE Nodes_LabelGetC
+    MODULE PROCEDURE Nodes_LabelGetVS
+  END INTERFACE Nodes_LabelGet
+
+   INTERFACE NODES_LABEL_SET
+    MODULE PROCEDURE Nodes_LabelSetC
+    MODULE PROCEDURE Nodes_LabelSetVS
+  END INTERFACE NODES_LABEL_SET
 
   !>Changes/sets the label for a node identified by a given global number.
-  INTERFACE NODES_LABEL_SET
-    MODULE PROCEDURE NODES_LABEL_SET_C
-    MODULE PROCEDURE NODES_LABEL_SET_VS
-  END INTERFACE !NODES_LABEL_SET
+  INTERFACE Nodes_LabelSet
+    MODULE PROCEDURE Nodes_LabelSetC
+    MODULE PROCEDURE Nodes_LabelSetVS
+  END INTERFACE Nodes_LabelSet
+
+  INTERFACE NODES_NUMBER_OF_NODES_GET
+    MODULE PROCEDURE Nodes_NumberOfNodesGet
+  END INTERFACE NODES_NUMBER_OF_NODES_GET
+
+  INTERFACE NODES_USER_NUMBER_GET
+    MODULE PROCEDURE Nodes_UserNumberGet
+  END INTERFACE NODES_USER_NUMBER_GET
+
+  INTERFACE NODES_USER_NUMBER_SET
+    MODULE PROCEDURE Nodes_UserNumberSet
+  END INTERFACE NODES_USER_NUMBER_SET
 
   PUBLIC NODE_CHECK_EXISTS
 
-  PUBLIC NODES_CREATE_FINISH,NODES_CREATE_START,NODES_DESTROY
+  PUBLIC Node_CheckExists
+
+  PUBLIC NODES_CREATE_FINISH,NODES_CREATE_START
+
+  PUBLIC Nodes_CreateFinish,Nodes_CreateStart
+
+  PUBLIC Nodes_Destroy
 
   PUBLIC NODES_LABEL_GET,NODES_LABEL_SET
 
+  PUBLIC Nodes_LabelGet,Nodes_LabelSet
+
   PUBLIC NODES_NUMBER_OF_NODES_GET
+
+  PUBLIC NODES_NumberOfNodesGet
   
   PUBLIC NODES_USER_NUMBER_GET,NODES_USER_NUMBER_SET
-  
-  PUBLIC NodesUserNumbersAllSet
 
-  !PUBLIC NODES_NUMBER_OF_VERSIONS_SET
+  PUBLIC Nodes_UserNumberGet,Nodes_UserNumberSet
+  
+  PUBLIC Nodes_UserNumbersAllSet
+
 
 CONTAINS
 
@@ -111,741 +157,693 @@ CONTAINS
   !
 
   !>Checks that a user node number is defined on the specified region.
-  SUBROUTINE NODE_CHECK_EXISTS(NODES,USER_NUMBER,NODE_EXISTS,GLOBAL_NUMBER,ERR,ERROR,*)
+  SUBROUTINE Node_CheckExists(nodes,userNumber,nodeExists,globalNumber,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to check
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user node number to check if it exists
-    LOGICAL, INTENT(OUT) :: NODE_EXISTS !<On exit, is .TRUE. if the node user number exists in the region, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: GLOBAL_NUMBER !<On exit, if the node exists the global number corresponding to the user node number. If the node does not exist then global number will be 0.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to check
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user node number to check if it exists
+    LOGICAL, INTENT(OUT) :: nodeExists !<On exit, is .TRUE. if the node user number exists in the region, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, if the node exists the global number corresponding to the user node number. If the node does not exist then global number will be 0.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
    
-    ENTERS("NODE_CHECK_EXISTS",ERR,ERROR,*999)
+    ENTERS("Node_CheckExists",err,error,*999)
 
-    NODE_EXISTS=.FALSE.
-    GLOBAL_NUMBER=0
-    IF(ASSOCIATED(NODES)) THEN
-      NULLIFY(TREE_NODE)
-      CALL TREE_SEARCH(NODES%NODES_TREE,USER_NUMBER,TREE_NODE,ERR,ERROR,*999)
-      IF(ASSOCIATED(TREE_NODE)) THEN
-        CALL TREE_NODE_VALUE_GET(NODES%NODES_TREE,TREE_NODE,GLOBAL_NUMBER,ERR,ERROR,*999)
-        NODE_EXISTS=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+
+    nodeExists=.FALSE.
+    globalNumber=0
+    NULLIFY(treeNode)
+    CALL Tree_Search(nodes%nodesTree,userNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(nodes%nodesTree,treeNode,globalNumber,err,error,*999)
+      nodeExists=.TRUE.
     ENDIF
 
-    EXITS("NODE_CHECK_EXISTS")
+    EXITS("Node_CheckExists")
     RETURN
-999 ERRORSEXITS("NODE_CHECK_EXISTS",ERR,ERROR)
-    RETURN 1   
-  END SUBROUTINE NODE_CHECK_EXISTS
+999 ERRORSEXITS("Node_CheckExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Node_CheckExists
   
   !
   !================================================================================================================================
   !
 
   !>Finalises a node and deallocates all memory
-  SUBROUTINE NODE_FINALISE(NODE,ERR,ERROR,*)
+  SUBROUTINE Node_Finalise(node,err,error,*)
     
     !Argument variables
-    TYPE(NODE_TYPE),INTENT(OUT) :: NODE !<The node to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodeType), INTENT(OUT) :: node !<The node to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("NODE_FINALISE",ERR,ERROR,*999)
+    ENTERS("Node_Finalise",err,error,*999)
 
-    NODE%GLOBAL_NUMBER=0
-    NODE%USER_NUMBER=0
-    NODE%LABEL=""
+    node%globalNumber=0
+    node%userNumber=0
+    node%label=""
     
-    EXITS("NODE_FINALISE")
+    EXITS("Node_Finalise")
     RETURN
-999 ERRORSEXITS("NODE_FINALISE",ERR,ERROR)
-    RETURN 1   
-  END SUBROUTINE NODE_FINALISE
+999 ERRORSEXITS("Node_Finalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Node_Finalise
   
   !
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating nodes in the region. \see OPENCMISS::CMISSNodesCreateFinish
-  SUBROUTINE NODES_CREATE_FINISH(NODES,ERR,ERROR,*)
+  !>Initialises a node 
+  SUBROUTINE Node_Initialise(node,err,error,*)
+    
+    !Argument variables
+    TYPE(NodeType), INTENT(OUT) :: node !<The node to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Node_Initialise",err,error,*999)
+
+    node%globalNumber=0
+    node%userNumber=0
+    node%label=""
+    
+    EXITS("Node_Initialise")
+    RETURN
+999 ERRORSEXITS("Node_Initialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Node_Initialise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the process of creating nodes in the region. \see OpenCMISS::Iron::cmfe_Nodes_CreateFinish
+  SUBROUTINE Nodes_CreateFinish(nodes,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to be finished
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to be finished
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: np
+    INTEGER(INTG) :: nodeIdx
     
-    ENTERS("NODES_CREATE_FINISH",ERR,ERROR,*999)
+    ENTERS("Nodes_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        CALL FlagError("Nodes have already been finished.",ERR,ERROR,*999)
-      ELSE
-        NODES%NODES_FINISHED=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(nodes%nodesFinished) CALL FlagError("Nodes have already been finished.",err,error,*999)
     
-    IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Number of nodes = ",NODES%NUMBER_OF_NODES,ERR,ERROR,*999)
-      DO np=1,NODES%NUMBER_OF_NODES
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Node = ",np,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Global number    = ",NODES%NODES(np)%GLOBAL_NUMBER, &
-          & ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    User number      = ",NODES%NODES(np)%USER_NUMBER, &
-          & ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Label            = ",NODES%NODES(np)%LABEL, &
-          & ERR,ERROR,*999)
-      ENDDO !np
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"User->Global number tree",ERR,ERROR,*999)
-      CALL TREE_OUTPUT(DIAGNOSTIC_OUTPUT_TYPE,NODES%NODES_TREE,ERR,ERROR,*999)
+    nodes%nodesFinished=.TRUE.
+    
+    IF(diagnostics1) THEN
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number of nodes = ",nodes%numberOfNodes,err,error,*999)
+      DO nodeIdx=1,nodes%numberOfNodes
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Node = ",nodeIdx,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global number    = ",nodes%nodes(nodeIdx)%globalNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    User number      = ",nodes%nodes(nodeIdx)%userNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Label            = ",nodes%nodes(nodeIdx)%label,err,error,*999)
+      ENDDO !nodeIdx
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"User->Global number tree:",err,error,*999)
+      CALL Tree_Output(DIAGNOSTIC_OUTPUT_TYPE,nodes%nodesTree,err,error,*999)
     ENDIF
 
-    EXITS("NODES_CREATE_FINISH")
+    EXITS("Nodes_CreateFinish")
     RETURN
-999 ERRORSEXITS("NODES_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("Nodes_CreateFinish",err,error)
     RETURN 1
    
-  END SUBROUTINE NODES_CREATE_FINISH
+  END SUBROUTINE Nodes_CreateFinish
     
   !
   !================================================================================================================================
   !
 
   !>Starts the process of creating generic nodes.
-  SUBROUTINE NODES_CREATE_START_GENERIC(NODES,NUMBER_OF_NODES,ERR,ERROR,*)
+  SUBROUTINE Nodes_CreateStartGeneric(nodes,numberOfNodes,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<The nodes pointer
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_NODES !<The number of nodes to create
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<The nodes pointer
+    INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of nodes to create
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: INSERT_STATUS,np
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: insertStatus,nodeIdx
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NODES_CREATE_START_GENERIC",ERR,ERROR,*999)
+    ENTERS("Nodes_CreateStartGeneric",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NUMBER_OF_NODES>0) THEN
-        ALLOCATE(NODES%NODES(NUMBER_OF_NODES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate nodes nodes.",ERR,ERROR,*999)
-        NODES%NUMBER_OF_NODES=NUMBER_OF_NODES
-        CALL TREE_CREATE_START(NODES%NODES_TREE,ERR,ERROR,*999)
-        CALL TREE_INSERT_TYPE_SET(NODES%NODES_TREE,TREE_NO_DUPLICATES_ALLOWED,ERR,ERROR,*999)
-        CALL TREE_CREATE_FINISH(NODES%NODES_TREE,ERR,ERROR,*999)
-        !Set default node numbers
-        DO np=1,NODES%NUMBER_OF_NODES
-          NODES%NODES(np)%GLOBAL_NUMBER=np
-          NODES%NODES(np)%USER_NUMBER=np
-          NODES%NODES(np)%LABEL=""
-          CALL TREE_ITEM_INSERT(NODES%NODES_TREE,np,np,INSERT_STATUS,ERR,ERROR,*999)
-        ENDDO !np
-      ELSE
-        LOCAL_ERROR="The specified number of nodes of "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_NODES,"*",ERR,ERROR))// &
-          & " is invalid. The number of nodes must be > 0."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    
+    IF(numberOfNodes<=0) THEN
+      localError="The specified number of nodes of "//TRIM(NumberToVString(numberOfNodes,"*",err,error))// &
+        & " is invalid. The number of nodes must be > 0."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_CREATE_START_GENERIC")
+    ALLOCATE(nodes%nodes(numberOfNodes),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate nodes nodes.",err,error,*999)
+    nodes%numberOfNodes=numberOfNodes
+    CALL Tree_CreateStart(nodes%nodesTree,err,error,*999)
+    CALL Tree_InsertTypeSet(nodes%nodesTree,TREE_NO_DUPLICATES_ALLOWED,err,error,*999)
+    CALL Tree_CreateFinish(nodes%nodesTree,err,error,*999)
+    !Set default node numbers
+    DO nodeIdx=1,nodes%numberOfNodes
+      CALL Node_Initialise(nodes%nodes(nodeIdx),err,error,*999)
+      nodes%nodes(nodeIdx)%globalNumber=nodeIdx
+      nodes%nodes(nodeIdx)%userNumber=nodeIdx
+      CALL Tree_ItemInsert(nodes%nodesTree,nodeIdx,nodeIdx,insertStatus,err,error,*999)
+    ENDDO !nodeIdx
+    
+    EXITS("Nodes_CreateStartGeneric")
     RETURN
-999 ERRORSEXITS("NODES_CREATE_START_GENERIC",ERR,ERROR)
+999 ERRORSEXITS("Nodes_CreateStartGeneric",err,error)
     RETURN 1
     
-  END SUBROUTINE NODES_CREATE_START_GENERIC
+  END SUBROUTINE Nodes_CreateStartGeneric
 
   !
   !================================================================================================================================
   !
 
-  !>Starts the process of creating nodes in an interface.
-  SUBROUTINE NODES_CREATE_START_INTERFACE(INTERFACE,NUMBER_OF_NODES,NODES,ERR,ERROR,*)
+  !>Starts the process of creating nodes in an interface. \see OpenCMISS::Iron::cmfe_Nodes_CreateStart
+  SUBROUTINE Nodes_CreateStartInterface(interface,numberOfNodes,nodes,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface in which to create the nodes
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_NODES !<The number of nodes to create
-    TYPE(NODES_TYPE), POINTER :: NODES !<On exit, a pointer to the created nodes. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface in which to create the nodes
+    INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of nodes to create
+    TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the created nodes. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("NODES_CREATE_START_INTERFACE",ERR,ERROR,*998)
+    ENTERS("Nodes_CreateStartInterface",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(NODES)) THEN
-        CALL FlagError("Nodes is already associated.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(INTERFACE%NODES)) THEN
-          CALL FlagError("Interface already has nodes associated.",ERR,ERROR,*998)
-        ELSE
-          !Initialise the nodes for the interface
-          CALL NODES_INITIALISE(INTERFACE,ERR,ERROR,*999)
-          !Create the nodes 
-          CALL NODES_CREATE_START_GENERIC(INTERFACE%NODES,NUMBER_OF_NODES,ERR,ERROR,*999)
-          !Return the pointer        
-          NODES=>INTERFACE%NODES
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(ASSOCIATED(interface%nodes)) CALL FlagError("Interface already has nodes associated.",err,error,*998)
+    IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*999)
+        
+    !Initialise the nodes for the interface
+    CALL Nodes_Initialise(interface,err,error,*999)
+    !Create the nodes 
+    CALL Nodes_CreateStartGeneric(interface%nodes,numberOfNodes,err,error,*999)
+    !Return the pointer        
+    nodes=>interface%nodes
     
-    EXITS("NODES_CREATE_START_INTERFACE")
+    EXITS("Nodes_CreateStartInterface")
     RETURN
-999 CALL NODES_FINALISE(INTERFACE%NODES,DUMMY_ERR,DUMMY_ERROR,*998)    
-998 ERRORSEXITS("NODES_CREATE_START_INTERFACE",ERR,ERROR)
+999 CALL Nodes_Finalise(interface%nodes,dummyErr,dummyError,*998)    
+998 ERRORSEXITS("Nodes_CreateStartInterface",err,error)
     RETURN 1
    
-  END SUBROUTINE NODES_CREATE_START_INTERFACE
+  END SUBROUTINE Nodes_CreateStartInterface
 
   !
   !================================================================================================================================
   !
 
-  !>Starts the process of creating nodes in the region.  \see OPENCMISS::CMISSNodesCreateStart
-  SUBROUTINE NODES_CREATE_START_REGION(REGION,NUMBER_OF_NODES,NODES,ERR,ERROR,*)
+  !>Starts the process of creating nodes in the region.  \see OpenCMISS::Iron::cmfe_Nodes_CreateStart
+  SUBROUTINE Nodes_CreateStartRegion(region,numberOfNodes,nodes,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region in which to create the nodes
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_NODES !<The number of nodes to create
-    TYPE(NODES_TYPE), POINTER :: NODES !<On exit, a pointer to the created nodes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region in which to create the nodes
+    INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of nodes to create
+    TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the created nodes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("NODES_CREATE_START_REGION",ERR,ERROR,*998)
+    ENTERS("Nodes_CreateStartRegion",err,error,*998)
 
-    NULLIFY(NODES)
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(REGION%NODES)) THEN
-        CALL FlagError("Region already has nodes associated.",ERR,ERROR,*998)
-      ELSE
-        IF(ASSOCIATED(NODES)) THEN
-          CALL FlagError("Nodes is already associated.",ERR,ERROR,*998)
-        ELSE
-          !Initialise the nodes for the region
-          CALL NODES_INITIALISE(REGION,ERR,ERROR,*999)
-          !Create the generic nodes
-          CALL NODES_CREATE_START_GENERIC(REGION%NODES,NUMBER_OF_NODES,ERR,ERROR,*999)
-          !Return the pointer        
-          NODES=>REGION%NODES
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(ASSOCIATED(region%nodes)) CALL FlagError("Region already has nodes associated.",err,error,*998)
+    IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
     
-    EXITS("NODES_CREATE_START_REGION")
+    !Initialise the nodes for the region    
+    CALL Nodes_Initialise(region,err,error,*999)
+    !Create the generic nodes
+    CALL Nodes_CreateStartGeneric(region%nodes,numberOfNodes,err,error,*999)
+    !Return the pointer        
+    nodes=>region%nodes
+   
+    EXITS("Nodes_CreateStartRegion")
     RETURN
-999 CALL NODES_FINALISE(REGION%NODES,DUMMY_ERR,DUMMY_ERROR,*998)    
-998 ERRORSEXITS("NODES_CREATE_START_REGION",ERR,ERROR)
+999 CALL Nodes_Finalise(region%nodes,dummyErr,dummyError,*998)    
+998 ERRORSEXITS("Nodes_CreateStartRegion",err,error)
     RETURN 1
    
-  END SUBROUTINE NODES_CREATE_START_REGION
+  END SUBROUTINE Nodes_CreateStartRegion
 
   !
   !================================================================================================================================
   !
 
-  !>Destroys nodes. \see OPENCMISS::CMISSNodesDestroy
-  SUBROUTINE NODES_DESTROY(NODES,ERR,ERROR,*)
+  !>Destroys nodes. \see OpenCMISS::Iron::cmfe_Nodes_Destroy
+  SUBROUTINE Nodes_Destroy(nodes,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("NODES_DESTROY",ERR,ERROR,*999)
+    ENTERS("Nodes_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(ASSOCIATED(NODES%REGION)) THEN
-        NULLIFY(NODES%REGION%NODES)
-      ELSE
-        IF(ASSOCIATED(NODES%INTERFACE)) THEN
-          NULLIFY(NODES%INTERFACE%NODES)
-        ELSE
-          CALL FlagError("Nodes region and interface are not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-      CALL NODES_FINALISE(NODES,ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    
+    IF(ASSOCIATED(nodes%region)) THEN
+      NULLIFY(nodes%region%nodes)
     ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+      IF(ASSOCIATED(nodes%interface)) THEN
+        NULLIFY(nodes%interface%nodes)
+      ELSE
+        CALL FlagError("Nodes region and interface are not associated.",err,error,*999)
+      ENDIF
     ENDIF
     
-    EXITS("NODES_DESTROY")
+    CALL Nodes_Finalise(nodes,err,error,*999)
+    
+    EXITS("Nodes_Destroy")
     RETURN
-999 ERRORSEXITS("NODES_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("Nodes_Destroy",err,error)
     RETURN 1
    
-  END SUBROUTINE NODES_DESTROY
+  END SUBROUTINE Nodes_Destroy
     
   !
   !===============================================================================================================================
   !
 
   !>Finalises the nodes and deallocates any memory. 
-  SUBROUTINE NODES_FINALISE(NODES,ERR,ERROR,*)
+  SUBROUTINE Nodes_Finalise(nodes,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: np
+    INTEGER(INTG) :: nodeIdx
 
-    ENTERS("NODES_FINALISE",ERR,ERROR,*999)
+    ENTERS("Nodes_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(ALLOCATED(NODES%NODES)) THEN
-        DO np=1,SIZE(NODES%NODES,1)
-          CALL NODE_FINALISE(NODES%NODES(np),ERR,ERROR,*999)
-        ENDDO !np
-        DEALLOCATE(NODES%NODES)
+    IF(ASSOCIATED(nodes)) THEN
+      IF(ALLOCATED(nodes%nodes)) THEN
+        DO nodeIdx=1,SIZE(nodes%nodes,1)
+          CALL Node_Finalise(nodes%nodes(nodeIdx),err,error,*999)
+        ENDDO !nodeIdx
+        DEALLOCATE(nodes%nodes)
       ENDIF
-      IF(ASSOCIATED(NODES%NODES_TREE)) CALL TREE_DESTROY(NODES%NODES_TREE,ERR,ERROR,*999)
-      DEALLOCATE(NODES)
+      IF(ASSOCIATED(nodes%nodesTree)) CALL Tree_Destroy(nodes%nodesTree,err,error,*999)
+      DEALLOCATE(nodes)
     ENDIF
     
-    EXITS("NODES_FINALISE")
+    EXITS("Nodes_Finalise")
     RETURN
-999 ERRORSEXITS("NODES_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Nodes_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE NODES_FINALISE
+    
+  END SUBROUTINE Nodes_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the nodes.
-  SUBROUTINE NODES_INITIALISE_GENERIC(NODES,ERR,ERROR,*)
+  SUBROUTINE Nodes_InitialiseGeneric(nodes,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("NODES_INITIALISE_GENERIC",ERR,ERROR,*999)
+    ENTERS("Nodes_InitialiseGeneric",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      NULLIFY(NODES%REGION)
-      NULLIFY(NODES%INTERFACE)
-      NODES%NODES_FINISHED=.FALSE.
-      NODES%NUMBER_OF_NODES=0
-      NULLIFY(NODES%NODES_TREE)
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
     
-    EXITS("NODES_INITIALISE_GENERIC")
+    NULLIFY(nodes%region)
+    NULLIFY(nodes%interface)
+    nodes%nodesFinished=.FALSE.
+    nodes%numberOfNodes=0
+    NULLIFY(nodes%nodesTree)
+   
+    EXITS("Nodes_InitialiseGeneric")
     RETURN
-999 ERRORSEXITS("NODES_INITIALISE_GENERIC",ERR,ERROR)
+999 ERRORSEXITS("Nodes_InitialiseGeneric",err,error)
     RETURN 1
-  END SUBROUTINE NODES_INITIALISE_GENERIC
+    
+  END SUBROUTINE Nodes_InitialiseGeneric
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the nodes in a given interface.
-  SUBROUTINE NODES_INITIALISE_INTERFACE(INTERFACE,ERR,ERROR,*)
+  SUBROUTINE Nodes_InitialiseInterface(INTERFACE,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to initialise the nodes for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to initialise the nodes for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("NODES_INITIALISE_INTERFACE",ERR,ERROR,*999)
+    ENTERS("Nodes_InitialiseInterface",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(INTERFACE%NODES)) THEN
-        CALL FlagError("Interface already has associated nodes.",ERR,ERROR,*999)
-      ELSE
-        ALLOCATE(INTERFACE%NODES,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate interface nodes.",ERR,ERROR,*999)
-        CALL NODES_INITIALISE_GENERIC(INTERFACE%NODES,ERR,ERROR,*999)
-        INTERFACE%NODES%INTERFACE=>INTERFACE
-      ENDIF
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(ASSOCIATED(interface%nodes)) CALL FlagError("Interface already has associated nodes.",err,error,*998)
     
-    EXITS("NODES_INITIALISE_INTERFACE")
+    ALLOCATE(interface%nodes,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface nodes.",err,error,*999)
+    CALL Nodes_InitialiseGeneric(interface%nodes,err,error,*999)
+    interface%nodes%interface=>interface
+    
+    EXITS("Nodes_InitialiseInterface")
     RETURN
-999 ERRORSEXITS("NODES_INITIALISE_INTERFACE",ERR,ERROR)
+999 CALL Nodes_Finalise(interface%nodes,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Nodes_InitialiseInterface",err,error)
     RETURN 1
     
-  END SUBROUTINE NODES_INITIALISE_INTERFACE
+  END SUBROUTINE Nodes_InitialiseInterface
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the nodes in a given region.
-  SUBROUTINE NODES_INITIALISE_REGION(REGION,ERR,ERROR,*)
+  SUBROUTINE Nodes_InitialiseRegion(region,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to initialise the nodes for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to initialise the nodes for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("NODES_INITIALISE_REGION",ERR,ERROR,*999)
+    ENTERS("Nodes_InitialiseRegion",err,error,*998)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(REGION%NODES)) THEN
-        CALL FlagError("Region has associated nodes.",ERR,ERROR,*999)
-      ELSE
-        ALLOCATE(REGION%NODES,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate region nodes.",ERR,ERROR,*999)
-        CALL NODES_INITIALISE_GENERIC(REGION%NODES,ERR,ERROR,*999)
-        REGION%NODES%REGION=>REGION
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(ASSOCIATED(region%nodes)) CALL FlagError("Region has associated nodes.",err,error,*998)
     
-    EXITS("NODES_INITIALISE_REGION")
+    ALLOCATE(region%nodes,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate region nodes.",err,error,*999)
+    CALL Nodes_InitialiseGeneric(region%nodes,err,error,*999)
+    region%nodes%region=>region
+          
+    EXITS("Nodes_InitialiseRegion")
     RETURN
-999 ERRORSEXITS("NODES_INITIALISE_REGION",ERR,ERROR)
+999 CALL Nodes_Finalise(region%nodes,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Nodes_InitialiseRegion",err,error)
     RETURN 1
-  END SUBROUTINE NODES_INITIALISE_REGION
+    
+  END SUBROUTINE Nodes_InitialiseRegion
 
   !
   !================================================================================================================================
   !
 
-  !>Gets the character label for a node identified by a given global number. \see OPENCMISS::CMISSNodesLabelGet
-  SUBROUTINE NODES_LABEL_GET_C(NODES,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Gets the character label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelGet
+  SUBROUTINE Nodes_LabelGetC(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to get the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the label for
-    CHARACTER(LEN=*), INTENT(OUT) :: LABEL !<On exit, the label of the specified global node
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to get the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On exit, the label of the specified global node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER :: C_LENGTH,VS_LENGTH
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER :: cLength,vsLength
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("NODES_LABEL_GET_C",ERR,ERROR,*999)
+    ENTERS("Nodes_LabelGetC",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=NODES%NUMBER_OF_NODES) THEN
-          C_LENGTH=LEN(LABEL)
-          VS_LENGTH=LEN_TRIM(NODES%NODES(GLOBAL_NUMBER)%LABEL)
-          IF(C_LENGTH>VS_LENGTH) THEN
-            LABEL=CHAR(LEN_TRIM(NODES%NODES(GLOBAL_NUMBER)%LABEL))
-          ELSE
-            LABEL=CHAR(NODES%NODES(GLOBAL_NUMBER)%LABEL,C_LENGTH)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The specified global node number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global node number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(NODES%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Nodes have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(.NOT.nodes%nodesFinished) CALL FlagError("Nodes have not been finished.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>nodes%numberOfNodes) THEN
+      localError="The specified global node number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global node number should be between 1 and "// &
+        & TRIM(NumberToVString(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_LABEL_GET_C")
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(nodes%nodes(globalNumber)%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(LEN_TRIM(nodes%nodes(globalNumber)%label))
+    ELSE
+      label=CHAR(nodes%nodes(globalNumber)%label,cLength)
+    ENDIF
+    
+    EXITS("Nodes_LabelGetC")
     RETURN
-999 ERRORSEXITS("NODES_LABEL_GET_C",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_LabelGetC",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_LABEL_GET_C
+  END SUBROUTINE Nodes_LabelGetC
         
   !
   !================================================================================================================================
   !
 
-  !>Gets the varying string label for a node identified by a given global number. \see OPENCMISS::CMISSNodesLabelGet
-  SUBROUTINE NODES_LABEL_GET_VS(NODES,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Gets the varying string label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelGet
+  SUBROUTINE Nodes_LabelGetVS(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to get the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the label for
-    TYPE(VARYING_STRING), INTENT(OUT) :: LABEL !<On exit, the label of the specified global node
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to get the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On exit, the label of the specified global node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("NODES_LABEL_GET_VS",ERR,ERROR,*999)
+    ENTERS("Nodes_LabelGetVS",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=NODES%NUMBER_OF_NODES) THEN
-          LABEL=NODES%NODES(GLOBAL_NUMBER)%LABEL
-        ELSE
-          LOCAL_ERROR="The specified global node number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global node number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(NODES%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Nodes have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(.NOT.nodes%nodesFinished) CALL FlagError("Nodes have not been finished.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>nodes%numberOfNodes) THEN
+      localError="The specified global node number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global node number should be between 1 and "// &
+        & TRIM(NumberToVString(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_LABEL_GET_VS")
+    label=nodes%nodes(globalNumber)%label
+    
+    EXITS("Nodes_LabelGetVS")
     RETURN
-999 ERRORSEXITS("NODES_LABEL_GET_VS",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_LabelGetVS",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_LABEL_GET_VS
+  END SUBROUTINE Nodes_LabelGetVS
         
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the character label for a node identified by a given global number. \see OPENCMISS::CMISSNodesLabelSet
-  SUBROUTINE NODES_LABEL_SET_C(NODES,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Changes/sets the character label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelSet
+  SUBROUTINE Nodes_LabelSetC(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to set the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the label for
-    CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The label to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to set the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to set the label for
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("NODES_LABEL_SET_C",ERR,ERROR,*999)
+    ENTERS("Nodes_LabelSetC",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        CALL FlagError("Nodes have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=NODES%NUMBER_OF_NODES) THEN
-          NODES%NODES(GLOBAL_NUMBER)%LABEL=LABEL
-        ELSE
-          LOCAL_ERROR="The specified global node number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global node number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(NODES%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>nodes%numberOfNodes) THEN
+      localError="The specified global node number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global node number should be between 1 and "// &
+        & TRIM(NumberToVString(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_LABEL_SET_C")
+    nodes%nodes(globalNumber)%label=label
+    
+    EXITS("Nodes_LabelSetC")
     RETURN
-999 ERRORSEXITS("NODES_LABEL_SET_C",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_LabelSetC",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_LABEL_SET_C
+  END SUBROUTINE Nodes_LabelSetC
         
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the varying string label for a node identified by a given global number. \see OPENCMISS::CMISSNodesLabelSet
-  SUBROUTINE NODES_LABEL_SET_VS(NODES,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Changes/sets the varying string label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelSet
+  SUBROUTINE Nodes_LabelSetVS(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to set the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the label for
-    TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The label to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to set the label for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to set the label for
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("NODES_LABEL_SET_VS",ERR,ERROR,*999)
+    ENTERS("Nodes_LabelSetVS",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        CALL FlagError("Nodes have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=NODES%NUMBER_OF_NODES) THEN
-          NODES%NODES(GLOBAL_NUMBER)%LABEL=LABEL
-        ELSE
-          LOCAL_ERROR="The specified global node number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global node number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(NODES%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>nodes%numberOfNodes) THEN
+      localError="The specified global node number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global node number should be between 1 and "// &
+        & TRIM(NumberToVString(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_LABEL_SET_VS")
+    nodes%nodes(globalNumber)%label=label
+    
+    EXITS("Nodes_LabelSetVS")
     RETURN
-999 ERRORSEXITS("NODES_LABEL_SET_VS",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_LabelSetVS",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_LABEL_SET_VS
+  END SUBROUTINE Nodes_LabelSetVS
         
   !
   !================================================================================================================================
   !
 
-  !>Returns the number of nodes. \see OPENCMISS::CMISSNodesNumberOfNodesGet
-  SUBROUTINE NODES_NUMBER_OF_NODES_GET(NODES,NUMBER_OF_NODES,ERR,ERROR,*)
+  !>Returns the number of nodes. \see OpenCMISS::Iron::cmfe_Nodes_NumberOfNodesGet
+  SUBROUTINE Nodes_NumberOfNodesGet(nodes,numberOfNodes,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to get the number of nodes for
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_NODES !<On return, the number of nodes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to get the number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the number of nodes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("NODES_NUMBER_OF_NODES_GET",ERR,ERROR,*999)
+    ENTERS("Nodes_NumberOfNodesGet",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        NUMBER_OF_NODES=NODES%NUMBER_OF_NODES
-      ELSE
-        CALL FlagError("Nodes have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(.NOT.nodes%nodesFinished) CALL FlagError("Nodes have not been finished.",err,error,*999)
     
-    EXITS("NODES_NUMBER_OF_NODES_GET")
+    numberOfNodes=nodes%numberOfNodes
+    
+    EXITS("Nodes_NumberOfNodesGet")
     RETURN
-999 ERRORSEXITS("NODES_NUMBER_OF_NODES_GET",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_NumberOfNodesGet",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_NUMBER_OF_NODES_GET
+  END SUBROUTINE Nodes_NumberOfNodesGet
         
   !
   !================================================================================================================================
   !
 
-  !>Gets the user number for a node identified by a given global number. \see OPENCMISS::CMISSNodesUserNumberGet
-  SUBROUTINE NODES_USER_NUMBER_GET(NODES,GLOBAL_NUMBER,USER_NUMBER,ERR,ERROR,*)
+  !>Gets the user number for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_UserNumberGet
+  SUBROUTINE Nodes_UserNumberGet(nodes,globalNumber,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to get the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the user number for
-    INTEGER(INTG), INTENT(OUT) :: USER_NUMBER !<On exit, the user number of the specified global node
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to get the number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the specified global node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("NODES_USER_NUMBER_GET",ERR,ERROR,*999)
+    ENTERS("Nodes_UserNumberGet",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=NODES%NUMBER_OF_NODES) THEN
-          USER_NUMBER=NODES%NODES(GLOBAL_NUMBER)%USER_NUMBER
-        ELSE
-          LOCAL_ERROR="The specified global node number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global node number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(NODES%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Nodes have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(.NOT.nodes%nodesFinished) CALL FlagError("Nodes have not been finished.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>nodes%numberOfNodes) THEN
+      localError="The specified global node number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global node number should be between 1 and "// &
+        & TRIM(NumberToVString(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_USER_NUMBER_GET")
+    userNumber=nodes%nodes(globalNumber)%userNumber
+    
+    EXITS("Nodes_UserNumberGet")
     RETURN
-999 ERRORSEXITS("NODES_USER_NUMBER_GET",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_UserNumberGet",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_USER_NUMBER_GET
+  END SUBROUTINE Nodes_UserNumberGet
         
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the user number for a node identified by a given global number. \see OPENCMISS::CMISSNodesUserNumberSet
-  SUBROUTINE NODES_USER_NUMBER_SET(NODES,GLOBAL_NUMBER,USER_NUMBER,ERR,ERROR,*)
+  !>Changes/sets the user number for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_UserNumberSet
+  SUBROUTINE Nodes_UserNumberSet(nodes,globalNumber,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes to set the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the user number for
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to set the number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to set the user number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: INSERT_STATUS,OLD_GLOBAL_NUMBER
-    LOGICAL :: NODE_EXISTS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: insertStatus,oldGlobalNumber
+    LOGICAL :: nodeExists
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("NODES_USER_NUMBER_SET",ERR,ERROR,*999)
+    ENTERS("Nodes_UserNumberSet",err,error,*999)
 
-    IF(ASSOCIATED(NODES)) THEN
-      IF(NODES%NODES_FINISHED) THEN
-        CALL FlagError("Nodes have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=NODES%NUMBER_OF_NODES) THEN
-          !Check the node user number is not already used
-          CALL NODE_CHECK_EXISTS(NODES,USER_NUMBER,NODE_EXISTS,OLD_GLOBAL_NUMBER,ERR,ERROR,*999)
-          IF(NODE_EXISTS) THEN
-            IF(OLD_GLOBAL_NUMBER/=GLOBAL_NUMBER) THEN
-              LOCAL_ERROR="The specified node user number of "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
-                & " is already used by global node number "//TRIM(NUMBER_TO_VSTRING(OLD_GLOBAL_NUMBER,"*",ERR,ERROR))// &
-                & ". User node numbers must be unique."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL TREE_ITEM_DELETE(NODES%NODES_TREE,NODES%NODES(GLOBAL_NUMBER)%USER_NUMBER,ERR,ERROR,*999)
-            CALL TREE_ITEM_INSERT(NODES%NODES_TREE,USER_NUMBER,GLOBAL_NUMBER,INSERT_STATUS,ERR,ERROR,*999)
-            IF(INSERT_STATUS/=TREE_NODE_INSERT_SUCESSFUL) CALL FlagError("Unsucessful nodes tree insert.",ERR,ERROR,*999)
-            NODES%NODES(GLOBAL_NUMBER)%USER_NUMBER=USER_NUMBER
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The specified global node number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global node number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(NODES%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
+    IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(nodes%nodesFinished) CALL FlagError("Nodes have been finished.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>nodes%numberOfNodes) THEN
+      localError="The specified global node number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global node number should be between 1 and "// &
+        & TRIM(NumberToVString(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NODES_USER_NUMBER_SET")
+    !Check the node user number is not already used
+    CALL Node_CheckExists(nodes,userNumber,nodeExists,oldGlobalNumber,err,error,*999)
+    IF(nodeExists) THEN
+      IF(oldGlobalNumber/=globalNumber) THEN
+        localError="The specified node user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+          & " is already used by global node number "//TRIM(NumberToVString(oldGlobalNumber,"*",err,error))// &
+          & ". User node numbers must be unique."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF      
+    ELSE
+      CALL Tree_ItemDelete(nodes%nodesTree,nodes%nodes(globalNumber)%userNumber,err,error,*999)
+      CALL Tree_ItemInsert(nodes%nodesTree,userNumber,globalNumber,insertStatus,err,error,*999)
+      IF(insertStatus/=TREE_NODE_INSERT_SUCESSFUL) CALL FlagError("Unsucessful nodes tree insert.",err,error,*999)
+      nodes%nodes(globalNumber)%userNumber=userNumber
+    ENDIF
+    
+    EXITS("Nodes_UserNumberSet")
     RETURN
-999 ERRORSEXITS("NODES_USER_NUMBER_SET",ERR,ERROR)    
+999 ERRORSEXITS("Nodes_UserNumberSet",err,error)    
     RETURN 1
    
-  END SUBROUTINE NODES_USER_NUMBER_SET
+  END SUBROUTINE Nodes_UserNumberSet
 
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the user numbers for all nodes. \see OPENCMISS::CMISSNodes_UserNumbersAllSet
-  SUBROUTINE NodesUserNumbersAllSet(nodes,userNumbers,err,error,*)
+  !>Changes/sets the user numbers for all nodes. \see OpenCMISS::Iron::cmfe_Nodes_UserNumbersAllSet
+  SUBROUTINE Nodes_UserNumbersAllSet(nodes,userNumbers,err,error,*)
 
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: nodes !<A pointer to the nodes to set the numbers for
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to set the numbers for
     INTEGER(INTG), INTENT(IN) :: userNumbers(:) !<The user numbers to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -856,55 +854,48 @@ CONTAINS
 
     NULLIFY(newNodesTree)
     
-    ENTERS("NodesUserNumbersAllSet",err,error,*999)
+    ENTERS("Nodes_UserNumbersAllSet",err,error,*999)
 
-    IF(ASSOCIATED(nodes)) THEN
-      IF(nodes%NODES_FINISHED) THEN
-        CALL FlagError("Nodes have been finished.",err,error,*999)
-      ELSE
-        IF(nodes%NUMBER_OF_NODES==SIZE(userNumbers,1)) THEN
-          !Check the users numbers to ensure that there are no duplicates                    
-          CALL TREE_CREATE_START(newNodesTree,err,error,*999)
-          CALL TREE_INSERT_TYPE_SET(newNodesTree,TREE_NO_DUPLICATES_ALLOWED,err,error,*999)
-          CALL TREE_CREATE_FINISH(newNodesTree,err,error,*999)
-          DO nodeIdx=1,nodes%NUMBER_OF_NODES
-            CALL TREE_ITEM_INSERT(newNodesTree,userNumbers(nodeIdx),nodeIdx,insertStatus,err,error,*999)
-            IF(insertStatus/=TREE_NODE_INSERT_SUCESSFUL) THEN
-              localError="The specified user number of "//TRIM(NumberToVstring(userNumbers(nodeIdx),"*",err,error))// &
-                & " for global node number "//TRIM(NumberToVstring(nodeIdx,"*",err,error))// &
-                & " is a duplicate. The user node numbers must be unique."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ENDDO !nodeIdx
-          CALL TREE_DESTROY(nodes%NODES_TREE,err,error,*999)
-          nodes%NODES_TREE=>newNodesTree
-          NULLIFY(newNodesTree)
-          DO nodeIdx=1,nodes%NUMBER_OF_NODES
-            nodes%NODES(nodeIdx)%GLOBAL_NUMBER=nodeIdx
-            nodes%NODES(nodeIdx)%USER_NUMBER=userNumbers(nodeIdx)
-          ENDDO !nodesIdx
-        ELSE
-          localError="The number of specified node user numbers ("// &
-            TRIM(NumberToVstring(SIZE(userNumbers,1),"*",err,error))// &
-            ") does not match number of nodes ("// &
-            TRIM(NumberToVstring(nodes%NUMBER_OF_NODES,"*",err,error))//")."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
+    IF(nodes%nodesFinished) CALL FlagError("Nodes have been finished.",err,error,*999)
+    IF(SIZE(userNumbers,1)/=nodes%numberOfNodes) THEN
+      localError="The number of specified node user numbers of "// &
+        TRIM(NumberToVstring(SIZE(userNumbers,1),"*",err,error))// &
+        " does not match number of nodes of "// &
+        TRIM(NumberToVstring(nodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("NodesUserNumbersAllSet")
+    !Check the users numbers to ensure that there are no duplicates                    
+    CALL Tree_CreateStart(newNodesTree,err,error,*999)
+    CALL Tree_InsertTypeSet(newNodesTree,TREE_NO_DUPLICATES_ALLOWED,err,error,*999)
+    CALL Tree_CreateFinish(newNodesTree,err,error,*999)
+    DO nodeIdx=1,nodes%numberOfNodes
+      CALL Tree_ItemInsert(newNodesTree,userNumbers(nodeIdx),nodeIdx,insertStatus,err,error,*999)
+      IF(insertStatus/=TREE_NODE_INSERT_SUCESSFUL) THEN
+        localError="The specified user number of "//TRIM(NumberToVstring(userNumbers(nodeIdx),"*",err,error))// &
+          & " for global node number "//TRIM(NumberToVstring(nodeIdx,"*",err,error))// &
+          & " is a duplicate. The user node numbers must be unique."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !nodeIdx
+    CALL Tree_Destroy(nodes%nodesTree,err,error,*999)
+    nodes%nodesTree=>newNodesTree
+    NULLIFY(newNodesTree)
+    DO nodeIdx=1,nodes%numberOfNodes
+      nodes%nodes(nodeIdx)%userNumber=userNumbers(nodeIdx)
+    ENDDO !nodesIdx
+    
+    EXITS("Nodes_UserNumbersAllSet")
     RETURN
-999 IF(ASSOCIATED(newNodesTree)) CALL TREE_DESTROY(newNodesTree,err,error,*998)
-998 ERRORSEXITS("NodesUserNumbersAllSet",err,error)    
+999 IF(ASSOCIATED(newNodesTree)) CALL Tree_Destroy(newNodesTree,err,error,*998)
+998 ERRORSEXITS("Nodes_UserNumbersAllSet",err,error)    
     RETURN 1
    
-  END SUBROUTINE NodesUserNumbersAllSet
+  END SUBROUTINE Nodes_UserNumbersAllSet
   
   !
   !================================================================================================================================
   !
 
-END MODULE NODE_ROUTINES
+END MODULE NodeRoutines

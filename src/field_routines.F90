@@ -63,7 +63,6 @@ MODULE FIELD_ROUTINES
 #endif
   USE MESH_ROUTINES
   USE MeshAccessRoutines
-  USE NODE_ROUTINES
   USE Strings
   USE Types
 
