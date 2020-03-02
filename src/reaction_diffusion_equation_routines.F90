@@ -655,10 +655,9 @@ CONTAINS
         CASE DEFAULT
           localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
             & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
-            & " is invalid for a standard Navier-Stokes fluid"
+            & " is invalid for a reaction diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-
       CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
         SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
         CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -1005,8 +1004,7 @@ CONTAINS
             & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
              & sourceInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-        ENDIF
-
+        ENDIF                  
         dynamicMatrices=>vectorMatrices%dynamicMatrices
         stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
         dampingMatrix=>dynamicMatrices%matrices(2)%ptr
@@ -1018,7 +1016,6 @@ CONTAINS
         dynamicMapping=>vectorMapping%dynamicMapping
         FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%variable
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
-
         geometricInterpPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
         geometricInterpPointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
         prevIndependentInterpPoint=>equations%interpolation%independentInterpPoint(FIELD_U1_VARIABLE_TYPE)%ptr
@@ -1061,8 +1058,7 @@ CONTAINS
             & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
               CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-           ENDIF
-           
+            ENDIF
             nj = GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
             CALL ReactionDiffusion_GaussDeformationGradientTensor(independentInterpPointMetrics, &
                  & geometricInterpPointMetrics, &
@@ -1082,37 +1078,15 @@ CONTAINS
             !TODO This was a solution for 1D. Working on Generalizing this to 2D/3D using deformation Gradient Tensors
             Jznu_ref = independentInterpPointMetrics%JACOBIAN/geometricInterpPointMetrics%JACOBIAN
             prevJznu_ref = prevIndependentInterpPointMetrics%JACOBIAN/geometricInterpPointMetrics%JACOBIAN
-
             Timestep=equations%interpolation%independentInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr%VALUES(nj,1)
             dJdt= ((Jznu - prevJznu) / (Timestep))
-
-            
-            !TODO Temporary Debugging
-            !IF(ELEMENT_NUMBER==1 .and. ng==1) THEN
-               !WRITE(*,*) "JACOBIAN_MAT", dzdnu(1:GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS,1:GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS)
-               !WRITE(*,*) "JACOBIAN_CURR", ELEMENT_NUMBER, ng, Jznu, Jznu_ref
-               !WRITE(*,*) "JACOBIAN_PREV", prevJznu, prevJznu_ref
-               !WRITE(*,*) "JACOBIAN_PARTIAL_t", dJdt
-               !WRITE(*,*) "DEFORMED", ELEMENT_NUMBER, ng, &
-               !  & Jznu_ref, independentInterpPointMetrics%JACOBIAN, geometricInterpPointMetrics%JACOBIAN
-               !DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
-                  !WRITE(*,*) dZdNuT_dZdNu_Inv(nj,:)
-               !ENDDO
-
-               !WRITE(*,*) Jznu, prevJznu, dJdt!, Timestep
-
-
-            !ENDIF
-
             !Calculate RWG.
             RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
               & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
-
             !Calculate the diffusivity tensor
             DIFFUSIVITY=0.0_DP
             IF(USE_FIBRES) THEN
               !Calculate the diffusivity tensor in fibre coordinates
-              !CALL FlagError("Not implemented.",err,error,*999)
               !TODO Implement
               DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS !first three components of material field are the diffusivities
                 DIFFUSIVITY(nj,nj)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(nj,1)
@@ -1126,12 +1100,6 @@ CONTAINS
             !Get the storage Coefficient, stored in the component after the diffusivities for each dimension
             component_idx=GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+1
             STORAGE_COEFFICIENT=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(component_idx,1)
-
-            !IF(ELEMENT_NUMBER==1 .and. ng==1) THEN
-            !   WRITE(*,*) DIFFUSIVITY
-            !ENDIF
-
-            !WRITE(*,*) "JARED WAS HERE"
             !Compute basis dPhi/dx terms
             DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
@@ -1142,8 +1110,8 @@ CONTAINS
                     & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)* &
                     & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,nj)
                ENDDO !ni
-               !PHI(nj,ms)=PHI(nj,ms)+ &
-               !     & 
+               PHI(nj,ms)=PHI(nj,ms) + &
+                    & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
               ENDDO !ms
             ENDDO !nj            
             !Loop over field components
@@ -1170,20 +1138,14 @@ CONTAINS
                          DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
                            !Get the velocity (Used velocity for timestep, !TODO update names)
                            !TODO Implement Advection in Separate Equation Set SubType
-                           !VELOCITY=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(nj,1)
-                           !VELOCITYGRAD= &
-                           !  & equations%interpolation%independentInterpPoint(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%VALUES(nj,1)
-                           !SUM=SUM-VELOCITY*PHI(ni,mhs)*DPHIDX(nj,nhs)/(Jznu)
+                           VELOCITY=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(nj,1)
+                           VELOCITYGRAD= &
+                             & equations%interpolation%independentInterpPoint(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%VALUES(nj,1)
+                           SUM=SUM-VELOCITY*PHI(ni,mhs)*DPHIDX(nj,nhs)/(Jznu)
 
                            != u * nabla(w), u = function and w = deformation velocity. Captures rate of expanding element
-                           
-                           !USE dZdNuT_dZdNU_INV instead of 1/(Jznu**2)
-                           SUM=SUM+DIFFUSIVITY(ni,nj)*DPHIDX(ni,mhs)*DPHIDX(nj,nhs)*dZdNuT_dZdNu_Inv(ni,nj)!*Jznu
-                              !WRITE(*,*) ng, mhs, nhs, &
-                              !    & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(mhs,NO_PART_DERIV,ng), &
-                              !    & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(nhs,NO_PART_DERIV,ng)!, RWG, Jznu
-                           !ENDIF
-
+                           SUM=SUM+DIFFUSIVITY(ni,nj)*DPHIDX(ni,mhs)*DPHIDX(nj,nhs)*dZdNuT_dZdNu_Inv(ni,nj)
+                     
                        ENDDO !nj
                     ENDDO !ni
                       SUM=SUM+dJdt*(1/Jznu)* &
@@ -1194,7 +1156,7 @@ CONTAINS
                     IF(dampingMatrix%updateMatrix) THEN
                       dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)+ &
                         & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
-                        & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)*STORAGE_COEFFICIENT*RWG!*Jznu
+                        & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)*STORAGE_COEFFICIENT*RWG
                     ENDIF
                   ENDDO !ns
                 ENDDO !nh
@@ -1211,7 +1173,7 @@ CONTAINS
                   DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                     mhs=mhs+1
                     sourceVector%elementVector%vector(mhs)=sourceVector%elementVector%vector(mhs)+ &
-                      & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)*C_PARAM*RWG!*Jznu
+                      & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)*C_PARAM*RWG
                   ENDDO
                 ENDDO
               ENDIF
