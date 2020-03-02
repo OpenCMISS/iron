@@ -1122,7 +1122,6 @@ CONTAINS
     INTEGER(INTG) :: DEPENDENT_BASES_EP(3) !,GEOMETRIC_BASES_EP(:)
     REAL(DP) :: JRWG,C(6,6),JRWG_DIAG_C(3,3),JRWG_OFF_DIAG_C(2,3)
     REAL(DP) :: SF(64*3)
-    REAL(DP) :: BETA
 
     !LOGICAL :: SAME_BASIS
     TYPE(EquationsType), POINTER :: equations
@@ -1190,10 +1189,6 @@ CONTAINS
            dampingMatrix=>dynamicMatrices%matrices(2)%ptr
            FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%variable
         END SELECT
-
-        !IF(ELEMENT_NUMBER == 1) THEN
-        !   WRITE(*,*) "JARED WAS HERE IN FINITE ELEMENT CALCULATE 1 "
-        !ENDIF
 
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
         !Note that the dimension/number of components for FIELD_U_VARIABLE_TYPE has to be the same as the FIELD_DELUDELN_VARIABLE_TYPE
@@ -1367,63 +1362,28 @@ CONTAINS
 
           !!TODO:: Is this RHS Vector update required? find out/check - RHS not used - BC are prescribed during assembling eg update RHS only when BC change - stiffness matrix should be the same
           IF(rhsVector%updateVector) THEN
-            !WRITE(*,*) rhsVector%elementVector%vector
             rhsVector%elementVector%vector=0.0_DP
           ENDIF
 
           !Scale factor adjustment, Application of Scale factors is symmetric
-          !IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-          !  DEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr
-          !  CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,DEPENDENT_INTERPOLATION_PARAMETERS, &
-          !    & err,error,*999)
-          !  DO xi=1,NUMBER_OF_XI
-          !    SF(DIAG_SUB_MAT_LOC(xi)+1:SUM(DEPENDENT_BASES_EP(1:xi)))=DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,xi)
-          !  ENDDO !xi
-          !  DO mhs=1,TOTAL_DEPENDENT_BASIS_EP
-          !    IF(equationsMatrix%updateMatrix) THEN
-          !      DO nhs=mhs,TOTAL_DEPENDENT_BASIS_EP
-          !        equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)*SF(mhs)*SF(nhs)
-          !      ENDDO !nhs
-          !    ENDIF
+          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+            DEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr
+            CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,DEPENDENT_INTERPOLATION_PARAMETERS, &
+              & err,error,*999)
+            DO xi=1,NUMBER_OF_XI
+              SF(DIAG_SUB_MAT_LOC(xi)+1:SUM(DEPENDENT_BASES_EP(1:xi)))=DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,xi)
+            ENDDO !xi
+            DO mhs=1,TOTAL_DEPENDENT_BASIS_EP
+              IF(equationsMatrix%updateMatrix) THEN
+                DO nhs=mhs,TOTAL_DEPENDENT_BASIS_EP
+                  equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)*SF(mhs)*SF(nhs)
+                ENDDO !nhs
+              ENDIF
               !!TODO:: Check if RHS update required for Linear Elasticity ie is the RHS the force terms but they are set during assembling and not here?
-          !    IF(rhsVector%updateVector) THEN
-          !       rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)*SF(mhs)
-          !       WRITE(*,*) "JARED WAS HERE"
-          !    ENDIF
-          !  ENDDO !mhs
-          !ENDIF
+              IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)*SF(mhs)
+            ENDDO !mhs
+          ENDIF
 
-
-          !VIJAYS CODE
-          !IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-          !   CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
-          !        & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
-          !   mhs=0          
-          !   DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-          !      !Loop over element rows
-          !      DO ms=1,DEPENDENT_BASES_EP(1)
-          !         mhs=mhs+1                    
-          !         nhs=0
-          !         IF(equationsMatrix%updateMatrix) THEN
-          !            !Loop over element columns
-          !            DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-          !               DO ns=1,DEPENDENT_BASES_EP(1)
-          !                  nhs=nhs+1
-          !                  equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
-          !                          & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
-          !                          & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
-          !               ENDDO !ns
-          !            ENDDO !nh
-          !         ENDIF
-          !         IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
-          !      & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)
-          !         
-          !      ENDDO !ms
-          !   ENDDO !mh
-          !ENDIF
-          !WRITE(*,*) SF
-
-          
           IF(equationsMatrix%updateMatrix) THEN
             !Transpose upper triangular portion of Stiffness matrix to give lower triangular portion. Has to be done after scale factors are applied
             !!TODO:: Use symmetric linear equation solver or alternatively traspose to give full matrix when asemmbling or when creating solver matrices
@@ -1437,11 +1397,6 @@ CONTAINS
          
       CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE, &
            & EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
-         
-         !WRITE(*,*) "STIFFNESS"
-         !WRITE(*,*) stiffnessMatrix%elementMatrix%matrix(:,:)
-         !WRITE(*,*) "DAMPING"
-         !WRITE(*,*) dampingMatrix%elementMatrix%matrix(:,:)
          
           !//
           !Parameters for number of off diagonal stress/strain terms for a given number of xi directions and order of calculation for shear terms
@@ -1514,9 +1469,7 @@ CONTAINS
                           stiffnessMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) = &
                                & stiffnessMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) + &
                                & DOT_PRODUCT(DPHIDX_COMP(xi)%DPHIDX(ns,1:NUMBER_OF_XI)*DPHIDX_COMP(xi)%DPHIDX(ms,1:NUMBER_OF_XI), &
-                               & JRWG_DIAG_C(xi,1:NUMBER_OF_XI))
-                          !WRITE(*,*) DIAG_SUB_MAT_LOC(xi)+ns, DIAG_SUB_MAT_LOC(xi)+ms, &
-                          !     & stiffnessMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) 
+                               & JRWG_DIAG_C(xi,1:NUMBER_OF_XI)) 
                        ENDDO !ms
                     ENDDO !ns
                  ENDDO !xi
@@ -1529,18 +1482,11 @@ CONTAINS
                                & stiffnessMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)& 
                                & +DOT_PRODUCT(DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,1,xi))%DPHIDX(ns,OFF_DIAG_DEP_VAR(1,:,xi))* &
                                &  DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,2,xi))%DPHIDX(ms,OFF_DIAG_DEP_VAR(2,:,xi)),JRWG_OFF_DIAG_C(:,xi))
-                          !WRITE(*,*) OFF_DIAG_SUB_MAT_LOC(1,xi)+ns, OFF_DIAG_SUB_MAT_LOC(2,xi)+ms, &
-                          !& stiffnessMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)
                        ENDDO !ms
                     ENDDO !ns
                  ENDDO !xi
               ENDIF            
-
-              !WRITE(*,*) "STIFFNESS 1"
-              !WRITE(*,*) stiffnessMatrix%elementMatrix%matrix(17,17)
-              !WRITE(*,*) "DAMPING 1"
-              !WRITE(*,*) dampingMatrix%elementMatrix%matrix(17,17)
-              
+            
               !Construct Damping Matrix
               IF(dampingMatrix%updateMatrix) THEN
                  !Construct Damping Matrix
@@ -1558,13 +1504,6 @@ CONTAINS
                                   & QUADRATURE_SCHEMES(mh)%ptr%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
                                   & QUADRATURE_SCHEMES(nh)%ptr%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)* &
                                   & materialsInterpPoint%values(2+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)*JRWG
-                             
-                                  !& JRWG
-                             !WRITE(*,*) ng, mh, ms, mhs, nh, ns, nhs, dampingMatrix%elementMatrix%matrix(mhs,nhs)
-                             !WRITE(*,*) "STIFFNESS"
-                             !WRITE(*,*) stiffnessMatrix%elementMatrix%matrix(:,:)
-                             !WRITE(*,*) "DAMPING"
-                             !WRITE(*,*) dampingMatrix%elementMatrix%matrix(:,:)
                           ENDDO !ns
                        ENDDO !nh
                        !IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=0.0_DP
@@ -1573,12 +1512,7 @@ CONTAINS
                  !dampingMatrix%elementMatrix%matrix(:,:)=dampingMatrix%elementMatrix%matrix(:,:)* &
                  !     & materialsInterpPoint%values(2+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
               ENDIF
-              
-              ! WRITE(*,*) "STIFFNESS 2"
-              !WRITE(*,*) stiffnessMatrix%elementMatrix%matrix(:,:)
-              !WRITE(*,*) "DAMPING 2"
-              !WRITE(*,*) dampingMatrix%elementMatrix%matrix(:,:)
-              
+                      
             ENDDO !ng
             !If Plane Stress/Strain problem multiply equation matrix by thickness
 
@@ -1616,9 +1550,10 @@ CONTAINS
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                      DO ns=1,DEPENDENT_BASES_EP(nh)
                         nhs=nhs+1
-                        BETA = 2.0_DP
+                        
                         dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)+ &
-                             & BETA*stiffnessMatrix%elementMatrix%matrix(mhs,nhs)
+                             & materialsInterpPoint%values(3+FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)* &
+                             & stiffnessMatrix%elementMatrix%matrix(mhs,nhs)
                      ENDDO !ns
                   ENDDO !nh
                   !IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=0.0_DP
@@ -2398,7 +2333,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE)
                    CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,err,error,*999)
                 CASE(EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE)
-                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,4,err,error,*999)
+                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,5,err,error,*999)
                 END SELECT
               ENDIF
             ELSE
@@ -2420,6 +2355,8 @@ CONTAINS
                 IF(EQUATIONS_SET%SPECIFICATION(3) == EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE) THEN
                    CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,4,30.0E6_DP,err,error,*999) !Stokes Damping Coefficient
+                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,5,1.0_DP,err,error,*999) !Viscoelastic (Rayleigh) Coefficient
                 ENDIF
               ENDIF
             ELSE
@@ -2819,7 +2756,7 @@ CONTAINS
                 CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
                 CASE(EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE)
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,4,err,error,*999)
                 END SELECT
               ENDIF
             ELSE
@@ -2839,6 +2776,8 @@ CONTAINS
                 IF(EQUATIONS_SET%SPECIFICATION(3) == EQUATIONS_SET_ONE_DIM_STOKES_DAMPING_SUBTYPE) THEN
                    CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,3,30.0E6_DP,err,error,*999) !Stokes Damping Coefficient
+                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,4,1.0_DP,err,error,*999) !Viscoelastic (Rayleigh) Coefficient
                 ENDIF                
               ENDIF
             ELSE
