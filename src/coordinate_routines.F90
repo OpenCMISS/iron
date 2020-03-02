@@ -3885,10 +3885,7 @@ CONTAINS
       ELSE
         !No fibre field
         numberOfNuDimensions=0
-        DO xiIdx=1,numberOfXiDimensions
-          dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
-          CALL Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),dXdNu(1:numberOfXDimensions,xiIdx),err,error,*999)
-        ENDDO !xiIdx
+        CALL IdentityMatrix(dXdNU,err,error,*999)
       ENDIF
       !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
       CALL MatrixTranspose(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &

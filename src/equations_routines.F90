@@ -660,7 +660,8 @@ CONTAINS
       CALL Field_InterpolatedPointsInitialise(equations%interpolation%independentInterpParameters,  &
         & equations%interpolation%independentInterpPoint,err,error,*999)
       IF(equations%interpolation%independentField%type==FIELD_GEOMETRIC_TYPE.OR. &
-        & equations%interpolation%independentField%type==FIELD_FIBRE_TYPE) THEN
+         & equations%interpolation%independentField%type==FIELD_FIBRE_TYPE.OR. &
+         & equations%interpolation%independentField%type==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
         CALL Field_InterpolatedPointsMetricsInitialise(equations%interpolation%independentInterpPoint,  &
           &  equations%interpolation%independentInterpPointMetrics,err,error,*999)
       END IF

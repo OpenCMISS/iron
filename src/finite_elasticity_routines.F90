@@ -3757,7 +3757,7 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     fieldVarType=fieldVariable%VARIABLE_TYPE
    
-    CALL Field_NumberOfComponentsCheck(field,fieldVarType,6,err,error,*999)
+    CALL Field_NumberOfComponentsCheck(field,fieldVarType,numberOfComponents,err,error,*999)
     CALL Field_ComponentInterpolationGet(field,fieldVarType,1,fieldInterpolation,err,error,*999)
     !Check the interpolation type
     SELECT CASE(fieldInterpolation)
@@ -4260,7 +4260,8 @@ CONTAINS
       
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
-        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
+        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+        & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE)
         !Calculate the Cauchy stress tensor (in Voigt form) at the gauss point.
         Jznu=dependentInterpolatedPointMetrics%JACOBIAN/geometricInterpolatedPointMetrics%JACOBIAN
         ! Note that some problems, e.g. active contraction, require additonal fields to be evaluated at Gauss points. This is
@@ -6995,17 +6996,20 @@ CONTAINS
     REAL(DP), INTENT(IN) :: Jznu !Determinant of deformation gradient tensor (AZL)
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER,GAUSS_POINT_NUMBER !<Element/Gauss point number
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    INTEGER(INTG) :: i
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: PRESSURE_COMPONENT,component_idx,dof_idx
     REAL(DP) :: P
-    REAL(DP) :: I1 !Invariants, if needed
+    REAL(DP) :: I1,I2,I3 !Invariants, if needed
     REAL(DP) :: TEMPTERM1,TEMPTERM2,VALUE !Temporary variables
     REAL(DP) :: ONETHIRD_TRACE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3)
+    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3),AZU(3,3),PIOLA_TENSOR(3,3),IDENTITY(3,3)
+    REAL(DP) :: AZL_SQUARED(3,3)
     REAL(DP) :: B(6),E(6),DQ_DE(6)
+    REAL(DP) :: WV_PRIME
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
 
     ENTERS("FINITE_ELASTICITY_GAUSS_STRESS_TENSOR",err,error,*999)
@@ -7021,6 +7025,38 @@ CONTAINS
     C=>MATERIALS_INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
 
     SELECT CASE(EQUATIONS_SET%specification(3))
+    CASE(EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE)
+
+       CALL INVERT(AZL,AZU,I3,ERR,ERROR,*999)
+       
+       IDENTITY=0.0_DP
+       DO i=1,3
+          IDENTITY(i,i)=1.0_DP
+       ENDDO
+
+      !Form of constitutive model is:
+      ! W_hat=c1*(I1_hat-3)+c2*(I2_hat-3)+p*J*C^(-1) + W^v(J)
+      ! take W^v(J) = 1/2 * kappa * (J-1)^2
+      WV_PRIME = C(3)*(Jznu - 1.0_DP)
+      !compute the invariants, I3 a few lines up
+      I1 = AZL(1,1) + AZL(2,2) + AZL(3,3)
+      CALL MatrixProduct(AZL,AZL,AZL_SQUARED,err,error,*999)
+      I2 = 0.5_DP * (I1**2 - AZL_SQUARED(1,1) - AZL_SQUARED(2,2) - AZL_SQUARED(3,3))
+
+      PIOLA_TENSOR=2.0_DP*Jznu**(-2.0_DP/3.0_DP)*((C(1)+C(2)*I1)*IDENTITY-C(2)*AZL &
+        & -(C(1)*I1+2.0_DP*C(2)*I2-1.5_DP*WV_PRIME*Jznu**(5.0_DP/3.0_DP))/3.0_DP*AZU)
+
+      !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
+      STRESS_TENSOR(1)=PIOLA_TENSOR(1,1)
+      STRESS_TENSOR(2)=PIOLA_TENSOR(2,2)
+      STRESS_TENSOR(3)=PIOLA_TENSOR(3,3)
+      STRESS_TENSOR(4)=PIOLA_TENSOR(2,1)
+      STRESS_TENSOR(5)=PIOLA_TENSOR(3,1)
+      STRESS_TENSOR(6)=PIOLA_TENSOR(3,2)
+
+      !Do push-forward of 2nd Piola tensor. 
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
+
     CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
