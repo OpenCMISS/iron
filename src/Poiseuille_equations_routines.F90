@@ -158,8 +158,8 @@ CONTAINS
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         NULLIFY(domainNodes)
         CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         !Loop over the local nodes excluding the ghosts.
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
           DO dimensionIdx=1,numberOfDimensions
@@ -167,8 +167,8 @@ CONTAINS
             CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
             x(dimensionIdx)=geometricParameters(localDOFIdx)
           ENDDO !dimensionIdx
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           !Loop over the derivatives
+          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           DO derivativeIdx=1,numberOfNodeDerivatives
             CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,derivativeGlobalIndex,err,error,*999)
             SELECT CASE(analyticFunctionType)
@@ -253,51 +253,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets up the Poiseuille equation type of a fluid mechanics equations set class.
-  SUBROUTINE Poiseuille_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Poiseuille equation on.
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("Poiseuille_EquationsSetSetup",err,error,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Poiseuille type equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE)
-        CALL Poiseuille_EquationsSetStaticSetup(EQUATIONS_SET,equationsSetSetup,err,error,*999)
-      CASE(EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE)
-        CALL Poiseuille_EquationsSetStaticSetup(EQUATIONS_SET,equationsSetSetup,err,error,*999)
-      CASE DEFAULT
-        localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a Poiseuille equation type of a fluid mechanics equation set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("Poiseuille_EquationsSetSetup")
-    RETURN
-999 ERRORSEXITS("Poiseuille_EquationsSetSetup",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Poiseuille_EquationsSetSetup
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the solution method for a Poiseuille equation type of an fluid mechanics equations set class.
   SUBROUTINE Poiseuille_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
@@ -371,6 +326,7 @@ CONTAINS
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
       CALL FlagError(localError,err,error,*999)
     END IF
+    
     subtype=specification(3)
     SELECT CASE(subtype)
     CASE(EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE, &
@@ -727,62 +683,18 @@ CONTAINS
   !
   !================================================================================================================================
   !
- 
-  !>Sets up the Poiseuille problem.
-  SUBROUTINE Poiseuille_ProblemSetup(PROBLEM,problemSetup,err,error,*)
-
-    !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a Poiseuille equation on.
-    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("Poiseuille_ProblemSetup",err,error,*999)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(problem%specification)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(problem%specification,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a Poiseuille problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(3))
-      CASE(PROBLEM_STATIC_POISEUILLE_SUBTYPE)
-        CALL POISEUILLE_EQUATION_PROBLEM_STATIC_SETUP(PROBLEM,problemSetup,err,error,*999)
-      CASE(PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE)
-        CALL POISEUILLE_EQUATION_PROBLEM_STATIC_SETUP(PROBLEM,problemSetup,err,error,*999)
-      CASE DEFAULT
-        localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a Poiseuille equation type of a fluid mechanics problem class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("Poiseuille_ProblemSetup")
-    RETURN
-999 ERRORSEXITS("Poiseuille_ProblemSetup",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Poiseuille_ProblemSetup
-  
-  !
-  !================================================================================================================================
-  !
 
   !>Calculates the element stiffness matrices and RHS for a Poiseuille equation finite element equations set.
-  SUBROUTINE Poiseuille_FiniteElementCalculate(equationsSet,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE Poiseuille_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) FIELD_VAR_TYPE,ng
-    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
+    INTEGER(INTG) :: esSpecification(3),gaussPointIdx,variableType
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -793,66 +705,134 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
     TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(QuadratureSchemeType), POINTER :: QUADRATURE_SCHEME
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Poiseuille_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.ALLOCATED(equationsSet%SPECIFICATION)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      IF(SIZE(equationsSet%SPECIFICATION,1)/=3) &
-        & CALL FlagError("Equations set specification must have three entries for a Poiseuille type equations set.",err,error,*999)
-      EQUATIONS=>equationsSet%EQUATIONS
-      IF(ASSOCIATED(EQUATIONS)) THEN
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        SELECT CASE(equationsSet%SPECIFICATION(3))
-        CASE(EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE,EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE)
-          !Store all these in equations matrices/somewhere else?????
-          dependentField=>equations%interpolation%dependentField
-          geometricField=>equations%interpolation%geometricField
-          materialsField=>equations%interpolation%materialsField
-          vectorMatrices=>vectorEquations%vectorMatrices
-          linearMatrices=>vectorMatrices%linearMatrices
-          equationsMatrix=>linearMatrices%matrices(1)%ptr
-          rhsVector=>vectorMatrices%rhsVector
-          vectorMapping=>vectorEquations%vectorMapping
-          linearMapping=>vectorMapping%linearMapping
-          fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%variable
-          FIELD_VAR_TYPE=fieldVariable%variableType
-          DEPENDENT_BASIS=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-            & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-          !Loop over gauss points
-          DO ng=1,QUADRATURE_SCHEME%numberOfGauss
-            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-              & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-              & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
-              & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE,EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Poiseuille equation type of a fluid mechanics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    NULLIFY(equations)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(lhsMapping)
+    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+    NULLIFY(rowsVariable)
+    CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+    NULLIFY(linearMapping)
+    CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+    NULLIFY(rhsMapping)
+    CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    NULLIFY(linearMatrices)
+    CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+    NULLIFY(equationsMatrix)
+    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
+    updateMatrix=equationsMatrix%updateMatrix
+    NULLIFY(rhsVector)
+    CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+    updateRHS=rhsVector%updateVector
+    
+    update=(updateMatrix.OR.updateRHS)
+
+    IF(update) THEN
+      
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      NULLIFY(geometricVariable)
+      CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+      NULLIFY(geometricDecomposition)
+      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+      NULLIFY(geometricDomain)
+      CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
+      NULLIFY(geometricDomainTopology)
+      CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
+      NULLIFY(geometricDomainElements)
+      CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
+      NULLIFY(geometricBasis)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
+
+      NULLIFY(dependentField)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      NULLIFY(dependentDecomposition)
+      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+      NULLIFY(colsDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
+      NULLIFY(colsDomainTopology)
+      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+      NULLIFY(colsDomainElements)
+      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+      NULLIFY(colsBasis)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+
+      NULLIFY(materialsField)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+        
+      NULLIFY(rowsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
+      
+      NULLIFY(colsVariable)
+      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
+      
+      NULLIFY(geometricInterpParameters)
+      CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpParameters,err,error,*999)
+      NULLIFY(geometricInterpPoint)
+      CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,geometricInterpPoint, &
+        & err,error,*999)
+      NULLIFY(geometricInterpPointMetrics)
+      CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpPointMetrics,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
+      
+      NULLIFY(materialsInterpParamters)
+      CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & materialsInterpParameters,err,error,*999)
+      NULLIFY(materialsInterpPoint)
+      CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,materialsInterpPoint, &
+        & err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsInterpParameters,err,error,*999)
+      
+      !Loop over gauss points
+      DO gaussPointIdx=1,numberOfGauss
+        
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
+        CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
+          & err,error,*999)
 
 !TODO
-
             
-          ENDDO !ng
-        CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%SPECIFICATION(3),"*",err,error))// &
-            & " is not valid for a Poiseuille equation type of a fluid mechanics equations set class."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+      ENDDO !gaussPointIdx
+      
+      !Scale factor adjustment
+      CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
+      IF(scalingType/=FIELD_NO_SCALING) THEN
+      ENDIF !scaling
+      
+    ENDIF !update
        
     EXITS("Poiseuille_FiniteElementCalculate")
     RETURN
@@ -947,7 +927,7 @@ CONTAINS
     END SELECT
     
     SELECT CASE(problemSetup%setupType)
-    CASE(problemSetup_INITIAL_TYPE)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Do nothing????
@@ -1146,5 +1126,4 @@ CONTAINS
   !================================================================================================================================
   !
  
-
 END MODULE PoiseuilleEquationsRoutines

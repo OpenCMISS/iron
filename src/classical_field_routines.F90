@@ -48,16 +48,16 @@ MODULE ClassicalFieldRoutines
   USE AdvectionDiffusionEquationsRoutines
   USE BaseRoutines
   USE ControlLoopAccessRoutines
-  USE DIFFUSION_EQUATION_ROUTINES
+  USE DiffusionEquationsRoutines
   USE EquationsSetAccessRoutines
-  USE HELMHOLTZ_EQUATIONS_ROUTINES
+  USE HelmholtzEquationsRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE LaplaceEquationsRoutines
   USE PoissonEquationsRoutines
   USE ProblemAccessRoutines
-  USE REACTION_DIFFUSION_EQUATION_ROUTINES
+  USE ReactionDiffusionEquationsRoutines
   USE Strings
   USE Types
 
@@ -77,7 +77,7 @@ MODULE ClassicalFieldRoutines
 
   PUBLIC ClassicalField_AnalyticFunctionsEvaluate
   
-  PUBLIC ClassicalField_ControlLoopPostLoop
+  PUBLIC ClassicalField_PostLoop
 
   PUBLIC ClassicalField_FiniteElementJacobianEvaluate,ClassicalField_FiniteElementResidualEvaluate
   
@@ -171,7 +171,7 @@ CONTAINS
   !
 
   !>Executes after each loop of a control loop for bioelectric problems, i.e., after each time step for a time loop
-  SUBROUTINE ClassicalField_ControlLoopPostLoop(controlLoop,err,error,*)
+  SUBROUTINE ClassicalField_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -181,7 +181,7 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ClassicalField_ControlLoopPostLoop",err,error,*999)
+    ENTERS("ClassicalField_PostLoop",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
 
@@ -191,9 +191,9 @@ CONTAINS
     CASE(CONTROL_TIME_LOOP_TYPE)
       SELECT CASE(problem%specification(2))
       CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
-        CALL DIFFUSION_EQUATION_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+        CALL Diffusion_PostLoop(controlLoop,err,error,*999)
       CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
-        CALL REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+        CALL ReactionDiffusion_PostLoop(controlLoop,err,error,*999)
       CASE DEFAULT
         localError="The second problem specification of "// &
           & TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
@@ -204,12 +204,12 @@ CONTAINS
       !do nothing
     END SELECT
 
-    EXITS("ClassicalField_ControlLoopPostLoop")
+    EXITS("ClassicalField_PostLoop")
     RETURN
-999 ERRORSEXITS("ClassicalField_ControlLoopPostLoop",err,error)
+999 ERRORSEXITS("ClassicalField_PostLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE ClassicalField_ControlLoopPostLoop
+  END SUBROUTINE ClassicalField_PostLoop
 
   !
   !================================================================================================================================
@@ -229,15 +229,15 @@ CONTAINS
     ENTERS("ClassicalField_EquationsSetSpecificationSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
-    IF(SIZE(specification,1)<2) &
-      & CALL FlagError("Equations set specification must have at least two entries for a classical field class equations set.", &
-      & err,error,*999)
+    IF(SIZE(specification,1)<2) THEN
+      localError="The size of the specified specification array of "// &
+        & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 2."
+      CALL FlagError(localError,error,*999)
+    ENDIF
       
     SELECT CASE(specification(2))
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
       CALL Laplace_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
-    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-      CALL HJEquation_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
       CALL Poisson_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
@@ -254,6 +254,8 @@ CONTAINS
       CALL ReactionDiffusion_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
+      CALL HJEquation_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
     CASE DEFAULT
       localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
         & " is not valid for a classical field equations set."
@@ -300,11 +302,11 @@ CONTAINS
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
       CALL Poisson_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-      CALL HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL Helmholtz_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-      CALL DIFFUSION_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL Diffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL AdvectionDiffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
@@ -476,11 +478,11 @@ CONTAINS
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
       CALL Poisson_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
-      CALL HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Helmholtz_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-      CALL DIFFUSION_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL Diffusion_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL AdvectionDiffusion_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
@@ -631,14 +633,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemType
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("ClassicalField_ProblemSpecificationSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(problem))  CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(SIZE(problemSpecification,1)<2) &
-      & CALL FlagError("Classical field problem specification must have a type set.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<2) THEN
+      localError="The size of the specified specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))//" is invalid. The size should be >= 2."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     problemType=problemSpecification(2)
     SELECT CASE(problemType)
@@ -704,17 +709,17 @@ CONTAINS
     CASE(PROBLEM_POISSON_EQUATION_TYPE)
       CALL Poisson_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
-      CALL HELMHOLTZ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Helmholtz_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_WAVE_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
-      CALL DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Diffusion_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_ADVECTION_EQUATION_TYPE)
       CALL Advection_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL AdvectionDiffusion_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
-      CALL REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL ReactionDiffusion_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(PROBLEM_HJ_EQUATION_TYPE)

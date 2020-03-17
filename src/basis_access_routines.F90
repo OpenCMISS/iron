@@ -242,11 +242,15 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_NodeNumberOfDerivativesGet
 
+  PUBLIC Basis_NumberOfElementParametersGet
+
   PUBLIC Basis_NumberOfLocalFacesGet
 
   PUBLIC Basis_NumberOfLocalLinesGet
 
   PUBLIC Basis_NumberOfLocalNodesGet
+
+  PUBLIC Basis_NumberOfNodesXiCGet
 
   PUBLIC Basis_NumberOfXiGet
 
@@ -1759,6 +1763,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the number of element parameters in the specified basis
+  SUBROUTINE Basis_NumberOfElementParametersGet(basis,numberOfElementParameters,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of element parameters for
+    INTEGER(INTG), INTENT(OUT) :: numberOfElementParameters !<On return, the number of element parameters in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_NumberOfElementParametersGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
+   
+    numberOfElementParameters=basis%numberOfElementParameters
+    
+    EXITS("Basis_NumberOfElementsParametersGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfElementParametersGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfElementParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the number of local faces in the specified basis
   SUBROUTINE Basis_NumberOfLocalFacesGet(basis,numberOfLocalFaces,err,error,*)
 
@@ -1841,6 +1874,49 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_NumberOfLocalNodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of nodes in each xi coordinate direction in the specified basis 
+  SUBROUTINE Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of nodes in each xi coordinate diretion
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodesXiC(:) !<numberOfNodesXiC(xicIdx). On return, the number of nodes in each xi coordinate direction in the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("Basis_NumberOfNodesXiCGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(SIZE(numberOfNodesXiC,1)<basis%numberOfXiCoordinates) THEN
+      localError="The size of the specified number of nodes xi array is too small for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//". The size should be >= "// &
+        & TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(basis%numberOfNodesXic)) THEN
+      localError="The number of nodes xi coordinate array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,error,*999)
+    ENDIF
+#endif    
+   
+    numberOfNodesXiC(1:basis%numberOfXiCoordinates)=basis%numberOfNodesXic(1:basis%numberOfXiCoordinates)
+    
+    EXITS("Basis_NumberOfNodesXiCGet")
+    RETURN
+999 ERRORSEXITS("Basis_NumberOfNodesXiCGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfNodesXiCGet
 
   !
   !================================================================================================================================

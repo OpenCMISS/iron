@@ -425,6 +425,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC Field_ParameterSetGet
 
+  PUBLIC Field_RegionCheck
+
   PUBLIC Field_RegionGet
   
   PUBLIC Field_ScaleFactorsVectorGet
@@ -2069,6 +2071,47 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE Field_ParameterSetGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that the field is defined in the specified region.
+  SUBROUTINE Field_RegionCheck(field,region,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the region for
+    TYPE(RegionType), POINTER :: region !<The region to check that the field is in.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(RegionType), POINTER :: fieldRegion
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_RegionCheck",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
+        
+    NULLIFY(fieldRegion)
+    CALL Field_RegionGet(field,fieldRegion,err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldRegion,region)) THEN
+      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " is defined in region number "//TRIM(NumberToVString(fieldRegion%userNumber,"*",err,error))// &
+        & " which does not correspond to the required region number of "// &
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+        
+    EXITS("Field_RegionCheck")
+    RETURN
+999 ERRORSEXITS("Field_RegionCheck",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_RegionCheck
 
   !
   !================================================================================================================================

@@ -110,25 +110,11 @@ MODULE ControlLoopAccessRoutines
   
   !Interfaces
 
-  !>Returns the specified control loop as indexed by the control loop identifier from the control loop root. \see OpenCMISS::Iron::cmge_ControlLoop_Get
-  INTERFACE CONTROL_LOOP_GET
-    MODULE PROCEDURE ControlLoop_Get0
-    MODULE PROCEDURE ControlLoop_Get1
-  END INTERFACE CONTROL_LOOP_GET
-
   !>Returns the specified control loop as indexed by the control loop identifier from the control loop root. \see OpenCMISS::Iron::cmfe_ControlLoop_Get
   INTERFACE ControlLoop_Get
     MODULE PROCEDURE ControlLoop_Get0
     MODULE PROCEDURE ControlLoop_Get1
   END INTERFACE ControlLoop_Get
-  
-  INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
-    MODULE PROCEDURE ControlLoop_CurrentTimesGet
-  END INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
-
-  INTERFACE CONTROL_LOOP_SOLVERS_GET
-    MODULE PROCEDURE ControlLoop_SolversGet
-  END INTERFACE CONTROL_LOOP_SOLVERS_GET
 
   PUBLIC CONTROL_LOOP_NODE
 
@@ -158,11 +144,9 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_Get
 
-  PUBLIC CONTROL_LOOP_GET
-
   PUBLIC ControlLoop_ContinueLoopGet
 
-  PUBLIC CONTROL_LOOP_CURRENT_TIMES_GET
+  PUBLIC ControlLoop_ContinueLoopSet
 
   PUBLIC ControlLoop_CurrentTimesGet
 
@@ -194,11 +178,11 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_SolversGet
 
-  PUBLIC CONTROL_LOOP_SOLVERS_GET
-
   PUBLIC ControlLoop_SubLoopGet
 
   PUBLIC ControlLoop_TimeLoopGet
+
+  PUBLIC ControlLoop_TypeGet
 
   PUBLIC ControlLoop_WhileLoopGet
 
@@ -564,6 +548,36 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the continue loop status for a while control loop
+  SUBROUTINE ControlLoop_ContinueLoopSet(controlLoop,continueLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The while control loop to set the continue loop for
+    LOGICAL, INTENT(IN) :: continueLoop !The continue loop status of the while control loop to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop
+
+    ENTERS("ControlLoop_ContinueLoopSet",err,error,*999)
+
+    CALL ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*999)
+    NULLIFY(whileLoop)
+    CALL ControlLoop_WhileLoopGet(controlLoop,whileLoop,err,error,*999)
+
+    whileLoop%continueLoop=continueLoop
+    
+    EXITS("ControlLoop_ContinueLoopSet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_ControlLoopSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_ContinueLoopSet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::Iron::cmfe_ControlLoop_CurrentTimesGet
   SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
 
@@ -574,13 +588,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,outputIteration
+    INTEGER(INTG) :: currentIteration,inputIteration,outputIteration
     REAL(DP) :: startTime,stopTime
 
     ENTERS("ControlLoop_CurrentTimesGet",err,error,*999)
 
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,err,error,*999)
+      & outputIteration,inputIteration,err,error,*999)
        
     EXITS("ControlLoop_CurrentTimesGet")
     RETURN
@@ -595,7 +609,7 @@ CONTAINS
 
   !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used.
   SUBROUTINE ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-    & outputIteration,err,error,*)
+    & outputIteration,inputIteration,err,error,*)
     
     !Argument variables
     TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the time information for
@@ -605,6 +619,7 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: stopTime !<On exit, the stop time for the loop
     INTEGER(INTG), INTENT(OUT) :: currentIteration !<On exit, the current iteration number for the loop
     INTEGER(INTG), INTENT(OUT) :: outputIteration !<On exit, the output iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: inputIteration !<On exit, the input iteration number for the loop
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables    
@@ -634,6 +649,7 @@ CONTAINS
           stopTime=timeLoop%stopTime
           currentIteration=timeLoop%iterationNumber
           outputIteration=timeLoop%outputNumber
+          inputIteration=timeLoop%inputNumber
           EXIT
         ELSE
           parentLoop=>parentLoop%parentLoop
@@ -1203,6 +1219,33 @@ CONTAINS
     
   END SUBROUTINE ControlLoop_TimeLoopGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the loop type for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TypeGet
+  SUBROUTINE ControlLoop_TypeGet(controlLoop,loopType,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to the control loop to get the loop type for.
+    INTEGER(INTG), INTENT(OUT) :: loopType !<On exit, the loop type of the control loop \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_TypeGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    loopType=controlLoop%loopType
+       
+    EXITS("ControlLoop_TypeGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_TypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_TypeGet
+  
   !
   !================================================================================================================================
   !

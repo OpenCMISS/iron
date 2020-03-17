@@ -917,7 +917,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
       
       NULLIFY(dependentField)
@@ -931,7 +931,7 @@ CONTAINS
       NULLIFY(colsDomainElements)
       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
       NULLIFY(colsBasis)
-      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
       
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
@@ -1211,7 +1211,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    INTEGER(INTG) :: currentIteration,i,j,n,m,outputIteration,pSpecification(3)
+    INTEGER(INTG) :: currentIteration,i,inputIteration,j,n,m,outputIteration,pSpecification(3)
     REAL(DP) :: c(300),conc,currentTime,delta(300),period,s,startTime,stopTime,t(300),timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -1233,7 +1233,7 @@ CONTAINS
     CASE(PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
       & PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-        & outputIteration,err,error,*999)
+        & outputIteration,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)

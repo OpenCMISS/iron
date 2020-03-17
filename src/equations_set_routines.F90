@@ -47,7 +47,7 @@ MODULE EquationsSetRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BIOELECTRIC_ROUTINES
+  USE BioelectricRoutines
   USE BoundaryConditionsRoutines
   USE BoundaryConditionAccessRoutines
   USE ClassicalFieldRoutines
@@ -81,7 +81,7 @@ MODULE EquationsSetRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE MULTI_PHYSICS_ROUTINES
+  USE MultiPhysicsRoutines
   USE ProfilingRoutines
   USE Strings
   USE Timer
@@ -423,7 +423,7 @@ CONTAINS
           !Loop over the local elements excluding the ghosts
           DO elementIdx=1,domainElements%numberOfElements
             NULLIFY(basis)
-            CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
               & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             IF(ASSOCIATED(analyticField)) THEN
@@ -530,7 +530,7 @@ CONTAINS
           !Loop over the local elements excluding the ghosts
           DO elementIdx=1,domainElements%numberOfElements
             NULLIFY(basis)
-            CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
               & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             IF(ASSOCIATED(analyticField)) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
@@ -2255,18 +2255,11 @@ CONTAINS
     CASE(EQUATIONS_SET_FITTING_CLASS)
       CALL Fitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-      IF(SIZE(equationsSet%specification,1)<2) &
-        & CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
-        & err,error,*999)
-      IF(equationsSet%specification(2) == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
-        CALL Monodomain_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
-      ELSE
-        CALL BIOELECTRIC_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
-      END IF
+      CALL Bioelectric_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_MODAL_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-      CALL MULTI_PHYSICS_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL MultiPhysics_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE DEFAULT
       localError="The first equations set specification of "// &
         & TRIM(NumberToVString(equationsSet%SPECIFICATION(1),"*",err,error))//" is not valid."
@@ -2598,7 +2591,7 @@ CONTAINS
       SELECT CASE(componentInterpolationType)
       CASE (FIELD_NODE_BASED_INTERPOLATION)
         NULLIFY(basis)
-        CALL DomainElements_BasisGet(domainElements,elementNumber,basis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
         DO nodeIdx=1,basis%numberOfNodes
           node=domainElements%elements(elementNumber)%elementNodes(nodeIdx)
           DO derivativeIdx=1,basis%numberOfDerivatives(nodeIdx)
@@ -3909,21 +3902,13 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL ClassicalField_EquationsSetSetup(equationsSet,equationsSetSetupInfo,err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-      IF(SIZE(equationsSet%specification,1)<2) THEN
-        CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
-          & err,error,*999)
-      END IF
-      IF(equationsSet%specification(2) == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
-        CALL MONODOMAIN_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetupInfo,err,error,*999)
-      ELSE
-        CALL BIOELECTRIC_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetupInfo,err,error,*999)
-      END IF
+      CALL Bioelectric_EquationsSetSetup(equationsSet,equationsSetSetupInfo,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
       CALL Fitting_EquationsSetSetup(equationsSet,equationsSetSetupInfo,err,error,*999)
     CASE(EQUATIONS_SET_MODAL_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-      CALL MULTI_PHYSICS_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetupInfo,err,error,*999)
+      CALL MultiPhysics_EquationsSetSetup(equationsSet,equationsSetSetupInfo,err,error,*999)
     CASE DEFAULT
       localError="The first equations set specification of "// &
         & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))//" is not valid."

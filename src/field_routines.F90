@@ -3042,7 +3042,7 @@ CONTAINS
     NULLIFY(domainElements)
     CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     NULLIFY(basis)
-    CALL DomainElements_BasisGet(domainElements,localElementNumber,basis,err,error,*999)
+    CALL DomainElements_ElementBasisGet(domainElements,localElementNumber,basis,err,error,*999)
     CALL Basis_LocalLineNumberGet(basis,normalXiDirections,localLineNumber,err,error,*999)
     globalLineNumber=decompositionElements%elements(localElementNumber)%elementLines(localLineNumber)
     lineLength=geometricParameters%lengths(globalLineNumber)
@@ -3183,7 +3183,7 @@ CONTAINS
       NULLIFY(domainElements)
       CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,1,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,1,basis,err,error,*999)
       !Allocate Gauss points
       order=2
       maxNumberOfGauss=order*order*order
@@ -3874,7 +3874,7 @@ CONTAINS
       element=domainNodes%nodes(nodeNumber)%surroundingElements(elementIdx)
       CALL Field_InterpolationParametersElementGet(parameterSetType,element,fieldInterpParameters,err,error,*999)
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,element,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,element,basis,err,error,*999)
       localNodeNumber=0
       DO localNodeIdx=1,basis%numberOfNodes
         IF(domainElements%ELEMENTS(element)%elementNodes(localNodeIdx)==nodeNumber) THEN
@@ -4090,7 +4090,7 @@ CONTAINS
       element=domainNodes%nodes(nodeNumber)%surroundingElements(elementIdx)
       CALL Field_InterpolationParametersElementGet(parameterSetType,element,fieldInterpParameters,err,error,*999)
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,element,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,element,basis,err,error,*999)
       localNodeNumber=0
       DO localNodeIdx=1,basis%numberOfNodes
         IF(domainElements%elements(element)%elementNodes(localNodeIdx)==nodeNumber) THEN
@@ -5306,7 +5306,7 @@ CONTAINS
       NULLIFY(domainElements)
       CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,elementNumber,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
       interpolationParameters%bases(componentIdx)%ptr=>basis
       IF(componentIdx==1) THEN
         interpolationParameters%numberOfXi=basis%numberOfXi
@@ -5587,7 +5587,7 @@ CONTAINS
       NULLIFY(domainLines)
       CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
       NULLIFY(basis)
-      CALL DomainLines_BasisGet(domainLines,lineNumber,basis,err,error,*999)
+      CALL DomainLines_LineBasisGet(domainLines,lineNumber,basis,err,error,*999)
       interpolationParameters%bases(componentIdx)%ptr=>basis
       IF(componentIdx==1) THEN
         interpolationParameters%numberOfXi=basis%numberOfXi
@@ -5786,7 +5786,7 @@ CONTAINS
       NULLIFY(domainFaces)
       CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
       NULLIFY(basis)
-      CALL DomainFaces_BasisGet(domainFaces,faceNumber,basis,err,error,*999)
+      CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,basis,err,error,*999)
       interpolationParameters%bases(componentIdx)%ptr=>basis
       IF(componentIdx==1) THEN
         interpolationParameters%numberOfXi=basis%numberOfXi
@@ -5936,7 +5936,7 @@ CONTAINS
         NULLIFY(domainElements)
         CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
         NULLIFY(basis)
-        CALL DomainElements_BasisGet(domainElements,elementNumber,basis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
         interpolationParameters%bases(componentIdx)%ptr=>basis
         SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)             
@@ -6376,7 +6376,7 @@ CONTAINS
         NULLIFY(domainLines)
         CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
         NULLIFY(basis)
-        CALL DomainLines_BasisGet(domainLines,lineNumber,basis,err,error,*999)
+        CALL DomainLines_LineBasisGet(domainLines,lineNumber,basis,err,error,*999)
         interpolationParameters%bases(componentIdx)%ptr=>basis
         IF(componentIdx==1) THEN
           interpolationParameters%numberOfXi=basis%numberOfXi
@@ -6507,7 +6507,7 @@ CONTAINS
         NULLIFY(domainFaces)
         CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
         NULLIFY(basis)
-        CALL DomainFaces_BasisGet(domainFaces,faceNumber,basis,err,error,*999)
+        CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,basis,err,error,*999)
         interpolationParameters%bases(componentIdx)%ptr=>basis
         IF(componentIdx==1) THEN
           interpolationParameters%numberOfXi=basis%numberOfXi
@@ -6699,7 +6699,7 @@ CONTAINS
           maxNumberOfGauss = -1
           DO elementIdx=1,domainElements%numberOfElements
             NULLIFY(basis)
-            CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
             NULLIFY(quadratureScheme)
             CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
             numberOfGauss=quadratureScheme%numberOfGauss
@@ -13598,7 +13598,7 @@ CONTAINS
       DO elementIdx=1,domainNodes%nodes(localNodeNumber)%numberOfSurroundingElements
         element=domainNodes%nodes(localNodeNumber)%surroundingElements(elementIdx)
         NULLIFY(basis)
-        CALL DomainElements_BasisGet(domainElements,element,basis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,element,basis,err,error,*999)
         !Find local node number in the basis
         localNode=0
         DO localNodeIdx=1,basis%numberOfNodes
@@ -15140,7 +15140,7 @@ CONTAINS
       fieldVariable%components(componentNumber)%maxNumberElementInterpolationParameters=-1
       DO elementIdx=1,domainElements%totalNumberOfElements
         NULLIFY(basis)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
         IF(basis%numberOfElementParameters>fieldVariable%components(componentNumber)% &
           & maxNumberElementInterpolationParameters) fieldVariable%components(componentNumber)% &
           & maxNumberElementInterpolationParameters=basis%numberOfElementParameters
@@ -15160,7 +15160,7 @@ CONTAINS
       maxNumberOfGauss = -1
       DO elementIdx=1,domainElements%totalNumberOfElements
         NULLIFY(basis)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
         NULLIFY(quadratureScheme)
         CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
         numberOfGauss=quadratureScheme%numberOfGauss
@@ -19266,7 +19266,7 @@ CONTAINS
     !Get the basis for the decomposition domain. We will have to assume that the quadrature scheme will be the
     !same for all component bases.
     NULLIFY(basis)
-    CALL DomainElements_BasisGet(domainElements,localElementNumber,basis,err,error,*999)
+    CALL DomainElements_ElementBasisGet(domainElements,localElementNumber,basis,err,error,*999)
     NULLIFY(quadratureScheme)
     CALL Basis_QuadratureSchemeGet(basis,quadSchemeType,quadratureScheme,err,error,*999)
     NULLIFY(interpolationParameters)

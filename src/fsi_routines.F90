@@ -56,7 +56,7 @@ MODULE FSIRoutines
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE FINITE_ELASTICITY_ROUTINES
+  USE FiniteElasticityRoutines
   USE InputOutput
   USE InterfaceAccessRoutines
   USE InterfaceConditionAccessRoutines
@@ -730,8 +730,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,equationsSetIndex,nodeIdx,numberOfComponents,outputIteration, &
-      & solidNode,versionIdx
+    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,equationsSetIndex,inputIteration,nodeIdx,numberOfComponents, &
+      & outputIteration,solidNode,versionIdx
     LOGICAL :: fluidEquationsSetFound=.FALSE.,solidEquationsSetFound=.FALSE.
     REAL(DP) :: startTime,currentTime,stopTime,timeIncrement,VALUE
     TYPE(DomainType), POINTER :: domain
@@ -759,7 +759,7 @@ CONTAINS
     CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
     !Get times
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,err,error,*999)    
+      & outputIteration,inputIteration,err,error,*999)    
     !Get solvers for FSI
     IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
       & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &

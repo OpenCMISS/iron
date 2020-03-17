@@ -533,7 +533,7 @@ CONTAINS
               elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
             CASE(FIELD_NODE_BASED_INTERPOLATION)
               NULLIFY(basis)
-              CALL DomainElements_BasisGet(domainElements,rowElementNumber,basis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,rowElementNumber,basis,err,error,*999)
               CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
               DO localNodeIdx=1,numberOfLocalNodes
                 CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,rowElementNumber,nodeNumber,err,error,*999)
@@ -566,7 +566,7 @@ CONTAINS
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
               DO dataPointIdx=1,numberOfElementDataPoints
-                CALL DecompositionDataPoints_ElementDataPointNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
+                CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
                   & localDataPointNumber,err,error,*999)
                 CALL FieldVariable_LocalDataPointDOFGet(rowsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx, &
                   & err,error,*999)
@@ -620,7 +620,7 @@ CONTAINS
               elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
             CASE(FIELD_NODE_BASED_INTERPOLATION)
               NULLIFY(basis)
-              CALL DomainElements_BasisGet(domainElements,rowElementNumber,basis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,rowElementNumber,basis,err,error,*999)
               CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
               DO localNodeIdx=1,numberOfLocalNodes
                 CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,rowElementNumber,nodeNumber,err,error,*999)
@@ -650,7 +650,7 @@ CONTAINS
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
                DO dataPointIdx=1,numberOfElementDataPoints
-                CALL DecompositionDataPoints_ElementDataPointNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
+                CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
                   & localDataPointNumber,err,error,*999)
                 CALL FieldVariable_LocalDataPointDOFGet(rowsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx, &
                   & err,error,*999)
@@ -701,7 +701,7 @@ CONTAINS
               elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
             CASE(FIELD_NODE_BASED_INTERPOLATION)
               NULLIFY(basis)
-              CALL DomainElements_BasisGet(domainElements,colElementNumber,basis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,colElementNumber,basis,err,error,*999)
               CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
               DO localNodeIdx=1,numberOfLocalNodes
                 CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,rowElementNumber,nodeNumber,err,error,*999)
@@ -732,7 +732,7 @@ CONTAINS
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
               DO dataPointIdx=1,numberOfElementDataPoints
-                CALL DecompositionDataPoints_ElementDataPointNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
+                CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
                   & localDataPointNumber,err,error,*999)
                 CALL FieldVariable_LocalDataPointDOFGet(colsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx, &
                   & err,error,*999)
@@ -945,7 +945,7 @@ CONTAINS
           elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           NULLIFY(basis)
-          CALL DomainElements_BasisGet(domainElements,elementNumber,basis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
           CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
           DO localNodeIdx=1,numberOfLocalNodes
             CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,rowElementNumber,nodeNumber,err,error,*999)
@@ -975,7 +975,7 @@ CONTAINS
           CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
             & err,error,*999)
            DO dataPointIdx=1,numberOfElementDataPoints
-             CALL DecompositionDataPoints_ElementDataPointNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
+             CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
                & localDataPointNumber,err,error,*999)
             CALL FieldVariable_LocalDataPointDOFGet(rowsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx,err,error,*999)
             elementVector%numberOfRows=elementVector%numberOfRows+1

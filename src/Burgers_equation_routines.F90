@@ -1940,7 +1940,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
       
       NULLIFY(dependentDecomposition)
@@ -1952,7 +1952,7 @@ CONTAINS
       NULLIFY(colsDomainElements)
       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
       NULLIFY(colsBasis)
-      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -2277,7 +2277,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
       
       NULLIFY(dependentDecomposition)
@@ -2289,7 +2289,7 @@ CONTAINS
       NULLIFY(colsDomainElements)
       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
       NULLIFY(colsBasis)
-      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
     
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)

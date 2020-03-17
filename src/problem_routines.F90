@@ -45,7 +45,7 @@
 MODULE ProblemRoutines
 
   USE BaseRoutines
-  USE BIOELECTRIC_ROUTINES
+  USE BioelectricRoutines
   USE ClassicalFieldRoutines
   USE ComputationAccessRoutines
   USE ContextAccessRoutines
@@ -59,7 +59,7 @@ MODULE ProblemRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FIELD_IO_ROUTINES
-  USE FINITE_ELASTICITY_ROUTINES
+  USE FiniteElasticityRoutines
   USE FittingRoutines
   USE FluidMechanicsRoutines
   USE InputOutput
@@ -68,9 +68,8 @@ MODULE ProblemRoutines
   USE InterfaceRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MULTI_PHYSICS_ROUTINES
+  USE MultiPhysicsRoutines
   USE ProblemAccessRoutines
-  USE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE SolverRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
@@ -380,7 +379,7 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Simple control loop: ",err,error,*999)
       ENDIF
-      CALL Problem_ControlLoopPreLoop(controlLoop,err,error,*999)
+      CALL Problem_PreLoop(controlLoop,err,error,*999)
       IF(controlLoop%numberOfSubLoops==0) THEN
         !If there are no sub loops then solve.
         NULLIFY(solvers)
@@ -400,7 +399,7 @@ CONTAINS
           CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
         ENDDO !loopIdx
       ENDIF
-      CALL Problem_ControlLoopPostLoop(controlLoop,err,error,*999)
+      CALL Problem_PostLoop(controlLoop,err,error,*999)
     CASE(CONTROL_FIXED_LOOP_TYPE)
       NULLIFY(fixedLoop)
       CALL ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*999)
@@ -414,7 +413,7 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Fixed control loop iteration: ",iterationIdx,err,error,*999)
         ENDIF
         fixedLoop%iterationNumber=iterationIdx
-        CALL Problem_ControlLoopPreLoop(controlLoop,err,error,*999)
+        CALL Problem_PreLoop(controlLoop,err,error,*999)
         IF(controlLoop%numberOfSubLoops==0) THEN
           !If there are no sub loops then solve
           NULLIFY(solvers)
@@ -434,7 +433,7 @@ CONTAINS
             CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
           ENDDO !loopIdx
         ENDIF
-        CALL Problem_ControlLoopPostLoop(controlLoop,err,error,*999)
+        CALL Problem_PostLoop(controlLoop,err,error,*999)
       ENDDO !iterationIdx
     CASE(CONTROL_TIME_LOOP_TYPE)
       NULLIFY(timeLoop)
@@ -474,7 +473,7 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Time increment = ",timeLoop%timeIncrement,err,error,*999)
         ENDIF
         !Perform any pre-loop actions.
-        CALL Problem_ControlLoopPreLoop(controlLoop,err,error,*999)
+        CALL Problem_PreLoop(controlLoop,err,error,*999)
         IF(controlLoop%numberOfSubLoops==0) THEN
           !If there are no sub loops then solve.
           NULLIFY(solvers)
@@ -495,7 +494,7 @@ CONTAINS
           ENDDO !loopIdx
         ENDIF
         !Perform any post loop actions.
-        CALL Problem_ControlLoopPostLoop(controlLoop,err,error,*999)
+        CALL Problem_PostLoop(controlLoop,err,error,*999)
         !Increment loop counter and time
         timeLoop%iterationNumber=timeLoop%iterationNumber+1
         timeLoop%globalIterationNumber=timeLoop%globalIterationNumber+1
@@ -520,7 +519,7 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum number of iterations = ", &
             & whileLoop%maximumNumberOfIterations,err,error,*999)
         ENDIF
-        CALL Problem_ControlLoopPreLoop(controlLoop,err,error,*999)
+        CALL Problem_PreLoop(controlLoop,err,error,*999)
         IF(controlLoop%numberOfSubLoops==0) THEN
           !If there are no sub loops then solve
           NULLIFY(solvers)
@@ -542,7 +541,7 @@ CONTAINS
             CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
           ENDDO !loopIdx
         ENDIF
-        CALL Problem_ControlLoopPostLoop(controlLoop,err,error,*999)
+        CALL Problem_PostLoop(controlLoop,err,error,*999)
       ENDDO !while loop
     CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
       NULLIFY(loadIncrementLoop)
@@ -569,7 +568,7 @@ CONTAINS
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum number of iterations = ", &
               & loadIncrementLoop%maximumNumberOfIterations,err,error,*999)
           ENDIF
-          CALL Problem_ControlLoopPreLoop(controlLoop,err,error,*999)
+          CALL Problem_PreLoop(controlLoop,err,error,*999)
           IF(controlLoop%numberOfSubLoops==0) THEN
             !If there are no sub loops then solve
             NULLIFY(solvers)
@@ -593,7 +592,7 @@ CONTAINS
               CALL Problem_ControlLoopSolve(controlLoop2,err,error,*999)
             ENDDO !loopIdx
           ENDIF
-          CALL Problem_ControlLoopPostLoop(controlLoop,err,error,*999)
+          CALL Problem_PostLoop(controlLoop,err,error,*999)
         ENDDO !while loop
       ENDIF
     CASE DEFAULT
@@ -1052,7 +1051,7 @@ CONTAINS
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
       CALL FluidMechanics_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
-      CALL BIOELECTRIC_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+      CALL Bioelectric_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
@@ -1062,7 +1061,7 @@ CONTAINS
     CASE(PROBLEM_MODAL_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-      CALL MULTI_PHYSICS_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+      CALL MultiPhysics_ProblemSetup(problem,problemSetupInfo,err,error,*999)
     CASE DEFAULT
       localError="The first problem specification of "//TRIM(NumberToVString(problem%specification(1),"*",err,error))// &
         & " is not valid."
@@ -1728,7 +1727,7 @@ CONTAINS
   !
 
   !>Executes before each loop of a control loop, ie before each time step for a time loop
-  SUBROUTINE Problem_ControlLoopPreLoop(controlLoop,err,error,*)
+  SUBROUTINE Problem_PreLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -1738,7 +1737,7 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Problem_ControlLoopPreLoop",err,error,*999)
+    ENTERS("Problem_PreLoop",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
     
@@ -1754,11 +1753,11 @@ CONTAINS
     IF(SIZE(problem%specification,1)<1) CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
     SELECT CASE(problem%specification(1))
     CASE(PROBLEM_ELASTICITY_CLASS)
-      CALL Elasticity_ControlLoopPreLoop(controlLoop,err,error,*999)
+      CALL Elasticity_PreLoop(controlLoop,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
       !do nothing
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-      CALL FluidMechanics_ControlLoopPreLoop(controlLoop,err,error,*999)
+      CALL FluidMechanics_PreLoop(controlLoop,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
       !do nothing
     CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
@@ -1768,26 +1767,26 @@ CONTAINS
     CASE(PROBLEM_MODAL_CLASS)
       !do nothing
     CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-      CALL MULTI_PHYSICS_CONTROL_LOOP_PRE_LOOP(controlLoop,err,error,*999)
+      CALL MultiPhysics_PreLoop(controlLoop,err,error,*999)
     CASE DEFAULT
       localError="Problem class "//TRIM(NumberToVString(problem%specification(1),"*",err,error))//" &
         & is not valid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
-    EXITS("Problem_ControlLoopPreLoop")
+    EXITS("Problem_PreLoop")
     RETURN
-999 ERRORSEXITS("Problem_ControlLoopPreLoop",err,error)
+999 ERRORSEXITS("Problem_PreLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE Problem_ControlLoopPreLoop
+  END SUBROUTINE Problem_PreLoop
 
   !
   !================================================================================================================================
   !
 
   !>Executes after each loop of a control loop, ie after each time step for a time loop
-  SUBROUTINE Problem_ControlLoopPostLoop(controlLoop,err,error,*)
+  SUBROUTINE Problem_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -1797,7 +1796,7 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
  
-    ENTERS("Problem_ControlLoopPostLoop",err,error,*999)
+    ENTERS("Problem_PostLoop",err,error,*999)
 
    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
  
@@ -1811,40 +1810,33 @@ CONTAINS
    IF(SIZE(problem%specification,1)<1) CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
    SELECT CASE(problem%specification(1))
    CASE(PROBLEM_ELASTICITY_CLASS)
-     CALL Elasticity_ControlLoopPostLoop(controlLoop,err,error,*999)
+     CALL Elasticity_PostLoop(controlLoop,err,error,*999)
    CASE(PROBLEM_BIOELECTRICS_CLASS)
-     CALL BIOELECTRIC_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+     CALL Bioelectric_PostLoop(controlLoop,err,error,*999)
    CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-     CALL FluidMechanics_ControlLoopPostLoop(controlLoop,err,error,*999)
+     CALL FluidMechanics_PostLoop(controlLoop,err,error,*999)
    CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
      !Do nothing
    CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
-     IF(SIZE(problem%specification,1)<2) CALL FlagError("Problem specification must have at least two entries.",err,error,*999)
-     CALL ClassicalField_ControlLoopPostLoop(controlLoop,err,error,*999)        
-     SELECT CASE(problem%specification(2))
-     CASE(PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE)
-       CALL REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
-     CASE DEFAULT
-       !do nothing
-     END SELECT
+     CALL ClassicalField_PostLoop(controlLoop,err,error,*999)        
    CASE(PROBLEM_FITTING_CLASS)
      !Do nothing
    CASE(PROBLEM_MODAL_CLASS)
      !Do nothing
    CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-     CALL MULTI_PHYSICS_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+     CALL MultiPhysics_PostLoop(controlLoop,err,error,*999)
    CASE DEFAULT
      localError="The first problem specification of "// &
        & TRIM(NumberToVString(problem%specification(1),"*",err,error))//" is not valid."
      CALL FlagError(localError,err,error,*999)
    END SELECT
     
-    EXITS("Problem_ControlLoopPostLoop")
+    EXITS("Problem_PostLoop")
     RETURN
-999 ERRORSEXITS("Problem_ControlLoopPostLoop",err,error)
+999 ERRORSEXITS("Problem_PostLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE Problem_ControlLoopPostLoop
+  END SUBROUTINE Problem_PostLoop
 
   !
   !================================================================================================================================
@@ -1883,7 +1875,7 @@ CONTAINS
     CASE(PROBLEM_ELASTICITY_CLASS)
       CALL Elasticity_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
-      CALL BIOELECTRIC_PRE_SOLVE(solver,err,error,*999)
+      CALL Bioelectric_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
       CALL FluidMechanics_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
@@ -1895,7 +1887,7 @@ CONTAINS
     CASE(PROBLEM_MODAL_CLASS)
       !Do nothing???
     CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-      CALL MULTI_PHYSICS_PRE_SOLVE(controlLoop,solver,err,error,*999)
+      CALL MultiPhysics_PreSolve(solver,err,error,*999)
     CASE DEFAULT
       localError="The problem class of "//TRIM(NumberToVString(problem%specification(1),"*",err,error))//" &
         & is invalid."
@@ -1946,7 +1938,7 @@ CONTAINS
     CASE(PROBLEM_ELASTICITY_CLASS)
       CALL Elasticity_PostSolve(solver,err,error,*999)
     CASE(PROBLEM_BIOELECTRICS_CLASS)
-      CALL BIOELECTRIC_POST_SOLVE(solver,err,error,*999)
+      CALL Bioelectric_PostSolve(solver,err,error,*999)
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
       CALL FluidMechanics_PostSolve(solver,err,error,*999)
     CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
@@ -1958,7 +1950,7 @@ CONTAINS
     CASE(PROBLEM_MODAL_CLASS)
       !Do nothing???
     CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-      CALL MULTI_PHYSICS_POST_SOLVE(controlLoop,solver,err,error,*999)
+      CALL MultiPhysics_PostSolve(solver,err,error,*999)
     CASE DEFAULT
       localError="The problem class of "//TRIM(NumberToVString(problem%specification(1),"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)

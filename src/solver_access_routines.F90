@@ -619,6 +619,8 @@ MODULE SolverAccessRoutines
 
   PUBLIC Solver_GeometricTransformationSolverGet
 
+  PUBLIC Solver_GlobalNumberGet
+
   PUBLIC Solver_LabelGet
 
   PUBLIC Solver_LibraryTypeGet
@@ -633,6 +635,8 @@ MODULE SolverAccessRoutines
   
   PUBLIC Solver_OptimiserSolverGet
 
+  PUBLIC Solver_OutputTypeGet
+
   PUBLIC Solver_QuasiNewtonLinkedCellMLSolverGet
   
   PUBLIC Solver_QuasiNewtonLinkedLinearSolverGet
@@ -640,6 +644,8 @@ MODULE SolverAccessRoutines
   PUBLIC Solver_SolverEquationsGet
 
   PUBLIC Solver_SolversGet
+
+  PUBLIC Solver_TypeGet
 
   PUBLIC Solver_WorkGroupGet
 
@@ -2657,6 +2663,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the global number of a solver.
+  SUBROUTINE Solver_GlobalNumberGet(solver,globalNumber,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to get the global number for
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On return, the solver global number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Solver_GlobalNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    globalNumber=solver%globalNumber
+    
+    EXITS("Solver_GlobalNumberGet")
+    RETURN
+999 ERRORSEXITS("Solver_GlobalNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_GlobalNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the label of a solver. \see OpenCMISS::Iron::cmfe_Solver_LabelGet
   SUBROUTINE Solver_LabelGetC(solver,label,err,error,*)
 
@@ -2871,6 +2906,35 @@ CONTAINS
     
   END SUBROUTINE Solver_OptimiserSolverGet
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the output type of a solver.
+  SUBROUTINE Solver_OutputTypeGet(solver,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the solver output type. \see SolverRoutines_OutputTypes,SolverRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Solver_OutputTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    outputType=solver%outputType
+    
+    EXITS("Solver_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("Solver_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_OutputTypeGet
+
   !
   !================================================================================================================================
   !
@@ -3111,6 +3175,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Solver_SolversGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the solve type of a solver.
+  SUBROUTINE Solver_TypeGet(solver,solveType,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to get the solve type for
+    INTEGER(INTG), INTENT(OUT) :: solveType !<On return, the solver type. \see SolverRoutines_SolverTypes,SolverRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Solver_TypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    solveType=solver%solveType
+    
+    EXITS("Solver_TypeGet")
+    RETURN
+999 ERRORSEXITS("Solver_TypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_TypeGet
 
   !
   !================================================================================================================================

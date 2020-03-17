@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,7 +42,7 @@
 !>
 
 !>This module handles all Helmholtz equations routines.
-MODULE HELMHOLTZ_EQUATIONS_ROUTINES
+MODULE HelmholtzEquationsRoutines
 
   USE BaseRoutines
   USE BasisRoutines
@@ -91,13 +91,13 @@ MODULE HELMHOLTZ_EQUATIONS_ROUTINES
   
   PUBLIC Helmholtz_EquationsSetSolutionMethodSet
   
-  PUBLIC HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP
+  PUBLIC Helmholtz_EquationsSetSetup
 
   PUBLIC Helmholtz_EquationsSetSpecificationSet
   
-  PUBLIC HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE
+  PUBLIC Helmholtz_FiniteElementCalculate
 
-  PUBLIC HELMHOLTZ_EQUATION_PROBLEM_SETUP
+  PUBLIC Helmholtz_ProblemSetup
 
   PUBLIC Helmholtz_ProblemSpecificationSet
 
@@ -109,175 +109,140 @@ CONTAINS
 
 
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE Helmholtz_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*)
+  SUBROUTINE Helmholtz_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(BoundaryConditionsType), POINTER :: BOUNDARY_CONDITIONS
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,node_idx,numberOfDimensions,variable_idx,variable_type,local_ny,deriv_idx,dim_idx
-    REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:), MATERIALS_PARAMETERS(:)
-    TYPE(DomainType), POINTER :: DOMAIN
-    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE,MATERIALS_VARIABLE
-    REAL(DP) :: VALUE,X(3),k,mu
-    TYPE(VARYING_STRING) :: LOCAL_ERROR    
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,globalDerivativeIndex,localDOFIdx, &
+      & nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,variableIdx, &
+      & variableType
+    REAL(DP) :: analyticValue,x(3),k,mu
+    REAL(DP), POINTER :: geometricParameters(:),materialsParameters(:)
+    LOGICAL :: boundaryNodes
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
+    TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
+    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable,materialsVariable
+    TYPE(VARYING_STRING) :: localError    
     
     ENTERS("Helmholtz_BoundaryConditionsAnalyticCalculate",err,error,*999)
-    
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-        IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-          GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
-          IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-            MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%materialsField
-            IF(ASSOCIATED(MATERIALS_FIELD)) THEN            
-              CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-              NULLIFY(GEOMETRIC_VARIABLE)
-              NULLIFY(GEOMETRIC_PARAMETERS)
-              CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
-              CALL Field_ParameterSetDataGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
-                & err,error,*999)
-              NULLIFY(MATERIALS_VARIABLE)
-              NULLIFY(MATERIALS_PARAMETERS)
-              CALL Field_VariableGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,err,error,*999)
-              CALL Field_ParameterSetDataGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,MATERIALS_PARAMETERS, &
-                & err,error,*999)
-              IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-                DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
-                  variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%variableType
-                  FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%PTR
-                  IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                    CALL Field_ParameterSetCreate(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                      IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
-                        IF(MATERIALS_VARIABLE%COMPONENTS(1)%interpolationType==FIELD_CONSTANT_INTERPOLATION) THEN
-                          CALL FieldVariable_ConstantDOFGet(MATERIALS_VARIABLE,1,local_ny,err,error,*999)
-                          k=MATERIALS_PARAMETERS(local_ny)
-                          mu=k/SQRT(2.0_DP)
-                          DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
-                          IF(ASSOCIATED(DOMAIN)) THEN
-                            IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                              DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                              IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                                !Loop over the local nodes excluding the ghosts.
-                                DO node_idx=1,DOMAIN_NODES%numberOfNodes
-                                  !!TODO \todo We should interpolate the geometric field here and the node position.
-                                  DO dim_idx=1,numberOfDimensions
-                                    CALL FieldVariable_LocalNodeDOFGet(GEOMETRIC_VARIABLE,1,1,node_idx,dim_idx, &
-                                      & local_ny,err,error,*999)
-                                     X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
-                                  ENDDO !dim_idx
-                                  !Loop over the derivatives
-                                  DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                                    SELECT CASE(EQUATIONS_SET%ANALYTIC%analyticFunctionType)
-                                    CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
-                                      !u=cos(k*x/sqrt(2))*sin(k*y/sqrt(2))
-                                      SELECT CASE(variable_type)
-                                      CASE(FIELD_U_VARIABLE_TYPE)
-                                        SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
-                                        CASE(NO_GLOBAL_DERIV)
-                                          VALUE=COS(mu*X(1))*SIN(mu*X(2))
-                                        CASE(GLOBAL_DERIV_S1)
-                                          VALUE=-mu*SIN(mu*X(1))*SIN(mu*X(2))
-                                        CASE(GLOBAL_DERIV_S2)
-                                          VALUE=mu*COS(mu*X(1))*COS(mu*X(2))
-                                        CASE(GLOBAL_DERIV_S1_S2)
-                                          VALUE=-mu*mu*SIN(mu*X(1))*COS(mu*X(2))
-                                        CASE DEFAULT
-                                          LOCAL_ERROR="The global derivative index of "//TRIM(NumberToVString( &
-                                            & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
-                                            & err,error))//" is invalid."
-                                          CALL FlagError(LOCAL_ERROR,err,error,*999)
-                                        END SELECT
-                                      CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
-                                        CASE(NO_GLOBAL_DERIV)
-                                          VALUE=0.0_DP !!TODO
-                                        CASE(GLOBAL_DERIV_S1)
-                                          CALL FlagError("Not implemented.",err,error,*999)
-                                        CASE(GLOBAL_DERIV_S2)
-                                          CALL FlagError("Not implemented.",err,error,*999)
-                                        CASE(GLOBAL_DERIV_S1_S2)
-                                          CALL FlagError("Not implemented.",err,error,*999)
-                                        CASE DEFAULT
-                                          LOCAL_ERROR="The global derivative index of "//TRIM(NumberToVString( &
-                                            & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
-                                            & err,error))//" is invalid."
-                                          CALL FlagError(LOCAL_ERROR,err,error,*999)
-                                        END SELECT
-                                      CASE DEFAULT
-                                        LOCAL_ERROR="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//&
-                                          & " is invalid."
-                                        CALL FlagError(LOCAL_ERROR,err,error,*999)
-                                      END SELECT
-                                    CASE DEFAULT
-                                      LOCAL_ERROR="The analytic function type of "// &
-                                        & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%analyticFunctionType,"*",err,error))// &
-                                        & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,err,error,*999)
-                                    END SELECT
-                                    CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD,variable_type, &
-                                      & FIELD_ANALYTIC_VALUES_SET_TYPE,1,deriv_idx,node_idx,component_idx,VALUE, &
-                                      & err,error,*999)
-                                    IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
-                                      IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
-                                        !If we are a boundary node then set the analytic value on the boundary
-                                        CALL BoundaryConditions_SetLocalDOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
-                                          & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
-                                      ENDIF
-                                    ENDIF
-                                  ENDDO !deriv_idx
-                                ENDDO !node_idx
-                              ELSE
-                                CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Domain topology is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Domain is not associated.",err,error,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Only constant interpolation of the material field is implemented.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
-                      ENDIF
-                    ENDDO !component_idx
-                    CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                      & err,error,*999)
-                    CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                      & err,error,*999)
-                  ELSE
-                    CALL FlagError("Field variable is not associated.",err,error,*999)
-                  ENDIF
 
-                ENDDO !variable_idx
-                CALL Field_ParameterSetDataRestore(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & GEOMETRIC_PARAMETERS,err,error,*999)
-              ELSE
-                CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    NULLIFY(equationsAnalytic)
+    CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricParameters)
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(materialsField)
+    CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+    NULLIFY(materialsVariable)
+    CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
+    NULLIFY(materialsParameters)
+    CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
+      NULLIFY(dependentVariable)
+      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+      DO componentIdx=1,numberOfComponents
+        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+          & err,error,*999)
+        CALL FieldVariable_ConstantDOFGet(materialsVariable,1,localDOFIdx,err,error,*999)
+        k=materialsParameters(localDOFIdx)
+        mu=k/SQRT(2.0_DP)
+        NULLIFY(domain)
+        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainNodes)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        !Loop over the local nodes excluding the ghosts.
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        DO nodeIdx=1,numberOfNodes
+!!TODO \todo We should interpolate the geometric field here and the node position.
+          DO dimensionIdx=1,numberOfDimensions
+            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+            x(dimensionIdx)=geometricParameters(localDOFIdx)
+          ENDDO !dimensionIdx
+          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+          !Loop over the derivatives
+          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+          DO derivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainNode_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
+            SELECT CASE(analyticFunctionType)
+            CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
+              !u=cos(k*x/sqrt(2))*sin(k*y/sqrt(2))
+              SELECT CASE(variableType)
+              CASE(FIELD_U_VARIABLE_TYPE)
+                SELECT CASE(globalDerivativeIndex)
+                CASE(NO_GLOBAL_DERIV)
+                  analyticValue=COS(mu*x(1))*SIN(mu*x(2))
+                CASE(GLOBAL_DERIV_S1)
+                  analyticValue=-mu*SIN(mu*x(1))*SIN(mu*x(2))
+                CASE(GLOBAL_DERIV_S2)
+                  analyticValue=mu*COS(mu*x(1))*COS(mu*x(2))
+                CASE(GLOBAL_DERIV_S1_S2)
+                  analyticValue=-mu*mu*SIN(mu*x(1))*COS(mu*x(2))
+                CASE DEFAULT
+                  localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+                SELECT CASE(globalDerivativeIndex)
+                CASE(NO_GLOBAL_DERIV)
+                  analyticValue=0.0_DP !!TODO
+                CASE(GLOBAL_DERIV_S1)
+                  CALL FlagError("Not implemented.",err,error,*999)
+                CASE(GLOBAL_DERIV_S2)
+                  CALL FlagError("Not implemented.",err,error,*999)
+                CASE(GLOBAL_DERIV_S1_S2)
+                  CALL FlagError("Not implemented.",err,error,*999)
+                CASE DEFAULT
+                  localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE DEFAULT
+                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            CASE DEFAULT
+              localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+            CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,1,derivativeIdx, &
+              & nodeIdx,componentIdx,analyticValue,err,error,*999)
+            IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
+              IF(boundaryNode) THEN
+                !If we are a boundary node then set the analytic value on the boundary
+                CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDOFIdx, &
+                  & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
               ENDIF
-            ELSE
-              CALL FlagError("Equations set materials field is not associated.",err,error,*999)
             ENDIF
-          ELSE
-            CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+          ENDDO !derivativeIdx
+        ENDDO !nodeIdx
+      ENDDO !componentIdx
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+    ENDDO !variableIdx
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    CALL FieldVariable_ParameterSetDataRestore(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
     
     EXITS("Helmholtz_BoundaryConditionsAnalyticCalculate")
     RETURN
@@ -292,17 +257,18 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a Helmholtz equation finite element equations set.
-  SUBROUTINE HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE Helmholtz_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns
-    REAL(DP) :: RWG,SUM,PGMSI(3),PGNSI(3),PGM,PGN,k
-    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
+    INTEGER(INTG) :: esSpecification(3),gaussPointIdx,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx, &
+      & columnComponentIdx,colElementDOFIdx,xiIdx,columnElementParameterIdx,variableType
+    REAL(DP) :: jacobianGaussWeight,sum,rowsdPhidXi(3),colsdPhidXi(3),rowsPhi,colsPhi,k,conductivityTensor(3,3)
+    TYPE(BasisType), POINTER :: colsBasis,geometricBasis,rowsBasis
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -311,273 +277,337 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    TYPE(QuadratureSchemeType), POINTER :: QUADRATURE_SCHEME
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
-#ifdef TAUPROF
-    CHARACTER(26) :: CVAR
-    INTEGER :: GAUSS_POINT_LOOP_PHASE(2) = [ 0, 0 ]
-    SAVE GAUSS_POINT_LOOP_PHASE
-#endif
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField
+    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,geometricQuadratureScheme,rowsQuadratureScheme
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE",err,error,*999)
+    ENTERS("Helmholtz_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Helmholtz type equations set.", &
-          & err,error,*999)
-      END IF
-      EQUATIONS=>EQUATIONS_SET%EQUATIONS
-      IF(ASSOCIATED(EQUATIONS)) THEN
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-        CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE)
-!!TODO: move these and scale factor adjustment out once generalised Helmholtz is put in.
-          !Store all these in equations matrices/somewhere else?????
-          DEPENDENT_FIELD=>equations%interpolation%dependentField
-          GEOMETRIC_FIELD=>equations%interpolation%geometricField
-          MATERIALS_FIELD=>equations%interpolation%materialsField
-          vectorMatrices=>vectorEquations%vectorMatrices
-          linearMatrices=>vectorMatrices%linearMatrices
-          equationsMatrix=>linearMatrices%matrices(1)%PTR
-          rhsVector=>vectorMatrices%rhsVector
-          vectorMapping=>vectorEquations%vectorMapping
-          linearMapping=>vectorMapping%linearMapping
-          FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%variable
-          FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%decomposition%meshComponentNumber)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%decomposition%meshComponentNumber)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
-            & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-          !Loop over gauss points
-          DO ng=1,QUADRATURE_SCHEME%numberOfGauss
-#ifdef TAUPROF
-              WRITE (CVAR,'(a17,i2)') 'Gauss Point Loop ',ng
-              CALL TAU_PHASE_CREATE_DYNAMIC(GAUSS_POINT_LOOP_PHASE,CVAR)
-              CALL TAU_PHASE_START(GAUSS_POINT_LOOP_PHASE)
-#endif
-            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-              & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-            CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
-              & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
 
-            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-              & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-            k = equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,NO_PART_DERIV) ! wave number
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
+      & EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Helmholtz equation type of a classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-            !Calculate RWG.
-!!TODO: Think about symmetric problems. 
-            RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR%jacobian* &
-              & QUADRATURE_SCHEME%gaussWeights(ng)
-            !Loop over field components
-            mhs=0          
-            DO mh=1,FIELD_VARIABLE%numberOfComponents
-              !Loop over element rows
-!!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
-                mhs=mhs+1
-                nhs=0
-                IF(equationsMatrix%updateMatrix) THEN
-                  !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%numberOfComponents
-                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
-                      nhs=nhs+1
-                      PGM=QUADRATURE_SCHEME%gaussBasisFunctions(ms,NO_PART_DERIV,ng)
-                      PGN=QUADRATURE_SCHEME%gaussBasisFunctions(ns,NO_PART_DERIV,ng)
-                      DO ni=1,DEPENDENT_BASIS%numberOfXi
-                        PGMSI(ni)=QUADRATURE_SCHEME%gaussBasisFunctions(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                        PGNSI(ni)=QUADRATURE_SCHEME%gaussBasisFunctions(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                      ENDDO !ni
-                      SUM=0.0_DP
-                      SUM=SUM-k*k*PGM*PGN
-                      DO mi=1,DEPENDENT_BASIS%numberOfXi
-                        DO ni=1,DEPENDENT_BASIS%numberOfXi
-                          SUM=SUM+PGMSI(mi)*PGNSI(ni)*equations%interpolation% &
-                            & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR%GU(mi,ni)
-                        ENDDO !ni
-                      ENDDO !mi
-                      equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)+SUM*RWG
-                    ENDDO !ns
-                  ENDDO !nh
-                ENDIF
-                IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=0.0_DP
-              ENDDO !ms
-            ENDDO !mh
-#ifdef TAUPROF
-            CALL TAU_PHASE_STOP(GAUSS_POINT_LOOP_PHASE)
-#endif
-          ENDDO !ng
+    NULLIFY(equations)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    NULLIFY(equationsInterpolation)
+    CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(lhsMapping)
+    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+    NULLIFY(linearMapping)
+    CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    NULLIFY(linearMatrices)
+    CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+    NULLIFY(equationsMatrix)
+    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
+    upateMatrix=equationsMatrix%updateMatrix
+    NULLIFY(rhsVector)
+    CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+    updateRHS=rhsVector%updateVector
+
+    update=(updateMatrix.OR.updateRHS)
+
+    IF(update) THEN
+
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      NULLIFY(geometricDecomposition)
+      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+      NULLIFY(geometricDomain)
+      CALL Decomposition_DomainGet(geometricDecomposition,0,geometricDomain,err,error,*999)
+      NULLIFY(geometricDomainTopology)
+      CALL Domain_DomainTopologyGet(geometricDomain,geometricDomainTopology,err,error,*999)
+      NULLIFY(geometricDomainElements)
+      CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
+      NULLIFY(geometricBasis)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
+
+ 
+      NULLIFY(dependentField)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      NULLIFY(dependentDecomposition)
+      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+      NULLIFY(colsDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
+      NULLIFY(colsDomainTopology)
+      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+      NULLIFY(colsDomainElements)
+      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+      NULLIFY(colsBasis)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL Basis_NumberOfXiGet(colsBasis,numberOfColsXi,err,error,*999)
+
+      NULLIFY(rowsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
+      
+      NULLIFY(colsVariable)
+      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
+      
+      NULLIFY(geometricQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
+      
+      NULLIFY(geometricInterpParameters)
+      CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpParameters,err,error,*999)
+      NULLIFY(geometricInterpPoint)
+      CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpPoint,err,error,*999)
+      NULLIFY(geometricInterpPointMetrics)
+      CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & geometricInterpPointMetrics,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
           
-          !Scale factor adjustment
-          IF(DEPENDENT_FIELD%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
-            CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
-              & dependentInterpParameters(FIELD_VAR_TYPE)%PTR,err,error,*999)
-            mhs=0          
-            DO mh=1,FIELD_VARIABLE%numberOfComponents
-              !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
-                mhs=mhs+1                    
-                nhs=0
-                IF(equationsMatrix%updateMatrix) THEN
-                  !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%numberOfComponents
-                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
-                      nhs=nhs+1
-                      equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
-                        & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%PTR%scaleFactors(ms,mh)* &
-                        & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%PTR%scaleFactors(ns,nh)
-                    ENDDO !ns
-                  ENDDO !nh
-                ENDIF
-                IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
-                  & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%PTR%scaleFactors(ms,mh)
-              ENDDO !ms
-            ENDDO !mh
-          ENDIF
-        CASE(EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-            & " is not valid for a Helmholtz equation type of a classical field equations set class."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-        
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
+      NULLIFY(fibreField)
+      NULLIFY(fibreInterpParameters)
+      NULLIFY(fibreInterpPoint)
+      IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE) THEN
+        CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
+        IF(ASSOCIATED(fibreField)) THEN
+          CALL EquationsInterpolation_FibreParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,fibreInterpParameters, &
+            & err,error,*999)
+          CALL EquationsInterpolation_FibrePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,fibreInterpPoint,err,error,*999)
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,fibreInterpParameters,err,error,*999)
+        ENDIF
       ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE")
-    RETURN
-999 ERRORSEXITS("HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE",err,error)
-    RETURN 1
-  END SUBROUTINE HELMHOLTZ_EQUATION_FINITE_ELEMENT_CALCULATE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets up the Helmholtz equation type of a classical field equations set class.
-  SUBROUTINE HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Helmholtz equation on.
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+      
+      NULLIFY(materialsInterpParameters)
+      CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & materialsInterpParameters,err,error,*999)
+      NULLIFY(materialsInterpPoint)
+      CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+        & materialsInterpPoint,err,error,*999)
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsInterpParameters,err,error,*999)
     
-    ENTERS("HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP",err,error,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Helmholtz type equations set.", &
+      !Loop over gauss points
+      DO gaussPointIdx=1,numberOfGauss
+        
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE)
-        CALL Helmholtz_EquationsSetStandardSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
-      CASE(EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a Helmholtz equation type of a classical field equation set class."
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+        CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)        
+        CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
+          & err,error,*999)
+        
+        k = materialsInterpPoint%values(1,NO_PART_DERIV) ! wave number
+        IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE) THEN
+          CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
+            & err,error,*999)
+          CALL CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint, &
+            & materialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity, &
+            & err,error,*999)
+        ENDIF
+        
+         !Calculate jacobianGaussWeight.
+!!TODO: Think about symmetric problems. 
+        CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        jacobianGaussWeight=jacobian*gaussWeight
+        
+        !Loop over field components
+        rowElementDOFIdx=0          
+        DO rowComponentIdx=1,numberOfRowsComponents
+          NULLIFY(rowsDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+          NULLIFY(rowsDomainTopology)
+          CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+          NULLIFY(rowsDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+          NULLIFY(rowsBasis)
+          CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+          CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+          !Loop over element rows
+          DO rowElementParameterIdx=1,numberOfRowsElementParameters
+            rowElementDOFIdx=rowElementDOFIdx+1
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+              & gaussPointIdx,rowsPhi,err,error,*999)
+            DO rowXiIdx=1,numberOfXi
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
+                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(rowXiIdx),gaussPointIdx,rowsdPhidXi(rowPhiIdx),err,error,*999)
+            ENDDO !xiIdx
+            IF(updateMatrix) THEN
+              colElementDOFIdx=0
+              !Loop over element columns
+              DO columnComponentIdx=1,numberOfColsComponents
+                NULLIFY(colsDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+                NULLIFY(colsDomainTopology)
+                CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+                NULLIFY(colsDomainElements)
+                CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+                NULLIFY(colsBasis)
+                CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColsElementParameters
+                  columnElementDOFIdx=columnElementDOFIdx+1
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                    & gaussPointIdx,colsPhi,err,error,*999)
+                  DO colXiIdx=1,numberOfXi
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
+                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(colXiIdx),gaussPointIdx,colsdPhidXi(colPhiIdx),err,error,*999)
+                  ENDDO !xiIdx
+                  sum=0.0_DP
+                  sum=sum-k*k*rowsPhi*colsPhi
+                  SELECT CASE(esSpecification(3))
+                  CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE)
+                    DO rowXiIdx=1,numberOfXi
+                      DO columnXiIdx=1,numberOfXi
+                        sum=sum+rowsdPhidXi(rowXiIdx)*colsdPhidXi(columnXiIdx)* &
+                          & geometricInterpPointMetrics%gu(rowXiIdx,columnXiIdx)
+                      ENDDO !columnXiIdx
+                    ENDDO !rowXiIdx
+                  CASE(EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
+                    DO rowIdx=1,numberOfXi
+                      DO columnXiIdx=1,numberOfXi
+                        DO xiIdx=1,numberOfXi
+                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowsdPhidXi(rowXiIdx)*colsdPhidXi(columnXiIdx)* &
+                            & geometricInterpPointMetrics%gu(rowIdx,xiIdx)
+                        ENDDO !xiIdx
+                      ENDDO !columnXiIdx
+                    ENDDO !rowXiIdx                    
+                  CASE DEFAULT
+                    localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+                      & " is not valid for a Helmholtz equation type of a classical field equations set class."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                 
+                  equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)= &
+                    & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)+ &
+                    & sum*jacobianGaussWeight
+                ENDDO !columnElementParameterIdx
+              ENDDO !columnComponentIdx
+            ENDIF
+            IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)=0.0_DP
+          ENDDO !rowElementParameterIdx
+        ENDDO !rowComponentIdx
+      ENDDO !gaussPointIdx
+      
+      !Scale factor adjustment
+      CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
+      IF(scalingType/=FIELD_NO_SCALING) THEN
+        NULLIFY(rowsInterpParameters)
+        CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsInterpParameters, &
+          & err,error,*999)
+        NULLIFY(colsInterpParameters)
+        CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,rowsInterpParameters,err,error,*999)
+        CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters,err,error,*999)
+        rowElementDOFIdx=0          
+        DO rowComponentIdx=1,numberOfRowsComponents
+          NULLIFY(rowsDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
+          NULLIFY(rowsDomainTopology)
+          CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
+          NULLIFY(rowsDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
+          NULLIFY(rowsBasis)
+          CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+          DO rowElementParameterIdx=1,numberOfRowsElementParameters
+            rowElementDOFIdx=rowElementDOFIdx+1                    
+            IF(updateMatrix) THEN
+              !Loop over element columns
+              columnElementDOFIdx=0
+              DO columnComponentIdx=1,numberOfColsComponents
+                NULLIFY(colsDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
+                NULLIFY(colsDomainTopology)
+                CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+                NULLIFY(colsDomainElements)
+                CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+                NULLIFY(colsBasis)
+                CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColsElementParameters
+                  columnElementDOFIdx=columnElementDOFIdx+1
+                  equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)= &
+                    & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)* &
+                    & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
+                    & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
+                ENDDO !columnElementParameterIdx
+              ENDDO !columnComponentIdx
+            ENDIF
+            IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)= &
+              & rhsVector%elementVector%vector(rowElementDOFIdx)* &
+              & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
+          ENDDO !rowElementParameterIdx
+        ENDDO !rowComponentIdx
+      ENDIF
+
+    ENDIF !update
        
-    EXITS("HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP")
+    EXITS("Helmholtz_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP",err,error)
+999 ERRORSEXITS("Helmholtz_FiniteElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE HELMHOLTZ_EQUATION_EQUATIONS_SET_SETUP
+    
+  END SUBROUTINE Helmholtz_FiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the solution method for a Helmholtz equation type of an classical field equations set class.
-  SUBROUTINE Helmholtz_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
+  SUBROUTINE Helmholtz_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: esSpecification(3)
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Helmholtz_EquationsSetSolutionMethodSet",err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Helmholtz type equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE)        
-        SELECT CASE(SOLUTION_METHOD)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)        
-        SELECT CASE(SOLUTION_METHOD)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
+      & EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
+      SELECT CASE(solutionMethod)
+      CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+        equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
+      CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a Helmholtz equation type of an classical field equations set class."
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
+        localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Helmholtz equation type of an classical field equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("Helmholtz_EquationsSetSolutionMethodSet")
     RETURN
@@ -600,38 +630,33 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: subtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Helmholtz_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Helmholtz type equations set.", &
-          & err,error,*999)
-      END IF
-      subtype=specification(3)
-      SELECT CASE(subtype)
-      CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE)
-        !ok
-      CASE(EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        localError="The third equations set specification of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
-          & " is not valid for a Helmholtz type of a classical field equations set."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      !Set full specification
-      IF(ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(equationsSet%specification(3),stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-      END IF
-      equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE,subtype]
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)    
+    IF(SIZE(specification,1)<3) THEN
+      localError="The size of the specified specification array of "// &
+        & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
     END IF
+    subtype=specification(3)
+    
+    SELECT CASE(subtype)
+    CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
+      & EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
+        & " is not valid for a Helmholtz type of a classical field equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !Set full specification
+    ALLOCATE(equationsSet%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
+    equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE,subtype]
 
     EXITS("Helmholtz_EquationsSetSpecificationSet")
     RETURN
@@ -646,431 +671,539 @@ CONTAINS
   !
 
   !>Sets up the standard Helmholtz equation.
-  SUBROUTINE Helmholtz_EquationsSetStandardSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
+  SUBROUTINE Helmholtz_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,numberOfDimensions
-    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(FieldType), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
+    INTEGER(INTG) :: componentIdx,esSpecification(3),geometricComponentNumber,geometricMeshComponent,geometricScalingType, &
+      & materialsNumberOfComponents,materialsNumberOfVariables,numberOfDimensions,solutionMethod
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsSetMaterialsType), POINTER :: EQUATIONS_MATERIALS
-    INTEGER(INTG) :: MATERIAL_FIELD_NUMBER_OF_VARIABLES, MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER(INTG) :: i,GEOMETRIC_COMPONENT_NUMBER
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(RegionType), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("Helmholtz_EquationsSetStandardSetup",err,error,*999)
-
-    NULLIFY(EQUATIONS)
-    NULLIFY(vectorMapping)
-    NULLIFY(vectorMatrices)
-    NULLIFY(GEOMETRIC_DECOMPOSITION)
+    ENTERS("Helmholtz_EquationsSetSetup",err,error,*999)
    
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Helmholtz type equations set.", &
-          & err,error,*999)
-      END IF
-      IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE) THEN
-        SELECT CASE(EQUATIONS_SET_SETUP%setupType)
-        CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-          CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            CALL Helmholtz_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error, &
-              & *999)               
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            !Do nothing
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
-          !Do nothing
-        CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-          CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
-              !Create the auto created dependent field
-              CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & dependentField,err,error,*999)
-              CALL Field_LabelSet(EQUATIONS_SET%dependent%dependentField,"Dependent Field",err,error,*999)
-              CALL Field_TypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_DECOMPOSITION, &
-                & err,error,*999)
-              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%dependent%dependentField,EQUATIONS_SET%GEOMETRY% &
-                & geometricField,err,error,*999)
-              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%dependent%dependentField,2,err,error,*999)
-              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-              CALL Field_VariableLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"Phi",err,error,*999)
-              CALL Field_VariableLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del Phi/del n", &
-                & err,error,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
-                & err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                & err,error,*999)
-              CALL Field_ComponentLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1,"Phi",err,error,*999)
-              CALL Field_ComponentLabelSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                & "del Phi/del n",err,error,*999)
-              !Default to the geometric interpolation setup
-              CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
-                & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
-                & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              SELECT CASE(EQUATIONS_SET%solutionMethod)
-              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                  & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                !Default the scaling to the geometric field scaling
-                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_SET%dependent%dependentField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              END SELECT
-            ELSE
-              !Check the user specified field
-              CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
-              CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
-                & err,error,*999)
-              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
-                & err,error,*999)
-              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-              CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,err,error,*999)
-              SELECT CASE(EQUATIONS_SET%solutionMethod)
-              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              END SELECT
-            ENDIF
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
-              CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
-            ENDIF
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation"
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-          MATERIAL_FIELD_NUMBER_OF_VARIABLES=1
-          MATERIAL_FIELD_NUMBER_OF_COMPONENTS=1 ! wave number k
-          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-          CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-            IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-              IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
-                !Create the auto created materials field
-                CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                  & materialsField,err,error,*999)
-                CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_DECOMPOSITION, &
-                  & err,error,*999)
-                CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%materialsField,EQUATIONS_SET%GEOMETRY% &
-                  & geometricField,err,error,*999)
-                CALL Field_NumberOfVariablesSet(EQUATIONS_MATERIALS%materialsField, &
-                  & MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%materialsField,[FIELD_U_VARIABLE_TYPE], &
-                  & err,error,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & MATERIAL_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)                
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
+      & EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
+        & " is not valid for a Helmholtz type of a classical field equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-                !Default to constant interpolation of material field
-                DO i=1,MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & i,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & i,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                END DO
-
-                !Default the field scaling to that of the geometric field
-                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-              ELSE
-                !Check the user specified field
-                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & err,error,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set materials is not associated.",err,error,*999)
-            ENDIF
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-            IF( ASSOCIATED(EQUATIONS_MATERIALS) ) THEN
-              IF( EQUATIONS_MATERIALS%materialsFieldAutoCreated ) THEN
-                CALL Field_CreateFinish(EQUATIONS_MATERIALS%materialsField,err,error,*999)
-                !Set the default values for the materials field
-                DO i=1,MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-                  CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE, i, 1.0_DP, ERR, ERROR, *999)
-                ENDDO
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set materials is not associated.",err,error,*999)
-            ENDIF
+    NULLIFY(region)
+    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+    
+    SELECT CASE(equationsSetSetup%setupType)
+    CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
+      !-----------------------------------------------------------------
+      ! I n i t i a l   s e t u p
+      !-----------------------------------------------------------------
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL Helmholtz_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)               
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        !Do nothing
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
+      !-----------------------------------------------------------------
+      ! G e o m e t r i c   f i e l d
+      !-----------------------------------------------------------------
+      !Do nothing
+    CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
+      !-----------------------------------------------------------------
+      ! D e p e n d e n t   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+          !Create the auto created dependent field
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
+          CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
+          CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+          CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+          CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
+          CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
+          CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,2,err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
+            & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
+          CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"Phi",err,error,*999)
+          CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del Phi/del n", &
+            & err,error,*999)
+          CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+            & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+            & FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            & FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+            & err,error,*999)
+          CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1,"Phi",err,error,*999)
+          CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1,"del Phi/del n", &
+            & err,error,*999)
+          !Default to the geometric interpolation setup
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+          CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
+            & geometricMeshComponent,err,error,*999)
+          CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+            & geometricMeshComponent,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+              & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
+              & FIELD_DELUDELN_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            !Default the scaling to the geometric field scaling
+            CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType,err,error,*999)
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
           END SELECT
-        CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-          CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            !Do nothing
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            !Do nothing
+        ELSE
+          !Check the user specified field
+          CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+          CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2,err,error,*999)
+          CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+            & err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+              & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+              & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
           END SELECT
-        CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-          CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
-            DEPENDENT_FIELD=>EQUATIONS_SET%dependent%dependentField
-            IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-              GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
-              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-                SELECT CASE(EQUATIONS_SET_SETUP%analyticFunctionType)
-                CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
-                  !Check that we are in 2D
-                  IF(numberOfDimensions/=2) THEN
-                    LOCAL_ERROR="The number of geometric dimensions of "// &
-                      & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
-                      & " is invalid. The analytic function type of "// &
-                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
-                      & " requires that there be 2 geometric dimensions."
-                    CALL FlagError(LOCAL_ERROR,err,error,*999)
-                  ENDIF
-                  !Create analytic field if required
-                  !Set analtyic function type
-                  EQUATIONS_SET%ANALYTIC%analyticFunctionType=EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified analytic function type of "// &
-                    & TRIM(NumberToVString(EQUATIONS_SET_SETUP%analyticFunctionType,"*",err,error))// &
-                    & " is invalid for a standard Helmholtz equation."
-                  CALL FlagError(LOCAL_ERROR,err,error,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-            ENDIF
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-              ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%analyticField
-              IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                IF(EQUATIONS_SET%ANALYTIC%analyticFieldAutoCreated) THEN
-                  CALL Field_CreateFinish(EQUATIONS_SET%dependent%dependentField,err,error,*999)
-                ENDIF
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-            ENDIF
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
-          SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-          CASE(EQUATIONS_SET_SETUP_START_ACTION)
-            CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
-            CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-            CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
-            CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_STATIC,err,error,*999)
-          CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-            SELECT CASE(EQUATIONS_SET%solutionMethod)
-            CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-              !Finish the equations creation
-              CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_CreateFinish(EQUATIONS,err,error,*999)
-              NULLIFY(vectorEquations)
-              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-              !Create the equations mapping.
-              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-              CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-              !Create the equations matrices
-              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-              SELECT CASE(EQUATIONS%sparsityType)
-              CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
-                CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                  & err,error,*999)
-                CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              END SELECT
-              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-            CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
+        ENDIF
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+          CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation"
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
+      !-----------------------------------------------------------------
+      ! M a t e r i a l s   f i e l d 
+      !-----------------------------------------------------------------
+      NULLIFY(equationsMaterials)
+      CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      materialsNumberOfVariables=1
+      materialsNumberOfComponents=1 ! wave number k
+      IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE) &
+        & materialsNumberOfComponents=materialsNumberOfComponents+NUMBER_OF_VOIGT(numberOfDimensions) !conductivity tensor
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        IF(equationsMaterials%materialsFieldAutoCreated) THEN
+          !Create the auto created materials field
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsMaterials%materialsField,err,error,*999)
+          CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+          CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
+          CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
+          CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField,materialsNumberOfVariables,err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+            & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+            & materialsNumberOfComponents,err,error,*999)
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+          !Default to constant interpolation of material field
+          DO componentIdx=1,materialsNumberOfComponents
+            CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & componentIdx,geometricComponentNumber,err,error,*999)
+            CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+          ENDDO !componentIdx          
+          !Default the field scaling to that of the geometric field
+          CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+          CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
+        ELSE
+          !Check the user specified field
+          CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
+          CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+        ENDIF
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsMaterials%materialsFieldAutoCreated) THEN
+          CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
+          !Set the default values for the materials field
+          CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & 1,1.0_DP,err,error,*999) !k
+          IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE) THEN
+            DO componentIdx=2,numberOfDimensions+1
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999) !diagonal sigma
+            ENDDO !componentIdx
+            DO componentIdx=numberOfDimensions+2,numberOfMaterialsComponents
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999) !off-diagonal sigma
+            ENDDO !componentIdx
+          ENDIF
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
+      !-----------------------------------------------------------------
+      ! S o u r c e   f i e l d 
+      !-----------------------------------------------------------------
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        !Do nothing
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        !Do nothing
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
+      !-----------------------------------------------------------------
+      ! A n a l y t i c   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(equationsAnalytic)
+      CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+        NULLIFY(geometricField)
+        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+        SELECT CASE(equationsSetSetup%analyticFunctionType)
+        CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
+          !Check that we are in 2D
+          IF(numberOfDimensions/=2) THEN
+            localError="The number of geometric dimensions of "// &
+              & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+              & " is invalid. The analytic function type of "// &
+              & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
+              & " requires that there be 2 geometric dimensions."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          !Create analytic field if required
+          !Set analtyic function type
+          equationsAnalytic%analyticFunctionType=EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
+          localError="The specified analytic function type of "// &
+            & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))// &
             & " is invalid for a standard Helmholtz equation."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
-      ELSE
-        LOCAL_ERROR="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " does not equal a standard Helmholtz equation subtype."
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("Helmholtz_EquationsSetStandardSetup")
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        NULLIFY(analyticField)
+        CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+        IF(ASSOCIATED(analyticField)) THEN
+          IF(equationsAnalytic%analyticFieldAutoCreated) THEN
+            CALL Field_CreateFinish(equationsAnalytic%analyticField,err,error,*999)
+          ENDIF
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
+      !-----------------------------------------------------------------
+      ! E q u a t i o n s 
+      !-----------------------------------------------------------------
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+        NULLIFY(equations)
+        CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+        CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+        CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)          
+        SELECT CASE(solutionMethod)
+        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+          !Finish the equations creation
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          CALL Equations_CreateFinish(equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          !Create the equations mapping.
+          NULLIFY(vectorMapping)
+          CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+          CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
+          CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+          !Create the equations matrices
+          NULLIFY(vectorMatrices)
+          CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+          CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+          SELECT CASE(sparsityType)
+          CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+          CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
+            CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+            CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+          CASE DEFAULT
+            localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+        & " is invalid for a standard Helmholtz equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+      
+    EXITS("Helmholtz_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("Helmholtz_EquationsSetStandardSetup",err,error)
+999 ERRORSEXITS("Helmholtz_EquationsSetSetup",err,error)
     RETURN 1
     
-  END SUBROUTINE Helmholtz_EquationsSetStandardSetup
+  END SUBROUTINE Helmholtz_EquationsSetSetup
 
   !
   !================================================================================================================================
   !
- 
+
   !>Sets up the Helmholtz problem.
-  SUBROUTINE HELMHOLTZ_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
+  SUBROUTINE Helmholtz_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a Helmholtz equation on.
-    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem set to setup a Helmholtz equation on.
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: pSpecification(3)
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("HELMHOLTZ_EQUATION_PROBLEM_SETUP",err,error,*999)
+    ENTERS("Helmholtz_ProblemSetup",err,error,*999)
 
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a Helmholtz equation problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(3))
-      CASE(PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE)
-        CALL HELMHOLTZ_EQUATION_PROBLEM_STANDARD_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
-      CASE(PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a Helmholtz equation type of a classical field problem class."
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE, &
+      & PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is invalid for a Helmholtz equation type."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    SELECT CASE(problemSetup%setupType)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
+      !-----------------------------------------------------------------
+      ! I n i t i a l   S e t u p
+      !-----------------------------------------------------------------
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Do nothing????
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Do nothing???
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_CONTROL_TYPE)
+      !-----------------------------------------------------------------
+      ! C o n t r o l   L o o p s
+      !-----------------------------------------------------------------
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Set up a simple control loop
+        NULLIFY(controlLoop)
+        CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the control loops
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)            
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      !-----------------------------------------------------------------
+      ! S o l v e r s
+      !-----------------------------------------------------------------
+      !Get the control loop
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Start the solvers creation
+        NULLIFY(solvers)
+        CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
+        CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
+        !Set the solver to be a linear solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+        !Set solver defaults
+        CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the solvers
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(solvers,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+      !-----------------------------------------------------------------
+      ! S o l v e r   E q u a t i o n s
+      !-----------------------------------------------------------------
+      !Get the control loop
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRoot(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      !Get the solver
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      NULLIFY(solver)
+      CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Create the solver equations
+        NULLIFY(solverEquations)
+        CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+        CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+        CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+        CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the solver equations
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        !Finish the solver equations creation
+        CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a standard Helmholtz equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+        & " is invalid for a standard Helmholtz equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("HELMHOLTZ_EQUATION_PROBLEM_SETUP")
+    EXITS("Helmholtz_ProblemSetup")
     RETURN
-999 ERRORSEXITS("HELMHOLTZ_EQUATION_PROBLEM_SETUP",err,error)
+999 ERRORSEXITS("Helmholtz_ProblemSetup",err,error)
     RETURN 1
-  END SUBROUTINE HELMHOLTZ_EQUATION_PROBLEM_SETUP
-  
+    
+  END SUBROUTINE Helmholtz_ProblemSetup
+
   !
   !================================================================================================================================
   !
@@ -1084,37 +1217,33 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Helmholtz_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)==3) THEN
-        problemSubtype=problemSpecification(3)
-        SELECT CASE(problemSubtype)
-        CASE(PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE)
-          !ok
-        CASE(PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
-            & " is not valid for a Helmholtz equation type of a classical field problem class."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        IF(ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(problem%specification(3),stat=err)
-          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-        END IF
-        problem%specification(1:3)=[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_HELMHOLTZ_EQUATION_TYPE,problemSubtype]
-      ELSE
-        CALL FlagError("Helmholtz equation problem specification must have three entries.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    problemSubtype=problemSpecification(3)
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE, &
+      & PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a Helmholtz equation type of a classical field problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    ALLOCATE(problem%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+    problem%specification(1:3)=[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_HELMHOLTZ_EQUATION_TYPE,problemSubtype]
 
     EXITS("Helmholtz_ProblemSpecificationSet")
     RETURN
@@ -1126,141 +1255,5 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
-  !>Sets up the standard Helmholtz equations problem.
-  SUBROUTINE HELMHOLTZ_EQUATION_PROBLEM_STANDARD_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
-
-    !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
-    ENTERS("HELMHOLTZ_EQUATION_PROBLEM_STANDARD_SETUP",err,error,*999)
-
-    NULLIFY(CONTROL_LOOP)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVERS)
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a Helmholtz equation problem.",err,error,*999)
-      END IF
-      IF(PROBLEM%SPECIFICATION(3)==PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE) THEN
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing???
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a simple control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
-            !Set the solver to be a linear solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-                & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            !Create the solver equations
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-            !Get the solver equations
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-              & " is invalid for a standard Helmholtz equation."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-       CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a standard Helmholtz equation."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-      ELSE
-        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-          & " does not equal a standard Helmholtz equation subtype."
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("HELMHOLTZ_EQUATION_PROBLEM_STANDARD_SETUP")
-    RETURN
-999 ERRORSEXITS("HELMHOLTZ_EQUATION_PROBLEM_STANDARD_SETUP",err,error)
-    RETURN 1
-  END SUBROUTINE HELMHOLTZ_EQUATION_PROBLEM_STANDARD_SETUP
-
-  !
-  !================================================================================================================================
-  !
  
-END MODULE HELMHOLTZ_EQUATIONS_ROUTINES
+END MODULE HelmholtzEquationsRoutines

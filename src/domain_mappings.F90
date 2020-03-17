@@ -80,12 +80,26 @@ MODULE DomainMappings
   PUBLIC DOMAIN_LOCAL_INTERNAL,DOMAIN_LOCAL_BOUNDARY,DOMAIN_LOCAL_GHOST
   
   PUBLIC DomainGlobalMapping_Initialise
+
+  PUBLIC DomainMapping_BoundaryFinishGet
+
+  PUBLIC DomainMapping_BoundaryStartGet
   
   PUBLIC DomainMapping_Finalise,DomainMapping_Initialise
+
+  PUBLIC DomainMapping_GhostFinishGet
+
+  PUBLIC DomainMapping_GhostStartGet
+
+  PUBLIC DomainMapping_InternalFinishGet
+
+  PUBLIC DomainMapping_InternalStartGet
 
   PUBLIC DomainMapping_LocalToGlobalGet
   
   PUBLIC DomainMapping_LocalFromGlobalCalculate
+
+  PUBLIC DomainMapping_NumberGet
 
   PUBLIC DomainMapping_NumberOfBoundaryGet
 
@@ -184,6 +198,64 @@ CONTAINS
    
   END SUBROUTINE DomainGlobalMapping_Finalise
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary finish for a domain mapping.
+  SUBROUTINE DomainMapping_BoundaryFinishGet(domainMapping,boundaryFinish,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the boundary finish for
+    INTEGER(INTG), INTENT(OUT) :: boundaryFinish !<On exit, the boundary finish number for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_BoundaryFinishGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    boundaryFinish=domainMapping%boundaryFinish
+    
+    EXITS("DomainMapping_BoundaryFinishGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_BoundaryFinishGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_BoundaryFinishGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary start for a domain mapping.
+  SUBROUTINE DomainMapping_BoundaryStartGet(domainMapping,boundaryStart,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the boundary start for
+    INTEGER(INTG), INTENT(OUT) :: boundaryStart !<On exit, the boundary start number for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_BoundaryStartGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    boundaryStart=domainMapping%boundaryStart
+    
+    EXITS("DomainMapping_BoundaryStartGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_BoundaryStartGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_BoundaryStartGet
+  
   !
   !================================================================================================================================
   !
@@ -298,6 +370,122 @@ CONTAINS
     
   END SUBROUTINE DomainMapping_Initialise
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the ghost finish for a domain mapping.
+  SUBROUTINE DomainMapping_GhostFinishGet(domainMapping,ghostFinish,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the ghost finish for
+    INTEGER(INTG), INTENT(OUT) :: ghostFinish !<On exit, the ghost finish number for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_GhostFinishGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    ghostFinish=domainMapping%ghostFinish
+    
+    EXITS("DomainMapping_GhostFinishGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_GhostFinishGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_GhostFinishGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the ghost start for a domain mapping.
+  SUBROUTINE DomainMapping_GhostStartGet(domainMapping,ghostStart,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the ghost start for
+    INTEGER(INTG), INTENT(OUT) :: ghostStart !<On exit, the ghost start number for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_GhostStartGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    ghostStart=domainMapping%ghostStart
+    
+    EXITS("DomainMapping_GhostStartGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_GhostStartGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_GhostStartGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the internal finish for a domain mapping.
+  SUBROUTINE DomainMapping_InternalFinishGet(domainMapping,internalFinish,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the internal finish for
+    INTEGER(INTG), INTENT(OUT) :: internalFinish !<On exit, the internal finish number for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_InternalFinishGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    internalFinish=domainMapping%internalFinish
+    
+    EXITS("DomainMapping_InternalFinishGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_InternalFinishGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_InternalFinishGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the internal start for a domain mapping.
+  SUBROUTINE DomainMapping_InternalStartGet(domainMapping,internalStart,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the internal start for
+    INTEGER(INTG), INTENT(OUT) :: internalStart !<On exit, the internal start number for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainMapping_InternalStartGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+#endif    
+
+    internalStart=domainMapping%internalStart
+    
+    EXITS("DomainMapping_InternalStartGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_InternalStartGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_InternalStartGet
+  
   !
   !================================================================================================================================
   !
@@ -783,6 +971,47 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainMapping_LocalFromGlobalCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number in a domain mapping.
+  SUBROUTINE DomainMapping_NumberGet(domainMapping,mappingIdx,mappingNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number for
+    INTEGER(INTG), INTENT(IN) :: mappingIdx !<The index in the mapping to get the mapping number for
+    INTEGER(INTG), INTENT(OUT) :: mappingNumber !<On exit, the mapping number for the mapping index for the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainMapping_NumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+    IF(mappingIdx<1.OR.mappingIdx>domainMapping%totalNumberOfLocal) THEN
+      localError="The specified mapping index of "//TRIM(NumberToVString(mappingIdx,"*",err,error))// &
+        & " is invalid. The mapping index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%totalNumberOfLocal,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainMapping%domainList)) &
+      & CALL FlagEror("The domain list is not allocated for the domain mapping.",err,error,*999)
+#endif    
+
+    mappingNumber=domainMapping%domainList(mappingIdx)
+    
+    EXITS("DomainMapping_NumberGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_NumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_NumberGet
   
   !
   !================================================================================================================================

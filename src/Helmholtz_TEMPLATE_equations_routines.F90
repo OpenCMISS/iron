@@ -42,7 +42,7 @@
 !>
 
 !>This module handles all Helmholtz equations routines.
-MODULE HELMHOLTZ_EQUATIONS_ROUTINES
+MODULE HelmholtzEquationsRoutines
 
   USE BaseRoutines
   USE BasisRoutines
@@ -440,4 +440,4 @@ CONTAINS
   !================================================================================================================================
   !
  
-END MODULE HELMHOLTZ_EQUATIONS_ROUTINES
+END MODULE HelmholtzEquationsRoutines

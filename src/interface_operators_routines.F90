@@ -185,7 +185,7 @@ CONTAINS
         NULLIFY(geometricDomainElements)
         CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
         NULLIFY(interfaceGeometricBasis)
-        CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,interfaceGeometricBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,interfaceGeometricBasis,err,error,*999)
         NULLIFY(dependentDecomposition)
         CALL Field_DecompositionGet(interfaceDependentField,dependentDecomposition,err,error,*999)
         NULLIFY(dependentDomain)
@@ -195,7 +195,7 @@ CONTAINS
         NULLIFY(dependentDomainElements)
         CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
         NULLIFY(interfaceDependentBasis)
-        CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,interfaceDependentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,interfaceDependentBasis,err,error,*999)
         SELECT CASE(interfaceCondition%method)
         CASE(INTERFACE_CONDITION_PENALTY_METHOD)
           CALL InterfaceDomainInterpolation_PenaltyFieldGet(interfaceInterpolation,interfacePenaltyField,err,error,*999)
@@ -208,7 +208,7 @@ CONTAINS
           NULLIFY(penaltyDomainElements)
           CALL DomainTopology_DomainElementsGet(penaltyDomainTopology,penaltyDomainElements,err,error,*999)
           NULLIFY(interfacePenaltyBasis)
-          CALL DomainElements_BasisGet(penaltyDomainElements,elementNumber,interfacePenaltyBasis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(penaltyDomainElements,elementNumber,interfacePenaltyBasis,err,error,*999)
           NULLIFY(penaltyInterpolationSet)
           CALL InterfaceDomainInterpolation_PenaltyInterpSetGet(interfaceInterpolation,1,penaltyInterpolationSet, &
             & err,error,*999)
@@ -320,7 +320,7 @@ CONTAINS
                   NULLIFY(dependentDomainElements)
                   CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                   NULLIFY(coupledMeshBasis)
-                  CALL DomainElements_BasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
+                  CALL DomainElements_ElementBasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
 
                   SELECT CASE(interfaceDependentBasis%numberOfXi)
                   CASE(1) !1D interface (line)
@@ -332,7 +332,7 @@ CONTAINS
                     NULLIFY(coupledMeshDomainLine)
                     CALL DomainLines_LineGet(dependentDomainLines,decompositionLineNumber,coupledMeshDomainLine,err,error,*999)
                     NULLIFY(lineBasis)
-                    CALL DomainLines_BasisGet(dependentDomainLines,decompositionLineNumber,lineBasis,err,error,*999)
+                    CALL DomainLines_LineBasisGet(dependentDomainLines,decompositionLineNumber,lineBasis,err,error,*999)
                      DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLineFace)
                       localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
                       DO derivativeIdx=1,lineBasis%numberOfDerivatives(localLineNodeIdx)
@@ -395,7 +395,7 @@ CONTAINS
                       NULLIFY(coupledMeshDomainFace)
                       CALL DomainFaces_FaceGet(dependentDomainFaces,decompositionFaceNumber,coupledMeshDomainFace,err,error,*999)
                       NULLIFY(faceBasis)
-                      CALL DomainFaces_BasisGet(dependentDomainFaces,decompositionFaceNumber,faceBasis,err,error,*999)
+                      CALL DomainFaces_FaceBasisGet(dependentDomainFaces,decompositionFaceNumber,faceBasis,err,error,*999)
                       DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedLineFace)
                         localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedLineFace)
                         DO derivativeIdx=1,faceBasis%numberOfDerivatives(localFaceNodeIdx)
@@ -470,7 +470,7 @@ CONTAINS
                   NULLIFY(dependentDomainElements)
                   CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                   NULLIFY(coupledMeshBasis)
-                  CALL DomainElements_BasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
+                  CALL DomainElements_ElementBasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
                   !Loop over element rows
                   DO rowParameterIdx=1,coupledMeshBasis%numberOfElementParameters
                     rowIdx=rowIdx+1
@@ -584,7 +584,7 @@ CONTAINS
                 NULLIFY(dependentDomainElements)
                 CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                 NULLIFY(coupledMeshDependentBasis)
-                CALL DomainElements_BasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
+                CALL DomainElements_ElementBasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
                 
                 DO rowParameterIdx=1,coupledMeshDependentBasis%numberOfElementParameters
                   rowBasisFunction=Basis_EvaluateXi(coupledMeshDependentBasis,rowParameterIdx,NO_PART_DERIV, &
@@ -618,7 +618,7 @@ CONTAINS
                   NULLIFY(dependentDomainElements)
                   CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                   NULLIFY(coupledMeshDependentBasis)
-                  CALL DomainElements_BasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
+                  CALL DomainElements_ElementBasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
                   DO rowParameterIdx=1,coupledMeshDependentBasis%numberOfElementParameters
                     rowIdx=rowParameterIdx+coupledMeshDependentBasis%numberOfElementParameters*(rowComponentIdx-1)
                     colIdx=dataPointIdx+decompositionElementData%numberOfProjectedData*(rowComponentIdx-1)
@@ -944,7 +944,7 @@ CONTAINS
                 NULLIFY(dependentDomainElements)
                 CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                 NULLIFY(coupledMeshDependentBasis)
-                CALL DomainElements_BasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
+                CALL DomainElements_ElementBasisGet(dependentDomainElements,localElementNumber,coupledMeshDependentBasis,err,error,*999)
                 DO rowParameterIdx=1,coupledMeshDependentBasis%numberOfElementParameters
                   rowBasisFunction=Basis_EvaluateXi(coupledMeshDependentBasis,rowParameterIdx,NO_PART_DERIV, &
                     & xi(1:numberOfCoupledMeshXi),err,error)*normals(rowComponentIdx,dataPointIdx)* &
@@ -1128,7 +1128,7 @@ CONTAINS
         NULLIFY(geometricDomainElements)
         CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
         NULLIFY(interfaceGeometricBasis)
-        CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,interfaceGeometricBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,interfaceGeometricBasis,err,error,*999)
         NULLIFY(interfaceDependentField)
         CALL InterfaceDomainInterpolation_DependentFieldGet(interfaceInterpolation,interfaceDependentField,err,error,*999)
         NULLIFY(dependentDecomposition)
@@ -1145,7 +1145,7 @@ CONTAINS
         NULLIFY(dependentDomainElements)
         CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
         NULLIFY(interfaceDependentBasis)
-        CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,interfaceDependentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,interfaceDependentBasis,err,error,*999)
         !Integrate using the interface quadrature scheme
         NULLIFY(interfaceQuadratureScheme)
         CALL Basis_QuadratureSchemeGet(interfaceGeometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,interfaceQuadratureScheme, &
@@ -1237,7 +1237,7 @@ CONTAINS
                 NULLIFY(dependentDomainLines)
                 CALL DomainTopology_DomainLinesGet(dependentDomainTopology,dependentDomainLines,err,error,*999)
                 NULLIFY(interfaceDependentBasis)
-                CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,coupledMeshBasis,err,error,*999)
+                CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,coupledMeshBasis,err,error,*999)
                 
                 SELECT CASE(interfaceDependentBasis%numberOfXi)
                   
@@ -1250,7 +1250,7 @@ CONTAINS
                   NULLIFY(coupledMeshDomainLine)
                   CALL DomainLines_LineGet(dependentDomainLines,decompositionLineNumber,coupledMeshDomainLine,err,error,*999)
                   NULLIFY(lineBasis)
-                  CALL DomainLines_BasisGet(dependentDomainLines,decompositionLineNumber,lineBasis,err,error,*999)
+                  CALL DomainLines_LineBasisGet(dependentDomainLines,decompositionLineNumber,lineBasis,err,error,*999)
                   DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLineFace)
                     localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
                     DO derivativeIdx=1,lineBasis%numberOfDerivatives(localLineNodeIdx)                     
@@ -1315,7 +1315,7 @@ CONTAINS
                     NULLIFY(coupledMeshDomainFace)
                     CALL DomainFaces_FaceGet(dependentDomainFaces,decompositionFaceNumber,coupledMeshDomainFace,err,error,*999)
                     NULLIFY(faceBasis)
-                    CALL DomainFaces_BasisGet(dependentDomainFaces,decompositionFaceNumber,faceBasis,err,error,*999)
+                    CALL DomainFaces_FaceBasisGet(dependentDomainFaces,decompositionFaceNumber,faceBasis,err,error,*999)
                     DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedLineFace)
                       localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedLineFace)
                       DO derivativeIdx=1,faceBasis%numberOfDerivatives(localFaceNodeIdx)
@@ -1372,7 +1372,7 @@ CONTAINS
                 NULLIFY(dependentDomainElements)
                 CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
                 NULLIFY(interfaceDependentBasis)
-                CALL DomainElements_BasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
+                CALL DomainElements_ElementBasisGet(dependentDomainElements,coupledElementNumber,coupledMeshBasis,err,error,*999)
                 !Loop over element rows
                 DO rowParameterIdx=1,coupledMeshBasis%numberOfElementParameters
                   rowIdx=rowIdx+1

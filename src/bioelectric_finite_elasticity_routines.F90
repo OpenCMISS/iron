@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley, Thomas Klotz
+!> Contributor(s): Thomas Heidlauf, Chris Bradley, Thomas Klotz
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,15 +42,13 @@
 !>
 
 !>This module handles all routines pertaining to bioelectrics coupled with finite elasticity.
-
-
-MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
+MODULE BioelectricFiniteElasticityRoutines
 
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE BIOELECTRIC_ROUTINES
-  USE BIODOMAIN_EQUATION_ROUTINES
+  USE BioelectricRoutines
+  USE BiodomainEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -63,7 +61,7 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE FIELD_IO_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
-  USE FINITE_ELASTICITY_ROUTINES
+  USE FiniteElasticityRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
@@ -79,18 +77,22 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   IMPLICIT NONE
 
   PUBLIC BioelectricFiniteElasticity_EquationsSetSetup
+  
   PUBLIC BioelectricFiniteElasticity_EquationsSetSolutionMethodSet
 
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP
+  PUBLIC BioelectricFiniteElasticity_ProblemSetup
+  
   PUBLIC BioelectricFiniteElasticity_ProblemSpecificationSet
  
   PUBLIC BioelectricFiniteElasticity_FiniteElementCalculate
 
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE
+  PUBLIC BioelectricFiniteElasticity_PreSolve
+  
+  PUBLIC BioelectricFiniteElasticity_PostSolve
 
-  PUBLIC BioelectricFiniteElasticity_ControlLoopPreLoop
-  PUBLIC BioelectricFiniteElasticity_ControlLoopPostLoop
+  PUBLIC BioelectricFiniteElasticity_PreLoop
+  
+  PUBLIC BioelectricFiniteElasticity_PostLoop
   
   PUBLIC BioelectricFiniteElasticity_UpdateGeometricField
 
@@ -101,60 +103,53 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a bioelectrics finite elasticity equation type of a multi physics equations set class.
-  SUBROUTINE BioelectricFiniteElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: esSpecification(3)
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet",err,error,*999)
+
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a "// &
-          & "Bioelectric-finite elasticity type equations set.",err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
-        & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-        & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
-        SELECT CASE(SOLUTION_METHOD)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
+      & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
+      & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+      & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+      & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
+      SELECT CASE(solutionMethod)
+      CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+        equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
+      CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
-          & " is not valid for a bioelectrics finite elasticity equation type of a multi physics equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a bioelectrics finite elasticity equation type of a multi physics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet",err,error)
     EXITS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet")
     RETURN 1
     
@@ -165,21 +160,21 @@ CONTAINS
   !
 
   !>Sets up the bioelectrics finite elasticity equation.
-  SUBROUTINE BioelectricFiniteElasticity_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
-    ENTERS("BioelectricFiniteElasticity_EquationsSetSetup",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_EquationsSetSetup",err,error,*999)
 
-    CALL FlagError("BioelectricFiniteElasticity_EquationsSetSetup is not implemented.",ERR,ERROR,*999)
+    CALL FlagError("BioelectricFiniteElasticity_EquationsSetSetup is not implemented.",err,error,*999)
 
     EXITS("BioelectricFiniteElasticity_EquationsSetSetup")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_EquationsSetSetup",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_EquationsSetSetup",err,error)
     EXITS("BioelectricFiniteElasticity_EquationsSetSetup")
     RETURN 1
     
@@ -190,21 +185,21 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a bioelectrics finite elasticity equation finite element equations set.
-  SUBROUTINE BioelectricFiniteElasticity_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
-    ENTERS("BioelectricFiniteElasticity_FiniteElementCalculate",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_FiniteElementCalculate",err,error,*999)
 
-    CALL FlagError("BioelectricFiniteElasticity_FiniteElementCalculate is not implemented.",ERR,ERROR,*999)
+    CALL FlagError("BioelectricFiniteElasticity_FiniteElementCalculate is not implemented.",err,error,*999)
 
     EXITS("BioelectricFiniteElasticity_FiniteElementCalculate")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_FiniteElementCalculate",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_FiniteElementCalculate",err,error)
     EXITS("BioelectricFiniteElasticity_FiniteElementCalculate")
     RETURN 1
     
@@ -228,35 +223,31 @@ CONTAINS
 
     ENTERS("BioelectricFiniteElasticity_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(SIZE(problemSpecification,1)==3) THEN
-        problemSubtype=problemSpecification(3)
-        SELECT CASE(problemSubtype)
-        CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE, &
-            & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-          !ok
-        CASE DEFAULT
-          localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
-            & " is not valid for a bioelectric finite elasticity type of a multi physics problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        IF(ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(problem%specification(3),stat=err)
-          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-        END IF
-        problem%specification(1:3)=[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE, &
-          & problemSubtype]
-      ELSE
-        CALL FlagError("Bioelectric finite elasticity problem specification must have three entries.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    problemSubtype=problemSpecification(3)
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE, &
+      & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a bioelectric finite elasticity type of a multi physics problem."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    ALLOCATE(problem%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+    problem%specification(1:3)=[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE,problemSubtype]
 
     EXITS("BioelectricFiniteElasticity_ProblemSpecificationSet")
     RETURN
@@ -271,713 +262,690 @@ CONTAINS
   !
 
   !>Sets up the bioelectric finite elasticity problem.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(ControlLoopType), POINTER :: MONODOMAIN_SUB_LOOP,ELASTICITY_SUB_LOOP
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(CellMLEquationsType), POINTER :: CELLML_EQUATIONS
-    TYPE(SolversType), POINTER :: SOLVERS,MONODOMAIN_SOLVERS,ELASTICITY_SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: pSpecification(3)
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
+    TYPE(ControlLoopType), POINTER :: monodomainSubLoop,elasticitySubLoop
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolversType), POINTER :: solvers,monodomainSolvers,elasticitySolvers
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ProblemSetup",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    NULLIFY(MONODOMAIN_SUB_LOOP)
-    NULLIFY(ELASTICITY_SUB_LOOP)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVERS)
-    NULLIFY(MONODOMAIN_SOLVERS)
-    NULLIFY(ELASTICITY_SOLVERS)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(CELLML_EQUATIONS)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(problem%specification)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(problem%specification,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(3))
-
-      !--------------------------------------------------------------------
-      !   Transient Gudunov monodomain, simple finite elasticity  
-      !--------------------------------------------------------------------
-      CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-        & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-        & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a time control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(CONTROL_LOOP,2,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_OUTPUT_TYPE_SET(CONTROL_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
-
-            !Set up the control sub loop for monodomain
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_LABEL_SET(MONODOMAIN_SUB_LOOP,'MONODOMAIN_TIME_LOOP',ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(MONODOMAIN_SUB_LOOP,CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_OUTPUT_TYPE_SET(MONODOMAIN_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
-
-            IF(PROBLEM%specification(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE) THEN
-              !Set up the control sub loop for finite elasicity
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_LABEL_SET(ELASTICITY_SUB_LOOP,'ELASTICITY_WHILE_LOOP',ERR,ERROR,*999)
-              CALL CONTROL_LOOP_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_WHILE_LOOP_TYPE,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_OUTPUT_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
-            ELSE
-              !Set up the control sub loop for finite elasicity
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_LABEL_SET(ELASTICITY_SUB_LOOP,'ELASTICITY_LOAD_INCREMENT_LOOP',ERR,ERROR,*999)
-              CALL CONTROL_LOOP_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_LOAD_INCREMENT_LOOP_TYPE,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_OUTPUT_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
-            ENDIF
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)
-            !Sub-loops are finished when parent is finished
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the monodomain sub loop
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            CALL Solvers_NumberOfSolversSet(MONODOMAIN_SOLVERS,2,ERR,ERROR,*999)
-            !Set the first solver to be a differential-algebraic equations solver
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,ERR,ERROR,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"ODE Solver",ERR,ERROR,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
-            !Set the second solver to be a dynamic solver 
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,ERR,ERROR,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"Parabolic solver",ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_RESTART_SET(SOLVER,.TRUE.,ERR,ERROR,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
-
-            !Get the finite elasticity sub loop
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
-            CALL Solvers_NumberOfSolversSet(ELASTICITY_SOLVERS,1,ERR,ERROR,*999)
-            !Set the finite elasticity solver to be a nonlinear solver
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(ELASTICITY_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the monodomain solvers
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-
-            !Get the finite elasticity solvers
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(ELASTICITY_SOLVERS,ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-                & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SolverEquationsType)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-
-            !Get the monodomain sub loop and solvers
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            !Create the solver equations for the second (parabolic) solver
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
-
-            !Get the finite elasticity sub loop and solvers
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
-            !Get the finite elasticity solver and create the finite elasticity solver equations
-            NULLIFY(SOLVER)
-            NULLIFY(SOLVER_EQUATIONS)
-            CALL SOLVERS_SOLVER_GET(ELASTICITY_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_NONLINEAR,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            
-            !Get the monodomain sub loop and solvers
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            !Get the solver equations for the second (parabolic) solver
-            NULLIFY(SOLVER)
-            NULLIFY(SOLVER_EQUATIONS)
-            CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
-
-            !Get the finite elasticity sub loop and solvers
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
-            !Finish the creation of the finite elasticity solver equations
-            NULLIFY(SOLVER)
-            NULLIFY(SOLVER_EQUATIONS)
-            CALL SOLVERS_SOLVER_GET(ELASTICITY_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            !Create the CellML equations for the first DAE solver
-            CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
-            !Get the CellML equations for the first DAE solver
-            CALL SOLVERS_SOLVER_GET(MONODOMAIN_SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
-            !Finish the CellML equations creation
-            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-            & " is invalid for a bioelectrics finite elasticity equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE, &
+      & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " does not equal a transient monodomain quasistatic finite elasticity equation subtype."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+ 
+    !--------------------------------------------------------------------
+    !   Transient Gudunov monodomain, simple finite elasticity  
+    !--------------------------------------------------------------------
+    
+    SELECT CASE(problemSetup%setupType)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Do nothing
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Do nothing
       CASE DEFAULT
-        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-          & " does not equal a transient monodomain quasistatic finite elasticity equation subtype."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a bioelectrics finite elasticity equation."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE(PROBLEM_SETUP_CONTROL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Set up a time control loop
+        NULLIFY(controlLoop)
+        CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+        CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
+        CALL ControlLoop_NumberOfSubLoopsSet(controlLoop,2,err,error,*999)
+!!TODO: Default output type should be none???
+        CALL ControlLoop_OutputTypeSet(controlLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)
+        
+        !Set up the control sub loop for monodomain
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        CALL ControlLoop_LabelSet(monodomainSubLoop,'Monodomain Time Loop',err,error,*999)
+        CALL ControlLoop_TypeSet(monodomainSubLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
+!!TODO: Default output type should be none???
+        CALL ControlLoop_OutputTypeSet(monodomainSubLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)
+        
+        !Set up the control sub loop for finite elasicity
+        IF(pSpecification(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE) THEN
+          NULLIFY(elasticitySubLoop
+          CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+          CALL ControlLoop_LabelSet(elasticitySubLoop,'Elasticity While Loop',err,error,*999)
+          CALL ControlLoop_TypeSet(elasticitySubLoop,CONTROL_WHILE_LOOP_TYPE,err,error,*999)
+!!TODO: Default output type should be none???
+          CALL ControlLoop_OutputTypeSet(elasticitySubLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)
+        ELSE
+          NULLIFY(elasticitySubLoop)
+          CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+          CALL ControlLoop_LabelSet(elasticitySubLoop,'Elasticity Load increment loop',err,error,*999)
+          CALL ControlLoop_TypeSet(elasticitySubLoop,CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
+!!TODO: Default output type should be none???
+          CALL ControlLoop_OutputTypeSet(elasticitySubLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)
+        ENDIF
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the control loops
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
+        !Sub-loops are finished when parent is finished
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a bioelectrics finite elasticity equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      !Get the control loop
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the monodomain sub loop
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        !Start the solvers creation
+        NULLIFY(monodomainSolvers)
+        CALL Solvers_CreateStart(monodomainSubLoop,monodomainSolvers,err,error,*999)
+        CALL Solvers_NumberOfSolversSet(monodomainSolvers,2,err,error,*999)
+        !Set the first solver to be a differential-algebraic equations solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(monodomainSolvers,1,solver,err,error,*999)
+        CALL Solver_TypeSet(solver,SOLVER_DAE_TYPE,err,error,*999)
+        CALL Solver_LabelSet(solver,"ODE Solver",err,error,*999)
+        CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+        !Set the second solver to be a dynamic solver 
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(monodomainSolvers,2,solver,err,error,*999)
+        CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+        CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+        CALL Solver_LabelSet(solver,"Parabolic solver",err,error,*999)
+        CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+        CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+        CALL Solver_DynamicRestartSet(solver,.TRUE.,err,error,*999)
+        CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+        
+        !Get the finite elasticity sub loop
+        NULLIFY(elasticitySubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+        !Start the solvers creation
+        NULLIFY(elasticitySolvers)
+        CALL Solvers_CreateStart(elasticitySubLoop,elasticitySolvers,err,error,*999)
+        CALL Solvers_NumberOfSolversSet(elasticitySolvers,1,err,error,*999)
+        !Set the finite elasticity solver to be a nonlinear solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(elasticitySolvers,1,solver,err,error,*999)
+        CALL Solver_TypeSet(solver,SOLVER_NONLINEAR_TYPE,err,error,*999)
+        CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the monodomain solvers
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        NULLIFY(monodomainSolvers)
+        CALL ControlLoop_SolversGet(monodomainSubLoop,monodomainSolvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(monodomainSolvers,err,error,*999)
+        
+        !Get the finite elasticity solvers
+        NULLIFY(elasticitySubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+        NULLIFY(elasticitySolvers)
+        CALL ControlLoop_SolversGet(elasticitySubLoop,elasticitySolvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(elasticitySolvers,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a bioelectrics finite elasticity equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SolverEquationsType)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the control loop and solvers
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        
+        !Get the monodomain sub loop and solvers
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        NULLIFY(monodomainSolvers)
+        CALL ControlLoop_SolversGet(monodomainSubLoop,monodomainSolvers,err,error,*999)
+        !Create the solver equations for the second (parabolic) solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(monodomainSolvers,2,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+        CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+        CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+        CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        
+        !Get the finite elasticity sub loop and solvers
+        NULLIFY(elasticitySubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+        NULLIFY(elasticitySolvers)
+        CALL ControlLoop_SolversGet(elasticitySubLoop,elasticitySolvers,err,error,*999)
+        !Get the finite elasticity solver and create the finite elasticity solver equations
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(elasticitySolvers,1,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+        CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
+        CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+        CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        
+        !Get the monodomain sub loop and solvers
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        NULLIFY(monodomainSolvers)
+        CALL ControlLoop_SolversGet(monodomainSubLoop,monodomainSolvers,err,error,*999)
+        !Get the solver equations for the second (parabolic) solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(monodomainSolvers,2,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        !Finish the solver equations creation
+        CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+        
+        !Get the finite elasticity sub loop and solvers
+        NULLIFY(elasticitySubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+        NULLIFY(elasticitySolvers)
+        CALL ControlLoop_SolversGet(elasticitySubLoop,elasticitySolvers,err,error,*999)
+        !Finish the creation of the finite elasticity solver equations
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(elasticitySolvers,1,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a bioelectrics finite elasticity equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        !Get the solvers
+        NULLIFY(monodomainSolvers)
+        CALL ControlLoop_SolversGet(monodomainSubLoop,monodomainSolvers,err,error,*999)
+        !Create the CellML equations for the first DAE solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(monodomainSolvers,1,solver,err,error,*999)
+        NULLIFY(cellMLEquations)
+        CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        NULLIFY(monodomainSubLoop)
+        CALL ControlLoop_SubLoopGet(controlLoop,1,monodomainSubLoop,err,error,*999)
+        !Get the solvers
+        NULLIFY(monodomainSolvers)
+        CALL ControlLoop_SolversGet(monodomainSubLoop,monodomainSolvers,err,error,*999)
+        !Get the CellML equations for the first DAE solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(monodomainSolvers,1,solver,err,error,*999)
+        NULLIFY(cellMLEquations)
+        CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+        !Finish the CellML equations creation
+        CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a bioelectrics finite elasticity equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+        & " is invalid for a bioelectrics finite elasticity equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP")
+    EXITS("BioelectricFiniteElasticity_ProblemSetup")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP",ERR,ERROR)
+999 ERRORSEXITS("BioelectricFiniteElasticity_ProblemSetup",err,error)
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP
+  END SUBROUTINE BioelectricFiniteElasticity_ProblemSetup
 
   !
   !================================================================================================================================
   !
  
   !>Sets up the bioelectrics finite elasticity problem pre-solve.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: loopType,pSpecification(3)
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_PreSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-            SELECT CASE(CONTROL_LOOP%loopType)
-            CASE(CONTROL_TIME_LOOP_TYPE)
-              CALL BIODOMAIN_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
-            CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-              CALL FiniteElasticity_PreSolve(solver,err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
-                & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-            SELECT CASE(CONTROL_LOOP%loopType)
-            CASE(CONTROL_TIME_LOOP_TYPE)
-              CALL BIODOMAIN_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
-            CASE(CONTROL_WHILE_LOOP_TYPE)
-              CALL FiniteElasticity_PreSolve(solver,err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
-                & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-              & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+   
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+      SELECT CASE(loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
+        CALL Biodomain_PreSolve(solver,err,error,*999)
+      CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        CALL FiniteElasticity_PreSolve(solver,err,error,*999)
+      CASE DEFAULT
+        localError="Control loop type "//TRIM(NumberToVString(loopType,"*",err,error))// &
+          & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+      SELECT CASE(loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
+        CALL Biodomain_PreSolve(solver,err,error,*999)
+      CASE(CONTROL_WHILE_LOOP_TYPE)
+        CALL FiniteElasticity_PreSolve(solver,err,error,*999)
+      CASE DEFAULT
+        localError="Control loop type "//TRIM(NumberToVString(loopType,"*",err,error))// &
+          & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE")
+    EXITS("BioelectricFiniteElasticity_PreSolve")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("BioelectricFiniteElasticity_PreSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE
+  END SUBROUTINE BioelectricFiniteElasticity_PreSolve
       
   !   
   !================================================================================================================================
   !
 
   !>Sets up the bioelectrics finite elasticity problem post solve.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver!<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: pSpecification(3),solveType
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_PostSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN 
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-            SELECT CASE(SOLVER%solveType)
-            CASE(SOLVER_DAE_TYPE)
-              CALL BIOELECTRIC_POST_SOLVE(SOLVER,ERR,ERROR,*999)
-            CASE(SOLVER_DYNAMIC_TYPE)
-              CALL BIOELECTRIC_POST_SOLVE(SOLVER,ERR,ERROR,*999)
-            CASE(SOLVER_NONLINEAR_TYPE)
-              CALL FiniteElasticity_PostSolve(solver,err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="Solver solve type "//TRIM(NumberToVString(SOLVER%solveType,"*",ERR,ERROR))// &
-                & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-              & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    CALL Solver_TypeGet(solver,solveType,err,error,*999)
+    
+    SELECT CASE(controlLoop%problem%SPECIFICATION(3))
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+      SELECT CASE(solveType)
+      CASE(SOLVER_DAE_TYPE)
+        CALL Bioelectric_PostSolve(solver,err,error,*999)
+      CASE(SOLVER_DYNAMIC_TYPE)
+        CALL Bioelectric_PostSolve(solver,err,error,*999)
+      CASE(SOLVER_NONLINEAR_TYPE)
+        CALL FiniteElasticity_PostSolve(solver,err,error,*999)
+      CASE DEFAULT
+        localError="Solver solve type "//TRIM(NumberToVString(solveType,"*",err,error))// &
+          & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE")
+    EXITS("BioelectricFiniteElasticity_PostSolve")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("BioelectricFiniteElasticity_PostSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE
+  END SUBROUTINE BioelectricFiniteElasticity_PostSolve
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the bioelectrics finite elasticity problem pre-control loop.
-  SUBROUTINE BioelectricFiniteElasticity_ControlLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_PreLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: iterationNumber,loopType,numberOfSubLoops,pSpecification(3)
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BioelectricFiniteElasticity_ControlLoopPreLoop",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_PreLoop",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-        PROBLEM=>CONTROL_LOOP%PROBLEM
-        IF(ASSOCIATED(PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(PROBLEM%SPECIFICATION(2))
-          CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
-            SELECT CASE(CONTROL_LOOP%loopType)
-            CASE(CONTROL_TIME_LOOP_TYPE)
-              !do nothing ???
-            CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-              SELECT CASE(PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-                CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
-              CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-                CALL BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN(CONTROL_LOOP,ERR,ERROR,*999)
-                CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="The third problem specification of "// &
-                  & TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-                  & " is not valid for bioelectric finite elasticity problem."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-              CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
-            CASE(CONTROL_WHILE_LOOP_TYPE)
-              SELECT CASE(PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-                IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
-                  CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
-                ENDIF
-                CALL BioelectricFiniteElasticity_ComputeFibreStretch(CONTROL_LOOP,ERR,ERROR,*999)
-                CALL BioelectricFiniteElasticity_ForceLengthVelocityRelation(CONTROL_LOOP,ERR,ERROR,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="The third problem specification of "// &
-                  & TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-                  & " is not valid for bioelectric finite elasticity problem."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-              CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
-                & " is not valid for bioelectric finite elasticity problem type."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(numberOfSubLoops==0) THEN
+      NULLIFY(problem)
+      CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+      CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+      
+      SELECT CASE(pSpecification(2))
+      CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
+        CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+        SELECT CASE(loopType)
+        CASE(CONTROL_TIME_LOOP_TYPE)
+          !do nothing ???
+        CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+          SELECT CASE(pSpecification(3))
+          CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+            CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(controlLoop,err,error,*999)
+          CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+            CALL BioelectricFiniteElasticity_ComputeTitin(controlLoop,err,error,*999)
+            CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(controlLoop,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The second problem specification of "// &
-              & TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-              & " is not valid for a multi physics problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            localError="The third problem specification of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+              & " is not valid for bioelectric finite elasticity problem."
+            CALL FlagError(localError,err,error,*999)
           END SELECT
-        ELSE
-          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        !the main time loop - do nothing!
-      ENDIF
+          CALL FiniteElasticity_PreLoop(controlLoop,err,error,*999)
+        CASE(CONTROL_WHILE_LOOP_TYPE)
+          SELECT CASE(pSpecification(3))
+          CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+            CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
+            IF(iterationNumber==1) CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(controlLoop,err,error,*999)
+            CALL BioelectricFiniteElasticity_ComputeFibreStretch(controlLoop,err,error,*999)
+            CALL BioelectricFiniteElasticity_ForceLengthVelocityRelation(controlLoop,err,error,*999)
+          CASE DEFAULT
+            localError="The third problem specification of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+              & " is not valid for bioelectric finite elasticity problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          CALL FiniteElasticity_PreLoop(controlLoop,err,error,*999)
+        CASE DEFAULT
+          localError="Control loop loop type "//TRIM(NumberToVString(loopType,"*",err,error))// &
+            & " is not valid for bioelectric finite elasticity problem type."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The second problem specification of "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
+          & " is not valid for a multi physics problem."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+      !the main time loop - do nothing!
     ENDIF
     
-    EXITS("BioelectricFiniteElasticity_ControlLoopPreLoop")
+    EXITS("BioelectricFiniteElasticity_PreLoop")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_ControlLoopPreLoop",ERR,ERROR)
-    EXITS("BioelectricFiniteElasticity_ControlLoopPreLoop")
+999 ERRORS("BioelectricFiniteElasticity_PreLoop",err,error)
+    EXITS("BioelectricFiniteElasticity_PreLoop")
     RETURN 1
     
-  END SUBROUTINE BioelectricFiniteElasticity_ControlLoopPreLoop
+  END SUBROUTINE BioelectricFiniteElasticity_PreLoop
 
   !
   !================================================================================================================================
   !
 
   !>Computes the fibre stretch for bioelectrics finite elasticity problems.
-  SUBROUTINE BioelectricFiniteElasticity_ComputeFibreStretch(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ComputeFibreStretch(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(BasisType), POINTER :: DEPENDENT_BASIS
+    INTEGER(INTG) :: numberOfGauss
+    INTEGER(INTG) :: meshComponentNumber,numberOfElements,variableType
+    INTEGER(INTG) :: equationsSetIdx,gaussPointIdx,dofIdx,elementIdx,idx
+    REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),Jznu
+    TYPE(BasisType), POINTER :: geometricBasis
+    TYPE(BasisType), POINTER :: dependentBasis
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(QuadratureSchemeType), POINTER :: DEPENDENT_QUADRATURE_SCHEME
-    TYPE(FieldInterpolationParametersType), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS, &
-      & FIBRE_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS
-    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT, &
-      & DEPENDENT_INTERPOLATED_POINT
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS, &
-      & DEPENDENT_INTERPOLATED_POINT_METRICS
-    TYPE(BasisType), POINTER :: GEOMETRIC_BASIS
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(FieldVariableType), POINTER :: FIELD_VAR_U1
-    INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS
-    INTEGER(INTG) :: meshComponentNumber,numberOfElements,FIELD_VAR_TYPE
-    INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx,idx
-    REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),AZL(3,3),Jznu
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,fibreInterpParameters,dependentInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,dependentInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,dependentInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: fieldVariableU1
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BioelectricFiniteElasticity_ComputeFibreStretch",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ComputeFibreStretch",err,error,*999)
 
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(FIELD_VAR_U1)
-    NULLIFY(DEPENDENT_BASIS)
-    NULLIFY(EQUATIONS)
-    NULLIFY(dependentField,fibreField,geometricField,independentField)
-    NULLIFY(DEPENDENT_QUADRATURE_SCHEME)
-    NULLIFY(GEOMETRIC_INTERPOLATION_PARAMETERS,FIBRE_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS)
-    NULLIFY(GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT,DEPENDENT_INTERPOLATED_POINT)
-    NULLIFY(GEOMETRIC_INTERPOLATED_POINT_METRICS,DEPENDENT_INTERPOLATED_POINT_METRICS)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-        SELECT CASE(CONTROL_LOOP%loopType)
-        CASE(CONTROL_TIME_LOOP_TYPE)
-          !do nothing
-        CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-          !do nothing
-        CASE(CONTROL_WHILE_LOOP_TYPE)
-          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-          CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-          CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-          !Loop over the equations sets associated with the solver
-          IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-            SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-            IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-              DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
-                  IF(.NOT.ASSOCIATED(geometricField)) THEN
-                    LOCAL_ERROR="Geometric field is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  dependentField=>EQUATIONS_SET%dependent%dependentField
-                  IF(.NOT.ASSOCIATED(dependentField)) THEN
-                    LOCAL_ERROR="Dependent field is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  independentField=>EQUATIONS_SET%INDEPENDENT%independentField
-                  IF(.NOT.ASSOCIATED(independentField)) THEN
-                    LOCAL_ERROR="Independent field is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  EQUATIONS=>EQUATIONS_SET%EQUATIONS
-                  IF(.NOT.ASSOCIATED(EQUATIONS)) THEN
-                    LOCAL_ERROR="Equations is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  NULLIFY(vectorEquations)
-                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                  NULLIFY(vectorMapping)
-                  CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-                  NULLIFY(nonlinearMapping)
-                  CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-                  fibreField=>equations%interpolation%fibreField
-                  IF(.NOT.ASSOCIATED(fibreField)) THEN
-                    LOCAL_ERROR="Fibre field is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                    & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !equations_set_idx
-            ELSE
-              CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
-          ENDIF
-
-          CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_U1,ERR,ERROR,*999)
-
-          DECOMPOSITION=>dependentField%DECOMPOSITION
-          meshComponentNumber=decomposition%meshComponentNumber
-
-          IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
-            !copy the old fibre stretch to the previous values parameter set
-            CALL Field_ParameterSetsCopy(independentField,FIELD_U1_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-          ENDIF
-
-          numberOfElements=dependentField%geometricField%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements
-
-          !Grab interpolation parameters
-          FIELD_VAR_TYPE=nonlinearMapping%residualVariables(1)%ptr%variableType
-          DEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr
-          GEOMETRIC_INTERPOLATION_PARAMETERS=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-          FIBRE_INTERPOLATION_PARAMETERS=>equations%interpolation%fibreInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-          !Point interpolation pointer
-          GEOMETRIC_INTERPOLATED_POINT=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-          GEOMETRIC_INTERPOLATED_POINT_METRICS=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
-          FIBRE_INTERPOLATED_POINT=>equations%interpolation%fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-          DEPENDENT_INTERPOLATED_POINT=>equations%interpolation%dependentInterpPoint(FIELD_VAR_TYPE)%ptr
-          DEPENDENT_INTERPOLATED_POINT_METRICS=>equations%interpolation%dependentInterpPointMetrics(FIELD_VAR_TYPE)%ptr
-          
-          !loop over the elements of the finite elasticity mesh (internal and boundary elements)
-          DO element_idx=1,numberOfElements
-
-            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
-            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%numberOfGauss
-            GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
-              & TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS
-
-            !Initialise tensors and matrices
-            DZDNU=0.0_DP
-            DO idx=1,3
-              DZDNU(idx,idx)=1.0_DP
-            ENDDO
-
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
-              & GEOMETRIC_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
-              & FIBRE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
-              & DEPENDENT_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
-
-           !Loop over gauss points
-            DO gauss_idx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
-            
-              !Interpolate dependent, geometric, fibre and materials fields
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-                & DEPENDENT_INTERPOLATED_POINT,ERR,ERROR,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(DEPENDENT_BASIS%numberOfXi, &
-                & DEPENDENT_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-                & GEOMETRIC_INTERPOLATED_POINT,ERR,ERROR,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%numberOfXi, &
-                & GEOMETRIC_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-                & FIBRE_INTERPOLATED_POINT,ERR,ERROR,*999)
-
-              !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-              CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-                & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,Jznu,ERR,ERROR,*999)
-              
-              !compute C=F^T F
-              CALL MatrixTranspose(DZDNU,DZDNUT,ERR,ERROR,*999)
-              CALL MatrixProduct(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
-
-              !store the fibre stretch lambda_f, i.e., sqrt(C_11) or AZL(1,1)
-              
-              CALL Field_ParameterSetUpdateLocalGaussPoint(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & gauss_idx,element_idx,1,SQRT(AZL(1,1)),ERR,ERROR,*999)
-
-            ENDDO !gauss_idx
-          ENDDO !element_idx
-
-          !now the ghost elements -- get the relevant info from the other computational nodes
-          CALL Field_ParameterSetUpdateStart(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-          CALL Field_ParameterSetUpdateFinish(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-
-        CASE DEFAULT
-          LOCAL_ERROR="Control loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
-            & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE !the control loop contains subloops
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(numberOfSubLoops==0) THEN
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+      SELECT CASE(loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
         !do nothing
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+      CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        !do nothing
+      CASE(CONTROL_WHILE_LOOP_TYPE)
+        CALL ControlLoop_IterationNumberGet(controlLoop,numberOfIterations,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        !Loop over the equations sets associated with the solver
+!!TODO: Why do we loop over the equations sets and get all the points if we do not actually do anything with those objects????
+        CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        DO equationsSetIdx=1,numberOfEquationsSets
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(geometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+          NULLIFY(fibreField)
+          CALL EquationsSet_FibreFieldGet(equationsSet,fibreField,err,error,*999)
+          NULLIFY(dependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(independentField)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          NULLIFY(vectorMapping)
+          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+          NULLIFY(nonlinearMapping)
+          CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+        ENDDO !equationsSetIdx
+        
+        CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,fieldVariableU1,err,error,*999)
+        
+        NULLIFY(decomposition)
+        CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+        NULLIFY(decompositionTopology)
+        CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+        NULLIFY(decompositionElements)
+        CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+        CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+
+        IF(iterationNumber==1) THEN
+          !copy the old fibre stretch to the previous values parameter set
+          CALL FieldVariable_ParameterSetsCopy(fieldVariableU1,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
+            & err,error,*999)
+        ENDIF
+        
+        !Grab interpolation parameters
+        NULLIFY(residualMapping)
+        CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
+        NULLIFY(residualVariable)
+        CALL EquationsMappingResidual_VariableGet(residualMapping,1,residualVariable,err,error,*999)
+        CALL FieldVariable_VariableTypeGet(residualVariable,variableType,err,error,*999)
+        NULLIFY(equationsInterpolation)
+        CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+        NULLIFY(geometricInterpParameters)
+        CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & geometricInterpParameters,err,error,*999)
+        NULLIFY(geometricInterpPoint)
+        CALL EquationsInterpolation_GeometricPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,geometricInterpPoint, &
+          & err,error,*999)
+        NULLIFY(geometricInterpPointMetrics)
+        CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & geometricInterpPointMetrics,err,error,*999)
+        NULLIFY(fibreInterpParameters)
+        CALL EquationsInterpolation_FibreParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & fibreInterpParameters,err,error,*999)
+        NULLIFY(fiberInterpPoint)
+        CALL EquationsInterpolation_FibrePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,fibreInterpPoint,err,error,*999)
+        NULLIFY(dependentInterpParameters)
+        CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,variableType, &
+          & dependentInterpParameters,err,error,*999)
+        NULLIFY(dependentInterpPoint)
+        CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,variableType,dependentInterpPoint,err,error,*999)
+        NULLIFY(dependentInterpPointMetrics)
+        CALL EquationsInterpolation_DependentPointMetricsGet(equationsInterpolation,variableType,dependentInterpPointMetrics, &
+          & err,error,*999)
+        
+        !loop over the elements of the finite elasticity mesh (internal and boundary elements)
+        DO elementIdx=1,numberOfElements
+
+          NULLIFY(domain)
+          CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+          NULLIFY(dependentBasis)
+          CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
+          CALL Basis_NumberOfXiGet(dependentBasis,numberOfXi,err,error,*999)
+          NULLIFY(dependentQuadratureScheme)
+          CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
+          CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+          
+          !Initialise tensors and matrices
+          CALL Identity(dZdNu,err,error,*999)
+  
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,fibreInterpParameters,err,error,*999)
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,dependentInterpParameters,err,error,*999)
+          
+          !Loop over gauss points
+          DO gaussPointIdx=1,numberOfGauss
+            
+            !Interpolate dependent, geometric, fibre and materials fields
+            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
+              & err,error,*999)
+            CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,dependentInterpPointMetrics,err,error,*999)
+            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
+              & err,error,*999)
+            CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
+            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
+              & err,error,*999)
+            
+            !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
+            CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
+              & fibreInterpPoint,dZdNu,Jznu,err,error,*999)
+              
+            !compute C=F^T F
+            CALL MatrixTranspose(dZdNu,dZdNuT,err,error,*999)
+            CALL MatrixProduct(dZdNuT,dZdNu,AZL,err,error,*999)
+            
+            !store the fibre stretch lambda_f, i.e., sqrt(C_11) or AZL(1,1)            
+            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariableU1,FIELD_VALUES_SET_TYPE,gaussPointIdx,elementIdx, &
+              & 1,SQRT(AZL(1,1)),err,error,*999)
+            
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
+
+        !now the ghost elements -- get the relevant info from the other computational nodes
+        CALL FieldVariable_ParameterSetUpdateStart(fieldVariableU1,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(fieldVariableU1,FIELD_VALUES_SET_TYPE,err,error,*999)
+        
+      CASE DEFAULT
+        localError="Control loop type "//TRIM(NumberToVString(loopType,"*",err,error))// &
+          & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ELSE !the control loop contains subloops
+      !do nothing
     ENDIF
 
     EXITS("BioelectricFiniteElasticity_ComputeFibreStretch")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_ComputeFibreStretch",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ComputeFibreStretch",err,error)
     EXITS("BioelectricFiniteElasticity_ComputeFibreStretch")
     RETURN 1
     
@@ -988,354 +956,308 @@ CONTAINS
   !
 
   !>Computes the bioelectrics finite elasticity force-length and force_velocity relations.
-  SUBROUTINE BioelectricFiniteElasticity_ForceLengthVelocityRelation(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ForceLengthVelocityRelation(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_PARENT
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(BasisType), POINTER :: DEPENDENT_BASIS
-    TYPE(EquationsType), POINTER :: EQUATIONS
-    TYPE(QuadratureSchemeType), POINTER :: DEPENDENT_QUADRATURE_SCHEME
-    TYPE(FieldInterpolationParametersType), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS, &
-      & FIBRE_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS
-    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT, &
-      & DEPENDENT_INTERPOLATED_POINT
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS, &
-      & DEPENDENT_INTERPOLATED_POINT_METRICS
-    TYPE(BasisType), POINTER :: GEOMETRIC_BASIS
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION
-    TYPE(FieldVariableType), POINTER :: FIELD_VAR_U,FIELD_VAR_U1
-    INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS
+    INTEGER(INTG) :: numberOfGauss
     INTEGER(INTG) :: meshComponentNumber,numberOfElements
-    INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx
-    INTEGER(INTG) :: ITERATION_NUMBER,maximumNumberOfIterations
-    REAL(DP) :: LENGTH_HS,LENGTH_HS_0,ACTIVE_STRESS,FIBRE_STRETCH,FIBRE_STRETCH_OLD
-    REAL(DP) :: FACTOR_LENGTH,FACTOR_VELO,SARCO_LENGTH,VELOCITY,VELOCITY_MAX,TIME_STEP,kappa,A,S,d,c
-
-!tomo
-    REAL(DP) :: VELOCITY_AVERAGE,STRETCH_AVERAGE,OLD_STRETCH_AVERAGE
+    INTEGER(INTG) :: equationsSetIdx,gaussPointIdx,dofIdx,elementIdx
     INTEGER(INTG) :: counter
+    INTEGER(INTG) :: iterationNumber,maximumNumberOfIterations
+    REAL(DP) :: averageVelocity,averageStretch,oldAverageStretch
+    REAL(DP) :: lengthHS,lengthHS0,activeStress,fibreStretch,oldFibreStretch
+    REAL(DP) :: lengthFactor,velocityFactor,sarcomereLength,velocity,maxVelocity,timeStep,kappa,A,S,d,c
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(ControlLoopType), POINTER :: controlLoopParent
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,fibreInterpParameters,dependentInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,dependentInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,ependentInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: fieldVariableU,fieldVariableU1
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BioelectricFiniteElasticity_ForceLengthVelocityRelation",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ForceLengthVelocityRelation",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP_PARENT)
-    NULLIFY(EQUATIONS_SET)
-    NULLIFY(SOLVER_MAPPING)
-    NULLIFY(GEOMETRIC_BASIS)
-    NULLIFY(DECOMPOSITION)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(FIELD_VAR_U,FIELD_VAR_U1)
-    NULLIFY(DEPENDENT_BASIS)
-    NULLIFY(EQUATIONS)
-    NULLIFY(dependentField,fibreField,geometricField,independentField)
-    NULLIFY(DEPENDENT_QUADRATURE_SCHEME)
-    NULLIFY(GEOMETRIC_INTERPOLATION_PARAMETERS,FIBRE_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS)
-    NULLIFY(GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT,DEPENDENT_INTERPOLATED_POINT)
-    NULLIFY(GEOMETRIC_INTERPOLATED_POINT_METRICS,DEPENDENT_INTERPOLATED_POINT_METRICS)
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(controlLoop%numberOfSubLoops==0) THEN
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+      SELECT CASE(loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
+        !do nothing
+      CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        !do nothing
+      CASE(CONTROL_WHILE_LOOP_TYPE)
+        CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumIterations,absoluteTolerance, &
+          & relativeTolerance,continueLoop,err,error,*)
+        CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+        NULLIFY(solvers)        
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        !Loop over the equations sets associated with the solver
+        CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        !!TODO: WHY ARE WE LOOPING OVER EQUATIONS SETS THUS T0 GET POINTERS TO FIELDS IF THEY ARE NOT USED???
+        DO equationsSetIdx=1,numberOfEquationsSets
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMpping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(dependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(independentField)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+        ENDDO !equationsSetIdx
+ 
+        CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,fieldVariableU,err,error,*999)
+        CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,fieldVariableU1,err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-        SELECT CASE(CONTROL_LOOP%loopType)
-        CASE(CONTROL_TIME_LOOP_TYPE)
-          !do nothing
-        CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-          !do nothing
-        CASE(CONTROL_WHILE_LOOP_TYPE)
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP%PROBLEM%controlLoop,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
-          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-          CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-          CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-          !Loop over the equations sets associated with the solver
-          IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-            SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-            IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-              DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  dependentField=>EQUATIONS_SET%dependent%dependentField
-                  IF(.NOT.ASSOCIATED(dependentField)) THEN
-                    LOCAL_ERROR="Dependent field is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  independentField=>EQUATIONS_SET%INDEPENDENT%independentField
-                  IF(.NOT.ASSOCIATED(independentField)) THEN
-                    LOCAL_ERROR="Independent field is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                    & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !equations_set_idx
+        !get the inital half-sarcomere length
+        CALL FieldVariable_ParameterSetGetConstant(fieldVariableU1,FIELD_VALUES_SET_TYPE,2,lengthHS0,err,error,*999)
+
+        !get the maximum contraction velocity
+        CALL FieldVariable_ParameterSetGetConstant(fieldVariableU1,FIELD_VALUES_SET_TYPE,3,maxVelocity,err,error,*999)
+        
+        !in the first iteration store the unaltered homogenized active stress field 
+        IF(iterationNumber==1) THEN
+          CALL FieldVariable_ParameterSetsCopy(fieldVariableU,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
+            & err,error,*999)
+        ELSE
+          !restore the solution of the previous time step
+          CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & FIELD_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+        ENDIF
+
+        timeStep=timeIncrement
+
+        NULLIFY(decomposition)
+        CALL DependentField_DecompositionGet(dependentField,decomposition,err,error,*999)
+        NULLIFY(decompositionTopology)
+        CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+        NULLIFY(decompositionElements)
+        CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+        CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+        
+        averageVelocity=0.0_DP
+        averageStretch=0.0_DP
+        oldAverageStretch=0.0_DP
+        counter=0
+
+        !loop over the elements of the finite elasticity mesh (internal and boundary elements)
+        DO elementIdx=1,numberOfElements
+
+          NULLIFY(domain)
+          CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+          NULLIFY(dependentBasis)
+          CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
+          CALL Basis_NumberOfXiGet(dependentBasis,numberOfXi,err,error,*999)
+          NULLIFY(dependentQuadratureScheme)
+          CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
+          CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+
+          !Loop over gauss points
+          DO gaussPointIdx=1,numberOfGauss
+
+            !get the unaltered activeStress at the GP
+            CALL FieldVariable_ParameterSetGetGaussPoint(fieldVariableU,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
+              & elementIdx,1,activeStress,err,error,*999)
+ 
+            ! FORCE-LENGTH RELATION -------------------------------------------------------------------------------
+              
+            !get the current fibre stretch at the GP
+            CALL FieldVariable_ParameterSetGetGaussPoint(fieldVariableU1,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
+              & elementIdx,1,fibreStretch,err,error,*999)
+            
+            !compute the current half-sarcomere length at the GP: l_hs = lambda_f * l_hs_0
+            lengthHS=lengthHS0*fibreStretch
+              
+            !compute the scale factor (0,1) due to sarcomere F-l relation of Gordon, A. M., A.F. Huxley, and F.J. Julian. 
+            !The variation in isometric tension with sarcomere length in vertebrate muscle fibres. 
+            !The Journal of Physiology 184.1 (1966): 170-192.
+            sarcomereLength=2.0_DP*lengthHS
+            IF(sarcomereLength<=1.27_DP) THEN
+              lengthFactor=0.0_DP
+            ELSE IF(sarcomereLength<=1.7_DP) THEN
+              lengthFactor=1.6047_DP*sarcomereLength-2.0379_DP
+            ELSE IF(sarcomereLength<=2.34_DP) THEN
+              lengthFactor=0.4844_DP*sarcomereLength-0.1334_DP
+            ELSE IF(sarcomereLength<=2.51_DP) THEN
+              lengthFactor=1.0_DP
+            ELSEIF(sarcomereLength<=3.94_DP) THEN
+              lengthFactor=-0.6993_DP*sarcomereLength+2.7552_DP
             ELSE
-              CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
+              lengthFactor=0.0_DP
             ENDIF
-          ELSE
-            CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
-          ENDIF
-
-          CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VAR_U,ERR,ERROR,*999)
-          CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_U1,ERR,ERROR,*999)
-
-          !get the inital half-sarcomere length
-          CALL Field_ParameterSetGetConstant(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-            & 2,LENGTH_HS_0,ERR,ERROR,*999)
-
-          !get the maximum contraction velocity
-          CALL Field_ParameterSetGetConstant(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-            & 3,VELOCITY_MAX,ERR,ERROR,*999)
-
-          ITERATION_NUMBER=CONTROL_LOOP%whileLoop%iterationNumber
-          maximumNumberOfIterations=CONTROL_LOOP%whileLoop%maximumNumberOfIterations
-          !in the first iteration store the unaltered homogenized active stress field 
-          IF(ITERATION_NUMBER==1) THEN
-            CALL Field_ParameterSetsCopy(independentField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-          ELSE
-            !restore the solution of the previous time step
-            CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-          ENDIF
-
-          TIME_STEP=CONTROL_LOOP_PARENT%timeLoop%timeIncrement
-
-          DECOMPOSITION=>dependentField%DECOMPOSITION
-          meshComponentNumber=decomposition%meshComponentNumber
-
-!tomo start
-          VELOCITY_AVERAGE=0.0_DP
-          STRETCH_AVERAGE=0.0_DP
-          OLD_STRETCH_AVERAGE=0.0_DP
-          counter=0
-!tomo end
-
-          numberOfElements=dependentField%geometricField%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements
-
-          !loop over the elements of the finite elasticity mesh (internal and boundary elements)
-          DO element_idx=1,numberOfElements
-
-            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
-            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%numberOfGauss
-
-            !Loop over gauss points
-            DO gauss_idx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
-
-              !get the unaltered ACTIVE_STRESS at the GP
-              CALL Field_ParameterSetGetGaussPoint(independentField,FIELD_U_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                & gauss_idx,element_idx,1,ACTIVE_STRESS,err,error,*999)
- 
-              ! FORCE-LENGTH RELATION -------------------------------------------------------------------------------
+            
+            !multiply the activeStress with the scale factor
+            activeStress=activeStress*lengthFactor
+            
+            !update the activeStress at GP
+            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariableU,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+              & elementIdx,1,activeStress,err,error,*999)
+            
+            ! FORCE-VELOCITY RELATION -------------------------------------------------------------------------------
               
-              !get the current fibre stretch at the GP
-              CALL Field_ParameterSetGetGaussPoint(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                & gauss_idx,element_idx,1,FIBRE_STRETCH,err,error,*999)
+            !get fibre stretch at the GP of the previous time step
+            CALL FieldVariable_ParameterSetGetLocalGaussPoint(fieldVariableU1,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
+              & elementIdx,1,oldFibreStretch,err,error,*999)
 
-              !compute the current half-sarcomere length at the GP: l_hs = lambda_f * l_hs_0
-              LENGTH_HS=LENGTH_HS_0*FIBRE_STRETCH
-              
-              !compute the scale factor (0,1) due to sarcomere F-l relation of Gordon, A. M., A.F. Huxley, and F.J. Julian. 
-              !The variation in isometric tension with sarcomere length in vertebrate muscle fibres. 
-              !The Journal of Physiology 184.1 (1966): 170-192.
-              SARCO_LENGTH=2.0_DP*LENGTH_HS
-              IF(SARCO_LENGTH.LE.1.27_DP) THEN
-                FACTOR_LENGTH=0.0_DP
-              ELSEIF(SARCO_LENGTH.LE.1.7_DP) THEN
-                FACTOR_LENGTH=1.6047_DP*SARCO_LENGTH-2.0379_DP
-              ELSEIF(SARCO_LENGTH.LE.2.34_DP) THEN
-                FACTOR_LENGTH=0.4844_DP*SARCO_LENGTH-0.1334_DP
-              ELSEIF(SARCO_LENGTH.LE.2.51_DP) THEN
-                FACTOR_LENGTH=1.0_DP
-              ELSEIF(SARCO_LENGTH.LE.3.94_DP) THEN
-                FACTOR_LENGTH=-0.6993_DP*SARCO_LENGTH+2.7552_DP
-              ELSE
-                FACTOR_LENGTH=0.0_DP
+            !compute the contraction velocity
+            velocity=(fibreStretch-oldFibreStretch)/timeStep
+            
+            !NOTE: maxVelocity is the max shortening velocity, and hence negative
+            IF(velocity<maxVelocity) THEN
+              CALL FlagWarning('Exceeded maximum contraction velocity (shortening).',err,error,*999)
+              IF(iterationNumber<(maximumNumberOfIterations/2)) THEN
+                velocity=velocity*1.0_DP/DBLE((maximumNumberOfIterations/2)-iterationNumber)
               ENDIF
+            ELSE IF(velocity>(ABS(maxVelocity))) THEN
+              CALL FlagWarning('Exceeded maximum contraction velocity (lengthening).',err,error,*999)
+            ENDIF
 
-              !multiply the ACTIVE_STRESS with the scale factor
-              ACTIVE_STRESS=ACTIVE_STRESS*FACTOR_LENGTH
-
-              !update the ACTIVE_STRESS at GP
-              CALL Field_ParameterSetUpdateLocalGaussPoint(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & gauss_idx,element_idx,1,ACTIVE_STRESS,ERR,ERROR,*999)
- 
-
-              ! FORCE-VELOCITY RELATION -------------------------------------------------------------------------------
+            !compute scale factor (velocityFactor)
+            kappa=0.24_DP !make mat param TODO
+            A=1.6_DP !make mat param TODO
+            S=2.5_DP !make mat param TODO
+            IF(velocity<0.0_DP) THEN
+              !shortening contraction              
+              velocityFactor=(1.0_DP-velocity/maxVelocity)/(1.0_DP+velocity/maxVelocity/kappa)
+            ELSE
+              !lengthening contraction
+              d=kappa*(1.O_DP-A)
+              c=velocity/maxVelocity*S*(kappa+1)
+              velocityFactor=1.0_DP+c*(A-1.0_DP)/(d+c)
+            ENDIF
               
-              !get fibre stretch at the GP of the previous time step
-              CALL Field_ParameterSetGetLocalGaussPoint(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                & gauss_idx,element_idx,1,FIBRE_STRETCH_OLD,ERR,ERROR,*999)
+            !multiply the activeStress with the scale factor
+            activeStress=activeStress*velocityFactor
 
-              !compute the contraction velocity
-              VELOCITY=(FIBRE_STRETCH-FIBRE_STRETCH_OLD)/TIME_STEP
+            !update the activeStress at GP
+            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariableU,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+              & elementIdx,1,activeStress,err,error,*999)
 
-!!!! original
-              !NOTE: VELOCITY_MAX is the max shortening velocity, and hence negative
-              IF(VELOCITY<VELOCITY_MAX) THEN
-                CALL FLAG_WARNING('Exceeded maximum contraction velocity (shortening).',ERR,ERROR,*999)
-!                VELOCITY=VELOCITY_MAX
-                !damping
-                IF(ITERATION_NUMBER<(maximumNumberOfIterations/2)) THEN
-                  VELOCITY=VELOCITY*1.0_DP/DBLE((maximumNumberOfIterations/2)-ITERATION_NUMBER)
-                ENDIF
-              ELSEIF(VELOCITY>(ABS(VELOCITY_MAX))) THEN
-                CALL FLAG_WARNING('Exceeded maximum contraction velocity (lengthening).',ERR,ERROR,*999)
-!!!                VELOCITY=-VELOCITY_MAX
-!                !damping
-!                IF(ITERATION_NUMBER<(maximumNumberOfIterations/2)) THEN
-!                  VELOCITY=VELOCITY*1.0_DP/DBLE((maximumNumberOfIterations/2)-ITERATION_NUMBER)
-!                ENDIF
-              ENDIF
-
-              !compute scale factor (FACTOR_VELO)
-              kappa=0.24_DP !make mat param TODO
-              A=1.6_DP !make mat param TODO
-              S=2.5_DP !make mat param TODO
-              IF(VELOCITY<0.0_DP) THEN
-                !shortening contraction              
-                FACTOR_VELO=(1-VELOCITY/VELOCITY_MAX)/(1+VELOCITY/VELOCITY_MAX/kappa)
-              ELSE
-                !lengthening contraction
-                d=kappa*(1-A)
-                c=VELOCITY/VELOCITY_MAX*S*(kappa+1)
-                FACTOR_VELO=1+c*(A-1)/(d+c)
-              ENDIF
-              
-              !multiply the ACTIVE_STRESS with the scale factor
-              ACTIVE_STRESS=ACTIVE_STRESS*FACTOR_VELO
-
-              !update the ACTIVE_STRESS at GP
-              CALL Field_ParameterSetUpdateLocalGaussPoint(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & gauss_idx,element_idx,1,ACTIVE_STRESS,ERR,ERROR,*999)
-
-            ENDDO !gauss_idx
-          ENDDO !element_idx
-!!!!end original
-
-
-
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
 
 !!!!tomo --- try averaging              
-!!!              VELOCITY_AVERAGE=VELOCITY_AVERAGE+VELOCITY
-!!!              STRETCH_AVERAGE=STRETCH_AVERAGE+FIBRE_STRETCH
-!!!              OLD_STRETCH_AVERAGE=OLD_STRETCH_AVERAGE+FIBRE_STRETCH_OLD
+!!!              averageVelocity=averageVelocity+velocity
+!!!              averageStretch=averageStretch+fibreStretch
+!!!              oldAverageStretch=oldAverageStretch+oldFibreStretch
 !!!              
 !!!              counter=counter+1
 
-!!!            ENDDO !gauss_idx
-!!!          ENDDO !element_idx
+!!!            ENDDO !gaussPointIdx
+!!!          ENDDO !elementIdx
 
-!!!          VELOCITY=VELOCITY_AVERAGE/REAL(counter)
-!!!          FIBRE_STRETCH=STRETCH_AVERAGE/REAL(counter)
-!!!          FIBRE_STRETCH_OLD=OLD_STRETCH_AVERAGE/REAL(counter)
+!!!          velocity=averageVelocity/REAL(counter)
+!!!          fibreStretch=averageStretch/REAL(counter)
+!!!          oldFibreStretch=oldAverageStretch/REAL(counter)
 
-!!!          VELOCITY_AVERAGE=(FIBRE_STRETCH-FIBRE_STRETCH_OLD)/TIME_STEP
+!!!          averageVelocity=(fibreStretch-oldFibreStretch)/timeStep
 
-!!!!          VELOCITY=0.0_DP
+!!!!          velocity=0.0_DP
 
 !!!!          !damping
-!!!!          IF(ITERATION_NUMBER<(maximumNumberOfIterations/2)) THEN
-!!!!            VELOCITY=VELOCITY*1.0_DP/DBLE((maximumNumberOfIterations/2)-ITERATION_NUMBER)
+!!!!          IF(iterationNumber<(maximumNumberOfIterations/2)) THEN
+!!!!            velocity=velocity*1.0_DP/DBLE((maximumNumberOfIterations/2)-iterationNumber)
 !!!!          ENDIF
 
-!!!          LOCAL_ERROR="######### VELOCITY: "//TRIM(NumberToVString(VELOCITY,"*",ERR,ERROR))//" #########"
-!!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
-!!!          LOCAL_ERROR="######### VELOCITY AVERAGE: "//TRIM(NumberToVString(VELOCITY_AVERAGE,"*",ERR,ERROR))//" #########"
-!!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
-!!!          LOCAL_ERROR="######### STRETCH: "//TRIM(NumberToVString(FIBRE_STRETCH,"*",ERR,ERROR))//" #########"
-!!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
-!!!          LOCAL_ERROR="######### OLD STRETCH: "//TRIM(NumberToVString(FIBRE_STRETCH_OLD,"*",ERR,ERROR))//" #########"
-!!!          CALL FLAG_WARNING(LOCAL_ERROR,ERR,ERROR,*999)
+!!!          localError="######### velocity: "//TRIM(NumberToVString(velocity,"*",err,error))//" #########"
+!!!          CALL FlagWarning(localError,err,error,*999)
+!!!          localError="######### velocity AVERAGE: "//TRIM(NumberToVString(averageVelocity,"*",err,error))//" #########"
+!!!          CALL FlagWarning(localError,err,error,*999)
+!!!          localError="######### STRETCH: "//TRIM(NumberToVString(fibreStretch,"*",err,error))//" #########"
+!!!          CALL FlagWarning(localError,err,error,*999)
+!!!          localError="######### OLD STRETCH: "//TRIM(NumberToVString(oldFibreStretch,"*",err,error))//" #########"
+!!!          CALL FlagWarning(localError,err,error,*999)
 
 
 !!!          
 !!!          
-!!!          VELOCITY=VELOCITY_AVERAGE
+!!!          velocity=averageVelocity
 !!!          
 !!!          
 !!!          
 
-!!!          !compute scale factor (FACTOR_VELO)
+!!!          !compute scale factor (velocityFactor)
 !!!          kappa=0.24_DP !make mat param TODO
 !!!          A=1.6_DP !make mat param TODO
 !!!          S=2.5_DP !make mat param TODO
-!!!          IF(VELOCITY<0.0_DP) THEN
+!!!          IF(velocity<0.0_DP) THEN
 !!!            !shortening contraction              
-!!!            FACTOR_VELO=(1-VELOCITY/VELOCITY_MAX)/(1+VELOCITY/VELOCITY_MAX/kappa)
-!!!            IF(VELOCITY<VELOCITY_MAX) THEN
-!!!              CALL FLAG_WARNING('Exceeded maximum contraction velocity (shortening).',ERR,ERROR,*999)
+!!!            velocityFactor=(1-velocity/maxVelocity)/(1+velocity/maxVelocity/kappa)
+!!!            IF(velocity<maxVelocity) THEN
+!!!              CALL FlagWarning('Exceeded maximum contraction velocity (shortening).',err,error,*999)
 !!!            ENDIF
 !!!          ELSE
 !!!            !lengthening contraction
 !!!            d=kappa*(1-A)
-!!!            c=VELOCITY/VELOCITY_MAX*S*(kappa+1)
-!!!            FACTOR_VELO=1+c*(A-1)/(d+c)
-!!!            IF(VELOCITY>ABS(VELOCITY_MAX)) THEN
-!!!              CALL FLAG_WARNING('Exceeded maximum contraction velocity (lengthening).',ERR,ERROR,*999)
+!!!            c=velocity/maxVelocity*S*(kappa+1)
+!!!            velocityFactor=1+c*(A-1)/(d+c)
+!!!            IF(velocity>ABS(maxVelocity)) THEN
+!!!              CALL FlagWarning('Exceeded maximum contraction velocity (lengthening).',err,error,*999)
 !!!            ENDIF
 !!!          ENDIF
 
-!!!          DO element_idx=1,numberOfElements
+!!!          DO elementIdx=1,numberOfElements
 
-!!!            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
-!!!            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-!!!            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%numberOfGauss
+!!!            dependentBasis=>decomposition%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(elementIdx)%BASIS       
+!!!            dependentQuadratureScheme=>dependentBasis%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+!!!            numberOfGauss=dependentQuadratureScheme%numberOfGauss
 
 !!!            !Loop over gauss points
-!!!            DO gauss_idx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
+!!!            DO gaussPointIdx=1,numberOfGauss
 
-!!!              !get the ACTIVE_STRESS at the GP
-!!!              dof_idx=FIELD_VAR_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,element_idx)
+!!!              !get the activeStress at the GP
+!!!              dofIdx=fieldVariableU%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointIdx,elementIdx)
 !!!              CALL Field_ParameterSetGetLocalDOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-!!!                & dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
+!!!                & dofIdx,activeStress,err,error,*999)
 
-!!!              !multiply the ACTIVE_STRESS with the scale factor
-!!!              ACTIVE_STRESS=ACTIVE_STRESS*FACTOR_VELO
+!!!              !multiply the activeStress with the scale factor
+!!!              activeStress=activeStress*velocityFactor
 
-!!!              !update the ACTIVE_STRESS at GP
-!!!              dof_idx=FIELD_VAR_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,element_idx)
+!!!              !update the activeStress at GP
+!!!              dofIdx=fieldVariableU%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointIdx,elementIdx)
 !!!              CALL Field_ParameterSetUpdateLocalDOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-!!!                & dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
+!!!                & dofIdx,activeStress,err,error,*999)
 !!!              
-!!!            ENDDO !gauss_idx
-!!!          ENDDO !element_idx
+!!!            ENDDO !gaussPointIdx
+!!!          ENDDO !elementIdx
 !tomo end
 
-          !now the ghost elements -- get the relevant info from the other computational nodes
-          CALL Field_ParameterSetUpdateStart(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-          CALL Field_ParameterSetUpdateFinish(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-
-        CASE DEFAULT
-          LOCAL_ERROR="Control loop type "//TRIM(NumberToVString(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
-            & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE !the control loop contains subloops
-        !do nothing
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+        !now the ghost elements -- get the relevant info from the other computational nodes
+        CALL FieldVariable_ParameterSetUpdateStart(fieldVariableU,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(fieldVaraibleU,FIELD_VALUES_SET_TYPE,err,error,*999)
+        
+      CASE DEFAULT
+        localError="Control loop type "//TRIM(NumberToVString(loopType,"*",err,error))// &
+          & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ELSE !the control loop contains subloops
+      !do nothing
     ENDIF
-
 
     EXITS("BioelectricFiniteElasticity_ForceLengthVelocityRelation")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_ForceLengthVelocityRelation",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ForceLengthVelocityRelation",err,error)
     EXITS("BioelectricFiniteElasticity_ForceLengthVelocityRelation")
     RETURN 1
     
@@ -1346,166 +1268,134 @@ CONTAINS
   !
 
   !>Sets up the bioelectrics finite elasticity problem post-control loop.
-  SUBROUTINE BioelectricFiniteElasticity_ControlLoopPostLoop(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ProblemType), POINTER :: PROBLEM
-    INTEGER(INTG) :: equations_set_idx
-    TYPE(ControlLoopTimeType), POINTER :: TIME_LOOP
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
+    INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIteration,outputIteration
+    REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
+    TYPE(ControlLoopType), POINTER :: elasticitySubLoop,bioelectricSubLoop
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(RegionType), POINTER :: DEPENDENT_REGION   
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: FILENAME,LOCAL_ERROR,METHOD
-    TYPE(ControlLoopType), POINTER :: ELASTICITY_SUB_LOOP,BIOELECTRIC_SUB_LOOP
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(RegionType), POINTER :: dependentRegion   
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: filename,localError,method
 
-    ENTERS("BioelectricFiniteElasticity_ControlLoopPostLoop",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_PostLoop",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-        PROBLEM=>CONTROL_LOOP%PROBLEM
-        IF(ASSOCIATED(PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%loopType)
-          CASE(CONTROL_TIME_LOOP_TYPE)
-            SELECT CASE(PROBLEM%SPECIFICATION(2))
-            CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
-              !the monodomain time loop - output of the monodomain fields
-              CALL BIODOMAIN_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="Problem type "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
-                & " is not valid for a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-            CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
-          CASE(CONTROL_WHILE_LOOP_TYPE)
-            CALL BioelectricFiniteElasticity_ConvergenceCheck(CONTROL_LOOP,ERR,ERROR,*999)
-          CASE DEFAULT
-            !do nothing
-          END SELECT
-        ELSE
-          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        !the main time loop - output the finite elasticity fields 
-        IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-          !Export the dependent field for this time step
-          TIME_LOOP=>CONTROL_LOOP%timeLoop
-          IF(ASSOCIATED(TIME_LOOP)) THEN
-            PROBLEM=>CONTROL_LOOP%PROBLEM
-            IF(ASSOCIATED(PROBLEM)) THEN
-              NULLIFY(SOLVERS)
-              NULLIFY(SOLVER)
-              NULLIFY(SOLVER_EQUATIONS)
-              NULLIFY(ELASTICITY_SUB_LOOP)
-              !Get the solver. The first solver of the second sub loop will contain the finite elasticity dependent field equation set
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-              !Loop over the equations sets associated with the solver
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      dependentField=>EQUATIONS_SET%dependent%dependentField
-                      NULLIFY(DEPENDENT_REGION)
-                      CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
-                      FILENAME="MainTime_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                        & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
-                      METHOD="FORTRAN"
-                      CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
-                    ELSE
-                      LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                        & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
-                        & " in the solver mapping."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDDO !equations_set_idx
-                ELSE
-                  CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
-              ENDIF
-              IF((PROBLEM%SPECIFICATION(3)==PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE).OR. &
-               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE).OR. &
-               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE).OR. &
-               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)) THEN
-                NULLIFY(SOLVERS)
-                NULLIFY(SOLVER)
-                NULLIFY(SOLVER_EQUATIONS)
-                NULLIFY(BIOELECTRIC_SUB_LOOP)
-                !Get the solver. The second solver of the first sub loop will contain the bioelectrics equation set
-                CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,BIOELECTRIC_SUB_LOOP,ERR,ERROR,*999)
-                CALL CONTROL_LOOP_SOLVERS_GET(BIOELECTRIC_SUB_LOOP,SOLVERS,ERR,ERROR,*999)
-                CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-                CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-                !Loop over the equations sets associated with the solver
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                      EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                      IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        dependentField=>EQUATIONS_SET%dependent%dependentField
-                        NULLIFY(DEPENDENT_REGION)
-                        CALL Field_RegionGet(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
-                        FILENAME="MainTime_M_"//TRIM(NumberToVString(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                          & "_"//TRIM(NumberToVString(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
-                        METHOD="FORTRAN"
-                        CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
-                        
-                        WRITE(*,*) TIME_LOOP%iterationNumber
-                        
-                      ELSE
-                        LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                          & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
-                          & " in the solver mapping."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO !equations_set_idx
-                  ELSE
-                    CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF !PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE
-            ELSE
-              CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Time loop is not associated.",ERR,ERROR,*999)
-          ENDIF
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(numberOfSubLoops==0) THEN
+      NULLIFY(problem)
+      CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+      CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+      SELECT CASE(loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
+        SELECT CASE(pSpecification(2))
+        CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
+          !the monodomain time loop - output of the monodomain fields
+          CALL Biodomain_PostLoop(controlLoop,err,error,*999)
+        CASE DEFAULT
+          localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
+            & " is not valid for a multi physics problem class."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        CALL BioelectricFiniteElasticity_UpdateGeometricField(controlLoop,.FALSE.,err,error,*999)
+      CASE(CONTROL_WHILE_LOOP_TYPE)
+        CALL BioelectricFiniteElasticity_ConvergenceCheck(controlLoop,err,error,*999)
+      CASE DEFAULT
+        !do nothing
+      END SELECT
+    ELSE
+      !the main time loop - output the finite elasticity fields
+      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+        & outputIteration,inputIteration,err,error,*)
+      IF(outputIteration/=0) THEN
+        IF(MOD(currentItertion,outputIteration)==0) THEN
+          NULLIFY(problem)
+          CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+          CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+          !Get the solver. The first solver of the second sub loop will contain the finite elasticity dependent field equation set
+          NULLIFY(elasticitySubLoop)
+          CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(elasticitySubLoop,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          !Loop over the equations sets associated with the solver
+          CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+          DO equationsSetIdx=1,numberOfEquationsSets
+            NULLIFY(equationsSet)
+            CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+            NULLIFY(dependentField)
+            CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+            NULLIFY(dependentRegion)
+            CALL Field_RegionGet(dependentField,dependentRegion,err,error,*999)
+            CALL Region_UserNumberGet(dependentRegion,regionUserNumber,err,error,*999)
+            NULLIFY(fields)
+            CALL Region_FieldsGet(region,fields,err,error,*999)
+            filename="MainTime_"//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+              & "_"//TRIM(NumberToVString(iterationNumber,"*",err,error))
+            method="FORTRAN"
+            CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
+          ENDDO !equationsSetIdx
+          IF((pSpecification(3)==PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE).OR. &
+            & (pSpecification(3)==PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE).OR. &
+            & (pSpecification(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE).OR. &
+            & (pSpecification(3)==PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)) THEN
+            !Get the solver. The second solver of the first sub loop will contain the bioelectrics equation set
+            NULLIFY(bioelectricSubLoop)
+            CALL ControlLoop_SubLoopGet(controlLoop,1,bioelectricSubLoop,err,error,*999)
+            NULLIFY(solvers)
+            CALL ControlLoop_SolversGet(bioelectricSubLoop,solvers,err,error,*999)
+            NULLIFY(solver)
+            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+            NULLIFY(solverEquations)
+            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+            NULLIFY(solverMapping)
+            CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+            !Loop over the equations sets associated with the solver
+            CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+            DO equationsSetIdx=1,numberOfEquationsSets
+              NULLIFY(equationsSet)
+              CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+              NULLIFY(dependentField)
+              CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+              NULLIFY(dependentRegion)
+              CALL Field_RegionGet(dependentField,dependentRegion,err,error,*999)
+              CALL Region_UserNumberGet(dependentRegion,regionUserNumber,err,error,*999)
+              NULLIFY(fields)
+              CALL Region_FieldsGet(region,fields,err,error,*999)
+              filename="MainTime_M_"//TRIM(NumberToVString(reionUserNumber,"*",err,error))// &
+                & "_"//TRIM(NumberToVString(iterationNumber,"*",err,error))
+              method="FORTRAN"
+              CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
+            ENDDO !equationsSetIdx
+          ENDIF !PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE
         ENDIF
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("BioelectricFiniteElasticity_ControlLoopPostLoop")
+    EXITS("BioelectricFiniteElasticity_PostLoop")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_ControlLoopPostLoop",ERR,ERROR)
-    EXITS("BioelectricFiniteElasticity_ControlLoopPostLoop")
+999 ERRORS("BioelectricFiniteElasticity_PostLoop",err,error)
+    EXITS("BioelectricFiniteElasticity_PostLoop")
     RETURN 1
     
-  END SUBROUTINE BioelectricFiniteElasticity_ControlLoopPostLoop
+  END SUBROUTINE BioelectricFiniteElasticity_PostLoop
 
 
   !
@@ -1513,136 +1403,112 @@ CONTAINS
   !
 
   !>Check for the convergence of the bioelectric finite elasticity while loop, i.e., if the force-length and force-velocity relations yielded a different actual configuration.
-  SUBROUTINE BioelectricFiniteElasticity_ConvergenceCheck(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ConvergenceCheck(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ProblemType), POINTER :: PROBLEM
-    INTEGER(INTG) :: equations_set_idx,numberOfNodes,dof_idx,node_idx
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
+    INTEGER(INTG) :: equationsSetIdx,numberOfNodes,dofIdx,nodeIdx
+    REAL(DP) :: x1,x2,x3,y1,y2,y3,mySum
+    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(FieldVariableType), POINTER :: FIELD_VAR
-    REAL(DP) :: x1,x2,x3,y1,y2,y3,my_sum
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("BioelectricFiniteElasticity_ConvergenceCheck",err,error,*999)
 
-    ENTERS("BioelectricFiniteElasticity_ConvergenceCheck",ERR,ERROR,*999)
-
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(FIELD_VAR)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-        PROBLEM=>CONTROL_LOOP%PROBLEM
-        IF(ASSOCIATED(PROBLEM)) THEN
-          SELECT CASE(CONTROL_LOOP%loopType)
-          CASE(CONTROL_TIME_LOOP_TYPE)
-            !do nothing
-          CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-            !do nothing
-          CASE(CONTROL_WHILE_LOOP_TYPE)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_SOLUTION_UPDATE(SOLVER,ERR,ERROR,*999) !tomo added this
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            !Loop over the equations sets associated with the solver
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    dependentField=>EQUATIONS_SET%dependent%dependentField
-                  ELSE
-                    LOCAL_ERROR="Equations set is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",ERR,ERROR))// &
-                      & " in the solver mapping."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ENDDO !equations_set_idx
-              ELSE
-                CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
-            ENDIF
-
-            IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
-              !
-            ELSE
-              CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VAR,ERR,ERROR,*999)
-
-              numberOfNodes=dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION% &
-                & meshComponentNumber)%ptr%MAPPINGS%NODES%numberOfLocal
-
-              my_sum=0.0_DP
-              DO node_idx=1,numberOfNodes
-
-                !get the current node position (x) and the node position of the last iteration (y)
-                CALL FieldVariable_LocalNodeDOFGet(FIELD_VAR,1,1,node_idx,1,dof_idx,err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,dof_idx,x1,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dof_idx,y1,ERR,ERROR,*999)
-                CALL FieldVariable_LocalNodeDOFGet(FIELD_VAR,1,1,node_idx,2,dof_idx,err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,dof_idx,x2,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dof_idx,y2,ERR,ERROR,*999)
-                CALL FieldVariable_LocalNodeDOFGet(FIELD_VAR,1,1,node_idx,3,dof_idx,err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,dof_idx,x3,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dof_idx,y3,ERR,ERROR,*999)
-
-                !sum up
-                my_sum=my_sum+SQRT((x1-y1)**2+(x2-y2)**2+(x3-y3)**2)
-              ENDDO
-              
-              IF(my_sum<1.0E-06_DP) THEN !if converged then:
-                CONTROL_LOOP%whileLoop%continueLoop=.FALSE.
-                CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
-                !copy the current solution to the previous solution
-                CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-              ELSEIF(CONTROL_LOOP%whileLoop%iterationNumber==CONTROL_LOOP%whileLoop%maximumNumberOfIterations) THEN
-                CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
-                CALL FLAG_WARNING('----------- Maximum number of iterations in while loop reached. -----------',ERR,ERROR,*999)
-                !copy the current solution to the previous solution
-                CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-              ENDIF
-
-            ENDIF
-
-            !copy the current solution to the previous iteration solution
-            CALL Field_ParameterSetsCopy(dependentField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-
-          CASE DEFAULT
-            !do nothing
-          END SELECT
-        ELSE
-          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE !the main time loop
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(numberOfSubLoops==0) THEN
+      CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
+      SELECT CASE(loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
         !do nothing
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+      CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        !do nothing
+      CASE(CONTROL_WHILE_LOOP_TYPE)
+        CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumIterations,absoluteTolerance, &
+          & relativeTolerance,continueLoop,err,error,*999)
+        CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        CALL Solver_SolutionUpdate(solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        !Loop over the equations sets associated with the solver
+        CALL SolverMapping_NumberOfEquationsSetGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        DO equationsSetIdx=1,numberOfEquationsSets
+!!TODO: Why are we looping over equations sets to get pointers if we don't use them???
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(dependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        ENDDO !equationsSetIdx
+          
+        IF(currentIteration>1) THEN
+          CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
+          NULLIFY(decomposition)
+          CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+          NULLIFY(domain)
+          CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomanTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainNodes)
+          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+  
+          mySum=0.0_DP
+          DO nodeIdx=1,numberOfNodes
+            
+            !get the current node position (x) and the node position of the last iteration (y)
+            CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,1,nodeIdx,1,dofIdx,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_VALUES_SET_TYPE,dofIdx,x1,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dofIdx,y1, &
+              & err,error,*999)
+            CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,1,nodeIdx,2,dofIdx,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_VALUES_SET_TYPE,dofIdx,x2,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dofIdx,y2, &
+              & err,error,*999)
+            CALL FieldVariable_LocalNodeDOFGet(fieldVariable,1,1,nodeIdx,3,dofIdx,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_VALUES_SET_TYPE,dofIdx,x3,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalDOF(fieldVariable,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,dofIdx,y3, &
+              & err,error,*999)            
+            !sum up
+            mySum=mySum+SQRT((x1-y1)**2+(x2-y2)**2+(x3-y3)**2)
+          ENDDO !nodeIdx
+          
+          IF(mySum<1.0E-06_DP) THEN !if converged then:
+            CALL ControlLoop_ContinueLoopSet(controlLoop,.FALSE.,err,error,*999)
+            CALL BioelectricFiniteElasticity_UpdateGeometricField(controlLoop,.FALSE.,err,error,*999)
+          ELSE IF(currentIteration==maximumIterations) THEN
+            CALL BioelectricFiniteElasticity_UpdateGeometricField(controlLoop,.FALSE.,err,error,*999)
+            CALL FlagWarning('----------- Maximum number of iterations in while loop reached. -----------',err,error,*999)
+          ENDIF          
+        ENDIF
+        
+        !copy the current solution to the previous solution
+        CALL FieldVariable_ParameterSetsCopy(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
+          & err,error,*999)
+        
+      CASE DEFAULT
+        !do nothing
+      END SELECT
+    ELSE !the main time loop
+      !do nothing
     ENDIF
 
     EXITS("BioelectricFiniteElasticity_ConvergenceCheck")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_ConvergenceCheck",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ConvergenceCheck",err,error)
     EXITS("BioelectricFiniteElasticity_ConvergenceCheck")
     RETURN 1
     
@@ -1654,912 +1520,825 @@ CONTAINS
 
   !>Update the the bioelectric equation geometric field from the finite elasticity dependent field (deformed geometry)
   !>NOTE: this is only temporary - will be replaced once embedded meshes are available
-  SUBROUTINE BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,CALC_CLOSEST_GAUSS_POINT,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_UpdateGeometricField(controlLoop,calcClosestGaussPoint,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    LOGICAL, INTENT(IN) :: CALC_CLOSEST_GAUSS_POINT !<If true then the closest finite elasticity Gauss point for each bioelectrics node is calculated
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    LOGICAL, INTENT(IN) :: calcClosestGaussPoint !<If true then the closest finite elasticity Gauss point for each bioelectrics node is calculated
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
-    TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(FieldType), POINTER :: independent_Field_ELASTICITY,GEOMETRIC_FIELD_MONODOMAIN,GEOMETRIC_FIELD_ELASTICITY
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_MONODOMAIN,DEPENDENT_FIELD_ELASTICITY
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT
-    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS
-    TYPE(DomainMappingType), POINTER :: NODES_MAPPING
-    TYPE(DecompositionElementsType), POINTER :: ELEMENTS_TOPOLOGY
-    TYPE(FieldVariableType), POINTER :: FIELD_VAR_DEP_M,FIELD_VAR_GEO_M,FIELD_VAR_IND_FE,FIELD_VAR_IND_M,FIELD_VAR_IND_M_2
-    INTEGER(INTG) :: component_idx,element_idx,ne,start_elem,START_ELEMENT,start_element_idx
-    INTEGER(INTG) :: DEPENDENT_FIELD_INTERPOLATION,GEOMETRIC_FIELD_INTERPOLATION
-    INTEGER(INTG) :: node_idx,node_idx_2,GAUSS_POINT,gauss_idx,fibre_idx
-    INTEGER(INTG) :: nodes_in_Xi_1,nodes_in_Xi_2,nodes_in_Xi_3,n3,n2,n1,dof_idx,dof_idx2,idx,my_element_idx
+    INTEGER(INTG) :: componentIdx,elementIdx,elementNumber,startElem,startElement,startElementIdx
+    INTEGER(INTG) :: dependentFieldInterpolation,geometricFieldInterpolation
+    INTEGER(INTG) :: nodeIdx,nodeIdx2,gaussPoint,gaussPointIdx,fibreIdx
+    INTEGER(INTG) :: nodesInXi1,nodesInXi2,nodesInXi3,n3,n2,n1,dofIdx,dofIdx2,idx,myElementIdx
     INTEGER(INTG) :: offset,n4
-    REAL(DP) :: XVALUE_M,XVALUE_FE,DIST_LEFT,DIST_RIGHT,VALUE,VALUE_LEFT,VALUE_RIGHT,DISTANCE,VELOCITY,VELOCITY_MAX,OLD_DIST
-    REAL(DP) :: OLD_DIST_2,OLD_DIST_3,OLD_DIST_4
-    REAL(DP) :: XI(3),PREVIOUS_NODE(3),DIST_INIT,SARCO_LENGTH_INIT,TIME_STEP,DIST
-    LOGICAL :: OUTSIDE_NODE
-    REAL(DP), POINTER :: gaussPositions(:,:)
+    REAL(DP) :: monodomainXValue,elasticityXValue,distanceLeft,distanceRight,value,valueLeft,valueRight,distance,velocity,maxVelocity,oldDistance
+    REAL(DP) :: oldDistance2,oldDistance3,oldDistance4
+    REAL(DP) :: xi(3),previousNode(3),initialDistance,initialSarcomereLength,timeStep,distance,gaussPosition(3)
+    LOGICAL :: outsideNode
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,controlLoopElasticity,controlLoopMonodomain
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(FieldType), POINTER :: independentFieldElasticity,geometricFieldMonodomain,geometricFieldElasticity
+    TYPE(FieldType), POINTER :: dependentFieldMonodomain,independentFieldMonodomain,dependentFieldElasticity
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(VARYING_STRING) :: localError
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+    TYPE(DomainMappingType), POINTER :: nodesMapping
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(FieldVariableType), POINTER :: monodomainDependentVariable,monodomainGeometricVariable,elasticityIndependentVariable,monodomainIndependentVariable,monodomainIndependentVariable2
 
-    ENTERS("BioelectricFiniteElasticity_UpdateGeometricField",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_UpdateGeometricField",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP_ROOT)
-    NULLIFY(CONTROL_LOOP_PARENT)
-    NULLIFY(CONTROL_LOOP_ELASTICITY)
-    NULLIFY(CONTROL_LOOP_MONODOMAIN)
-    NULLIFY(PROBLEM)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(INDEPENDENT_FIELD_ELASTICITY)
-    NULLIFY(DEPENDENT_FIELD_MONODOMAIN)
-    NULLIFY(INDEPENDENT_FIELD_MONODOMAIN)
-    NULLIFY(DEPENDENT_FIELD_ELASTICITY)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVER_MAPPING)
-    NULLIFY(EQUATIONS_SET)
-    NULLIFY(GEOMETRIC_FIELD_MONODOMAIN)
-    NULLIFY(GEOMETRIC_FIELD_ELASTICITY)
-    NULLIFY(ELEMENTS_TOPOLOGY)
-    NULLIFY(INTERPOLATED_POINT)
-    NULLIFY(INTERPOLATION_PARAMETERS)
-    NULLIFY(FIELD_VAR_DEP_M)
-    NULLIFY(FIELD_VAR_GEO_M)
-    NULLIFY(FIELD_VAR_IND_FE)
-    NULLIFY(FIELD_VAR_IND_M)
-    NULLIFY(FIELD_VAR_IND_M_2)
-    NULLIFY(gaussPositions)
-    
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-        PROBLEM=>CONTROL_LOOP%PROBLEM
-        IF(ASSOCIATED(PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+    IF(numberOfSubLoops==0) THEN
+      NULLIFY(problem)
+      CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+      CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoopParent)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoopParent,err,error,*999)
+      SELECT CASE(pSpecification(2))
+      CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
+        SELECT CASE(pSpecification(3))
+        CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
+
+          !get the monodomain sub loop, solvers, solver, and finally geometric and field
+          NULLIFY(controlLoopMonodomain)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+          NULLIFY(geometricFieldMonodomain)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldMonodomain,err,error,*999)
+          !get the finite elasticity sub loop, solvers, solver, and finally the dependent field
+          NULLIFY(controlLoopElasticity)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+          NULLIFY(dependentFieldElasticity)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(geometricVariableMonodomain)
+          CALL Field_VariableIndexGet(geometricFieldMonodomain,1,geometricVariableMonodomain,geometricVariableType,err,error,*999)
+          CALL FieldVariable_NumberOfComponentsGet(geometricVariableMonodomain,numberOfComponents,err,error,*999)
+          NULLIFY(dependentVariableElasticity)
+          CALL Field_VariableIndexGet(dependentFieldElasticity,1,dependentVariableElasticity,dependentVariableType,err,error,*999)
+          DO componentIdx=1,numberOfComponents
+            !check for identical interpolation of the fields
+            CALL FieldVariable_ComponentInterpolationGet(geometricVariableMonodomain,componentIdx,geometricFieldInterpolation, &
               & err,error,*999)
-          END IF
-          SELECT CASE(PROBLEM%SPECIFICATION(2))
-          CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
-            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CALL FieldVariable_ComponentInterpolationGet(dependentVariableElasticity,componentIdx,dependentFieldInterpolation, &
+              & err,error,*999)
+            IF(geometricFieldInterpolation==dependentFieldInterpolation) THEN
+              !copy the dependent field components to the geometric field
+              CALL Field_ParametersToFieldParametersCopy(dependentFieldElasticity,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,geometricFieldMonodomain,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & componentIdx,err,error,*999)
+            ELSE
+              CALL Field_UserNumberGet(geometricFieldMonodomain,geometricUserNumber,err,error,*999)
+              CALL Field_UserNumberGet(dependentFieldElasticity,dependentUserNumber,err,error,*999)
+              localError="The interpolation type of component number "// &
+                & TRIM(NumberToVString(componentIdx,"*",err,error))//" of field number "// &
+                & TRIM(NumberToVString(geometricUserNumber,"*",err,error))// &
+                & " does not coincide with the interpolation type of field number "// &
+                & TRIM(NumberToVString(dependentUserNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ENDDO !componentIdx
 
-            CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
+        CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+          & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
 
-              CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-              CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
-              !get the monodomain sub loop, solvers, solver, and finally geometric and field
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%geometricField
-                    IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
-              NULLIFY(SOLVERS)
-              NULLIFY(SOLVER)
-              NULLIFY(SOLVER_MAPPING)
-              NULLIFY(EQUATIONS_SET)
-              NULLIFY(SOLVER_EQUATIONS)
-              !get the finite elasticity sub loop, solvers, solver, and finally the dependent field
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    DEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%dependent%dependentField
-                    IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_ELASTICITY)) THEN
-                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
-              DO component_idx=1,GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%numberOfComponents
-                !check for identical interpolation of the fields
-                GEOMETRIC_FIELD_INTERPOLATION=GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%COMPONENTS(component_idx)%interpolationType
-                DEPENDENT_FIELD_INTERPOLATION=DEPENDENT_FIELD_ELASTICITY%VARIABLES(1)%COMPONENTS(component_idx)%interpolationType
-                IF(GEOMETRIC_FIELD_INTERPOLATION==DEPENDENT_FIELD_INTERPOLATION) THEN
-                  !copy the dependent field components to the geometric field
-                  CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,component_idx,GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                    & component_idx,ERR,ERROR,*999)
-                ELSE
-                  LOCAL_ERROR="The interpolation type of component number "//TRIM(NumberToVString(component_idx,"*",ERR, &
-                    & ERROR))//" of field number "//TRIM(NumberToVString(GEOMETRIC_FIELD_MONODOMAIN%userNumber,"*",ERR, &
-                    & ERROR))//" does not coincide with the interpolation type of field number " &
-                    & //TRIM(NumberToVString(DEPENDENT_FIELD_ELASTICITY%userNumber,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO
+          CALL ControlLoop_CurrentTimesGet(controlLoopParent,currentTime,timeIncrement,err,error,*999)
+          !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
+          NULLIFY(controlLoopMonodomain)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+          NULLIFY(geometricFieldMonodomain)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldMonodomain,err,error,*999)
+          ! the Field_V_Variable_Type contains the 3D nodal positions
+          NULLIFY(dependentFieldMonodomain)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(independentFieldMonodomain)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
+          !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
+          NULLIFY(controlLoopElasticity)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+          NULLIFY(geometricFieldElasticity)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldElasticity,err,error,*999)
+          NULLIFY(dependentFieldElasticity)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentFieldElasticity,err,error,*999)
+          NULLIFY(independentFieldElasticity)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldElasticity,err,error,*999)
+          !get the finite elasticity dependent field interpolation parameters of this element
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          NULLIFY(equaationsInterpolation)
+          CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+          NULLIFY(interpolationParameters)
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+            & interpolationParameters,err,error,*999)
+          NULLIFY(interpolationPoint)
+          CALL EquationInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
+            & err,error,*999)
 
-            CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-              & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+          nodeIdx=0
+          nodeIdx2=0
+          fibreIdx=0
+          NULLIFY(monodomainDependentVariable)
+          CALL Field_VariableGet(dependentFieldMonodomain,FIELD_V_VARIABLE_TYPE,monodomainDependentVariable,err,error,*999)
+          NULLIFY(monodomainGeometricVariable)
+          CALL Field_VariableGet(geometricFieldMonodomain,FIELD_U_VARIABLE_TYPE,monodomainGeometricVariable,err,error,*999)
+          NULLIFY(elasticityIndependentVariable)
+          CALL Field_VariableGet(independentFieldElasticity,FIELD_V_VARIABLE_TYPE,elasticityIndependentVariable,err,error,*999)
+          NULLIFY(monodomainIndependentVariable)
+          CALL Field_VariableGet(independentFieldMonodomain,FIELD_U1_VARIABLE_TYPE,monodomainIndependentVariable,err,error,*999)
+          NULLIFY(monodomainIndependentVaraible2)
+          CALL Field_VariableGet(independentFieldMonodomain,FIELD_U2_VARIABLE_TYPE,monodomainIndependentVariable2,err,error,*999)
 
-              CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-              CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
-              !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%geometricField
-                    IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                    ! the Field_V_Variable_Type contains the 3D nodal positions
-                    DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%dependent%dependentField
-                    IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                    INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
-                    IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
-              NULLIFY(SOLVERS)
-              NULLIFY(SOLVER)
-              NULLIFY(SOLVER_MAPPING)
-              NULLIFY(EQUATIONS_SET)
-              NULLIFY(SOLVER_EQUATIONS)
-              !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%independentField
-                    IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) THEN
-                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                    GEOMETRIC_FIELD_ELASTICITY=>EQUATIONS_SET%GEOMETRY%geometricField
-                    IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_ELASTICITY)) THEN
-                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
+          NULLIFY(decomposition)
+          CALL Field_DecompositionGet(geometricFieldEleasticity,decomposition,err,error,*999)
+          NULLIFY(decompositionTopology)
+          CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+          NULLIFY(decompositionElements)
+          CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+          NULLIFY(domain)
+          CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
 
+          !get the maximum contraction velocity 
+          CALL FieldVariable_ParameterSetGetConstant(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE,2,maxVelocity, &
+            & err,error,*999)
+          !NOTE: maxVelocity is the max shortening velocity, and hence negative!!!
+          !The max lengthening velocity is assumed to be abs(maxVelocity)/2.0
 
-              node_idx=0
-              node_idx_2=0
-              fibre_idx=0
-              CALL Field_VariableGet(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE,FIELD_VAR_DEP_M,ERR,ERROR,*999)
-              CALL Field_VariableGet(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VAR_GEO_M,ERR,ERROR,*999)
-              CALL Field_VariableGet(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE,FIELD_VAR_IND_FE,ERR,ERROR,*999)
-              CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_IND_M,ERR,ERROR,*999)
-              CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE,FIELD_VAR_IND_M_2,ERR,ERROR,*999)
+          !get the time step of the elasticity problem
+          timeStep=timeIncrement
 
-              NODES_MAPPING=>GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION% &
-                & meshComponentNumber)%ptr%MAPPINGS%NODES
-              
-              ELEMENTS_TOPOLOGY=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%TOPOLOGY%ELEMENTS
+          !loop over the elements of the finite elasticity mesh (internal and boundary elements)
+          !no need to consider ghost elements here since only bioelectrical fields are changed
+          CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+          DO elementIdx=1,numberOfElements
 
+!!TODO is elementNumber not just the same as elementIdx????
+            elementNumber=decompositionElements%elements(elementIdx)%localNumber
+            myElementIdx=elementIdx
 
-              !get the maximum contraction velocity 
-              CALL Field_ParameterSetGetConstant(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,2,VELOCITY_MAX,ERR,ERROR,*999)
-              !NOTE: VELOCITY_MAX is the max shortening velocity, and hence negative!!!
-              !The max lengthening velocity is assumed to be   abs(VELOCITY_MAX)/2.0
-              
-              !get the time step of the elasticity problem
-              TIME_STEP=CONTROL_LOOP_PARENT%timeLoop%timeIncrement
+            !the Field_V_Variable_Type of the FE independent field contains the number of nodes in each Xi-direction of
+            !the bioelectrics grid
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & 1,nodesInXi1,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & 2,nodesInXi2,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & 3,nodesInXi3,err,error,*999)
+            !beginning of a fibre in this element: 1=yes, 0=no
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE,elementNumber, &
+              & 4,startElem,err,error,*999)            
 
+            !if there is no bioelectrics grid in this finite elasticity element, or the fibres don't begin in this element,
+            IF((nodesInXi1==0).OR.(nodesInXi2==0).OR.(nodesInXi3==0).OR.(startElem==0)) CYCLE
 
-              !loop over the elements of the finite elasticity mesh (internal and boundary elements)
-              !no need to consider ghost elements here since only bioelectrical fields are changed
-              DO element_idx=1,ELEMENTS_TOPOLOGY%numberOfElements
-                ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
-                my_element_idx=element_idx
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,interpolationParameters,err,error,*999)
+            NULLIFY(basis)
+            CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
+            NULLIFY(quadratureScheme)
+            CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRTURE_SCHEME,quadratureScheme,err,error,*999)
 
-                !the Field_V_Variable_Type of the FE independent field contains the number of nodes in each Xi-direction of the bioelectrics grid
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,1,nodes_in_Xi_1,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,2,nodes_in_Xi_2,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,3,nodes_in_Xi_3,ERR,ERROR,*999)
-                !beginning of a fibre in this element: 1=yes, 0=no
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,4,start_elem,ERR,ERROR,*999)
+            startElement=elementNumber
+            startElementIdx=myElementIdx
 
-                !if there is no bioelectrics grid in this finite elasticity element, or the fibres don't begin in this element, jump to the next element
-                IF((nodes_in_Xi_1==0).OR.(nodes_in_Xi_2==0).OR.(nodes_in_Xi_3==0).OR.(start_elem==0)) CYCLE
-                
-                START_ELEMENT=ne
-                start_element_idx=my_element_idx
-                
-                !assume Xi(1) to be normal to the seed surface, i.e. the seed points have Xi(1)=0
-                XI=[0.0_DP,1.0_DP/(REAL(2*nodes_in_Xi_2)),1.0_DP/(REAL(2*nodes_in_Xi_3))]
-                
-                !assume that the bioelectrics node numbers are increased in order Xi(1), Xi(2), Xi(3) 
-                DO n3=1,nodes_in_Xi_3
-                  DO n2=1,nodes_in_Xi_2
-                    fibre_idx=fibre_idx+1
-                    
-                    !loop over the FE elements that contain nodes of the very same fibres
-                    DO
-                      !get the finite elasticity dependent field interpolation parameters of this element
-                      INTERPOLATION_PARAMETERS=>EQUATIONS_SET%equations%interpolation%dependentInterpParameters &
-                        & (FIELD_U_VARIABLE_TYPE)%ptr
-                      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ne,INTERPOLATION_PARAMETERS, &
-                        & ERR,ERROR,*999)
-                      INTERPOLATED_POINT=>EQUATIONS_SET%equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+            !assume Xi(1) to be normal to the seed surface, i.e. the seed points have xi(1)=0
+            xi=[0.0_DP,1.0_DP/(REAL(2*nodesInXi2)),1.0_DP/(REAL(2*nodesInXi3))]
 
-                      !get the positions of the Gauss points of the Finite Elasticity element, gaussPositions(components,number_of_Gauss_points)
-                      gaussPositions=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
-                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%quadratureSchemeMap( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%gaussPositions
-                      
-                      DO n1=1,nodes_in_Xi_1
-                        node_idx=node_idx+1
-                        
-                        !store the fibre number this bioelectrics node belongs to.
-                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,fibre_idx,ERR,ERROR,*999) 
+            !assume that the bioelectrics node numbers are increased in order Xi(1), Xi(2), Xi(3) 
+            DO n3=1,nodesInXi3
+              DO n2=1,nodesInXi2
+                fibreIdx=fibreIdx+1
 
-                        !find the interpolated position of the bioelectric grid node from the FE dependent field
-                        CALL Field_InterpolateXi(NO_PART_DERIV,XI,INTERPOLATED_POINT,ERR,ERROR,*999)
-                        !update the bioelectrics dependent field Field_V_Variable_Type
-                        !the Field_V_Variable_Type of the monodomain dependent field contains the nodal positions in 3D
-                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,INTERPOLATED_POINT%VALUES(1,1),ERR,ERROR,*999)
-                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,2,INTERPOLATED_POINT%VALUES(2,1),ERR,ERROR,*999)
-                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,INTERPOLATED_POINT%VALUES(3,1),ERR,ERROR,*999)
+                !loop over the FE elements that contain nodes of the very same fibres
+                DO                      
+                  DO n1=1,nodesInXi1
+                    nodeIdx=nodeIdx+1
 
-                        IF((n1==1).AND.(ne==START_ELEMENT)) THEN
-                          !a new line of bioelectrics grid nodes begins
-                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,0.0_DP,ERR,ERROR,*999)
-                        ELSE
-                          !get the position in 3D of the previous node
-                          CALL Field_ParameterSetGetLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,PREVIOUS_NODE(1),ERR,ERROR,*999)
-                          CALL Field_ParameterSetGetLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,2,PREVIOUS_NODE(2),ERR,ERROR,*999)
-                          CALL Field_ParameterSetGetLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,3,PREVIOUS_NODE(3),ERR,ERROR,*999)
+                    !store the fibre number this bioelectrics node belongs to.
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE,1,1, &
+                      & nodeIdx,3,fibreIdx,err,error,*999) 
 
-                          !compute the distance between the previous node and the actual node
-                          DIST=SQRT( &
-                            & (INTERPOLATED_POINT%VALUES(1,1)-PREVIOUS_NODE(1))*(INTERPOLATED_POINT%VALUES(1,1)-PREVIOUS_NODE(1))+ &
-                            & (INTERPOLATED_POINT%VALUES(2,1)-PREVIOUS_NODE(2))*(INTERPOLATED_POINT%VALUES(2,1)-PREVIOUS_NODE(2))+ &
-                            & (INTERPOLATED_POINT%VALUES(3,1)-PREVIOUS_NODE(3))*(INTERPOLATED_POINT%VALUES(3,1)-PREVIOUS_NODE(3)))
+                    !find the interpolated position of the bioelectric grid node from the FE dependent field
+                    CALL Field_InterpolateXi(NO_PART_DERIV,XI,interpolatedPoint,err,error,*999)
+                    !update the bioelectrics dependent field Field_V_Variable_Type
+                    !the Field_V_Variable_Type of the monodomain dependent field contains the nodal positions in 3D
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,1,interpolatedPoint%values(1,NO_PART_DERIV),err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,2,interpolatedPoint%values(2,NO_PART_DERIV),err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,3,interpolatedPoint%values(3,NO_PART_DERIV),err,error,*999)
 
+                    IF((n1==1).AND.(elementNumber==startElement)) THEN
+                      !a new line of bioelectrics grid nodes begins
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainGeometricVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,0.0_DP,err,error,*999)
+                    ELSE
+                      !get the position in 3D of the previous node
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,1,previousNode(1),err,error,*999)
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,2,previousNode(2),err,error,*999)
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,3,previousNode(3),err,error,*999)
 
-                          !CONTRACTION VELOCITY CALCULATION
-                          
-                          !get the distance between the 2 nodes in the previous time step
-                          CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,OLD_DIST,ERR,ERROR,*999)
+                      !compute the distance between the previous node and the actual node
+                      distance=SQRT((interpolatedPoint%values(1,NO_PART_DERIV)- &
+                        & previousNode(1))*(interpolatedPoint%values(1,NO_PART_DERIV)-previousNode(1))+ &
+                        & (interpolatedPoint%values(2,NO_PART_DERIV)- &
+                        & previousNode(2))*(interpolatedPoint%values(2,NO_PART_DERIV)-previousNode(2))+ &
+                        & (interpolatedPoint%values(3,NO_PART_DERIV)- &
+                        & previousNode(3))*(interpolatedPoint%values(3,NO_PART_DERIV)-previousNode(3)))
 
-                          !get the distance between the 2 nodes before two time step
-                          CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,OLD_DIST_2,ERR,ERROR,*999)
-                          
-                          !get the distance between the 2 nodes before three time step
-                          CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,OLD_DIST_3,ERR,ERROR,*999)
-			  
-                          !get the distance between the 2 nodes before four time step
-                          CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,6,OLD_DIST_4,ERR,ERROR,*999)
-                          
-                          !compute the new contraction velocity
-                          !VELOCITY=(DIST-OLD_DIST)/TIME_STEP
-                          VELOCITY=0.25_DP*((DIST-OLD_DIST)/TIME_STEP+(DIST-OLD_DIST_2)/(2.0_DP*TIME_STEP)+ &
-                  			    & (DIST-OLD_DIST_3)/(3.0_DP*TIME_STEP)+(DIST-OLD_DIST_4)/(4.0_DP*TIME_STEP))
-                          IF(.NOT. CALC_CLOSEST_GAUSS_POINT) THEN
-                            !NOTE: VELOCITY_MAX is the max shortening velocity, and hence negative!!!
-                            IF(VELOCITY<VELOCITY_MAX) THEN
-                              CALL FLAG_WARNING('Exceeded maximum contraction velocity (shortening).',ERR,ERROR,*999)
-                              VELOCITY=VELOCITY_MAX
-                            !The max lengthening velocity is assumed to be VELOCITY_MAX/2.0
-                            ELSEIF(VELOCITY>(ABS(VELOCITY_MAX)/2.0_DP)) THEN
-                              CALL FLAG_WARNING('Exceeded maximum contraction velocity (lengthening).',ERR,ERROR,*999)
-                              VELOCITY=-VELOCITY_MAX/2.0_DP
-                            ENDIF
-                          ENDIF
-                          
-                          !store the relative contraction velocity in component 3 of the U2 variable of the monodomain independent field
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,VELOCITY/ABS(VELOCITY_MAX),ERR,ERROR,*999)
+                      !CONTRACTION VELOCITY CALCULATION                          
+                      !get the distance between the 2 nodes in the previous time step
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,oldDistance,err,error,*999)                      
+                      !get the distance between the 2 nodes before two time step
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,4,oldDistance2,err,error,*999)                      
+                      !get the distance between the 2 nodes before three time step
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,5,oldDistance3,err,error,*999)                      
+                      !get the distance between the 2 nodes before four time step
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,6,oldDistance4,err,error,*999)
 
-                          !store the node distance for contraction velocity calculation
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,DIST,ERR,ERROR,*999)
-
-                          !store the node distance for contraction velocity calculation
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,OLD_DIST,ERR,ERROR,*999)
-			    
-                          !store the node distance for contraction velocity calculation
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,OLD_DIST_2,ERR,ERROR,*999)
-                          
-                          !store the node distance for contraction velocity calculation
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,6,OLD_DIST_3,ERR,ERROR,*999)
-
-                          !get the position in 1D of the previous node
-                          CALL Field_ParameterSetGetLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,VALUE_LEFT,ERR,ERROR,*999)
-                          !update the current 1D node position
-                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,VALUE_LEFT+DIST,ERR,ERROR,*999)
-
-                          !get the initial sarcomere half length and initial node distance
-                          CALL Field_ParameterSetGetConstant(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,2,SARCO_LENGTH_INIT,ERR,ERROR,*999)
-                          CALL Field_ParameterSetGetConstant(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,3,DIST_INIT,ERR,ERROR,*999)
-                          !update the current sarcomere half length
-                          VALUE=SARCO_LENGTH_INIT*DIST/DIST_INIT
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,VALUE,ERR,ERROR,*999)
-
-                          !update the first node to the same value as the second node (no better info available)
-                          IF((n1==2).AND.(ne==START_ELEMENT)) THEN
-                            !current sarcomere half length
-                            CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
-                              & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,VALUE,ERR,ERROR,*999)                            
-                            !old node distance
-                            CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                              & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,DIST,ERR,ERROR,*999)
-                            !relative contraction velocity
-                            CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-                              & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,3,VELOCITY/ABS(VELOCITY_MAX),ERR,ERROR,*999)
-                          ENDIF
-
-                        ENDIF !((n1==1).AND.(ne==START_ELEMENT))
-                          
-                        IF(CALC_CLOSEST_GAUSS_POINT) THEN
-                          !calculate the closest finite elasticity Gauss point of each bioelectrics node
-                          DISTANCE=1000000.0_DP
-                          GAUSS_POINT=0
-                          DO gauss_idx=1,SIZE(gaussPositions,2)
-                            !compute the distance between the bioelectrics node and the Gauss point
-                            VALUE=SQRT( &
-                              & (Xi(1)-gaussPositions(1,gauss_idx))*(Xi(1)-gaussPositions(1,gauss_idx))+ &
-                              & (Xi(2)-gaussPositions(2,gauss_idx))*(Xi(2)-gaussPositions(2,gauss_idx))+ &
-                              & (Xi(3)-gaussPositions(3,gauss_idx))*(Xi(3)-gaussPositions(3,gauss_idx)))
-                            IF(VALUE<DISTANCE) THEN
-                              DISTANCE=VALUE
-                              GAUSS_POINT=gauss_idx
-                            ENDIF
-                          ENDDO !gauss_idx
-                          IF(GAUSS_POINT==0) CALL FLAG_WARNING("Closest Gauss Point not found",ERR,ERROR,*999)
-                          !store the nearest Gauss Point info and the inElement info (local element number!!!)
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,GAUSS_POINT,ERR,ERROR,*999)
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,ne,ERR,ERROR,*999)
-                        ENDIF !CALC_CLOSEST_GAUSS_POINT
-                        
-                        IF(start_elem==1) THEN
-                          !fibres start in this element
-                          XI(1)=XI(1)+1.0_DP/(REAL(nodes_in_Xi_1-1))
-                        ELSEIF(start_elem==0) THEN
-                          !fibres don't start in this element
-                          XI(1)=XI(1)+1.0_DP/(REAL(nodes_in_Xi_1))
-                        ELSE
-                          LOCAL_ERROR="The start element index is incorrect. The index is "// &
-                            & TRIM(NumberToVString(start_elem,"*",ERR,ERROR))// &
-                            & " and should be zero or one." 
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      !compute the new contraction velocity
+                      !velocity=(distance-oldDistance)/timeStep
+                      velocity=0.25_DP*((distance-oldDistance)/timeStep+(distance-oldDistance2)/(2.0_DP*timeStep)+ &
+                        & (distance-oldDistance3)/(3.0_DP*timeStep)+(distance-oldDistance4)/(4.0_DP*timeStep))
+                      IF(.NOT.calcClosestGaussPoint) THEN
+                        !NOTE: maxVelocity is the max shortening velocity, and hence negative!!!
+                        IF(velocity<maxVelocity) THEN
+                          CALL FlagWarning('Exceeded maximum contraction velocity (shortening).',err,error,*999)
+                          velocity=maxVelocity
+                          !The max lengthening velocity is assumed to be maxVelocity/2.0
+                        ELSEIF(velocity>(ABS(maxVelocity)/2.0_DP)) THEN
+                          CALL FlagWarning('Exceeded maximum contraction velocity (lengthening).',err,error,*999)
+                          velocity=-maxVelocity/2.0_DP
                         ENDIF
-                        
-                      ENDDO !n1
-                      
-
-
-
-!tomo new
-                      !smooth of the velocity field
-
-                      !arithmetic mean of all rel_velo values within one FE element
-!                      VELOCITY=0.0_DP
-!                      DO n1=1,nodes_in_Xi_1
-!                        node_idx_2=node_idx_2+1
-!                        dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                          & DERIVATIVES(1)%VERSIONS(1)
-!                        CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                          & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                        VELOCITY=VELOCITY+VALUE
-!                      ENDDO
-!                      VELOCITY=VELOCITY/nodes_in_Xi_1
-
-!                      node_idx_2=node_idx_2-nodes_in_Xi_1
-!                      DO n1=1,nodes_in_Xi_1
-!                        node_idx_2=node_idx_2+1
-!                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                          & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
-!                      ENDDO
-
-!--------------------------------------------------------------------------
-
-!                      !moving average
-!                      offset=3
-!                      
-!                      !do the first three nodes of a fibre manually - arithmetic mean
-!                      VELOCITY=0.0_DP
-
-!                      node_idx_2=node_idx_2+1
-!                      
-!                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                      VELOCITY=VELOCITY+VALUE
-
-!                      node_idx_2=node_idx_2+1
-!                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                      VELOCITY=VELOCITY+VALUE
-
-!                      node_idx_2=node_idx_2+1
-!                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                      VELOCITY=VELOCITY+VALUE
-!                      
-!                      VELOCITY=VELOCITY/offset
-
-!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-2,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-1,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
-
-!                      !do the major part as moving average
-!                      DO n1=1+offset,nodes_in_Xi_1-offset
-!                        node_idx_2=node_idx_2+1
-!                        VELOCITY=0.0_DP
-!                        DO n4=node_idx_2-offset,node_idx_2+offset
-!                          dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(n4)% &
-!                            & DERIVATIVES(1)%VERSIONS(1)
-!                          CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                            & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                          VELOCITY=VELOCITY+VALUE
-!                        ENDDO !n4
-!                        VELOCITY=VELOCITY/(2*offset+1)
-!                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                          & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
-!                      ENDDO !n1
-!                      
-!                      !do the last three nodes of a fibre manually - arithmetic mean
-!                      VELOCITY=0.0_DP
-
-!                      node_idx_2=node_idx_2+1
-!                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                      VELOCITY=VELOCITY+VALUE
-
-!                      node_idx_2=node_idx_2+1
-!                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                      VELOCITY=VELOCITY+VALUE
-
-!                      node_idx_2=node_idx_2+1
-!                      dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx_2)% &
-!                        & DERIVATIVES(1)%VERSIONS(1)
-!                      CALL Field_ParameterSetGetLocalDOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-!                      VELOCITY=VELOCITY+VALUE
-!                      
-!                      VELOCITY=VELOCITY/offset
-
-!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-2,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2-1,3,VELOCITY,ERR,ERROR,*999)
-!                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
-!                        & FIELD_VALUES_SET_TYPE,1,1,node_idx_2,3,VELOCITY,ERR,ERROR,*999)
-!!tomo new end                       
-
-
-                      !if there is not an adjacent element in positive XI_1 direction, go to the next FE element
-                      IF(ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%numberOfAdjacentElements==0) EXIT
-                      
-                      !consider the adjacent element in positive XI_1 direction
-                      ne=ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%adjacentElements(1)
-
-                      !if a fibre starts in the next element, go to the next FE elem
-                      CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                        & FIELD_VALUES_SET_TYPE,ne,4,start_elem,ERR,ERROR,*999)
-                      !beginning of a fibre in this element: 1=yes, 0=no
-                      IF (start_elem==1) THEN
-                        ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
-                        EXIT
                       ENDIF
-                      
-                      !find the element_idx that corresponds to ne
-                      my_element_idx=0
-                      DO idx=1,ELEMENTS_TOPOLOGY%numberOfElements
-                        IF(ne==ELEMENTS_TOPOLOGY%ELEMENTS(idx)%adjacentElements(0)%adjacentElements(1)) THEN
-                          my_element_idx=idx
-                          EXIT
-                        ENDIF
-                      ENDDO
-                      IF(my_element_idx==0) CALL FlagError("my_element_idx not found.",ERR,ERROR,*999)                      
 
-                      CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                        & FIELD_VALUES_SET_TYPE,ne,1,nodes_in_Xi_1,ERR,ERROR,*999)
-                      
-                      start_elem=0 !fibres don't start in this element
-                      
-                      XI(1)=1.0_DP/(REAL(nodes_in_Xi_1))
+                      !store the relative contraction velocity in component 3 of the U2 variable of the monodomain independent field
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,3,velocity/ABS(maxVelocity),err,error,*999)                      
+                      !store the node distance for contraction velocity calculation
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,distance,err,error,*999)                      
+                      !store the node distance for contraction velocity calculation
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,4,oldDistance,err,error,*999)                      
+                      !store the node distance for contraction velocity calculation
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,5,oldDistance2,err,error,*999)                      
+                      !store the node distance for contraction velocity calculation
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,6,oldDistance3,err,error,*999)
 
-                    ENDDO !
-                    !for the beginning of the next fibre, go back to the element in which the last fibre started
-                    ne=START_ELEMENT
+                      !get the position in 1D of the previous node
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainGeometricVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,1,valueLeft,err,error,*999)
+                      !update the current 1D node position
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainGeometricVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,valueLeft+distance,err,error,*999)
 
-                    CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,ne,1,nodes_in_Xi_1,ERR,ERROR,*999)
+                      !get the initial sarcomere half length and initial node distance
+                      CALL FieldVariable_ParameterSetGetConstant(monodomainIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 2,initialSarcomereLength,err,error,*999)
+                      CALL FieldVariable_ParameterSetGetConstant(monodomainIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 3,initialDistance,err,error,*999)
+                      !update the current sarcomere half length
+                      VALUE=initialSarcomereLength*distance/initialDistance
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,VALUE,err,error,*999)
 
-                    my_element_idx=start_element_idx
-                    start_elem=1 !fibres start in this element
-                    XI(1)=0.0_DP
-                    XI(2)=XI(2)+1.0_DP/(REAL(nodes_in_Xi_2))
-                  ENDDO !n2
-                  XI(1)=0.0_DP
-                  XI(2)=1.0_DP/(REAL(2*nodes_in_Xi_2))
-                  XI(3)=Xi(3)+1.0_DP/(REAL(nodes_in_Xi_3))
-                ENDDO !n3
-
-              ENDDO !element_idx
-
-            CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-
-              CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-              CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
-              !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%geometricField
-                    IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                    ! the Field_V_Variable_Type contains the 3D nodal positions
-                    DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%dependent%dependentField
-                    IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                    INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
-                    IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
-              NULLIFY(SOLVERS)
-              NULLIFY(SOLVER)
-              NULLIFY(SOLVER_MAPPING)
-              NULLIFY(EQUATIONS_SET)
-              NULLIFY(SOLVER_EQUATIONS)
-              !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
-              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
-              CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                  IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                    INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%independentField
-                    IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) THEN
-                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                    GEOMETRIC_FIELD_ELASTICITY=>EQUATIONS_SET%GEOMETRY%geometricField
-                    IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_ELASTICITY)) THEN
-                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
-
-
-              node_idx=0
-              node_idx_2=0
-              fibre_idx=0
-              CALL Field_VariableGet(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE,FIELD_VAR_DEP_M,ERR,ERROR,*999)
-              CALL Field_VariableGet(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VAR_GEO_M,ERR,ERROR,*999)
-              CALL Field_VariableGet(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE,FIELD_VAR_IND_FE,ERR,ERROR,*999)
-
-              NODES_MAPPING=>GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION% &
-                & meshComponentNumber)%ptr%MAPPINGS%NODES
-              
-              ELEMENTS_TOPOLOGY=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%TOPOLOGY%ELEMENTS
-
-              !loop over the elements of the finite elasticity mesh (internal and boundary elements)
-              !no need to consider ghost elements here since only bioelectrical fields are changed
-              DO element_idx=1,ELEMENTS_TOPOLOGY%numberOfElements
-                ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
-                my_element_idx=element_idx
-
-                !the Field_V_Variable_Type of the FE independent field contains the number of nodes in each Xi-direction of the bioelectrics grid
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,1,nodes_in_Xi_1,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,2,nodes_in_Xi_2,ERR,ERROR,*999)
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,ne,3,nodes_in_Xi_3,ERR,ERROR,*999)
-                !beginning of a fibre in this element: 1=yes, 0=no
-                CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,NE,4,start_elem,ERR,ERROR,*999)
-
-                !if there is no bioelectrics grid in this finite elasticity element, or the fibres don't begin in this element, jump to the next element
-                IF((nodes_in_Xi_1==0).OR.(nodes_in_Xi_2==0).OR.(nodes_in_Xi_3==0).OR.(start_elem==0)) CYCLE
-                
-                START_ELEMENT=ne
-                start_element_idx=my_element_idx
-                
-                !assume Xi(1) to be normal to the seed surface, i.e. the seed points have Xi(1)=0
-                XI=[0.0_DP,1.0_DP/(REAL(2*nodes_in_Xi_2)),1.0_DP/(REAL(2*nodes_in_Xi_3))]
-                
-                !assume that the bioelectrics node numbers are increased in order Xi(1), Xi(2), Xi(3) 
-                DO n3=1,nodes_in_Xi_3
-                  DO n2=1,nodes_in_Xi_2
-                    fibre_idx=fibre_idx+1
-                    
-                    !loop over the FE elements that contain nodes of the very same fibres
-                    DO
-                      !get the finite elasticity dependent field interpolation parameters of this element
-                      INTERPOLATION_PARAMETERS=>EQUATIONS_SET%equations%interpolation%dependentInterpParameters &
-                        & (FIELD_U_VARIABLE_TYPE)%ptr
-                      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ne,INTERPOLATION_PARAMETERS, &
-                        & ERR,ERROR,*999)
-                      INTERPOLATED_POINT=>EQUATIONS_SET%equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-
-                      !get the positions of the Gauss points of the Finite Elasticity element, gaussPositions(components,number_of_Gauss_points)
-                      gaussPositions=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
-                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%quadratureSchemeMap( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%gaussPositions
-                      
-                      DO n1=1,nodes_in_Xi_1
-                        node_idx=node_idx+1
-                        
-                        !store the fibre number this bioelectrics node belongs to.
-                        CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,fibre_idx,ERR,ERROR,*999) 
-
-                        !find the interpolated position of the bioelectric grid node from the FE dependent field
-                        CALL Field_InterpolateXi(NO_PART_DERIV,XI,INTERPOLATED_POINT,ERR,ERROR,*999)
-                        !update the bioelectrics dependent field Field_V_Variable_Type
-                        !the Field_V_Variable_Type of the monodomain dependent field contains the nodal positions in 3D
-                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,INTERPOLATED_POINT%VALUES(1,1),ERR,ERROR,*999)
-                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,2,INTERPOLATED_POINT%VALUES(2,1),ERR,ERROR,*999)
-                        CALL Field_ParameterSetUpdateLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                          & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,INTERPOLATED_POINT%VALUES(3,1),ERR,ERROR,*999)
-
-                        IF((n1==1).AND.(ne==START_ELEMENT)) THEN
-                          !a new line of bioelectrics grid nodes begins
-                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,0.0_DP,ERR,ERROR,*999)
-                        ELSE
-                          !get the position in 3D of the previous node
-                          CALL Field_ParameterSetGetLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,PREVIOUS_NODE(1),ERR,ERROR,*999)
-                          CALL Field_ParameterSetGetLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,2,PREVIOUS_NODE(2),ERR,ERROR,*999)
-                          CALL Field_ParameterSetGetLocalNode(DEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,3,PREVIOUS_NODE(3),ERR,ERROR,*999)
-
-                          !compute the distance between the previous node and the actual node
-                          DIST=SQRT( &
-                            & (INTERPOLATED_POINT%VALUES(1,1)-PREVIOUS_NODE(1))*(INTERPOLATED_POINT%VALUES(1,1)-PREVIOUS_NODE(1))+ &
-                            & (INTERPOLATED_POINT%VALUES(2,1)-PREVIOUS_NODE(2))*(INTERPOLATED_POINT%VALUES(2,1)-PREVIOUS_NODE(2))+ &
-                            & (INTERPOLATED_POINT%VALUES(3,1)-PREVIOUS_NODE(3))*(INTERPOLATED_POINT%VALUES(3,1)-PREVIOUS_NODE(3)))
-
-                          !get the position in 1D of the previous node
-                          CALL Field_ParameterSetGetLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx-1,1,VALUE_LEFT,ERR,ERROR,*999)
-                          !update the current 1D node position
-                          CALL Field_ParameterSetUpdateLocalNode(GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,VALUE_LEFT+DIST,ERR,ERROR,*999)
-
-                        ENDIF !((n1==1).AND.(ne==START_ELEMENT))
-                          
-                        IF(CALC_CLOSEST_GAUSS_POINT) THEN
-                          !calculate the closest finite elasticity Gauss point of each bioelectrics node
-                          DISTANCE=1000000.0_DP
-                          GAUSS_POINT=0
-                          DO gauss_idx=1,SIZE(gaussPositions,2)
-                            !compute the distance between the bioelectrics node and the Gauss point
-                            VALUE=SQRT( &
-                              & (Xi(1)-gaussPositions(1,gauss_idx))*(Xi(1)-gaussPositions(1,gauss_idx))+ &
-                              & (Xi(2)-gaussPositions(2,gauss_idx))*(Xi(2)-gaussPositions(2,gauss_idx))+ &
-                              & (Xi(3)-gaussPositions(3,gauss_idx))*(Xi(3)-gaussPositions(3,gauss_idx)))
-                            IF(VALUE<DISTANCE) THEN
-                              DISTANCE=VALUE
-                              GAUSS_POINT=gauss_idx
-                            ENDIF
-                          ENDDO !gauss_idx
-                          IF(GAUSS_POINT==0) CALL FLAG_WARNING("Closest Gauss Point not found",ERR,ERROR,*999)
-                          !store the nearest Gauss Point info and the inElement info (local element number!!!)
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,GAUSS_POINT,ERR,ERROR,*999)
-                          CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,ne,ERR,ERROR,*999)
-                        ENDIF !CALC_CLOSEST_GAUSS_POINT
-                        
-                        IF(start_elem==1) THEN
-                          !fibres start in this element
-                          XI(1)=XI(1)+1.0_DP/(REAL(nodes_in_Xi_1-1))
-                        ELSEIF(start_elem==0) THEN
-                          !fibres don't start in this element
-                          XI(1)=XI(1)+1.0_DP/(REAL(nodes_in_Xi_1))
-                        ELSE
-                          LOCAL_ERROR="The start element index is incorrect. The index is "// &
-                            & TRIM(NumberToVString(start_elem,"*",ERR,ERROR))// &
-                            & " and should be zero or one." 
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                        
-                      ENDDO !n1
-
-
-                      !if there is not an adjacent element in positive XI_1 direction, go to the next FE element
-                      IF(ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%numberOfAdjacentElements==0) EXIT
-                      
-                      !consider the adjacent element in positive XI_1 direction
-                      ne=ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%adjacentElements(1)
-
-                      !if a fibre starts in the next element, go to the next FE elem
-                      CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                        & FIELD_VALUES_SET_TYPE,NE,4,start_elem,ERR,ERROR,*999)
-                      !beginning of a fibre in this element: 1=yes, 0=no
-                      IF (start_elem==1) THEN
-                        ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
-                        EXIT
+                      !update the first node to the same value as the second node (no better info available)
+                      IF((n1==2).AND.(elementNumber==startElement)) THEN
+                        !current sarcomere half length
+                        CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                          & 1,1,nodeIdx-1,1,VALUE,err,error,*999)
+                        !old node distance
+                        CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                          & 1,1,nodeIdx-1,1,distance,err,error,*999)
+                        !relative contraction velocity
+                        CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                          & 1,1,nodeIdx-1,3,velocity/ABS(maxVelocity),err,error,*999)
                       ENDIF
-                      
-                      !find the element_idx that corresponds to ne
-                      my_element_idx=0
-                      DO idx=1,ELEMENTS_TOPOLOGY%numberOfElements
-                        IF(ne==ELEMENTS_TOPOLOGY%ELEMENTS(idx)%adjacentElements(0)%adjacentElements(1)) THEN
-                          my_element_idx=idx
-                          EXIT
+
+                    ENDIF !((n1==1).AND.(elementNumber==startElement))
+
+                    IF(calcClosestGaussPoint) THEN
+                      !calculate the closest finite elasticity Gauss point of each bioelectrics node
+                      distance=1000000.0_DP
+                      gaussPoint=0
+                      DO gaussPointIdx=1,SIZE(gaussPositions,2)
+                        !compute the distance between the bioelectrics node and the Gauss point
+                        CALL BasisQuadratureScheme_GaussPositionGet(quadratureScheme,gaussPointIdx,gaussPosition,err,error,*999)
+                        VALUE=SQRT((Xi(1)-gaussPosition(1))*(xi(1)-gaussPosition(1))+ &
+                          & (xi(2)-gaussPosition(2))*(xi(2)-gaussPosition(2))+ &
+                          & (xi(3)-gaussPosition(3))*(xi(3)-gaussPosition(3)))
+                        IF(value<distance) THEN
+                          distance=VALUE
+                          gaussPoint=gaussPointIdx
                         ENDIF
-                      ENDDO
-                      IF(my_element_idx==0) CALL FlagError("my_element_idx not found.",ERR,ERROR,*999)                      
+                      ENDDO !gaussPointIdx
+                      IF(gaussPoint==0) CALL FlagWarning("Closest Gauss Point not found",err,error,*999)
+                      !store the nearest Gauss Point info and the inElement info (local element number!!!)
+                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4,gaussPoint,err,error,*999)
+                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5,elementNumber,err,error,*999)
+                    ENDIF !calcClosestGaussPoint
 
-                      CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                        & FIELD_VALUES_SET_TYPE,NE,1,nodes_in_Xi_1,ERR,ERROR,*999)
-                      
-                      start_elem=0 !fibres don't start in this element
-                      
-                      XI(1)=1.0_DP/(REAL(nodes_in_Xi_1))
+                    IF(startElem==1) THEN
+                      !fibres start in this element
+                      xi(1)=xi(1)+1.0_DP/(REAL(nodesInXi1-1))
+                    ELSEIF(startElem==0) THEN
+                      !fibres don't start in this element
+                      xi(1)=xi(1)+1.0_DP/(REAL(nodesInXi1))
+                    ELSE
+                      localError="The start element index is incorrect. The index is "// &
+                        & TRIM(NumberToVString(startElem,"*",err,error))//" and should be zero or one." 
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
 
-                    ENDDO !
-                    !for the beginning of the next fibre, go back to the element in which the last fibre started
-                    ne=START_ELEMENT
+                  ENDDO !n1
 
-                    CALL Field_ParameterSetGetLocalElement(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,NE,1,nodes_in_Xi_1,ERR,ERROR,*999)
+!!smooth of the velocity field
+!!arithmetic mean of all rel_velo values within one FE element
+                  !velocity=0.0_DP
+                  !DO n1=1,nodesInXi1
+                  !  nodeIdx2=nodeIdx2+1
+                  !  CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !  CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !    & dofIdx,VALUE,err,error,*999)
+                  !  velocity=velocity+VALUE
+                  !ENDDO !n1
+                  !velocity=velocity/nodesInXi1
+                  !
+                  !nodeIdx2=nodeIdx2-nodesInXi1
+                  !DO n1=1,nodesInXi1
+                  !  nodeIdx2=nodeIdx2+1
+                  !  CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !    & 1,1,nodeIdx2,3,velocity,err,error,*999)
+                  !ENDDO !n1
+                  !
+!!--------------------------------------------------------------------------
+                  !
+!!moving average
+                  !offset=3                  
+!!do the first three nodes of a fibre manually - arithmetic mean
+                  !velocity=0.0_DP
+                  !nodeIdx2=nodeIdx2+1                  
+                  !CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & dofIdx,VALUE,err,error,*999)
+                  !velocity=velocity+VALUE
+                  !nodeIdx2=nodeIdx2+1
+                  !CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & dofIdx,VALUE,err,error,*999)
+                  !velocity=velocity+VALUE
+                  ! 
+                  !nodeIdx2=nodeIdx2+1
+                  !CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & dofIdx,VALUE,err,error,*999)
+                  !velocity=velocity+VALUE                  
+                  !velocity=velocity/offset
+                  !
+                  !CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & 1,1,nodeIdx2-2,3,velocity,err,error,*999)
+                  !CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & 1,1,nodeIdx2-1,3,velocity,err,error,*999)
+                  !CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & 1,1,nodeIdx2,3,velocity,err,error,*999)
+                  ! 
+!!do the major part as moving average
+                  !DO n1=1+offset,nodesInXi1-offset
+                  !  nodeIdx2=nodeIdx2+1
+                  !  velocity=0.0_DP
+                  !  DO n4=nodeIdx2-offset,nodeIdx2+offset
+                  !    CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,n4,3,dofIdx,err,error,*999)
+                  !    CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !      & dofIdx,VALUE,err,error,*999)
+                  !    velocity=velocity+VALUE
+                  !  ENDDO !n4
+                  !  velocity=velocity/(2*offset+1)
+                  !  CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !    & 1,1,nodeIdx2,3,velocity,err,error,*999)
+                  !ENDDO !n1
+                  !
+!!do the last three nodes of a fibre manually - arithmetic mean
+                  !velocity=0.0_DP
+                  !nodeIdx2=nodeIdx2+1
+                  !CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & dofIdx,VALUE,err,error,*999)
+                  !velocity=velocity+VALUE
+                  !nodeIdx2=nodeIdx2+1
+                  !CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & dofIdx,VALUE,err,error,*999)
+                  !velocity=velocity+VALUE                  
+                  !nodeIdx2=nodeIdx2+1
+                  !CALL FieldVariable_LocalDOFIdxGet(monodomainIndependentVariable2,1,1,nodeIdx2,3,dofIdx,err,error,*999)
+                  !CALL FieldVariable_ParameterSetGetLocalDOF(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & dofIdx,VALUE,err,error,*999)
+                  !velocity=velocity+VALUE                  
+                  !velocity=velocity/offset
+                  !CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & 1,1,nodeIdx2-2,3,velocity,err,error,*999)                  
+                  !CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_VALUES_SET_TYPE, &
+                  !  & 1,1,nodeIdx2-1,3,velocity,err,error,*999)
+                  !CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentVariable2,FIELD_U2_VARIABLE_TYPE, &
+                  !  & FIELD_VALUES_SET_TYPE,1,1,nodeIdx2,3,velocity,err,error,*999)
 
-                    my_element_idx=start_element_idx
-                    start_elem=1 !fibres start in this element
-                    XI(1)=0.0_DP
-                    XI(2)=XI(2)+1.0_DP/(REAL(nodes_in_Xi_2))
-                  ENDDO !n2
-                  XI(1)=0.0_DP
-                  XI(2)=1.0_DP/(REAL(2*nodes_in_Xi_2))
-                  XI(3)=Xi(3)+1.0_DP/(REAL(nodes_in_Xi_3))
-                ENDDO !n3
+                  !if there is not an adjacent element in positive XI_1 direction, go to the next FE element
+                  CALL DecompositionElements_ElementNumberAdjacentGet(decompositionElements,ELEMENT_NORMAL_PLUS_XI1, &
+                    & myElementIdx,numberOfAdjacentElements,err,error,*999)
+                  IF(numberOfAdjacentElements==0) EXIT
 
-              ENDDO !element_idx
+                  !consider the adjacent element in positive XI_1 direction
+                  CALL DecompositionElements_ElementAdjacentNumberGet(decompositionElements,1,ELEMENT_NORMAL_PLUS_XI1, &
+                    &  myElementIdx,elementNumber,err,error,*999)
 
-            CASE DEFAULT
-              LOCAL_ERROR="The third problem specification of "// &
-                & TRIM(NumberToVString(PROBLEM%specification(2),"*",ERR,ERROR))// &
-                & " is not valid for a bioelectrics finite elasticity of a multi physics problem."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          CASE DEFAULT
-            LOCAL_ERROR="The second problem specification of "// &
-              & TRIM(NumberToVString(PROBLEM%specification(2),"*",ERR,ERROR))// &
-              & " is not valid for a multi physics problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        !the main time loop - do nothing!
-      ENDIF
+                  !if a fibre starts in the next element, go to the next FE elem
+                  CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                    & elementNumber,4,startElem,err,error,*999)
+                  !beginning of a fibre in this element: 1=yes, 0=no
+                  IF (startElem==1) THEN
+!!TODO: THIS IS JUST THE SAME AS ELEMENTIDX???
+                    elementNumber=decompositionElements%ELEMENTS(elementIdx)%localNumber
+                    EXIT
+                  ENDIF
+
+                  !find the elementIdx that corresponds to elementNumber
+                  myElementIdx=0
+                  DO elementIdx2=1,numberOfElements
+                    CALL DecompositionElements_ElementsAdjacentNumberGet(decompositionElements,1,0,elementIdx2, &
+                      & elementNumber2,err,error,*999)
+                    IF(elementNumber==elementNumber2) THEN
+                      myElementIdx=elementIdx2
+                      EXIT
+                    ENDIF
+                  ENDDO !elementIdx2
+                  IF(myElementIdx==0) CALL FlagError("myElementIdx not found.",err,error,*999)                      
+
+                  CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                    & elementNumber,1,nodesInXi1,err,error,*999)
+
+                  startElem=0 !fibres don't start in this element
+
+                  xi(1)=1.0_DP/(REAL(nodesInXi1))
+
+                ENDDO !
+                !for the beginning of the next fibre, go back to the element in which the last fibre started
+                elementNumber=startElement
+
+                CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                  & elementNumber,1,nodesInXi1,err,error,*999)
+
+                myElementIdx=startElementIdx
+                startElem=1 !fibres start in this element
+                xi(1)=0.0_DP
+                xi(2)=xi(2)+1.0_DP/(REAL(nodesInXi2))
+              ENDDO !n2
+              xi(1)=0.0_DP
+              xi(2)=1.0_DP/(REAL(2*nodesInXi2))
+              xi(3)=Xi(3)+1.0_DP/(REAL(nodesInXi3))
+            ENDDO !n3
+
+          ENDDO !elementIdx
+
+        CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+
+          !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
+          NULLIFY(controlLoopMonodomain)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+          NULLIFY(geometricFieldMonodomain)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldMonodomain,err,error,*999)
+          ! the Field_V_Variable_Type contains the 3D nodal positions
+          NULLIFY(dependentFieldMonodomain)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentFieldMonodomain,err,error,*999)
+          NULLIFY(independentFieldMonodomain)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
+          !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
+          NULLIFY(controlLoopElasticity)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+          NULLIFY(geometricFieldElasticity)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldElasticity,err,error,*999)
+          NULLIFY(independentFieldElasticity)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldElasticity,err,error,*999)
+          !get the finite elasticity dependent field interpolation parameters of this element
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          NULLIFY(equaationsInterpolation)
+          CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+          NULLIFY(interpolationParameters)
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+            & interpolationParameters,err,error,*999)
+          NULLIFY(interpolationPoint)
+          CALL EquationInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
+            & err,error,*999)
+
+          nodeIdx=0
+          nodeIdx2=0
+          fibreIdx=0
+          CALL Field_VariableGet(dependentFieldMonodomain,FIELD_V_VARIABLE_TYPE,monodomainDependentVariable,err,error,*999)
+          CALL Field_VariableGet(geometricFieldMonodomain,FIELD_U_VARIABLE_TYPE,monodomainGeometricVariable,err,error,*999)
+          CALL Field_VariableGet(independentFieldElasticity,FIELD_V_VARIABLE_TYPE,elasticityIndependentVariable,err,error,*999)
+
+          NULLIFY(decomposition)
+          CALL Field_DecompositionGet(geometricFieldEleasticity,decomposition,err,error,*999)
+          NULLIFY(decompositionTopology)
+          CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+          NULLIFY(decompositionElements)
+          CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+          NULLIFY(domain)
+          CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+          NULLIFY(domainTopology)
+          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+          NULLIFY(domainElements)
+          CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+
+          !loop over the elements of the finite elasticity mesh (internal and boundary elements)
+          !no need to consider ghost elements here since only bioelectrical fields are changed
+          CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+          DO elementIdx=1,numberOfElements
+
+!!TODO: IS ELEMENTNUMBER NOT JUST THE SAME AS ELEMENTIDX???
+            elementNumber=decompositionElements%ELEMENTS(elementIdx)%localNumber
+            myElementIdx=elementIdx
+
+            !the Field_V_Variable_Type of the FE independent field contains the number of nodes in each Xi-direction
+            !of the bioelectrics grid
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+              & elementNumber,1,nodesInXi1,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+              & elementNumber,2,nodesInXi2,err,error,*999)
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+              & elementNumber,3,nodesInXi3,err,error,*999)
+            !beginning of a fibre in this element: 1=yes, 0=no
+            CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+              & elementNumber,4,startElem,err,error,*999)
+
+            !if there is no bioelectrics grid in this finite elasticity element, or the fibres don't begin in this element,
+            !jump to the next element
+            IF((nodesInXi1==0).OR.(nodesInXi2==0).OR.(nodesInXi3==0).OR.(startElem==0)) CYCLE
+
+            !get the finite elasticity dependent field interpolation parameters of this element
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,interpolationParameters, &
+              & err,error,*999)
+            NULLIFY(basis)
+            CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
+            NULLIFY(quadratureScheme)
+            CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRTURE_SCHEME,quadratureScheme,err,error,*999)
+            CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
+
+            startElement=elementNumber
+            startElementIdx=myElementIdx
+
+            !assume Xi(1) to be normal to the seed surface, i.e. the seed points have Xi(1)=0
+            xi=[0.0_DP,1.0_DP/(REAL(2*nodesInXi2)),1.0_DP/(REAL(2*nodesInXi3))]
+
+            !assume that the bioelectrics node numbers are increased in order Xi(1), Xi(2), Xi(3) 
+            DO n3=1,nodesInXi3
+              DO n2=1,nodesInXi2
+                fibreIdx=fibreIdx+1
+
+                !loop over the FE elements that contain nodes of the very same fibres
+                DO                                    
+                  DO n1=1,nodesInXi1
+                    nodeIdx=nodeIdx+1
+
+                    !store the fibre number this bioelectrics node belongs to.
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,3,fibreIdx,err,error,*999) 
+
+                    !find the interpolated position of the bioelectric grid node from the FE dependent field
+                    CALL Field_InterpolateXi(NO_PART_DERIV,XI,interpolatedPoint,err,error,*999)
+                    !update the bioelectrics dependent field Field_V_Variable_Type
+                    !the Field_V_Variable_Type of the monodomain dependent field contains the nodal positions in 3D
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,1,interpolatedPoint%values(1,NO_PART_DERIV),err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,2,interpolatedPoint%values(2,NO_PART_DERIV),err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                      & 1,1,nodeIdx,3,interpolatedPoint%values(3,NO_PART_DERIV),err,error,*999)
+
+                    IF((n1==1).AND.(elementNumber==startElement)) THEN
+                      !a new line of bioelectrics grid nodes begins
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainGeometricVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,0.0_DP,err,error,*999)
+                    ELSE
+                      !get the position in 3D of the previous node
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,1,previousNode(1),err,error,*999)
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,2,previousNode(2),err,error,*999)
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainDependentVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,3,previousNode(3),err,error,*999)
+
+                      !compute the distance between the previous node and the actual node
+                      distance=SQRT((interpolatedPoint%values(1,NO_PART_DERIV)- &
+                        & previousNode(1))*(interpolatedPoint%values(1,NO_PART_DERIV)-previousNode(1))+ &
+                        & (interpolatedPoint%values(2,NO_PART_DERIV)- &
+                        & previousNode(2))*(interpolatedPoint%values(2,NO_PART_DERIV)-previousNode(2))+ &
+                        & (interpolatedPoint%values(3,NO_PART_DERIV)- &
+                        & previousNode(3))*(interpolatedPoint%values(3,NO_PART_DERIV)-previousNode(3)))
+
+                      !get the position in 1D of the previous node
+                      CALL FieldVariable_ParameterSetGetLocalNode(monodomainGeometricVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx-1,1,valueLeft,err,error,*999)
+                      !update the current 1D node position
+                      CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainGeometricVariable,FIELD_VALUES_SET_TYPE, &
+                        & 1,1,nodeIdx,1,valueLeft+distance,err,error,*999)
+
+                    ENDIF !((n1==1).AND.(elementNumber==startElement))
+
+                    IF(calcClosestGaussPoint) THEN
+                      !calculate the closest finite elasticity Gauss point of each bioelectrics node
+                      distance=1000000.0_DP
+                      gaussPoint=0
+                      DO gaussPointIdx=1,numberOfGauss
+                        !compute the distance between the bioelectrics node and the Gauss point
+                        CALL BasisQuadratureScheme_GaussPositionGet(quadratureScheme,gaussPointIdx,gaussPosition,err,error,*999)
+                        VALUE=SQRT((Xi(1)-gaussPosition(1))*(Xi(1)-gaussPosition(1))+ &
+                          & (Xi(2)-gaussPosition(2))*(Xi(2)-gaussPosition(2))+ &
+                          & (Xi(3)-gaussPosition(3))*(Xi(3)-gaussPosition(3)))
+                        IF(value<distance) THEN
+                          distance=VALUE
+                          gaussPoint=gaussPointIdx
+                        ENDIF
+                      ENDDO !gaussPointIdx
+                      IF(gaussPoint==0) CALL FlagWarning("Closest Gauss Point not found",err,error,*999)
+                      !store the nearest Gauss Point info and the inElement info (local element number!!!)
+                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4,gaussPoint,err,error,*999)
+                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5,elementNumber,err,error,*999)
+                    ENDIF !calcClosestGaussPoint
+
+                    IF(startElem==1) THEN
+                      !fibres start in this element
+                      xi(1)=xi(1)+1.0_DP/(REAL(nodesInXi1-1))
+                    ELSEIF(startElem==0) THEN
+                      !fibres don't start in this element
+                      xi(1)=xi(1)+1.0_DP/(REAL(nodesInXi1))
+                    ELSE
+                      localError="The start element index is incorrect. The index is "// &
+                        & TRIM(NumberToVString(startElem,"*",err,error))//" and should be zero or one." 
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
+
+                  ENDDO !n1
+
+                  !if there is not an adjacent element in positive XI_1 direction, go to the next FE element
+                  CALL DecompositionElements_ElementNumberAdjacentGet(decompositionElements,ELEMENT_NORMAL_PLUS_XI1, &
+                    & myElementIdx,numberOfAdjacentElements,err,error,*999)
+                  IF(numberOfAdjacentElements==0) EXIT
+
+                  !consider the adjacent element in positive XI_1 direction
+                  CALL DecompositionElements_ElementAdjacentNumberGet(decompositionElements,1,ELEMENT_NORMAL_PLUS_XI1, &
+                    &  myElementIdx,elementNumber,err,error,*999)
+
+                  !if a fibre starts in the next element, go to the next FE elem
+                  CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                    & elementNumber,4,startElem,err,error,*999)
+                  !beginning of a fibre in this element: 1=yes, 0=no
+                  IF (startElem==1) THEN
+!!TODO: THIS IS JUST THE SAME AS ELEMENTIDX???
+                    elementNumber=decompositionElements%elements(elementIdx)%localNumber
+                    EXIT
+                  ENDIF
+
+                  !find the elementIdx that corresponds to elementNumber
+                  myElementIdx=0
+                  DO elementIdx2=1,decompositionElements%numberOfElements
+                    CALL DecompositionElements_ElementsAdjacentNumberGet(decompositionElements,1,0,elementIdx2, &
+                      & elementNumber2,err,error,*999)
+                    IF(elementNumber==elementNumber2) THEN
+                      myElementIdx=elementIdx2
+                      EXIT
+                    ENDIF
+                  ENDDO
+                  IF(myElementIdx==0) CALL FlagError("myElementIdx not found.",err,error,*999)                      
+
+                  CALL Field_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                    & elementNumber,1,nodesInXi1,err,error,*999)
+
+                  startElem=0 !fibres don't start in this element
+
+                  xi(1)=1.0_DP/(REAL(nodesInXi1))
+
+                ENDDO !
+                !for the beginning of the next fibre, go back to the element in which the last fibre started
+                elementNumber=startElement
+
+                CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                  & elementNumber,1,nodesInXi1,err,error,*999)
+
+                myElementIdx=startElementIdx
+                startElem=1 !fibres start in this element
+                xi(1)=0.0_DP
+                xi(2)=xi(2)+1.0_DP/(REAL(nodesInXi2))
+              ENDDO !n2
+              xi(1)=0.0_DP
+              xi(2)=1.0_DP/(REAL(2*nodesInXi2))
+              xi(3)=Xi(3)+1.0_DP/(REAL(nodesInXi3))
+            ENDDO !n3
+
+          ENDDO !elementIdx
+
+        CASE DEFAULT
+          localError="The third problem specification of "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
+            & " is not valid for a bioelectrics finite elasticity of a multi physics problem."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The second problem specification of "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
+          & " is not valid for a multi physics problem."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+      !the main time loop - do nothing!
     ENDIF
     
     EXITS("BioelectricFiniteElasticity_UpdateGeometricField")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_UpdateGeometricField",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_UpdateGeometricField",err,error)
     EXITS("BioelectricFiniteElasticity_UpdateGeometricField")
     RETURN 1
     
@@ -2571,321 +2350,309 @@ CONTAINS
 
   !>Interpolates the finite elasticity independent field from the biolectrics independent field.
   !>NOTE: this is only temporary - will be replaced once embedded meshes are available
-  SUBROUTINE BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_IndependentFieldInterpolate(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the time control loop
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the time control loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
-    TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_ELASTICITY
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING,NODES_MAPPING
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE_U,FIELD_VARIABLE_V,FIELD_VARIABLE_FE
-    INTEGER(INTG) :: node_idx,element_idx,gauss_idx,ne
-    INTEGER(INTG) :: nearestGP,inElement,dof_idx
-    INTEGER(INTG) :: NUMBER_OF_GAUSS_POINTS
-    REAL(DP) :: ACTIVE_STRESS
-    REAL(DP) :: TITIN_STRESS_UNBOUND,TITIN_STRESS_BOUND,TITIN_STRESS_CROSS_FIBRE_UNBOUND,TITIN_STRESS_CROSS_FIBRE_BOUND,ACTIVATION
+    INTEGER(INTG) :: nodeIdx,elementIdx,gaussPointIdx,elementNumber
+    INTEGER(INTG) :: nearestGP,inElement,dofIdx
+    INTEGER(INTG) :: numberOfGaussPoints
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_GAUSS_POINTS=64
     INTEGER(INTG) :: numberOfNodes(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: ACTIVE_STRESS_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: TITIN_STRESS_VALUES_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS),TITIN_STRESS_VALUES_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: ACTIVATION_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: A_1,A_2,x_1,x_2
-    REAL(DP) :: A_1_VALUES(MAX_NUMBER_OF_GAUSS_POINTS),A_2_VALUES(MAX_NUMBER_OF_GAUSS_POINTS), &
-      & x_1_VALUES(MAX_NUMBER_OF_GAUSS_POINTS),x_2_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: activeStress
+    REAL(DP) :: titinStressUnbound,titinStressBound,titinStressCrossFibreUnbound,titinStressCrossFibreBound,activation
+    REAL(DP) :: activeStressValues(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: titinStressValuesUnbound(MAX_NUMBER_OF_GAUSS_POINTS),titinStressValuesBound(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: titinStressValuesCrossFibreUnbound(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: titinStressValuesCrossFibreBound(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: activationValues(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: a1,a2,x1,x2
+    REAL(DP) :: a1Values(MAX_NUMBER_OF_GAUSS_POINTS),a2Values(MAX_NUMBER_OF_GAUSS_POINTS), &
+      & x1Values(MAX_NUMBER_OF_GAUSS_POINTS),x2Values(MAX_NUMBER_OF_GAUSS_POINTS)
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,controlLoopElasticity,controlLoopMonodomain
+    TYPE(DomainMappingType), POINTER :: elementsMapping,nodesMapping
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(FieldType), POINTER :: independentFieldMonodomain,independentFieldElasticity
+    TYPE(FieldVariableType), POINTER :: fieldUVariable,fieldVVariable,fieldFEVariable
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
 
-    NULLIFY(CONTROL_LOOP_PARENT)
-    NULLIFY(CONTROL_LOOP_MONODOMAIN)
-    NULLIFY(CONTROL_LOOP_ELASTICITY)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(FIELD_VARIABLE_U)
-    NULLIFY(FIELD_VARIABLE_V)
-    NULLIFY(FIELD_VARIABLE_FE)
-    
-    ENTERS("BioelectricFiniteElasticity_IndependentFieldInterpolate",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_IndependentFieldInterpolate",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      PROBLEM=>CONTROL_LOOP%PROBLEM
-      IF(ASSOCIATED(PROBLEM)) THEN
-        IF(.NOT.ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(problem%specification,1)<3) THEN
-          CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
-            & err,error,*999)
-        END IF
-        SELECT CASE(PROBLEM%SPECIFICATION(3))
-        CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-          & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-          IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
-            !--- MONODOMAIN ---
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            SOLVER_EQUATIONS=>SOLVER%solverEquations
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
-                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) CALL FlagError("Independent field is not associated.", &
-                    & ERR,ERROR,*999)
-                ELSE
-                  CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-            ENDIF
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+      & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+      CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+      IF(numberOfSubLoops==0) THEN
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoopParent)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoopParent,err,error,*999)
+        !--- MONODOMAIN ---
+        NULLIFY(controlLoopMonodomain)
+        CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+        NULLIFY(independentFieldMonodomain)
+        CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
 
-            !--- FINITE ELASTICITY ---
-            NULLIFY(SOLVERS)
-            NULLIFY(SOLVER)
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            SOLVER_EQUATIONS=>SOLVER%solverEquations
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%independentField
-                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) CALL FlagError("Independent field is not associated.",ERR, &
-                    & ERROR,*999)
-                ELSE
-                  CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-            ENDIF
+        !--- FINITE ELASTICITY ---
+        NULLIFY(controlLoopElasticity)
+        CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+        NULLIFY(independentFieldElasticity)
+        CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldElasticity,err,error,*999)
 
-            !--- NOW INTERPOLATE ---
-            ELEMENTS_MAPPING=>INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION% &
-              & meshComponentNumber)%ptr%MAPPINGS%ELEMENTS
-            NODES_MAPPING=>INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION% &
-              & meshComponentNumber)%ptr%MAPPINGS%NODES
-
-            CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE_U,ERR,ERROR,*999)
-            CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE,FIELD_VARIABLE_V,ERR,ERROR,*999)
-            CALL Field_VariableGet(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE_FE,ERR,ERROR,*999)
-
-            !loop over the finite elasticity elements
-            !first process the internal and boundary elements
-            DO element_idx=ELEMENTS_MAPPING%internalStart,ELEMENTS_MAPPING%boundaryFinish
-              ne=ELEMENTS_MAPPING%domainList(element_idx)
+        !--- NOW INTERPOLATE ---
+        NULLIFY(decomposition)
+        CALL Field_DecompositionGet(independentFieldElasticity,decomposition,err,error,*999)
+        NULLIFY(domain)
+        CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+        NULLIFY(domainMappings)
+        CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
+        NULLIFY(elementsMapping)
+        CALL DomainMappings_ElementMappingGet(domainMappings,elementsMapping,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainElements)
+        CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+        NULLIFY(decomposition)
+        CALL Field_DecompositionGet(independentFieldMonodomain,decomposition,err,error,*999)
+        NULLIFY(domain)
+        CALL Decomposition_DomainGet(decomposition,domain,err,error,*999)
+        NULLIFY(domainMappings)
+        CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
+        NULLIFY(nodesMapping)
+        CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
+        
+        CALL Field_VariableGet(independentFieldMonodomain,FIELD_U_VARIABLE_TYPE,fieldUVariable,err,error,*999)
+        CALL Field_VariableGet(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE,fieldVVariable,err,error,*999)
+        CALL Field_VariableGet(independentFieldElasticity,FIELD_U_VARIABLE_TYPE,fieldFEVariable,err,error,*999)
+        
+        !loop over the finite elasticity elements
+        !first process the internal and boundary elements
+        CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+        CALL DomainMapping_BoundaryFinishGet(elementsMapping,boundaryFinish,err,error,*999)
+        DO elementIdx=internalStart,boundaryFinish
+          CALL DomainMapping_NumberGet(elementsMapping,elementIdx,elementNumber,err,error,*999)
+          NULLIFY(basis)
+          CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
+          NULLIFY(quadratureScheme)
+          CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCEME,quadratureScheme,err,error,*999)
+          CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
               
-              NUMBER_OF_GAUSS_POINTS=INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_ELASTICITY% &
-                & decomposition%meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%quadratureSchemeMap &
-                & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%numberOfGauss
-
-              IF(NUMBER_OF_GAUSS_POINTS>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( & 
-                & "NUMBER_OF_GAUSS_POINTS is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
-              numberOfNodes=0
-              ACTIVE_STRESS_VALUES=0.0_DP
-              TITIN_STRESS_VALUES_UNBOUND=0.0_DP
-              TITIN_STRESS_VALUES_BOUND=0.0_DP
-              TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND=0.0_DP
-              TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND=0.0_DP
-              ACTIVATION_VALUES=0.0_DP
-              A_1_VALUES=0.0_DP
-              A_2_VALUES=0.0_DP
-              x_1_VALUES=0.0_DP
-              x_2_VALUES=0.0_DP
-              
-              !loop over the bioelectrics nodes
-              DO node_idx=1,NODES_MAPPING%numberOfLocal
-                 CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,inElement,ERR,ERROR,*999) !component 5 of variable V contains inElem info (LOCAL NUMBERING!!!)
-
-                !check if the bioelectrics node is located within the finite elasticity element
-                IF(inElement==ne) THEN
-                  !component 4 of variable V contains Nearest Gauss Point info
-                  CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,nearestGP,ERR,ERROR,*999)
-                  IF(nearestGP>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( &
-                    & "Nearest Gauss Point is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
-
-                  SELECT CASE(PROBLEM%SPECIFICATION(3))
-                  CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-
-                    !component 1 of variable U contains the active stress
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,ACTIVE_STRESS,ERR,ERROR,*999)
-                    
-                    !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                    numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
-                    !add up the active stress value
-                    ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
-                    
-                  CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-
-                    !component 1 of variable U contains the active stress
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,ACTIVE_STRESS,ERR,ERROR,*999)
-                    
-                    !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                    numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
-                    !add up the active stress value
-                    ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
-                    
-                    !component 2 of variable U contains the titin stress unbound
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,2,TITIN_STRESS_UNBOUND,ERR,ERROR,*999)
-                    !component 3 of variable U contains the titin stress bound
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,TITIN_STRESS_BOUND,ERR,ERROR,*999)
-                    !component 4 of variable U contains the titin XF-stress (cross-fibre directions) unbound
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,TITIN_STRESS_CROSS_FIBRE_UNBOUND,ERR,ERROR,*999)
-                    !component 5 of variable U contains the titin XF-stress (cross-fibre directions) bound
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,TITIN_STRESS_CROSS_FIBRE_BOUND,ERR,ERROR,*999)
-                    !component 6 of variable U contains the titin activation
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,6,ACTIVATION,ERR,ERROR,*999)
-
-                    TITIN_STRESS_VALUES_UNBOUND(nearestGP)=TITIN_STRESS_VALUES_UNBOUND(nearestGP)+TITIN_STRESS_UNBOUND
-                    TITIN_STRESS_VALUES_BOUND(nearestGP)=TITIN_STRESS_VALUES_BOUND(nearestGP)+TITIN_STRESS_BOUND
-                    TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(nearestGP)=TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(nearestGP) + &
-                      & TITIN_STRESS_CROSS_FIBRE_UNBOUND
-                    TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(nearestGP)=TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(nearestGP) + &
-                      & TITIN_STRESS_CROSS_FIBRE_BOUND
-                    ACTIVATION_VALUES(nearestGP)=ACTIVATION_VALUES(nearestGP)+ACTIVATION
-                    
-                  CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-
-                    !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                    numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
-
-                    !component 1 of variable U contains A_1
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,A_1,ERR,ERROR,*999)
-                    !component 2 of variable U contains A_2
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,2,A_2,ERR,ERROR,*999)
-                    !component 3 of variable U contains x_1
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,3,x_1,ERR,ERROR,*999)
-                    !component 4 of variable U contains x_2
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,x_2,ERR,ERROR,*999)
-
-                    A_1_VALUES(nearestGP)=A_1_VALUES(nearestGP)+A_1
-                    A_2_VALUES(nearestGP)=A_2_VALUES(nearestGP)+A_2
-                    x_1_VALUES(nearestGP)=x_1_VALUES(nearestGP)+x_1
-                    x_2_VALUES(nearestGP)=x_2_VALUES(nearestGP)+x_2
-                  END SELECT
-
-                ENDIF
-              ENDDO
-
-              !loop over the finite elasticity Gauss points
-              DO gauss_idx=1,NUMBER_OF_GAUSS_POINTS
-                !make sure we don't divide by zero
-                IF(numberOfNodes(gauss_idx)<=0) THEN
-                  ACTIVE_STRESS=0.0_DP
-                  TITIN_STRESS_UNBOUND=0.0_DP
-                  TITIN_STRESS_BOUND=0.0_DP
-                  TITIN_STRESS_CROSS_FIBRE_UNBOUND=0.0_DP
-                  TITIN_STRESS_CROSS_FIBRE_BOUND=0.0_DP
-                  ACTIVATION=0.0_DP
-                  A_1=0.0_DP
-                  A_2=0.0_DP
-                  x_1=0.0_DP
-                  x_2=0.0_DP
-                ELSE
-                  ACTIVE_STRESS=ACTIVE_STRESS_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
-                  TITIN_STRESS_UNBOUND=TITIN_STRESS_VALUES_UNBOUND(gauss_idx)/numberOfNodes(gauss_idx)
-                  TITIN_STRESS_BOUND=TITIN_STRESS_VALUES_BOUND(gauss_idx)/numberOfNodes(gauss_idx)
-                  TITIN_STRESS_CROSS_FIBRE_UNBOUND=TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(gauss_idx)/numberOfNodes(gauss_idx)
-                  TITIN_STRESS_CROSS_FIBRE_BOUND=TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(gauss_idx)/ &
-                    & numberOfNodes(gauss_idx)
-                  ACTIVATION=ACTIVATION_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
-                  A_1=A_1_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
-                  A_2=A_2_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
-                  x_1=x_1_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
-                  x_2=x_2_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
-                ENDIF
-
-                SELECT CASE(PROBLEM%SPECIFICATION(3))
-                CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,1,ACTIVE_STRESS,ERR,ERROR,*999)
-
-                CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,1,ACTIVE_STRESS,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,2,TITIN_STRESS_UNBOUND,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,3,TITIN_STRESS_BOUND,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,4,TITIN_STRESS_CROSS_FIBRE_UNBOUND,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,5,TITIN_STRESS_CROSS_FIBRE_BOUND,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,6,ACTIVATION,ERR,ERROR,*999)
-
-                CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,1,A_1,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,2,A_2,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,3,x_1,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateLocalGaussPoint(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gauss_idx,ne,4,x_2,ERR,ERROR,*999)
-
-                END SELECT
-
-              ENDDO !gauss_idx
-            ENDDO !element_idx
-
-            !now the ghost elements -- get the relevant info from the other computational nodes
-            CALL Field_ParameterSetUpdateStart(INDEPENDENT_FIELD_ELASTICITY, & 
-              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-            CALL Field_ParameterSetUpdateFinish(INDEPENDENT_FIELD_ELASTICITY, & 
-              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-
+          IF(numberOfGaussPoints>MAX_NUMBER_OF_GAUSS_POINTS) THEN
+            localError="The number of Gauss points of "//TRIM(NumberToVString(numberOfGuassPoint,"*",err,error))// &
+              & " is greater than the allowed maximum number of Gauss points of "// &
+              & TRIM(NumberToVString(MAX_NUMBER_OF_GAUSS_POINTS,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
           ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR="Independent field interpolation is not implemented for problem subtype " &
-            & //TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+          
+          numberOfNodes=0
+          activeStressValues=0.0_DP
+          titinStressValuesUnbound=0.0_DP
+          titinStressValuesBound=0.0_DP
+          titinStressValuesCrossFibreUnbound=0.0_DP
+          titinStressValuesCrossFibreBound=0.0_DP
+          activationValues=0.0_DP
+          a1Values=0.0_DP
+          a2Values=0.0_DP
+          x1Values=0.0_DP
+          x2Values=0.0_DP
+          
+          !loop over the bioelectrics nodes
+          CALL DomainMapping_NumberOfLocalGet(nodesMapping,numberOfLocal,err,error,*999)
+          DO nodeIdx=1,numberOfLocal
+            !component 5 of variable V contains inElem info (LOCAL NUMBERING!!!)
+            CALL FieldVariable_ParameterSetGetLocalNode(fieldVVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5,inElement, &
+              & err,error,*999) 
+            
+            !check if the bioelectrics node is located within the finite elasticity element
+            IF(inElement==elementNumber) THEN
+              !component 4 of variable V contains Nearest Gauss Point info
+              CALL FieldVariable_ParameterSetGetLocalNode(fieldVVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4,nearestGP, &
+                & err,error,*999)
+              IF(nearestGP>MAX_NUMBER_OF_GAUSS_POINTS) THEN
+                localError="The nearest Gauss point number of "//TRIM(NumberToVString(nearestGP,"*",err,error))// &
+                  & " is greater than the allowed maximum number of Gauss points of "// &
+                  & TRIM(NumberToVString(MAX_NUMBER_OF_GAUSS_POINTS,"*",err,error))//"."
+              ENDIF
+              
+              SELECT CASE(pSpecification(3))
+              CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+                
+                !component 1 of variable U contains the active stress
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,1,activeStress, &
+                  & err,error,*999)
+                
+                !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
+                numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
+                !add up the active stress value
+                activeStressValues(nearestGP)=activeStressValues(nearestGP)+activeStress
+                
+              CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+                
+                !component 1 of variable U contains the active stress
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,1,activeStress, &
+                  & err,error,*999)
+                    
+                !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
+                numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
+                !add up the active stress value
+                activeStressValues(nearestGP)=activeStressValues(nearestGP)+activeStress
+                
+                !component 2 of variable U contains the titin stress unbound
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,2, &
+                  & titinStressUnbound,err,error,*999)
+                !component 3 of variable U contains the titin stress bound
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,3, &
+                  & titinStressBound,err,error,*999)
+                !component 4 of variable U contains the titin XF-stress (cross-fibre directions) unbound
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4, &
+                  & titinStressCrossFibreUnbound,err,error,*999)
+                !component 5 of variable U contains the titin XF-stress (cross-fibre directions) bound
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5, &
+                  & titinStressCrossFibreBound,err,error,*999)
+                !component 6 of variable U contains the titin activation
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,6, &
+                  & activation,err,error,*999)
+                
+                titinStressValuesUnbound(nearestGP)=titinStressValuesUnbound(nearestGP)+titinStressUnbound
+                titinStressValuesBound(nearestGP)=titinStressValuesBound(nearestGP)+titinStressBound
+                titinStressValuesCrossFibreUnbound(nearestGP)=titinStressValuesCrossFibreUnbound(nearestGP) + &
+                  & titinStressCrossFibreUnbound
+                titinStressValuesCrossFibreBound(nearestGP)=titinStressValuesCrossFibreBound(nearestGP) + &
+                  & titinStressCrossFibreBound
+                activationValues(nearestGP)=activationValues(nearestGP)+activation
+                
+              CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+                
+                !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
+                numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
+                
+                !component 1 of variable U contains a1
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,1,a1,err,error,*999)
+                !component 2 of variable U contains a2
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,2,a2,err,error,*999)
+                !component 3 of variable U contains x1
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,3,x1,err,error,*999)
+                !component 4 of variable U contains x2
+                CALL FieldVariable_ParameterSetGetLocalNode(fieldUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4,x2,err,error,*999)
+                
+                a1Values(nearestGP)=a1Values(nearestGP)+a1
+                a2Values(nearestGP)=a2Values(nearestGP)+a2
+                x1Values(nearestGP)=x1Values(nearestGP)+x1
+                x2Values(nearestGP)=x2Values(nearestGP)+x2
+              END SELECT
+              
+            ENDIF
+          ENDDO !nodeIdx
+
+          !loop over the finite elasticity Gauss points
+          DO gaussPointIdx=1,numberOfGaussPoints
+            !make sure we don't divide by zero
+            IF(numberOfNodes(gaussPointIdx)<=0) THEN
+              activeStress=0.0_DP
+              titinStressUnbound=0.0_DP
+              titinStressBound=0.0_DP
+              titinStressCrossFibreUnbound=0.0_DP
+              titinStressCrossFibreBound=0.0_DP
+              activation=0.0_DP
+              a1=0.0_DP
+              a2=0.0_DP
+              x1=0.0_DP
+              x2=0.0_DP
+            ELSE
+              activeStress=activeStressValues(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              titinStressUnbound=titinStressValuesUnbound(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              titinStressBound=titinStressValuesBound(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              titinStressCrossFibreUnbound=titinStressValuesCrossFibreUnbound(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              titinStressCrossFibreBound=titinStressValuesCrossFibreBound(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              activation=activationValues(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              a1=a1Values(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              a2=a2Values(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              x1=x1Values(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+              x2=x2Values(gaussPointIdx)/numberOfNodes(gaussPointIdx)
+            ENDIF
+
+            SELECT CASE(pSpecification(3))
+            CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,1,activeStress,err,error,*999)
+              
+            CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+              
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,1,activeStress,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,2,titinStressUnbound,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,3,titinStressBound,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,4,titinStressCrossFibreUnbound,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,5,titinStressCrossFibreBound,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,6,activation,err,error,*999)
+              
+            CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+              
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,1,a1,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,2,a2,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,3,x1,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldFEVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+                & elementNumber,4,x2,err,error,*999)
+              
+            END SELECT
+            
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
+
+        !now the ghost elements -- get the relevant info from the other computational nodes
+        CALL FieldVariable_ParameterSetUpdateStart(fieldFEVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(fieldFEVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Independent field interpolation is not implemented for problem subtype " &
+        & //TRIM(NumberToVString(pSpecification(3),"*",err,error))
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("BioelectricFiniteElasticity_IndependentFieldInterpolate")
     RETURN
-999 ERRORS("BioelectricFiniteElasticity_IndependentFieldInterpolate",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_IndependentFieldInterpolate",err,error)
     EXITS("BioelectricFiniteElasticity_IndependentFieldInterpolate")
     RETURN 1
 
@@ -2897,58 +2664,46 @@ CONTAINS
 
   !>Computes force enhancement based on the titin model of C Rode et al. (2009). Force depression is not yet implemented.
   !>Titin-induced force enhancement and force depression: A 'sticky-spring' mechanism in muscle contractions? C Rode, T Siebert, R Blickhan - Journal of theoretical biology, 2009.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ComputeTitin(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !A pointer to the time control loop
-    INTEGER(INTG), INTENT(OUT) :: ERR !The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !The error string
+    TYPE(ControlLoopType), POINTER :: controlLoop !A pointer to the time control loop
+    INTEGER(INTG), INTENT(OUT) :: err !The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_MONODOMAIN
-    TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN
-    TYPE(FieldVariableType), POINTER :: FIELD_VAR_IND_M
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET
-    TYPE(DomainMappingType), POINTER :: NODES_MAPPING
-    INTEGER(INTG) :: node_idx,dof_idx
+    INTEGER(INTG) :: nodeIdx,dofIdx
+    INTEGER(INTG) :: indexRef,indexPseudo,indexI
+    INTEGER(INTG), PARAMETER :: DIM_DATA=250
+    INTEGER(INTG) :: switchModel
     REAL(DP), PARAMETER :: LENGTH_ACTIN=1.04_DP,LENGTH_MBAND=0.0625_DP,LENGTH_MYOSIN=0.7375_DP
     REAL(DP), PARAMETER :: LENGTH_ZERO=0.635_DP,LENGTH_ZDISC=0.05_DP
-    REAL(DP) :: F0,FORCE,TITIN_BOUND,TITIN_XF_BOUND,TITIN_UNBOUND,TITIN_XF_UNBOUND
-    REAL(DP) :: ELONGATION,ELONGATION_NEW
-    REAL(DP) :: ELONGATION_DIST_IG,ELONGATION_PEVK
-    REAL(DP) :: LENGTH_TITIN,LENGTH_INIT_TITIN,LENGTH_DIST_IG_F0,LENGTH_DIST_IG
-    REAL(DP) :: STIFFNESS_PEVK
-    REAL(DP) :: SARCO_LENGTH_AT_ACTIVATION,SARCO_LENGTH
-    REAL(DP) :: ACTIN_MYOSIN_DISTANCE,d10
-    REAL(DP) :: SLOPE,STIFFNESS_DIST,FORCE_DISTAL_IG,DELTA_F,DIFF_QUOT
+    REAL(DP) :: f0,force,titinBound,titinXFBound,titinUnbound,titinXFUnbound
+    REAL(DP) :: elongation,elongationNew
+    REAL(DP) :: elongationDistIG,elongationPEVK
+    REAL(DP) :: lengthTitin,lengthInitTitin,lengthDistIGF0,lengthDistIG
+    REAL(DP) :: stiffnessPEVK
+    REAL(DP) :: sarcoLengthAtActivation,sarcoLength
+    REAL(DP) :: actinMyosinDistance,d10
+    REAL(DP) :: slope,stiffnessDist,forceDistalIG,deltaF,diffQuot
+    REAL(DP :: lengthsDistIG(250),forcesDistIG(2500
     REAL(DP), PARAMETER, DIMENSION(5) :: COEFF_MATRIX=[5.0239_DP,-0.6717_DP,-2.5841_DP,-5.0128_DP,-5.0239_DP]
-    REAL(DP), DIMENSION(250) :: LENGTHS_DIST_IG,FORCES_DIST_IG
     REAL(DP), PARAMETER :: DX=0.001_DP
     REAL(DP), PARAMETER :: FORCE_INCREMENT=1.e-5_DP,TOL=1.e-5_DP
-    INTEGER(INTG) :: INDEX_REF,INDEX_PSEUDO,INDEX_I
-    INTEGER(INTG), PARAMETER :: DIM_DATA=250
-    INTEGER(INTG) :: SWITCH_MODEL
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,controlLoopMonodomain
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverType), POINTER :: solver
+    TYPE(FieldType), POINTER :: independentFieldMonodomain
+    TYPE(FieldVariableType), POINTER :: monodomainIndependentVariable
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(DomainMappingType), POINTER :: nodesMapping
     
-    NULLIFY(CONTROL_LOOP_ROOT)
-    NULLIFY(CONTROL_LOOP_PARENT)
-    NULLIFY(CONTROL_LOOP_MONODOMAIN)
-    NULLIFY(PROBLEM)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER)
-    NULLIFY(INDEPENDENT_FIELD_MONODOMAIN)
-    NULLIFY(SOLVER_EQUATIONS)
-    NULLIFY(SOLVER_MAPPING)
-    NULLIFY(EQUATIONS_SET)
-    NULLIFY(FIELD_VAR_IND_M)
-    
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ComputeTitin",err,error,*999)
 
     !the realtion between length and force of the distal_Ig region is very nonlinear. Linear interpolation of Rode's data is used here.
-    FORCES_DIST_IG= &
+    forcesDistIG= &
       & [0.0_DP,0.001_DP,0.002_DP,0.003_DP,0.004_DP,0.005_DP,0.006_DP,0.007_DP,0.008_DP,0.009_DP,0.01_DP,0.011_DP,0.012_DP, &
       & 0.013_DP,0.014_DP,0.015_DP,0.016_DP,0.017_DP,0.018_DP,0.019_DP,0.02_DP,0.021_DP,0.022_DP,0.023_DP,0.024_DP, &
       & 0.025_DP,0.026_DP,0.027_DP,0.028_DP,0.029_DP,0.03_DP,0.031_DP,0.032_DP,0.033_DP,0.034_DP,0.035_DP,0.036_DP, &
@@ -2970,7 +2725,7 @@ CONTAINS
       & 0.217_DP,0.218_DP,0.219_DP,0.22_DP,0.221_DP,0.222_DP,0.223_DP,0.224_DP,0.225_DP,0.226_DP,0.227_DP,0.228_DP, &
       & 0.229_DP,0.23_DP,0.231_DP,0.232_DP,0.233_DP,0.234_DP,0.235_DP,0.236_DP,0.237_DP,0.238_DP,0.239_DP,0.24_DP, &
       & 0.241_DP,0.242_DP,0.243_DP,0.244_DP,0.245_DP,0.246_DP,0.247_DP,0.248_DP,0.249_DP]
-    LENGTHS_DIST_IG= &
+    lengthsDistIG= &
       & [0.0_DP,0.03461753545561_DP,0.049729169766010_DP,0.058506390323323_DP,0.064606296848594_DP,0.06922519775133_DP, &
       & 0.0729080120998386_DP,0.0759458896446241_DP,0.0785230355395668_DP,0.0807314335143191_DP,0.0826674161660979_DP, &
       & 0.0843819721302_DP,0.0859161360822_DP,0.087300738288_DP,0.0885510536196_DP,0.08970061165_DP,0.090751366_DP, &
@@ -3014,271 +2769,268 @@ CONTAINS
       & 0.1391713448843_DP,0.1393495454909_DP,0.139527746097_DP,0.139705946704_DP,0.139884147310_DP,0.140062347917_DP, &
       & 0.1402415516727_DP,0.1404208541990_DP,0.140600156725270_DP,0.140779459251523_DP,0.140958761777775_DP]
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      PROBLEM=>CONTROL_LOOP%PROBLEM
-      IF(ASSOCIATED(PROBLEM)) THEN
-        SELECT CASE(PROBLEM%SPECIFICATION(3))
-        CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-          IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
-            !The first control_loop is the one for monodomain
-            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
-            !The second solver is associated with the diffusion part of the monodomain equation
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            SOLVER_EQUATIONS=>SOLVER%solverEquations
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%independentField
-                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
-                    CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
-                  ENDIF
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+      CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
+      IF(numberOfSubLoops==0) THEN
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRoot(problem,controlLoopRoot)
+        NULLIFY(controlLoopParent)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoopParent,err,error,*999)
+        !The first control_loop is the one for monodomain
+        NULLIFY(controlLoopMonodomain)
+        CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+        !The second solver is associated with the diffusion part of the monodomain equation
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,eror,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGt(solverEquations,solverMapping,err,error,*999)
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsetGet(solverMapping,1,equationsSet,err,error,*999)
+        NULLIFY(independentFieldMonodomain)
+        CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
 
-                  CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_IND_M,ERR,ERROR,*999)
+        NULLIFY(monodomainIndependentUVariable)
+        CALL Field_VariableGet(independentFieldMonodomain,FIELD_U_VARIABLE_TYPE,monodomainIndependentUVariable,err,error,*999)
+        NULLIFY(monodomainIndependentU1Variable)
+        CALL Field_VariableGet(independentFieldMonodomain,FIELD_U1_VARIABLE_TYPE,monodomainIndependentU1Variable,err,error,*999)
 
-                  NODES_MAPPING=>INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION% &
-                    & meshComponentNumber)%ptr%MAPPINGS%NODES
+        NULLIFY(decomposition)
+        CALL Field_DecompositionGet(independentFieldMonodomain,decomposition,err,error,*999)
+        NULLIFY(domain)
+        CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+        NULLIFY(domainMappings)
+        CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
+        NULLIFY(nodesMapping)
+        CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
+        
+        ! Initialization
+        indexRef=1
 
-                  ! Initialization
-                  INDEX_REF=1
-
-                  DO node_idx=1,NODES_MAPPING%numberOfLocal
-                  
-                    !the fourth component of the U1 variable contains the half sarcomere length at activation
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,SARCO_LENGTH_AT_ACTIVATION,ERR,ERROR,*999)
-
-                    !the first component of the U1 variable contains the actual half sarcomere length
-                    CALL Field_ParameterSetGetLocalNode(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,SARCO_LENGTH,ERR,ERROR,*999)
-                    
-                    ELONGATION=SARCO_LENGTH-SARCO_LENGTH_AT_ACTIVATION
-                    
-                    IF(ELONGATION.LT.0) THEN
-                      LENGTH_TITIN=SARCO_LENGTH-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
-                      !function to approximate the relation between the initial titin length and the initial passive force F0	
-                      TITIN_UNBOUND=COEFF_MATRIX(1)*EXP(LENGTH_TITIN)+COEFF_MATRIX(2)*LENGTH_TITIN**3+COEFF_MATRIX(3)* &
-                        & LENGTH_TITIN**2+COEFF_MATRIX(4)*LENGTH_TITIN+COEFF_MATRIX(5) 
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,2,TITIN_UNBOUND,ERR,ERROR,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,3,TITIN_UNBOUND,ERR,ERROR,*999)
-
-                      ! calculate x-fibre titin stress (trigonometry):                      
-                      ! fitting function to calculate the filament-lattice parameter d10 in nanometer (from Elliot 1963 -mammalian muscle)
-                      d10=-13.39_DP*SARCO_LENGTH+58.37_DP
-                      ! d10=-13.39_DP*1.0_DP+58.37_DP
-                      ! calculate the distance between actin and myosin filament in micro meter (geometrical relationship)
-                      ACTIN_MYOSIN_DISTANCE=0.001_DP*(2.0_DP/3.0_DP*d10)  
-                      ! calculate x-fibre stress with tangens-function (unbound titin)
-                      TITIN_XF_UNBOUND=0.5_DP*TITIN_UNBOUND*ACTIN_MYOSIN_DISTANCE/LENGTH_TITIN
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,4,TITIN_XF_UNBOUND,ERR,ERROR,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,5,TITIN_XF_UNBOUND,ERR,ERROR,*999)
-
-                    ELSE  ! Force enhancement  
-
-                      ! Calculate Titin-Force for unbound titin filaments
-                      LENGTH_TITIN=SARCO_LENGTH-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
-                      !function to approximate the relation between the initial titin length and the initial passive force F0	
-                      TITIN_UNBOUND=COEFF_MATRIX(1)*EXP(LENGTH_TITIN)+COEFF_MATRIX(2)*LENGTH_TITIN**3+COEFF_MATRIX(3)* &
-                        & LENGTH_TITIN**2+COEFF_MATRIX(4)*LENGTH_TITIN+COEFF_MATRIX(5)
-
-                      ! Calculate Titin-Force for bound titin filaments
-                      ! Switch between different force-enhancent models/implementations 
-                      ! 1=linear approximation 2=square approximation 3=simple iterative solution of Rode's model
-                      ! 4=Newton's-method to solve Rode's model
-                      SWITCH_MODEL=4
-                      !linear approximation
-                      IF(SWITCH_MODEL.EQ.1) THEN
-                        LENGTH_INIT_TITIN=SARCO_LENGTH_AT_ACTIVATION-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
-                        !function to approximate the relation between the initial titin length and the initial passive force F0	
-                        F0=COEFF_MATRIX(1)*EXP(LENGTH_INIT_TITIN)+COEFF_MATRIX(2)*LENGTH_INIT_TITIN**3+COEFF_MATRIX(3)* &
-                          & LENGTH_INIT_TITIN**2+COEFF_MATRIX(4)*LENGTH_INIT_TITIN+COEFF_MATRIX(5)
-                        !function to approximate the relation between the initial sarcomere length and the stiffness of the PEVK region.
-                        STIFFNESS_PEVK=1000.0_DP*(0.1880_DP*SARCO_LENGTH_AT_ACTIVATION**4-0.8694_DP*SARCO_LENGTH_AT_ACTIVATION**3+ &
-                          & 1.5084_DP*SARCO_LENGTH_AT_ACTIVATION**2-1.1577_DP*SARCO_LENGTH_AT_ACTIVATION+0.3345_DP)
-                        IF(ELONGATION.LT.0.02) THEN ! 0.02 -> offset value 
-                          FORCE=0.0_DP
-                        ELSE 
-                          FORCE=(ELONGATION-0.02_DP)*STIFFNESS_PEVK
-                        ENDIF
-                        TITIN_BOUND=F0+FORCE
-
-                      !square approximation
-                      ELSEIF(SWITCH_MODEL.EQ.2) THEN
-                        LENGTH_INIT_TITIN=SARCO_LENGTH_AT_ACTIVATION-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
-                        !function to approximate the relation between the initial titin length and the initial passive force F0	
-                        F0=COEFF_MATRIX(1)*EXP(LENGTH_INIT_TITIN)+COEFF_MATRIX(2)*LENGTH_INIT_TITIN**3+COEFF_MATRIX(3)* &
-                          & LENGTH_INIT_TITIN**2+COEFF_MATRIX(4)*LENGTH_INIT_TITIN+COEFF_MATRIX(5)
-                        FORCE=2.0_DP*ELONGATION**2
-                        TITIN_BOUND=F0+FORCE
-
-                      !Rode's model -> Ekin's implementation
-                      ELSEIF(SWITCH_MODEL.EQ.3) THEN
-                        LENGTH_INIT_TITIN=SARCO_LENGTH_AT_ACTIVATION-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
-                        !function to approximate the relation between the initial titin length and the initial passive force F0	
-                        F0=COEFF_MATRIX(1)*EXP(LENGTH_INIT_TITIN)+COEFF_MATRIX(2)*LENGTH_INIT_TITIN**3+COEFF_MATRIX(3)* &
-                          & LENGTH_INIT_TITIN**2+COEFF_MATRIX(4)*LENGTH_INIT_TITIN+COEFF_MATRIX(5)
-                        !function to approximate the relation between the initial sarcomere length and the stiffness of the PEVK region.
-                        STIFFNESS_PEVK=1000.0_DP*(0.1880_DP*SARCO_LENGTH_AT_ACTIVATION**4-0.8694_DP*SARCO_LENGTH_AT_ACTIVATION**3+ &
-                          & 1.5084_DP*SARCO_LENGTH_AT_ACTIVATION**2-1.1577_DP*SARCO_LENGTH_AT_ACTIVATION+0.3345_DP)
-                      
-                        IF(F0.LE.0) THEN
-                          LENGTH_DIST_IG_F0=-35.63_DP+39.58889_DP*(F0+0.9_DP)
-                        ELSEIF(F0.GE.0.24_DP) THEN
-                          LENGTH_DIST_IG_F0=0.1411_DP+0.196576763485477_DP*(F0-0.2495_DP)
-                        ELSE                    
-                          INDEX_PSEUDO=CEILING(F0/DX)
-                          INDEX_I=INDEX_REF+INDEX_PSEUDO-1
-                          LENGTH_DIST_IG_F0=LENGTHS_DIST_IG(INDEX_I)-(LENGTHS_DIST_IG(INDEX_I+1)-LENGTHS_DIST_IG(INDEX_I))* &
-                            & (FORCES_DIST_IG(INDEX_I)-F0)/(FORCES_DIST_IG(INDEX_I+1)-FORCES_DIST_IG(INDEX_I))
-                        ENDIF          
-	               
-                        ELONGATION_NEW=-1.0_DP
-                        FORCE=0.0_DP                  
-                        DO WHILE (ELONGATION_NEW.LT.ELONGATION)
-                          FORCE=FORCE+FORCE_INCREMENT
-                          TITIN_BOUND=FORCE+F0
-                          ELONGATION_PEVK=FORCE/STIFFNESS_PEVK  
-                          IF (TITIN_BOUND.LE.0.0_DP) THEN
-                            LENGTH_DIST_IG=-35.63_DP+39.58889_DP*(TITIN_BOUND+0.9_DP)
-                          ELSE IF (TITIN_BOUND.GE.0.24_DP) THEN
-                            LENGTH_DIST_IG=0.1411_DP+0.196576763485477_DP*(TITIN_BOUND-0.2495_DP)
-                          ELSE                  
-                            INDEX_PSEUDO=CEILING(TITIN_BOUND/DX)
-                            INDEX_I=INDEX_REF+INDEX_PSEUDO-1
-                            LENGTH_DIST_IG=LENGTHS_DIST_IG(INDEX_I)-(LENGTHS_DIST_IG(INDEX_I+1)-LENGTHS_DIST_IG( &
-                              & INDEX_I))*(FORCES_DIST_IG(INDEX_I)-TITIN_BOUND)/(FORCES_DIST_IG(INDEX_I+1)-FORCES_DIST_IG(INDEX_I))
-                          END IF
-                          ELONGATION_DIST_IG=LENGTH_DIST_IG-LENGTH_DIST_IG_F0                  
-                          ELONGATION_NEW=ELONGATION_PEVK+ELONGATION_DIST_IG
-                        ENDDO
-
-                      !Rode's titin model -> solve with Newton's method
-                      ELSEIF(SWITCH_MODEL.EQ.4) THEN
-                        LENGTH_INIT_TITIN=SARCO_LENGTH_AT_ACTIVATION-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
-                        !function to approximate the relation between the initial titin length and the initial passive force F0	
-                        F0=COEFF_MATRIX(1)*EXP(LENGTH_INIT_TITIN)+COEFF_MATRIX(2)*LENGTH_INIT_TITIN**3+COEFF_MATRIX(3)* &
-                          & LENGTH_INIT_TITIN**2+COEFF_MATRIX(4)*LENGTH_INIT_TITIN+COEFF_MATRIX(5)
-                        !function to approximate the relation between the initial sarcomere length and the stiffness of the PEVK region.
-                        STIFFNESS_PEVK=1000.0_DP*(0.1880_DP*SARCO_LENGTH_AT_ACTIVATION**4-0.8694_DP*SARCO_LENGTH_AT_ACTIVATION**3+ &
-                          & 1.5084_DP*SARCO_LENGTH_AT_ACTIVATION**2-1.1577_DP*SARCO_LENGTH_AT_ACTIVATION+0.3345_DP)
-
-                        !calculate LENGTH_DIST_IG_F0 with linear inter- or extrapolation
-                        INDEX_I=2
-                        SLOPE=0.0_DP
-                        LENGTH_DIST_IG_F0=0.0_DP
-                        IF(F0.GE.FORCES_DIST_IG(DIM_DATA)) THEN
-                          INDEX_I=DIM_DATA
-                        ELSE
-                          DO WHILE (F0.GT.FORCES_DIST_IG(INDEX_I))
-                            INDEX_I=INDEX_I+1
-                          ENDDO
-                        ENDIF
-                        SLOPE=(FORCES_DIST_IG(INDEX_I)-FORCES_DIST_IG(INDEX_I-1))/ &
-                          & (LENGTHS_DIST_IG(INDEX_I)-LENGTHS_DIST_IG(INDEX_I-1))
-                        LENGTH_DIST_IG_F0=LENGTHS_DIST_IG(INDEX_I-1)+SLOPE*(F0-FORCES_DIST_IG(INDEX_I-1))
-
-                        !initialize Newton-method to calculate the titin force
-                        INDEX_I=2                
-                        STIFFNESS_DIST=1.0_DP   
-                        FORCE_DISTAL_IG=F0      
-                        FORCE=0.0_DP                  ! delta P
-                        TITIN_BOUND=0.0_DP            ! total titin force (= P_PEVK)
-                        DELTA_F=10.0_DP               ! start value for iteration
-                        DIFF_QUOT=1.0_DP              ! numerical derivative              
-                        ELONGATION_PEVK=ELONGATION/2.0_DP                               
-                        LENGTH_DIST_IG=LENGTH_DIST_IG_F0+ELONGATION-ELONGATION_PEVK     
-
-                        DO WHILE(ABS(DELTA_F).GT.TOL) !Newton-method (solve FORCE_DISTAL_IG-FORCE_0=0)
-
-                          IF(LENGTH_DIST_IG.GE.LENGTHS_DIST_IG(DIM_DATA)) THEN  !Extrapolation if LENGTHS_DIST_IG(end)>LENGTH_DIST_IG
-                            INDEX_I=DIM_DATA
-                          ELSE 
-                            DO WHILE(LENGTH_DIST_IG.GT.LENGTHS_DIST_IG(INDEX_I))
-                              INDEX_I=INDEX_I+1
-                            ENDDO
-                          ENDIF
-                          STIFFNESS_DIST=(FORCES_DIST_IG(INDEX_I)-FORCES_DIST_IG(INDEX_I-1))/ &
-                            & (LENGTHS_DIST_IG(INDEX_I)-LENGTHS_DIST_IG(INDEX_I-1))
-                          FORCE_DISTAL_IG=FORCES_DIST_IG(INDEX_I-1)+STIFFNESS_DIST* &
-                            & (LENGTH_DIST_IG-LENGTHS_DIST_IG(INDEX_I-1))                
-
-                          FORCE=STIFFNESS_PEVK*ELONGATION_PEVK
-                          TITIN_BOUND=FORCE+F0
-
-                          DELTA_F=TITIN_BOUND-FORCE_DISTAL_IG !new iteration for FORCE_DISTAL_IG-TITIN_BOUND
-                          DIFF_QUOT=STIFFNESS_PEVK+STIFFNESS_DIST                 
-                          ELONGATION_PEVK=ELONGATION_PEVK-DELTA_F/DIFF_QUOT                 
-                          LENGTH_DIST_IG=LENGTH_DIST_IG_F0+ELONGATION-ELONGATION_PEVK       
-                        ENDDO
-                      ENDIF ! switch model
-
-                      ! calculate x-fibre titin stress                       
-                      ! fitting function to calculate the filament-lattice parameter d10 in nanometer (from Elliot 1963 -mammalian muscle)
-                      d10=-13.39_DP*SARCO_LENGTH+58.37_DP
-                      ! d10=-13.39_DP*1.0_DP+58.37_DP
-                      ! calculate the distance between actin and myosin filament in micro meter (geometrical relationship)
-                      ACTIN_MYOSIN_DISTANCE=0.001_DP*(2.0_DP/3.0_DP*d10) 
-                      ! calculate x-fibre stress with tangent (unbound titin)
-                      TITIN_XF_UNBOUND=0.5_DP*TITIN_UNBOUND*ACTIN_MYOSIN_DISTANCE/LENGTH_TITIN 
-                      ! calculate x-fibre stress with tangent (for bound titin filaments)
-                      TITIN_XF_BOUND=0.5_DP*TITIN_BOUND*ACTIN_MYOSIN_DISTANCE/LENGTH_DIST_IG  
-                      
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,2,TITIN_UNBOUND,ERR,ERROR,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,3,TITIN_BOUND,ERR,ERROR,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,4,TITIN_XF_UNBOUND,ERR,ERROR,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(INDEPENDENT_FIELD_MONODOMAIN, &
-                        & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,5,TITIN_XF_BOUND,ERR,ERROR,*999)
-
-                    ENDIF ! Check if elongation is positive or not
-                  ENDDO ! Over the nodes
-
-                  !now the ghost elements -- get the relevant info from the other computational nodes
-                  CALL Field_ParameterSetUpdateStart(INDEPENDENT_FIELD_MONODOMAIN, & 
-                    & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                  CALL Field_ParameterSetUpdateFinish(INDEPENDENT_FIELD_MONODOMAIN, & 
-                    & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-
-                ELSE
-                  CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
+        CALL DomainMapping_NumberOfLocalGet(nodesMapping,numberOfLocal,err,error,*999)
+        DO nodeIdx=1,numberOfLocal
+          
+          !the fourth component of the U1 variable contains the half sarcomere length at activation
+          CALL FieldVariable_ParameterSetGetLocalNode(monodomainIndependentU1Variable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4, &
+            & sarcoLengthAtActivation,err,error,*999)
+          
+          !the first component of the U1 variable contains the actual half sarcomere length
+          CALL FieldVariable_ParameterSetGetLocalNode(monodomainIndependentU1Variable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,1, &
+            & sarcoLength,err,error,*999)
+          
+          elongation=sarcoLength-sarcoLengthAtActivation
+          
+          IF(elongation<ZERO_TOLERANCE) THEN
+            lengthTitin=sarcoLength-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
+            !function to approximate the relation between the initial titin length and the initial passive force F0	
+            titinUnbound=COEFF_MATRIX(1)*EXP(lengthTitin)+COEFF_MATRIX(2)*lengthTitin**3+COEFF_MATRIX(3)* &
+              & lengthTitin**2+COEFF_MATRIX(4)*lengthTitin+COEFF_MATRIX(5) 
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,2, &
+              & titinUnbound,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,3, &
+              & titinUnbound,err,error,*999)
+            
+            ! calculate x-fibre titin stress (trigonometry):                      
+            ! fitting function to calculate the filament-lattice parameter d10 in nanometer (from Elliot 1963 -mammalian muscle)
+            d10=-13.39_DP*sarcoLength+58.37_DP
+            ! d10=-13.39_DP*1.0_DP+58.37_DP
+            ! calculate the distance between actin and myosin filament in micro meter (geometrical relationship)
+            actinMyosinDistance=0.001_DP*(2.0_DP/3.0_DP*d10)  
+            ! calculate x-fibre stress with tangens-function (unbound titin)
+            titinXFUnbound=0.5_DP*titinUnbound*actinMyosinDistance/lengthTitin
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4, &
+              & titinXFUnbound,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5, &
+              & titinXFUnbound,err,error,*999)
+            
+          ELSE  ! Force enhancement  
+            
+            ! Calculate Titin-Force for unbound titin filaments
+            lengthTitin=sarcoLength-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
+            !function to approximate the relation between the initial titin length and the initial passive force F0	
+            titinUnbound=COEFF_MATRIX(1)*EXP(lengthTitin)+COEFF_MATRIX(2)*lengthTitin**3+COEFF_MATRIX(3)* &
+              & lengthTitin**2+COEFF_MATRIX(4)*lengthTitin+COEFF_MATRIX(5)
+            
+            ! Calculate Titin-Force for bound titin filaments
+            ! Switch between different force-enhancent models/implementations 
+            ! 1=linear approximation 2=square approximation 3=simple iterative solution of Rode's model
+            ! 4=Newton's-method to solve Rode's model
+            switchModel=4
+            !linear approximation
+            IF(switchModel==1) THEN
+              lengthInitTitin=sarcoLengthAtActivation-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
+              !function to approximate the relation between the initial titin length and the initial passive force F0	
+              F0=COEFF_MATRIX(1)*EXP(lengthInitTitin)+COEFF_MATRIX(2)*lengthInitTitin**3+COEFF_MATRIX(3)* &
+                & lengthInitTitin**2+COEFF_MATRIX(4)*lengthInitTitin+COEFF_MATRIX(5)
+              !function to approximate the relation between the initial sarcomere length and the stiffness of the PEVK region.
+              stiffnessPEVK=1000.0_DP*(0.1880_DP*sarcoLengthAtActivation**4-0.8694_DP*sarcoLengthAtActivation**3+ &
+                & 1.5084_DP*sarcoLengthAtActivation**2-1.1577_DP*sarcoLengthAtActivation+0.3345_DP)
+              IF(elongation<0.02) THEN ! 0.02 -> offset value 
+                force=0.0_DP
+              ELSE 
+                force=(elongation-0.02_DP)*stiffnessPEVK
               ENDIF
-            ELSE
-              CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        CASE DEFAULT
-          CALL FlagError("Problem subtype not implemented for titin",ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Problem not associated",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+              titinBound=F0+force
+              
+              !square approximation
+            ELSE IF(switchModel==2) THEN
+              lengthInitTitin=sarcoLengthAtActivation-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
+              !function to approximate the relation between the initial titin length and the initial passive force F0	
+              F0=COEFF_MATRIX(1)*EXP(lengthInitTitin)+COEFF_MATRIX(2)*lengthInitTitin**3+COEFF_MATRIX(3)* &
+                & lengthInitTitin**2+COEFF_MATRIX(4)*lengthInitTitin+COEFF_MATRIX(5)
+              force=2.0_DP*elongation**2
+              titinBound=F0+force
+              
+              !Rode's model -> Ekin's implementation
+            ELSE IF(switchModel==3) THEN
+              lengthInitTitin=sarcoLengthAtActivation-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
+              !function to approximate the relation between the initial titin length and the initial passive force F0	
+              F0=COEFF_MATRIX(1)*EXP(lengthInitTitin)+COEFF_MATRIX(2)*lengthInitTitin**3+COEFF_MATRIX(3)* &
+                & lengthInitTitin**2+COEFF_MATRIX(4)*lengthInitTitin+COEFF_MATRIX(5)
+              !function to approximate the relation between the initial sarcomere length and the stiffness of the PEVK region.
+              stiffnessPEVK=1000.0_DP*(0.1880_DP*sarcoLengthAtActivation**4-0.8694_DP*sarcoLengthAtActivation**3+ &
+                & 1.5084_DP*sarcoLengthAtActivation**2-1.1577_DP*sarcoLengthAtActivation+0.3345_DP)
+              
+              IF(F0<=ZERO_TOLERANCE) THEN
+                lengthDistIGF0=-35.63_DP+39.58889_DP*(F0+0.9_DP)
+              ELSEIF(F0>=0.24_DP) THEN
+                lengthDistIGF0=0.1411_DP+0.196576763485477_DP*(F0-0.2495_DP)
+              ELSE                    
+                indexPseudo=CEILING(F0/DX)
+                indexI=indexRef+indexPseudo-1
+                lengthDistIGF0=lengthsDistIG(indexI)-(lengthsDistIG(indexI+1)-lengthsDistIG(indexI))* &
+                  & (forcesDistIG(indexI)-F0)/(forcesDistIG(indexI+1)-forcesDistIG(indexI))
+              ENDIF
+              
+              elongationNew=-1.0_DP
+              force=0.0_DP                  
+              DO WHILE(elongationNew<elongation)
+                force=force+FORCE_INCREMENT
+                titinBound=force+F0
+                elongationPEVK=force/stiffnessPEVK  
+                IF (titinBound<=0.0_DP) THEN
+                  lengthDistIG=-35.63_DP+39.58889_DP*(titinBound+0.9_DP)
+                ELSE IF(titinBound>=0.24_DP) THEN
+                  lengthDistIG=0.1411_DP+0.196576763485477_DP*(titinBound-0.2495_DP)
+                ELSE                  
+                  indexPseudo=CEILING(titinBound/DX)
+                  indexI=indexRef+indexPseudo-1
+                  lengthDistIG=lengthsDistIG(indexI)-(lengthsDistIG(indexI+1)-lengthsDistIG( &
+                    & indexI))*(forcesDistIG(indexI)-titinBound)/(forcesDistIG(indexI+1)-forcesDistIG(indexI))
+                END IF
+                elongationDistIG=lengthDistIG-lengthDistIGF0                  
+                elongationNew=elongationPEVK+elongationDistIG
+              ENDDO
+              
+              !Rode's titin model -> solve with Newton's method
+            ELSE IF(switchModel==4) THEN
+              lengthInitTitin=sarcoLengthAtActivation-LENGTH_MYOSIN-LENGTH_MBAND-LENGTH_ZDISC
+              !function to approximate the relation between the initial titin length and the initial passive force F0	
+              F0=COEFF_MATRIX(1)*EXP(lengthInitTitin)+COEFF_MATRIX(2)*lengthInitTitin**3+COEFF_MATRIX(3)* &
+                & lengthInitTitin**2+COEFF_MATRIX(4)*lengthInitTitin+COEFF_MATRIX(5)
+              !function to approximate the relation between the initial sarcomere length and the stiffness of the PEVK region.
+              stiffnessPEVK=1000.0_DP*(0.1880_DP*sarcoLengthAtActivation**4-0.8694_DP*sarcoLengthAtActivation**3+ &
+                & 1.5084_DP*sarcoLengthAtActivation**2-1.1577_DP*sarcoLengthAtActivation+0.3345_DP)
+              
+              !calculate lengthDistIGF0 with linear inter- or extrapolation
+              indexI=2
+              slope=0.0_DP
+              lengthDistIGF0=0.0_DP
+              IF(F0>=forcesDistIG(DIM_DATA)) THEN
+                indexI=DIM_DATA
+              ELSE
+                DO WHILE(F0>forcesDistIG(indexI))
+                  indexI=indexI+1
+                ENDDO
+              ENDIF
+              slope=(forcesDistIG(indexI)-forcesDistIG(indexI-1))/ &
+                & (lengthsDistIG(indexI)-lengthsDistIG(indexI-1))
+              lengthDistIGF0=lengthsDistIG(indexI-1)+slope*(F0-forcesDistIG(indexI-1))
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN")
+              !initialize Newton-method to calculate the titin force
+              indexI=2                
+              stiffnessDist=1.0_DP   
+              forceDistalIG=F0      
+              force=0.0_DP                  ! delta P
+              titinBound=0.0_DP            ! total titin force (= P_PEVK)
+              deltaF=10.0_DP               ! start value for iteration
+              diffQuot=1.0_DP              ! numerical derivative              
+              elongationPEVK=elongation/2.0_DP                               
+              lengthDistIG=lengthDistIGF0+elongation-elongationPEVK     
+              
+              DO WHILE(ABS(deltaF)>TOL) !Newton-method (solve forceDistalIG-force_0=0)
+                
+                IF(lengthDistIG>=lengthsDistIG(DIM_DATA)) THEN  !Extrapolation if lengthsDistIG(end)>lengthDistIG
+                  indexI=DIM_DATA
+                ELSE 
+                  DO WHILE(lengthDistIG>lengthsDistIG(indexI))
+                    indexI=indexI+1
+                  ENDDO
+                ENDIF
+                stiffnessDist=(forcesDistIG(indexI)-forcesDistIG(indexI-1))/ &
+                  & (lengthsDistIG(indexI)-lengthsDistIG(indexI-1))
+                forceDistalIG=forcesDistIG(indexI-1)+stiffnessDist* &
+                  & (lengthDistIG-lengthsDistIG(indexI-1))                
+                
+                force=stiffnessPEVK*elongationPEVK
+                titinBound=force+F0
+                
+                deltaF=titinBound-forceDistalIG !new iteration for forceDistalIG-titinBound
+                diffQuot=stiffnessPEVK+stiffnessDist                 
+                elongationPEVK=elongationPEVK-deltaF/diffQuot                 
+                lengthDistIG=lengthDistIGF0+elongation-elongationPEVK       
+              ENDDO
+            ENDIF ! switch model
+            
+            ! calculate x-fibre titin stress                       
+            ! fitting function to calculate the filament-lattice parameter d10 in nanometer (from Elliot 1963 -mammalian muscle)
+            d10=-13.39_DP*sarcoLength+58.37_DP
+            ! d10=-13.39_DP*1.0_DP+58.37_DP
+            ! calculate the distance between actin and myosin filament in micro meter (geometrical relationship)
+            actinMyosinDistance=0.001_DP*(2.0_DP/3.0_DP*d10) 
+            ! calculate x-fibre stress with tangent (unbound titin)
+            titinXFUnbound=0.5_DP*titinUnbound*actinMyosinDistance/lengthTitin 
+            ! calculate x-fibre stress with tangent (for bound titin filaments)
+            titinXFBound=0.5_DP*titinBound*actinMyosinDistance/lengthDistIG  
+            
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,2, &
+              & titinUnbound,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,3, &
+              & titinBound,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4, &
+              & titinXFUnbound,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalNode(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5, &
+              & titinXFBound,err,error,*999)
+            
+          ENDIF ! Check if elongation is positive or not
+        ENDDO ! Over the nodes
+
+        !now the ghost elements -- get the relevant info from the other computational nodes
+        CALL FieldVariable_ParameterSetUpdateStart(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(monodomainIndependentUVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Problem subtype not implemented for titin",err,error,*999)
+    END SELECT
+
+    EXITS("BioelectricFiniteElasticity_ComputeTitin")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN",ERR,ERROR)
+999 ERRORSEXITS("BioelectricFiniteElasticity_ComputeTitin",err,error)
     RETURN 1
 
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN
+  END SUBROUTINE BioelectricFiniteElasticity_ComputeTitin
 
   !
   !================================================================================================================================
   !
 
-END MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
+END MODULE BioelectricFiniteElasticityRoutines
 

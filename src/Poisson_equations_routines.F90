@@ -1173,7 +1173,8 @@ CONTAINS
             CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
             IF(esSpecification(3)==EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE.OR. &
               & esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE) THEN
-              CALL EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+              CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                & err,error,*999)
               CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
             ENDIF
           CASE DEFAULT
@@ -1241,13 +1242,18 @@ CONTAINS
     ENTERS("Poisson_EquationsSetSolutionMethodSet",err,error,*999)
 
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
-    
+   
     SELECT CASE(esSpecification(3))
-    CASE(EQUATIONS_SET_GENERALISED_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE, &
-      & EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE,EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE, &
-      & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, &
-      & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE, &
-      & EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
+    CASE(EQUATIONS_SET_GENERALISED_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE, &
+      & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
       SELECT CASE(solutionMethod)
       CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
         equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -1353,7 +1359,7 @@ CONTAINS
       & rowElementParameterIdx
     REAL(DP) :: aParam,b(3),colsdPhidXi(3),colsPhi,conductivity(3,3),deltaT,diffCoeff1,diffCoeff2,dXidX(3,3),d2XidX2(3,3), &
       & extraConductivity(3,3),intraConductivity(3,3),jacobianGaussWeight,muParam,pDeriv(3),rhoParam,rowsdPhidXi(3),rowsPhi, &
-      & sourceValue,sum,sum2,uDeriv(3,3),,uOld(3),uSecond(3,3,3),uValue(3),Vm(64),wValue(3),x(3)
+      & sourceValue,sum,sum2,uDeriv(3,3),uOld(3),uSecond(3,3,3),uValue(3),Vm(64),wValue(3),x(3)
     LOGICAL :: between,inside,update,updateMatrix,updateRHS,updateSource
     TYPE(BasisType), POINTER :: columnBasis,geometricBasis,independentBasis,rowBasis,sourceBasis
     TYPE(EquationsType), POINTER :: equations
@@ -1422,10 +1428,6 @@ CONTAINS
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-    NULLIFY(equationsInterpolation)
-    CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
-    NULLIFY(vectorEquations)
-    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(lhsMapping)
@@ -1467,6 +1469,9 @@ CONTAINS
     update=(updateMatrix.OR.updateSource.OR.updateRHS)
 
     IF(update) THEN
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+      
       NULLIFY(geometricVariable)
       CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
@@ -1479,7 +1484,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
       
       NULLIFY(dependentDecomposition)
@@ -1491,7 +1496,7 @@ CONTAINS
       NULLIFY(colsDomainElements)
       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
       NULLIFY(colsBasis)
-      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -1731,7 +1736,7 @@ CONTAINS
           DO rowElementParameterIdx=1,numberOfRowsElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1
             CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & rowsPhi,err,error,*999)
+              & gaussPointIdx,rowsPhi,err,error,*999)
             DO xiIdx=1,numberOfXi
               CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
                 & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,rowsdPhidXi(xiIdx),err,error,*999)
@@ -2108,7 +2113,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
 
       NULLIFY(dependentDecomposition)
@@ -2120,7 +2125,7 @@ CONTAINS
       NULLIFY(colsDomainElements)
       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
       NULLIFY(colsBasis)
-      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -2416,6 +2421,7 @@ CONTAINS
     update=(updateMatrix.OR.updateSource.OR.updateResidual.OR.updateRHS)
 
     IF(update) THEN
+      
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(dependentField)
@@ -2439,7 +2445,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
@@ -2450,7 +2456,7 @@ CONTAINS
       NULLIFY(colsDomainElements)
       CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
       NULLIFY(colsBasis)
-      CALL DomainElements_BasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
     
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -2559,7 +2565,7 @@ CONTAINS
               & rowsPhi,err,error,*999)
             DO xiIdx=1,numberOfXi
               CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
-                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx,rowsdPhidXi(xiIdx1),err,error,*999)
+                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,rowsdPhidXi(xiIdx),err,error,*999)
             ENDDO !xiIdx
             columnElementDOFIdx=0
             IF(updateMatrix) THEN
@@ -2579,10 +2585,10 @@ CONTAINS
                   columnElementDOFIdx=columnElementDOFIdx+1
                   CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
                     & colsPhi,err,error,*999)
-                  DO xiIdx1=1,numberOfXi
+                  DO xiIdx=1,numberOfXi
                     CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
-                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx1),gaussPointIdx,colsdPhidXi(xiIdx1),err,error,*999)
-                  ENDDO !xiIdx1
+                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx),gaussPointIdx,colsdPhidXi(xiIdx),err,error,*999)
+                  ENDDO !xiIdx
                   sum=0.0_DP
                   SELECT CASE(esSpecification(3))
                   CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)
@@ -2888,7 +2894,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfDimensions,currentIteration,inputType,inputOption,outputIteration,outputType,solverGlobalNumber
+    INTEGER(INTG) :: numberOfDimensions,currentIteration,inputIteration,inputType,inputOption,outputIteration,outputType, &
+      & solverGlobalNumber
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: inputVelocityNewData(:),inputVelocityOldData(:),inputVelocityLabelData(:),inputVelocityUData(:), &
       & inputVelocityVData(:),inputVelocityWData(:)
@@ -2923,7 +2930,7 @@ CONTAINS
       IF(solverGlobalNumber==1) THEN
         !only read in data if it is the fitting problem
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-          & outputIteration,err,error,*999)
+          & outputIteration,inputIteration,err,error,*999)
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
@@ -2944,7 +2951,7 @@ CONTAINS
       ELSE IF(solverGlobalNumber==2) THEN
         !this is the interior flag
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-          & outputIteration,err,error,*999)
+          & outputIteration,inputIteration,err,error,*999)
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
@@ -2989,7 +2996,7 @@ CONTAINS
     CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
       CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-        & outputIteration,err,error,*999)
+        & outputIteration,inputIteration,err,error,*999)
       IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN        
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
       ENDIF
@@ -3081,7 +3088,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,geometricMeshComponent
-    INTEGER(INTG) :: inputType,inputOption,componentIdx,derivativeIdx,localDOFIdx,nodeIdx,variableIdx,variable_type
+    INTEGER(INTG) :: inputIteration,inputType,inputOption,componentIdx,derivativeIdx,localDOFIdx,nodeIdx,variableIdx,variable_type
     REAL(DP) :: currentTime,timeIncrement,alpha
     REAL(DP), POINTER :: meshDisplacementValues(:)
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -3106,7 +3113,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,err,error,*999)
+      & outputIteration,inputIteration,err,error,*999)
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE)
       ! do nothing ???
@@ -3210,7 +3217,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: I,numberOfDimensionsPPE,numberOfDimensionsFitted,geometricMeshComponent
+    INTEGER(INTG) :: I,numberOfDimensionsPPE,numberOfDimensionsFitted,geometricMeshComponent,inputIteration
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(SolverType), POINTER :: solverFitted, solverPPE
@@ -3229,7 +3236,7 @@ CONTAINS
     CALL Problem_ProblemSpecificationGet(problem,pSpecification,err,error,*999)
     CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,err,error,*999)
+      & outputIteration,inputIteration,err,error,*999)
     
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE)
@@ -3344,7 +3351,6 @@ CONTAINS
 
     ENTERS("Poisson_PostSolve",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
@@ -3401,7 +3407,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,currenIteration,numberOfEquationsSets,outputIteration,outputType,pSpecification(3)
+    INTEGER(INTG) :: equationsSetIdx,currenIteration,inputIteration,numberOfEquationsSets,outputIteration,outputType, &
+      & pSpecification(3)
     REAL(DP) :: absoluteTolerance,currentTime,relativeTolerance,startTime,stopTime,timeIncrement
     LOGICAL :: continueLoop,exportField
     CHARACTER(14) :: file,outputFile
@@ -3432,7 +3439,7 @@ CONTAINS
       IF(currentIteration==maximumNumberOfIterations)THEN
         CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-          & outputIteration,err,error,*999)
+          & outputIteration,inputIteration,err,error,*999)
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
@@ -3477,7 +3484,7 @@ CONTAINS
     CASE(PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE)
       CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-        & outputIteration,err,error,*999)
+        & outputIteration,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
@@ -3640,6 +3647,7 @@ CONTAINS
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Set up a simple control loop
+        NULLIFY(controlLoop)
         CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
         SELECT CASE(pSpecification(3))
         CASE(PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE, &

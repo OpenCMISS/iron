@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s):  Andrew Cookson, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -41,10 +41,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!>TThis module handles all routines pertaining to diffusion coupled to diffusion.
-
-
-MODULE DIFFUSION_ADVECTION_DIFFUSION_ROUTINES
+!>This module handles all routines pertaining to diffusion coupled to diffusion.
+MODULE DiffusionAdvectionDiffusionRoutines
 
   USE AdvectionDiffusionEquationsRoutines
   USE BaseRoutines
@@ -54,7 +52,7 @@ MODULE DIFFUSION_ADVECTION_DIFFUSION_ROUTINES
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE CoordinateSystemRoutines  
-  USE DIFFUSION_EQUATION_ROUTINES
+  USE DiffusionEquationsRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
@@ -80,18 +78,21 @@ MODULE DIFFUSION_ADVECTION_DIFFUSION_ROUTINES
   IMPLICIT NONE
 
   PUBLIC DiffusionAdvectionDiffusion_EquationsSetSetup
+  
   PUBLIC DiffusionAdvectionDiffusion_EquationsSetSpecSet
+  
   PUBLIC DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet
 
-  PUBLIC DIFFUSION_ADVECTION_DIFFUSION_PROBLEM_SETUP
+  PUBLIC DiffusionAdvectionDiffusion_ProblemSetup
+  
   PUBLIC DiffusionAdvectionDiffusion_ProblemSpecificationSet
   
   PUBLIC DiffusionAdvectionDiffusion_FiniteElementCalculate
 
-  PUBLIC DIFFUSION_ADVECTION_DIFFUSION_PRE_SOLVE
-  PUBLIC DIFFUSION_ADVECTION_DIFFUSION_POST_SOLVE
-
+  PUBLIC DiffusionAdvectionDiffusion_PreSolve
   
+  PUBLIC DiffusionAdvectionDiffusion_PostSolve
+
 CONTAINS
 
   !
@@ -99,56 +100,49 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a coupled diffusion & advection-diffusion equation type of a multi physics equations set class.
-  SUBROUTINE DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: esSpecification(3)
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet",ERR,ERROR,*999)
+    ENTERS("DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet",err,error,*999)
+
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a "// &
-          & "diffusion and advection-diffusion type equations set.",err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-        SELECT CASE(SOLUTION_METHOD)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+      SELECT CASE(solutionMethod)
+      CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+        equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
+      CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
-          & " is not valid for a diffusion & advection-diffusion equation type of a multi physics equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a diffusion & advection-diffusion equation type of a multi physics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet")
     RETURN
-999 ERRORS("DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet",ERR,ERROR)
+999 ERRORS("DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet",err,error)
     EXITS("DiffusionAdvectionDiffusion_EquationsSetSolnMethodSet")
     RETURN 1
     
@@ -159,23 +153,22 @@ CONTAINS
   !
 
   !>Sets up the diffusion & advection-diffusion coupled equation.
-  SUBROUTINE DiffusionAdvectionDiffusion_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to setup
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
+    ENTERS("DiffusionAdvectionDiffusion_EquationsSetSetup",err,error,*999)
 
-    ENTERS("DiffusionAdvectionDiffusion_EquationsSetSetup",ERR,ERROR,*999)
-
-    CALL FlagError("Not implemented.",ERR,ERROR,*999)
+    CALL FlagError("Not implemented.",err,error,*999)
              
     EXITS("DiffusionAdvectionDiffusion_EquationsSetSetup")
     RETURN
-999 ERRORS("DiffusionAdvectionDiffusion_EquationsSetSetup",ERR,ERROR)
+999 ERRORS("DiffusionAdvectionDiffusion_EquationsSetSetup",err,error)
     EXITS("DiffusionAdvectionDiffusion_EquationsSetSetup")
     RETURN 1
 
@@ -186,22 +179,22 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a coupled diffusion & advection-diffusion equation finite element equations set.
-  SUBROUTINE DiffusionAdvectionDiffusion_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DiffusionAdvectionDiffusion_FiniteElementCalculate",ERR,ERROR,*999)
+    ENTERS("DiffusionAdvectionDiffusion_FiniteElementCalculate",err,error,*999)
 
-    CALL FlagError("Not implemented.",ERR,ERROR,*999)
+    CALL FlagError("Not implemented.",err,error,*999)
       
     EXITS("DiffusionAdvectionDiffusion_FiniteElementCalculate")
     RETURN
-999 ERRORS("DiffusionAdvectionDiffusion_FiniteElementCalculate",ERR,ERROR)
+999 ERRORS("DiffusionAdvectionDiffusion_FiniteElementCalculate",err,error)
     EXITS("DiffusionAdvectionDiffusion_FiniteElementCalculate")
     RETURN 1
     
@@ -245,35 +238,32 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("DiffusionAdvectionDiffusion_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)==3) THEN
-        SELECT CASE(problemSubtype)
-        CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-          !ok
-        CASE DEFAULT
-          localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
-            & " is not valid for a coupled diffusion & advection-diffusion type of a multi physics problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        IF(ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(problem%specification(3),stat=err)
-          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-        END IF
-        problem%specification(1:3)=[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE, &
-          & problemSubtype]
-      ELSE
-        CALL FlagError("Diffusion advection-diffusion transport problem specification must have 3 entries.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    problemSubtype=problemSpecification(3)
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a coupled diffusion & advection-diffusion type of a multi physics problem."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    ALLOCATE(problem%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+    problem%specification(1:3)=[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE,problemSubtype]
 
     EXITS("DiffusionAdvectionDiffusion_ProblemSpecificationSet")
     RETURN
@@ -288,355 +278,301 @@ CONTAINS
   !
 
   !>Sets up the coupled diffusion-diffusion equations problem.
-  SUBROUTINE DIFFUSION_ADVECTION_DIFFUSION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
-    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SolverType), POINTER :: SOLVER_DIFFUSION, SOLVER_ADVECTION_DIFFUSION
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS_DIFFUSION, SOLVER_EQUATIONS_ADVECTION_DIFFUSION
-    TYPE(SolversType), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
+    TYPE(SolverType), POINTER :: solverDiffusion,solverAdvectionDiffusion
+    TYPE(SolverEquationsType), POINTER :: solverEquationsDiffusion,solverEquationsAdvectionDiffusion
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DIFFUSION_ADVECTION_DIFFUSION_PROBLEM_SETUP",ERR,ERROR,*999)
+    ENTERS("DiffusionAdvectionDiffusion_ProblemSetup",err,error,*999)
 
-    NULLIFY(CONTROL_LOOP)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER_DIFFUSION)
-    NULLIFY(SOLVER_ADVECTION_DIFFUSION)
-    NULLIFY(SOLVER_EQUATIONS_DIFFUSION)
-    NULLIFY(SOLVER_EQUATIONS_ADVECTION_DIFFUSION)
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(problem%specification)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(problem%specification,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a diffusion-advection diffusion problem.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM%SPECIFICATION(3))
+    CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
 
-      !--------------------------------------------------------------------
-      !   coupled source diffusion--advection-diffusion
-      !--------------------------------------------------------------------
-      CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-        SELECT CASE(PROBLEM_SETUP%setupType)
-        CASE(PROBLEM_SETUP_INITIAL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Do nothing????
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Do nothing???
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a diffusion & advection-diffusion equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_CONTROL_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Set up a time control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a coupled diffusion & advection-diffusion equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL Solvers_NumberOfSolversSet(SOLVERS,2,ERR,ERROR,*999)
-            !
-            !Set the first solver to be a linear solver for the advection-diffusion problem
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_ADVECTION_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER_ADVECTION_DIFFUSION,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER_ADVECTION_DIFFUSION,SOLVER_DYNAMIC_FIRST_ORDER,ERR,ERROR,*999)
-            !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER_ADVECTION_DIFFUSION,SOLVER_DYNAMIC_FIRST_DEGREE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER_ADVECTION_DIFFUSION,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,ERR,ERROR,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_ADVECTION_DIFFUSION,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
-            !
-            !Set the second solver to be a linear solver for the diffusion problem
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER_DIFFUSION,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER_DIFFUSION,SOLVER_DYNAMIC_FIRST_ORDER,ERR,ERROR,*999)
-            !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER_DIFFUSION,SOLVER_DYNAMIC_FIRST_DEGREE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER_DIFFUSION,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,ERR,ERROR,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER_DIFFUSION,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
-            !
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-                & " is invalid for a coupled diffusion & advection-diffusion equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-          SELECT CASE(PROBLEM_SETUP%actionType)
-          CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            !
-            !Get the advection-diffusion solver and create the advection-diffusion solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_ADVECTION_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_ADVECTION_DIFFUSION,SOLVER_EQUATIONS_ADVECTION_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_ADVECTION_DIFFUSION,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_ADVECTION_DIFFUSION, & 
-              & SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS_ADVECTION_DIFFUSION,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
-            !
-            !Get the diffusion solver and create the diffusion solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER_DIFFUSION,SOLVER_EQUATIONS_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS_DIFFUSION,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS_DIFFUSION, & 
-              & SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS_DIFFUSION,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
-            !
-
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            !
-            !Finish the creation of the advection-diffusion solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER_ADVECTION_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_ADVECTION_DIFFUSION,SOLVER_EQUATIONS_ADVECTION_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_ADVECTION_DIFFUSION,ERR,ERROR,*999)             
-            !
-            !Finish the creation of the diffusion solver equations
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER_DIFFUSION,SOLVER_EQUATIONS_DIFFUSION,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS_DIFFUSION,ERR,ERROR,*999)             
-            !
-          
-          CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-              & " is invalid for a coupled diffusion & advection-diffusion equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &
-            & " is invalid for a coupled diffusion & advection-diffusion equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-
-      !-----------------------------------------------------------------
-      !   c a s e   d e f a u l t
-      !-----------------------------------------------------------------
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE DEFAULT
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " does not equal a coupled source diffusion & advection-diffusion equation subtype."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+      
+    SELECT CASE(problemSetup%setupType)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Do nothing????
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Do nothing???
       CASE DEFAULT
-        LOCAL_ERROR="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-          & " does not equal a coupled source diffusion & advection-diffusion equation subtype."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a diffusion & advection-diffusion equation."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE(PROBLEM_SETUP_CONTROL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Set up a time control loop
+        NULLIFY(controlLoop)
+        CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+        CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the control loops
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        CALL ContolLoop_CreateFinish(controlLoop,err,error,*999)            
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a coupled diffusion & advection-diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      !Get the control loop
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Start the solvers creation
+        NULLIFY(solvers)
+        CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
+        CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
+        !Set the first solver to be a linear solver for the advection-diffusion problem
+        NULLIFY(solverAdvectionDiffusion)
+        CALL Solvers_SolverGet(solvers,1,solverAdvectionDiffusion,err,error,*999)
+        CALL Solver_TypeSet(solverAdvectionDiffusion,SOLVER_DYNAMIC_TYPE,err,error,*999)
+        CALL Solver_DynamicOrderSet(solverAdvectionDiffusion,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+        !Set solver defaults
+        CALL Solver_DynamicDegreeSet(solverAdvectionDiffusion,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+        CALL Solver_DynamicSchemeSet(solverAdvectionDiffusion,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+        CALL Solver_LibraryTypeSet(solverAdvectionDiffusion,SOLVER_CMISS_LIBRARY,err,error,*999)
+        !Set the second solver to be a linear solver for the diffusion problem
+        NULLIFY(solverDiffusion)
+        CALL Solvers_SolverGet(solvers,2,solverDiffusion,err,error,*999)
+        CALL Solver_TypeSet(solverDiffusion,SOLVER_DYNAMIC_TYPE,err,error,*999)
+        CALL Solver_DynamicOrderSet(solverDiffusion,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+        !Set solver defaults
+        CALL Solver_DynamicDegreeSet(solverDiffusion,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+        CALL Solver_DynamicSchemeSet(solverDiffusion,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+        CALL Solver_LibraryTypeSet(solverDiffusion,SOLVER_CMISS_LIBRARY,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the solvers
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(solvers,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a coupled diffusion & advection-diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+      !Get the control loop and solvers
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the advection-diffusion solver and create the advection-diffusion solver equations
+        CALL Solvers_SolverGet(solvers,1,solverAdvectionDiffusion,err,error,*999)
+        CALL SolverEquations_CreateStart(solverAdvectionDiffusion,solverEquationsAdvectionDiffusion,err,error,*999)
+        CALL SolverEquations_LinearityTypeSet(solverEquationsAdvectionDiffusion,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+        CALL SolverEquations_TimeDependenceTypeSet(solverEquationsAdvectionDiffusion, & 
+          & SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+        CALL SolverEquations_SparsityTypeSet(solverEquationsAdvectionDiffusion,SOLVER_SPARSE_MATRICES,err,error,*999)
+        !Get the diffusion solver and create the diffusion solver equations
+        CALL Solvers_SolverGet(solvers,2,solverDiffusion,err,error,*999)
+        CALL SolverEquations_CreateStart(solverDiffusion,solverEquationsDiffusion,err,error,*999)
+        CALL SolverEquations_LinearityTypeSet(solverEquationsDiffusion,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+        CALL SolverEquations_TimeDependenceTypeSet(solverEquationsDiffusion, & 
+          & SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+        CALL SolverEquations_SparsityTypeSet(solverEquationsDiffusion,SOLVER_SPARSE_MATRICES,err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the creation of the advection-diffusion solver equations
+        NULLIFY(solverAdvectionDiffusion)
+        CALL Solvers_SolverGet(solvers,1,solverAdvectionDiffusion,err,error,*999)
+        NULLIFY(solverEquationsAdvectionDiffusion)
+        CALL Solver_SolverEquationsGet(solverAdvectionDiffusion,solverEquationsAdvectionDiffusion,err,error,*999)
+        CALL SolverEquations_CreateFinish(solverEquationsAdvectionDiffusion,err,error,*999)             
+        !
+        !Finish the creation of the diffusion solver equations
+        NULLIFY(solverDiffusion)
+        CALL Solvers_SolverGet(solvers,2,solverDiffusion,err,error,*999)
+        NULLIFY(solverEquationsDiffusion)
+        CALL Solver_SolverEquationsGet(solverDiffusion,solverEquationsDiffusion,err,error,*999)
+        CALL SolverEquations_CreateFinish(solverEquationsDiffusion,err,error,*999)             
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a coupled diffusion & advection-diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+        & " is invalid for a coupled diffusion & advection-diffusion equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("DIFFUSION_ADVECTION_DIFFUSION_PROBLEM_SETUP")
+    EXITS("DiffusionAdvectionDiffusion_ProblemSetup")
     RETURN
-999 ERRORSEXITS("DIFFUSION_ADVECTION_DIFFUSION_PROBLEM_SETUP",ERR,ERROR)
+999 ERRORSEXITS("DiffusionAdvectionDiffusion_ProblemSetup",err,error)
     RETURN 1
-  END SUBROUTINE DIFFUSION_ADVECTION_DIFFUSION_PROBLEM_SETUP
+    
+  END SUBROUTINE DiffusionAdvectionDiffusion_ProblemSetup
 
   !
   !================================================================================================================================
   !
  
   !>Sets up the diffusion-diffusion problem pre-solve.
-  SUBROUTINE DIFFUSION_ADVECTION_DIFFUSION_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: pSpecification(3),solverNuber
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
+    ENTERS("DiffusionAdvectionDiffusion_PreSolve",err,error,*999)
 
-    ENTERS("DIFFUSION_ADVECTION_DIFFUSION_PRE_SOLVE",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a diffusion-advection diffusion problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-
-              IF(SOLVER%globalNumber==1) THEN
-                !copy current value of concentration_one to another variable
-                CALL AdvectionDiffusion_PreSolveStoreCurrentSoln(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-                !Set source term to be updated value of concentration_two
-                !CALL ADVECTION_DIFFUSION_EQUATION_PRE_SOLVE_GET_SOURCE_VALUE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-                
-                !Update indpendent data fields
-!                 CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",ERR,ERROR,*999)
-!                 CALL ADVECTION_DIFFUSION_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
- 
-              ELSE IF(SOLVER%globalNumber==2) THEN
-                !copy current value of concentration_one to another variable
-                CALL Diffusion_PreSolveStoreCurrentSolution(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-                !compute value of constant source term - evaluated from lamdba*(0.5*(c_1^{t+1}+c_1^{t}) - c_2^{t})
-                !CALL DIFFUSION_EQUATION_PRE_SOLVE_GET_SOURCE_VALUE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-              ENDIF
-            CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-                & " is not valid for a diffusion & advection-diffusion type of a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
+      IF(solverNumber==1) THEN
+        !copy current value of concentration_one to another variable
+        CALL AdvectionDiffusion_PreSolveStoreCurrentSoln(solver,err,error,*999)
+        !Set source term to be updated value of concentration_two
+        !CALL AdvectionDiffusion_PreSolveGetSourceValue(solver,err,error,*999)        
+        !Update indpendent data fields
+        !CALL AdvectionDiffusion_PreSolveUpdateInputData(solver,err,error,*999) 
+      ELSE IF(solverNumber==2) THEN
+        !copy current value of concentration_one to another variable
+        CALL Diffusion_PreSolveStoreCurrentSolution(solver,err,error,*999)
+        !compute value of constant source term - evaluated from lamdba*(0.5*(c_1^{t+1}+c_1^{t}) - c_2^{t})
+        !CALL Diffusion_PreSolveGetSourceValue(solver,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a diffusion & advection-diffusion type of a multi physics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("DIFFUSION_ADVECTION_DIFFUSION_PRE_SOLVE")
+    EXITS("DiffusionAdvectionDiffusion_PreSolve")
     RETURN
-999 ERRORSEXITS("DIFFUSION_ADVECTION_DIFFUSION_PRE_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("DiffusionAdvectionDiffusion_PreSolve",err,error)
     RETURN 1
-  END SUBROUTINE DIFFUSION_ADVECTION_DIFFUSION_PRE_SOLVE
+    
+  END SUBROUTINE DiffusionAdvectionDiffusion_PreSolve
       
   !   
   !================================================================================================================================
   !
 
   !>Sets up the diffusion-diffusion problem post solve.
-  SUBROUTINE DIFFUSION_ADVECTION_DIFFUSION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver!<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: pSpecification(3),solverNumber
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("DIFFUSION_ADVECTION_DIFFUSION_POST_SOLVE",ERR,ERROR,*999)
+    ENTERS("DiffusionAdvectionDiffusion_PostSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN 
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a diffusion-advection diffusion problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-              IF(SOLVER%globalNumber==1) THEN
-!              CALL ADVECTION_DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-              ELSE IF(SOLVER%globalNumber==2) THEN
-!              CALL DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-              ENDIF
-            CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-                & " is not valid for a diffusion & advection-diffusion type of a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
+      IF(solverNumber==1) THEN
+        !CALL AdvectionDiffusion_PostSolve(solver,err,error,*999)
+      ELSE IF(solverNumber==2) THEN
+        !CALL Diffusion_PostSolve(solver,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for a diffusion & advection-diffusion type of a multi physics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("DIFFUSION_ADVECTION_DIFFUSION_POST_SOLVE")
+    EXITS("DiffusionAdvectionDiffusion_PostSolve")
     RETURN
-999 ERRORSEXITS("DIFFUSION_ADVECTION_DIFFUSION_POST_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("DiffusionAdvectionDiffusion_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE DIFFUSION_ADVECTION_DIFFUSION_POST_SOLVE
+    
+  END SUBROUTINE DiffusionAdvectionDiffusion_PostSolve
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the diffuion-diffusion problem post solve output data.
-  SUBROUTINE DiffusionAdvectionDiffusion_PostSolveOutputData(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE DiffusionAdvectionDiffusion_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: pSpecification(3)
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("DiffusionAdvectionDiffusion_PostSolveOutputData",ERR,ERROR,*999)
+    ENTERS("DiffusionAdvectionDiffusion_PostSolveOutputData",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a diffusion-advection diffusion problem.", &
-              & err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-                !CALL ADVECTION_DIFFUSION_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-                !CALL DIFFUSION_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-                & " is not valid for a diffusion & advection-diffusion type of a multi physics problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+      !CALL AdvectionDiffusion_PostSolveOutputData(controlLoop,solver,err,error,*999)
+      !CALL Diffusion_PostSolveOutputData(solver,err,error,*999)
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(controlLoop%problem%SPECIFICATION(3),"*",err,error))// &
+        & " is not valid for a diffusion & advection-diffusion type of a multi physics problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
       
     EXITS("DiffusionAdvectionDiffusion_PostSolveOutputData")
     RETURN
-999 ERRORS("DiffusionAdvectionDiffusion_PostSolveOutputData",ERR,ERROR)
+999 ERRORS("DiffusionAdvectionDiffusion_PostSolveOutputData",err,error)
     EXITS("DiffusionAdvectionDiffusion_PostSolveOutputData")
     RETURN 1
     
@@ -646,5 +582,4 @@ CONTAINS
   !================================================================================================================================
   !
 
-
-END MODULE DIFFUSION_ADVECTION_DIFFUSION_ROUTINES
+END MODULE DiffusionAdvectionDiffusionRoutines

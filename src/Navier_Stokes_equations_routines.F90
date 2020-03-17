@@ -135,7 +135,7 @@ MODULE NavierStokesEquationsRoutines
 
   PUBLIC NavierStokes_FiniteElementPreResidualEvaluate
 
-  PUBLIC NavierStokes_ControlLoopPostLoop
+  PUBLIC NavierStokes_PostLoop
 
   PUBLIC NavierStokes_UpdateMultiscaleBoundary
 
@@ -5161,7 +5161,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
       NULLIFY(dependentDomain)
@@ -5173,7 +5173,7 @@ CONTAINS
       NULLIFY(dependentDomainNodes)
       CALL DomainTopology_DomainNodesGet(dependentDomainTopology,dependentDomainNodes,err,error,*999)
       NULLIFY(dependentBasis)
-      CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
       NULLIFY(quadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
       NULLIFY(vectorMatrices)
@@ -5277,7 +5277,7 @@ CONTAINS
         NULLIFY(independentDomainElements)
         CALL DomainTopology_DomainElementsGet(independentDomainTopology,independentDomainElements,err,error,*999)
         NULLIFY(independentBasis)
-        CALL DomainElements_BasisGet(independentDomainElements,elementNumber,independentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(independentDomainElements,elementNumber,independentBasis,err,error,*999)
         NULLIFY(dynamicMatrices)
         CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
         NULLIFY(dynamicMapping)
@@ -5384,7 +5384,7 @@ CONTAINS
             NULLIFY(rowDomainElements)
             CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
             NULLIFY(rowBasis)
-            CALL DomainElements_BasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
             NULLIFY(rowQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
             jacobianGaussWeight=geometricInterpPointMetrics%jacobian*rowQuadratureScheme%gaussWeights(gaussPointIdx)
@@ -5403,7 +5403,7 @@ CONTAINS
                   NULLIFY(columnDomainElements)
                   CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                   NULLIFY(columnBasis)
-                  CALL DomainElements_BasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                  CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
                   NULLIFY(columnQuadratureScheme)
                   CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                     & err,error,*999)
@@ -5545,7 +5545,7 @@ CONTAINS
                     NULLIFY(rowDomainElements)
                     CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
                     NULLIFY(rowBasis)
-                    CALL DomainElements_BasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+                    CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
                     NULLIFY(rowQuadratureScheme)
                     CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
                     jacobianGaussWeight=geometricInterpPointMetrics%jacobian*rowQuadratureScheme%gaussWeights(gaussPointIdx)
@@ -5708,7 +5708,7 @@ CONTAINS
               NULLIFY(rowDomainElements)
               CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
               NULLIFY(rowBasis)
-              CALL DomainElements_BasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
               NULLIFY(rowQuadratureScheme)
               CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
               jacobianGaussWeight=geometricInterpPointMetrics%jacobian*rowQuadratureScheme%gaussWeights(gaussPointIdx)
@@ -5790,7 +5790,7 @@ CONTAINS
             NULLIFY(rowDomainElements)
             CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
             NULLIFY(rowBasis)
-            CALL DomainElements_BasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
             NULLIFY(rowQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
             dXidX=0.0_DP
@@ -5819,7 +5819,7 @@ CONTAINS
                   NULLIFY(columnDomainElements)
                   CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                   NULLIFY(columnBasis)
-                  CALL DomainElements_BasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                  CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
                   NULLIFY(columnQuadratureScheme)
                   CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                     & err,error,*999)
@@ -6178,7 +6178,7 @@ CONTAINS
       NULLIFY(geometricDomainElements)
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
       NULLIFY(dependentDomain)
@@ -6190,7 +6190,7 @@ CONTAINS
       NULLIFY(dependentDomainNodes)
       CALL DomainTopology_DomainNodesGet(dependentDomainTopology,dependentDomainNodes,err,error,*999)
       NULLIFY(dependentBasis)
-      CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
       NULLIFY(quadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
       NULLIFY(vectorMatrices)
@@ -6281,7 +6281,7 @@ CONTAINS
         NULLIFY(independentDomainElements)
         CALL DomainTopology_DomainElementsGet(independentDomainTopology,independentDomainElements,err,error,*999)
         NULLIFY(independentBasis)
-        CALL DomainElements_BasisGet(independentDomainElements,elementNumber,independentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(independentDomainElements,elementNumber,independentBasis,err,error,*999)
         NULLIFY(dynamicMatrices)
         CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
         NULLIFY(dynamicMapping)
@@ -6419,7 +6419,7 @@ CONTAINS
             NULLIFY(rowDomainElements)
             CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
             NULLIFY(rowBasis)
-            CALL DomainElements_BasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
             NULLIFY(rowQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
             jacobianGaussWeight=geometricInterpPointMetrics%jacobian*rowQuadratureScheme%gaussWeights(gaussPointIdx)
@@ -6438,7 +6438,7 @@ CONTAINS
                   NULLIFY(columnDomainElements)
                   CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                   NULLIFY(columnBasis)
-                  CALL DomainElements_BasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                  CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
                   NULLIFY(columnQuadratureScheme)
                   CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                     & err,error,*999)
@@ -6536,7 +6536,7 @@ CONTAINS
             NULLIFY(rowDomainElements)
             CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
             NULLIFY(rowBasis)
-            CALL DomainElements_BasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
             NULLIFY(rowQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
             dXidX(1,1)=0.0_DP
@@ -6564,7 +6564,7 @@ CONTAINS
                 NULLIFY(columnDomainElements)
                 CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
                 NULLIFY(columnBasis)
-                CALL DomainElements_BasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
                 NULLIFY(columnQuadratureScheme)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme, &
                   & err,error,*999)
@@ -6725,7 +6725,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,equationsSetNumber,iterationNumber,maxIterations,outputIteration,timestep
+    INTEGER(INTG) :: equationsSetIdx,equationsSetNumber,inputIteration,iterationNumber,maxIterations,outputIteration,timestep
     REAL(DP) :: absoluteTolerance,currentTime,relativeTolerance,startTime,stopTime,timeIncrement
     LOGICAL :: continueLoop,convergedFlag,fluidEquationsSetFound
     TYPE(ControlLoopType), POINTER :: controlLoop
@@ -6999,7 +6999,7 @@ CONTAINS
     CASE(PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
       IF(solver%globalNumber==2) THEN
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-          & timestep,outputIteration,err,error,*999)
+          & timestep,outputIteration,inputIteration,err,error,*999)
         IF(ASSOCIATED(solver%solverEquations)) THEN
           convergedFlag = .FALSE.
           NULLIFY(solverEquations)
@@ -7142,7 +7142,7 @@ CONTAINS
     INTEGER(INTG) :: componentNumberVelocity,numberOfNodes,numberOfGlobalNodes
     INTEGER(INTG) :: dependentVariableType,independentVariableType,dependentDof,independentDof,userNodeNumber,localNodeNumber
     INTEGER(INTG) :: EquationsSetIndex,SolidNodeNumber,FluidNodeNumber,equationsSetIdx
-    INTEGER(INTG) :: currentTimeLoopIteration,outputIterationNumber,numberOfFittedNodes,computationNode
+    INTEGER(INTG) :: currentTimeLoopIteration,inputIteration,outputIterationNumber,numberOfFittedNodes,computationNode
     REAL(DP) :: currentTime,timeIncrement,displacementValue,VALUE,xiCoordinates(3),timeData,QP,QPP,componentValues(3)
     REAL(DP) :: tCoordinates(20,3),muParam,rhoParam,X(3),FluidGFValue,SolidDFValue,NewLaplaceBoundaryValue,Lref,Tref,Mref
     REAL(DP) :: startTime,stopTime
@@ -7187,7 +7187,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-      & currentTimeLoopIteration,outputIterationNumber,err,error,*999)
+      & currentTimeLoopIteration,outputIterationNumber,inputIteration,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     IF(.NOT.ALLOCATED(problem%specification)) &
@@ -7373,7 +7373,7 @@ CONTAINS
                     DO nodeIdx=1,domainNodes%numberOfNodes
                       elementIdx=domainNodes%nodes(nodeIdx)%surroundingElements(1)
                       NULLIFY(basis)
-                      CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+                      CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
                       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,dependentInterpParameters, &
                         & err,error,*999)
                       elementNodeIdx=0
@@ -7731,7 +7731,7 @@ CONTAINS
         CASE(SOLVER_DYNAMIC_TYPE)
           ! --- D y n a m i c    S o l v e r s ---
           CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-            & currentTimeLoopIteration,outputIterationNumber,err,error,*999)
+            & currentTimeLoopIteration,outputIterationNumber,inputIteration,err,error,*999)
           NULLIFY(solverEquations)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
           NULLIFY(boundaryConditions)
@@ -8547,8 +8547,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,equationsSetIdx,fluidNode,fluidNumberOfDimensions, &
-      & geometricMeshComponent,interfaceNumberOfDimensions,inputType,inputOption,laplaceNumberOfDimensions,localDOF, &
-      & nodeIdx,outputIteration,solidNode,variableIdx,variableType,versionIdx
+      & geometricMeshComponent,inputIteration,interfaceNumberOfDimensions,inputType,inputOption,laplaceNumberOfDimensions, &
+      & localDOF,nodeIdx,outputIteration,solidNode,variableIdx,variableType,versionIdx
     REAL(DP) :: alpha,currentTime,previousSolidNodePosition,solidDelta,solidNodePosition,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: meshDisplacementValues(:)
     LOGICAL :: fluidEquationsSetFound=.FALSE.
@@ -8585,7 +8585,7 @@ CONTAINS
     IF(SIZE(problem%specification,1)<3) &
       & CALL FlagError("Problem specification must have >= 3 entries for a Navier-Stokes problem.",err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime, &
-      & currentIteration,outputIteration,err,error,*999)
+      & currentIteration,outputIteration,inputIteration,err,error,*999)
 
     SELECT CASE(problem%specification(1))
     CASE(PROBLEM_FLUID_MECHANICS_CLASS)
@@ -9173,7 +9173,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,currentLoopIteration,outputIterationNumber
+    INTEGER(INTG) :: equationsSetIdx,currentLoopIteration,inputIteration,outputIterationNumber
     INTEGER(INTG) :: numberOfDimensions,fileNameLength
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     CHARACTER(20) :: file,outputFile                                    
@@ -9234,7 +9234,7 @@ CONTAINS
 
       IF(solver%globalNumber==2) THEN
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime, &
-          & currentLoopIteration,outputIterationNumber,err,error,*999)
+          & currentLoopIteration,outputIterationNumber,inputIteration,err,error,*999)
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
@@ -9288,7 +9288,7 @@ CONTAINS
 
     CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE,PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-        & currentLoopIteration,outputIterationNumber,err,error,*999)
+        & currentLoopIteration,outputIterationNumber,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
@@ -9373,7 +9373,7 @@ CONTAINS
       & PROBLEM_STREE1D0D_ADV_NAVIER_STOKES_SUBTYPE)
 
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-        & currentLoopIteration,outputIterationNumber,err,error,*999)
+        & currentLoopIteration,outputIterationNumber,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
@@ -9544,7 +9544,7 @@ CONTAINS
             userNodeNumber=domainNodes%nodes(nodeIdx)%userNumber
             elementIdx=domainNodes%nodes(nodeNumber)%surroundingElements(1)
             NULLIFY(basis)
-            CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
               & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             elementNodeIdx=0
@@ -10958,7 +10958,7 @@ CONTAINS
       NULLIFY(domainElements1)
       CALL DomainTopology_DomainElementsGet(domainTopology1,domainElements1,err,error,*999)
       NULLIFY(basisVelocity)
-      CALL DomainElements_BasisGet(domainElements1,elementNumber,basisVelocity,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements1,elementNumber,basisVelocity,err,error,*999)
       numberOfXi=basisVelocity%numberOfXi
       NULLIFY(domain2)
       CALL FieldVariable_ComponentDomainGet(dependentVariable,numberOfDependentComponents,domain2,err,error,*999)
@@ -10967,7 +10967,7 @@ CONTAINS
       NULLIFY(domainElements2)
       CALL DomainTopology_DomainElementsGet(domainTopology2,domainElements2,err,error,*999)
       NULLIFY(basisPressure)
-      CALL DomainElements_BasisGet(domainElements2,elementNumber,basisPressure,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements2,elementNumber,basisPressure,err,error,*999)
       
       IF(basisVelocity%interpolationOrder(1).LE.1) THEN
         linearElement = .TRUE.
@@ -11597,7 +11597,7 @@ CONTAINS
       NULLIFY(domainElements)
       CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       NULLIFY(basisVelocity)
-      CALL DomainElements_BasisGet(domainElements,elementNumber,basisVelocity,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basisVelocity,err,error,*999)
       numberOfXi=basisVelocity%numberOfXi
       numberOfElementParameters=basisVelocity%numberOfElementParameters
       NULLIFY(quadratureVelocity)
@@ -11956,7 +11956,7 @@ CONTAINS
       NULLIFY(domainLines1)
       CALL DomainTopology_DomainLinesGet(domainTopology1,domainLines1,err,error,*999)
       NULLIFY(dependentBasis1)
-      CALL DomainElements_BasisGet(domainElements1,elementNumber,dependentBasis1,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements1,elementNumber,dependentBasis1,err,error,*999)
       NULLIFY(domain2)
       CALL FieldVariable_ComponentDomainGet(dependentVariable,numberOfDependentComponents,domain2,err,error,*999)
       NULLIFY(domainTopology2)
@@ -11968,7 +11968,7 @@ CONTAINS
       NULLIFY(domainLines2)
       CALL DomainTopology_DomainLinesGet(domainTopology2,domainLines2,err,error,*999)
       NULLIFY(dependentBasis2)
-      CALL DomainElements_BasisGet(domainElements2,elementNumber,dependentBasis2,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements2,elementNumber,dependentBasis2,err,error,*999)
       NULLIFY(variableField)
       CALL FieldVariable_FieldGet(dependentVariable,variableField,err,error,*999)
       NULLIFY(decomposition)
@@ -12066,9 +12066,9 @@ CONTAINS
               CALL FlagError(localError,err,error,*999)
             END SELECT
             NULLIFY(basis1)
-            CALL DomainFaces_BasisGet(domainFaces1,boundaryNumber,basis1,err,error,*999)
+            CALL DomainFaces_FaceBasisGet(domainFaces1,boundaryNumber,basis1,err,error,*999)
             NULLIFY(basis2)
-            CALL DomainFaces_BasisGet(domainFaces2,boundaryNumber,basis2,err,error,*999)
+            CALL DomainFaces_FaceBasisGet(domainFaces2,boundaryNumber,basis2,err,error,*999)
             CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,boundaryNumber, &
               & geometricInterpParameters,err,error,*999)
             CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12103,9 +12103,9 @@ CONTAINS
               CALL FlagError(localError,err,error,*999)
             END SELECT
             NULLIFY(basis1)
-            CALL DomainLines_BasisGet(domainLines1,boundaryNumber,basis1,err,error,*999)
+            CALL DomainLines_LineBasisGet(domainLines1,boundaryNumber,basis1,err,error,*999)
             NULLIFY(basis2)
-            CALL DomainLines_BasisGet(domainLines2,boundaryNumber,basis2,err,error,*999)
+            CALL DomainLines_LineBasisGet(domainLines2,boundaryNumber,basis2,err,error,*999)
             CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,boundaryNumber, &
               & geometricInterpParameters,err,error,*999)
             CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12462,7 +12462,7 @@ CONTAINS
         NULLIFY(domainFaces)
         CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
         NULLIFY(dependentBasis)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
         decompositionElement=>decompositionElements3D%elements(elementIdx)
 
         ! Note: if CFL tolerance = 0, we'll skip this step, which speeds things up a bit
@@ -12530,7 +12530,7 @@ CONTAINS
             END SELECT
 
             NULLIFY(faceBasis)
-            CALL DomainFaces_BasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
+            CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
             NULLIFY(faceQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(faceBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,faceQuadratureScheme,err,error,*999)
 
@@ -12808,7 +12808,7 @@ CONTAINS
         NULLIFY(domainElements)
         CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
         NULLIFY(dependentBasis2)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
         NULLIFY(domainFaces)
         CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
 
@@ -12874,7 +12874,7 @@ CONTAINS
           face=>decompositionFaces3D%faces(faceNumber)
           IF(.NOT.(face%boundaryFace)) CYCLE
           NULLIFY(faceBasis)
-          CALL DomainFaces_BasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
+          CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
           NULLIFY(faceQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(faceBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,faceQuadratureScheme,err,error,*999)
 
@@ -13025,7 +13025,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfLocalNodes1D,outputIteration
+    INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,inputIteration,numberOfLocalNodes1D,outputIteration
     INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber,MPI_IERROR,timestep,iteration
     INTEGER(INTG) :: boundaryNumber,numberOfBoundaries,numberOfGroupComputationNodes,groupCommunicator
     INTEGER(INTG) :: dependentDof,boundaryConditionType
@@ -13088,7 +13088,7 @@ CONTAINS
         NULLIFY(parentLoop)
         CALL ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*999)
         CALL ControlLoop_CurrentTimeInformationGet(parentLoop,startTime,stopTime,currentTime,timeIncrement, &
-          & timestep,outputIteration,err,error,*999)
+          & timestep,outputIteration,inputIteration,err,error,*999)
       ELSE
         localError="The solver number of "//TRIM(NumberToVString(solverNumber,"*",err,error))// &
          & " does not correspond with the Navier-Stokes solver number for 1D-0D fluid coupling."
@@ -13113,7 +13113,7 @@ CONTAINS
         NULLIFY(parentLoop2)
         CALL ControlLoop_ParentLoopGet(parentLoop,parentLoop2,err,error,*999)
         CALL ControlLoop_CurrentTimeInformationGet(parentLoop,startTime,stopTime,currentTime,timeIncrement, &
-          & timestep,outputIteration,err,error,*999)
+          & timestep,outputIteration,inputIteration,err,error,*999)
       ELSE
         localError="The solver number of "//TRIM(NumberToVString(solverNumber,"*",err,error))// &
          & " does not correspond with the Navier-Stokes solver number for 1D-0D fluid coupling."
@@ -13340,7 +13340,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfLocalNodes1D
-    INTEGER(INTG) :: solver1dNavierStokesNumber,MPI_IERROR,timestep,iteration,outputIteration,maxIterations
+    INTEGER(INTG) :: solver1dNavierStokesNumber,MPI_IERROR,timestep,iteration,inputIteration,outputIteration,maxIterations
     INTEGER(INTG) :: boundaryNumber,boundaryType1D,numberOfBoundaries,numberOfGroupComputationNodes
     INTEGER(INTG) :: solver3dNavierStokesNumber,userNodeNumber,localDof,globalDof,computationNode,groupCommunicator
     REAL(DP) :: normalWave(2),currentTime,startTime,stopTime,timeIncrement
@@ -13382,7 +13382,7 @@ CONTAINS
       CALL ControlLoop_CurrentWhileInformationGet(controlLoop,iteration,maxIterations,absoluteCouplingTolerance, &
         & relativeCouplingTolerance,continueLoop,err,error,*999)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,timestep, &
-        & outputIteration,err,error,*999)
+        & outputIteration,inputIteration,err,error,*999)
       absoluteCouplingTolerance2=absoluteCouplingTolerance
       ! 1D solver & equations pointers
       solver1dNavierStokesNumber=2
@@ -13645,7 +13645,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,i
-    INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber
+    INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber,inputIteration
     INTEGER(INTG) :: branchNumber,numberOfBranches,numberOfGroupComputationNodes,numberOfVersions
     INTEGER(INTG) :: MPI_IERROR,timestep,iteration,outputIteration,groupCommunicator
     REAL(DP) :: couplingTolerance,l2ErrorW(30),wPrevious(2,7),wNavierStokes(2,7),wCharacteristic(2,7),wError(2,7)
@@ -13687,7 +13687,7 @@ CONTAINS
       NULLIFY(solver1DNavierStokes)
       CALL Solvers_SolverGet(solvers,solver1dNavierStokesNumber,solver1DNavierStokes,err,error,*999)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,startTime,stopTime,currentTime,timeIncrement, &
-        & timestep,outputIteration,err,error,*999)
+        & timestep,outputIteration,inputIteration,err,error,*999)
       CALL ControlLoop_IterationNumberGet(controlLoop,iteration,err,error,*999)
     CASE(PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
        & PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE, &
@@ -13704,7 +13704,7 @@ CONTAINS
       CALL Solvers_SolverGet(solvers,solver1DNavierStokesNumber,solver1DNavierStokes,err,error,*999)
       CALL ControlLoop_IterationNumberGet(controlLoop,iteration,err,error,*999)
       CALL ControlLoop_CurrentTimeInformationGet(parentLoop,startTime,stopTime,currentTime,timeIncrement,timestep, &
-        & outputIteration,err,error,*999)
+        & outputIteration,inputIteration,err,error,*999)
     CASE DEFAULT
       localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
         & " is not valid for 1D-0D Navier-Stokes fluid coupling."
@@ -14024,7 +14024,7 @@ CONTAINS
 
         IF(elementExists) THEN
           NULLIFY(dependentBasis)
-          CALL DomainElements_BasisGet(domainElements,localElementNumber,dependentBasis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(domainElements,localElementNumber,dependentBasis,err,error,*999)
           NULLIFY(quadratureScheme)
           CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
 
@@ -14166,7 +14166,7 @@ CONTAINS
   !
 
   !>Runs after each control loop iteration
-  SUBROUTINE NavierStokes_ControlLoopPostLoop(controlLoop,err,error,*)
+  SUBROUTINE NavierStokes_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop.
@@ -14189,7 +14189,7 @@ CONTAINS
     TYPE(SolverMappingType), POINTER :: solverMapping,solverMapping1D,solverMapping2,solverMapping3D
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NavierStokes_ControlLoopPostLoop",err,error,*999)
+    ENTERS("NavierStokes_PostLoop",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
     
@@ -14501,12 +14501,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NavierStokes_ControlLoopPostLoop")
+    EXITS("NavierStokes_PostLoop")
     RETURN
-999 ERRORSEXITS("NavierStokes_ControlLoopPostLoop",err,error)
+999 ERRORSEXITS("NavierStokes_PostLoop",err,error)
     RETURN 1
 
-  END SUBROUTINE NavierStokes_ControlLoopPostLoop
+  END SUBROUTINE NavierStokes_PostLoop
 
   !
   !================================================================================================================================
@@ -14979,7 +14979,7 @@ CONTAINS
         NULLIFY(domainFaces)
         CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
         NULLIFY(dependentBasis)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis,err,error,*999)
         decompositionElement=>decompositionElements3D%elements(elementIdx)
 
         ! Note: if CFL tolerance = 0, we'll skip this step, which speeds things up a bit
@@ -15049,7 +15049,7 @@ CONTAINS
               CALL FlagError(localError,err,error,*999)
             END SELECT
             NULLIFY(faceBasis)
-            CALL DomainFaces_BasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
+            CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
             NULLIFY(faceQuadratureScheme)
             CALL Basis_QuadratureSchemeGet(faceBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,faceQuadratureScheme,err,error,*999)
  
@@ -15193,7 +15193,7 @@ CONTAINS
         NULLIFY(domainFaces)
         CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
         NULLIFY(dependentBasis2)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,dependentBasis2,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,dependentBasis2,err,error,*999)
         decompositionElement=>decompositionElements3D%elements(elementIdx)
    
         ! B o u n d a r y   F a c e    N o r m a l s
@@ -15220,7 +15220,7 @@ CONTAINS
           END SELECT
 
           NULLIFY(faceBasis)
-          CALL DomainFaces_BasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
+          CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,faceBasis,err,error,*999)
           NULLIFY(faceQuadratureScheme)
           CALL Basis_QuadratureSchemeGet(faceBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,faceQuadratureScheme,err,error,*999)
           !Use the geometric field to find the face normal and Jacobian for the face integral
@@ -15430,12 +15430,13 @@ CONTAINS
         !Loop over internal and boundary nodes
         nodes: DO nodeIdx=startNode,stopNode
           nodeNumber=nodesMappings%domainList(nodeIdx)
-          IF(.NOT.domainNodes%nodes(nodeNumber)%boundaryNode) CYCLE nodes
+          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeNumber,boundaryNode,err,error,*999)
+          IF(.NOT.boundaryNode) CYCLE nodes
           !Node is on the boundary. Loop over surrounding faces/lines
           IF(numberOfDimensions == 2) THEN
-            numberOfBoundaries = domainNodes%nodes(nodeNumber)%numberOfNodeLines
+            CALL DomainNodes_NodeNumberOfLinesGet(domainNodes,nodeNumber,numberOfBoundaries,err,error,*999)
           ELSE
-            numberOfBoundaries = domainNodes%nodes(nodeNumber)%numberOfNodeFaces
+            CALL DomainNodes_NodeNumberOfFacesGet(domainNodes,nodeNumber,numberOfBoundaries,err,error,*999)
           ENDIF
           IF(numberOfBoundaries<=0) THEN
             localError="The number of boundaries for node "//TRIM(NumberToVString(nodeNumber,"*",err,error))// &
@@ -15447,14 +15448,14 @@ CONTAINS
           DO boundaryIdx=1,numberOfBoundaries
             boundaryXi=0.0_DP
             IF(numberOfDimensions==2) THEN
-              lineIdx=domainNodes%nodes(nodeNumber)%nodeLines(boundaryIdx)
+              CALL DomainNodes_NodeLineNumberGet(domainNodes,boundaryIdx,nodeNumber,lineIdx,err,error,*999)
               NULLIFY(line)
               CALL DomainLines_LineGet(domainLines,lineIdx,line,err,error,*999)
               NULLIFY(boundaryBasis)
-              CALL DomainLines_BasisGet(domainLines,lineIdx,boundaryBasis,err,error,*999)
+              CALL DomainLines_LineBasisGet(domainLines,lineIdx,boundaryBasis,err,error,*999)
               elementNumber=line%elementNumber
               NULLIFY(velocityBasis)
-              CALL DomainElements_BasisGet(domainElements,elementNumber,velocityBasis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,elementNumber,velocityBasis,err,error,*999)
               !Find node position
               found=.FALSE.
               DO localNodeIdx=1,boundaryBasis%numberOfNodes
@@ -15471,14 +15472,14 @@ CONTAINS
               CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters, &
                 & err,error,*999)
             ELSE
-              faceIdx=domainNodes%nodes(nodeNumber)%nodeFaces(boundaryIdx)
+              CALL DomainNodes_NodeFaceNumberGet(domainNodes,boundaryIdx,nodeNumber,faceIdx,err,error,*999)
               NULLIFY(face)
               CALL DomainFaces_FaceGet(domainFaces,faceIdx,face,err,error,*999)
               NULLIFY(boundaryBasis)
-              CALL DomainFaces_BasisGet(domainFaces,faceIdx,boundaryBasis,err,error,*999)
+              CALL DomainFaces_FaceBasisGet(domainFaces,faceIdx,boundaryBasis,err,error,*999)
               elementNumber=face%elementNumber
               NULLIFY(velocityBasis)
-              CALL DomainElements_BasisGet(domainElements,elementNumber,velocityBasis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,elementNumber,velocityBasis,err,error,*999)
               !Find node position
               found=.FALSE.
               DO localNodeIdx=1,boundaryBasis%numberOfNodes

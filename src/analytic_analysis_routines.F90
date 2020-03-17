@@ -793,9 +793,9 @@ CONTAINS
     CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
     DO elementIdx=1,dependentDomainElements%numberOfElements
       NULLIFY(dependentBasis)
-      CALL DomainElements_BasisGet(dependentDomainElements,elementIdx,dependentBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementIdx,dependentBasis,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementIdx,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementIdx,geometricBasis,err,error,*999)
       NULLIFY(quadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
@@ -818,7 +818,7 @@ CONTAINS
           NULLIFY(domainElements)
           CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
           NULLIFY(basis)
-          CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
           numericalIntegral=0.0_DP
           analyticIntegral=0.0_DP
           SELECT CASE(dependentField%scalings%scalingType)
@@ -858,9 +858,9 @@ CONTAINS
     ENDDO !elementIdx
     DO elementIdx=dependentDomainElements%numberOfElements+1,dependentDomainElements%totalNumberOfElements
       NULLIFY(dependentBasis)
-      CALL DomainElements_BasisGet(dependentDomainElements,elementIdx,dependentBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementIdx,dependentBasis,err,error,*999)
       NULLIFY(geometricBasis)
-      CALL DomainElements_BasisGet(geometricDomainElements,elementIdx,geometricBasis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(geometricDomainElements,elementIdx,geometricBasis,err,error,*999)
       NULLIFY(quadratureScheme)
       CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
@@ -883,7 +883,7 @@ CONTAINS
           NULLIFY(domainElements)
           CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
           NULLIFY(basis)
-          CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
           numericalIntegral=0.0_DP
           analyticIntegral=0.0_DP
           SELECT CASE(dependentField%scalings%scalingType)

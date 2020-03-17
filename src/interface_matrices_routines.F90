@@ -524,7 +524,7 @@ CONTAINS
           CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
           DO interfaceElementIdx=1,columnDomainElements%totalNumberOfElements
             NULLIFY(columnBasis)
-            CALL DomainElements_BasisGet(columnDomainElements,interfaceElementIdx,columnBasis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(columnDomainElements,interfaceElementIdx,columnBasis,err,error,*999)
             !Loop over the column DOFs in the element
             DO columnLocalNodeIdx=1,columnBasis%numberOfNodes
               columnNode=columnDomainElements%elements(interfaceElementIdx)%elementNodes(columnLocalNodeIdx)
@@ -564,7 +564,7 @@ CONTAINS
                     CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
                     domainElement=meshConnectivity%elementConnectivity(interfaceElementIdx,interfaceMeshIdx)%coupledElementNumber
                     NULLIFY(rowBasis)
-                    CALL DomainElements_BasisGet(rowDomainElements,domainElement,rowBasis,err,error,*999)
+                    CALL DomainElements_ElementBasisGet(rowDomainElements,domainElement,rowBasis,err,error,*999)
                     !Loop over the row DOFs in the domain mesh element
                     DO rowLocalNodeIdx=1,rowBasis%numberOfNodes
                       rowNode=rowDomainElements%elements(domainElement)%elementNodes(rowLocalNodeIdx)

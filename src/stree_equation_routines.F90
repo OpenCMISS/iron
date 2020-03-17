@@ -688,8 +688,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: boundaryConditionCheckVariable,componentIdx,currentIteration,derivativeIdx,dependentDof, &
-      & dependentVariableType,m,nodeIdx,numberOfComponents,numberOfNodes,numberOfNodeDerivatives,numberOfVariables, &
-      & numberOfVersions,outputIteration,pSpecification(3),userNodeNumber,variableIdx,versionIdx
+      & dependentVariableType,inputIteration,m,nodeIdx,numberOfComponents,numberOfNodes,numberOfNodeDerivatives, &
+      & numberOfVariables,numberOfVersions,outputIteration,pSpecification(3),userNodeNumber,variableIdx,versionIdx
     REAL(DP) :: currentTime,flow,startTime,stopTime,timeIncrement
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
@@ -718,7 +718,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,err,error,*999)
+      & outputIteration,inputIteration,err,error,*999)
     NULLIFY(parentLoop)
     CALL ControlLoop_ParentLoopGet(controlLoop,parentLoop,err,error,*999)
     NULLIFY(navierStokesLoop)

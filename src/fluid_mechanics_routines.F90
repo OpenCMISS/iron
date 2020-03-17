@@ -56,7 +56,7 @@ MODULE FluidMechanicsRoutines
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE DarcyEquationsRoutines
-  USE DARCY_PRESSURE_EQUATIONS_ROUTINES
+  USE DarcyPressureEquationsRoutines
   USE EquationsSetAccessRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
@@ -88,7 +88,7 @@ MODULE FluidMechanicsRoutines
 
   PUBLIC FluidMechanics_BoundaryConditionsAnalyticCalculate
 
-  PUBLIC FluidMechanics_ControlLoopPreLoop,FluidMechanics_ControlLoopPostLoop
+  PUBLIC FluidMechanics_PreLoop,FluidMechanics_PostLoop
   
   PUBLIC FluidMechanics_EquationsSetSolutionMethodSet
 
@@ -860,7 +860,7 @@ CONTAINS
   !
 
   !>Executes before each loop of a control loop, ie before each time step for a time loop
-  SUBROUTINE FluidMechanics_ControlLoopPreLoop(controlLoop,err,error,*)
+  SUBROUTINE FluidMechanics_PreLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -870,7 +870,7 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FluidMechanics_ControlLoopPreLoop",err,error,*999)
+    ENTERS("FluidMechanics_PreLoop",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("ControlLoop is not associated.",err,error,*999)
     NULLIFY(problem)
@@ -903,19 +903,19 @@ CONTAINS
       !do nothing
     END SELECT
 
-    EXITS("FluidMechanics_ControlLoopPreLoop")
+    EXITS("FluidMechanics_PreLoop")
     RETURN
-999 ERRORSEXITS("FluidMechanics_ControlLoopPreLoop",err,error)
+999 ERRORSEXITS("FluidMechanics_PreLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE FluidMechanics_ControlLoopPreLoop
+  END SUBROUTINE FluidMechanics_PreLoop
 
   !
   !================================================================================================================================
   !
 
   !>Executes after each loop of a control loop, ie after each time step for a time loop
-  SUBROUTINE FluidMechanics_ControlLoopPostLoop(controlLoop,err,error,*)
+  SUBROUTINE FluidMechanics_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
@@ -925,7 +925,7 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FluidMechanics_ControlLoopPostLoop",err,error,*999)
+    ENTERS("FluidMechanics_PostLoop",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("ControlLoop is not associated.",err,error,*999)
     NULLIFY(problem)
@@ -942,7 +942,7 @@ CONTAINS
       CASE(PROBLEM_STOKES_EQUATION_TYPE)
         !do nothing
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NavierStokes_ControlLoopPostLoop(controlLoop,err,error,*999)
+        CALL NavierStokes_PostLoop(controlLoop,err,error,*999)
       CASE(PROBLEM_DARCY_EQUATION_TYPE)
         !do nothing
       CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
@@ -959,12 +959,12 @@ CONTAINS
       !do nothing
     END SELECT
 
-    EXITS("FluidMechanics_ControlLoopPostLoop")
+    EXITS("FluidMechanics_PostLoop")
     RETURN
-999 ERRORSEXITS("FluidMechanics_ControlLoopPostLoop",err,error)
+999 ERRORSEXITS("FluidMechanics_PostLoop",err,error)
     RETURN 1
     
-  END SUBROUTINE FluidMechanics_ControlLoopPostLoop
+  END SUBROUTINE FluidMechanics_PostLoop
 
   !
   !================================================================================================================================

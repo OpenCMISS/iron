@@ -1340,9 +1340,9 @@ CONTAINS
           CALL FieldGeometricParameters_LineLengthGet(geometricParameters,lineNumber,elementLength,err,error,*999)
           !Loop over the nodes on this (surrounding) element
           NULLIFY(dependentBasis)
-          CALL DomainElements_BasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
           NULLIFY(materialBasis)
-          CALL DomainElements_BasisGet(materialsDomainElements,elementNumber,materialsBasis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(materialsDomainElements,elementNumber,materialsBasis,err,error,*999)
           CALL Basis_NumberOfNodesGet(dependentBasis,numberOfElementNodes,err,error,*999)
           DO elementNodeIdx=1,numberOfElementNodes
             CALL DomainElements_ElementNodeGet(dependentDomainElements,elementNodeIdx,elementNumber,elementNodeNumber, &

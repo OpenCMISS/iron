@@ -9272,7 +9272,7 @@ CONTAINS
       & variableGlobalDOF,variableDOF,equationsMatrixNumber,dependentVariableType, &
       & equationsColumnNumber,dirichletIdx, &
       & interfaceConditionIdx,interfaceMatrixIdx,interfaceColumnNumber, &
-      & interfaceVariableType,numberOfInterfaceMatrices
+      & interfaceVariableType,numberOfInterfaceMatrices, inputIteration
     INTEGER(INTG) :: currentIteration,outputIteration
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: dampingMatrixCoefficient,deltaT,dofValue,dynamicValue,firstUpdateFactor,residualValue, &
@@ -9351,7 +9351,7 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime, &
-      & currentIteration,outputIteration,err,error,*999)
+      & currentIteration,outputIteration,inputIteration,err,error,*999)
     
     deltaT=dynamicSolver%timeIncrement
     SELECT CASE(dynamicSolver%degree)

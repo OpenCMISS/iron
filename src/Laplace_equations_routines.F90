@@ -493,7 +493,7 @@ CONTAINS
     NULLIFY(geometricDomainElements)
     CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
     NULLIFY(geometricBasis)
-    CALL DomainElements_BasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
+    CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
     CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
 
     NULLIFY(dependentDecomposition)
@@ -505,7 +505,7 @@ CONTAINS
     NULLIFY(dependentColDomainElements)
     CALL DomainTopology_DomainElementsGet(dependentColDomainTopology,dependentColDomainElements,err,error,*999)
     NULLIFY(dependentColBasis)
-    CALL DomainElements_BasisGet(dependentColDomainElements,elementNumber,dependentColBasis,err,error,*999)
+    CALL DomainElements_ElementBasisGet(dependentColDomainElements,elementNumber,dependentColBasis,err,error,*999)
     
     NULLIFY(rowsVariable)
     CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
@@ -628,7 +628,7 @@ CONTAINS
               NULLIFY(colsBasis)
               CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
               CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-              CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
+              CALL Basis_NumbexfrOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
               DO columnElementParameterIdx=1,numberOfColsElementParameters
                 columnElementDOFIdx=columnElementDOFIdx+1
                 DO xiIdx1=1,numberOfXi
@@ -681,7 +681,8 @@ CONTAINS
     ENDDO !gaussPointIdx
           
     !Scale factor adjustment
-    IF(dependentField%scalings%scalingType/=FIELD_NO_SCALING) THEN
+    CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
+    IF(scalingType/=FIELD_NO_SCALING) THEN
       NULLIFY(rowsInterpParameters)
       CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsInterpParameters, &
         & err,error,*999)
@@ -1611,11 +1612,14 @@ CONTAINS
     ENTERS("Laplace_ProblemSpecificationSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(ALLOCATED(problem%specification)) &
-      & CALL FlagError("Problem specification is already allocated.",err,error,*999)
-    IF(SIZE(problemSpecification,1)<3) &
-      & CALL FlagError("Laplace problem specification must have three entries.",err,error,*999)
-    
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+     
     problemSubtype=problemSpecification(3)
     SELECT CASE(problemSubtype)
     CASE(PROBLEM_STANDARD_LAPLACE_SUBTYPE)

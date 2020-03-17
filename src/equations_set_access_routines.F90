@@ -104,7 +104,6 @@ MODULE EquationsSetAccessRoutines
   !Bioelectrics class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE=1
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE=2
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE=3
 
   !Modal class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE=1
@@ -257,12 +256,10 @@ MODULE EquationsSetAccessRoutines
   !  Wave equation
   !  Diffusion equation
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GENERALISED_DIFFUSION_SUBTYPE=1
-  !INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE=2
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE=3
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE=4
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE=5
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GENERALISED_ALE_DIFFUSION_SUBTYPE=6
-  !INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE=7
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE=8
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE=9
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE=10
@@ -302,21 +299,22 @@ MODULE EquationsSetAccessRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE=15
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE=16
   !Subtypes for single-compartment coupled transport (advection-diffusion coupled to diffusion)
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE=17
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE=17
   !Subtypes for multi-compartment coupled transport (advection-diffusion equation)
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE=18
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE=19
   !Bioelectrics class
   !  Monodomain equation
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE=1
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE=2
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_CELLML_SUBTYPE=1
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE=2
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE=3
   !  Bidomain equation
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE=1
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE=2
   !Modal class
   !Multi physics (subtype numbers must be different from Darcy ones)
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE=101
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE=111
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE=111
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE=141
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE=142
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE=143
@@ -584,18 +582,6 @@ MODULE EquationsSetAccessRoutines
 
   !Interfaces
  
-  INTERFACE EQUATIONS_SET_ANALYTIC_TIME_GET
-    MODULE PROCEDURE EquationsSet_AnalyticTimeGet
-  END INTERFACE EQUATIONS_SET_ANALYTIC_TIME_GET
-  
-  INTERFACE EQUATIONS_SET_ANALYTIC_TIME_SET
-    MODULE PROCEDURE EquationsSet_AnalyticTimeSet
-  END INTERFACE EQUATIONS_SET_ANALYTIC_TIME_SET
-  
-  INTERFACE EQUATIONS_SET_EQUATIONS_GET
-    MODULE PROCEDURE EquationsSet_EquationsGet
-  END INTERFACE EQUATIONS_SET_EQUATIONS_GET
-  
   INTERFACE EquationsSet_LabelGet
     MODULE PROCEDURE EquationsSet_LabelGetC
     MODULE PROCEDURE EquationsSet_LabelGetVS
@@ -605,10 +591,6 @@ MODULE EquationsSetAccessRoutines
     MODULE PROCEDURE EquationsSet_LabelSetC
     MODULE PROCEDURE EquationsSet_LabelSetVS
   END INTERFACE EquationsSet_LabelSet
-
-  INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
-    MODULE PROCEDURE EquationsSet_UserNumberFind
-  END INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
 
   PUBLIC EQUATIONS_SET_NO_CLASS
 
@@ -734,7 +716,7 @@ MODULE EquationsSetAccessRoutines
     & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
     & EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
     & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
-    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE
+    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE
 
   PUBLIC EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE,EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE
 
@@ -742,7 +724,7 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE,EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE
 
-  PUBLIC EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, &
+  PUBLIC EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE, &
     & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
     & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE, &
     & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE
@@ -850,8 +832,6 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EquationsSet_AnalyticTimeGet,EquationsSet_AnalyticTimeSet
 
-  PUBLIC EQUATIONS_SET_ANALYTIC_TIME_GET,EQUATIONS_SET_ANALYTIC_TIME_SET
-
   PUBLIC EquationsSet_AssertIsFinished,EquationsSet_AssertNotFinished
   
   PUBLIC EquationsSet_AssertAnalyticIsCreated,EquationsSet_AssertAnalyticNotCreated
@@ -894,8 +874,6 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EquationsSet_EquationsGet
 
-  PUBLIC EQUATIONS_SET_EQUATIONS_GET
-  
   PUBLIC EquationsSet_EquationsSetsGet
 
   PUBLIC EquationsSet_EquationsSetFieldGet
@@ -905,6 +883,8 @@ MODULE EquationsSetAccessRoutines
   PUBLIC EquationsSet_FibreFieldGet
   
   PUBLIC EquationsSet_GeometricFieldGet
+
+  PUBLIC EquationsSet_GlobalNumberGet
 
   PUBLIC EquationsSet_IndependentExists
   
@@ -926,6 +906,8 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EquationsSet_OutputTypeGet
 
+  PUBLIC EquationsSet_RegionCheck
+
   PUBLIC EquationsSet_RegionGet
 
   PUBLIC EquationsSet_SolutionMethodGet
@@ -945,8 +927,6 @@ MODULE EquationsSetAccessRoutines
   PUBLIC EquationsSet_TimesGet
 
   PUBLIC EquationsSet_UserNumberFind
-
-  PUBLIC EQUATIONS_SET_USER_NUMBER_FIND
 
 CONTAINS
 
@@ -2722,6 +2702,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the global number for an equations set.
+  SUBROUTINE EquationsSet_GlobalNumberGet(equationsSet,globalNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the global number for
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On return, the equations set global number
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_GlobalNumberGet",err,error,*999)
+
+#ifdef PRE_CHECKS
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif
+    
+    globallNumber=equationsSet%globalNumber
+     
+    EXITS("EquationsSet_GlobalNumberGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_GlobalNumberGet",err,error)
+    RETURN 1
+    
+END SUBROUTINE EquationsSet_GlobalNumberGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations independent for an equations set if it exists.
   SUBROUTINE EquationsSet_IndependentExists(equationsSet,equationsIndependent,err,error,*)
 
@@ -3190,6 +3199,47 @@ CONTAINS
     
   END SUBROUTINE EquationsSet_OutputTypeGet
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that the equations set is defined in the specified region.
+  SUBROUTINE EquationsSet_RegionCheck(equationsSet,region,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to check the region for
+    TYPE(RegionType), POINTER :: region !<The region to check that the equations set is in.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(RegionType), POINTER :: equationsSetRegion
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_RegionCheck",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+#endif    
+        
+    NULLIFY(equationsSetRegion)
+    CALL EquationsSet_RegionGet(equationsSet,fieldRegion,err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSetRegion,region)) THEN
+      localError="Equations set number "//TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))// &
+        & " is defined in region number "//TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))// &
+        & " which does not correspond to the required region number of "// &
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+        
+    EXITS("EquationsSet_RegionCheck")
+    RETURN
+999 ERRORSEXITS("EquationsSet_RegionCheck",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_RegionCheck
+
   !
   !================================================================================================================================
   !

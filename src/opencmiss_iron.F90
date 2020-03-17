@@ -60,7 +60,7 @@ MODULE OpenCMISS_Iron
  USE BaseRoutines
  USE BasisRoutines
  USE BasisAccessRoutines
- USE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
+ USE BioelectricFiniteElasticityRoutines
  USE BoundaryConditionsRoutines
  USE CellMLAccessRoutines
  USE Cmiss
@@ -95,7 +95,7 @@ MODULE OpenCMISS_Iron
  USE FIELDML_UTIL_ROUTINES
 #endif
  USE FIELD_IO_ROUTINES
- USE FINITE_ELASTICITY_ROUTINES
+ USE FiniteElasticityRoutines
  USE GeneratedMeshRoutines
  USE GeneratedMeshAccessRoutines
  USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
@@ -2770,8 +2770,6 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE = EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE = &
     & EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE = &
-    & EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation equations Strang Splitting set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
 
   !>@}
   !> \addtogroup OpenCMISS_EquationsSetSubtypes OpenCMISS::Iron::EquationsSet::Subtypes
@@ -2934,17 +2932,13 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_DIFFUSION_SUBTYPE = EQUATIONS_SET_GENERALISED_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE = &
     & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE = &
     & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_ALE_DIFFUSION_SUBTYPE = EQUATIONS_SET_GENERALISED_ALE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = &
     & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE = &
@@ -3027,8 +3021,8 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LIN_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
     & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_DIFFUSION_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled diffusion & advection-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE = &
     & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE !<Multi-component transport advection-diffusion equations set \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE = &
@@ -3043,8 +3037,9 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE !Standard Reaction Diffusion without order splitting, and constant source \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
 
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE= EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE= EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_CELLML_SUBTYPE= EQUATIONS_SET_MONODOMAIN_CELLML_SUBTYPE !<CellML monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE= EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE !<Bueno-Orovio monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE= EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<Ten Tusscher 2006 monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE = EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE !<First bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE = EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE !<Second bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
@@ -3074,8 +3069,8 @@ MODULE OpenCMISS_Iron
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE = &
     & EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled diffusion-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE =  &
     & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE !<Standard Monodomain Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE =  &
@@ -3355,8 +3350,7 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE,CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE, &
     & CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE, &
     & CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE, &
-    & CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE,CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE, &
-    & CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE
+    & CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE,CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE
 
   PUBLIC CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE, &
     & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE, CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE, &
@@ -3420,10 +3414,10 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE, &
     & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
     & CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GENERALISED_DIFFUSION_SUBTYPE, &
     & CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE, &
     & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GENERALISED_ALE_DIFFUSION_SUBTYPE, &
     & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE, &
     & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE, &
     & CMFE_EQUATIONS_SET_ADVECTION_SUBTYPE, &
@@ -3450,6 +3444,7 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE, &
     & CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE, &
     & CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE,CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MONODOMAIN_CELLML_SUBTYPE,&
     & CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE,&
     & CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE  ,&
     & CMFE_EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE, &
@@ -3461,8 +3456,8 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE, &
     & CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE, &
     & CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COUPLED_DIFFUSION_ADVEC_DIFF_SUBTYPE, &
     & CMFE_EQUATIONS_SET_BURGERS_SUBTYPE,CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE, &
     & CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE, &
     & CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
@@ -6278,8 +6273,6 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_FLUID_PRESSURE_TYPE = PROBLEM_FINITE_ELASTICITY_FLUID_PRESSURE_TYPE !<Finite elasticity fluid pressure problem type \see OpenCMISS_ProblemTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE = PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE !<Monodomain finite elasticity problem type \see OpenCMISS_ProblemTypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE = &
-   & PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
  !>@}
  !> \addtogroup OpenCMISS_ProblemSubtypes OpenCMISS::Iron::Problem::Subtypes
  !> \brief Problem Subtypes.
@@ -6325,13 +6318,10 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE = PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE !<Nonlinear source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE = PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE = PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE !<No source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-   & PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_DIFFUSION_SUBTYPE = PROBLEM_NONLINEAR_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ALE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_ALE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_ALE_DIFFUSION_SUBTYPE = PROBLEM_NONLINEAR_ALE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
    & PROBLEM_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
@@ -6386,10 +6376,10 @@ MODULE OpenCMISS_Iron
    & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE !<Quasistatic Elasticity Transient Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE = &
    & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE !<Quasistatic Elasticity Transient Darcy Material Solve problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
-   & PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE = &
-   & PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE = &
+   & PROBLEM_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled diffusion-diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE = &
+   & PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled diffusion & advection-diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE = &
    & PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE !<Standard multi-compartment transport problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE = &
@@ -6430,10 +6420,9 @@ MODULE OpenCMISS_Iron
 
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_DIRECT_MODEL_SUBTYPE = PROBLEM_MONODOMAIN_DIRECT_MODEL_SUBTYPE !<Monodomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Bidomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE !<Bidomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE = PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE !<Generalised Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE = PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<Generalised Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments \see OpenCMISS_ProblemSubtypes,OpenCMISS
@@ -6519,11 +6508,9 @@ MODULE OpenCMISS_Iron
 
  PUBLIC CMFE_PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE,CMFE_PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE
 
- PUBLIC CMFE_PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE,CMFE_PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE, &
-   & CMFE_PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE
+ PUBLIC CMFE_PROBLEM_LINEAR_DIFFUSION_SUBTYPE,CMFE_PROBLEM_NONLINEAR_DIFFUSION_SUBTYPE
 
- PUBLIC CMFE_PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE, &
-   & CMFE_PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE
+ PUBLIC CMFE_PROBLEM_LINEAR_ALE_DIFFUSION_SUBTYPE,CMFE_PROBLEM_NONLINEAR_ALE_DIFFUSION_SUBTYPE
 
  PUBLIC CMFE_PROBLEM_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE,CMFE_PROBLEM_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
    & CMFE_PROBLEM_NONLINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE
@@ -6552,7 +6539,7 @@ MODULE OpenCMISS_Iron
 
  PUBLIC CMFE_PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, CMFE_PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
    & CMFE_PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE, &
-   & CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE, &
+   & CMFE_PROBLEM_COUPLED_DIFFUSION_DIFFUSION_SUBTYPE, CMFE_PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE, &
    & CMFE_PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE,CMFE_PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
    & CMFE_PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
    & CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
@@ -26158,7 +26145,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultDistanceGet(dataProjection,dataPointUserNumber,ProjectionDistance,err,error,*999)
+    CALL DataProjection_ResultDistanceUserGet(dataProjection,dataPointUserNumber,ProjectionDistance,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultDistanceGetNumber")
     RETURN
@@ -26186,7 +26173,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultDistanceGetObj",err,error,*999)
 
-    CALL DataProjection_ResultDistanceGet(dataProjection%dataProjection,dataPointUserNumber,projectionDistance, &
+    CALL DataProjection_ResultDistanceUserGet(dataProjection%dataProjection,dataPointUserNumber,projectionDistance, &
       & err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultDistanceGetObj")
@@ -26233,7 +26220,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultElementNumberGet(dataProjection,dataPointUserNumber,projectionElementNumber,err,error,*999)
+    CALL DataProjection_ResultElementNumberUserGet(dataProjection,dataPointUserNumber,projectionElementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementNumberGetNumber")
     RETURN
@@ -26261,7 +26248,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultElementNumberGetObj",err,error,*999)
 
-    CALL DataProjection_ResultElementNumberGet(dataProjection%dataProjection,dataPointUserNumber,projectionElementNumber, &
+    CALL DataProjection_ResultElementNumberUserGet(dataProjection%dataProjection,dataPointUserNumber,projectionElementNumber, &
       & err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementNumberGetObj")
@@ -26309,7 +26296,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultElementFaceNumberGet(dataProjection,dataPointUserNumber,projectionElementFaceNumber,err, &
+    CALL DataProjection_ResultElementFaceNumberUserGet(dataProjection,dataPointUserNumber,projectionElementFaceNumber,err, &
       & error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementFaceNumberGetNumber")
@@ -26339,7 +26326,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultElementFaceNumberGetObj",err,error,*999)
 
-    CALL DataProjection_ResultElementFaceNumberGet(dataProjection%dataProjection,dataPointUserNumber, &
+    CALL DataProjection_ResultElementFaceNumberUserGet(dataProjection%dataProjection,dataPointUserNumber, &
       & projectionElementFaceNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementFaceNumberGetObj")
@@ -26387,7 +26374,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultElementLineNumberGet(dataProjection,dataPointUserNumber,projectionElementLineNumber,err, &
+    CALL DataProjection_ResultElementLineNumberUserGet(dataProjection,dataPointUserNumber,projectionElementLineNumber,err, &
       & error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementLineNumberGetNumber")
@@ -26417,7 +26404,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultElementLineNumberGetObj",err,error,*999)
 
-    CALL DataProjection_ResultElementLineNumberGet(dataProjection%dataProjection,dataPointUserNumber, &
+    CALL DataProjection_ResultElementLineNumberUserGet(dataProjection%dataProjection,dataPointUserNumber, &
       & projectionElementLineNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementLineNumberGetObj")
@@ -26465,7 +26452,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultExitTagGet(dataProjection,dataPointUserNumber,projectionExitTag,err,error,*999)
+    CALL DataProjection_ResultExitTagUserGet(dataProjection,dataPointUserNumber,projectionExitTag,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultExitTagGetNumber")
     RETURN
@@ -26492,7 +26479,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultExitTagGetObj",err,error,*999)
 
-    CALL DataProjection_ResultExitTagGet(dataProjection%dataProjection,dataPointUserNumber,projectionExitTag, &
+    CALL DataProjection_ResultExitTagUserGet(dataProjection%dataProjection,dataPointUserNumber,projectionExitTag, &
       & err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultExitTagGetObj")
@@ -26762,7 +26749,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
+    CALL DataProjection_ResultXiUserGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultXiGetNumber")
     RETURN
@@ -26789,7 +26776,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultXiGetObj",err,error,*999)
 
-    CALL DataProjection_ResultXiGet(dataProjection%dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
+    CALL DataProjection_ResultXiUserGet(dataProjection%dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultXiGetObj")
     RETURN
@@ -26835,7 +26822,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultXiSet(dataProjection,dataPointUserNumber,ProjectionXi,err,error,*999)
+    CALL DataProjection_ResultXiUserSet(dataProjection,dataPointUserNumber,ProjectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultXiSetNumber")
     RETURN
@@ -26862,7 +26849,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultXiSetObj",err,error,*999)
 
-    CALL DataProjection_ResultXiSet(dataProjection%dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
+    CALL DataProjection_ResultXiUserSet(dataProjection%dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultXiSetObj")
     RETURN
@@ -26908,7 +26895,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ResultProjectionVectorGet(dataProjection,dataPointUserNumber,projectionVector,err,error,*999)
+    CALL DataProjection_ResultProjectionVectorUserGet(dataProjection,dataPointUserNumber,projectionVector,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber")
     RETURN
@@ -26936,7 +26923,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ResultProjectionVectorGetObj",err,error,*999)
 
-    CALL DataProjection_ResultProjectionVectorGet(dataProjection%dataProjection,dataPointUserNumber, &
+    CALL DataProjection_ResultProjectionVectorUserGet(dataProjection%dataProjection,dataPointUserNumber, &
       & projectionVector,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionVectorGetObj")
@@ -27602,7 +27589,7 @@ CONTAINS
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_ElementSetInterfaceNumber(contextUserNumber,parentRegionUserNumber,interfaceUserNumber, &
-    & dataPointsUserNumber,dataProjectionUserNumber,dataPointNumber,elementNumber,err)
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,elementNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ElementSetInterfaceNumber)
 
     !Argument variables
@@ -27611,7 +27598,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
-    INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The data point number to set xi position for
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to set xi position for
     INTEGER(INTG), INTENT(IN) :: elementNumber !<the element number to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -27636,7 +27623,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ElementSet(dataProjection,dataPointNumber,elementNumber,err,error,*999)
+    CALL DataProjection_ElementUserSet(dataProjection,dataPointUserNumber,elementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ElementSetInterfaceNumber")
     RETURN
@@ -27653,7 +27640,7 @@ CONTAINS
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_ElementSetRegionNumber(contextUserNumber,regionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,dataPointNumber,elementNumber,err)
+    & dataProjectionUserNumber,dataPointUserNumber,elementNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ElementSetRegionNumber)
 
     !Argument variables
@@ -27661,7 +27648,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to set starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
-    INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The data point number to set xi position for
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to set xi position for
     INTEGER(INTG), INTENT(IN) :: elementNumber !<the element number to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -27683,7 +27670,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ElementSet(dataProjection,dataPointNumber,elementNumber,err,error,*999)
+    CALL DataProjection_ElementUserSet(dataProjection,dataPointUserNumber,elementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ElementSetRegionNumber")
     RETURN
@@ -27698,7 +27685,7 @@ CONTAINS
   !
 
   !>Sets/changes the starting xi of data projection identified an object.
-  SUBROUTINE cmfe_DataProjection_ElementSetObj(dataProjection,dataPointNumber,elementNumber,err)
+  SUBROUTINE cmfe_DataProjection_ElementSetObj(dataProjection,dataPointUserNumber,elementNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ElementSetObj)
 
     !Argument variables
@@ -27710,7 +27697,7 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ElementSetObj",err,error,*999)
 
-    CALL DataProjection_ElementSet(dataProjection%dataProjection,dataPointNumber,elementNumber,err,error,*999)
+    CALL DataProjection_ElementUserSet(dataProjection%dataProjection,dataPointUserNumber,elementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ElementSetObj")
     RETURN

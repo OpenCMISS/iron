@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Vijay Rajagopal,Chris Bradley
+!> Contributor(s): Vijay Rajagopal, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,7 +42,7 @@
 !>
 
 !>This module handles all reaction diffusion equation routines.
-MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
+MODULE ReactionDiffusionEquationsRoutines
 
   USE BaseRoutines
   USE BasisRoutines
@@ -107,13 +107,13 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   
   PUBLIC ReactionDiffusion_PreSolve
   
-  PUBLIC REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP
+  PUBLIC ReactionDiffusion_ProblemSetup
 
   PUBLIC ReactionDiffusion_ProblemSpecificationSet
 
   PUBLIC ReactionDiffusion_PostSolve
 
-  PUBLIC REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP
+  PUBLIC ReactionDiffusion_PostLoop
 
 
 CONTAINS
@@ -123,481 +123,332 @@ CONTAINS
   !
 
   !>Sets up the reaction diffusion equation type of a classical equations set class.
-  SUBROUTINE ReactionDiffusion_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
+  SUBROUTINE ReactionDiffusion_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a bioelectric domain equation on.
-    TYPE(EquationsSetSetupType), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to setup a bioelectric domain equation on.
+    TYPE(EquationsSetSetupType), INTENT(INOUT) :: equationsSetSetup !<The equations set setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,DIMENSION_MULTIPLIER,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE, &
-      & numberOfDimensions,NUMBER_OF_MATERIALS_COMPONENTS,GEOMETRIC_MESH_COMPONENT
-    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
+    INTEGER(INTG) :: componentIdx,dimensionMultiplier,geometricComponentNumber,geometricScalingType, &
+      & numberOfDimensions,numberOfMaterialsComponents,geometricMeshComponent
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsSetMaterialsType), POINTER :: EQUATIONS_MATERIALS
+    TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(FieldType), POINTER :: geometricField
+    TYPE(RegionType), POINTER :: regionType
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("ReactionDiffusion_EquationsSetSetup",err,error,*999)
 
-    NULLIFY(EQUATIONS)
-    NULLIFY(vectorMapping)
-    NULLIFY(vectorMatrices)
-    NULLIFY(GEOMETRIC_DECOMPOSITION)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE, &
+      & EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, &
+      & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
+        & " is not valid for a reaction-diffusion type of a classical field equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a reaction-diffusion type equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET_SETUP%setupType)
-      CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-        CASE(EQUATIONS_SET_SETUP_START_ACTION)
-          CALL ReactionDiffusion_EquationsSetSolutionMethodSet(EQUATIONS_SET, &
-           & EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
-        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+    NULLIFY(region)
+    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+    
+    SELECT CASE(equationsSetSetup%setupType)
+    CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
+      !-----------------------------------------------------------------
+      ! I n i t i a l   s e t u p
+      !-----------------------------------------------------------------
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(equationsSet_SETUP_START_ACTION)
+        CALL ReactionDiffusion_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!Todo: CHECK VALID SETUP
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction diffusion domain equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
-        !\todo Check geometric dimension
-      CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-        CASE(EQUATIONS_SET_SETUP_START_ACTION)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, &
-           & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
-            IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion domain equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
+      !-----------------------------------------------------------------
+      ! G e o m e t r i c   f i e l d
+      !-----------------------------------------------------------------
+      !\todo Check geometric dimension
+    CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
+      !-----------------------------------------------------------------
+      ! D e p e n d e n t   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, &
+          & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
+          IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
               !Create the auto created dependent field
-              CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & dependentField,err,error,*999)
-              CALL Field_LabelSet(EQUATIONS_SET%DEPENDENT%dependentField,"Dependent Field",err,error,*999)
-              CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL Field_DecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,GEOMETRIC_DECOMPOSITION, &
-                & err,error,*999)
-              CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,EQUATIONS_SET%GEOMETRY% &
-                & geometricField,err,error,*999)
-              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,2,err,error,*999)
-              CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
-              !CALL Field_VariableLabelSet
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_U_VARIABLE_TYPE,1, &
-                & err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                & err,error,*999)
-              !Default to the geometric interpolation setup
-              CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
-                & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_U_VARIABLE_TYPE,1, &
-                & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                & GEOMETRIC_MESH_COMPONENT,err,error,*999)
-              SELECT CASE(EQUATIONS_SET%solutionMethod)
-              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField, &
-                  & FIELD_U_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%DEPENDENT%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                !Default the scaling to the geometric field scaling
-                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%dependentField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            ELSE
-              !Check the user specified field
-              CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
-              CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
-                & err,error,*999)
-              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
-                & err,error,*999)
-              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-              CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,err,error,*999)
-              SELECT CASE(EQUATIONS_SET%solutionMethod)
-              CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",err,error,*999)
-              CASE DEFAULT
-                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            ENDIF
-          CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-              & " is invalid for a reaction diffusion equation set class."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-          IF(EQUATIONS_SET%DEPENDENT%dependentFieldAutoCreated) THEN
-            CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%dependentField,err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction diffusion equation"
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-        CASE(EQUATIONS_SET_SETUP_START_ACTION)
-          CALL EquationsSet_AssertDependentIsFinished(EQUATIONS_SET,err,error,*999)
-          EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-          IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-            IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
-              !Create the auto created materials field
-              CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                & materialsField,err,error,*999)
-              CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-              CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL Field_DecompositionSetAndLock(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_DECOMPOSITION, &
-                & err,error,*999)
-              CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%materialsField,EQUATIONS_SET%GEOMETRY% &
-                & geometricField,err,error,*999)
-              CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_MATERIALS%materialsField,1,err,error,*999)
-              CALL Field_VariableTypesSetAndLock(EQUATIONS_MATERIALS%materialsField,[FIELD_U_VARIABLE_TYPE], &
-                & err,error,*999)
-              CALL Field_DimensionSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,err,error,*999)
-              CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                & numberOfDimensions,err,error,*999)
-              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
-                !Reaction Diffusion. Materials field components are 1 diffusion coeff for each dimension
-                !plus one for the storage coefficient in alpha(delC/delt) = Div(-kgradC)+cellmlRC
-                NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+1
-                DIMENSION_MULTIPLIER=1
-              ELSEIF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
-                !Constant reaction + diffusion. Materials field has 1 diffuse coeff for each dimension
-                !plus one for the storage coefficient om  alpha(delC/delt) = Div(-kgradC)+const(x)_source
-                NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+1
-                DIMENSION_MULTIPLIER=1
-              ENDIF
-              !Set the number of materials components
-              CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_MATERIALS_COMPONENTS,err,error,*999)
-              !Default the first three materials components for diffusivity param to the first component geometric interpolation with const interpolation
-              DO component_idx=1,numberOfDimensions
-                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-              ENDDO !components_idx
-              !Default the storage co-efficient to the first geometric interpolation setup with constant interpolation
-              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
-                component_idx=NUMBER_OF_MATERIALS_COMPONENTS
-                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-              ENDIF
-              !Default the field scaling to that of the geometric field
-              CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-              CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%materialsField,GEOMETRIC_SCALING_TYPE,err,error,*999)
-            ELSE
-              !Check the user specified field
-              CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
-              CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-              CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-              CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-              CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & err,error,*999)
-              CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                & numberOfDimensions,err,error,*999)
-              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE .OR. &
-                & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
-                !Reaction Diffusion with cellml. Materials field components are 1 for storage coeff plus one for each dimension i.e., k
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1, &
-                  & err,error,*999)
-              ENDIF
-            ENDIF
+            CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
+            CALL Field_LabelSet(equationsSet%dependent%dependentField,"Dependent Field",err,error,*999)
+            CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+            CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+            CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
+            CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
+            CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,2,err,error,*999)
+            CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
+              & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
+            !CALL Field_VariableLabelSet
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+              & err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
+              & err,error,*999)
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+              & err,error,*999)
+            !Default to the geometric interpolation setup
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
+              & geometricMeshComponent,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+              & geometricMeshComponent,err,error,*999)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+              CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              !Default the scaling to the geometric field scaling
+              CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+              CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType,err,error,*999)
+            CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
           ELSE
-            CALL FlagError("Equations set materials is not associated.",err,error,*999)
+            !Check the user specified field
+            CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+            CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
+            CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2,err,error,*999)
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+              & err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
+              & err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1,err,error,*999)
+            CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+            SELECT CASE(solutionMethod)
+            CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,1, &
+                & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+            CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
           ENDIF
-        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-          EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-          IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
-            IF(EQUATIONS_MATERIALS%materialsFieldAutoCreated) THEN
-              !Finish creating the materials field
-              CALL Field_CreateFinish(EQUATIONS_MATERIALS%materialsField,err,error,*999)
-              !Set the default values for the materials field
-              CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
-                & numberOfDimensions,err,error,*999)
-              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE .OR. &
-               & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
-                !Reaction Diffusion with cellml. Materials field components are 1 plus one for each dimension i.e.,storage coeff, and k.
-                NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+1
-                DIMENSION_MULTIPLIER=1
-              ENDIF
-              !set the diffusion coefficients to be 1.0
-              DO component_idx=1,numberOfDimensions
-                CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,err,error,*999)
-              ENDDO !component_idx
-               !Now set storage-coefficient
-              component_idx=numberOfDimensions+1
-              CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%materialsField,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations set materials is not associated.",err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction diffusion equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-        CASE(EQUATIONS_SET_SETUP_START_ACTION)
-          IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
-            CALL EquationsSet_AssertMaterialsIsFinished(EQUATIONS_SET,err,error,*999)
-            IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
-              IF(EQUATIONS_SET%SOURCE%sourceFieldAutoCreated) THEN
-                !Create the auto created source field
-                !Start field creation with name 'SOURCE_FIELD'
-                CALL Field_CreateStart(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
-                  & EQUATIONS_SET%SOURCE%sourceField,err,error,*999)
-                !Create a general field
-                CALL Field_TypeSetAndLock(EQUATIONS_SET%SOURCE%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
-                !Label the field
-                CALL Field_LabelSetAndLock(EQUATIONS_SET%SOURCE%sourceField,"Source Field",err,error,*999)
-                !Set the dependent type
-                CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%SOURCE%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                !Set the field decomposition to be that of the geometric decomposition
-                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL Field_DecompositionSetAndLock(EQUATIONS_SET%SOURCE%sourceField,GEOMETRIC_DECOMPOSITION, &
-                  & err,error,*999)
-                !Set the geometric field
-                CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%SOURCE%sourceField,EQUATIONS_SET% & 
-                  & GEOMETRY%geometricField,err,error,*999)
-                !Set the field variables.
-                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%SOURCE%sourceField,1,err,error,*999)
-                CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%SOURCE%sourceField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                !Set the dimension
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%SOURCE%sourceField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
-                !Set the data type
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%SOURCE%sourceField,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,err,error,*999)
-                !Set the number of components to one
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%SOURCE%sourceField,FIELD_U_VARIABLE_TYPE,1, &
-                  & err,error,*999)
-                !Get the geometric mesh component
-                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, & 
-                  & 1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-                !Default to the geometric interpolation setup
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%SOURCE%sourceField,FIELD_U_VARIABLE_TYPE,1, &
-                  & GEOMETRIC_MESH_COMPONENT,err,error,*999)            
-                !Specify the interpolation to be same as geometric interpolation
-                SELECT CASE(EQUATIONS_SET%solutionMethod)
-                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                  CALL Field_ComponentInterpolationSetAndLock(EQUATIONS_SET%SOURCE%sourceField,FIELD_U_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of " &
-                    & //TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                !Set the scaling to be the same as the geometric field
-                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
-                  & err,error,*999)
-                CALL Field_ScalingTypeSet(EQUATIONS_SET%SOURCE%sourceField,GEOMETRIC_SCALING_TYPE, &
-                  & err,error,*999)
-              ELSE
-                !Check the user specified field
-                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
-                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
-                  & err,error,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
-                
-                SELECT CASE(EQUATIONS_SET%solutionMethod)
-                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                  CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod, &
-                    &"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set source is not associated.",err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations set materials is not associated.",err,error,*999)
-          ENDIF
-        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-          IF(EQUATIONS_SET%SOURCE%sourceFieldAutoCreated) THEN
-            CALL Field_CreateFinish(EQUATIONS_SET%SOURCE%sourceField,err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction diffusion equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-        CASE(EQUATIONS_SET_SETUP_START_ACTION)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction diffusion equation."
+          localError="The equation set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+            & " is invalid for a reaction diffusion equation set class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
-        SELECT CASE(EQUATIONS_SET_SETUP%actionType)
-        CASE(EQUATIONS_SET_SETUP_START_ACTION)
-          CALL EquationsSet_AssertSourceIsFinished(EQUATIONS_SET,err,error,*999)
-          !Create the equations
-          CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-          SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE)
-            CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
-          CASE(EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
-            CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
-          CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
-            CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_NONLINEAR,err,error,*999)
-          CASE DEFAULT
-            localError="The equations matrices linearity set up of "// &
-              & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-          CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-        CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-          SELECT CASE(EQUATIONS_SET%solutionMethod)
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsSet%dependent%dependentFieldAutoCreated) THEN
+          CALL Field_CreateFinish(equationsSet%dependent%dependentField,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion equation"
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
+      !-----------------------------------------------------------------
+      ! M a t e r i a l s   f i e l d
+      !-----------------------------------------------------------------
+      NULLIFY(equationsMaterials)
+      CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      IF(esSpecification(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
+        !a.\delby{u}{t}+div(\sigma.\grad u)+b.cellmlRC=0
+        !Reaction Diffusion. Materials field components are a + diffusion coeff tensor components for each dimension
+        numberOfMaterialsComponents=1+NUMBER_OF_VOIGT(numberOfDimensions)
+        dimensionMultiplier=1
+      ELSE IF(esSpecification(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+        !Constant reaction + diffusion. Materials field has 1 diffuse coeff for each dimension
+        !plus one for the storage coefficient om  alpha(delC/delt) = Div(-kgradC)+const(x)_source
+        numberOfMaterialsComponents=1+NUMBER_OF_VOIGT(numberOfDimensions)
+        dimensionMultiplier=1
+      ENDIF
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+        IF(equationsMaterials%materialsFieldAutoCreated) THEN
+          !Create the auto created materials field
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsMaterials%materialsField,err,error,*999)
+          CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+          CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
+          CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
+          CALL Field_NumberOfVariablesSetAndLock(equationsMaterials%materialsField,1,err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE], err,error,*999)
+          CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          !Set the number of materials components
+          CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+            & numberOfMaterialsComponents,err,error,*999)
+          !Default the materials components for diffusivity param to the first component geometric interpolation
+          !with const interpolation
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+          DO componentIdx=1,numberOfDimensions
+            CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & componentIdx,geometricComponentNumber,err,error,*999)
+            CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+          ENDDO !components_idx
+          !Default the storage co-efficient to the first geometric interpolation setup with constant interpolation
+          IF(esSpecification(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE) THEN
+            componentIdx=numberOfMaterialsComponents
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
+            CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+              & geometricComponentNumber,err,error,*999)
+            CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,componentIdx, &
+              & FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+          ENDIF
+          !Default the field scaling to that of the geometric field
+          CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+          CALL Field_ScalingTypeSet(equationsMaterials%materialsField,geometricScalingType,err,error,*999)
+        ELSE
+          !Check the user specified field
+          CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
+          CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            & err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          IF(esSpecification(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE .OR. &
+            & esSpecification(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+            !Reaction Diffusion with cellml. Materials field components are 1 for storage coeff plus one for each dimension i.e., k
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1, &
+              & err,error,*999)
+          ENDIF
+        ENDIF
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsMaterials%materialsFieldAutoCreated) THEN
+          !Finish creating the materials field
+          CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
+          !Set the default values for the materials field
+          IF(esSpecification(3)==EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE .OR. &
+            & esSpecification(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+            !Reaction Diffusion with cellml. Materials field components are 1 plus one for each dimension i.e.,storage coeff, and k.
+            numberOfMaterialsComponents=numberOfDimensions+1
+            dimensionMultiplier=1
+          ENDIF
+          !set the diffusion coefficients to be 1.0
+          DO componentIdx=1,numberOfDimensions
+            CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+          ENDDO !componentIdx
+          !Now set storage-coefficient
+          componentIdx=numberOfDimensions+1
+          CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+            & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
+      NULLIFY(equationsSource)
+      CALL EquationsSet_SourceGet(equationsSet,equationsSource,err,error,*999)
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL EquationsSet_AssertMaterialsIsFinished(equationsSet,err,error,*999)
+        IF(equationsSource%sourceFieldAutoCreated) THEN
+          !Create the auto created source field
+          !Start field creation with name 'Source Field'
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSource%sourceField,err,error,*999)
+          !Create a general field
+          CALL Field_TypeSetAndLock(equationsSource%sourceField,FIELD_GENERAL_TYPE,err,error,*999)
+          !Label the field
+          CALL Field_LabelSetAndLock(equationsSource%sourceField,"Source Field",err,error,*999)
+          !Set the dependent type
+          CALL Field_DependentTypeSetAndLock(equationsSource%sourceField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          !Set the field decomposition to be that of the geometric decomposition
+          CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+          CALL Field_DecompositionSetAndLock(equationsSource%sourceField,geometricDecomposition,err,error,*999)
+          !Set the geometric field
+          CALL Field_GeometricFieldSetAndLock(equationsSource%sourceField,geometricField,err,error,*999)
+          !Set the field variables.
+          CALL Field_NumberOfVariablesSetAndLock(equationsSource%sourceField,1,err,error,*999)
+          CALL Field_VariableTypesSetAndLock(equationsSource%sourceField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          !Set the dimension
+          CALL Field_DimensionSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE, &
+            & err,error,*999)
+          !Set the data type
+          CALL Field_DataTypeSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          !Set the number of components to one
+          CALL Field_NumberOfComponentsSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+          !Get the geometric mesh component
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+          !Default to the geometric interpolation setup
+          CALL Field_ComponentMeshComponentSet(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent, &
+            & err,error,*999)
+          !Specify the interpolation to be same as geometric interpolation
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
           CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-            !Finish the creation of the equations
-            CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
-            CALL Equations_CreateFinish(equations,err,error,*999)
-            NULLIFY(vectorEquations)
-            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-            !Create the equations mapping.
-            CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
-            CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
-            CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-            CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-            CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-            CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
-            CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
-            !Create the equations matrices
-            CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-            !Set up matrix storage and structure
-            IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
-              !Set up lumping
-              CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices, &
-                & [EQUATIONS_MATRIX_UNLUMPED,EQUATIONS_MATRIX_LUMPED],err,error,*999)
-              CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
-                & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
-                & err,error,*999)
-              CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
-                [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
-            ELSE
-              SELECT CASE(EQUATIONS%sparsityType)
-              CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
-                  & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
-              CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
-                  & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                  & err,error,*999)
-                CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices, &
-                  [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)                  
-              CASE DEFAULT
-                localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            ENDIF
-            CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+            CALL Field_ComponentInterpolationSetAndLock(equationsSource%sourceField,FIELD_U_VARIABLE_TYPE,1, &
+              & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
           CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -609,25 +460,159 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%solutionMethod,"*",err,error))// &
-              & " is invalid."
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))// " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
+          !Set the scaling to be the same as the geometric field
+          CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
+          CALL Field_ScalingTypeSet(equationsSource%sourceField,geometricScalingType,err,error,*999)
+        ELSE
+          !Check the user specified field
+          CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
+          CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
+          CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_SCALAR_DIMENSION_TYPE,err,error,*999)
+          CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+          CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+          CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+          SELECT CASE(solutionMethod)
+          CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+            CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1, &
+              & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+          CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT          
+        ENDIF
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        IF(equationsSource%sourceFieldAutoCreated) THEN
+          CALL Field_CreateFinish(equationsSource%sourceField,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
+      SELECT CASE(equationsSetSetup%actionType)
+      CASE(EQUATIONS_SET_SETUP_START_ACTION)
+        CALL EquationsSet_AssertSourceIsFinished(equationsSet,err,error,*999)
+        !Create the equations
+        NULLIFY(equations)
+        CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+        SELECT CASE(esSpecification(3))
+        CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE)
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+        CASE(EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+        CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
+          CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a bioelectric domain equation."
+          localError="The third equations set specification of "//TRIM(NumberToVstring(esSpecification(3),"*",err,error))// &
+            & " is not valid for a reaction-diffusion type of a classical field equations set."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+      CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+        CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
+        SELECT CASE(solutionMethod)
+        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+          !Finish the creation of the equations
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          CALL Equations_CreateFinish(equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          !Create the equations mapping.
+          NULLIFY(vectorMapping)
+          CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
+          CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+          CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
+          CALL EquationsMappingVector_SourceVariableTypeSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
+          !Create the equations matrices
+          NULLIFY(vectorMatrices)
+          CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+          !Set up matrix storage and structure
+          CALL EquationsSet_LumpingTypeGet(equations,lumpingType,err,error,*999)
+          IF(lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
+            !Set up lumping
+            CALL EquationsMatricesVector_DynamicLumpingTypeSet(vectorMatrices,[EQUATIONS_MATRIX_UNLUMPED, &
+              & EQUATIONS_MATRIX_LUMPED],err,error,*999)
+            CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+              & DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+            CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE, &
+              & EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
+          ELSE
+            CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
+            SELECT CASE(sparsityType)
+            CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
+              CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE, &
+                & DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+            CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
+              CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+                & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+              CALL EquationsMatricesVector_DynamicStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE, &
+                & EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+            CASE DEFAULT
+              localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDIF
+          CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%setupType,"*",err,error))// &
-          & " is invalid for reaction diffusion equation."
+        localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+          & " is invalid for a bioelectric domain equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-    
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
+        & " is invalid for reaction diffusion equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+  
     EXITS("ReactionDiffusion_EquationsSetSetup")
     RETURN
 999 ERRORSEXITS("ReactionDiffusion_EquationsSetSetup",err,error)
@@ -640,11 +625,11 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a reaction diffusion equation type of a classical equations set class.
-  SUBROUTINE ReactionDiffusion_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
+  SUBROUTINE ReactionDiffusion_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -652,43 +637,34 @@ CONTAINS
     
     ENTERS("ReactionDiffusion_EquationsSetSolutionMethodSet",err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a reaction-diffusion type equations set.", &
-          & err,error,*999)
-      END IF
-      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-      CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, &
-         & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE, &
-         & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)        
-        SELECT CASE(SOLUTION_METHOD)
-        CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-          EQUATIONS_SET%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
-        CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    
+    SELECT CASE(esSpecification(3))
+    CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, &
+      & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE, &
+      & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)        
+      SELECT CASE(solutionMethod)
+      CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+        equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
+      CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-          & " is not valid for a reaction diffusion equation type of classical equations set class."
+        localError="The specified solution method of "//TRIM(NumberToVString(solutionMethod,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    CASE DEFAULT
+      localError="Equations set subtype of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+        & " is not valid for a reaction diffusion equation type of classical equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("ReactionDiffusion_EquationsSetSolutionMethodSet")
     RETURN
@@ -711,40 +687,36 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: subtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("ReactionDiffusion_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)>3) THEN
-        CALL FlagError("Equations set specification must have 3 entries for a reaction-diffusion type equations set.", &
-          & err,error,*999)
-      END IF
-      subtype=specification(3)
-      SELECT CASE(subtype)
-      CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE)
-        !ok
-      CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
-        CALL FlagError("Not implemented.",err,error,*999)
-      CASE(EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
-        !ok
-      CASE DEFAULT
-        localError="The specified equations set subtype of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
-          & " is not valid for reaction diffusion equation type of a classical equations set class."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      !Set full specification
-      IF(ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(equationsSet%specification(3),stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-      END IF
-      equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE,subtype]
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)    
+    IF(SIZE(specification,1)<3) THEN
+      localError="The size of the specified specification array of "// &
+        & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
     END IF
+    
+    subtype=specification(3)
+    SELECT CASE(subtype)
+    CASE(EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE)
+      !ok
+    CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The specified equations set subtype of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
+        & " is not valid for reaction diffusion equation type of a classical equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !Set full specification
+    ALLOCATE(equationsSet%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
+    equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE,subtype]
 
     EXITS("ReactionDiffusion_EquationsSetSpecificationSet")
     RETURN
@@ -758,15 +730,15 @@ CONTAINS
   !================================================================================================================================
   !
   !>Calculates the element stiffness matrices and RHS for a reaction diffusion equation finite element equations set.
-  SUBROUTINE ReactionDiffusion_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE ReactionDiffusion_FiniteElementCalculate(equationsSet,ELEMENT_NUMBER,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) FIELD_VAR_TYPE,mh,mhs,ms,ng,nh,nhs,ni,nj,ns,component_idx
+    INTEGER(INTG) FIELD_VAR_TYPE,mh,mhs,ms,ng,nh,nhs,ni,nj,ns,componentIdx
     LOGICAL :: USE_FIBRES
     REAL(DP) :: DIFFUSIVITY(3,3),DPHIDX(3,64),RWG,SUM,STORAGE_COEFFICIENT,C_PARAM
     TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS,FIBRE_BASIS
@@ -785,22 +757,22 @@ CONTAINS
     
     ENTERS("ReactionDiffusion_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+    IF(ASSOCIATED(equationsSet)) THEN
+      IF(.NOT.ALLOCATED(equationsSet%SPECIFICATION)) THEN
         CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
+      ELSE IF(SIZE(equationsSet%SPECIFICATION,1)/=3) THEN
         CALL FlagError("Equations set specification must have three entries for a reaction-diffusion type equations set.", &
           & err,error,*999)
       END IF
-      EQUATIONS=>EQUATIONS_SET%EQUATIONS
+      EQUATIONS=>equationsSet%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
         NULLIFY(vectorEquations)
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         dependentField=>equations%interpolation%dependentField
         geometricField=>equations%interpolation%geometricField
         materialsField=>equations%interpolation%materialsField
-        IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
-            & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+        IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
+            & equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
            sourceField=>equations%interpolation%sourceField
         ENDIF
         fibreField=>equations%interpolation%fibreField
@@ -821,8 +793,8 @@ CONTAINS
           & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
         IF(USE_FIBRES) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations% &
           & interpolation%fibreInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-        IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
-            & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+        IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
+            & equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
              & sourceInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
         ENDIF                  
@@ -830,8 +802,8 @@ CONTAINS
         stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
         dampingMatrix=>dynamicMatrices%matrices(2)%ptr
         rhsVector=>vectorMatrices%rhsVector
-        IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
-            & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+        IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
+            & equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
            sourceVector=>vectorMatrices%sourceVector
         ENDIF
         dynamicMapping=>vectorMapping%dynamicMapping
@@ -852,8 +824,8 @@ CONTAINS
               CALL Field_InterpolatedPointMetricsCalculate(FIBRE_BASIS%numberOfXi,equations%interpolation% &
                 & fibreInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             ENDIF
-            IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
-            & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+            IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE .OR. &
+            & equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             ENDIF
@@ -872,8 +844,8 @@ CONTAINS
               ENDDO !nj
             ENDIF
             !Get the storage Coefficient, stored in the component after the diffusivities for each dimension
-            component_idx=GEOMETRIC_VARIABLE%numberOfComponents+1
-            STORAGE_COEFFICIENT=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(component_idx,1)
+            componentIdx=GEOMETRIC_VARIABLE%numberOfComponents+1
+            STORAGE_COEFFICIENT=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(componentIdx,1)
             !Compute basis dPhi/dx terms
             DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
@@ -916,7 +888,7 @@ CONTAINS
                 IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=0.0_DP
               ENDDO !ms
             ENDDO !mh
-            IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+            IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
               IF(sourceVector%updateVector) THEN
                 C_PARAM=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
                 mhs=0
@@ -963,7 +935,7 @@ CONTAINS
               ENDIF
               IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
                 & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)
-              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
+              IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) THEN
                  IF(sourceVector%updateVector) sourceVector%elementVector%vector(mhs)= & 
                     & sourceVector%elementVector%vector(mhs)* &
                     & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)
@@ -998,38 +970,35 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("ReactionDiffusion_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)>=3) THEN
-        problemSubtype=problemSpecification(3)
-        SELECT CASE(problemSubtype)
-        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE, &
-            & PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE, &
-            & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-          !ok
-        CASE DEFAULT
-          localError="The specified problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
-            & " is not valid for a reaction-diffusion problem type of a classical problem class."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        IF(ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(problem%specification(3),stat=err)
-          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-        END IF
-        problem%specification(1:3)=[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE,problemSubtype]
-      ELSE
-        CALL FlagError("Reaction-diffusion problem specification must have >=3 entries.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
-
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    problemSubtype=problemSpecification(3)
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE, &
+      & PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE, &
+      & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The specified problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a reaction-diffusion problem type of a classical problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    ALLOCATE(problem%specification(3),stat=err)
+    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+    problem%specification(1:3)=[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE,problemSubtype]
+ 
     EXITS("ReactionDiffusion_ProblemSpecificationSet")
     RETURN
 999 ERRORS("ReactionDiffusion_ProblemSpecificationSet",err,error)
@@ -1041,318 +1010,351 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
   !>Sets up the reaction-diffusion problem.
-  SUBROUTINE REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
+  SUBROUTINE ReactionDiffusion_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a bioelectric domain equation on.
-    TYPE(ProblemSetupType), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem set to setup a bioelectric domain equation on.
+    TYPE(ProblemSetupType), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CellMLEquationsType), POINTER :: CELLML_EQUATIONS
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SolverType), POINTER :: SOLVER
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS
-    TYPE(SolversType), POINTER :: SOLVERS
+    INTEGER(INTG) :: pSpecification(3)
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
+   
+    ENTERS("ReactionDiffusion_ProblemSetup",err,error,*999)
 
-    NULLIFY(CELLML_EQUATIONS)
-    NULLIFY(CONTROL_LOOP)
-    NULLIFY(SOLVER)
-    NULLIFY(SOLVERS)
-    NULLIFY(SOLVER_EQUATIONS)
-    
-    ENTERS("REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP",err,error,*999)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-        CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<3) THEN
-        CALL FlagError("Problem specification must have three entries for a reaction diffusion problem.",err,error,*999)
-      END IF
-      SELECT CASE(PROBLEM_SETUP%setupType)
-      CASE(PROBLEM_SETUP_INITIAL_TYPE)
-        SELECT CASE(PROBLEM_SETUP%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Do nothing????
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Do nothing????
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+      !OK
+    CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !OK
+    CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !OK
+    CASE DEFAULT
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is invalid for a reaction-diffusion problem type of a classical problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+  
+    SELECT CASE(problemSetup%setupType)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Do nothing????
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Do nothing????
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_CONTROL_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Set up a time control loop
+        NULLIFY(controlLoop)
+        CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+        CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
+        CALL ControlLoop_LabelSet(controlLoop,"Time Loop",err,error,*999)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the control loops
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)            
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction-diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      !Get the control loop
+      NULLIFY(controlLoopRoot)
+      CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+      NULLIFY(controlLoop)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Start the solvers creation
+        NULLIFY(solvers)
+        CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
+        SELECT CASE(pSpecification(3))
+        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
+          !Set the first solver to be a differential-algebraic equations solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DAE_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"First ODE solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the second solver to be a dynamic solver 
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          CALL Solver_LabelSet(solver,"Parabolic solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the third solver to be a differential-algebraic equations solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DAE_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"Second ODE solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+        CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
+          !Set the first solver to be a CELLML evaluator equations solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"Evaluator solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the second solver to be a dynamic solver 
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          CALL Solver_LabelSet(solver,"Parabolic solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+        CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
+          !Set the solver to be a dynamic solver 
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          CALL Solver_LabelSet(solver,"Parabolic solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction diffusion equation."
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " is invalid for a reaction-diffusion problem type of a classical problem class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(PROBLEM_SETUP_CONTROL_TYPE)
-        SELECT CASE(PROBLEM_SETUP%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Set up a time control loop
-          CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-          CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
-          CALL CONTROL_LOOP_LABEL_SET(CONTROL_LOOP,"Time Loop",err,error,*999)
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Finish the control loops
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction-diffusion equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the solvers
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(solvers,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a classical equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
         !Get the control loop
-        CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-        CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-        SELECT CASE(PROBLEM_SETUP%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Start the solvers creation
-          CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
-          SELECT CASE(PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-            CALL Solvers_NumberOfSolversSet(SOLVERS,3,err,error,*999)
-            !Set the first solver to be a differential-algebraic equations solver
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"First ODE solver",err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the second solver to be a dynamic solver 
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"Parabolic solver",err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the third solver to be a differential-algebraic equations solver
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"Second ODE solver",err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-          CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            CALL Solvers_NumberOfSolversSet(SOLVERS,2,err,error,*999)
-            !Set the first solver to be a CELLML evaluator equations solver
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"Evaluator solver",err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the second solver to be a dynamic solver 
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"Parabolic solver",err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-          CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
-            !Set the solver to be a dynamic solver 
-            NULLIFY(SOLVER)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-            CALL SOLVER_LABEL_SET(SOLVER,"Parabolic solver",err,error,*999)
-            !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-            CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-          CASE DEFAULT
-            localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-              & " is invalid for a reaction-diffusion problem type of a classical problem class."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Get the solvers
-          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-          !Finish the solvers creation
-          CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a classical equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-        SELECT CASE(PROBLEM_SETUP%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          SELECT CASE(PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-            !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Create the solver equations for the second (parabolic) solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Create the solver equations for the parabolic solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-            !Create the solver equations for the parabolic solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-              & " is invalid for a reaction-diffusion equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-          SELECT CASE(PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-            !Get the solver equations for the second (parabolic) solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
-          CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            !Get the solver equations for the parabolic solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
-          CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            !Get the solver equations for thE solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
-            !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-              & " is invalid for a reaction-diffusion equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for a reaction-diffusion equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
-        SELECT CASE(PROBLEM_SETUP%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        SELECT CASE(pSpecification(3))
+        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
           !Get the solver
-          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-
-          IF(PROBLEM%SPECIFICATION(3)==PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE) THEN
-            NULLIFY(SOLVER)
-            NULLIFY(CELLML_EQUATIONS)
-            !Create the CellML equations for the first DAE solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
-            !Set the time dependence
-            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
-            !Set the linearity
-            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
-            !Create the CellML equations for the second DAE solver
-            NULLIFY(SOLVER)
-            NULLIFY(CELLML_EQUATIONS)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
-            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
-            !Set the time dependence
-            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
-            !Set the linearity
-            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
-          ELSEIF(PROBLEM%SPECIFICATION(3)== &
-           & PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE) THEN
-            !CREATE the CellML equations for the first evaluator solver
-            NULLIFY(SOLVER)
-            NULLIFY(CELLML_EQUATIONS)
-            !Create the CellML equations for the first cellml evaluator solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL CellMLEquations_CreateStart(SOLVER,CELLML_EQUATIONS,err,error,*999)
-            !Set the time dependence
-            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
-            !Set the linearity
-            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
-          ENDIF
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
-          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
-          SELECT CASE(PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-            !Get the CellML equations for the first DAE solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
-            !Finish the CellML equations creation
-            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
-            !Get the CellML equations for the second DAE solver
-            NULLIFY(SOLVER)
-            NULLIFY(CELLML_EQUATIONS)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
-            CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
-            !Finish the CellML equations creation
-            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
-          CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-            !Get the CellML equations for the first evaluator solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
-            CALL SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,err,error,*999)
-            !Finish the CellML equations creation
-            CALL CellMLEquations_CreateFinish(CELLML_EQUATIONS,err,error,*999)
-          CASE DEFAULT
-            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-              & " for a setup type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-              & " is invalid for reaction-diffusion equation."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          !Create the solver equations for the second (parabolic) solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_TypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          !Get the solver
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          !Create the solver equations for the parabolic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_TypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          !Get the solver
+          NULLIFY(solvers)
+          CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+          !Create the solver equations for the parabolic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_TypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-            & " is invalid for reaction-diffusion equation."
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " is invalid for a reaction-diffusion problem type of a classical problem class."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+     CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        SELECT CASE(pSpecification(3))
+        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+          !Get the solver equations for the second (parabolic) solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+        CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          !Get the solver equations for the parabolic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+        CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          !Get the solver equations for thE solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+        CASE DEFAULT
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " is invalid for a reaction-diffusion problem type of a classical problem class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &
-          & " is invalid for areaction-diffusion equation."
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a reaction-diffusion equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    ENDIF
-      
-    EXITS("REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP")
+    CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        !Get the solver
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)        
+        SELECT CASE(pSpecification(3))
+        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+          !Create the CellML equations for the first DAE solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(cellMLEquations)
+          CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+          !Set the time dependence
+          CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+          !Set the linearity
+          CALL CellMLEquations_LinearityTypeSet(cellMLEquations,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
+          !Create the CellML equations for the second DAE solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          NULLIFY(cellMLEquations)
+          CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+          !Set the time dependence
+          CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+          !Set the linearity
+          CALL CellMLEquations_LinearityTypeSet(cellMLEquations,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
+        CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          !Create the CellML equations for the first cellml evaluator solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(cellMLEquations)
+          CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+          !Set the time dependence
+          CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+          !Set the linearity
+          CALL CellMLEquations_LinearityTypeSet(cellMLEquations,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
+        ENDIF
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoopRoot)
+        CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
+        NULLIFY(controlLoop)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        SELECT CASE(pSpecification(3))
+        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+          !Get the CellML equations for the first DAE solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(cellMLEquations)
+          CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+          !Finish the CellML equations creation
+          CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+          !Get the CellML equations for the second DAE solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          NULLIFY(cellMLEquations)
+          CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+          !Finish the CellML equations creation
+          CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+        CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+          !Get the CellML equations for the first evaluator solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          NULLIFY(cellMLEquations)
+          CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+          !Finish the CellML equations creation
+          CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+        CASE DEFAULT
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " is invalid for a reaction-diffusion problem type of a classical problem class."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for reaction-diffusion equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+        & " is invalid for areaction-diffusion equation."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+     
+    EXITS("ReactionDiffusion_ProblemSetup")
     RETURN
-999 ERRORSEXITS("REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP",err,error)
+999 ERRORSEXITS("ReactionDiffusion_ProblemSetup",err,error)
     RETURN 1
-  END SUBROUTINE REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP
+    
+  END SUBROUTINE ReactionDiffusion_ProblemSetup
   
   !
   !================================================================================================================================
@@ -1366,6 +1368,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3),solverNumber
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
@@ -1373,19 +1376,17 @@ CONTAINS
 
     ENTERS("ReactionDiffusion_PreSolve",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<3) &
-      & CALL FlagError("Problem specification must have at least three entries for an advection-diffusion problem.",err,error,*999)
-    
-    SELECT CASE(problem%specification(3))
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+  
+    SELECT CASE(pSpecification(3))
     CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-      CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)    
-      SELECT CASE(solver%globalNumber)
+      CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
+      SELECT CASE(solverNumber)
       CASE(1)
         CALL Solver_DAETimesSet(solver,currentTime,currentTime+timeIncrement/2.0_DP,err,error,*999)
       CASE(2)
@@ -1393,7 +1394,7 @@ CONTAINS
       CASE(3)
         CALL Solver_DAETimesSet(solver,currentTime,currentTime+timeIncrement/2.0_DP,err,error,*999)
       CASE DEFAULT
-        localError="The solver global number of "//TRIM(NumberToVString(SOLVER%globalNumber,"*",err,error))// &
+        localError="The solver global number of "//TRIM(NumberToVString(solverNumber,"*",err,error))// &
           & " is invalid for a Strang split reaction-diffusion problem."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1402,7 +1403,7 @@ CONTAINS
     CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
       !No splitting, therefore entire problem is solved as a dynamic one, with 1 solver nothing to do.
     CASE DEFAULT
-      localError="The problem subtype of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is invalid for a reaction-diffusion problem type."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1426,6 +1427,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3),solverNumber
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolversType), POINTER :: solvers
@@ -1434,19 +1436,16 @@ CONTAINS
 
     ENTERS("ReactionDiffusion_PostSolve",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<3) &
-      & CALL FlagError("Problem specification must have at least three entries for an reaction-diffusion problem.",err,error,*999)
-    
-    SELECT CASE(problem%specification(3))
-      
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+     
+    SELECT CASE(pSpecification(3))      
     CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-      SELECT CASE(solver%globalNumber)
+      CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
+      SELECT CASE(solverNumber)
       CASE(1)        
         !do nothing
       CASE(2)        
@@ -1455,12 +1454,13 @@ CONTAINS
         !OUTPUT SOLUTIONS AT EACH TIME STEP - should probably change this bit below to output 
         !mesh solutions directly from the 3rd solver itself rather than by getting the 2nd solver.
         !I just don't know how to work with cellml_equations to do this.
-        solvers=>solver%solvers
+        NULLIFY(solvers)
+        CALL Solver_SolversGet(solver,solvers,err,error,*999)
         NULLIFY(pdeSolver)
-        CALL SOLVERS_SOLVER_GET(solvers,2,pdeSolver,err,error,*999)
-        CALL REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(controlLoop,pdeSolver,err,error,*999)
+        CALL Solvers_SolverGet(solvers,2,pdeSolver,err,error,*999)
+        CALL ReactionDiffusion_PostSolveOutputData(controlLoop,pdeSolver,err,error,*999)
       CASE DEFAULT
-        localError="The solver global number of "//TRIM(NumberToVString(solver%globalNumber,"*",err,error))// &
+        localError="The solver global number of "//TRIM(NumberToVString(solverNumber,"*",err,error))// &
           & " is invalid for a Strang split reaction-diffusion problem."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1468,9 +1468,9 @@ CONTAINS
       !do nothing - time output not implemented
     CASE (PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
       !OUTPUT SOLUTIONS AT TIME STEP
-      CALL REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(controlLoop,solver,err,error,*999)
+      CALL ReactionDiffusion_PostSolveOutputData(controlLoop,solver,err,error,*999)
     CASE DEFAULT
-      localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is not valid for a reaction diffusion type of a classical field problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1486,197 +1486,175 @@ CONTAINS
   !================================================================================================================================
   !
 
-  SUBROUTINE REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE ReactionDiffusion_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SolverType), POINTER :: SOLVER!<A pointer to the solver
+    TYPE(SolverType), POINTER :: solver!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
+    !Local variables 
+    INTEGER(INTG) :: equationsSetIdx,currentIteration,esNumber,inputFrequency,maxDigits,myGroupComputationNodeNumber, &
+      & outputFrequency,pSpecification(3)
+    REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
+    LOGICAL :: exportExelem
+    CHARACTER(30) :: file
+    CHARACTER(30) :: outputFile
+    CHARACTER(100) :: fmt, tempFmt
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
 
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY,MAX_DIGITS
-    INTEGER(INTG) :: myGroupComputationNodeNumber
-    LOGICAL :: exportExelem
+    ENTERS("ReactionDiffusion_PostSolveOutputData",err,error,*999)
 
-    CHARACTER(30) :: FILE
-    CHARACTER(30) :: OUTPUT_FILE
-    CHARACTER(100) :: FMT, TEMP_FMT
-
-    ENTERS("REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA",err,error,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a reaction diffusion problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE, &
-              & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-              CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-              SOLVER_EQUATIONS=>SOLVER%solverEquations
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%numberOfEquationsSets
-                    EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(equations_set_idx)%PTR
-                    CURRENT_LOOP_ITERATION=CONTROL_LOOP%timeLoop%iterationNumber
-                    OUTPUT_FREQUENCY=CONTROL_LOOP%timeLoop%outputNumber
-                    NULLIFY(workGroup)
-                    CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
-                    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-                    MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%timeLoop%stopTime-CONTROL_LOOP%timeLoop%startTime)/ &
-                      & CONTROL_LOOP%timeLoop%timeIncrement))+1
-                    IF(OUTPUT_FREQUENCY>0) THEN
-                      IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
-                        IF(CONTROL_LOOP%timeLoop%currentTime<=CONTROL_LOOP%timeLoop%stopTime) THEN
-                          IF(SOLVER_MAPPING%numberOfEquationsSets.EQ.1) THEN
-                            WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
-                            !100 FORMAT 
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_1.part",I2.2,".",',FMT,")"
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(OUTPUT_FILE,FMT) &
-                              & myGroupComputationNodeNumber,CURRENT_LOOP_ITERATION
-                          ELSE
-                            WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
-                            !200 FORMAT 
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_",I0,".part",I2.2,".",',FMT,")"
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(OUTPUT_FILE,FMT) &
-                              & equations_set_idx, myGroupComputationNodeNumber,CURRENT_LOOP_ITERATION
-                          ENDIF
-                          WRITE(*,*) OUTPUT_FILE
-                          FILE=TRIM(OUTPUT_FILE)
-                          CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                          CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                          exportExelem = .False.
-                          IF (CURRENT_LOOP_ITERATION==0) THEN
-                             IF (equations_set_idx==1) exportExelem = .True.
-                          ENDIF
-                          CALL REACTION_DIFFUSION_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%globalNumber,FILE, &
-                            & exportExelem,err,error,*999)
-                        ENDIF
-                      ENDIF 
-                    ENDIF
-                  ENDDO
-                ENDIF
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE, &
+      & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+        & outputFrequency,inputFrequency,err,error,*999)
+      CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      !Make sure the equations sets are up to date
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,solverMapping,err,error,*999)
+        NULLIFY(region)
+        CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+        CALL EquationsSet_GlobalNumberGet(equationsSet,esNumber,err,error,*999)
+        NULLIFY(workGroup)
+        CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
+        CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+        maxDigits=FLOOR(LOG10((stopTime-startTime)/timeIncrement))+1
+        IF(outputFrequency>0) THEN
+          IF(MOD(currentIteration,outputFrequency)==0) THEN
+            IF(currentTime<=stopTime) THEN
+              IF(numberOfEquationsSets==1) THEN
+                WRITE(tempFmt,'("I",I0,".",I0)') maxDigits,maxDigits
+                !100 FORMAT 
+                fmt = TRIM(tempFmt)
+                WRITE(tempFmt,'(A2,A38,A20,A2)') "(", '"TimeStepSpec_1.part",I2.2,".",',fmt,")"
+                fmt = TRIM(tempFmt)
+                WRITE(outputFile,fmt) myGroupComputationNodeNumber,currentIteration
+              ELSE
+                WRITE(tempFmt,'("I",I0,".",I0)') maxDigits,maxDigits
+                !200 FORMAT 
+                fmt = TRIM(tempFmt)
+                WRITE(tempFmt,'(A2,A38,A20,A2)') "(", '"TimeStepSpec_",I0,".part",I2.2,".",',fmt,")"
+                fmt = TRIM(tempFmt)
+                WRITE(outputFile,fmt) equationsSetIdx, myGroupComputationNodeNumber,currentIteration
               ENDIF
-            CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-              ! do nothing ???
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for an advection-diffusion equation type of a classical field problem class."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+              WRITE(*,*) outputFile
+              file=TRIM(outputFile)
+              IF(outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+              ENDIF
+              exportExelem = .FALSE.
+              IF(currentIteration==0) THEN
+                IF(equationsSetIdx==1) exportExelem = .TRUE.
+              ENDIF
+              CALL REACTION_DIFFUSION_IO_WRITE_CMGUI(region,esNumber,file,exportExelem,err,error,*999)
+            ENDIF
+          ENDIF
         ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+      ENDDO !equationsSetIdx
+    CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      ! do nothing ???
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " is not valid for an advection-diffusion equation type of a classical field problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA")
+    EXITS("ReactionDiffusion_PostSolveOutputData")
     RETURN
-999 ERRORSEXITS("REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA",err,error)
+999 ERRORSEXITS("ReactionDiffusion_PostSolveOutputData",err,error)
     RETURN 1
     
-  END SUBROUTINE REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA
+  END SUBROUTINE ReactionDiffusion_PostSolveOutputData
+  
   !
   !================================================================================================================================
   !
 
-  SUBROUTINE REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*)
+  SUBROUTINE ReactionDiffusion_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(ProblemType), POINTER :: PROBLEM
-    TYPE(SolverEquationsType), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SolverMappingType), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations
-    TYPE(EquationsVectorType), POINTER :: vectorEquations 
-    TYPE(EquationsSetType), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(SolverType), POINTER :: SOLVER !<A pointer to the solver
-    TYPE(SolversType), POINTER :: SOLVERS !<A pointer to the solvers
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
-    
-    ENTERS("REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP",err,error,*999)
-    
-    NULLIFY(SOLVER)
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      PROBLEM=>CONTROL_LOOP%PROBLEM
-      IF(ASSOCIATED(PROBLEM)) THEN
-        SELECT CASE(PROBLEM%SPECIFICATION(3))
-        CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-          SOLVERS=>CONTROL_LOOP%solvers
-          IF(ASSOCIATED(SOLVERS)) THEN
-            CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
-            SOLVER_EQUATIONS=>SOLVER%solverEquations
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                EQUATIONS_SET=>SOLVER_MAPPING%equationsSets(1)%ptr
-                IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                  EQUATIONS=>EQUATIONS_SET%EQUATIONS
-                  IF(ASSOCIATED(EQUATIONS)) THEN
-                    NULLIFY(vectorEquations)
-                    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                    vectorMatrices=>vectorEquations%vectorMatrices
-                    dynamicMatrices=>vectorMatrices%dynamicMatrices
-                    stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
-                    dampingMatrix=>dynamicMatrices%matrices(2)%ptr
-                    stiffnessMatrix%updateMatrix = .FALSE.
-                    dampingMatrix%updateMatrix = .FALSE.
-                  ELSE
-                    CALL FlagError("Equations not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Equations Set not associated.",err,error,*999)
-                ENDIF
-      
-              ELSE
-                CALL FlagError("Solver Mapping not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver Equations not associated.", err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Solvers is not associated.", err,error,*999)
-          ENDIF
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsVectorType), POINTER :: vectorEquations 
+    TYPE(ProblemType), POINTER :: problem
+    TYPE(SolverType), POINTER :: solver 
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+   
+    ENTERS("ReactionDiffusion_PostLoop",err,error,*999)
 
-
-        CASE DEFAULT
-          !do nothing
-        END SELECT
-      ELSE
-        CALL FlagError("Problem is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control Loop is not associated.",err,error,*999)
-    ENDIF
-    EXITS("REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP")
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,pSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
+    CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      NULLIFY(solver)
+      CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+      NULLIFY(equations)
+      CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+      NULLIFY(vectorEquations)
+      CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+      NULLIFY(vectorMatrices)
+      CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+      NULLIFY(dynamicMatrices)
+      CALL EquationsMatricesVector_DynamicMatrices(vectorMatrices,dynamicMatrices,err,error,*999)
+      NULLIFY(stiffnessMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
+      NULLIFY(dampingMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
+      stiffnessMatrix%updateMatrix = .FALSE.
+      dampingMatrix%updateMatrix = .FALSE.
+    CASE DEFAULT
+      !do nothing
+    END SELECT
+    
+    EXITS("ReactionDiffusion_PostLoop")
     RETURN
-999 ERRORSEXITS("REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP",err,error)
+999 ERRORSEXITS("ReactionDiffusion_PostLoop",err,error)
     RETURN 1
-  END SUBROUTINE REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP
-END MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
+  END SUBROUTINE ReactionDiffusion_PostLoop
+  
+  !
+  !================================================================================================================================
+  !
+  
+END MODULE ReactionDiffusionEquationsRoutines

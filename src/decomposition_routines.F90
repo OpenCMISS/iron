@@ -2037,7 +2037,7 @@ CONTAINS
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
     CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
-    CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+    CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
    
     EXITS("Decomposition_ElementBasisGet")
     RETURN
@@ -3117,7 +3117,7 @@ CONTAINS
     !Loop over the elements in the decomposition
     DO elementIdx=1,decompositionElements%totalNumberOfElements
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
      !Create a list for every xi direction (plus and minus)
       DO xiCoordIdx=-basis%numberOfXiCoordinates,basis%numberOfXiCoordinates
         NULLIFY(adjacentElementsList(xiCoordIdx)%ptr)
@@ -3364,7 +3364,7 @@ CONTAINS
         & err,error,*999)
       DO elementIdx=1,decompositionElements%totalNumberOfElements
         NULLIFY(basis)
-        CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+        CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Local element number : ",elementIdx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of xi coordinates = ",basis%numberOfXiCoordinates,err,error,*999)
         DO xiCoordIdx=-basis%numberOfXiCoordinates,basis%numberOfXiCoordinates
@@ -6112,7 +6112,7 @@ CONTAINS
     domainElements%maximumNumberOfElementParameters=-1
     DO elementIdx=1,domainElements%totalNumberOfElements
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
       IF(basis%numberOfElementParameters>domainElements%maximumNumberOfElementParameters) &
         & domainElements%maximumNumberOfElementParameters=basis%numberOfElementParameters
     ENDDO !elementIdx
@@ -7077,7 +7077,7 @@ CONTAINS
     ENDDO !nodeIdx
     DO elementIdx=1,domainElements%totalNumberOfElements
       NULLIFY(basis)
-      CALL DomainElements_BasisGet(domainElements,elementIdx,basis,err,error,*999)
+      CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
       DO localNodeIdx=1,basis%numberOfNodes
         nodeNumber=domainElements%elements(elementIdx)%elementNodes(localNodeIdx)
         foundElement=.FALSE.

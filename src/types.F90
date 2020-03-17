@@ -4018,17 +4018,16 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Contains information on a time iteration control loop
   TYPE ControlLoopTimeType
-    TYPE(ControlLoopType), POINTER :: controlLoop
-    INTEGER(INTG) :: iterationNumber
-    INTEGER(INTG) :: globalIterationNumber
-! sebk: is thei usefull?
-    INTEGER(INTG) :: outputNumber          !< The frequency of output, is only used if the specific problem implementation accesses it
-    INTEGER(INTG) :: inputNumber
-    REAL(DP) :: currentTime
-    REAL(DP) :: startTime
-    REAL(DP) :: stopTime
-    REAL(DP) :: timeIncrement
-    INTEGER(INTG) :: numberOfIterations   !< The total number of iterations for this loop, if 0 it will be computed from time span and increment
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer back to the control loop
+    INTEGER(INTG) :: iterationNumber !<The iteration number for this time loop progress
+    INTEGER(INTG) :: globalIterationNumber !<The total number of iterations for all times the loop has executed
+    INTEGER(INTG) :: outputNumber !<The frequency of output
+    INTEGER(INTG) :: inputNumber !<The frequency of input
+    REAL(DP) :: currentTime !<The current time in the time loop
+    REAL(DP) :: startTime !<The start time for the time loop
+    REAL(DP) :: stopTime !<The stop time for the time loop
+    REAL(DP) :: timeIncrement !<The time increment
+    INTEGER(INTG) :: numberOfIterations !<The total number of iterations for this loop, if 0 it will be computed from time span and increment
   END TYPE ControlLoopTimeType
 
   !>Contains information on a do-while control loop

@@ -82,24 +82,6 @@ MODULE DataProjectionRoutines
 
   !Module parameters
 
-  !> \addtogroup DataProjectionRoutines_DataProjectionTypes DataProjectionRoutines::DataProjectionTypes
-  !> \brief Datapoint projection definition type parameters
-  !> \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
-  !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE=1 !<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE=2 !<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE=3 !<The element projection type for data projection, projects to all elements in mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
-  !>@}
-
-  !> \addtogroup DataProjectionRoutines_DataProjectionDistanceRelations DataProjectionRoutines::DataProjectionDistanceRelations
- !> \brief Datapoint projection distance relations to select data points based on distance.
-  !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER=1 !<Data projection distance relation is greater than \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER_EQUAL=2 !<Data projection distance relation is greater than or equal \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS=3 !<Data projection distance relation is less than \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS_EQUAL=4 !<Data projection distance relation is less than or equal \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
-  !>@}
 
   !Module types
 
@@ -107,12 +89,6 @@ MODULE DataProjectionRoutines
 
   !Interfaces
 
-  !>Gets the label for a data projection.
-  INTERFACE DataProjection_LabelGet
-    MODULE PROCEDURE DataProjection_LabelGetC
-    MODULE PROCEDURE DataProjection_LabelGetVS
-  END INTERFACE DataProjection_LabelGet
-  
   !>Sets/changes the label for a data projection.
   INTERFACE DataProjection_LabelSet
     MODULE PROCEDURE DataProjection_LabelSetC
@@ -131,13 +107,7 @@ MODULE DataProjectionRoutines
     MODULE PROCEDURE DataProjection_ProjectionCancelByExitTags1
   END INTERFACE DataProjection_ProjectionCancelByExitTags
 
-  PUBLIC DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE, &
-    & DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
-
-  PUBLIC DATA_PROJECTION_DISTANCE_GREATER,DATA_PROJECTION_DISTANCE_GREATER_EQUAL,DATA_PROJECTION_DISTANCE_LESS, &
-    & DATA_PROJECTION_DISTANCE_LESS_EQUAL
-  
-  PUBLIC DataProjection_AbsoluteToleranceGet,DataProjection_AbsoluteToleranceSet
+  PUBLIC DataProjection_AbsoluteToleranceSet
 
   PUBLIC DataProjection_CreateFinish,DataProjection_CreateStart
   
@@ -149,13 +119,13 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_ElementSet
   
-  PUBLIC DataProjection_LabelGet,DataProjection_LabelSet
+  PUBLIC DataProjection_LabelSet
 
-  PUBLIC DataProjection_MaximumInterationUpdateGet,DataProjection_MaximumInterationUpdateSet
+  PUBLIC DataProjection_MaximumInterationUpdateSet
 
-  PUBLIC DataProjection_MaximumNumberOfIterationsGet,DataProjection_MaximumNumberOfIterationsSet
+  PUBLIC DataProjection_MaximumNumberOfIterationsSet
 
-  PUBLIC DataProjection_NumberOfClosestElementsGet,DataProjection_NumberOfClosestElementsSet
+  PUBLIC DataProjection_NumberOfClosestElementsSet
   
   PUBLIC DataProjection_ProjectionCancelByDataPoints
   
@@ -175,54 +145,19 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_ProjectionDataCandidateLinesSet
   
-  PUBLIC DataProjection_ProjectionTypeGet,DataProjection_ProjectionTypeSet
+  PUBLIC DataProjection_ProjectionTypeSet
   
-  PUBLIC DataProjection_RelativeToleranceGet,DataProjection_RelativeToleranceSet
+  PUBLIC DataProjection_RelativeToleranceSet
 
   PUBLIC DataProjection_ResultAnalysisOutput
   
-  PUBLIC DataProjection_ResultDistanceGet
-  
-  PUBLIC DataProjection_ResultElementNumberGet,DataProjection_ResultElementFaceNumberGet,DataProjection_ResultElementLineNumberGet
-  
-  PUBLIC DataProjection_ResultExitTagGet
+  PUBLIC DataProjection_ResultXiUserSet
 
-  PUBLIC DataProjection_ResultProjectionVectorGet
-  
-  PUBLIC DataProjection_ResultXiGet,DataProjection_ResultXiSet
-
-  PUBLIC DataProjection_StartingXiGet,DataProjection_StartingXiSet
+  PUBLIC DataProjection_StartingXiSet
 
   PUBLIC DataProjections_Initialise,DataProjections_Finalise
   
 CONTAINS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the absolute tolerance for a data projection.
-  SUBROUTINE DataProjection_AbsoluteToleranceGet(dataProjection,absoluteTolerance,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the absolute tolerance for
-    REAL(DP), INTENT(OUT) :: absoluteTolerance !<On exit, the absolute tolerance of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_AbsoluteToleranceGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    
-    absoluteTolerance=dataProjection%absoluteTolerance       
-     
-    EXITS("DataProjection_AbsoluteToleranceGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_AbsoluteToleranceGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_AbsoluteToleranceGet
 
   !
   !================================================================================================================================
@@ -2089,33 +2024,6 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
-  !>Gets the maximum iteration update for a data projection.
-  SUBROUTINE DataProjection_MaximumInterationUpdateGet(dataProjection,maximumIterationUpdate,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the maximum iteration update for
-    REAL(DP), INTENT(OUT) :: maximumIterationUpdate !<On exit, the maximum iteration update of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_MaximumInterationUpdateGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    
-    maximumIterationUpdate=dataProjection%maximumIterationUpdate       
-     
-    EXITS("DataProjection_MaximumInterationUpdateGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_MaximumInterationUpdateGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_MaximumInterationUpdateGet
-
-  !
-  !================================================================================================================================
-  !
 
   !>Sets the maximum iteration update for a data projection.
   SUBROUTINE DataProjection_MaximumInterationUpdateSet(dataProjection,maximumIterationUpdate,err,error,*)
@@ -2146,34 +2054,6 @@ CONTAINS
 
   END SUBROUTINE DataProjection_MaximumInterationUpdateSet
   
-
-  !
-  !================================================================================================================================
-  !
-  
-  !>Gets the maximum number of iterations for a data projection.
-  SUBROUTINE DataProjection_MaximumNumberOfIterationsGet(dataProjection,maximumNumberOfIterations,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the maximum number of iterations for
-    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfIterations !<On exit, the maximum number of iterations of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_MaximumNumberOfIterationsGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    
-    maximumNumberOfIterations=dataProjection%maximumNumberOfIterations       
-    
-    EXITS("DataProjection_MaximumNumberOfIterationsGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_MaximumNumberOfIterationsGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_MaximumNumberOfIterationsGet
-
   !
   !================================================================================================================================
   !
@@ -3377,33 +3257,6 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of closest elements for a data projection.
-  SUBROUTINE DataProjection_NumberOfClosestElementsGet(dataProjection,numberOfClosestElements,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the number of closest elements for
-    INTEGER(INTG), INTENT(OUT) :: numberOfClosestElements !<On exit, the number of closest elements of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_NumberOfClosestElementsGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    
-    numberOfClosestElements=dataProjection%numberOfClosestElements       
-    
-    EXITS("DataProjection_NumberOfClosestElementsGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_NumberOfClosestElementsGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_NumberOfClosestElementsGet
-
-  !
-  !================================================================================================================================
-  !
-  
   !>Sets the number of closest elements for a data projection.
   SUBROUTINE DataProjection_NumberOfClosestElementsSet(dataProjection,numberOfClosestElements,err,error,*)
 
@@ -3909,7 +3762,7 @@ CONTAINS
           IF(.NOT.ghostElement) THEN
             numberOfCandidates=numberOfCandidates+1           
             NULLIFY(basis)
-            CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
             CALL Basis_LocalFaceNumberGet(basis,localFaceNormals(elementIdx),localFaceNumber,err,error,*999)
             dataProjection%dataProjectionCandidates(0)%candidateElementNumbers(numberOfCandidates)=elementLocalNumber
             dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers(numberOfCandidates)=localFaceNumber
@@ -4019,7 +3872,7 @@ CONTAINS
             IF(.NOT.ghostElement) THEN
               numberOfCandidates=numberOfCandidates+1           
               NULLIFY(basis)
-              CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
               CALL Basis_LocalFaceNumberGet(basis,localFaceNormals(elementIdx),localFaceNumber,err,error,*999)
               dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers(numberOfCandidates)= &
                 & elementLocalNumber
@@ -4127,7 +3980,7 @@ CONTAINS
           IF(.NOT.ghostElement) THEN
             numberOfCandidates=numberOfCandidates+1
             NULLIFY(basis)
-            CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+            CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
             CALL Basis_LocalLineNumberGet(basis,localLineNormals(:,elementIdx),localLineNumber,err,error,*999)
             dataProjection%dataProjectionCandidates(0)%candidateElementNumbers(elementIdx)=elementLocalNumber
             dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers(elementIdx)=localLineNumber
@@ -4242,7 +4095,7 @@ CONTAINS
             IF(.NOT.ghostElement) THEN
               numberOfCandidates=numberOfCandidates+1
               NULLIFY(basis)
-              CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+              CALL DomainElements_ElementBasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
               CALL Basis_LocalLineNumberGet(basis,localLineNormals(:,elementIdx),localLineNumber,err,error,*999)
               dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers(elementIdx)=elementLocalNumber
               dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%localFaceLineNumbers(elementIdx)=localLineNumber
@@ -4269,33 +4122,6 @@ CONTAINS
 
   END SUBROUTINE DataProjection_ProjectionDataCandidateLinesSet
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection type for a data projection.
-  SUBROUTINE DataProjection_ProjectionTypeGet(dataProjection,projectionType,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the projection type for
-    INTEGER(INTG), INTENT(OUT) :: projectionType !<On exit, the projection type of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_ProjectionTypeGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    
-    projectionType=dataProjection%projectionType       
-    
-    EXITS("DataProjection_ProjectionTypeGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ProjectionTypeGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ProjectionTypeGet
-
   !
   !================================================================================================================================
   !
@@ -4350,33 +4176,6 @@ CONTAINS
 
   END SUBROUTINE DataProjection_ProjectionTypeSet
     
-   !
-  !================================================================================================================================
-  !
-
-  !>Gets the relative tolerance for a data projection.
-  SUBROUTINE DataProjection_RelativeToleranceGet(dataProjection,relativeTolerance,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the relative tolerance for
-    REAL(DP), INTENT(OUT) :: relativeTolerance !<On exit, the relative tolerance of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_RelativeToleranceGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    
-    relativeTolerance=dataProjection%relativeTolerance       
-   
-    EXITS("DataProjection_RelativeToleranceGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_RelativeToleranceGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_RelativeToleranceGet
-
   !
   !================================================================================================================================
   !
@@ -4409,40 +4208,6 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DataProjection_RelativeToleranceSet
-  
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the starting xi for a data projection.
-  SUBROUTINE DataProjection_StartingXiGet(dataProjection,startingXi,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the starting xi for
-    REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the starting xi of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DataProjection_StartingXiGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    IF(SIZE(startingXi,1)<SIZE(dataProjection%startingXi,1)) THEN
-      localError="The size of the specified starting xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))// &
-        & " is too small. The size must be >= "//TRIM(NumberToVString(SIZE(dataProjection%startingXi,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    startingXi(1:SIZE(dataProjection%startingXi,1))=dataProjection%startingXi(1:SIZE(dataProjection%startingXi,1))
-    
-    EXITS("DataProjection_StartingXiGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_StartingXiGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_StartingXiGet
 
   !
   !================================================================================================================================
@@ -4492,7 +4257,7 @@ CONTAINS
   !
 
   !>Sets the element for a data projection.
-  SUBROUTINE DataProjection_ElementSet(dataProjection,dataPointUserNumber,elementUserNumber,err,error,*)
+  SUBROUTINE DataProjection_ElementUserSet(dataProjection,dataPointUserNumber,elementUserNumber,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set the element for
@@ -4508,7 +4273,7 @@ CONTAINS
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ElementSet",err,error,*999)
+    ENTERS("DataProjection_ElementUserSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     NULLIFY(decomposition)
@@ -4535,104 +4300,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
    
-    EXITS("DataProjection_ElementSet")
+    EXITS("DataProjection_ElementUserSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ElementSet",err,error)
+999 ERRORSEXITS("DataProjection_ElementUserSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_ElementSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection distance for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultDistanceGet(dataProjection,dataPointUserNumber,projectionDistance,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the projection distance for
-    REAL(DP), INTENT(OUT) :: projectionDistance !<On exit, the projection distance of the specified data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-    
-    ENTERS("DataProjection_ResultDistanceGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    projectionDistance=dataProjection%dataProjectionResults(dataPointGlobalNumber)%distance
-
-    EXITS("DataProjection_ResultDistanceGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultDistanceGet",err,error)
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultDistanceGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelGet
-  SUBROUTINE DataProjection_LabelGetVS(dataProjection,label,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the label for
-    TYPE(VARYING_STRING), INTENT(OUT) :: label !<the label to get
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    
-    ENTERS("DataProjection_LabelGetVS",err,error,*999)
-
-    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    
-    label=dataProjection%label
-     
-    EXITS("DataProjection_LabelGetVS")
-    RETURN
-999 ERRORSEXITS("DataProjection_LabelGetVS",err,error)
-    RETURN 1
-
-  END SUBROUTINE DataProjection_LabelGetVS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the label for a data projection for character labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelGet
-  SUBROUTINE DataProjection_LabelGetC(dataProjection,label,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the label for
-    CHARACTER(LEN=*), INTENT(OUT) :: label !<the label to get
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: cLength,vsLength
-    
-    ENTERS("DataProjection_LabelGetC",err,error,*999)
-
-    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    
-    cLength=LEN(label)
-    vsLength=LEN_TRIM(dataProjection%label)
-    IF(cLength>vsLength) THEN
-      label=CHAR(LEN_TRIM(dataProjection%label))
-    ELSE
-      label=CHAR(dataProjection%label,cLength)
-    ENDIF
-    
-    EXITS("DataProjection_LabelGetC")
-    RETURN
-999 ERRORSEXITS("DataProjection_LabelGetC",err,error)
-    RETURN 1
-
-  END SUBROUTINE DataProjection_LabelGetC
 
   !
   !================================================================================================================================
@@ -4875,182 +4548,8 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the projection element number for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultElementNumberGet(dataProjection,dataPointUserNumber,projectionElementNumber,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the projection element number for
-    INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the projection element number of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-   
-    ENTERS("DataProjection_ResultElementNumberGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    projectionElementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementNumber
- 
-    EXITS("DataProjection_ResultElementNumberGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultElementNumberGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultElementNumberGet
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection element face number for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultElementFaceNumberGet(dataProjection,dataPointUserNumber,projectionElementFaceNumber &
-    & ,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the projection element face number for
-    INTEGER(INTG), INTENT(OUT) :: projectionElementFaceNumber !<On exit, the projection element face number of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-    
-    ENTERS("DataProjection_ResultElementFaceNumberGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    
-    !Check if boundary faces projection type was set
-    IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) THEN
-      CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-      projectionElementFaceNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLineFaceNumber
-    ELSE
-      CALL FlagError("Data projection type is not set to a boundary faces projection type.",err,error,*999)
-    ENDIF
-
-    EXITS("DataProjection_ResultElementFaceNumberGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultElementFaceNumberGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultElementFaceNumberGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection element line number for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultElementLineNumberGet(dataProjection,dataPointUserNumber,projectionElementLineNumber &
-    & ,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the element line number distance for
-    INTEGER(INTG), INTENT(OUT) :: projectionElementLineNumber !<On exit, the projection element line number of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-    
-    ENTERS("DataProjection_ResultElementLineNumberGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    
-    !Check if boundary lines projection type was set
-    IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
-      CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-      projectionElementLineNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLineFaceNumber
-    ELSE
-      CALL FlagError("Data projection type is not set to a boundary lines projection type.",err,error,*999)
-    ENDIF
-
-    EXITS("DataProjection_ResultElementLineNumberGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultElementLineNumberGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultElementLineNumberGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection exit tag for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultExitTagGet(dataProjection,dataPointUserNumber,projectionExitTag,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the projection exit tag for
-    INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the projection exit tag of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-    
-    ENTERS("DataProjection_ResultExitTagGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    projectionExitTag=dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag
-
-    EXITS("DataProjection_ResultExitTagGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultExitTagGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultExitTagGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection xi for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the projection xi for
-    REAL(DP), INTENT(OUT) :: projectionXi(:) !<On exit, the projection xi of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DataProjection_ResultXiGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    IF(SIZE(projectionXi,1)<dataProjection%numberOfXi) THEN
-      localError="The specified projection xi has size of "//TRIM(NumberToVString(SIZE(projectionXi,1),"*",err,error))// &
-        & " but it needs to have size of >= "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"." 
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-        
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    projectionXi(1:dataProjection%numberOfXi)=dataProjection%dataProjectionResults(dataPointGlobalNumber)% &
-      & xi(1:dataProjection%numberOfXi)
-
-    EXITS("DataProjection_ResultXiGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultXiGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultXiGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets the projection xi for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultXiSet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
+  SUBROUTINE DataProjection_ResultXiUserSet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
@@ -5062,7 +4561,7 @@ CONTAINS
     INTEGER(INTG) :: dataPointGlobalNumber
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ResultXiSet",err,error,*999)
+    ENTERS("DataProjection_ResultXiUserSet",err,error,*999)
 
     CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
     CALL DataProjection_AssertNotProjected(dataProjection,err,error,*999)
@@ -5078,51 +4577,12 @@ CONTAINS
     dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi(1:dataProjection%numberOfXi)= &
       & projectionXi(1:dataProjection%numberOfXi)
 
-    EXITS("DataProjection_ResultXiSet")
+    EXITS("DataProjection_ResultXiUserSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ResultXiSet",err,error)
+999 ERRORSEXITS("DataProjection_ResultXiUserSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_ResultXiSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the projection vector for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultProjectionVectorGet(dataProjection,dataPointUserNumber,projectionVector,err,error,*)
-
-    !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The Data projection user number to get the projection xi for
-    REAL(DP), INTENT(OUT) :: projectionVector(:) !<On exit, the projection vector of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DataProjection_ResultProjectionVectorGet",err,error,*999)
-
-    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
-    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
-    IF(SIZE(projectionVector,1)<dataProjection%numberOfCoordinates) THEN
-      localError="The specified projection vector has a size of "// &
-        & TRIM(NumberToVString(SIZE(projectionVector,1),"*",err,error))//" but it needs to have size of "// &
-        & TRIM(NumberToVString(dataProjection%numberOfCoordinates,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-   
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    projectionVector(1:dataProjection%numberOfCoordinates)=dataProjection%dataProjectionResults(dataPointGlobalNumber)% &
-      & projectionVector(1:dataProjection%numberOfCoordinates)
-
-    EXITS("DataProjection_ResultProjectionVectorGet")
-    RETURN
-999 ERRORSEXITS("DataProjection_ResultProjectionVectorGet",err,error)    
-    RETURN 1
-
-  END SUBROUTINE DataProjection_ResultProjectionVectorGet
 
   !
   !================================================================================================================================
