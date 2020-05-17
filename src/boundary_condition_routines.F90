@@ -329,8 +329,16 @@ CONTAINS
                   IF(ASSOCIATED(VARIABLE_DOMAIN_MAPPING)) THEN
                     SEND_COUNT=VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL
                     IF(computationalEnvironment%numberOfComputationalNodes>1) THEN
-                      !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combin
+                      !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combine
                       !\todo the data from each rank into all ranks. We will see how this goes for now.
+
+                      ! Should be replaced with scatter(?)!! And local implementation of dof_types!!!
+                      ! But solver mapping STILL requires dof types global
+                      ! Can change this but would work only here.
+                      ! ALLREDUCE must stay until solver_mapping is not changed.
+               
+
+                      ! Summing up all global vectors returns the number of fixed dofs in the row (?)
                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%DOF_TYPES, &
                         & SEND_COUNT,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
@@ -412,8 +420,12 @@ CONTAINS
                     BOUNDARY_CONDITIONS_DIRICHLET=>BOUNDARY_CONDITION_VARIABLE%DIRICHLET_BOUNDARY_CONDITIONS
                     IF(ASSOCIATED(BOUNDARY_CONDITIONS_DIRICHLET)) THEN
                       ! Find dirichlet conditions
+
+                      ! replace with (total) n. of local!!??
                       dirichlet_idx=1
                       DO dof_idx=1,FIELD_VARIABLE%NUMBER_OF_GLOBAL_DOFS
+                        
+                        ! BC_DOF_FIXED is 1
                         IF(BOUNDARY_CONDITION_VARIABLE%DOF_TYPES(dof_idx)==BOUNDARY_CONDITION_DOF_FIXED) THEN
                           BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(dirichlet_idx)=dof_idx
                           dirichlet_idx=dirichlet_idx+1
@@ -1717,6 +1729,7 @@ CONTAINS
       END IF
     END IF
     !Update Dirichlet DOF count
+    ! should be local!!!
     previousDof=boundaryConditionsVariable%DOF_TYPES(globalDof)
     IF(dofType==BOUNDARY_CONDITION_DOF_FIXED.AND.previousDof/=BOUNDARY_CONDITION_DOF_FIXED) THEN
       boundaryConditionsVariable%NUMBER_OF_DIRICHLET_CONDITIONS= &
@@ -1728,6 +1741,7 @@ CONTAINS
 
     !Set the boundary condition type and DOF type
     boundaryConditionsVariable%CONDITION_TYPES(globalDof)=condition
+    ! should be local!!!
     boundaryConditionsVariable%DOF_TYPES(globalDof)=dofType
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Boundary Condition Being Set",err,error,*999)
@@ -2337,6 +2351,7 @@ CONTAINS
 
         CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(pointDofMapping,err,error,*999)
 
+        ! here allocation of integrationMatrix!!!???
         CALL DistributedMatrix_CreateStart(rowMapping,pointDofMapping,boundaryConditionsNeumann%integrationMatrix,err,error,*999)
         SELECT CASE(boundaryConditionsVariable%BOUNDARY_CONDITIONS%neumannMatrixSparsity)
         CASE(BOUNDARY_CONDITION_SPARSE_MATRICES)
@@ -2512,6 +2527,8 @@ CONTAINS
 
           CALL DistributedMatrix_StorageTypeSet(boundaryConditionsNeumann%integrationMatrix, &
             & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
+
+          ! replace with local quantities!!!???
           CALL DistributedMatrix_NumberOfNonZerosSet(boundaryConditionsNeumann%integrationMatrix,numberNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(boundaryConditionsNeumann%integrationMatrix, &
             & rowIndices,columnIndices(1:numberNonZeros),err,error,*999)
@@ -2736,6 +2753,7 @@ CONTAINS
             neumannNodeNumber=rhsVariable%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,neumannDofNyy)
             SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%DOMAIN%NUMBER_OF_DIMENSIONS)
             CASE(1)
+              ! replace with local????
               CALL DistributedMatrix_ValuesSet(neumannConditions%integrationMatrix,neumannLocalDof,neumannDofIdx, &
                 & 1.0_DP,err,error,*999)
             CASE(2)
@@ -2828,6 +2846,7 @@ CONTAINS
                     END IF
 
                     ! Add integral term to N matrix
+                    ! Already local, ok???
                     CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDof,neumannDofIdx, &
                       & integratedValue,err,error,*999)
                   END DO
@@ -2923,6 +2942,7 @@ CONTAINS
                     END IF
 
                     ! Add integral term to N matrix
+                    ! Already local, ok???
                     CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDof,neumannDofIdx, &
                       & integratedValue,err,error,*999)
                   END DO
@@ -2956,6 +2976,8 @@ CONTAINS
         & integratedValues,err,error,*999)
       CALL DistributedVector_AllValuesSet(integratedValues,0.0_DP,err,error,*999)
       ! Perform matrix multiplication, f = N q, to calculate force vector from integration matrix and point values
+
+      ! local??? Mapping on f???
       CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
         & neumannConditions%integrationMatrix,neumannConditions%pointValues,integratedValues, &
         & err,error,*999)
@@ -3263,6 +3285,7 @@ CONTAINS
     END DO
 
     !Check DOFs are free
+    ! Should be local!
     DO dofIdx=1,numberOfDofs
       IF(boundaryConditionsVariable%dof_types(dofs(dofIdx))/=BOUNDARY_CONDITION_DOF_FREE) THEN
         CALL FlagError("DOF number "//TRIM(NumberToVstring(dofs(dofIdx),"*",err,error))// &
@@ -3387,6 +3410,8 @@ CONTAINS
           !Check that the constrained DOFs are still set to be constrained, as
           !subsequently setting a boundary condition would change the DOF type but
           !not update the DOF constraints structure.
+
+          ! should be local!!
           IF(boundaryConditionsVariable%dof_types(globalDof)/=BOUNDARY_CONDITION_DOF_CONSTRAINED) THEN
             CALL FlagError("Global DOF number "//TRIM(NumberToVstring(globalDof,"*",err,error))// &
               & " is part of a linear constraint but the DOF type has been changed"// &
@@ -3397,6 +3422,7 @@ CONTAINS
             globalDof2=dofConstraint%dofs(dofIdx)
             localDof2=variableDomainMapping%global_to_local_map(globalDof2)%local_number(1)
             !Check a Dirichlet conditions hasn't also been set on this DOF
+            ! should be local!!
             IF(boundaryConditionsVariable%dof_types(globalDof2)/=BOUNDARY_CONDITION_DOF_FREE) THEN
               CALL FlagError("A Dirichlet boundary condition has been set on DOF number "// &
                 & TRIM(NumberToVstring(globalDof2,"*",err,error))// &
@@ -3696,10 +3722,15 @@ CONTAINS
             BOUNDARY_CONDITIONS_VARIABLE%VARIABLE=>FIELD_VARIABLE
             ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate global boundary condition types.",ERR,ERROR,*999)
+
+            ! THIS ALLOCATION SHOULD BE LOCAL!
             ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate global boundary condition dof types.",ERR,ERROR,*999)
             BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES=BOUNDARY_CONDITION_FREE
+            
+            ! All initialised to zero!!!
             BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES=BOUNDARY_CONDITION_DOF_FREE
+            
             ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS(MAX_BOUNDARY_CONDITION_NUMBER),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate boundary condition DOF counts array.",ERR,ERROR,*999)
             BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS=0

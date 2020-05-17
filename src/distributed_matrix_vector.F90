@@ -60,6 +60,7 @@ MODULE DistributedMatrixVector
 #endif
   USE Strings
   USE Types
+  USE HashRoutines
   USE LINKEDLIST_ROUTINES
 
 #include "macros.h"
@@ -974,7 +975,22 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
-    
+
+    ! Hash variables
+    INTEGER(INTG), ALLOCATABLE :: SKey(:) 
+    INTEGER(INTG), ALLOCATABLE :: SIntVal(:,:)
+    REAL(SP), ALLOCATABLE      :: SRealVal(:,:)
+
+    INTEGER(INTG) :: i, n, q, myComputationalNodeNumber, indexFound, dataType, dataSize, newDataSize
+    LOGICAL :: isFound
+
+    INTEGER(INTG), ALLOCATABLE :: valueInt(:) ! Allow for different returned value INT sizes
+    REAL(SP), ALLOCATABLE      :: valueSp(:)  ! Allow for different returned value SP sizes
+
+    INTEGER(INTG), ALLOCATABLE :: valueIntMult(:,:) ! Same in case of multiple lists
+    REAL(SP),      ALLOCATABLE :: valueSpMult (:,:) ! Same in case of multiple lists
+    INTEGER(INTG), ALLOCATABLE :: listNum(:) ! Array of list num for getting values from many lists 
+
     ENTERS("DistributedMatrix_CMISSInitialise",err,error,*998)
 
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*998)
@@ -1009,7 +1025,171 @@ CONTAINS
         & TRIM(NumberToVString(distributedMatrix%ghostingType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    
+
+    ! START my hash implementation    
+
+    ! use columnDomainMapping ltg info to create hash:
+    ! hash type in type of distributedMatrix%cmiss, move in future? petsc already handles. OK
+
+    ! Decide data type of values to add to the table
+    dataType = LIST_SP_TYPE 
+    ! dataType = LIST_INTG_TYPE
+    ! Decide data size of values
+    dataSize = 3
+
+    myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+
+    IF (diagnostics1) THEN
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE, 1,1, size(columnDomainMapping%LOCAL_TO_GLOBAL_MAP,1), &
+      & 4,4, columnDomainMapping%LOCAL_TO_GLOBAL_MAP, & 
+      & '("Printing out the map  :", 4(x,I8))','(23x,4(x,I8))', ERR, ERROR, *999)
+    END IF
+
+    n = size(columnDomainMapping%LOCAL_TO_GLOBAL_MAP)
+
+    ! Create a new table
+    ! If a table already exists, content is zeroed at CreateStart. 
+    NULLIFY(distributedMatrix%cmiss%columnHashTable)
+
+    CALL HashTable_CreateStart(distributedMatrix%cmiss%columnHashTable,ERR,ERROR,*999)
+    ! define some parameters here if needed
+    CALL HashTable_CreateFinish(distributedMatrix%cmiss%columnHashTable,ERR,ERROR,*999)
+
+    ! Create array of keys
+    ALLOCATE(SKey(n),STAT=err)
+    IF(ERR/=0) CALL FlagError("Could not allocate array",ERR,ERROR,*999)
+    SKey = columnDomainMapping%LOCAL_TO_GLOBAL_MAP(1:n)
+
+    ! Create initial arrays of values
+    ALLOCATE(SIntVal(dataSize,n),STAT=err)
+    IF(ERR/=0) CALL FlagError("Could not allocate array",ERR,ERROR,*999)
+    DO i=1,dataSize  ! Just repeat the same (nonsense) info (= local numbering) 
+      SIntVal(i,1:n)=[ (i, i=1,n)] +100
+    END DO
+
+    ALLOCATE(SRealVal(dataSize,n),STAT=err)
+    IF(ERR/=0) CALL FlagError("Could not allocate array",ERR,ERROR,*999)
+    DO i=1,dataSize  ! Just repeat the same (nonsense) info (= local numbering + real part)
+      SRealVal(i,1:n) = [ (i, i=1,n)] +100.15_SP
+    END DO
+
+    SELECT CASE (dataType)
+
+    CASE(LIST_INTG_TYPE)
+
+    ! Create the list of values and compute the table based on the key array
+    ! Create a new table
+    ! .FALSE. = new table (no addition)
+    CALL HashTable_ValuesSetAndInsert(distributedMatrix%cmiss%columnHashTable, SKey(1:n-3), &
+      & SIntVal(1:dataSize,1:n-3), .FALSE., ERR, ERROR, *999)
+
+    ! Test insertion to already created table
+    ! Recompute the table adding new keys and expand the list of values
+    ! .TRUE. = add new elements
+    CALL HashTable_ValuesSetAndInsert(distributedMatrix%cmiss%columnHashTable, SKey(n-2:n), &
+      & SIntVal(1:dataSize,n-2:n), .TRUE., ERR, ERROR, *999)
+
+    CASE(LIST_SP_TYPE)
+
+    ! Create the list of values and compute the table based on the key array
+    ! Create a new table
+    ! .FALSE. = new table (no addition)
+    CALL HashTable_ValuesSetAndInsert(distributedMatrix%cmiss%columnHashTable, SKey(1:n-3), &
+      & SRealVal(1:dataSize,1:n-3), .FALSE., ERR, ERROR, *999)
+
+    ! Test insertion to already created table
+    ! Recompute the table adding new keys and expand the list of values
+    ! .TRUE. = add new elements
+    CALL HashTable_ValuesSetAndInsert(distributedMatrix%cmiss%columnHashTable, SKey(n-2:n), &
+      & SRealVal(1:dataSize,n-2:n), .TRUE., ERR, ERROR, *999)
+
+    CASE DEFAULT
+      CALL FlagError("Invalid data type!!!",err,error,*999)  
+    END SELECT
+
+
+
+    ! Test query for q
+    IF (diagnostics1) THEN
+      DO q=1,50
+      ! Get the INDEX in the input vector (Skey, SIntVal) where q is found in the table (+ flag isFound)
+        CALL HashTable_GetKey(distributedMatrix%cmiss%columnHashTable, q, indexFound, isFound, ERR, ERROR, *999)
+        IF (isFound) THEN
+          SELECT CASE (dataType)
+          CASE(LIST_INTG_TYPE)
+            CALL HashTable_GetValue(distributedMatrix%cmiss%columnHashTable, indexFound, valueInt, ERR, ERROR, *999)
+ !           PRINT *, q, "Found! With value ", valueInt
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE, "Key found: ", q, err, error, *999)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE, 1,1, size(valueInt,1), &
+              & 4,4, valueInt, & 
+              & '("with value     :", 4(x,I8))','(5x,4(x,I8))', ERR, ERROR, *999)
+          CASE(LIST_SP_TYPE)
+            CALL HashTable_GetValue(distributedMatrix%cmiss%columnHashTable, indexFound, valueSp, ERR, ERROR, *999)
+!            PRINT *, q, "Found! With value ", valueSp
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE, "Key found: ", q, err, error, *999)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE, 1,1, size(valueSp,1), &
+              & 4,4, valueSp, & 
+              & '("with value     :", 4(x,F8.4))','(5x,4(x,F8.4))', ERR, ERROR, *999)
+          CASE DEFAULT
+            CALL FlagError("Invalid data type!!!",err,error,*999)  
+          END SELECT
+        ELSE
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE, "Key does not exist! ", q, err, error, *999)
+        END IF 
+      END DO
+    END IF
+
+  ! Add additional values to the existing ones in table%ListSVal as
+  ! table%arrayOfListSVal(i)%ptr
+  ! Can be called AFTER the table has been created (table%ListSVal should already exist)
+  ! Add INTEGER or REAL values of different dimension
+    newDataSize = 2
+  ! List 2
+    CALL HashTable_AdditionalValuesSet (distributedMatrix%cmiss%columnHashTable, &
+      & SRealVal(1:newDataSize+1,1:n), LIST_SP_TYPE, err,error,*999)
+  ! List 3
+    CALL HashTable_AdditionalValuesSet (distributedMatrix%cmiss%columnHashTable, &
+      & SIntVal(1:newDataSize,1:n), LIST_INTG_TYPE, err,error,*999)
+  ! List 4
+    CALL HashTable_AdditionalValuesSet (distributedMatrix%cmiss%columnHashTable, &
+      & SRealVal(1:newDataSize,1:n), LIST_SP_TYPE, err,error,*999)
+
+
+! Test query in multiple values case for 1 key
+! The obtained value (real or intg) is sized as #lists X max dimension of the data in all lists
+! Then, there will be zeros if the value has smaller dimension. (Fix??)
+    IF (diagnostics1) THEN
+      q = 25
+      CALL HashTable_GetKey(distributedMatrix%cmiss%columnHashTable, q, indexFound, isFound, ERR, ERROR, *999)
+      IF (isFound) THEN
+        CALL HashTable_GetValue(distributedMatrix%cmiss%columnHashTable, indexFound, valueSpMult, listNum, ERR, ERROR, *999)
+        DO i=1,size(listNum,1)
+          !PRINT *, q, "Found Real!    With value ", valueSpMult(i,:), "in list number", listNum(i)
+
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE, "Found in list number ", listNum(i), err, error, *999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE, 1,1, size(valueSpMult(i,:),1), &
+            & 4,4, valueSpMult(i,:), & 
+            & '("REAL SP value     :", 4(x,F8.4))','(5x,4(x,F8.4))', ERR, ERROR, *999)
+
+        END DO
+        CALL HashTable_GetValue(distributedMatrix%cmiss%columnHashTable, indexFound, valueIntMult, listNum, ERR, ERROR, *999)
+        DO i=1,size(listNum,1)
+          !PRINT *, q, "Found Integer! With value ", valueIntMult(i,:), "in list number", listNum(i)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE, "Found in list number: ", listNum(i), err, error, *999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE, 1,1, size(valueIntMult(i,:),1), &
+            & 4,4, valueIntMult(i,:), & 
+            & '("INTEGER value     :", 4(x,I8))','(5x,4(x,I8))', ERR, ERROR, *999)
+        END DO
+      
+      ELSE
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE, "Key does not exist! ", q, err, error, *999)
+      END IF
+    END IF
+
+    STOP
+
+! end my hash_implementation
+
     EXITS("DistributedMatrix_CMISSInitialise")
     RETURN
 999 IF(ASSOCIATED(distributedMatrix%cmiss)) &
@@ -2663,7 +2843,8 @@ CONTAINS
     distributedMatrix%petsc%useOverrideMatrix=.FALSE.
     CALL Petsc_MatInitialise(distributedMatrix%petsc%matrix,err,error,*999)
     CALL Petsc_MatInitialise(distributedMatrix%petsc%overrideMatrix,err,error,*999)
-   
+
+
     EXITS("DistributedMatrix_PETScInitialise")
     RETURN
 999 IF(ASSOCIATED(distributedMatrix%petsc)) &

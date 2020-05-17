@@ -97,7 +97,8 @@ MODULE Types
   TYPE INTEGER_CINT_ALLOC_TYPE
     INTEGER(C_INT), ALLOCATABLE :: ARRAY(:)
   END TYPE INTEGER_CINT_ALLOC_TYPE
-  
+
+
   !
   !================================================================================================================================
   !
@@ -130,6 +131,32 @@ MODULE Types
     INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT(:) !<The integer data (dimension = 1) for integer lists. 
     INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT2(:,:) !<The integer data (dimension > 1) for integer lists. 
   END TYPE LIST_TYPE
+
+
+  !
+  !================================================================================================================================
+  !
+  ! Hash Table type
+  !
+  TYPE HashTableType
+    !PRIVATE ! derived-type definition can be accessed outside (public), but not the components (below)
+
+    LOGICAL :: hashTableFinished !<Is .TRUE. if the table has finished being created, .FALSE. if not.
+
+    INTEGER(INTG), ALLOCATABLE :: vecTKey(:)   ! The hash vector of keys
+    INTEGER(INTG), ALLOCATABLE :: vecTVal(:)   ! The hash vector of indices of values
+
+    INTEGER(INTG), ALLOCATABLE :: vecSKey(:)   ! The original vector of keys
+ 
+    ! List of values
+    TYPE(List_Type), POINTER :: listSVal
+    ! Array of list of values to allow for multiple data
+    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: arrayOfListSVal(:)
+
+
+    INTEGER(INTG) :: n !<The number of items currently in the table (number of keys)
+    INTEGER(INTG) :: p !<The prime number required from the table algorithm
+  END TYPE HashTableType
     
   !
   !================================================================================================================================
@@ -847,7 +874,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE DistributedMatrixCMISSType
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
     INTEGER(INTG) :: baseTagNumber !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
-    TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
+    TYPE(MATRIX_TYPE), POINTER   :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
+    
+    TYPE(HashTableType), POINTER :: columnHashTable !< The hash table for ltg columns
+
   END TYPE DistributedMatrixCMISSType
 
   !>Contains information for a PETSc distributed matrix
@@ -1999,8 +2029,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions for this boundary conditions variable
     INTEGER(INTG) :: VARIABLE_TYPE !<The type of variable for this variable boundary conditions
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE !<A pointer to the field variable for this boundary condition variable
+
+! These two types below have been confused!!!
     INTEGER(INTG), ALLOCATABLE :: DOF_TYPES(:) !<DOF_TYPES(dof_idx). The general boundary condition type (eg. fixed or free) of the dof_idx'th dof in the dependent field variable. \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
     INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dof_idx). The specific boundary condition type (eg. incremented pressure) of the dof_idx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOF_TYPES array. \see OPENCMISS_BoundaryConditionsDOFTypes,OPENCMISS
+    
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS  !<A pointer to the dirichlet boundary condition type for this boundary condition variable
     INTEGER(INTG) :: NUMBER_OF_DIRICHLET_CONDITIONS !<Stores the number of dirichlet conditions associated with this variable
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
@@ -2046,6 +2079,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information used to integrate Neumann boundary conditions
   TYPE BoundaryConditionsNeumannType
     INTEGER(INTG), ALLOCATABLE :: setDofs(:) !<setDofs(neumann_idx): the global dof for the neumann_idx'th Neumann condition
+
+    ! This matrix should be local!!!??
     TYPE(DistributedMatrixType), POINTER :: integrationMatrix !<The N matrix that multiples the point values vector q to give the integrated values f. Number of rows equals number of local dofs, and number of columns equals number of set point DOFs.
     TYPE(DistributedVectorType), POINTER :: pointValues !<The vector of set point values q
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: pointDofMapping !<The domain mapping for DOFs with Neumann point conditions set.

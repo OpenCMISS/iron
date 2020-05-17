@@ -34,6 +34,9 @@ MODULE LinkedList_routines
   public :: LinkedList_Add,LinkedList_Destroy,LinkedList_Remove_First,LinkedList_Remove_Last
   public :: LinkedList_is_Empty,LinkedList_to_Array
 
+
+
+
 contains
 
 ! -------------------------------------------------------------------
@@ -72,7 +75,7 @@ contains
 
 ! -------------------------------------------------------------------
 
-  !> adds all data from one list to another
+  !> adds all data from one list (addlist) to another (list)
   Subroutine LinkedList_Add_List(list,addlist,ERR,ERROR,*)
     type(LinkedList),intent(inout) :: list
     type(LinkedList),intent(in) :: addlist
@@ -157,7 +160,7 @@ contains
           exit
         endif
       else
-        ! there must be only one item in the list?
+        ! there must be only one item in the list(?)!
         data = current%data
         deallocate(list%root)
         list%root => NULL()
@@ -251,5 +254,8 @@ contains
     enddo
 
   End Subroutine LinkedList_to_Array
+
+  
+
 
 End Module LinkedList_routines

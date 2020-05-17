@@ -80,6 +80,7 @@ set(IRON_Fortran_SRC
     generated_mesh_routines.F90
     generated_mesh_access_routines.F90
     Hamilton_Jacobi_equations_routines.F90
+    hash_routines.F90
     Helmholtz_equations_routines.F90
     #Helmholtz_TEMPLATE_equations_routines.F90
     history_routines.F90
