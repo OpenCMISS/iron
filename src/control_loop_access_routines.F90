@@ -150,6 +150,8 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_CurrentTimesGet
 
+  PUBLIC ControlLoop_CurrentLoadIncrementInfoGet
+
   PUBLIC ControlLoop_CurrentTimeInformationGet
 
   PUBLIC ControlLoop_CurrentWhileInformationGet
@@ -179,6 +181,8 @@ MODULE ControlLoopAccessRoutines
   PUBLIC ControlLoop_SolversGet
 
   PUBLIC ControlLoop_SubLoopGet
+
+  PUBLIC ControlLoop_SubLoopIndexGet
 
   PUBLIC ControlLoop_TimeLoopGet
 
@@ -573,6 +577,62 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_ContinueLoopSet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current loop information for a load increment control loop. If the specified loop is not a load increment loop the next load increment loop up the chain will be used.
+  SUBROUTINE ControlLoop_CurrentLoadIncrementInfoGet(controlLoop,currentIteration,maxNumberOfIterations,outputIteration, &
+    & inputIteration,err,error,*)
+    
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the load increment information for
+    INTEGER(INTG), INTENT(OUT) :: currentIteration !<On exit, the current iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: maxNumberOfIterations !<On exit, the maximum number of iterations for the loop
+    INTEGER(INTG), INTENT(OUT) :: outputIteration !<On exit, the output iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: inputIteration !<On exit, the input iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables    
+    INTEGER(INTG) :: controlLoopLevel,levelIdx
+    TYPE(ControlLoopType), POINTER :: parentLoop
+    TYPE(ControlLoadIncrementType), POINTER :: loadIncrementLoop
+
+    ENTERS("ControlLoop_CurrentLoadIncrementInfoGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    !Find a load increment loop from either the specified control loop or the next load increment loop up the chain.
+    controlLoopLevel=controlLoop%controlLoopLevel
+    parentLoop=>controlLoop
+    DO levelIdx=controlLoopLevel,1,-1
+      IF(controlLoopLevel==0) THEN
+        CALL FlagError("Could not find a load increment loop for the specified control loop.",err,error,*999)
+      ELSE
+        IF(parentLoop%loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+          loadIncrementLoop=>parentLoop%loadIncrementLoop
+#ifdef WITH_POSTCHECKS          
+          IF(.NOT.ASSOCIATED(loadIncrementLoop)) &
+            & CALL FlagError("Control loop load increment loop is not associated.",err,error,*999)
+#endif          
+          currentIteration=loadIncrementLoop%iterationNumber
+          maxNumberOfIterations=loadIncrementLoop%maxNumberOfIterations
+          outputIteration=loadIncrementLoop%outputNumber
+          inputIteration=loadIncrement%inputNumber
+          EXIT
+        ELSE
+          parentLoop=>parentLoop%parentLoop
+        ENDIF
+      ENDIF
+    ENDDO !levelIdx
+       
+    EXITS("ControlLoop_CurrentLoadIncrementInfoGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_CurrentLoadIncrementInfoGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_CurrentLoadIncrementInfoGet
   
   !
   !================================================================================================================================
@@ -1183,6 +1243,33 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_SubLoopGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the sub loop index for a control loop. 
+  SUBROUTINE ControlLoop_SubLoopIndexGet(controlLoop,subLoopIndex,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to the control loop to get the sub loop index for.
+    INTEGER(INTG), INTENT(OUT) :: subLoopIndex !<On exit, the sub loop index  of the control loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_SubLoopIndexGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    subLoopIndex=controlLoop%subLoopIndex
+       
+    EXITS("ControlLoop_SubLoopIndexGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_SubLoopIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_SubLoopIndexGet
   
   !
   !================================================================================================================================

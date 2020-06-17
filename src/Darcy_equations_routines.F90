@@ -2106,7 +2106,7 @@ CONTAINS
             & elasticityDependentInterpPoint,err,error,*999)
           !Mind the sign !!!
           !The minus sign derives from the convention of using "+ P * Jznu * AZU(i,j)"
-          ! in the constitutive law in FINITE_ELASTICITY_GAUSS_CAUCHY_TENSOR
+          ! in the constitutive law in FiniteElasticity_GaussCauchyTensor
           lmPressure = -elasticityDependentInterpPoint%values(4,NO_PART_DERIV)
           DO xiIdx=1,numberOfXi
             derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7

@@ -64,13 +64,19 @@ MODULE EquationsMappingAccessRoutines
 
   !Interfaces
 
+  PUBLIC EquationsMappingDynamic_DampingMatrixNumberGet
+
   PUBLIC EquationsMappingDynamic_DynamicVariableGet
 
   PUBLIC EquationsMappingDynamic_DynamicVariableTypeGet
 
   PUBLIC EquationsMappingDynamic_EquationsMatrixToVariableMapGet
 
+  PUBLIC EquationsMappingDynamic_MassMatrixNumberGet
+
   PUBLIC EquationsMappingDynamic_NumberOfDynamicMatricesGet
+
+  PUBLIC EquationsMappingDynamic_StiffnessMatrixNumberGet
 
   PUBLIC EquationsMappingDynamic_VariableNumberOfMatricesGet
 
@@ -203,6 +209,36 @@ MODULE EquationsMappingAccessRoutines
   PUBLIC EquationsMappingVectorVToJMMap_VariableGet
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the damping matrix number for a dynamic mapping. If there is no damping matrix 0 is returned.
+  SUBROUTINE EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the damping matrix number for
+    INTEGER(INTG), INTENT(OUT) :: dampingMatrixNumber !<On exit, the damping matrix number. If there is no damping matrix in the dynamic mapping then 0 is returned.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingDynamic_DampingMatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
+#endif    
+    
+    dampingMatrixNumber=dynamicMapping%dampingMatrixNumber 
+    
+    EXITS("EquationsMappingDynamic_DampingMatrixNumberGet")
+    RETURN
+999 ERRORS("EquationsMappingDynamic_DampingMatrixNumberGet",err,error)
+    EXITS("EquationsMappingDynamic_DampingMatrixNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingDynamic_DampingMatrixNumberGet
 
   !
   !================================================================================================================================
@@ -364,6 +400,36 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the mass matrix number for a dynamic mapping. If there is no mass matrix 0 is returned.
+  SUBROUTINE EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the mass matrix number for
+    INTEGER(INTG), INTENT(OUT) :: massMatrixNumber !<On exit, the mass matrix number. If there is no mass matrix in the dynamic mapping then 0 is returned.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingDynamic_MassMatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
+#endif    
+    
+    massMatrixNumber=dynamicMapping%massMatrixNumber 
+    
+    EXITS("EquationsMappingDynamic_MassMatrixNumberGet")
+    RETURN
+999 ERRORS("EquationsMappingDynamic_MassMatrixNumberGet",err,error)
+    EXITS("EquationsMappingDynamic_MassMatrixNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingDynamic_MassMatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the number of dynamic matrices for a dynamic mapping.
   SUBROUTINE EquationsMappingDynamic_NumberOfDynamicMatricesGet(dynamicMapping,numberOfDynamicMatrices,err,error,*)
 
@@ -389,6 +455,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingDynamic_NumberOfDynamicMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the stiffness matrix number for a dynamic mapping. If there is no stiffness matrix 0 is returned.
+  SUBROUTINE EquationsMappingDynamic_StiffnessMatrixNumberGet(dynamicMapping,stiffnessMatrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the stiffness matrix number for
+    INTEGER(INTG), INTENT(OUT) :: stiffnessMatrixNumber !<On exit, the stiffness matrix number. If there is no stiffness matrix in the dynamic mapping then 0 is returned.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingDynamic_StiffnessMatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
+#endif    
+    
+    stiffnessMatrixNumber=dynamicMapping%stiffnessMatrixNumber 
+    
+    EXITS("EquationsMappingDynamic_StiffnessMatrixNumberGet")
+    RETURN
+999 ERRORS("EquationsMappingDynamic_StiffnessMatrixNumberGet",err,error)
+    EXITS("EquationsMappingDynamic_StiffnessMatrixNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingDynamic_StiffnessMatrixNumberGet
 
   !
   !================================================================================================================================

@@ -2052,6 +2052,7 @@ CONTAINS
     controlLoop%loadIncrementLoop%iterationNumber=0
     controlLoop%loadIncrementLoop%maximumNumberOfIterations=1 ! default is full load in one step
     controlLoop%loadIncrementLoop%outputNumber=0
+    controlLoop%loadIncrementLoop%inputNumber=0
       
     EXITS("ControlLoop_LoadIncrementInitialise")
     RETURN

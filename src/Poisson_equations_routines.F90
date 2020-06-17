@@ -2210,7 +2210,7 @@ CONTAINS
           DO rowElementParameterIdx=1,numberOfRowsElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1                    
             CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & rowsPhi,err,error,*999)
+              & gaussPointIdx,rowsPhi,err,error,*999)
             columnElementDOFIdx=0
             IF(equationsMatrix%updateMatrix) THEN
               !Loop over element columns

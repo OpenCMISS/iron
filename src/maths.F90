@@ -165,6 +165,34 @@ MODULE Maths
     MODULE PROCEDURE I1SP
   END INTERFACE I1
 
+  !>Returns the invaiants of a matrix.
+  INTERFACE Invariants
+    MODULE PROCEDURE InvariantsOne2SP
+    MODULE PROCEDURE InvariantsOne2DP
+    MODULE PROCEDURE InvariantsTwo2SP
+    MODULE PROCEDURE InvariantsTwo2DP
+    MODULE PROCEDURE InvariantsThree2SP
+    MODULE PROCEDURE InvariantsThree2DP
+  END INTERFACE Invariants
+
+  !>Returns the first invaiant of a matrix.
+  INTERFACE InvariantsOne
+    MODULE PROCEDURE InvariantsOne2SP
+    MODULE PROCEDURE InvariantsOne2DP
+  END INTERFACE InvariantsOne
+
+  !>Returns the first three invaiants of a matrix.
+  INTERFACE InvariantsThree
+    MODULE PROCEDURE InvariantsThree2SP
+    MODULE PROCEDURE InvariantsThree2DP
+  END INTERFACE InvariantsThree
+
+  !>Returns the first two invaiants of a matrix.
+  INTERFACE InvariantsTwo
+    MODULE PROCEDURE InvariantsTwo2SP
+    MODULE PROCEDURE InvariantsTwo2DP
+  END INTERFACE InvariantsTwo
+
   !>Returns the inverse of a matrix.
   INTERFACE Invert
     MODULE PROCEDURE InvertFullSP
@@ -276,6 +304,12 @@ MODULE Maths
   END INTERFACE NormaliseCrossProduct
 
   !>Solves a small linear system Ax=b.
+  INTERFACE SolveEigenproblem
+    MODULE PROCEDURE SolveEigenproblemSP
+    MODULE PROCEDURE SolveEigenproblemDP
+  END INTERFACE SolveEigenproblem
+
+  !>Solves a small linear system Ax=b.
   INTERFACE SolveSmallLinearSystem
     MODULE PROCEDURE SolveSmallLinearSystemSP
     MODULE PROCEDURE SolveSmallLinearSystemDP
@@ -340,6 +374,14 @@ MODULE Maths
 
   PUBLIC IdentityMatrix
 
+  PUBLIC Invariants
+
+  PUBLIC InvariantsOne
+
+  PUBLIC InvariantsTwo
+
+  PUBLIC InvariantsThree
+
   PUBLIC Invert
 
   PUBLIC InvertTranspose
@@ -369,6 +411,8 @@ MODULE Maths
   PUBLIC Normalise
 
   PUBLIC NormaliseCrossProduct
+
+  PUBLIC SolveEigenproblem
 
   PUBLIC SolveSmallLinearSystem
 
@@ -437,8 +481,10 @@ CONTAINS
     
     ENTERS("CrossProductIntg",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
     IF(SIZE(c,1)==3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(a,1))
     CASE(3)
@@ -473,8 +519,10 @@ CONTAINS
     
     ENTERS("CrossProductSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
     IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(3)
@@ -509,8 +557,10 @@ CONTAINS
     
     ENTERS("CrossProductDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
     IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(a,1))
     CASE(3)
@@ -551,10 +601,12 @@ CONTAINS
     
     ENTERS("dCrossProductIntg",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(da,1)/=SIZE(db,1).OR.SIZE(a,1)/=SIZE(da,1).OR.SIZE(b,1)/=SIZE(db,1)) &
       & CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
     IF(SIZE(da,2)<n.OR.SIZE(db,2)<n) CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
     IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+#endif    
     
     CALL CrossProduct(a,b,c,err,error,*999)
     SELECT CASE(SIZE(a,1))
@@ -598,10 +650,12 @@ CONTAINS
     
     ENTERS("dCrossProductSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(da,1)/=SIZE(db,1).OR.SIZE(a,1)/=SIZE(da,1).OR.SIZE(b,1)/=SIZE(db,1)) &
       & CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
     IF(SIZE(da,2)<n.OR.SIZE(db,2)<n) CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
     IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+#endif    
     
     CALL CrossProduct(a,b,c,err,error,*999)
     SELECT CASE(SIZE(a,1))
@@ -645,10 +699,12 @@ CONTAINS
     
     ENTERS("dCrossProductDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(da,1)/=SIZE(db,1).OR.SIZE(a,1)/=SIZE(da,1).OR.SIZE(b,1)/=SIZE(db,1)) &
       & CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
     IF(SIZE(da,2)<n.OR.SIZE(db,2)<n) CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
     IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+#endif    
 
     CALL CrossProduct(a,b,c,err,error,*999)
     SELECT CASE(SIZE(a,1))
@@ -688,9 +744,11 @@ CONTAINS
     
     ENTERS("DecomposeSphericalDeviatoricMatrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
       & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -771,9 +829,11 @@ CONTAINS
     
     ENTERS("DecomposeSphericalDeviatoricMatrix2DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
       & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -853,9 +913,11 @@ CONTAINS
     
     ENTERS("DecomposeSymmetricSkewMatrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
       & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -931,9 +993,11 @@ CONTAINS
     
     ENTERS("DecomposeSymmetricSkewMatrix2DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
       & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -1008,8 +1072,10 @@ CONTAINS
     ENTERS("DeterminantFullIntg",err,error,*999)
 
     detA=0_INTG
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -1048,8 +1114,10 @@ CONTAINS
     ENTERS("DeterminantFullSP",err,error,*999)
 
     detA=0.0_SP
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -1088,8 +1156,10 @@ CONTAINS
     ENTERS("DeterminantFullDP",err,error,*999)
 
     detA=0.0_DP
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -1129,7 +1199,9 @@ CONTAINS
     
     ENTERS("DotProductMatrix2Matrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
     
     IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
       !A and B matrices are square and the same size
@@ -1197,8 +1269,10 @@ CONTAINS
     INTEGER(INTG) :: i,j,k
         
     ENTERS("DotProductMatrix2Matrix2DP",err,error,*999)
-    
+
+#ifdef WITH_PRECHEKCS    
     IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
     
     IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
       !A and B matrices are square and the same size
@@ -1267,8 +1341,10 @@ CONTAINS
 
     ENTERS("DotProductMatrixVectorSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(b,1)) CALL FlagError("The number of columns in A does not match the number of rows in b.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(c,1)) CALL FlagError("The number of rows of A does not match the number of rows in c.",err,error,*999)
+#endif    
     
     IF(SIZE(A,1)==SIZE(A,2)) THEN
       !A matrix is square
@@ -1325,8 +1401,10 @@ CONTAINS
 
     ENTERS("DotProductMatrixVectorDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(b,1)) CALL FlagError("The number of columns in A does not match the number of rows in b.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(c,1)) CALL FlagError("The number of rows of A does not match the number of rows in c.",err,error,*999)
+#endif    
     
     IF(SIZE(A,1)==SIZE(A,2)) THEN
       !A matrix is square
@@ -1383,7 +1461,9 @@ CONTAINS
 
     ENTERS("DotProductVectorVectorSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The a and b vectors are of different lengths.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(a,1))
     CASE(1)
@@ -1420,7 +1500,9 @@ CONTAINS
 
     ENTERS("DotProductVectorVectorDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The a and b vectors are of different lengths.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(a,1))
     CASE(1)
@@ -1458,7 +1540,9 @@ CONTAINS
     
     ENTERS("DotTransposeProductMatrix2Matrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
 
     IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
       !A and B matrices are square and the same size
@@ -1527,7 +1611,9 @@ CONTAINS
     
     ENTERS("DotTransposeProductMatrix2Matrix2DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
 
     IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
       !A and B matrices are square and the same size
@@ -1596,8 +1682,10 @@ CONTAINS
 
     ENTERS("DotTransposeProductMatrixVectorSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("The number of rows in A does not match the number of rows in b.",err,error,*999)
     IF(SIZE(A,2)/=SIZE(c,1)) CALL FlagError("The number of columns in A does not match the number of rows in c.",err,error,*999)
+#endif    
   
     IF(SIZE(A,1)==SIZE(A,2)) THEN
       !A matrix is square
@@ -1654,8 +1742,10 @@ CONTAINS
 
     ENTERS("DotTransposeProductMatrixVectorDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("The number of rows in A does not match the number of rows in b.",err,error,*999)
     IF(SIZE(A,2)/=SIZE(c,1)) CALL FlagError("The number of columns in A does not match the number of rows in c.",err,error,*999)
+#endif    
   
     IF(SIZE(A,1)==SIZE(A,2)) THEN
       !A matrix is square
@@ -1712,7 +1802,9 @@ CONTAINS
     
     ENTERS("DotProductTransposeMatrix2Matrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,1)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
 
     IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,1)) THEN
       !A and B matrices are square and the same size
@@ -1780,8 +1872,10 @@ CONTAINS
     INTEGER(INTG) :: i,j,k
        
     ENTERS("DotProductTransposeMatrix2Matrix2DP",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,1)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
 
     IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,1)) THEN
       !A and B matrices are square and the same size
@@ -1850,9 +1944,11 @@ CONTAINS
     
     ENTERS("DoubleDotProductMatrix2Matrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
       & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -1898,9 +1994,11 @@ CONTAINS
 
     ENTERS("DoubleDotProductMatrix2Matrix2DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
       & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -1946,11 +2044,13 @@ CONTAINS
     
     ENTERS("DoubleDotProductMatrix2Matrix4SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
       & CALL FlagError("The number of dimensions of the A matrix to no conform to the first two dimensions of the B matrix.", &
       & err,error,*999)
     IF(SIZE(C,1)/=SIZE(B,3).OR.SIZE(C,2)/=SIZE(B,4))  &
       & CALL FlagError("The C matrix is not the same size as the last two dimensions of the B matrix.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(B,3)
       DO j=1,SIZE(B,4)
@@ -1988,11 +2088,13 @@ CONTAINS
     
     ENTERS("DoubleDotProductMatrix2Matrix4DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
       & CALL FlagError("The number of dimensions of the A matrix to no conform to the first two dimensions of the B matrix.", &
       & err,error,*999)
     IF(SIZE(C,1)/=SIZE(B,3).OR.SIZE(C,2)/=SIZE(B,4))  &
       & CALL FlagError("The C matrix is not the same size as the last two dimensions of the B matrix.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(B,3)
       DO j=1,SIZE(B,4)
@@ -2030,11 +2132,13 @@ CONTAINS
     
     ENTERS("DoubleDotProductMatrix4Matrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,3)/=SIZE(B,1).OR.SIZE(A,4)/=SIZE(B,2)) &
       & CALL FlagError("The last two dimensions of the A matrix does not conform to the number of dimensions of the B matrix.", &
       & err,error,*999)
     IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,2))  &
       & CALL FlagError("The C matrix is not the same size as the first two dimensions of the A matrix.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(A,1)
       DO j=1,SIZE(A,2)
@@ -2072,11 +2176,13 @@ CONTAINS
     
     ENTERS("DoubleDotProductMatrix4Matrix2DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,3)/=SIZE(B,1).OR.SIZE(A,4)/=SIZE(B,2)) &
       & CALL FlagError("The last two dimensions of the A matrix does not conform to the number of dimensions of the B matrix.", &
       & err,error,*999)
     IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,2))  &
       & CALL FlagError("The C matrix is not the same size as the first two dimensions of the A matrix.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(A,1)
       DO j=1,SIZE(A,2)
@@ -2178,67 +2284,64 @@ CONTAINS
     
     ENTERS("EigenvalueFullSP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(A,1)<=SIZE(eValues,1)) THEN
-        SELECT CASE(SIZE(A,1))
-        CASE(1)
-          eValues(1)=A(1,1)
-        CASE(2)
-          IF(ABS(A(1,2))>ZERO_TOLERANCE_SP) THEN
-            ri1=A(1,1)+A(2,2)
-            ri2=A(1,1)*A(2,2)-A(1,2)**2
-            b2=ri1/2.0_SP
-            c1=ri1*ri1
-            c2=4.0_SP*ri2
-            IF(c2>c1) CALL FlagError("Complex roots found in quadratic equation.",err,error,*999)
-            b3=SQRT(c1-c2)/2.0_SP
-            eValues(1)=b2+b3
-            eValues(2)=b2-b3
-          ELSE
-            eValues(1)=A(1,1)
-            eValues(2)=A(2,2)
-          ENDIF
-          IF(ABS(eValues(2))>ABS(eValues(1))) THEN
-            temp=eValues(1)
-            eValues(1)=eValues(2)
-            eValues(2)=temp
-          ENDIF
-        CASE(3)
-          ri1=A(1,1)+A(2,2)+A(3,3)
-          ri2=A(1,1)*A(2,2)+A(2,2)*A(3,3)+A(3,3)*A(1,1)-(A(1,2)**2+A(2,3)**2+A(3,1)**2)
-          CALL Determinant(A,ri3,err,error,*999)
-          ri4=ri1/3.0_SP
-          q=ri4*ri4-ri2/3.0_SP   
-          r=ri4*(ri4*ri4-ri2/2.0_SP)+ri3/2.0_SP
-          q3=q*q*q
-          d=r*r-q3
-          IF(ABS(d)>ZERO_TOLERANCE_SP) CALL FlagError("Complex roots found in solution of cubic equation.",err,error,*999)
-          rq=SQRT(ABS(q))
-          IF(ABS(q)<ZERO_TOLERANCE_SP) THEN
-            theta=0.0_SP
-          ELSE
-            theta=ACOS(r/SQRT(ABS(q3)))/3.0_SP
-          ENDIF
-          angle=2.0_SP*REAL(PI,SP)/3.0_SP
-          eValues(1)=2.0_SP*rq*COS(theta)+ri4
-          eValues(2)=2.0_SP*rq*COS(theta+angle)+ri4
-          eValues(3)=2.0_SP*rq*COS(theta+2.0_SP*angle)+ri4
-          DO i=1,2
-            IF(ABS(eValues(3))>ABS(eValues(i))) THEN
-              temp=eValues(i)
-              eValues(i)=eValues(3)
-              eValues(3)=temp
-            ENDIF
-          ENDDO !i
-        CASE DEFAULT
-          CALL FlagError("Matrix size not implemented.",err,error,*999)
-        END SELECT
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)    
+    IF(SIZE(A,1)>SIZE(eValues,1)) CALL FlagError("Evalues is too small.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      eValues(1)=A(1,1)
+    CASE(2)
+      IF(ABS(A(1,2))>ZERO_TOLERANCE_SP) THEN
+        ri1=A(1,1)+A(2,2)
+        ri2=A(1,1)*A(2,2)-A(1,2)**2
+        b2=ri1/2.0_SP
+        c1=ri1*ri1
+        c2=4.0_SP*ri2
+        IF(c2>c1) CALL FlagError("Complex roots found in quadratic equation.",err,error,*999)
+        b3=SQRT(c1-c2)/2.0_SP
+        eValues(1)=b2+b3
+        eValues(2)=b2-b3
       ELSE
-        CALL FlagError("Evalues is too small.",err,error,*999)
+        eValues(1)=A(1,1)
+        eValues(2)=A(2,2)
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+      IF(ABS(eValues(2))>ABS(eValues(1))) THEN
+        temp=eValues(1)
+        eValues(1)=eValues(2)
+        eValues(2)=temp
+      ENDIF
+    CASE(3)
+      ri1=A(1,1)+A(2,2)+A(3,3)
+      ri2=A(1,1)*A(2,2)+A(2,2)*A(3,3)+A(3,3)*A(1,1)-(A(1,2)**2+A(2,3)**2+A(3,1)**2)
+      CALL Determinant(A,ri3,err,error,*999)
+      ri4=ri1/3.0_SP
+      q=ri4*ri4-ri2/3.0_SP   
+      r=ri4*(ri4*ri4-ri2/2.0_SP)+ri3/2.0_SP
+      q3=q*q*q
+      d=r*r-q3
+      IF(ABS(d)>ZERO_TOLERANCE_SP) CALL FlagError("Complex roots found in solution of cubic equation.",err,error,*999)
+      rq=SQRT(ABS(q))
+      IF(ABS(q)<ZERO_TOLERANCE_SP) THEN
+        theta=0.0_SP
+      ELSE
+        theta=ACOS(r/SQRT(ABS(q3)))/3.0_SP
+      ENDIF
+      angle=2.0_SP*REAL(PI,SP)/3.0_SP
+      eValues(1)=2.0_SP*rq*COS(theta)+ri4
+      eValues(2)=2.0_SP*rq*COS(theta+angle)+ri4
+      eValues(3)=2.0_SP*rq*COS(theta+2.0_SP*angle)+ri4
+      DO i=1,2
+        IF(ABS(eValues(3))>ABS(eValues(i))) THEN
+          temp=eValues(i)
+          eValues(i)=eValues(3)
+          eValues(3)=temp
+        ENDIF
+      ENDDO !i
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("EigenvalueFullSP")
     RETURN
@@ -2265,67 +2368,64 @@ CONTAINS
     
     ENTERS("EigenvalueFullDP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(A,1)<= SIZE(eValues,1)) THEN
-        SELECT CASE(SIZE(A,1))
-        CASE(1)
-          eValues(1)=A(1,1)
-        CASE(2)
-          IF(ABS(A(1,2))>ZERO_TOLERANCE_DP) THEN
-            ri1=A(1,1)+A(2,2)
-            ri2=A(1,1)*A(2,2)-A(1,2)**2
-            b2=ri1/2.0_DP
-            c1=ri1*ri1
-            c2=4.0_DP*ri2
-            IF(c2>c1) CALL FlagError("Complex roots found in quadratic equation.",err,error,*999)
-            b3=SQRT(c1-c2)/2.0_DP
-            eValues(1)=b2+b3
-            eValues(2)=b2-b3
-          ELSE
-            eValues(1)=A(1,1)
-            eValues(2)=A(2,2)
-          ENDIF
-          IF(ABS(eValues(2))>ABS(eValues(1))) THEN
-            temp=eValues(1)
-            eValues(1)=eValues(2)
-            eValues(2)=temp
-          ENDIF
-        CASE(3)
-          ri1=A(1,1)+A(2,2)+A(3,3)
-          ri2=A(1,1)*A(2,2)+A(2,2)*A(3,3)+A(3,3)*A(1,1)-(A(1,2)**2+A(2,3)**2+A(3,1)**2)
-          CALL Determinant(A,ri3,err,error,*999)
-          ri4=ri1/3.0_DP
-          q=ri4*ri4-ri2/3.0_DP   
-          r=ri4*(ri4*ri4-ri2/2.0_DP)+ri3/2.0_DP
-          q3=q*q*q
-          d=r*r-q3
-          IF(ABS(d)>ZERO_TOLERANCE_DP) CALL FlagError("Complex roots found in solution of cubic equation.",err,error,*999)
-          rq=SQRT(ABS(q))
-          IF(ABS(q)<ZERO_TOLERANCE_DP) THEN
-            theta=0.0_DP
-          ELSE
-            theta=ACOS(r/SQRT(ABS(q3)))/3.0_DP
-          ENDIF
-          angle=2.0_DP*PI/3.0_DP
-          eValues(1)=2.0_DP*rq*COS(theta)+ri4
-          eValues(2)=2.0_DP*rq*COS(theta+angle)+ri4
-          eValues(3)=2.0_DP*rq*COS(theta+2.0_DP*angle)+ri4
-          DO i=1,2
-            IF(ABS(eValues(3))>ABS(eValues(i))) THEN
-              temp=eValues(i)
-              eValues(i)=eValues(3)
-              eValues(3)=temp
-            ENDIF
-          ENDDO !i
-        CASE DEFAULT
-          CALL FlagError("Matrix size not implemented.",err,error,*999)
-        END SELECT
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)    
+    IF(SIZE(A,1)>SIZE(eValues,1)) CALL FlagError("Evalues is too small.",err,error,*999)
+#endif
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      eValues(1)=A(1,1)
+    CASE(2)
+      IF(ABS(A(1,2))>ZERO_TOLERANCE_DP) THEN
+        ri1=A(1,1)+A(2,2)
+        ri2=A(1,1)*A(2,2)-A(1,2)**2
+        b2=ri1/2.0_DP
+        c1=ri1*ri1
+        c2=4.0_DP*ri2
+        IF(c2>c1) CALL FlagError("Complex roots found in quadratic equation.",err,error,*999)
+        b3=SQRT(c1-c2)/2.0_DP
+        eValues(1)=b2+b3
+        eValues(2)=b2-b3
       ELSE
-        CALL FlagError("Evalues is too small.",err,error,*999)
+        eValues(1)=A(1,1)
+        eValues(2)=A(2,2)
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+      IF(ABS(eValues(2))>ABS(eValues(1))) THEN
+        temp=eValues(1)
+        eValues(1)=eValues(2)
+        eValues(2)=temp
+      ENDIF
+    CASE(3)
+      ri1=A(1,1)+A(2,2)+A(3,3)
+      ri2=A(1,1)*A(2,2)+A(2,2)*A(3,3)+A(3,3)*A(1,1)-(A(1,2)**2+A(2,3)**2+A(3,1)**2)
+      CALL Determinant(A,ri3,err,error,*999)
+      ri4=ri1/3.0_DP
+      q=ri4*ri4-ri2/3.0_DP   
+      r=ri4*(ri4*ri4-ri2/2.0_DP)+ri3/2.0_DP
+      q3=q*q*q
+      d=r*r-q3
+      IF(ABS(d)>ZERO_TOLERANCE_DP) CALL FlagError("Complex roots found in solution of cubic equation.",err,error,*999)
+      rq=SQRT(ABS(q))
+      IF(ABS(q)<ZERO_TOLERANCE_DP) THEN
+        theta=0.0_DP
+      ELSE
+        theta=ACOS(r/SQRT(ABS(q3)))/3.0_DP
+      ENDIF
+      angle=2.0_DP*PI/3.0_DP
+      eValues(1)=2.0_DP*rq*COS(theta)+ri4
+      eValues(2)=2.0_DP*rq*COS(theta+angle)+ri4
+      eValues(3)=2.0_DP*rq*COS(theta+2.0_DP*angle)+ri4
+      DO i=1,2
+        IF(ABS(eValues(3))>ABS(eValues(i))) THEN
+          temp=eValues(i)
+          eValues(i)=eValues(3)
+          eValues(3)=temp
+        ENDIF
+      ENDDO !i
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("EigenvalueFullDP")
     RETURN
@@ -2356,62 +2456,59 @@ CONTAINS
     ENTERS("EigenvectorFullSP",err,error,*999)
 
 !!THIS NEEDS TO BE CHECKED
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)=/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)>SIZE(eVector,1)) CALL FlagError("Evector is too small.",err,error,*999)
+#endif
     
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(A,1)<=SIZE(eVector,1)) THEN
-        SELECT CASE(SIZE(A,1))
-        CASE(1)
-          eVector(1)=1.0_SP
-        CASE(2)
-          IF(ABS(A(1,2))>ZERO_TOLERANCE_SP) THEN
-            IF(ABS(A(1,1)-eValue)>ABS(A(2,2)-eValue)) THEN
-              al=SQRT(A(1,2)**2+(A(1,1)-eValue)**2)
-              eVector(1)=A(1,2)/al
-              eVector(2)=(eValue-A(1,1))/al
-            ELSE
-              al=SQRT(A(1,2)**2+(A(2,2)-eValue)**2)
-              eVector(1)=(eValue-A(2,2))/al
-              eVector(2)=A(1,2)/al
-            ENDIF
-          ELSE IF(ABS(eValue-A(1,1))<ZERO_TOLERANCE_SP) THEN
-            eVector(1)=1.0_SP
-            eVector(2)=0.0_SP
-          ELSE IF(ABS(eValue-A(2,2))<ZERO_TOLERANCE_SP) THEN
-            eVector(1)=0.0_SP
-            eVector(2)=1.0_DP
-          ENDIF
-        CASE(3)
-          IF(ABS(A(1,2))<ZERO_TOLERANCE_SP.AND.ABS(A(1,3))<ZERO_TOLERANCE_SP.AND.ABS(A(2,3))<ZERO_TOLERANCE_SP) THEN
-            eVector=0.0_SP
-            CALL FlagError("Zero matrix?? Eigenvectors undetermined.",err,error,*999)
-          ELSE
-            DO i=1,3
-              U(i,:)=A(i,:)
-              U(i,i)=U(i,i)-eValue
-            ENDDO !i
-            DO i=1,3
-              x(i)=1.0_SP
-              i1=iCycle(i,1)
-              i2=iCycle(i,2)
-              i3=iCycle(i,3)
-              b(1)=-1.0_SP*U(i1,i)
-              b(2)=-1.0_SP*U(i2,i)
-              CALL SolveSmallLinearSystem(U(i1:i2:i3,i1:i2:i3),x,b,err,error,*999)
-              sum=DOT_PRODUCT(U(i,:),x)
-              IF(ABS(sum)<ZERO_TOLERANCE_SP) THEN
-                CALL Normalise(x,eVector,err,error,*999)
-              ENDIF
-            ENDDO !i
-          ENDIF
-        CASE DEFAULT
-          CALL FlagError("Matrix size not implemented.",err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Evector is too small.",err,error,*999)
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      eVector(1)=1.0_SP
+    CASE(2)
+      IF(ABS(A(1,2))>ZERO_TOLERANCE_SP) THEN
+        IF(ABS(A(1,1)-eValue)>ABS(A(2,2)-eValue)) THEN
+          al=SQRT(A(1,2)**2+(A(1,1)-eValue)**2)
+          eVector(1)=A(1,2)/al
+          eVector(2)=(eValue-A(1,1))/al
+        ELSE
+          al=SQRT(A(1,2)**2+(A(2,2)-eValue)**2)
+          eVector(1)=(eValue-A(2,2))/al
+          eVector(2)=A(1,2)/al
+        ENDIF
+      ELSE IF(ABS(eValue-A(1,1))<ZERO_TOLERANCE_SP) THEN
+        eVector(1)=1.0_SP
+        eVector(2)=0.0_SP
+      ELSE IF(ABS(eValue-A(2,2))<ZERO_TOLERANCE_SP) THEN
+        eVector(1)=0.0_SP
+        eVector(2)=1.0_DP
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    CASE(3)
+      IF(ABS(A(1,2))<ZERO_TOLERANCE_SP.AND.ABS(A(1,3))<ZERO_TOLERANCE_SP.AND.ABS(A(2,3))<ZERO_TOLERANCE_SP) THEN
+        eVector=0.0_SP
+        CALL FlagError("Zero matrix?? Eigenvectors undetermined.",err,error,*999)
+      ELSE
+        DO i=1,3
+          U(i,:)=A(i,:)
+          U(i,i)=U(i,i)-eValue
+        ENDDO !i
+        DO i=1,3
+          x(i)=1.0_SP
+          i1=iCycle(i,1)
+          i2=iCycle(i,2)
+          i3=iCycle(i,3)
+          b(1)=-1.0_SP*U(i1,i)
+          b(2)=-1.0_SP*U(i2,i)
+          CALL SolveSmallLinearSystem(U(i1:i2:i3,i1:i2:i3),x,b,err,error,*999)
+          sum=DOT_PRODUCT(U(i,:),x)
+          IF(ABS(sum)<ZERO_TOLERANCE_SP) THEN
+            CALL Normalise(x,eVector,err,error,*999)
+          ENDIF
+        ENDDO !i
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("EigenvectorFullSP")
     RETURN
@@ -2443,62 +2540,59 @@ CONTAINS
 
 !!THIS NEEDS TO BE CHECKED
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(A,1)<=SIZE(eVector,1)) THEN
-        SELECT CASE(SIZE(A,1))
-        CASE(1)
-          eVector(1)=1.0_DP
-        CASE(2)
-          IF(ABS(A(1,2))>ZERO_TOLERANCE_DP) THEN
-            IF(ABS(A(1,1)-eValue)>ABS(A(2,2)-eValue)) THEN
-              al=SQRT(A(1,2)**2+(A(1,1)-eValue)**2)
-              eVector(1)=A(1,2)/al
-              eVector(2)=(eValue-A(1,1))/al
-            ELSE
-              al=SQRT(A(1,2)**2+(A(2,2)-eValue)**2)
-              eVector(1)=(eValue-A(2,2))/al
-              eVector(2)=A(1,2)/al
-            ENDIF
-          ELSE IF(ABS(eValue-A(1,1))<ZERO_TOLERANCE_DP) THEN
-            eVector(1)=1.0_DP
-            eVector(2)=0.0_DP
-          ELSE IF(ABS(eValue-A(2,2))<ZERO_TOLERANCE_DP) THEN
-            eVector(1)=0.0_DP
-            eVector(2)=1.0_DP
-          ENDIF
-        CASE(3)
-          IF(ABS(A(1,2))<ZERO_TOLERANCE_DP.AND.ABS(A(1,3))<ZERO_TOLERANCE_DP.AND.ABS(A(2,3))<ZERO_TOLERANCE_DP) THEN
-            eVector=0.0_DP
-            CALL FlagError("Zero matrix?? Eigenvectors undetermined.",err,error,*999)
-          ELSE
-            DO i=1,3
-              U(i,:)=A(i,:)
-              U(i,i)=U(i,i)-eValue
-            ENDDO !i
-            DO i=1,3
-              x(i)=1.0_DP
-              i1=iCycle(i,1)
-              i2=iCycle(i,2)
-              i3=iCycle(i,3)
-              b(1)=-1.0_DP*U(i1,i)
-              b(2)=-1.0_DP*U(i2,i)
-              CALL SolveSmallLinearSystem(U(i1:i2:i3,i1:i2:i3),x,b,err,error,*999)
-              sum=DOT_PRODUCT(U(i,:),x)
-              IF(ABS(sum)<ZERO_TOLERANCE_DP) THEN
-                CALL Normalise(x,eVector,err,error,*999)
-                IF(err /= 0) GOTO 999
-              ENDIF
-            ENDDO !i
-          ENDIF
-        CASE DEFAULT
-          CALL FlagError("Matrix size not implemented.",err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Evector is too small.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)=/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)>SIZE(eVector,1)) CALL FlagError("Evector is too small.",err,error,*999)
+#endif
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      eVector(1)=1.0_DP
+    CASE(2)
+      IF(ABS(A(1,2))>ZERO_TOLERANCE_DP) THEN
+        IF(ABS(A(1,1)-eValue)>ABS(A(2,2)-eValue)) THEN
+          al=SQRT(A(1,2)**2+(A(1,1)-eValue)**2)
+          eVector(1)=A(1,2)/al
+          eVector(2)=(eValue-A(1,1))/al
+        ELSE
+          al=SQRT(A(1,2)**2+(A(2,2)-eValue)**2)
+          eVector(1)=(eValue-A(2,2))/al
+          eVector(2)=A(1,2)/al
+        ENDIF
+      ELSE IF(ABS(eValue-A(1,1))<ZERO_TOLERANCE_DP) THEN
+        eVector(1)=1.0_DP
+        eVector(2)=0.0_DP
+      ELSE IF(ABS(eValue-A(2,2))<ZERO_TOLERANCE_DP) THEN
+        eVector(1)=0.0_DP
+        eVector(2)=1.0_DP
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    CASE(3)
+      IF(ABS(A(1,2))<ZERO_TOLERANCE_DP.AND.ABS(A(1,3))<ZERO_TOLERANCE_DP.AND.ABS(A(2,3))<ZERO_TOLERANCE_DP) THEN
+        eVector=0.0_DP
+        CALL FlagError("Zero matrix?? Eigenvectors undetermined.",err,error,*999)
+      ELSE
+        DO i=1,3
+          U(i,:)=A(i,:)
+          U(i,i)=U(i,i)-eValue
+        ENDDO !i
+        DO i=1,3
+          x(i)=1.0_DP
+          i1=iCycle(i,1)
+          i2=iCycle(i,2)
+          i3=iCycle(i,3)
+          b(1)=-1.0_DP*U(i1,i)
+          b(2)=-1.0_DP*U(i2,i)
+          CALL SolveSmallLinearSystem(U(i1:i2:i3,i1:i2:i3),x,b,err,error,*999)
+          sum=DOT_PRODUCT(U(i,:),x)
+          IF(ABS(sum)<ZERO_TOLERANCE_DP) THEN
+            CALL Normalise(x,eVector,err,error,*999)
+            IF(err /= 0) GOTO 999
+          ENDIF
+        ENDDO !i
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("EigenvectorFullDP")
     RETURN
@@ -2647,7 +2741,9 @@ CONTAINS
     
     ENTERS("IdentityMatrixSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1)) 
     CASE(1)
@@ -2697,7 +2793,9 @@ CONTAINS
     
     ENTERS("IdentityMatrixDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1)) 
     CASE(1)
@@ -2735,6 +2833,260 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !Returns the first invariant of a single precision second order matrix A
+  SUBROUTINE InvariantsOne2SP(A,I1,err,error,*)
+    
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
+    REAL(SP), INTENT(OUT) :: I1 !<On exit, the first invariant of A i.e., I1 = tr A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvariantsOne2SP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      I1=A(1,1)
+    CASE(2)
+      I1=A(1,1)+A(2,2)
+    CASE(3)
+      I1=A(1,1)+A(2,2)+A(3,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvariantsOne2SP")
+    RETURN
+999 ERRORSEXITS("InvariantsOne2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvariantsOne2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !Returns the first invariant of a double precision second order matrix A
+  SUBROUTINE InvariantsOne2DP(A,I1,I2,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
+    REAL(DP), INTENT(OUT) :: I1 !<On exit, the first invariant of A i.e., I1 = tr A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvariantsOne2DP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      I1=A(1,1)
+    CASE(2)
+      I1=A(1,1)+A(2,2)
+    CASE(3)
+      I1=A(1,1)+A(2,2)+A(3,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvariantsOne2DP")
+    RETURN
+999 ERRORSEXITS("InvariantsOne2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvariantsOne2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !Returns three invariants of a single precision second order matrix A
+  SUBROUTINE InvariantsThree2SP(A,I1,I2,I3,err,error,*)
+    
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
+    REAL(SP), INTENT(OUT) :: I1 !<On exit, the first invariant of A i.e., I1 = tr A
+    REAL(SP), INTENT(OUT) :: I2 !<On exit, the second invariant of A i.e., I2 = 1/2.((tr A)^2-tr(A.A))
+    REAL(SP), INTENT(OUT) :: I3 !<On exit, the third invariant of A i.e., I3 = det A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvariantsThree2SP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      I1=A(1,1)
+      I2=0.0_SP
+      I3=A(1,1)
+    CASE(2)
+      I1=A(1,1)+A(2,2)
+      I2=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+      I3=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+    CASE(3)
+      I1=A(1,1)+A(2,2)+A(3,3)
+      I2=A(1,1)*A(2,2)+A(1,1)*A(3,3)+A(2,2)*A(3,3)-A(1,2)*A(2,1)-A(1,3)*A(3,1)-A(2,3)*A(3,2)
+      I3=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
+        & A(3,1)*A(2,2)*A(1,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvariantsThree2SP")
+    RETURN
+999 ERRORSEXITS("InvariantsThree2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvariantsThree2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !Returns three invariants of a double precision second order matrix A
+  SUBROUTINE InvariantsThree2DP(A,I1,I2,I3,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
+    REAL(DP), INTENT(OUT) :: I1 !<On exit, the first invariant of A i.e., I1 = tr A
+    REAL(DP), INTENT(OUT) :: I2 !<On exit, the second invariant of A i.e., I2 = 1/2.((tr A)^2-tr(A.A))
+    REAL(DP), INTENT(OUT) :: I3 !<On exit, the third invariant of A i.e., I3 = det A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvariantsThree2DP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      I1=A(1,1)
+      I2=0.0_DP
+      I3=A(1,1)
+    CASE(2)
+      I1=A(1,1)+A(2,2)
+      I2=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+      I3=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+    CASE(3)
+      I1=A(1,1)+A(2,2)+A(3,3)
+      I2=A(1,1)*A(2,2)+A(1,1)*A(3,3)+A(2,2)*A(3,3)-A(1,2)*A(2,1)-A(1,3)*A(3,1)-A(2,3)*A(3,2)
+      I3=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
+        & A(3,1)*A(2,2)*A(1,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvariantsThree2DP")
+    RETURN
+999 ERRORSEXITS("InvariantsThree2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvariantsThree2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !Returns the first two invariants of a single precision second order matrix A
+  SUBROUTINE InvariantsTwo2SP(A,I1,I2,err,error,*)
+    
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
+    REAL(SP), INTENT(OUT) :: I1 !<On exit, the first invariant of A i.e., I1 = tr A
+    REAL(SP), INTENT(OUT) :: I2 !<On exit, the second invariant of A i.e., I2 = 1/2.((tr A)^2-tr(A.A))
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvariantsTwo2SP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      I1=A(1,1)
+      I2=0.0_SP
+    CASE(2)
+      I1=A(1,1)+A(2,2)
+      I2=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+    CASE(3)
+      I1=A(1,1)+A(2,2)+A(3,3)
+      I2=A(1,1)*A(2,2)+A(1,1)*A(3,3)+A(2,2)*A(3,3)-A(1,2)*A(2,1)-A(1,3)*A(3,1)-A(2,3)*A(3,2)
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvariantsTwo2SP")
+    RETURN
+999 ERRORSEXITS("InvariantsTwo2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvariantsTwo2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !Returns the first two invariants of a double precision second order matrix A
+  SUBROUTINE InvariantsTwo2DP(A,I1,I2,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
+    REAL(DP), INTENT(OUT) :: I1 !<On exit, the first invariant of A i.e., I1 = tr A
+    REAL(DP), INTENT(OUT) :: I2 !<On exit, the second invariant of A i.e., I2 = 1/2.((tr A)^2-tr(A.A))
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvariantsTwo2DP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+#endif    
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      I1=A(1,1)
+      I2=0.0_DP
+    CASE(2)
+      I1=A(1,1)+A(2,2)
+      I2=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+    CASE(3)
+      I1=A(1,1)+A(2,2)+A(3,3)
+      I2=A(1,1)*A(2,2)+A(1,1)*A(3,3)+A(2,2)*A(3,3)-A(1,2)*A(2,1)-A(1,3)*A(3,1)-A(2,3)*A(3,2)
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvariantsTwo2DP")
+    RETURN
+999 ERRORSEXITS("InvariantsTwo2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvariantsTwo2DP
+
+  !
+  !================================================================================================================================
+  !
+
   !>Inverts a full single precision matrix A to give matrix B and returns the determinant of A in det.
   SUBROUTINE InvertFullSP(A,B,det,err,error,*)
     
@@ -2748,8 +3100,10 @@ CONTAINS
 
     ENTERS("InvertFullSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
     IF(SIZE(B,1)/=SIZE(A,1).OR.SIZE(B,2)/=SIZE(A,2)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1)) 
     CASE(1)
@@ -2816,8 +3170,10 @@ CONTAINS
 
     ENTERS("InvertFullDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
     IF(SIZE(B,1)/=SIZE(A,1).OR.SIZE(B,2)/=SIZE(A,2)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1)) 
     CASE(1)
@@ -2884,8 +3240,10 @@ CONTAINS
 
     ENTERS("InvertTransposeFullSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
     IF(SIZE(B,1)/=SIZE(A,2).OR.SIZE(B,2)/=SIZE(A,1)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1)) 
     CASE(1)
@@ -2952,8 +3310,10 @@ CONTAINS
 
     ENTERS("InvertTransposeFullDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
     IF(SIZE(B,1)/=SIZE(A,2).OR.SIZE(B,2)/=SIZE(A,1)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1)) 
     CASE(1)
@@ -3684,7 +4044,9 @@ CONTAINS
     
     ENTERS("NormaliseMatrixSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(normA,1).OR.SIZE(A,2)/=SIZE(normA,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
     
     CALL Determinant(A,detA,err,error,*999)
     IF(ABS(detA)<ZERO_TOLERANCE_SP) THEN
@@ -3718,7 +4080,9 @@ CONTAINS
     
     ENTERS("NormaliseMatrixDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(normA,1).OR.SIZE(A,2)/=SIZE(normA,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
     
     CALL Determinant(A,detA,err,error,*999)
     IF(ABS(detA)<ZERO_TOLERANCE) THEN
@@ -3752,7 +4116,9 @@ CONTAINS
     
     ENTERS("NormaliseVectorSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(normA,1)) CALL FlagError("Invalid vector sizes.",err,error,*999)
+#endif    
     
     CALL L2Norm(a,length,err,error,*999)
     IF(ABS(length)<ZERO_TOLERANCE_SP) THEN
@@ -3785,7 +4151,9 @@ CONTAINS
     
     ENTERS("NormaliseVectorDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(a,1)/=SIZE(normA,1)) CALL FlagError("Invalid vector sizes.",err,error,*999)
+#endif    
     
     CALL L2Norm(a,length,err,error,*999)
     IF(ABS(length)<ZERO_TOLERANCE_DP) THEN
@@ -3821,7 +4189,6 @@ CONTAINS
 
     CALL CrossProduct(a,b,temp,err,error,*999)
     CALL Normalise(temp,c,err,error,*999)
-    IF(err/=0) GOTO 999
 
     EXITS("NormaliseCrossProductSP")
     RETURN
@@ -3862,30 +4229,209 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Finds the solution to a single precision eigenproblem 
+  SUBROUTINE SolveEigenproblemSP(A,eigenvalues,eigenvectors,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix to solve the eigenproblem for
+    REAL(SP), INTENT(OUT) :: eigenvalues(:) !<On exit, the eigenvalues of A
+    REAL(SP), INTENT(IN) :: eigenvectors(:,:) !<On exit, the eigenvectors of A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: matrixSize
+    INTEGER(INTG), PARAMETER :: lWork=1000
+    REAL(SP) :: B(SIZE(A,1),SIZE(A,2)),det,factor,trace,work(lWork)
+    
+    ENTERS("SolveEigenproblemSP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)>SIZE(eigenvalues,1)) &
+      & CALL FlagError("Size of eigenvalues is not the same as the number of rows in A.",err,error,*999)    
+    IF(SIZE(A,1)>SIZE(eigenvectors,1)) CALL FlagError("Eigenvectors is too small.",err,error,*999)
+    IF(SIZE(A,2)>SIZE(eigenvectors,2)) CALL FlagError("Eigenvectors is too small.",err,error,*999)
+#endif    
+
+    matrixSize=SIZE(A,1)
+    SELECT CASE(matrixSize)
+    CASE(1)
+      eigenvalues(1)=A(1,1)
+      eigenvectors(1,1)=0.0_SP
+    CASE(2)
+!!TODO: This needs to be checked      
+      trace=A(1,1)+A(2,2)
+      det=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+      factor=trace*trace/4.0_SP-det
+      IF(factor<=ZERO_TOLERANCE_SP) CALL FlagError("Complex roots encountered.",err,error,*999)
+      eigenvalues(1)=trace/2.0_SP+SQRT(factor)
+      eigenvalues(2)=trace/2.0_SP-SQRT(factor)
+      IF(ABS(A(2,1)>ZERO_TOLERANCE_SP)) THEN
+        eigenvectors(1,1)=eigenvalues(1)-A(2,2)
+        eigenvectors(2,1)=A(2,1)
+        eigenvectors(1,2)=eigenvalues(2)-A(2,2)
+        eigenvectors(2,2)=A(2,1)
+      ELSE
+        IF(ABS(A(1,2))>ZERO_TOLERANCE_SP) THEN
+          eigenvectors(1,1)=A(1,2)
+          eigenvectors(2,1)=eigenvalues(1)-A(1,1)
+          eigenvectors(1,2)=A(1,2)
+          eigenvectors(2,2)=eigenvalues(2)-A(1,1)
+        ELSE
+          eigenvectors(1,1)=1.0_SP
+          eigenvectors(2,1)=0.0_SP
+          eigenvectors(1,2)=0.0_SP
+          eigenvectors(2,2)=1.0_SP
+         ENDIF
+      ENDIF      
+    CASE DEFAULT
+      B(1:matrixSize,1:matrixSize)=A(1:matrixSize,1:matrixSize)
+      CALL SSYEV('V','U',matrixSize,B,matrixSize,eigenvalues,work,-1,err)
+      IF(err/=0) CALL FlagError("Error in eigenvalue computation SSYEV.",err,error,*999)
+      lWork=MIN(lWMax,INT(work(1)))
+      CALL SSYEV('V','U',matrixSize,B,matrixSize,eigenvalues,work,lWork,err)
+      IF(err/=0) CALL FlagError("Error in eigenvectror computation SSYEV.",err,error,*999)
+      eigenvectors(1:matrixSize,1)=B(1:matrixSize,1)
+      eigenvectors(1:matrixSize,2)=B(1:matrixSize,2)
+      eigenvectors(1:matrixSize,3)=B(1:matrixSize,3)
+    END SELECT
+
+    EXITS("SolveEigenproblemSP")
+    RETURN
+999 ERRORSEXITS("SolveEigenproblemSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolveEigenproblemSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds the solution to a double precision eigenproblem 
+  SUBROUTINE SolveEigenproblemDP(A,eigenvalues,eigenvectors,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix to solve the eigenproblem for
+    REAL(DP), INTENT(OUT) :: eigenvalues(:) !<On exit, the eigenvalues of A
+    REAL(DP), INTENT(IN) :: eigenvectors(:,:) !<On exit, the eigenvectors of A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: matrixSize
+    INTEGER(INTG), PARAMETER :: lWork=1000
+    REAL(DP) :: B(SIZE(A,1),SIZE(A,2)),det,factor,trace,work(lWork)
+    
+    ENTERS("SolveEigenproblemDP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)>SIZE(eigenvalues,1)) &
+      & CALL FlagError("Size of eigenvalues is not the same as the number of rows in A.",err,error,*999)    
+    IF(SIZE(A,1)>SIZE(eigenvectors,1)) CALL FlagError("Eigenvectors is too small.",err,error,*999)
+    IF(SIZE(A,2)>SIZE(eigenvectors,2)) CALL FlagError("Eigenvectors is too small.",err,error,*999)
+#endif    
+
+    matrixSize=SIZE(A,1)
+    SELECT CASE(matrixSize)
+    CASE(1)
+      eigenvalues(1)=A(1,1)
+      eigenvectors(1,1)=0.0_DP
+    CASE(2)
+!!TODO: This needs to be checked      
+      trace=A(1,1)+A(2,2)
+      det=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+      factor=trace*trace/4.0_DP-det
+      IF(factor<=ZERO_TOLERANCE) CALL FlagError("Complex roots encountered.",err,error,*999)
+      eigenvalues(1)=trace/2.0_DP+SQRT(factor)
+      eigenvalues(2)=trace/2.0_DP-SQRT(factor)
+      IF(ABS(A(2,1)>ZERO_TOLERANCE)) THEN
+        eigenvectors(1,1)=eigenvalues(1)-A(2,2)
+        eigenvectors(2,1)=A(2,1)
+        eigenvectors(1,2)=eigenvalues(2)-A(2,2)
+        eigenvectors(2,2)=A(2,1)
+      ELSE
+        IF(ABS(A(1,2))>ZERO_TOLERANCE) THEN
+          eigenvectors(1,1)=A(1,2)
+          eigenvectors(2,1)=eigenvalues(1)-A(1,1)
+          eigenvectors(1,2)=A(1,2)
+          eigenvectors(2,2)=eigenvalues(2)-A(1,1)
+        ELSE
+          eigenvectors(1,1)=1.0_DP
+          eigenvectors(2,1)=0.0_DP
+          eigenvectors(1,2)=0.0_DP
+          eigenvectors(2,2)=1.0_DP
+         ENDIF
+      ENDIF      
+    CASE DEFAULT
+      B(1:matrixSize,1:matrixSize)=A(1:matrixSize,1:matrixSize)
+      CALL DSYEV('V','U',matrixSize,B,matrixSize,eigenvalues,work,-1,err)
+      IF(err/=0) CALL FlagError("Error in eigenvalue computation DSYEV.",err,error,*999)
+      lWork=MIN(lWMax,INT(work(1)))
+      CALL DSYEV('V','U',matrixSize,B,matrixSize,eigenvalues,work,lWork,err)
+      IF(err/=0) CALL FlagError("Error in eigenvector computation DSYEV.",err,error,*999)
+      eigenvectors(1:matrixSize,1)=B(1:matrixSize,1)
+      eigenvectors(1:matrixSize,2)=B(1:matrixSize,2)
+      eigenvectors(1:matrixSize,3)=B(1:matrixSize,3)
+    END SELECT
+
+    EXITS("SolveEigenproblemDP")
+    RETURN
+999 ERRORSEXITS("SolveEigenproblemDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolveEigenproblemDP
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finds the solution to a small single precision linear system Ax=b.
   SUBROUTINE SolveSmallLinearSystemSP(A,x,b,err,error,*)
   
     !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(SP), INTENT(INOUT) :: A(:,:) !<The A matrix
     REAL(SP), INTENT(OUT) :: x(:) !<On exit, the solution vector x
-    REAL(SP), INTENT(IN) :: b(:) !<The RHS vector b
+    REAL(SP), INTENT(INOUT) :: b(:) !<The RHS vector b
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    INTEGER(INTG) :: iPivot(SIZE(A,1)
     REAL(SP) :: AInv(SIZE(A,1),SIZE(A,2)),det
     
     ENTERS("SolveSmallLinearSystemSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("Size of b is not the same as the number of rows in A.",err,error,*999)    
     IF(SIZE(A,1)>SIZE(x,1)) CALL FlagError("x is too small.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
-    CASE(1:3)
+    CASE(1)
+      IF(ABS(A(1,1))<ZERO_TOLERANCE_SP) CALL FlagError("The A matrix is zero.",err,error,*999)
+      x(1)=b(1)/A(1,1)
+    CASE(2:3)
       CALL Invert(A,AInv,det,err,error,*999)
       x=MATMUL(AInv,b)
     CASE DEFAULT
-      CALL FlagError("Matrix size not implemented.",err,error,*999)
+      !Use LAPACK LU
+      CALL DGETRF(SIZE(A,1),SIZE(A,2),A,SIZE(A,1),iPivot,info)
+      IF(info/=0) THEN
+        IF(info<0) THEN
+          localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
+        ELSE
+          localError="The A matrix is singular. The factorised diagonal entry for row "// &
+            & TRIM(NumberToVString(info,"*",err,error))//" is zero."          
+        ENDIF
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Solve the LU problem
+      CALL DGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
+      IF(info/=0) THEN
+        localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
+        CALL FlagError(localErr,err,error,*999)
+      ENDIF
+      x=b
     END SELECT
 
     EXITS("SolveSmallLinearSystemSP")
@@ -3903,26 +4449,49 @@ CONTAINS
   SUBROUTINE SolveSmallLinearSystemDP(A,x,b,err,error,*)
   
     !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(INOUT) :: A(:,:) !<The A matrix
     REAL(DP), INTENT(OUT) :: x(:) !<On exit, the solution vector x
-    REAL(DP), INTENT(IN) :: b(:) !<The RHS vector b
+    REAL(DP), INTENT(INOUT) :: b(:) !<The RHS vector b
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    INTEGER(INTG) :: iPivot(SIZE(A,1))
     REAL(DP) :: AInv(SIZE(A,1),SIZE(A,2)),det
     
     ENTERS("SolveSmallLinearSystemDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("Size of b is not the same as the number of rows in A.",err,error,*999)    
     IF(SIZE(A,1)>SIZE(x,1)) CALL FlagError("x is too small.",err,error,*999)
+#endif    
 
     SELECT CASE(SIZE(A,1))
-    CASE(1:3)
+    CASE(1)
+      IF(ABS(A(1,1))<ZERO_TOLERANCE_DP) CALL FlagError("The A matrix is zero.",err,error,*999)
+      x(1)=b(1)/A(1,1)
+    CASE(2:3)
       CALL Invert(A,AInv,det,err,error,*999)
       x=MATMUL(AInv,b)
     CASE DEFAULT
-      CALL FlagError("Matrix size not implemented.",err,error,*999)
+      !Use LAPACK LU
+      CALL DGETRF(SIZE(A,1),SIZE(A,2),A,SIZE(A,1),iPivot,info)
+      IF(info/=0) THEN
+        IF(info<0) THEN
+          localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
+        ELSE
+          localError="The A matrix is singular. The factorised diagonal entry for row "// &
+            & TRIM(NumberToVString(info,"*",err,error))//" is zero."          
+        ENDIF
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Solve the LU problem
+      CALL DGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
+      IF(info/=0) THEN
+        localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
+        CALL FlagError(localErr,err,error,*999)
+      ENDIF
+      x=b
     END SELECT
 
     EXITS("SolveSmallLinearSystemDP")
@@ -3950,10 +4519,12 @@ CONTAINS
 
     ENTERS("TensorProductMatrix2Matrix2SP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
       & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
     IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,1).OR.SIZE(C,3)/=SIZE(A,1).OR.SIZE(C,4)/=SIZE(A,1)) &
       & CALL FlagError("The C matrix is not of the same dimension as the A and B matrices.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(A,1)
       DO j=1,SIZE(A,2)
@@ -3990,10 +4561,12 @@ CONTAINS
 
     ENTERS("TensorProductMatrix2Matrix2DP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
       & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
     IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,1).OR.SIZE(C,3)/=SIZE(A,1).OR.SIZE(C,4)/=SIZE(A,1)) &
       & CALL FlagError("The C matrix is not of the same dimension as the A and B matrices.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(A,1)
       DO j=1,SIZE(A,2)
@@ -4030,8 +4603,10 @@ CONTAINS
 
     ENTERS("TensorProductVectorVectorSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(C,1)/=SIZE(a,1).OR.SIZE(C,2)/=SIZE(b,1)) &
       & CALL FlagError("The C matrix is not of the same dimension as the a and b vectors.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(a,1)
       DO j=1,SIZE(b,1)
@@ -4064,8 +4639,10 @@ CONTAINS
 
     ENTERS("TensorProductVectorVectorDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(C,1)/=SIZE(a,1).OR.SIZE(C,2)/=SIZE(b,1)) &
       & CALL FlagError("The C matrix is not of the same dimension as the a and b vectors.",err,error,*999)
+#endif    
     
     DO i=1,SIZE(a,1)
       DO j=1,SIZE(b,1)
@@ -4098,8 +4675,10 @@ CONTAINS
     ENTERS("TraceIntg",err,error,*999)
 
     traceA=0_INTG
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -4139,8 +4718,10 @@ CONTAINS
     ENTERS("TraceSP",err,error,*999)
 
     traceA = 0.0_SP
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -4180,8 +4761,10 @@ CONTAINS
     ENTERS("TraceDP",err,error,*999)
 
     traceA = 0.0_DP
-    
+
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+#endif    
     
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -4220,7 +4803,9 @@ CONTAINS
     
     ENTERS("TransposeMatrixSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(AT,2).OR.SIZE(A,2)/=SIZE(AT,1)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
     
     IF(SIZE(A,1)==SIZE(A,2)) THEN
       !A matrix is square
@@ -4282,7 +4867,9 @@ CONTAINS
             
     ENTERS("TransposeMatrixDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(AT,2).OR.SIZE(A,2)/=SIZE(AT,1)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+#endif    
     
     IF(SIZE(A,1)==SIZE(A,2)) THEN
       !A matrix is square
@@ -4344,9 +4931,11 @@ CONTAINS
     
     ENTERS("UnimodularMatrixSP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(unimodA,1).OR.SIZE(A,2)/=SIZE(unimodA,2)) &
       & CALL FlagError("The size of the unimodular matrix is not the same size as the A matrix.",err,error,*999)
+#endif    
 
     SELECT CASE(SIZE(A,1))
     CASE(1)
@@ -4387,9 +4976,11 @@ CONTAINS
     
     ENTERS("UnimodularMatrixDP",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
     IF(SIZE(A,1)/=SIZE(unimodA,1).OR.SIZE(A,2)/=SIZE(unimodA,2)) &
       & CALL FlagError("The size of the unimodular matrix is not the same size as the A matrix.",err,error,*999)
+#endif    
 
     SELECT CASE(SIZE(A,1))
     CASE(1)

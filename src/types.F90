@@ -4032,20 +4032,21 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Contains information on a do-while control loop
   TYPE ControlLoopWhileType
-    TYPE(ControlLoopType), POINTER :: controlLoop
-    INTEGER(INTG) :: iterationNumber
-    INTEGER(INTG) :: maximumNumberOfIterations
-    REAL(DP) :: absoluteTolerance
-    REAL(DP) :: relativeTolerance
-    LOGICAL :: continueLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer back to the control loop
+    INTEGER(INTG) :: iterationNumber !<The iteration number for this while loop progress
+    INTEGER(INTG) :: maximumNumberOfIterations !<The maximum number of iterations for this while loop
+    REAL(DP) :: absoluteTolerance !<The absolute tolerance for the while loop continue test
+    REAL(DP) :: relativeTolerance !<The relative tolerance for the while loop contintue test
+    LOGICAL :: continueLoop !<If .TRUE. the while loop will continue, if .FALSE. the loop will finish
   END TYPE ControlLoopWhileType
 
   !>Contains information on a load-increment control loop
   TYPE ControlLoopLoadIncrementType
-    TYPE(ControlLoopType), POINTER :: controlLoop
-    INTEGER(INTG) :: iterationNumber
-    INTEGER(INTG) :: maximumNumberOfIterations
-    INTEGER(INTG) :: outputNumber
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer back to the control loop
+    INTEGER(INTG) :: iterationNumber !<The iteration number for this load increment loop progress
+    INTEGER(INTG) :: maximumNumberOfIterations !<The maximum number of iterations for this load increment loop
+    INTEGER(INTG) :: outputNumber !<The frequency of output
+    INTEGER(INTG) :: inputNumber !<The frequency of input
   END TYPE ControlLoopLoadIncrementType
 
   !>Contains information about a dependent field variable involved in a control loop solver.
