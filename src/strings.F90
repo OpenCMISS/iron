@@ -184,8 +184,8 @@ CONTAINS
     CHARACTER(LEN=LEN(long)) :: upperLong
     
     IsAbbreviationCC=.FALSE.
-    upperShort=CHARACTER_TO_UPPERCASE(short)
-    upperLong=CHARACTER_TO_UPPERCASE(long)
+    upperShort=CharacterToUppercase(short)
+    upperLong=CharacterToUppercase(long)
     numberOfCharacters=MIN(LEN(long),LEN(short))
     DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
       IF(upperShort==upperLong(:characterIdx)) THEN
@@ -216,8 +216,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: upperLong
     
     IsAbbreviationCVS=.FALSE.
-    upperShort=CHARACTER_TO_UPPERCASE(short)
-    upperLong=VSTRING_TO_UPPERCASE(long)
+    upperShort=CharacterToUppercase(short)
+    upperLong=VStringToUppercase(long)
     numberOfCharacters=MIN(LEN(long),LEN(short))
     DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
       IF(upperShort==EXTRACT(upperLong,1,characterIdx)) THEN
@@ -248,8 +248,8 @@ CONTAINS
     CHARACTER(LEN=LEN(long)) :: upperLong
     
     IsAbbreviationVSC=.FALSE.
-    upperShort=VSTRING_TO_UPPERCASE(short)
-    upperLong=CHARACTER_TO_UPPERCASE(long)
+    upperShort=VStringToUppercase(short)
+    upperLong=CharacterToUppercase(long)
     numberOfCharacters=MIN(LEN(long),LEN(short))
     DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
       IF(upperShort==upperLong(:characterIdx)) THEN
@@ -279,8 +279,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: upperShort,upperLong
     
     IsAbbreviationVSVS=.FALSE.
-    upperShort=VSTRING_TO_UPPERCASE(short)
-    upperLong=VSTRING_TO_UPPERCASE(long)
+    upperShort=VStringToUppercase(short)
+    upperLong=VStringToUppercase(long)
     numberOfCharacters=MIN(LEN(long),LEN(short))
     DO characterIdx=minimumNumberOfCharacters,numberOfCharacters
       IF(upperShort==EXTRACT(upperLong,1,characterIdx)) THEN
@@ -1553,7 +1553,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    INTEGER(LINTG) :: string_TO_LONG_INTEGER_C !<On exit, the long integer equivalent of the string
+    INTEGER(LINTG) :: StringToLongIntegerC !<On exit, the long integer equivalent of the string
     !Local variables
     
     !ENTERS("StringToLongIntegerC",err,error,*999)
@@ -1613,7 +1613,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
-    LOGICAL :: StringTLogicalC !<On exit, the logical equivalent of the string
+    LOGICAL :: StringToLogicalC !<On exit, the logical equivalent of the string
     !Local variables
     
     !ENTERS("StringToLogicalC",err,error,*999)

@@ -90,6 +90,10 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_NumberOfMatricesGet
 
+  PUBLIC SolverMatrices_NumberOfRowsGet
+
+  PUBLIC SolverMatrices_NumberOfGlobalRowsGet
+
   PUBLIC SolverMatrices_RHSDistributedVectorGet
 
   PUBLIC SolverMatrices_ResidualDistributedVectorGet
@@ -102,9 +106,25 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_SymmetryTypeGet
 
+  PUBLIC SolverMatrices_UpdateResidualGet
+
+  PUBLIC SolverMatrices_UpdateRHSGet
+
+  PUBLIC SolverMatrix_MatrixNumberGet
+
+  PUBLIC SolverMatrix_NumberOfColumnsGet
+
   PUBLIC SolverMatrix_SolverDistributedMatrixGet
 
   PUBLIC SolverMatrix_SolverDistributedVectorGet
+
+  PUBLIC SolverMatrix_SolverMatricesGet
+
+  PUBLIC SolverMatrix_StorageTypeGet
+
+  PUBLIC SolverMatrix_SymmetryTypeGet
+
+  PUBLIC SolverMatrix_UpdateMatrixGet
   
 CONTAINS
 
@@ -123,10 +143,11 @@ CONTAINS
  
     ENTERS("SolverMatrices_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
 
-    IF(.NOT.solverMatrices%solverMatricesFinished) &
-      & CALL FlagError("Solver matrices has not been finished."
+    IF(.NOT.solverMatrices%solverMatricesFinished) CALL FlagError("Solver matrices has not been finished.",err,error,*999)
     
     EXITS("SolverMatrices_AssertIsFinished")
     RETURN
@@ -150,10 +171,11 @@ CONTAINS
  
     ENTERS("SolverMatrices_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
 
-    IF(solverMatrices%solverMatricesFinished) &
-      & CALL FlagError("Solver matrices has already been finished.",err,error,*999)
+    IF(solverMatrices%solverMatricesFinished) CALL FlagError("Solver matrices has already been finished.",err,error,*999)
     
     EXITS("SolverMatrices_AssertNotFinished")
     RETURN
@@ -205,7 +227,9 @@ CONTAINS
 
     ENTERS("SolverMatrices_NumberOfMatricesGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices are not associated.",err,error,*999)
+#endif    
      
     numberOfMatrices=solverMatrices%numberOfMatrices
 
@@ -215,6 +239,64 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE SolverMatrices_NumberOfMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of rows for the solver matrices
+  SUBROUTINE SolverMatrices_NumberOfRowsGet(solverMatrices,numberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER, INTENT(IN) :: solverMatrices !<The solver matrices to get the number of rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRows !<On return, the number of rows for the solver matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("SolverMatrices_NumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices are not associated.",err,error,*999)
+#endif    
+     
+    numberOfRows=solverMatrices%numberOfRows
+
+    EXITS("SolverMatrices_NumberOfRowsGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_NumberOfRowsGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverMatrices_NumberOfRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of global rows for the solver matrices
+  SUBROUTINE SolverMatrices_NumberOfGlobalRowsGet(solverMatrices,numberOfGlobalRows,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER, INTENT(IN) :: solverMatrices !<The solver matrices to get the number of global rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalRows !<On return, the number of global rows for the solver matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("SolverMatrices_NumberOfGlobalRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices are not associated.",err,error,*999)
+#endif    
+     
+    numberOfGlobalRows=solverMatrices%numberOfGlobalRows
+
+    EXITS("SolverMatrices_NumberOfGlobalRowsGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_NumberOfGlobalRowsGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverMatrices_NumberOfGlobalRowsGet
 
   !
   !================================================================================================================================
@@ -232,12 +314,17 @@ CONTAINS
  
     ENTERS("SolverMatrices_RHSDistributedVectorGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(rhsDistributedVector)) CALL FlagError("RHS distributed vector is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
     
     rhsDistributedVector=>solverMatrices%rhsVector
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(rhsDistributedVector)) &
       & CALL FlagError("The RHS distributed vector is not associated for the solver matrices.",err,error,*999)
+#endif    
       
     EXITS("SolverMatrices_RHSDistributedVectorGet")
     RETURN
@@ -263,12 +350,17 @@ CONTAINS
  
     ENTERS("SolverMatrices_ResidualDistributedVectorGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(residualDistributedVector)) CALL FlagError("Residual distributed vector is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
     
     residualDistributedVector=>solverMatrices%residual
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(residualDistributedVector)) &
       & CALL FlagError("The residual distributed vector is not associated for the solver matrices.",err,error,*999)
+#endif    
       
     EXITS("SolverMatrices_ResidualDistributedVectorGet")
     RETURN
@@ -294,11 +386,16 @@ CONTAINS
  
     ENTERS("SolverMatrices_SolverMappingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
 
     solverMapping=>solverMatrices%solverMapping
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver matrices solver mapping is not associated.",err,error,*999)
+#endif    
       
     EXITS("SolverMatrices_SolverMappingGet")
     RETURN
@@ -322,10 +419,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("SolverMatrices_SolverMatrixGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
     IF(matrixIdx<1.OR.matrixIdx>solverMatrices%numberOfMatrices) THEN
@@ -335,12 +435,16 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(solverMatrices%matrices)) CALL FlagError("Solver matrices matrices is not allocated.",err,error,*999)
+#endif    
     
     solverMatrix=>solverMatrices%matrices(matrixIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(solverMatrix)) THEN
       localError="The solver matrix for index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
       
     EXITS("SolverMatrices_SolverMatrixGet")
     RETURN
@@ -365,17 +469,22 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("SolverMatrices_StorageTypeGet",err,error,*999)
 
     CALL SolverMatrices_AssertIsFinished(solverMatrices,err,error,*999)
+#ifdef WITH_PRECHECKS    
     IF(SIZE(storageType,1)<solverMatrices%numberOfMatrices) THEN
       localError="The size of storage type array is too small. The supplied size is "// &
         & TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))//" and it needs to be >= "// &
         & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif
+    
     DO matrixIdx=1,solverMatrices%numberOfMatrices
       NULLIFY(solverMatrix)
       CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIdx,solverMatrix,err,error,*999)
@@ -404,17 +513,21 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("SolverMatrices_SymmetryTypeGet",err,error,*999)
 
     CALL SolverMatrices_AssertIsFinished(solverMatrices,err,error,*999)
+#ifdef WITH_PRECHECKS    
     IF(SIZE(symmetryTypes,1)<solverMatrices%numberOfMatrices) THEN
       localError="The size of symmetry types is too small. The supplied size is "// &
         & TRIM(NumberToVString(SIZE(symmetryTypes,1),"*",err,error))//" and it needs to be >= "// &
         & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
     
     DO matrixIdx=1,solverMatrices%numberOfMatrices
       NULLIFY(solverMatrix)
@@ -433,28 +546,149 @@ CONTAINS
   !================================================================================================================================
   !
   
+  !>Gets the update residual flag for solver matrices
+  SUBROUTINE SolverMatrices_UpdateResidualGet(solverMatrices,updateResidual,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices to get the update residual flag for
+    LOGICAL, INTENT(OUT) :: updateResidual !<On return, the update flag for the solver residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverMatrices_UpdateResidualGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
+
+    updateResidual=solverMatrices%updateResidual
+    
+    EXITS("SolverMatrices_UpdateResidualGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_UpdateResidualGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_UpdateResidualGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the update RHS flag for solver matrices
+  SUBROUTINE SolverMatrices_UpdateRHSGet(solverMatrices,updateRHS,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices to get the update RHS flag for
+    LOGICAL, INTENT(OUT) :: updateRHS !<On return, the update flag for the solver RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverMatrices_UpdateRHSGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+#endif    
+
+    updateRHS=solverMatrices%updateRHSVector
+    
+    EXITS("SolverMatrices_UpdateRHSGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_UpdateRHSGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_UpdateRHSGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the number of a solver matrix
+  SUBROUTINE SolverMatrix_MatrixNumberGet(solverMatrix,matrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the number for
+    INTEGER(INTG), INTENT(OUT) :: matrixNumber !<On return, the matrix number of solver matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverMatrix_MatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
+
+    matrixNumber=solverMatrix%matrixNumber
+    
+    EXITS("SolverMatrix_MatrixNumberGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrix_MatrixNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_MatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the number of columns in a solver matrix
+  SUBROUTINE SolverMatrix_NumberOfColumnsGet(solverMatrix,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On return, the number of columns in the solver matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("SolverMatrix_NumberOfColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
+
+    numberOfColumns=solverMatrix%numberOfColumns
+    
+    EXITS("SolverMatrix_NumberOfColumnsGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrix_NumberOfColumnsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_NumberOfColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to solver distributed matrix for a solver matrix.
-  SUBROUTINE SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*)
+  SUBROUTINE SolverMatrix_SolverDistributedMatrixGet(solverMatrix,distributedMatrix,err,error,*)
 
     !Argument variables
     TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the solver distributed matrix for
-    TYPE(DistributedMatrixType), POINTER :: solverMatrix !<On exit, a pointer to the solver distributed matrix for the specified solver matrix. Must not be associated on entry.
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<On exit, a pointer to the solver distributed matrix for the specified solver matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
     ENTERS("SolverMatrix_SolverDistributedMatrixGet",err,error,*998)
 
-    IF(ASSOCIATED(solverDistributedMatrix)) CALL FlagError("Solver distributed matrix is already associated.",err,error,*998)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
     
-    solverDistributedMatrix=>solverMatrix%matrix
-    IF(.NOT.ASSOCIATED(solverDistributedMatrix)) &
+    distributedMatrix=>solverMatrix%matrix
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(distributedMatrix)) &
       & CALL FlagError("The solver distributed matrix is not associated for the solver matrix.",err,error,*999)
+#endif    
       
     EXITS("SolverMatrix_SolverDistributedMatrixGet")
     RETURN
-999 NULLIFY(solverDistributedMatrix)
+999 NULLIFY(distributedMatrix)
 998 ERRORSEXITS("SolverMatrix_SolverDistributedMatrixGet",err,error)
     RETURN 1
     
@@ -465,32 +699,160 @@ CONTAINS
   !
   
   !>Returns a pointer to solver distributed vector for a solver matrix.
-  SUBROUTINE SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverDistributedVector,err,error,*)
+  SUBROUTINE SolverMatrix_SolverDistributedVectorGet(solverMatrix,distributedVector,err,error,*)
 
     !Argument variables
     TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the solver distributed vector for
-    TYPE(DistributedVectorType), POINTER :: solverVector !<On exit, a pointer to the solver distributed vector for the specified solver matrix. Must not be associated on entry.
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<On exit, a pointer to the solver distributed vector for the specified solver matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
     ENTERS("SolverMatrix_SolverDistributedVectorGet",err,error,*998)
 
-    IF(ASSOCIATED(solverDistributedVector)) CALL FlagError("Solver distributed vector is already associated.",err,error,*998)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(distributedVector)) CALL FlagError("Solver distributed vector is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
     
-    solverDistributedVector=>solverMatrix%solverVector
-    IF(.NOT.ASSOCIATED(solverDistributedVector)) &
+    distributedVector=>solverMatrix%solverVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(distributedVector)) &
       & CALL FlagError("The solver distributed vector is not associated for the solver matrix.",err,error,*999)
+#endif    
       
     EXITS("SolverMatrix_SolverDistributedVectorGet")
     RETURN
-999 NULLIFY(solverDistributedVector)
+999 NULLIFY(distributedVector)
 998 ERRORSEXITS("SolverMatrix_SolverDistributedVectorGet",err,error)
     RETURN 1
     
   END SUBROUTINE SolverMatrix_SolverDistributedVectorGet
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to solver matrices for a solver matrix.
+  SUBROUTINE SolverMatrix_SolverMatricesGet(solverMatrix,solverMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the solver matrices for
+    TYPE(SolverMatricesType), POINTER :: solverMatrices !<On exit, a pointer to the solver matrices for the specified solver matrix. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMatrix_SolverMatricesGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
+    
+    solverMatrices=>solverMatrix%solverMatrices
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrices)) &
+      & CALL FlagError("The solver matrices is not associated for the solver matrix.",err,error,*999)
+#endif    
+      
+    EXITS("SolverMatrix_SolverMatricesGet")
+    RETURN
+999 NULLIFY(solverMatrices)
+998 ERRORSEXITS("SolverMatrix_SolverMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_SolverMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the storage type for a solver matrix
+  SUBROUTINE SolverMatrix_StorageTypeGet(solverMatrix,storageType,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the storage type for
+    INTEGER(INTG), INTENT(OUT) :: storageType !<On return, the storage type the solver matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverMatrix_StorageTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
+
+    storageType=solverMatrix%storageType
+    
+    EXITS("SolverMatrix_StorageTypeGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrix_StorageTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_StorageTypeGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the symmetry type for a solver matrix
+  SUBROUTINE SolverMatrix_SymmetryTypeGet(solverMatrix,symmetryType,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the symmetry type for
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type the solver matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverMatrix_SymmetryTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
+
+    symmetryType=solverMatrix%symmetryType
+    
+    EXITS("SolverMatrix_SymmetryTypeGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrix_SymmetryTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_SymmetryTypeGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the update flag for a solver matrix
+  SUBROUTINE SolverMatrix_UpdateMatrixGet(solverMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to get the update flag for
+    LOGICAL, INTENT(OUT) :: updateMatrix !<On return, the update flag the solver matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverMatrix_UpdateMatrixGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+#endif    
+
+    updateMatrix=solverMatrix%updateMatrix
+    
+    EXITS("SolverMatrix_UpdateMatrixGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrix_UpdateMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_UpdateMatrixGet
+
   !
   !================================================================================================================================
   !

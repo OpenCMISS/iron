@@ -83,10 +83,6 @@ MODULE DecompositionAccessRoutines
 
   !Interfaces
 
-  INTERFACE DECOMPOSITION_USER_NUMBER_FIND
-    MODULE PROCEDURE Decomposition_UserNumberFind
-  END INTERFACE DECOMPOSITION_USER_NUMBER_FIND
-
   PUBLIC DECOMPOSITION_ALL_TYPE,DECOMPOSITION_CALCULATED_TYPE,DECOMPOSITION_USER_DEFINED_TYPE
 
   PUBLIC DECOMPOSER_NO_OUTPUT,DECOMPOSER_TIMING_OUTPUT,DECOMPOSER_ALL_OUTPUT
@@ -139,8 +135,6 @@ MODULE DecompositionAccessRoutines
   
   PUBLIC Decomposition_UserNumberFind
 
-  PUBLIC DECOMPOSITION_USER_NUMBER_FIND
-
   PUBLIC Decomposition_WorkGroupGet
 
   PUBLIC DecompositionDataPoints_DataPointCheckExists
@@ -183,7 +177,7 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DecompositionFaces_FaceBoundaryFaceGet
 
-  PUBLIC DecompositionFaces_FaceXiNormalDiretionGet
+  PUBLIC DecompositionFaces_FaceXiNormalDirectionGet
 
   PUBLIC DecompositionFaces_NumberOfFacesGet
 
@@ -204,6 +198,10 @@ MODULE DecompositionAccessRoutines
   PUBLIC Domain_DomainTopologyGet
 
   PUBLIC Domain_MeshComponentNumberGet
+
+  PUBLIC Domain_NumberOfDimensionsGet
+
+  PUBLIC Domain_RegionGet
 
   PUBLIC DomainElement_BasisGet
 
@@ -229,13 +227,29 @@ MODULE DecompositionAccessRoutines
   
   PUBLIC DomainElements_TotalNumberOfElementsGet
   
+  PUBLIC DomainFaces_DerivativeGlobalIndexGet
+
+  PUBLIC DomainFaces_DerivativeVersionNumberGet
+
   PUBLIC DomainFaces_FaceBasisGet
+
+  PUBLIC DomainFaces_FaceBoundaryFaceGet
 
   PUBLIC DomainFaces_FaceGet
 
+  PUBLIC DomainFaces_FaceNodeNumberGet
+
+  PUBLIC DomainLines_DerivativeGlobalIndexGet
+
+  PUBLIC DomainLines_DerivativeVersionNumberGet
+
   PUBLIC DomainLines_LineBasisGet
 
+  PUBLIC DomainLines_LineBoundaryLineGet
+
   PUBLIC DomainLines_LineGet
+
+  PUBLIC DomainLines_LineNodeNumberGet
 
   PUBLIC DomainMappings_DofsMappingGet
   
@@ -317,8 +331,6 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainNodes_UserNodeNumberGet
   
-  PUBLIC DomainNodes_VersionGet
-
   PUBLIC DomainTopology_DomainGet
 
   PUBLIC DomainTopology_DomainDofsGet
@@ -1027,7 +1039,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
-#endief    
+#endif    
 
     IF(ASSOCIATED(decomposition%decomposer)) THEN
       localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
@@ -1220,7 +1232,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(decomposition%domain)) CALL FlagError("Decomposition domain is not allocated.",err,error,*999)
- #endif    
+#endif    
 
     !Get the domain
     IF(meshComponentNumber==0) THEN
@@ -1782,10 +1794,10 @@ CONTAINS
     EXITS("DecompositionDataPoints_ElementDataUserNumberGet")
     RETURN
 999 ERRORS("DecompositionDataPoints_ElementDataUserNumberGet",err,error)
-    EXITS("DecompositionDataPoints_ElementDataUsserNumberGet")
+    EXITS("DecompositionDataPoints_ElementDataUserNumberGet")
     RETURN 1
 
-  END SUBROUTINE DecompositionDataPoints_ElementDataLocalNumberGet
+  END SUBROUTINE DecompositionDataPoints_ElementDataUserNumberGet
 
   !
   !================================================================================================================================
@@ -1816,20 +1828,6 @@ CONTAINS
       localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " is invalid for the decomposition data points. The local element number should be >= 1 and <= "// &
         & TRIM(NumberToVString(SIZE(decompositionDataPoints%elementDataPoints,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(elementDataPointIdx<1.OR.elementDataPointIdx>decompositionDataPoints%elementDataPoints(localElementNumber)% &
-      & numberOfProjectedData) THEN
-      localError="The specified element data point index of "//TRIM(NumberToVString(elementDataPointIdx,"*",err,error))// &
-        & " is invalid for local element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
-        & " for the decomposition data points. The element data point index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(decompositionDataPoints%elementDataPoints(localElementNumber)%numberOfProjectedData, &
-        & "*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(ALLOCATED(decompositionDataPoints%elementDataPoints(localElementNumber)%dataIndices)) THEN
-      localError="The data indices array is not allocated for local element number "// &
-        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition data points."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
@@ -1933,7 +1931,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     numberOfXiCoordinates=(SIZE(decompositionElement%adjacentElements,1)-1)/2
-    IF(xiCoordinateIdx<-numberOfXiCoordinates.OR.elementFaceNumber>numberOfXiCoordinates) THEN
+    IF(xiCoordinateIdx<-numberOfXiCoordinates.OR.xiCoordinateIdx>numberOfXiCoordinates) THEN
       localError="The specified xi coordinate index of "//TRIM(NumberToVString(xiCoordinateIdx,"*",err,error))// &
         & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " of the decomposition elements. The element face number should be >= "// &
@@ -2055,7 +2053,7 @@ CONTAINS
   SUBROUTINE DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*)
 
     !Argument variables
-    TYPE(DecompositionElementsType), POINTER :: decompositionElement !<A pointer to the decomposition elements to get the decomposition element for
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the decomposition element for
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the decomposition element for
     TYPE(DecompositionElementType), POINTER, INTENT(OUT) :: decompositionElement !<On exit, a pointer to the specified decomposition element. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2082,10 +2080,10 @@ CONTAINS
 
     decompositionElement=>decompositionElements%elements(localElementNumber)
 
-#if WITH_POSTCHECKS
+#ifdef WITH_POSTCHECKS
     IF(.NOT.ASSOCIATED(decompositionElement)) THEN
       localError="Decomposition element is not associated for local element number "// &
-        & TRIM(NumberToVString(localElementNumber,err,error))//" of the decomposition elements."
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition elements."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
@@ -2266,7 +2264,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     numberOfXiCoordinates=(SIZE(decompositionElement%adjacentElements,1)-1)/2
-    IF(xiCoordinateIdx<-numberOfXiCoordinates.OR.elementFaceNumber>numberOfXiCoordinates) THEN
+    IF(xiCoordinateIdx<-numberOfXiCoordinates.OR.xiCoordinateIdx>numberOfXiCoordinates) THEN
       localError="The specified xi coordinate index of "//TRIM(NumberToVString(xiCoordinateIdx,"*",err,error))// &
         & " is invalid for element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " of the decomposition elements. The xi coordinate index should be >= "// &
@@ -2458,28 +2456,28 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS
     IF(ASSOCIATED(decompositionFace)) CALL FlagError("Decomposition face is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(decompositionFacess)) CALL FlagError("Decomposition faces is not associated.",err,error,*999)
-    IF(localFaceNumber<1.OR.localFaceNumber>decompositionFaces%totalNumberOfFaces) THEN
+    IF(.NOT.ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition faces is not associated.",err,error,*999)
+    IF(localFaceNumber<1.OR.localFaceNumber>decompositionFaces%numberOfFaces) THEN
       localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
         & " is invalid. The local face number should be >= 1 and <= "// &
-        & TRIM(NumberToVString(decompositionFacess%totalNumberOfFaces,"*",err,error))//"."
+        & TRIM(NumberToVString(decompositionFaces%numberOfFaces,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(decompositionFacess%faces)) &
+    IF(.NOT.ALLOCATED(decompositionFaces%faces)) &
       & CALL FlagError("The faces array is not allocated for the decomposition faces.",err,error,*999)
 #endif
 
     decompositionFace=>decompositionFaces%faces(localFaceNumber)
 
-#if WITH_POSTCHECKS
+#ifdef WITH_POSTCHECKS
     IF(.NOT.ASSOCIATED(decompositionFace)) THEN
       localError="Decomposition face is not associated for local face number "// &
-        & TRIM(NumberToVString(localFaceNumber,err,error))//" of the decomposition faces."
+        & TRIM(NumberToVString(localFaceNumber,"*",err,error))//" of the decomposition faces."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
 
-    EXITS("DecompositionFacess_FaceGet")
+    EXITS("DecompositionFaces_FaceGet")
     RETURN
 999 NULLIFY(decompositionFace)
 998 ERRORSEXITS("DecompositionFaces_FaceGet",err,error)
@@ -2495,7 +2493,7 @@ CONTAINS
   SUBROUTINE DecompositionFaces_FaceBoundaryFaceGet(decompositionFaces,localFaceNumber,boundaryFace,err,error,*)
 
     !Argument variables
-    TYPE(DecompositionFacessType), POINTER :: decompositionFacess !<A pointer to the decomposition faces to get the boundary face status for
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces !<A pointer to the decomposition faces to get the boundary face status for
     INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the boundary face status for
     LOGICAL, INTENT(OUT) :: boundaryFace !<On exit, the boundary face flag for the local face number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2509,15 +2507,15 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS
     NULLIFY(decompositionFace)
-    CALL DecompositionFaces_FaceGet(decompositionFacess,localFaceNumber,decompositionFace,err,error,*999)
+    CALL DecompositionFaces_FaceGet(decompositionFaces,localFaceNumber,decompositionFace,err,error,*999)
 #endif
 
     boundaryFace=decompositionFaces%faces(localFaceNumber)%boundaryFace
 
     EXITS("DecompositionFaces_FaceBoundaryFaceGet")
     RETURN
-999 ERRORS("DecompositionFacess_FaceBoundaryFaceGet",err,error)
-    EXITS("DecompositionFacess_FaceBoundaryFaceGet")
+999 ERRORS("DecompositionFaces_FaceBoundaryFaceGet",err,error)
+    EXITS("DecompositionFaces_FaceBoundaryFaceGet")
     RETURN 1
     
   END SUBROUTINE DecompositionFaces_FaceBoundaryFaceGet
@@ -2530,7 +2528,7 @@ CONTAINS
   SUBROUTINE DecompositionFaces_FaceXiNormalDirectionGet(decompositionFaces,localFaceNumber,faceXiNormalDirection,err,error,*)
 
     !Argument variables
-    TYPE(DecompositionFacessType), POINTER :: decompositionFacess !<A pointer to the decomposition faces to get the xi normal direction for
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces !<A pointer to the decomposition faces to get the xi normal direction for
     INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The local face number to get the xi normal direction for
     INTEGER(INTG), INTENT(OUT) :: faceXiNormalDirection !<On exit, the face xi normal direction for the local face number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2544,15 +2542,15 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS
     NULLIFY(decompositionFace)
-    CALL DecompositionFaces_FaceGet(decompositionFacess,localFaceNumber,decompositionFace,err,error,*999)
+    CALL DecompositionFaces_FaceGet(decompositionFaces,localFaceNumber,decompositionFace,err,error,*999)
 #endif
 
     faceXiNormalDirection=decompositionFaces%faces(localFaceNumber)%xiNormalDirection
 
     EXITS("DecompositionFaces_FaceXiNormalDirectionGet")
     RETURN
-999 ERRORS("DecompositionFacess_FaceXiNormalDirectionGet",err,error)
-    EXITS("DecompositionFacess_FaceXiNormalDirectionGet")
+999 ERRORS("DecompositionFaces_FaceXiNormalDirectionGet",err,error)
+    EXITS("DecompositionFaces_FaceXiNormalDirectionGet")
     RETURN 1
     
   END SUBROUTINE DecompositionFaces_FaceXiNormalDirectionGet
@@ -2565,7 +2563,7 @@ CONTAINS
   SUBROUTINE DecompositionFaces_NumberOfFacesGet(decompositionFaces,numberOfFaces,err,error,*)
 
     !Argument variables
-    TYPE(DecompositionFacessType), POINTER :: decompositionFacess !<A pointer to the decomposition faces to get the number of faces for
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces !<A pointer to the decomposition faces to get the number of faces for
     INTEGER(INTG), INTENT(OUT) :: numberOfFaces !<On exit, the number of faces in the decomposition faces.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2581,8 +2579,8 @@ CONTAINS
 
     EXITS("DecompositionFaces_NumberOfFacesGet")
     RETURN
-999 ERRORS("DecompositionFacess_NumberOfFacesGet",err,error)
-    EXITS("DecompositionFacess_NumberOfFacesGet")
+999 ERRORS("DecompositionFaces_NumberOfFacesGet",err,error)
+    EXITS("DecompositionFaces_NumberOfFacesGet")
     RETURN 1
     
   END SUBROUTINE DecompositionFaces_NumberOfFacesGet
@@ -2854,7 +2852,7 @@ CONTAINS
     ENDIF
 #endif    
       
-    globalDerivativeIdx=domainElement%elementDerivatives(derivativeIdx,localNodeIdx)
+    globalDerivativeIdx=domainElement%elementDerivatives(localDerivativeIdx,localNodeIdx)
     
     EXITS("DomainElement_ElementDerivativeGet")
     RETURN
@@ -2943,7 +2941,7 @@ CONTAINS
     ENDIF
 #endif    
     
-    versionNumber=domainElement%elementVersions(derivativeIdx,localNodeIdx)
+    versionNumber=domainElement%elementVersions(localDerivativeIdx,localNodeIdx)
     
     EXITS("DomainElement_ElementVersionGet")
     RETURN
@@ -3055,15 +3053,15 @@ CONTAINS
 
   !>Get the element global derivative index for the local node and derivative index of an element in the domain.
   SUBROUTINE DomainElements_ElementDerivativeGet(domainElements,localDerivativeIdx,localNodeIdx,localElementNumber, &
-    & globalDerivativeIdx,err,error,*)
+    & globalDerivativeIndex,err,error,*)
 
     !Argument variables
     TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the element global derivative index for
-    INTEGER(INTG), INTENT(IN) :: locaDerivativeIdx !<The local derivative index to get the element global derivative index for.
+    INTEGER(INTG), INTENT(IN) :: localDerivativeIdx !<The local derivative index to get the element global derivative index for.
     INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element global derivative index for.
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the elment global derivative index for
     INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On return, the global derivative index for the local node and derivative index for the element.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
@@ -3164,7 +3162,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the element version number for
-    INTEGER(INTG), INTENT(IN) :: locaDerivativeIdx !<The local derivative index to get the element version number for.
+    INTEGER(INTG), INTENT(IN) :: localDerivativeIdx !<The local derivative index to get the element version number for.
     INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the element version number for.
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the elment version number for
     INTEGER(INTG), INTENT(OUT) :: versionNumber !<On return, the version number for the local node and derivative index for the element.
@@ -3274,7 +3272,7 @@ CONTAINS
   !
 
   !>Gets the total number of elements from a domain. 
-  SUBROUTINE DomainElements_TotalNumberOfElementssGet(domainElements,totalNumberOfElements,err,error,*)
+  SUBROUTINE DomainElements_TotalNumberOfElementsGet(domainElements,totalNumberOfElements,err,error,*)
 
     !Argument variables
     TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the total number of elements for
@@ -3291,14 +3289,138 @@ CONTAINS
 
     totalNumberOfElements=domainElements%totalNumberOfElements
 
-    EXITS("DomainElements_TotalNumberOfElementssGet")
+    EXITS("DomainElements_TotalNumberOfElementsGet")
     RETURN
-999 ERRORSEXITS("DomainElements_TotalNumberOfElementssGet",err,error)
+999 ERRORSEXITS("DomainElements_TotalNumberOfElementsGet",err,error)
     RETURN 1
 
-  END SUBROUTINE DomainElements_TotalNumberOfElementssGet
+  END SUBROUTINE DomainElements_TotalNumberOfElementsGet
 
-  !  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the global derivative index for a derivative index of a local node index in the domain faces identified by its local number
+  SUBROUTINE DomainFaces_DerivativeGlobalIndexGet(domainFaces,derivativeIdx,localNodeIdx,faceNumber,globalDerivativeIndex, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DomainFacesType), POINTER :: domainFaces !<A pointer to the domain faces to get the global derivative index for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The local derivative index to get the global derivative index for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the global derivative index.
+    INTEGER(INTG), INTENT(IN) :: faceNumber !<The face number to get the node number for.
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On return, the global derivative index for the derivative index of the local node index in the specified face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainFaces_DerivativeGlobalIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
+    IF(faceNumber<1.OR.faceNumber>domainFaces%numberOfFaces) THEN
+      localError="The face number of "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " is invalid. The face number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainFaces%numberOfFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faxes is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainFaces%faces(faceNumber)%derivativesInFace)) THEN
+      localError="The derivatives in face is not allocated for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(derivativeIdx<1.OR.derivativeIdx>SIZE(domainFaces%faces(faceNumber)%derivativesInFace,2)) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainFaces%faces(faceNumber)%derivativesInFace,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainFaces%faces(faceNumber)%derivativesInFace,3)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainFaces%faces(faceNumber)%derivativesInFace,3),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    globalDerivativeIndex=domainFaces%faces(faceNumber)%derivativesInFace(1,derivativeIdx,localNodeIdx)
+    
+    EXITS("DomainFaces_DerivativeGlobalIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainFaces_DerivativeGlobalIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFaces_DerivativeGlobalIndexGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the version number for a derivative index of a local node index in the domain faces identified by its local number
+  SUBROUTINE DomainFaces_DerivativeVersionNumberGet(domainFaces,derivativeIdx,localNodeIdx,faceNumber,versionNumber, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DomainFacesType), POINTER :: domainFaces !<A pointer to the domain faces to get the version number for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The local derivative index to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: faceNumber !<The face number to get the version number for.
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On return, the version number for the derivative index of the local node index in the specified face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainFaces_DerivativeVersionNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
+    IF(faceNumber<1.OR.faceNumber>domainFaces%numberOfFaces) THEN
+      localError="The face number of "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " is invalid. The face number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainFaces%numberOfFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainFaces%faces(faceNumber)%derivativesInFace)) THEN
+      localError="The derivatives in face is not allocated for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(derivativeIdx<1.OR.derivativeIdx>SIZE(domainFaces%faces(faceNumber)%derivativesInFace,2)) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainFaces%faces(faceNumber)%derivativesInFace,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainFaces%faces(faceNumber)%derivativesInFace,3)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainFaces%faces(faceNumber)%derivativesInFace,3),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    versionNumber=domainFaces%faces(faceNumber)%derivativesInFace(2,derivativeIdx,localNodeIdx)
+    
+    EXITS("DomainFaces_DerivativeVersionNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainFaces_DerivativeVersionNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFaces_DerivativeVersionNumberGet
+  
+  !
   !================================================================================================================================
   !
 
@@ -3347,6 +3469,46 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainFaces_FaceBasisGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the boundary face status for a face in the domain faces identified by its local number
+  SUBROUTINE DomainFaces_FaceBoundaryFaceGet(domainFaces,localFaceNumber,boundaryFace,err,error,*)
+
+    !Argument variables
+    TYPE(DomainFacesType), POINTER :: domainFaces !<A pointer to the domain faces to get the face boundary status for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The face local number to get the boundary status for
+    LOGICAL, INTENT(OUT) :: boundaryFace !<On return, the boundary status for the face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainFaces_FaceBoundarFaceGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)    
+    IF(localFaceNumber<=0.OR.localFaceNumber>domainFaces%numberOfFaces) THEN
+      localError="The local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainFaces%numberOfFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not allocated.",err,error,*999)
+#endif    
+      
+    boundaryFace=domainFaces%faces(localFaceNumber)%boundaryFace
+
+    EXITS("DomainFaces_FaceBoundaryFaceGet")
+    RETURN
+999 ERRORSEXITS("DomainFaces_FaceBoundaryFaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFaces_FaceBoundaryFaceGet
 
   !
   !================================================================================================================================
@@ -3397,6 +3559,183 @@ CONTAINS
     
   END SUBROUTINE DomainFaces_FaceGet    
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the node number for a local node index in the domain faces identified by its local number
+  SUBROUTINE DomainFaces_FaceNodeNumberGet(domainFaces,localNodeIdx,faceNumber,nodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainFacesType), POINTER :: domainFaces !<A pointer to the domain faces to get the node number for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the face node number.
+    INTEGER(INTG), INTENT(IN) :: faceNumber !<The face number to get the node number for.
+    INTEGER(INTG), INTENT(OUT) :: nodeNumber !<On return, the node number for the local node index in the specified face.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainFaces_FaceNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
+    IF(faceNumber<1.OR.faceNumber>domainFaces%numberOfFaces) THEN
+      localError="The face number of "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " is invalid. The face number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainFaces%numberOfFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainFaces%faces(faceNumber)%nodesInFace)) THEN
+      localError="The nodes in face is not allocated for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainFaces%faces(faceNumber)%nodesInFace,1)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for face number "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " in the domain faces. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainFaces%faces(faceNumber)%nodesInFace,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    nodeNumber=domainFaces%faces(faceNumber)%nodesInFace(localNodeIdx)
+    
+    EXITS("DomainFaces_FaceNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainFaces_FaceNodeNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFaces_FaceNodeNumberGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the global derivative index for a derivative index of a local node index in the domain lines identified by its local number
+  SUBROUTINE DomainLines_DerivativeGlobalIndexGet(domainLines,derivativeIdx,localNodeIdx,lineNumber,globalDerivativeIndex, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DomainLinesType), POINTER :: domainLines !<A pointer to the domain lines to get the global derivative index for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The local derivative index to get the global derivative index for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the global derivative index.
+    INTEGER(INTG), INTENT(IN) :: lineNumber !<The line number to get the node number for.
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On return, the global derivative index for the derivative index of the local node index in the specified line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainLines_DerivativeGlobalIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
+    IF(lineNumber<1.OR.lineNumber>domainLines%numberOfLines) THEN
+      localError="The line number of "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " is invalid. The line number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainLines%numberOfLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainLines%lines(lineNumber)%derivativesInLine)) THEN
+      localError="The derivatives in line is not allocated for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(derivativeIdx<1.OR.derivativeIdx>SIZE(domainLines%lines(lineNumber)%derivativesInLine,2)) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainLines%lines(lineNumber)%derivativesInLine,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainLines%lines(lineNumber)%derivativesInLine,3)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainLines%lines(lineNumber)%derivativesInLine,3),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    globalDerivativeIndex=domainLines%lines(lineNumber)%derivativesInLine(1,derivativeIdx,localNodeIdx)
+    
+    EXITS("DomainLines_DerivativeGlobalIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainLines_DerivativeGlobalIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLines_DerivativeGlobalIndexGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the version number for a derivative index of a local node index in the domain lines identified by its local number
+  SUBROUTINE DomainLines_DerivativeVersionNumberGet(domainLines,derivativeIdx,localNodeIdx,lineNumber,versionNumber, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DomainLinesType), POINTER :: domainLines !<A pointer to the domain lines to get the version number for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The local derivative index to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: lineNumber !<The line number to get the version number for.
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On return, the version number for the derivative index of the local node index in the specified line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainLines_DerivativeVersionNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
+    IF(lineNumber<1.OR.lineNumber>domainLines%numberOfLines) THEN
+      localError="The line number of "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " is invalid. The line number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainLines%numberOfLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainLines%lines(lineNumber)%derivativesInLine)) THEN
+      localError="The derivatives in line is not allocated for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(derivativeIdx<1.OR.derivativeIdx>SIZE(domainLines%lines(lineNumber)%derivativesInLine,2)) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainLines%lines(lineNumber)%derivativesInLine,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainLines%lines(lineNumber)%derivativesInLine,3)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainLines%lines(lineNumber)%derivativesInLine,3),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    versionNumber=domainLines%lines(lineNumber)%derivativesInLine(2,derivativeIdx,localNodeIdx)
+    
+    EXITS("DomainLines_DerivativeVersionNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainLines_DerivativeVersionNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLines_DerivativeVersionNumberGet
+  
   !  
   !================================================================================================================================
   !
@@ -3415,7 +3754,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
 
-    ENTERS("DomainLiness_BasisGet",err,error,*998)
+    ENTERS("DomainLiness_LineBasisGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
@@ -3446,6 +3785,46 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainLines_LineBasisGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the boundary line status for a line in the domain lines identified by its local number
+  SUBROUTINE DomainLines_LineBoundaryLineGet(domainLines,localLineNumber,boundaryLine,err,error,*)
+
+    !Argument variables
+    TYPE(DomainLinesType), POINTER :: domainLines !<A pointer to the domain lines to get the line boundary status for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The line local number to get the boundary status for
+    LOGICAL, INTENT(OUT) :: boundaryLine !<On return, the boundary status for the line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainLiness_LineBoundaryLineGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)    
+    IF(localLineNumber<=0.OR.localLineNumber>domainLines%numberOfLines) THEN
+      localError="The local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainLines%numberOfLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not allocated.",err,error,*999)
+#endif    
+      
+    boundaryLine=domainLines%lines(localLineNumber)%boundaryLine
+
+    EXITS("DomainLines_LineBoundaryLineGet")
+    RETURN
+999 ERRORSEXITS("DomainLines_LineBoundaryLineGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLines_LineBoundaryLineGet
 
   !
   !================================================================================================================================
@@ -3495,6 +3874,59 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainLines_LineGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the node number for a local node index in the domain lines identified by its local number
+  SUBROUTINE DomainLines_LineNodeNumberGet(domainLines,localNodeIdx,lineNumber,nodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainLinesType), POINTER :: domainLines !<A pointer to the domain lines to get the node number for
+    INTEGER(INTG), INTENT(IN) :: localNodeIdx !<The local node index to get the line node number.
+    INTEGER(INTG), INTENT(IN) :: lineNumber !<The line number to get the node number for.
+    INTEGER(INTG), INTENT(OUT) :: nodeNumber !<On return, the node number for the local node index in the specified line.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainLines_LineNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
+    IF(lineNumber<1.OR.lineNumber>domainLines%numberOfLines) THEN
+      localError="The line number of "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " is invalid. The line number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainLines%numberOfLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainLines%lines(lineNumber)%nodesInLine)) THEN
+      localError="The nodes in line is not allocated for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeIdx<1.OR.localNodeIdx>SIZE(domainLines%lines(lineNumber)%nodesInLine,1)) THEN
+      localError="The specified local node index of "//TRIM(NumberToVString(localNodeIdx,"*",err,error))// &
+        & " is invalid for line number "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " in the domain lines. The local node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(domainLines%lines(lineNumber)%nodesInLine,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    nodeNumber=domainLines%lines(lineNumber)%nodesInLine(localNodeIdx)
+    
+    EXITS("DomainLines_LineNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainLines_LineNodeNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLines_LineNodeNumberGet
   
   !
   !================================================================================================================================
@@ -3643,6 +4075,75 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the number of dimensions from a domain.
+  SUBROUTINE Domain_NumberOfDimensionsGet(domain,numberOfDimensions,err,error,*)
+
+    !Argument variables
+    TYPE(DomainType), POINTER :: domain !<The domain to get the number of dimensions for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfDimensions !<On exit, the number of dimensions for the domain.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Domain_NumberOfDimensionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+#endif    
+
+    !Get the domain number of dimensions
+    numberOfDimensions=domain%numberOfDimensions
+
+    EXITS("Domain_NumberOfDimensionsGet")
+    RETURN
+999 ERRORSEXITS("Domain_NumberOfDimensionsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Domain_NumberOfDimensionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the region from a domain.
+  SUBROUTINE Domain_RegionGet(domain,region,err,error,*)
+
+    !Argument variables
+    TYPE(DomainType), POINTER :: domain !<The domain to get the region for.
+    TYPE(RegionType), POINTER :: region !<On exit, a pointer to the domain region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Domain_RegionGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+#endif    
+
+    !Get the domain region
+    region=>domain%region
+
+#ifdef WITH_POSTCHECKS    
+    !Check domain region is associated.
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Domain region is not associated.",err,error,*999)
+#endif    
+    
+    EXITS("Domain_RegionGet")
+    RETURN
+999 NULLIFY(region)
+998 ERRORSEXITS("Domain_RegionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Domain_RegionGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets dofs from a domain mappings.
   SUBROUTINE DomainMappings_DOFsMappingGet(domainMappings,domainDofs,err,error,*)
 
@@ -3735,7 +4236,7 @@ CONTAINS
     !Check input arguments
     IF(ASSOCIATED(domainElements)) CALL FlagError("Domain mapping elements is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
-#endi    
+#endif    
 
     !Get the domain elements
     domainElements=>domainMappings%elements
@@ -4293,7 +4794,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<A pointer to the domain node derivative to get the partial derivative index for
-    INTEGER(INTG), INTENT(OUT) :: partialDerivativeInde !<On exit, the partial derivative index for the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeIndex !<On exit, the partial derivative index for the domain node derivative.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Mesh Variables
@@ -4341,7 +4842,7 @@ CONTAINS
         & TRIM(NumberToVString(domainNodeDerivative%numberOfVersions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)      
     ENDIF
-    IF(.NOT.ALLOCATED(domainNode%userVersionNumbers)) &
+    IF(.NOT.ALLOCATED(domainNodeDerivative%userVersionNumbers)) &
       & CALL FlagError("User version numbers is not allocated for the domain node derivative.",err,error,*999)
 #endif
 
@@ -4363,8 +4864,8 @@ CONTAINS
 
     !Argument variables
     TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the derivative number for
-    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the derivative number for
-    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<The local node number to get the derivative number for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the derivative number for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the derivative number for
     INTEGER(INTG), INTENT(OUT) :: derivativeNumber !<On exit, the derivative number for the derivative index of the local node number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4398,11 +4899,12 @@ CONTAINS
   !
 
   !>Gets the number of versions for a derivative of local node number from a domain. 
-  SUBROUTINE DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,numberOfVersions,err,error,*)
+  SUBROUTINE DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,localNodeNumber,numberOfVersions,err,error,*)
 
     !Argument variables
     TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the number of versions for
-    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the number of versions for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the number of versions for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the derivative number for
     INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On exit, the number of versions for the derivative index of the local node number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4418,14 +4920,14 @@ CONTAINS
     NULLIFY(domainNode)
     CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
     NULLIFY(domainNodeDerivative)
-    CALL DomainNode_NodeDerivativeGet(domainNode,derivativeId,domainNodeDerivative,err,error,*999)
+    CALL DomainNode_NodeDerivativeGet(domainNode,derivativeIdx,domainNodeDerivative,err,error,*999)
 #endif
 
     numberOfVersions=domainNodes%nodes(localNodeNumber)%derivatives(derivativeIdx)%numberOfVersions
 
     EXITS("DomainNodes_DerivativeNumberOfVersionsGet")
     RETURN
-999 ERRORSEXITS("DomainNodes_DerivativeNumberOfVersionssGet",err,error)
+999 ERRORSEXITS("DomainNodes_DerivativeNumberOfVersionsGet",err,error)
     RETURN 1
 
   END SUBROUTINE DomainNodes_DerivativeNumberOfVersionsGet
@@ -4439,8 +4941,8 @@ CONTAINS
 
     !Argument variables
     TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the partial derivative index for
-    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the partial derivative index for
-    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<The local node number to get the partial derivative index for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the partial derivative index for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the partial derivative index for
     INTEGER(INTG), INTENT(OUT) :: partialDerivativeIndex !<On exit, the partial derivative index for the derivative index of the local node number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4478,9 +4980,9 @@ CONTAINS
 
     !Argument variables
     TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the version number for
-    INTEGER(INTG), INTENT(OUT) :: versionIdx !<The version index to get the version number for
-    INTEGER(INTG), INTENT(OUT) :: derivativeIdx !<The derivative index to get the version number for
-    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<The local node number to get the version number for
+    INTEGER(INTG), INTENT(IN) :: versionIdx !<The version index to get the version number for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the version number for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the version number for
     INTEGER(INTG), INTENT(OUT) :: versionNumber !<On exit, the version number for the derivative version index of the local node number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4821,9 +5323,9 @@ CONTAINS
 
     domainNode=>domainNodes%nodes(localNodeNumber)
 
-#if WITH_POSTCHECKS
+#ifdef WITH_POSTCHECKS
     IF(.NOT.ASSOCIATED(domainNode)) THEN
-      localError="Domain node is not associated for local node number "//TRIM(NumberToVString(localNodeNumber,err,error))// &
+      localError="Domain node is not associated for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
         & " of the domain nodes."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -4847,7 +5349,7 @@ CONTAINS
     !Argument variables
     TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the number of derivatives for
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to get the number of derivatives for
-    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatiaves !<On exit, the number of derivatives for the local node number.
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On exit, the number of derivatives for the local node number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4964,7 +5466,7 @@ CONTAINS
     CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
 #endif
 
-    numberOfDerivatives=domainNodes%nodes(localNodeNumber)%numberOfSurroundingElements
+    numberOfSurroundingElements=domainNodes%nodes(localNodeNumber)%numberOfSurroundingElements
 
     EXITS("DomainNodes_NodeNumberOfSurroundingElementsGet")
     RETURN

@@ -1941,8 +1941,8 @@ CONTAINS
   !
 
   !>Writes the firstString followed by a formatted character value to the given output stream specified by ID. formatString is used to format the value.
-  SUBROUTINE WriteStringFmtValueLIntg(id,firstString,value,formatString,err,error,*)
-7
+  SUBROUTINE WriteStringFmtValueLIntg(id,firstString,VALUE,formatString,err,error,*)
+    
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     CHARACTER(LEN=*), INTENT(IN) :: firstString !<The first string to be output

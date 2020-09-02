@@ -58,54 +58,73 @@ MODULE BoundaryConditionAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup BoundaryConditionsRoutines_DOFTypes BoundaryConditionsRoutines::DOFTypes
+  !> \addtogroup BoundaryConditionsRoutines_Constants OpenCMISS::Iron::BoundaryConditions::Constants
+  !> \brief Boundary conditions constants.
+  !>@{
+  
+  !> \addtogroup BoundaryConditionsRoutines_RowTypes OpenCMISS::Iron::BoundaryConditions::Constants::RowTypes
+  !> \brief Boundary conditions type for rows.
+  !>@{
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FREE_ROW=0 !<The row is free. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DIRICHLET_ROW=1 !<The row has Dirichlet boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_POINT_NEUMANN_ROW=2 !<The row has point Neumann boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_INTEGRATED_NEUMANN_ROW=3 !<The row has integrated Neumann boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_ROBIN_ROW=4 !<The row has Robin boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CAUCHY_ROW=5 !<The row has Cauchy boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CONSTRAINED_ROW=6 !<The row has constraint boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  !>@}
+  
+  !> \addtogroup BoundaryConditionsRoutines_DOFTypes OpenCMISS::Iron:::BoundaryConditions::Constants::DOFTypes
   !> \brief DOF type for boundary conditions.
   !>@{
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_FREE=0 !<The dof is free. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_FIXED=1 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_MIXED=2 !<The dof is set as a mixed boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_CONSTRAINED=3 !<The dof is constrained to be a linear combination of other DOFs. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_FREE=0 !<The dof is free. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_FIXED=1 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_INCREMENTED=2 !<The dof is set as a mixed boundary condition. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_MIXED=3 !<The dof is set as a mixed boundary condition. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_CONSTRAINED=4 !<The dof is constrained to be a linear combination of other DOFs. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
   !>@}
-  !> \addtogroup BoundaryConditionsRoutines_BoundaryConditions BoundaryConditionsRoutines::BoundaryConditions
+  
+  !> \addtogroup BoundaryConditionsRoutines_BoundaryConditionsTypes OpenCMISS::Iron:::BoundaryConditions::Constants::BoundaryConditionTypes
   !> \brief Boundary conditions types. These may be specific to a particular equation type and the solver routines should not need to use these.
   !>@{
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FREE=0 !<The dof is free. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED=1 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_INLET=2 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_OUTLET=3 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_WALL=4 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_MOVED_WALL=5 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FREE_WALL=6 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_POINT=8 !<The dof is set to a Neumann point boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_INTEGRATED=9 !<The dof is set to a Neumann integrated boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DIRICHLET=10 !<The dof is set to a Dirichlet boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CAUCHY=11 !<The dof is set to a Cauchy boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_ROBIN=12 !<The dof is set to a Robin boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_INCREMENTED=13 !<The dof is a fixed boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_PRESSURE=14 !<The dof is a surface pressure boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_PRESSURE_INCREMENTED=15 !<The dof is a surface pressure boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED=17 !<The dof is fixed as a boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE=18 !<The dof is fixed as a boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_IMPERMEABLE_WALL=19 !<The dof is set such that (via penalty formulation): velocity * normal = 0. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY=20 !<A Neumann integrated boundary condition, and no point values will be integrated over a face or line that includes this dof. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_LINEAR_CONSTRAINT=21 !<The dof is constrained to be a linear combination of other DOFs. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED=22!<A Neumann point boundary condition that is incremented inside a load increment control loop. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_FITTED=23 !<The dof is fixed as a boundary condition to be updated from fitting data \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_NONREFLECTING=24 !<The dof is fixed and set to a non-reflecting type for 1D wave propagation problems. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_CELLML=25 !<The dof is fixed and set to values specified based on the coupled CellML solution at the dof. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_STREE=26 !<The dof is fixed and set to values specified based on the transmission line theory at the dof. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_COUPLING_FLOW=27 !<The dof is fixed and set to values specified based on a coupled flow rate at the dof. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_COUPLING_STRESS=28 !<The dof is fixed and set to values specified based on a coupled stress at the dof. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_PRESSURE=29 !<The dof is a fixed pressure boundary condition. \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
- !>@}
-
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NONE=0 !<The DOF has no boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED=1 !<The DOF is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_INLET=2 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_OUTLET=3 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_WALL=4 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_MOVED_WALL=5 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FREE_WALL=6 !<The dof is fixed as a boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_POINT=8 !<The dof is set to a Neumann point boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_INTEGRATED=9 !<The dof is set to a Neumann integrated boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DIRICHLET=10 !<The dof is set to a Dirichlet boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CAUCHY=11 !<The dof is set to a Cauchy boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_ROBIN=12 !<The dof is set to a Robin boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_INCREMENTED=13 !<The dof is a fixed boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_PRESSURE=14 !<The dof is a surface pressure boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_PRESSURE_INCREMENTED=15 !<The dof is a surface pressure boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED=17 !<The dof is fixed as a boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE=18 !<The dof is fixed as a boundary condition, to be used with load increment loop. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_IMPERMEABLE_WALL=19 !<The dof is set such that (via penalty formulation): velocity * normal = 0. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY=20 !<A Neumann integrated boundary condition, and no point values will be integrated over a face or line that includes this dof. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_LINEAR_CONSTRAINT=21 !<The dof is constrained to be a linear combination of other DOFs. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED=22!<A Neumann point boundary condition that is incremented inside a load increment control loop. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_FITTED=23 !<The dof is fixed as a boundary condition to be updated from fitting data \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_NONREFLECTING=24 !<The dof is fixed and set to a non-reflecting type for 1D wave propagation problems. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_CELLML=25 !<The dof is fixed and set to values specified based on the coupled CellML solution at the dof. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_STREE=26 !<The dof is fixed and set to values specified based on the transmission line theory at the dof. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_COUPLING_FLOW=27 !<The dof is fixed and set to values specified based on a coupled flow rate at the dof. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_COUPLING_STRESS=28 !<The dof is fixed and set to values specified based on a coupled stress at the dof. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FIXED_PRESSURE=29 !<The dof is a fixed pressure boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
   INTEGER(INTG), PARAMETER :: MAX_BOUNDARY_CONDITION_NUMBER=29 !The maximum boundary condition type identifier, used for allocating an array with an entry for each type
-
-  !> \addtogroup BoundaryConditionsRoutines_SparsityTypes BoundaryConditionsRoutines::BoundaryConditions
+  !>@}
+  
+  !> \addtogroup BoundaryConditionsRoutines_SparsityTypes OpenCMISS::Iron::BoundaryConditions::Constants::BoundaryConditionsSparsityTypes
   !> \brief Storage type for matrices used by boundary conditions.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_SPARSE_MATRICES=1 !<The matrices are stored as sparse matrices.
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FULL_MATRICES=2 !<The matrices are stored as full matrices.
+  !>@}
+  
   !>@}
 
   !Module types
@@ -114,29 +133,64 @@ MODULE BoundaryConditionAccessRoutines
 
   !Interfaces
 
-  PUBLIC BOUNDARY_CONDITION_DOF_FREE,BOUNDARY_CONDITION_DOF_FIXED,BOUNDARY_CONDITION_DOF_MIXED,BOUNDARY_CONDITION_DOF_CONSTRAINED
+  PUBLIC BOUNDARY_CONDITION_FREE_ROW,BOUNDARY_CONDITION_DIRICHLET_ROW,BOUNDARY_CONDITION_POINT_NEUMANN_ROW, &
+    & BOUNDARY_CONDITION_INTEGRATED_NEUMANN_ROW,BOUNDARY_CONDITION_ROBIN_ROW,BOUNDARY_CONDITION_CAUCHY_ROW, &
+    & BOUNDARY_CONDITION_CONSTRAINED_ROW
+  
+  PUBLIC BOUNDARY_CONDITION_DOF_FREE,BOUNDARY_CONDITION_DOF_FIXED,BOUNDARY_CONDITION_DOF_INCREMENTED, &
+    & BOUNDARY_CONDITION_DOF_MIXED,BOUNDARY_CONDITION_DOF_CONSTRAINED
 
-  PUBLIC BOUNDARY_CONDITION_FREE,BOUNDARY_CONDITION_FIXED,BOUNDARY_CONDITION_FIXED_INLET,&
-    & BOUNDARY_CONDITION_FIXED_OUTLET,BOUNDARY_CONDITION_FIXED_WALL,BOUNDARY_CONDITION_MOVED_WALL,BOUNDARY_CONDITION_FREE_WALL,&
-    & BOUNDARY_CONDITION_NEUMANN_INTEGRATED,BOUNDARY_CONDITION_DIRICHLET,BOUNDARY_CONDITION_NEUMANN_POINT, &
-    & BOUNDARY_CONDITION_CAUCHY,BOUNDARY_CONDITION_ROBIN,BOUNDARY_CONDITION_FIXED_INCREMENTED,BOUNDARY_CONDITION_PRESSURE,&
+  PUBLIC BOUNDARY_CONDITION_NONE,BOUNDARY_CONDITION_FIXED,BOUNDARY_CONDITION_FIXED_INLET, &
+    & BOUNDARY_CONDITION_FIXED_OUTLET,BOUNDARY_CONDITION_FIXED_WALL,BOUNDARY_CONDITION_MOVED_WALL,BOUNDARY_CONDITION_FREE_WALL, &
+    & BOUNDARY_CONDITION_NEUMANN_POINT,BOUNDARY_CONDITION_NEUMANN_INTEGRATED,BOUNDARY_CONDITION_DIRICHLET, &
+    & BOUNDARY_CONDITION_CAUCHY,BOUNDARY_CONDITION_ROBIN,BOUNDARY_CONDITION_FIXED_INCREMENTED,BOUNDARY_CONDITION_PRESSURE, &
     & BOUNDARY_CONDITION_PRESSURE_INCREMENTED,BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED, &
     & BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE,BOUNDARY_CONDITION_IMPERMEABLE_WALL,BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY, &
-    & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED,BOUNDARY_CONDITION_FIXED_STREE, &
-    & BOUNDARY_CONDITION_FIXED_FITTED,BOUNDARY_CONDITION_FIXED_NONREFLECTING,BOUNDARY_CONDITION_FIXED_CELLML, &
-    & BOUNDARY_CONDITION_COUPLING_FLOW, BOUNDARY_CONDITION_COUPLING_STRESS, BOUNDARY_CONDITION_FIXED_PRESSURE
+    & BOUNDARY_CONDITION_LINEAR_CONSTRAINT,BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED,BOUNDARY_CONDITION_FIXED_FITTED, &
+    & BOUNDARY_CONDITION_FIXED_NONREFLECTING,BOUNDARY_CONDITION_FIXED_CELLML,BOUNDARY_CONDITION_FIXED_STREE, &
+    & BOUNDARY_CONDITION_COUPLING_FLOW,BOUNDARY_CONDITION_COUPLING_STRESS,BOUNDARY_CONDITION_FIXED_PRESSURE
+
+  PUBLIC MAX_BOUNDARY_CONDITION_NUMBER
 
   PUBLIC BOUNDARY_CONDITION_SPARSE_MATRICES,BOUNDARY_CONDITION_FULL_MATRICES
 
   PUBLIC BoundaryConditions_AssertIsFinished,BoundaryConditions_AssertNotFinished
 
+  PUBLIC BoundaryConditions_NumberOfRowVariablesGet
+
+  PUBLIC BoundaryConditions_NumberOfVariablesGet
+
   PUBLIC BoundaryConditions_SolverEquationsGet
+
+  PUBLIC BoundaryConditions_RowVariableIndexGet
+
+  PUBLIC BoundaryConditions_VariableIndexGet
+
+  PUBLIC BoundaryConditionsDirichlet_DynamicSparsityIndicesGet
   
+  PUBLIC BoundaryConditionsDirichlet_LinearSparsityIndicesGet
+  
+  PUBLIC BoundaryConditionsRowVariable_BoundaryConditionsGet
+
+  PUBLIC BoundaryConditionsRowVariable_FieldVariableGet
+
+  PUBLIC BoundaryConditionsRowVariable_NumberOfDOFsGet
+
+  PUBLIC BoundaryConditionsRowVariable_RowConditionTypeGet
+
+  PUBLIC BoundaryConditionsRowVariable_TotalNumberOfDOFsGet
+
+  PUBLIC BoundaryConditionsVariable_ConditionTypeGet
+
   PUBLIC BoundaryConditionsVariable_DirichletConditionsGet
 
   PUBLIC BoundaryConditionsVariable_DOFConstraintsExists
   
   PUBLIC BoundaryConditionsVariable_DOFConstraintsGet
+
+  PUBLIC BoundaryConditionsVariable_DOFTypeGet
+
+  PUBLIC BoundaryConditionsVariable_FieldVariableGet
 
   PUBLIC BoundaryConditionsVariable_NeumannConditionsGet
 
@@ -172,10 +226,12 @@ CONTAINS
  
     ENTERS("BoundaryConditions_AssertIsFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+#endif    
 
     IF(.NOT.boundaryConditions%boundaryConditionsFinished) &
-      & CALL FlagError("Boundary conditions has not been finished."
+      & CALL FlagError("Boundary conditions has not been finished.",err,error,*999)
     
     EXITS("BoundaryConditions_AssertIsFinished")
     RETURN
@@ -200,8 +256,10 @@ CONTAINS
  
     ENTERS("BoundaryConditions_AssertNotFinished",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-
+#endif
+    
     IF(boundaryConditions%boundaryConditionsFinished) &
       & CALL FlagError("Boundary conditions has already been finished.",err,error,*999)
     
@@ -212,6 +270,64 @@ CONTAINS
     
   END SUBROUTINE BoundaryConditions_AssertNotFinished
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of boundary conditions row variables for boundary conditions.
+  SUBROUTINE BoundaryConditions_NumberOfRowVariablesGet(boundaryConditions,numberOfRowVariables,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to get the number of boundary conditions row variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRowVariables !<On exit, the number of boundary conditions row variables in the boundary conditions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditions_NumberOfRowVariablesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+#endif    
+
+    numberOfRowVariables=boundaryConditions%numberOfBoundaryConditionsRowVariables
+
+    EXITS("BoundaryConditions_NumberOfRowVariablesGet")
+    RETURN
+999 ERRORSEXITS("BoundaryConditions_NumberOfRowVariablesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_NumberOfRowVariablesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of boundary conditions variables for boundary conditions.
+  SUBROUTINE BoundaryConditions_NumberOfVariablesGet(boundaryConditions,numberOfVariables,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to get the number of boundary conditions variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On exit, the number of boundary conditions variables in the boundary conditions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditions_NumberOfVariablesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+#endif    
+
+    numberOfVariables=boundaryConditions%numberOfBoundaryConditionsVariables
+
+    EXITS("BoundaryConditions_NumberOfVariablesGet")
+    RETURN
+999 ERRORSEXITS("BoundaryConditions_NumberOfVariablesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_NumberOfVariablesGet
+
   !
   !================================================================================================================================
   !
@@ -228,12 +344,17 @@ CONTAINS
  
     ENTERS("BoundaryConditions_SolverEquationsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+#endif    
 
     solverEquations=>boundaryConditions%solverEquations
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(solverEquations)) &
       & CALL FlagError("Solver equations is not associated for the boundary conditions.",err,error,*999)
+#endif    
        
     EXITS("BoundaryConditions_SolverEquationsGet")
     RETURN
@@ -247,27 +368,488 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the specificed boundary conditions row variable for a row variable index of boundary conditions.
+  SUBROUTINE BoundaryConditions_RowVariableIndexGet(boundaryConditions,rowVariableIdx,boundaryConditionsRowVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to get the boundary conditions row variable for
+    INTEGER(INTG), INTENT(IN) :: rowVariableIdx !<The row variable index to get the boundary conditions row variable for
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<On exit, a pointer to the specificed boundary conditions row variable in the specified boundary conditions. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("BoundaryConditions_RowVariableIndexGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    IF(rowVariableIdx<1.OR.rowVariableIdx>boundaryConditions%numberOfBoundaryConditionsRowVariables) THEN
+      localError="The specificed boundary conditions row variable index of "// &
+        & TRIM(NumberToVString(rowVariableIdx,"*",err,error))//" is invalid. The row variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(boundaryConditions%numberOfBoundaryConditionsRowVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(boundaryConditions%boundaryConditionsRowVariables)) &
+      & CALL FlagError("Boundary conditions row variables is not allocated for the boundary conditions.",err,error,*999)
+#endif    
+
+    boundaryConditionsRowVariable=>boundaryConditions%boundaryConditionsRowVariables(rowVariableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) THEN
+      localError="The boundary conditions row variable is not associated for row variable index "// &
+        & TRIM(NumberToVString(rowVariableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+       
+    EXITS("BoundaryConditions_RowVariableIndexGet")
+    RETURN
+999 NULLIFY(boundaryConditionsRowVariable)
+998 ERRORSEXITS("BoundaryConditions_RowVariableIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_RowVariableIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specificed boundary conditions variable for a variable index of boundary conditions.
+  SUBROUTINE BoundaryConditions_VariableIndexGet(boundaryConditions,variableIdx,boundaryConditionsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to get the boundary conditions variable for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index to get the boundary conditions variable for
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<On exit, a pointer to the specificed boundary conditions variable in the specified boundary conditions. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("BoundaryConditions_VariableIndexGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>boundaryConditions%numberOfBoundaryConditionsVariables) THEN
+      localError="The specificed boundary conditions variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(boundaryConditions%numberOfBoundaryConditionsVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(boundaryConditions%boundaryConditionsVariables)) &
+      & CALL FlagError("Boundary conditions variables is not allocated for the boundary conditions.",err,error,*999)
+#endif    
+
+    boundaryConditionsVariable=>boundaryConditions%boundaryConditionsVariables(variableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) THEN
+      localError="The boundary conditions variable is not associated for variable index "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+       
+    EXITS("BoundaryConditions_VariableIndexGet")
+    RETURN
+999 NULLIFY(boundaryConditionsVariable)
+998 ERRORSEXITS("BoundaryConditions_VariableIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_VariableIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dynamic matrices sparsity indices for the Dirichlet boundary conditions.
+  SUBROUTINE BoundaryConditionsDirichlet_DynamicSparsityIndicesGet(dirichletBoundaryConditions,equationsMatrixIdx, &
+    & equationsSetIdx,dynamicSparsityIndices,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions !<A pointer to the boundary conditions variable to get the dynamic sparsity indices for
+    INTEGER(INTG), INTENT(IN) :: equationsMatrixIdx !<The equations matrix index to get the dynamic sparsity indices for
+    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index to get the dynamic sparsity indices for.
+    TYPE(BoundaryConditionsSparsityIndicesType), POINTER :: dynamicSparsityIndices !<On exit, a pointer to the dynamic sparsity indices in the specified Dirichlet boundary conditions. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("BoundaryConditionsDirichlet_DynamicSparsityIndicesGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(dynamicSparsityIndices)) CALL FlagError("Dynamic sparsity indices are already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dirichletBoundaryConditions)) &
+      & CALL FlagError("Dirichlet boundary conditions is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dirichletBoundaryConditions%dynamicSparsityIndices)) &
+      & CALL FlagError("The dynamic sparsity indices are not allocated for the Dirichlet boundary conditions.",err,error,*999)
+    IF(equationsMatrixIdx<1.OR.equationsMatrixIdx>SIZE(dirichletBoundaryConditions%dynamicSparsityIndices,2)) THEN
+      localError="The specified equations matrix index of "//TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
+        & " is invalid. The equations matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(dirichletBoundaryConditions%dynamicSparsityIndices,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(equationsSetIdx<1.OR.equationsSetIdx>SIZE(dirichletBoundaryConditions%dynamicSparsityIndices,1)) THEN
+      localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
+        & " is invalid. The equations set index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(dirichletBoundaryConditions%dynamicSparsityIndices,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    dynamicSparsityIndices=>dirichletBoundaryConditions%dynamicSparsityIndices(equationsSetIdx,equationsMatrixIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(dynamicSparsityIndices)) THEN
+      localError="The dynamic sparsity indices are not associated for equations matrix index "// &
+        & TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))//" of equations set index "// &
+        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//" in the Dirichlet boundary conditions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+       
+    EXITS("BoundaryConditionsDirichlet_DynamicSparsityIndicesGet")
+    RETURN
+999 NULLIFY(dynamicSparsityIndices)
+998 ERRORS("BoundaryConditionsDirichlet_DynamicSparsityIndicesGet",err,error)
+    EXITS("BoundaryConditionsDirichlet_DynamicSparsityIndicesGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsDirichlet_DynamicSparsityIndicesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the linear matrices sparsity indices for the Dirichlet boundary conditions.
+  SUBROUTINE BoundaryConditionsDirichlet_LinearSparsityIndicesGet(dirichletBoundaryConditions,equationsMatrixIdx, &
+    & equationsSetIdx,linearSparsityIndices,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions !<A pointer to the boundary conditions variable to get the linear sparsity indices for
+    INTEGER(INTG), INTENT(IN) :: equationsMatrixIdx !<The equations matrix index to get the linear sparsity indices for
+    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index to get the linear sparsity indices for.
+    TYPE(BoundaryConditionsSparsityIndicesType), POINTER :: linearSparsityIndices !<On exit, a pointer to the linear sparsity indices in the specified Dirichlet boundary conditions. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("BoundaryConditionsDirichlet_LinearSparsityIndicesGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(linearSparsityIndices)) CALL FlagError("Linear sparsity indices are already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dirichletBoundaryConditions)) &
+      & CALL FlagError("Dirichlet boundary conditions is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dirichletBoundaryConditions%linearSparsityIndices)) &
+      & CALL FlagError("The linear sparsity indices are not allocated for the Dirichlet boundary conditions.",err,error,*999)
+    IF(equationsMatrixIdx<1.OR.equationsMatrixIdx>SIZE(dirichletBoundaryConditions%linearSparsityIndices,2)) THEN
+      localError="The specified equations matrix index of "//TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
+        & " is invalid. The equations matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(dirichletBoundaryConditions%linearSparsityIndices,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(equationsSetIdx<1.OR.equationsSetIdx>SIZE(dirichletBoundaryConditions%linearSparsityIndices,1)) THEN
+      localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
+        & " is invalid. The equations set index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(dirichletBoundaryConditions%linearSparsityIndices,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    linearSparsityIndices=>dirichletBoundaryConditions%linearSparsityIndices(equationsSetIdx,equationsMatrixIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(linearSparsityIndices)) THEN
+      localError="The linear sparsity indices are not associated for equations matrix index "// &
+        & TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))//" of equations set index "// &
+        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//" in the Dirichlet boundary conditions."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+       
+    EXITS("BoundaryConditionsDirichlet_LinearSparsityIndicesGet")
+    RETURN
+999 NULLIFY(linearSparsityIndices)
+998 ERRORS("BoundaryConditionsDirichlet_LinearSparsityIndicesGet",err,error)
+    EXITS("BoundaryConditionsDirichlet_LinearSparsityIndicesGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsDirichlet_LinearSparsityIndicesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary conditions for a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_BoundaryConditionsGet(boundaryConditionsRowVariable,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the boundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryCOnditions !<On exit, a pointer to the boundary conditions in the specified boundary conditions row variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsRowVariable_BoundaryConditionsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(boundaryConditions)) &
+      & CALL FlagError("Boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+#endif    
+
+    boundaryConditions=>boundaryConditionsRowVariable%boundaryConditions
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) &
+      & CALL FlagError("Boundary conditions is not associated for the boundary conditions row variable.",err,error,*999)
+#endif    
+       
+    EXITS("BoundaryConditionsRowVariable_BoundaryConditionsGet")
+    RETURN
+999 NULLIFY(boundaryConditions)
+998 ERRORS("BoundaryConditionsRowVariable_BoundaryConditionsGet",err,error)
+    EXITS("BoundaryConditionsRowVariable_BoundaryConditionsGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_BoundaryConditionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the field variable associated with a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_FieldVariableGet(boundaryConditionsRowVariable,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the field variable for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the field variable associated with the specified boundary conditions row variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsRowVariable_FieldVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+#endif    
+
+    fieldVariable=>boundaryConditionsRowVariable%variable
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable)) &
+      & CALL FlagError("The field variable is not associated for the boundary conditions row variable.",err,error,*999)
+#endif    
+       
+    EXITS("BoundaryConditionsRowVariable_FieldVariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORS("BoundaryConditionsRowVariable_FieldVariableGet",err,error)
+    EXITS("BoundaryConditionsRowVariable_FieldVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_FieldVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of DOFs for a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_NumberOfDOFsGet(boundaryConditionsRowVariable,numberOfDOFs,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the number of DOFs for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDOFs !<On exit, the number of DOFs for the specified boundary conditions row variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsRowVariable_NumberOfDOFsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+#endif    
+
+    numberOfDOFs=boundaryConditionsRowVariable%numberOfDOFs
+      
+    EXITS("BoundaryConditionsRowVariable_NumberOfDOFsGet")
+    RETURN
+999 ERRORS("BoundaryConditionsRowVariable_NumberOfDOFs",err,error)
+    EXITS("BoundaryConditionsRowVariable_NumberOfDOFs")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_NumberOfDOFsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the row boundary condition type for a DOF in a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_RowConditionTypeGet(boundaryConditionsRowVariable,dofIdx,rowConditionType,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the row condition type for
+    INTEGER(INTG), INTENT(IN) :: dofIdx !<The DOF index in the boundary conditions row variable to get the row condition type for.
+    INTEGER(INTG), INTENT(OUT) :: rowConditionType !<On exit, the row condition type for the specified DOF in the boundary conditions row variable. \see BoundaryConditionsRoutines_RowTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("BoundaryConditionsRowVariable_RowConditionTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+    IF(dofIdx<1.OR.dofIdx>boundaryConditionsRowVariable%totalNumberOfDOFs) THEN
+      localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
+        & " is invalid. The specified DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(boundaryConditionsRowVariable%totalNumberOfDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(boundaryConditionsRowVariable%rowConditionTypes)) &
+      & CALL FlagError("The row condition types array is not allocated for the boundary conditions row variable.",err,error,*999)
+#endif    
+
+    rowConditionType=boundaryConditionsRowVariable%rowConditionTypes(dofIdx)
+      
+    EXITS("BoundaryConditionsRowVariable_RowConditionTypeGet")
+    RETURN
+999 ERRORS("BoundaryConditionsRowVariable_RowConditionTypeGet",err,error)
+    EXITS("BoundaryConditionsRowVariable_RowConditionTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_RowConditionTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of DOFs for a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_TotalNumberOfDOFsGet(boundaryConditionsRowVariable,totalNumberOfDOFs,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the total number of DOFs for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfDOFs !<On exit, the total number of DOFs for the specified boundary conditions row variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsRowVariable_TotalNumberOfDOFsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfDOFs=boundaryConditionsRowVariable%totalNumberOfDOFs
+      
+    EXITS("BoundaryConditionsRowVariable_TotalNumberOfDOFsGet")
+    RETURN
+999 ERRORS("BoundaryConditionsRowVariable_TotalNumberOfDOFs",err,error)
+    EXITS("BoundaryConditionsRowVariable_TotalNumberOfDOFs")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_TotalNumberOfDOFsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the condition type for a DOF in a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,dofIdx,conditionType,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the condition type for
+    INTEGER(INTG), INTENT(IN) :: dofIdx !<The dof index to get the condition type for.
+    INTEGER(INTG), INTENT(OUT) :: conditionType !<On exit, the boundary condition variable condition type.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    INTEGER(INTG) :: numberOfGlobalDOFs
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("BoundaryConditionsVariable_ConditionTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL BoundaryConditionsVariable_VariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
+    CALL FieldVariable_NumberOfGlobalGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+    IF(dofIdx<1.OR.dofIdx>numberOfGlobalDOFs) THEN
+      localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
+        & " is invalid. The DOF index should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(boundaryConditionsVariable%conditionTypes)) &
+      & CALL FlagError("The condition types array is not allocated for the boundary conditions variable.",err,error,*999)
+#endif    
+
+    conditionType=boundaryConditionsVariable%conditionTypes(dofIdx)
+    
+    EXITS("BoundaryConditionsVariable_ConditionTypeGet")
+    RETURN
+999 ERRORS("BoundaryConditionsVariable_ConditionTypeGet",err,error)
+    EXITS("BoundaryConditionsVariable_ConditionTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_ConditionTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the dirichlet boundary conditions for a boundary condition variable.
   SUBROUTINE BoundaryConditionsVariable_DirichletConditionsGet(boundaryConditionsVariable,dirichletBoundaryConditions, &
     & err,error,*)
 
     !Argument variables
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
-    TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: dirichletBoundaryCOnditions !<On exit, a pointer to the dirichlet boundary conditions in the specified boundary conditions variable. Must not be associated on entry
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryCOnditions !<On exit, a pointer to the dirichlet boundary conditions in the specified boundary conditions variable. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
     ENTERS("BoundaryConditionsVariable_DirichletConditionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dirichletBoundaryConditions)) &
       & CALL FlagError("Dirichlet boundary conditions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
       & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
 
     dirichletBoundaryConditions=>boundaryConditionsVariable%dirichletBoundaryConditions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dirichletBoundaryConditions)) &
       & CALL FlagError("Dirichlet boundary conditions is not associated for the boundary conditions variable.",err,error,*999)
+#endif    
        
     EXITS("BoundaryConditionsVariable_DirichletConditionsGet")
     RETURN
@@ -286,7 +868,7 @@ CONTAINS
   SUBROUTINE BoundaryConditionsVariable_DOFConstraintsExists(boundaryConditionsVariable,dofConstraints,err,error,*)
 
     !Argument variables
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<On exit, a pointer to the DOF constraints in the specified boundary conditions variable if they exist. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -294,8 +876,10 @@ CONTAINS
  
     ENTERS("BoundaryConditionsVariable_DOFConstraintsExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
 
     dofConstraints=>boundaryConditionsVariable%dofConstraints
        
@@ -316,7 +900,7 @@ CONTAINS
   SUBROUTINE BoundaryConditionsVariable_DOFConstraintsGet(boundaryConditionsVariable,dofConstraints,err,error,*)
 
     !Argument variables
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the dirichlet boundary conditions for
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<On exit, a pointer to the DOF constraints in the specified boundary conditions variable. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -324,12 +908,16 @@ CONTAINS
  
     ENTERS("BoundaryConditionsVariable_DOFConstraintsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is already associated.",err,error,*998)
+#endif    
     
     CALL BoundaryConditionsVariable_DOFConstraintsExist(boundaryConditionsVariable,dofConstraints,err,error,*999)
 
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dofConstraints)) &
       & CALL FlagError("DOF constraints is not associated for the boundary conditions variable.",err,error,*999)
+#endif    
 
     EXITS("BoundaryConditionsVariable_DOFConstraintsGet")
     RETURN
@@ -344,12 +932,95 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the neumann boundary conditions for a boundary condition variable.
-  SUBROUTINE BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,neumannBoundaryConditions, &
-    & err,error,*)
+  !>Gets the DOF type for a DOF in a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_DOFTypeGet(boundaryConditionsVariable,dofIdx,dofType,err,error,*)
 
     !Argument variables
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the neumann boundary conditions for
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the DOF type for
+    INTEGER(INTG), INTENT(IN) :: dofIdx !<The DOF index to get the DOF type for.
+    INTEGER(INTG), INTENT(OUT) :: dofType !<On exit, the boundary condition variable DOF type.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    INTEGER(INTG) :: numberOfGlobalDOFs
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("BoundaryConditionsVariable_DOFTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL BoundaryConditionsVariable_VariableGet(boundaryConditionsVariable,fieldVariable,err,error,*999)
+    CALL FieldVariable_NumberOfGlobalGet(fieldVariable,numberOfGlobalDOFs,err,error,*999)
+    IF(dofIdx<1.OR.dofIdx>numberOfGlobalDOFs) THEN
+      localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
+        & " is invalid. The DOF index should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(boundaryConditionsVariable%dofTypes)) &
+      & CALL FlagError("The dof types array is not allocated for the boundary conditions variable.",err,error,*999)
+#endif    
+
+    dofType=boundaryConditionsVariable%dofTypes(dofIdx)
+    
+    EXITS("BoundaryConditionsVariable_DOFTypeGet")
+    RETURN
+999 ERRORS("BoundaryConditionsVariable_DOFTypeGet",err,error)
+    EXITS("BoundaryConditionsVariable_DOFTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_DOFTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the field variable associated with a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_FieldVariableGet(boundaryConditionsVariable,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the field variable for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the field variable associated with the specified boundary conditions variable. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_FieldVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
+
+    fieldVariable=>boundaryConditionsVariable%variable
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable)) &
+      & CALL FlagError("The field variable is not associated for the boundary conditions variable.",err,error,*999)
+#endif    
+       
+    EXITS("BoundaryConditionsVariable_FieldVariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORS("BoundaryConditionsVariable_FieldVariableGet",err,error)
+    EXITS("BoundaryConditionsVariable_FieldVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_FieldVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the neumann boundary conditions for a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,neumannBoundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the neumann boundary conditions for
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryCOnditions !<On exit, a pointer to the neumann boundary conditions in the specified boundary conditions variable. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -357,14 +1028,17 @@ CONTAINS
  
     ENTERS("BoundaryConditionsVariable_NeumannConditionsGet",err,error,*998)
 
-    IF(ASSOCIATED(neumannBoundaryConditions)) &
-      & CALL FlagError("Neumann boundary conditions is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(neumannBoundaryConditions)) CALL FlagError("Neumann boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
 
     neumannBoundaryConditions=>boundaryConditionsVariable%neumannBoundaryConditions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(neumannBoundaryConditions)) &
       & CALL FlagError("Neumann boundary conditions is not associated for the boundary conditions variable.",err,error,*999)
+#endif    
        
     EXITS("BoundaryConditionsVariable_NeumannConditionsGet")
     RETURN
@@ -384,7 +1058,7 @@ CONTAINS
     & pressureIncrementedBoundaryConditions,err,error,*)
 
     !Argument variables
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the pressure incremented boundary conditions for
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to get the pressure incremented boundary conditions for
     TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions !<On exit, a pointer to the pressure incremented boundary conditions in the specified boundary conditions variable. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -392,15 +1066,19 @@ CONTAINS
  
     ENTERS("BoundaryConditionsVariable_PressureIncConditionsGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(pressureIncrementedBoundaryConditions)) &
       & CALL FlagError("Pressure incremented boundary conditions is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
-      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
 
     pressureIncrementedBoundaryConditions=>boundaryConditionsVariable%pressureIncrementedBoundaryConditions
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(pressureIncrementedBoundaryConditions)) &
       & CALL FlagError("Pressure incremented boundary conditions is not associated for the boundary conditions variable.", &
       & err,error,*999)
+#endif    
        
     EXITS("BoundaryConditionsVariable_PressureIncConditionsGet")
     RETURN
@@ -421,14 +1099,17 @@ CONTAINS
     !Argument variables
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<A pointer to the DOF constraints to get the DOF constraint for
     INTEGER(INTG), INTENT(IN) :: constraintIdx !<The constraint index to get the DOF constraint for
-    TYPE(BoundaryConditionsDofConstraintPtrType), POINTER :: dofConstraint !<On exit, a pointer to the specified DOF constraint if it exists. Must not be associated on entry
+    TYPE(BoundaryConditionsDofConstraintType), POINTER :: dofConstraint !<On exit, a pointer to the specified DOF constraint if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("BoundaryConditionsVariableDOFConstraints_ConstraintExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dofConstraint)) CALL FlagError("DOF constraint is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is not associated.",err,error,*999)
     IF(constraintIdx<1.OR.constraintIdx>dofConstraints%numberOfConstraints) THEN
@@ -438,32 +1119,10 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(dofConstraints%constraints)) CALL FlagError("DOF constraints constraints is not allocated.",err,error,*999)
+#endif    
 
     dofConstraint=>dofConstraints%constraints(constraintIdx)%ptr
-
-    IF(ASSOCIATED(dofConstraint)) THEN
-      IF(dofConstraint%numberOfDOFs>0) THEN
-        IF(.NOT.ALLOCATED(dofConstraint%globalDOFs)) THEN
-          localError="The global DOFs are not allocated for constraint index "// &
-            & TRIM(NumberToVString(constraintIdx,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-        IF(.NOT.ALLOCATED(dofConstraint%dofs)) THEN
-          localError="The DOFs are not allocated for constraint index "// &
-            & TRIM(NumberToVString(constraintIdx,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-        IF(.NOT.ALLOCATED(dofConstraint%coefficients)) THEN
-          localError="The coefficients are not allocated for constraint index "// &
-            & TRIM(NumberToVString(constraintIdx,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-    ENDIF
-    
+   
     EXITS("BoundaryConditionsVariableDOFConstraints_ConstraintExists")
     RETURN
 999 NULLIFY(dofConstraint)
@@ -483,23 +1142,44 @@ CONTAINS
     !Argument variables
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<A pointer to the DOF constraints to get the DOF constraint for
     INTEGER(INTG), INTENT(IN) :: constraintIdx !<The constraint index to get the DOF constraint for
-    TYPE(BoundaryConditionsDofConstraintPtrType), POINTER :: dofConstraint !<On exit, a pointer to the specified DOF constraint. Must not be associated on entry
+    TYPE(BoundaryConditionsDofConstraintType), POINTER :: dofConstraint !<On exit, a pointer to the specified DOF constraint. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("BoundaryConditionsVariableDOFConstraints_ConstraintGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dofConstraint)) CALL FlagError("DOF onstraint is already associated.",err,error,*998)
+#endif    
 
     CALL BoundaryConditionsVariableDOFConstraints_ConstraintExists(dofConstraints,constraintIdx,dofConstraint,err,error,*999)
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dofConstraint)) THEN
       localError="The DOF constraint is not associated for constraint index "// &
         & TRIM(NumberToVString(constraintIdx,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
+    ELSE
+      IF(dofConstraint%numberOfDOFs>0) THEN
+        IF(.NOT.ALLOCATED(dofConstraint%dofs)) THEN
+          localError="The DOFs are not allocated for constraint index "// &
+            & TRIM(NumberToVString(constraintIdx,"*",err,error))//" which has "// &
+            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(.NOT.ALLOCATED(dofConstraint%coefficients)) THEN
+          localError="The coefficients are not allocated for constraint index "// &
+            & TRIM(NumberToVString(constraintIdx,"*",err,error))//" which has "// &
+            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDIF
     ENDIF
+#endif    
    
     EXITS("BoundaryConditionsVariableDOFConstraints_ConstraintGet")
     RETURN
@@ -520,14 +1200,17 @@ CONTAINS
     !Argument variables
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<A pointer to the DOF constraints to get the DOF coupling for
     INTEGER(INTG), INTENT(IN) :: dofIdx !<The dof index to get the DOF coupling for
-    TYPE(BoundaryConditionsCoupledDofsPtrType), POINTER :: dofCoupling !<On exit, a pointer to the specified DOF coupling if it exists. Must not be associated on entry
+    TYPE(BoundaryConditionsCoupledDofsType), POINTER :: dofCoupling !<On exit, a pointer to the specified DOF coupling if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("BoundaryConditionsVariableDOFConstraints_DOFCouplingExists",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dofCoupling)) CALL FlagError("DOF coupling is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is not associated.",err,error,*999)
     IF(dofIdx<1.OR.dofIdx>dofConstraints%numberOfDOFs) THEN
@@ -537,35 +1220,13 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(dofConstraints%dofCouplings)) CALL FlagError("DOF constraints DOF couplings is not allocated.",err,error,*999)
+#endif    
 
     dofCoupling=>dofConstraints%dofCouplings(dofIdx)%ptr
-
-    IF(ASSOCIATED(dofCoupling)) THEN
-      IF(dofCoupling%numberOfDOFs>0) THEN
-        IF(.NOT.ALLOCATED(dofCoupling%globalDOFs)) THEN
-          localError="The global DOFs are not allocated for DOF index "// &
-            & TRIM(NumberToVString(dofIdx,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-        IF(.NOT.ALLOCATED(dofCoupling%dofs)) THEN
-          localError="The DOFs are not allocated for DOF index "// &
-            & TRIM(NumberToVString(dofIdx,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-        IF(.NOT.ALLOCATED(dofCoupling%coefficients)) THEN
-          localError="The coefficients are not allocated for DOF index "// &
-            & TRIM(NumberToVString(dofIdx,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(dofConstraint%numberOfDOFs,"*",err,error))//" DOFs."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-    ENDIF
     
     EXITS("BoundaryConditionsVariableDOFConstraints_DOFCouplingExists")
     RETURN
-999 NULLIFY(dofConstraint)
+999 NULLIFY(dofCoupling)
 998 ERRORS("BoundaryConditionsVariableDOFConstraints_DOFCouplingExists",err,error)
     EXITS("BoundaryConditionsVariableDOFConstraints_DOFCouplingExists")
     RETURN 1
@@ -582,27 +1243,54 @@ CONTAINS
     !Argument variables
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<A pointer to the DOF constraints to get the DOF coupling for
     INTEGER(INTG), INTENT(IN) :: dofIdx !<The dof index to get the DOF coupling for
-    TYPE(BoundaryConditionsCoupledDofsPtrType), POINTER :: dofCoupling !<On exit, a pointer to the specified DOF coupling. Must not be associated on entry
+    TYPE(BoundaryConditionsCoupledDofsType), POINTER :: dofCoupling !<On exit, a pointer to the specified DOF coupling. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("BoundaryConditionsVariableDOFConstraints_DOFCouplingGet",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(dofCoupling)) CALL FlagError("DOF coupling is already associated.",err,error,*998)
+#endif    
 
     CALL BoundaryConditionsVariableDOFConstraints_DOFCouplingExists(dofConstraints,dofIdx,dofCoupling,err,error,*999)
-    
+
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(dofCoupling)) THEN
       localError="The DOF couping is not associated for DOF index "// &
         & TRIM(NumberToVString(dofIdx,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
+    ELSE
+      IF(dofCoupling%numberOfDOFs>0) THEN
+        IF(.NOT.ALLOCATED(dofCoupling%globalDofs)) THEN
+          localError="The global DOFs are not allocated for DOF index "// &
+            & TRIM(NumberToVString(dofIdx,"*",err,error))//" which has "// &
+            & TRIM(NumberToVString(dofConstraints%numberOfDOFs,"*",err,error))//" DOFs."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(.NOT.ALLOCATED(dofCoupling%localDofs)) THEN
+          localError="The local DOFs are not allocated for DOF index "// &
+            & TRIM(NumberToVString(dofIdx,"*",err,error))//" which has "// &
+            & TRIM(NumberToVString(dofConstraints%numberOfDOFs,"*",err,error))//" DOFs."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(.NOT.ALLOCATED(dofCoupling%coefficients)) THEN
+          localError="The coefficients are not allocated for DOF index "// &
+            & TRIM(NumberToVString(dofIdx,"*",err,error))//" which has "// &
+            & TRIM(NumberToVString(dofConstraints%numberOfDOFs,"*",err,error))//" DOFs."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDIF
     ENDIF
+#endif    
     
     EXITS("BoundaryConditionsVariableDOFConstraints_DOFCouplingGet")
     RETURN
-999 NULLIFY(dofConstraint)
+999 NULLIFY(dofCoupling)
 998 ERRORS("BoundaryConditionsVariableDOFConstraints_DOFCouplingGet",err,error)
     EXITS("BoundaryConditionsVariableDOFConstraints_DOFCouplingGet")
     RETURN 1
@@ -625,7 +1313,9 @@ CONTAINS
  
     ENTERS("BoundaryConditionsVariableDOFConstraints_NumberOfConstraintsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is not associated.",err,error,*999)
+#endif    
  
     numberOfConstraints=dofConstraints%numberOfConstraints
     
@@ -653,7 +1343,9 @@ CONTAINS
  
     ENTERS("BoundaryConditionsVariableDOFConstraints_NumberOfDOFsGet",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(dofConstraints)) CALL FlagError("DOF constraints is not associated.",err,error,*999)
+#endif    
  
     numberOfDOFs=dofConstraints%numberOfDOFs
     

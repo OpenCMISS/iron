@@ -1532,7 +1532,7 @@ CONTAINS
     INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
     REAL(DP) :: dependentValue,matrixValue,rhsValue,sourceValue
     REAL(DP), POINTER :: dependentParameters(:),equationsMatrixData(:),sourceVectorData(:)
-    TYPE(BoundaryConditionVariableType), POINTER :: rhsBoundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: rhsBoundaryConditions
     TYPE(DomainMappingType), POINTER :: columnDomainMapping,rhsDomainMapping
     TYPE(DistributedMatrixType), POINTER :: equationsDistributedMatrix
     TYPE(DistributedVectorType), POINTER :: sourceDistributedVector
@@ -1772,7 +1772,7 @@ CONTAINS
     TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(FieldType), POINTER :: rhsField
     TYPE(FieldVariableType), POINTER :: rhsVariable,residualVariable
-    TYPE(BoundaryConditionVariableType), POINTER :: rhsBoundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: rhsBoundaryConditions
     TYPE(DomainMappingType), POINTER :: rhsDomainMapping
     TYPE(VARYING_STRING) :: localError
 
@@ -2097,12 +2097,12 @@ CONTAINS
     equationsSetRegion%equationsSets%equationsSets=>newEquationsSets
     equationsSetRegion%equationsSets%numberOfEquationsSets=equationsSetRegion%equationsSets%numberOfEquationsSets+1
     equationsSet=>newEquationsSet
-    equationsEquationsSetField=>equationsSet%equationsSetField
+    equationsSetEquationsField=>equationsSet%equationsField
     !\todo check pointer setup
-    IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
-      equationsSetField=>equationsSet%equationsSetField%equationsSetFieldField
+    IF(equationsSetEquationsField%equationsSetFieldAutoCreated) THEN
+      equationsSetField=>equationsSet%equationsField%equationsSetField
     ELSE
-      equationsSet%equationsSetField%equationsSetFieldField=>equationsSetField
+      equationsSet%equationsField%equationsSetField=>equationsSetField
     ENDIF
    
     EXITS("EquationsSet_CreateStart")
@@ -2193,7 +2193,7 @@ CONTAINS
       CALL EquationsSet_MaterialsFinalise(equationsSet%materials,err,error,*999)
       CALL EquationsSet_SourceFinalise(equationsSet%source,err,error,*999)
       CALL EquationsSet_AnalyticFinalise(equationsSet%analytic,err,error,*999)
-      CALL EqutionsSet_EquationsSetFieldFinalise(equationsSet%equationsSetField,err,error,*999)
+      CALL EquationsSet_EquationsFieldFinalise(equationsSet%equationsField,err,error,*999)
       CALL EquationsSet_DerivedFinalise(equationsSet%derived,err,error,*999)
       IF(ASSOCIATED(equationsSet%equations)) CALL Equations_Destroy(equationsSet%equations,err,error,*999)
       IF(ALLOCATED(equationsSet%specification)) DEALLOCATE(equationsSet%specification)
@@ -3068,7 +3068,7 @@ CONTAINS
     equationsSet%solutionMethod=0
     CALL EquationsSet_GeometryInitialise(equationsSet,err,error,*999)
     CALL EquationsSet_DependentInitialise(equationsSet,err,error,*999)
-    CALL EquationsSet_EquationsSetFieldInitialise(equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsFieldInitialise(equationsSet,err,error,*999)
     NULLIFY(equationsSet%independent)
     NULLIFY(equationsSet%materials)
     NULLIFY(equationsSet%source)
@@ -3816,56 +3816,63 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finalises the dependent variables for an equation set and deallocates all memory.
-  SUBROUTINE EqutionsSet_EquationsSetFieldFinalise(equationsSetField,err,error,*)
+  !>Finalises the equation set field variables for an equation set and deallocates all memory.
+  SUBROUTINE EqutionsSet_EquationsFieldFinalise(equationsField,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetEquationsSetFieldType) :: equationsSetField !<The pointer to the equations set
+    TYPE(EquationsSetEquationsFieldType) :: equationsField !<The pointer to the equations set equations field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EqutionsSet_EquationsSetFieldFinalise",err,error,*999)
+    ENTERS("EqutionsSet_EquationsFieldFinalise",err,error,*999)
 
-    NULLIFY(equationsSetField%equationsSet)
-    equationsSetField%equationsSetFieldFinished=.FALSE.
-    equationsSetField%equationsSetFieldAutoCreated=.FALSE.
-    NULLIFY(equationsSetField%equationsSetFieldField)
+    IF(ASSOCIATED(equationsField)) THEN
+      NULLIFY(equationsField%equationsSet)
+      equationsField%equationsSetFieldFinished=.FALSE.
+      equationsField%equationsSetFieldAutoCreated=.FALSE.
+      NULLIFY(equationsField%equationsSetField)
+      DEALLOCATE(equationsField)
+    ENDIF
     
-    EXITS("EqutionsSet_EquationsSetFieldFinalise")
+    EXITS("EqutionsSet_EquationsFieldFinalise")
     RETURN
-999 ERRORSEXITS("EqutionsSet_EquationsSetFieldFinalise",err,error)
+999 ERRORSEXITS("EqutionsSet_EquationsFieldFinalise",err,error)
     RETURN 1
     
-  END SUBROUTINE EqutionsSet_EquationsSetFieldFinalise
+  END SUBROUTINE EqutionsSet_EquationsFieldFinalise
   
   !
   !================================================================================================================================
   !
   !>Initialises the equations set field for a equations set.
-  SUBROUTINE EquationsSet_EquationsSetFieldInitialise(equationsSet,err,error,*)
+  SUBROUTINE EquationsSet_EquationsFieldInitialise(equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the dependent field for
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to initialise the equations field for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsSet_EquationsSetFieldInitialise",err,error,*999)
+    ENTERS("EquationsSet_EquationsFieldInitialise",err,error,*999)
 
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     
-    equationsSet%equationsSetField%equationsSet=>equationsSet
-    equationsSet%equationsSetField%equationsSetFieldFinished=.FALSE.
-    equationsSet%equationsSetField%equationsSetFieldAutoCreated=.TRUE.
-    NULLIFY(equationsSet%equationsSetField%equationsSetFieldField)
+    CALL EquationsSet_AssertEquationsFieldNotCreated(equationsSet,err,error,*999)
+    
+    ALLOCATE(equationsSet%equationsField,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations set equations field information.",err,error,*998)
+    equationsSet%equationsField%equationsSet=>equationsSet
+    equationsSet%equationsField%equationsSetFieldFinished=.FALSE.
+    equationsSet%equationsField%equationsSetFieldAutoCreated=.TRUE.
+    NULLIFY(equationsSet%equationsField%equationsSetField)
         
-    EXITS("EquationsSet_EquationsSetFieldInitialise")
+    EXITS("EquationsSet_EquationsFieldInitialise")
     RETURN
-999 ERRORSEXITS("EquationsSet_EquationsSetFieldInitialise",err,error)
+999 ERRORSEXITS("EquationsSet_EquationsFieldInitialise",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsSet_EquationsSetFieldInitialise
+  END SUBROUTINE EquationsSet_EquationsFieldInitialise
 
   !
   !================================================================================================================================
@@ -5627,7 +5634,7 @@ CONTAINS
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
     TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions
-    TYPE(BoundaryConditionVariableType),   POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType),   POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(FieldType), POINTER :: dependentField

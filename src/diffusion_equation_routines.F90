@@ -3617,7 +3617,7 @@ CONTAINS
     REAL(DP) :: A1,currentTime,D1,timeIncrement,normal(3),tangents(3,3),VALUE,X(3)
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes

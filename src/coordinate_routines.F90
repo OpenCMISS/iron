@@ -3972,12 +3972,12 @@ CONTAINS
   !
 
   !>Transforms a symmetric second order tensor in materials coordinates (e.g., conductivity tensor) to a tensor in xi coordinates
-  SUBROUTINE CoordinateSystem_MaterialTransformSymTensor27(geometricInterpPointMetrics,fibreInterpPoint,symmetricMaterialTensor, &
+  SUBROUTINE CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint,symmetricMaterialTensor, &
     & transformedTensor,err,error,*)
 
     !Argument variables
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
     REAL(DP), INTENT(IN) :: symmetricMaterialTensor(:) !<symmetricMaterialTensor(voigtIdx). The original symmetric material tensor values (in Voigt form) to transform.
     REAL(DP), INTENT(OUT) :: transformedTensor(:,:) !<transformedTensor(xiCoordinateIdx,xiCoordinateIdx). On exit, the tensor transformed from material coordinates.
@@ -4028,7 +4028,7 @@ CONTAINS
     materialTensor(1:numberOfDimensions,1:numberOfDimensions)=0.0_DP
     SELECT CASE(numberOfDimensions)
     CASE(1)
-      materialTensor(1,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT(1,1))
+      materialTensor(1,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT1(1,1))
     CASE(2)
       materialTensor(1,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(1,1))
       materialTensor(1,2)=symmetricMaterialTensor(TENSOR_TO_VOIGT2(1,2))
@@ -4043,7 +4043,7 @@ CONTAINS
       materialTensor(2,3)=symmetricMaterialTensor(TENSOR_TO_VOIGT3(2,3))
       materialTensor(3,1)=symmetricMaterialTensor(TENSOR_TO_VOIGT3(3,1))
       materialTensor(3,2)=symmetricMaterialTensor(TENSOR_TO_VOIGT3(3,2))
-      materialTensor(3,3)=symmetriMaterialcTensor(TENSOR_TO_VOIGT3(3,3))
+      materialTensor(3,3)=symmetricMaterialTensor(TENSOR_TO_VOIGT3(3,3))
     CASE DEFAULT
       localError="The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
         & " is invalid."
@@ -4119,6 +4119,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("CoordinateSystems_Finalise",err,error)
     RETURN 1
+    
   END SUBROUTINE CoordinateSystems_Finalise
 
   !

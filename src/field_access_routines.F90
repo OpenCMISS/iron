@@ -480,7 +480,7 @@ MODULE FieldAccessRoutines
   PUBLIC FieldVariable_AssertIsINTGData,FieldVariable_AssertIsSPData,FieldVariable_AssertIsDPData,FieldVariable_AssertIsLData
   
   PUBLIC FieldVariable_AssertComponentNumberOK
-  
+
   PUBLIC FieldVariable_ComponentDomainGet
 
   PUBLIC FieldVariable_ComponentInterpolationCheck
@@ -491,7 +491,7 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldVariable_ComponentMaxElementInterpParametersGet
 
-  PUBLIC FieldVariable_ComponentMaxNodalInterpParametersGet
+  PUBLIC FieldVariable_ComponentMaxNodeInterpParametersGet
 
   PUBLIC FieldVariable_ComponentMeshComponentCheck
 
@@ -2654,7 +2654,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(geometricParameters)) CALL FlagError("Geometric parameters is not associated.",err,error,*999)
     IF(localElementNumber<0.OR.localElementNumber>geometricParameters%numberOfVolumes) THEN
-      localError="The specified local element number of "//TRIM(localElementNumber,"*",err,error)// &
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " is invalid. The element number should be >= 1 and <= "// &
         & TRIM(NumberToVString(geometricParameters%numberOfVolumes,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -2696,7 +2696,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(geometricParameters)) CALL FlagError("Geometric parameters is not associated.",err,error,*999)
     IF(localFaceNumber<0.OR.localFaceNumber>geometricParameters%numberOfAreas) THEN
-      localError="The specified local face number of "//TRIM(localFaceNumber,"*",err,error)// &
+      localError="The specified local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
         & " is invalid. The face number should be >= 1 and <= "// &
         & TRIM(NumberToVString(geometricParameters%numberOfAreas,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -2738,7 +2738,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(geometricParameters)) CALL FlagError("Geometric parameters is not associated.",err,error,*999)
     IF(localLineNumber<0.OR.localLineNumber>geometricParameters%numberOfLines) THEN
-      localError="The specified local line number of "//TRIM(localLineNumber,"*",err,error)// &
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
         & " is invalid. The line number should be >= 1 and <= "// &
         & TRIM(NumberToVString(geometricParameters%numberOfLines,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -2853,7 +2853,7 @@ CONTAINS
       & CALL FlagError("Field interpolated point metrics is not associated.",err,error,*999)
 #endif    
 
-    jacobain=interpolatedPointMetrics%jacobian
+    jacobian=interpolatedPointMetrics%jacobian
 
     EXITS("FieldInterpolatedPointMetrics_JacobianGet")
     RETURN
@@ -3867,13 +3867,13 @@ CONTAINS
   !
 
   !>Returns the maximum number of nodal interpolation parameters of the specified field variable component
-  SUBROUTINE FieldVariable_ComponentMaxNodalInterpParametersGet(fieldVariable,componentIdx,maxNodalInterpParameters, &
+  SUBROUTINE FieldVariable_ComponentMaxNodeInterpParametersGet(fieldVariable,componentIdx,maxNodeInterpParameters, &
     & err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the max number of nodal interpolation parameters for
     INTEGER(INTG), INTENT(IN) :: componentIdx !<The component index of the field variable to get the max number of nodal interpolation parameters for. 
-    INTEGER(INTG), INTENT(OUT) :: maxNodalInterpParameters !<On exit, the max number of nodal interpolation parameters for the field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: maxNodeInterpParameters !<On exit, the max number of nodal interpolation parameters for the field variable component. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3881,7 +3881,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
 
-    ENTERS("FieldVariable_ComponentMaxNodalInterpParametersGet",err,error,*999)
+    ENTERS("FieldVariable_ComponentMaxNodeInterpParametersGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
@@ -3904,15 +3904,15 @@ CONTAINS
     ENDIF
 #endif    
      
-    maxNodalInterpParameters=fieldVariable%components(componentIdx)%maxNumberNodalInterpolationParameters
+    maxNodeInterpParameters=fieldVariable%components(componentIdx)%maxNumberNodeInterpolationParameters
 
-    EXITS("FieldVariable_ComponentMaxNodalInterpParametersGet")
+    EXITS("FieldVariable_ComponentMaxNodeInterpParametersGet")
     RETURN
-999 ERRORS("FieldVariable_ComponentMaxNodalInterpParametersGet",err,error)
-    EXITS("FieldVariable_ComponentMaxNodalInterpParametersGet")
+999 ERRORS("FieldVariable_ComponentMaxNodeInterpParametersGet",err,error)
+    EXITS("FieldVariable_ComponentMaxNodeInterpParametersGet")
     RETURN 1
     
-  END SUBROUTINE FieldVariable_ComponentMaxNodalInterpParametersGet
+  END SUBROUTINE FieldVariable_ComponentMaxNodeInterpParametersGet
 
   !
   !================================================================================================================================
@@ -4324,13 +4324,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFParametersGetConstant",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(dofTypeIdx<1.OR.dofTypeIdx>fieldVariable%dofToParamMap%numberOfConstantDOFs) THEN
-      localError="The specified DOF type index of "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+      localError="The specified DOF type index of "//TRIM(NumberToVString(dofTypeIdx,"*",err,error))// &
         & " is invalid for a constant based DOF. The DOF type index should be >= 1 and <= "// &
         & TRIM(NumberToVString(fieldVariable%dofToParamMap%numberOfConstantDOFs,"*",err,error))// &
         & " for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -4373,13 +4376,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFParametersGetElement",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(dofTypeIdx<1.OR.dofTypeIdx>fieldVariable%dofToParamMap%numberOfElementDOFs) THEN
-      localError="The specified DOF type index of "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+      localError="The specified DOF type index of "//TRIM(NumberToVString(dofTypeIdx,"*",err,error))// &
         & " is invalid for a element based DOF. The DOF type index should be >= 1 and <= "// &
         & TRIM(NumberToVString(fieldVariable%dofToParamMap%numberOfElementDOFs,"*",err,error))// &
         & " for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -4426,13 +4432,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFParametersGetNode",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(dofTypeIdx<1.OR.dofTypeIdx>fieldVariable%dofToParamMap%numberOfNodeDOFs) THEN
-      localError="The specified DOF type index of "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+      localError="The specified DOF type index of "//TRIM(NumberToVString(dofTypeIdx,"*",err,error))// &
         & " is invalid for a node based DOF. The DOF type index should be >= 1 and <= "// &
         & TRIM(NumberToVString(fieldVariable%dofToParamMap%numberOfNodeDOFs,"*",err,error))// &
         & " for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -4478,13 +4487,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFParametersGetGridPoint",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(dofTypeIdx<1.OR.dofTypeIdx>fieldVariable%dofToParamMap%numberOfGridPointDOFs) THEN
-      localError="The specified DOF type index of "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+      localError="The specified DOF type index of "//TRIM(NumberToVString(dofTypeIdx,"*",err,error))// &
         & " is invalid for a grid point based DOF. The DOF type index should be >= 1 and <= "// &
         & TRIM(NumberToVString(fieldVariable%dofToParamMap%numberOfGridPointDOFs,"*",err,error))// &
         & " for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -4530,13 +4542,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFParametersGetGaussPoint",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(dofTypeIdx<1.OR.dofTypeIdx>fieldVariable%dofToParamMap%numberOfGaussPointDOFs) THEN
-      localError="The specified DOF type index of "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+      localError="The specified DOF type index of "//TRIM(NumberToVString(dofTypeIdx,"*",err,error))// &
         & " is invalid for a Gauss point based DOF. The DOF type index should be >= 1 and <= "// &
         & TRIM(NumberToVString(fieldVariable%dofToParamMap%numberOfGaussPointDOFs,"*",err,error))// &
         & " for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -4571,7 +4586,7 @@ CONTAINS
   !
 
   !>Gets the data point DOF parameters for the local DOF type index of a field variable.
-  SUBROUTINE FieldVariable_DOFParametersGetDataPoint(fieldVariable,dofTypeIdx,elemantDataPointNumber,elementNumber, &
+  SUBROUTINE FieldVariable_DOFParametersGetDataPoint(fieldVariable,dofTypeIdx,elementDataPointNumber,elementNumber, &
     & componentNumber,err,error,*)
 
     !Argument variables
@@ -4583,13 +4598,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFParametersGetDataPoint",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(dofTypeIdx<1.OR.dofTypeIdx>fieldVariable%dofToParamMap%numberOfDataPointDOFs) THEN
-      localError="The specified DOF type index of "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+      localError="The specified DOF type index of "//TRIM(NumberToVString(dofTypeIdx,"*",err,error))// &
         & " is invalid for a data point based DOF. The DOF type index should be >= 1 and <= "// &
         & TRIM(NumberToVString(fieldVariable%dofToParamMap%numberOfDataPointDOFs,"*",err,error))// &
         & " for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
@@ -4608,7 +4626,7 @@ CONTAINS
     ENDIF
 #endif    
 
-    dataPointNumber=fieldVariable%dofToParamMap%dataPointDOF2ParamMap(1,dofTypeIdx)
+    elementDataPointNumber=fieldVariable%dofToParamMap%dataPointDOF2ParamMap(1,dofTypeIdx)
     elementNumber=fieldVariable%dofToParamMap%dataPointDOF2ParamMap(2,dofTypeIdx)
     componentNumber=fieldVariable%dofToParamMap%dataPointDOF2ParamMap(3,dofTypeIdx)
 
@@ -4634,6 +4652,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("FieldVariable_DOFTypeGet",err,error,*999)
 
@@ -4888,7 +4909,7 @@ CONTAINS
 
     ENTERS("FieldVariable_LocalElementDOFGet",err,error,*999)
 
-#if WITH_PRECHECKS    
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
       localError="The specified field variable component number of "// &

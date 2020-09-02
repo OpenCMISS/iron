@@ -162,6 +162,8 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_LoadIncrementLoopGet
 
+  PUBLIC ControlLoop_MaximumNumberOfIterationsGet
+
   PUBLIC ControlLoop_NumberOfIterationsGet
 
   PUBLIC ControlLoop_NumberOfSubLoopsGet
@@ -597,7 +599,7 @@ CONTAINS
     !Local Variables    
     INTEGER(INTG) :: controlLoopLevel,levelIdx
     TYPE(ControlLoopType), POINTER :: parentLoop
-    TYPE(ControlLoadIncrementType), POINTER :: loadIncrementLoop
+    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
 
     ENTERS("ControlLoop_CurrentLoadIncrementInfoGet",err,error,*999)
 
@@ -617,9 +619,9 @@ CONTAINS
             & CALL FlagError("Control loop load increment loop is not associated.",err,error,*999)
 #endif          
           currentIteration=loadIncrementLoop%iterationNumber
-          maxNumberOfIterations=loadIncrementLoop%maxNumberOfIterations
+          maxNumberOfIterations=loadIncrementLoop%maximumNumberOfIterations
           outputIteration=loadIncrementLoop%outputNumber
-          inputIteration=loadIncrement%inputNumber
+          inputIteration=loadIncrementLoop%inputNumber
           EXIT
         ELSE
           parentLoop=>parentLoop%parentLoop
@@ -941,6 +943,57 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_NumberOfIterationsGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the maximum number of iterations for a time type control loop. 
+  SUBROUTINE ControlLoop_MaximumNumberOfIterationsGet(controlLoop,maximumNumberOfIterations,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to time control loop to set the maximum number of iterations for
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfIterations !<The maximum number of iterations for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("ControlLoop_MaximumNumberOfIterationsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
+
+    SELECT CASE(controlLoop%loopType)
+    CASE(CONTROL_SIMPLE_TYPE)
+      CALL FlagError("Can not get the maximum number of iterations for a simple loop.",err,error,*999)
+    CASE(CONTROL_FIXED_LOOP_TYPE)
+      CALL FlagError("Can not get the maximum number of iterations for a fixed loop.",err,error,*999)
+    CASE(CONTROL_TIME_LOOP_TYPE)
+      CALL FlagError("Can not get the maximum number of iterations for a time loop.",err,error,*999)
+    CASE(CONTROL_WHILE_LOOP_TYPE)
+      NULLIFY(whileLoop)
+      CALL ControlLoop_WhileLoopGet(controlLoop,whileLoop,err,error,*999)
+      maximumNumberOfIterations=whileLoop%maximumNumberOfIterations
+    CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+      NULLIFY(loadIncrementLoop)
+      CALL ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*999)
+      maximumNumberOfIterations=loadIncrementLoop%maximumNumberOfIterations
+    CASE DEFAULT
+      localError="The control loop type of "//TRIM(NumberToVString(controlLoop%loopType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("ControlLoop_MaximumNumberOfIterationsGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_MaximumNumberOfIterationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_MaximumNumberOfIterationsGet
   
   !
   !================================================================================================================================

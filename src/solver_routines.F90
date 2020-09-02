@@ -276,7 +276,9 @@ MODULE SolverRoutines
 
   PUBLIC Solver_NewtonAbsoluteToleranceSet
 
-  PUBLIC Solver_NewtonLineSearchMonitorOutputSet
+  PUBLIC Solver_NewtonLinearSolverGet
+
+  PUBLIC Solver_NewtonLinesearchMonitorOutputSet
 
   PUBLIC Solver_NewtonLinesearchAlphaSet
 
@@ -284,12 +286,6 @@ MODULE SolverRoutines
 
   PUBLIC Solver_NewtonJacobianCalculationTypeSet
   
-  PUBLIC SOLVER_NEWTON_LINEAR_SOLVER_GET
-
-  PUBLIC SOLVER_NEWTON_CELLML_SOLVER_GET
-
-  PUBLIC Solver_NewtonCellmlSolverGet
-
   PUBLIC Solver_NewtonConvergenceTestTypeSet
 
   PUBLIC Solver_NewtonLinesearchMaxStepSet
@@ -310,7 +306,7 @@ MODULE SolverRoutines
 
   PUBLIC Solver_NewtonTrustregionToleranceSet
 
-  PUBLIC Solver_NewtonSolveTypeSet
+  PUBLIC Solver_NewtonTypeSet
 
   PUBLIC Solver_NonlinearDivergenceExit
 
@@ -324,14 +320,10 @@ MODULE SolverRoutines
   
   PUBLIC Solver_Solve
   
-  PUBLIC SOLVER_SOLVER_EQUATIONS_GET
-
   PUBLIC Solver_SolverEquationsGet
 
   PUBLIC SolverDAE_TimeSteppingMonitor
   
-  PUBLIC SOLVER_TYPE_SET
-
   PUBLIC Solver_TypeSet
 
   PUBLIC Solver_VariablesDynamicFieldUpdate
@@ -340,11 +332,9 @@ MODULE SolverRoutines
 
   PUBLIC Solver_VariablesDynamicNonlinearUpdate
 
-  PUBLIC SOLVER_VARIABLES_FIELD_UPDATE
+  PUBLIC Solver_VariablesFieldUpdate
 
-  PUBLIC SOLVERS_CREATE_FINISH,SOLVERS_CREATE_START
-
-  PUBLIC Solvers_CreateFinish,Solvers_CreateStart
+ PUBLIC Solvers_CreateFinish,Solvers_CreateStart
 
   PUBLIC Solvers_Destroy
 
@@ -353,8 +343,6 @@ MODULE SolverRoutines
   PUBLIC Solver_NewtonCellMLEvaluatorCreate,Solver_CellMLEvaluatorFinalise
 
   PUBLIC Solver_NewtonCellMLEvaluatorCreate
-
-  PUBLIC SOLVER_LINKED_SOLVER_ADD,SOLVER_LINKED_SOLVER_REMOVE
 
   PUBLIC Solver_LinkedSolverAdd,Solver_LinkedSolverRemove
   
@@ -391,7 +379,7 @@ CONTAINS
     DO cellmlIdx=1,cellMLEquations%numberOfCellMLEnvironments
       newCellMLEnvironments(cellmlIdx)%ptr=>cellMLEquations%cellMLEnvironments(cellmlIdx)%ptr
     ENDDO !cellmlIdx
-    newCellMLEnvironments(cellMLEquations%numberOfCellMLEnvironments+1)%ptr=>CELLML
+    newCellMLEnvironments(cellMLEquations%numberOfCellMLEnvironments+1)%ptr=>cellML
     CALL MOVE_ALLOC(newCellMLEnvironments,cellMLEquations%cellMLEnvironments)
     cellMLEquations%numberOfCellMLEnvironments=cellMLEquations%numberOfCellMLEnvironments+1
     cellMLIndex=cellMLEquations%numberOfCellMLEnvironments
@@ -446,17 +434,20 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("CellMLEquations_CreateStart",err,error,*999)
+    ENTERS("CellMLEquations_CreateStart",err,error,*998)
 
-    IF(ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is already associated.",err,error,*999)
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
         
     CALL CellMLEquations_Initialise(solver,err,error,*999)
     cellMLEquations=>solver%cellMLEquations
         
     EXITS("CellMLEquations_CreateStart")
     RETURN
-999 ERRORSEXITS("CellMLEquations_CreateStart",err,error)
+999 NULLIFY(cellMLEquations)
+998 ERRORSEXITS("CellMLEquations_CreateStart",err,error)
     RETURN 1
    
   END SUBROUTINE CellMLEquations_CreateStart
@@ -568,7 +559,7 @@ CONTAINS
     
     ENTERS("CellMLEquations_LinearityTypeSet",err,error,*999)
 
-    CALL CellMLEquations_AssertNotFinished(celMLEquations,err,error,*999)
+    CALL CellMLEquations_AssertNotFinished(cellMLEquations,err,error,*999)
    
     SELECT CASE(linearityType)
     CASE(CELLML_EQUATIONS_LINEAR)
@@ -641,8 +632,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("CellMLEquations_TimeSet",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML evaluator solver is not associated.",err,error,*999)
+#endif    
 
     cellMLEquations%currentTime=time
          
@@ -668,7 +661,9 @@ CONTAINS
 
     ENTERS("Solver_CellMLEvaluatorCreateFinish",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLEvaluatorSolver)) CALL FlagError("CellML evaluastor solver is not associated.",err,error,*999)
+#endif    
     
     CALL FlagError("Not implemented.",err,error,*999)
        
@@ -722,7 +717,10 @@ CONTAINS
 
     ENTERS("Solver_CellMLEvaluatorInitialise",err,error,*998)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
+#endif
+    
     IF(ASSOCIATED(solver%cellMLEvaluatorSolver)) &
       & CALL FlagError("CellML evaluator solver is already associated for this solver.",err,error,*998)
     
@@ -755,8 +753,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverCellMLEvaluator_LibraryTypeSet",err,error,*999)
-    
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLEvaluatorSolver)) CALL FlagError("CellML evaluator solver is not associated.",err,error,*999)
+#endif    
     
     SELECT CASE(solverLibraryType)
     CASE(SOLVER_CMISS_LIBRARY)
@@ -786,7 +786,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: cellmlIdx
+    INTEGER(INTG) :: cellmlIdx,maximumNumberOfIntermediates,maximumNumberOfParameters,maximumNumberOfStates, &
+      & numberOfCellMLEnvironments,onlyOneModelIndex,solverLibraryType,totalNumberOfDOFs
     INTEGER(INTG), POINTER :: modelsData(:)
     REAL(DP) :: time
     REAL(DP), POINTER :: intermediateData(:),parametersData(:),stateData(:)
@@ -803,13 +804,17 @@ CONTAINS
 
     ENTERS("SolverCellMLEvaluator_Solve",err,error,*999)
 
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(cellMLEvaluatorSolver)) CALL FlagError("CellML evaluator solver is not associated.",err,error,*999)
+#endif
+    
     NULLIFY(solver)
     CALL SolverCellMLEvaluator_SolverGet(cellMLEvaluatorSolver,solver,err,error,*999)
     NULLIFY(cellMLEquations)
     CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-    time=cellMLEquations%currentTime
-    DO cellmlIdx=1,cellMLEquations%numberOfCellMLEnvironments
+    CALL CellMLEquations_TimeGet(cellMLEquations,time,err,error,*999)
+    CALL CellMLEquations_NumberOfCellMLEnvironments(cellMLEquations,numberOfCellMLEnvironments,err,error,*999)
+    DO cellmlIdx=1,numberOfCellMLEnvironments
       NULLIFY(cellML)
       CALL CellMLEquations_CellMLGet(cellMLEquations,cellMLIdx,cellML,err,error,*999)
       NULLIFY(cellMLModelsField)
@@ -817,6 +822,7 @@ CONTAINS
       NULLIFY(modelsField)
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
       NULLIFY(modelsData)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
 
@@ -829,8 +835,8 @@ CONTAINS
       NULLIFY(cellMLStateField)
       NULLIFY(stateField)
       NULLIFY(stateData)
-      IF(ASSOCIATED(cellML%stateField)) THEN
-        CALL CellML_CellMLStateFieldGet(cellML,cellMLStateField,err,error,*999)
+      CALL CellML_CellMLStateFieldExists(cellML,cellMLStateField,err,error,*999)
+      IF(ASSOCIATED(cellMLStateField)) THEN
         CALL CellMLStateField_StateFieldGet(cellMLStateField,stateField,err,error,*999)
         CALL Field_ParameterSetDataGet(stateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,stateData,err,error,*999)
       ENDIF
@@ -839,8 +845,8 @@ CONTAINS
       NULLIFY(cellMLParametersField)
       NULLIFY(parametersField)
       NULLIFY(parametersData)
-      IF(ASSOCIATED(cellML%parametersField)) THEN
-        CALL CellML_CellMLParametersFieldGet(cellML,cellMLParametersField,err,error,*999)
+      CALL CellML_CellMLParametersFieldExists(cellML,cellMLParametersField,err,error,*999)
+      IF(ASSOCIATED(cellMLParametersField)) THEN
         CALL CellMLParametersField_ParametersFieldGet(cellMLParametersField,parametersField,err,error,*999)
         CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parametersData,err,error,*999)
       ENDIF
@@ -849,22 +855,28 @@ CONTAINS
       NULLIFY(cellMLIntermediateField)
       NULLIFY(intermediateField)
       NULLIFY(intermediateData)
-      IF(ASSOCIATED(cellML%intermediateField)) THEN
-        CALL CellML_CellMLIntermediateFieldGet(cellML,cellMLIntermediateField,err,error,*999)
+      CALL CellML_CellMLIntermediateFieldExists(cellML,cellMLIntermediateField,err,error,*999)
+      IF(ASSOCIATED(cellMLIntermediateField)) THEN
         CALL CellMLIntermediateField_IntermediateFieldGet(cellMLIntermediateField,intermediateField,err,error,*999)
         CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,intermediateData, &
           & err,error,*999)                            
       ENDIF
 
       !Solve these CellML equations
-      SELECT CASE(cellMLEvaluatorSolver%solverLibrary)
+      CALL SolverCellMLEvaluator_LibraryTypeGet(cellMLEvaluatorSolver,solverLibraryType,err,error,*999)
+      SELECT CASE(solverLibraryType)
       CASE(SOLVER_CMISS_LIBRARY)
-        CALL SolverCellMLEvaluator_Evaluate(cellMLEvaluatorSolver,time,cellML,modelsVariable% &
-          & totalNumberOfDofs,cellML%modelsField%onlyOneModelIndex,modelsData,cellML% &
-          & maximumNumberOfState,stateData,cellML%maximumNumberOfParameters, &
-          & parametersData,cellML%maximumNumberOfIntermediate,intermediateData,err,error,*999)
+        CALL CellMLModelsField_OnlyOneModelIndexGet(cellMLModelsField,onlyOneModelIndex,err,error,*999)
+        CALL CellML_MaximumNumberOfIntermediateGet(cellML,maximumNumberOfIntermediates,err,error,*999)
+        CALL CellML_MaximumNumberOfParametersGet(cellML,maximumNumberOfParameters,err,error,*999)
+        CALL CellML_MaximumNumberOfStateGet(cellML,maximumNumberOfStates,err,error,*999)
+        CALL SolverCellMLEvaluator_Evaluate(cellMLEvaluatorSolver,time,cellML,totalNumberOfDofs,onlyOneModelIndex, &
+          & modelsData,maximumNumberOfStates,stateData,maximumNumberOfParameters,parametersData, &
+          & maximumNumberOfIntermediates,intermediateData,err,error,*999)
       CASE DEFAULT
-        CALL FlagError("Solver library not implemented.",err,error,*999)
+        localError="The CellML evaluator solver library type of "//TRIM(NumberToVString(solverLibraryType,"*",err,error))// &
+          & " is invalid or not implemented."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
                    
       !Restore field data
@@ -883,7 +895,7 @@ CONTAINS
         
     EXITS("SolverCellMLEvaluator_Solve")
     RETURN
-999 ERRORSEXITS("SolverCellMLEvaluator_Solve",err,error)7
+999 ERRORSEXITS("SolverCellMLEvaluator_Solve",err,error)
     RETURN 1
    
   END SUBROUTINE SolverCellMLEvaluator_Solve
@@ -919,6 +931,8 @@ CONTAINS
     REAL(DP) :: intermediates(MAX(1,maximumNumberOfIntermediates)),parameters(MAX(1,maximumNumberOfParameters)), &
       & rates(MAX(1,maximumNumberOfStates)),states(MAX(1,maximumNumberOfStates))
     TYPE(CellMLModelType), POINTER :: cellMLModel
+    TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
+    TYPE(FieldType), POINTER :: modelsField
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverCellMLEvaluator_Evaluate",err,error,*999)
@@ -940,9 +954,9 @@ CONTAINS
             IF(modelIdx>0) THEN
               NULLIFY(cellMLModel)
               CALL CellML_CellMLModelGet(cellML,modelIdx,cellMLModel,err,error,*999)
-              numberOfStates=cellMLModel%numberOfState
-              numberOfIntermediates=cellMLModel%numberOfIntermediate
-              numberOfParameters=cellMLModel%numberOfParameters
+              CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+              CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+              CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
               
               !Copy CellML data to temporary arrays
               DO stateIdx=1,numberOfStates
@@ -974,9 +988,9 @@ CONTAINS
           !One one model is used.
           NULLIFY(cellMLModel)
           CALL CellML_CellMLModelGet(cellML,onlyOneModelIndex,cellMLModel,err,error,*999)
-          numberOfStates=cellMLModel%numberOfState
-          numberOfIntermediates=cellMLModel%numberOfIntermediate
-          numberOfParameters=cellMLModel%numberOfParameters
+          CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+          CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+          CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
           DO dofIdx=1,N
             modelIdx=modelsData(dofIdx)
             IF(modelIdx>0) THEN
@@ -1020,9 +1034,9 @@ CONTAINS
             IF(modelIdx>0) THEN
               NULLIFY(cellMLModel)
               CALL CellML_CellMLModelGet(cellML,modelIdx,cellMLModel,err,error,*999)
-              numberOfStates=cellMLModel%numberOfState
-              numberOfIntermediates=cellMLModel%numberOfIntermediate
-              numberOfParameters=cellMLModel%numberOfParameters
+              CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+              CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+              CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
               !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
               !to avoid indexing in to null pointers
               IF(numberOfStates>0) THEN
@@ -1144,9 +1158,9 @@ CONTAINS
           !One model is used.
           NULLIFY(cellMLModel)
           CALL CellML_CellMLModelGet(cellML,onlyOneModelIndex,cellMLModel,err,error,*999)
-          numberOfStates=cellMLModel%numberOfState
-          numberOfIntermediates=cellMLModel%numberOfIntermediate
-          numberOfParameters=cellMLModel%numberOfParameters                
+          CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+          CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+          CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
           !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
           !to avoid referencing null pointers
           IF(numberOfStates>0) THEN
@@ -1671,6 +1685,8 @@ CONTAINS
     REAL(DP) :: intermediates(MAX(1,maximumNumberOfIntermediates)),parameters(MAX(1,maximumNumberOfParameters)), &
       & rates(MAX(1,maximumNumberOfStates)),states(MAX(1,maximumNumberOfStates)),time
     TYPE(CellMLModelType), POINTER :: cellMLModel
+    TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
+    TYPE(FieldType), POINTER :: modelsField
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverDAEEulerForward_Integrate",err,error,*999)
@@ -1692,9 +1708,9 @@ CONTAINS
             IF(modelIdx>0) THEN
               NULLIFY(cellMLModel)
               CALL CellML_CellMLModelGet(cellML,modelIdx,cellMLModel,err,error,*999)
-              numberOfStates=cellMLModel%numberOfState
-              numberOfIntermediates=cellMLModel%numberOfIntermediate
-              numberOfParameters=cellMLModel%numberOfParameters
+              CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+              CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+              CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
 
               !Copy CellML data to temporary arrays
               DO stateIdx=1,numberOfStates
@@ -1728,9 +1744,9 @@ CONTAINS
         !One one model is used.
         NULLIFY(cellMLModel)
         CALL CellML_CellMLModelGet(cellML,onlyOneModelIndex,cellMLModel,err,error,*999)
-        numberOfStates=cellMLModel%numberOfState
-        numberOfIntermediates=cellMLModel%numberOfIntermediate
-        numberOfParameters=cellMLModel%numberOfParameters
+        CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+        CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+        CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
         time=startTime
         DO WHILE(time<=endTime)
           DO dofIdx=1,N
@@ -1777,9 +1793,9 @@ CONTAINS
             IF(modelIdx>0) THEN
               NULLIFY(cellMLModel)
               CALL CellML_CellMLModelGet(cellML,modelIdx,cellMLModel,err,error,*999)
-              numberOfStates=cellMLModel%numberOfState
-              numberOfIntermediates=cellMLModel%numberOfIntermediate
-              numberOfParameters=cellMLModel%numberOfParameters
+              CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+              CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+              CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
               !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
               !to avoid referencing null pointers
               IF(numberOfStates>0) THEN
@@ -1866,9 +1882,9 @@ CONTAINS
         !One one model is used.
         NULLIFY(cellmlModel)
         CALL CellML_CellMLModelGet(cellML,onlyOneModelIndex,cellMLModel,err,error,*999)
-        numberOfStates=cellMLModel%numberOfState
-        numberOfIntermediates=cellMLModel%numberOfIntermediate
-        numberOfParameters=cellMLModel%numberOfParameters
+        CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+        CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+        CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
         !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
         !to avoid referencing null pointers
         IF(numberOfStates>0) THEN
@@ -2015,7 +2031,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: cellmlIdx
+    INTEGER(INTG) :: cellmlIdx,maximumNumberOfIntermediates,maximumNumberOfParameters,maximumNumberOfStates, &
+      & numberOfCellMLEnvironments,onlyOneModelIndex,totalNumberOfDOFs
     INTEGER(INTG), POINTER :: modelsData(:)
     REAL(DP), POINTER :: intermediateData(:),parametersData(:),stateData(:)
     TYPE(CellMLType), POINTER :: cellML
@@ -2044,7 +2061,8 @@ CONTAINS
     CALL SolverDAE_SolverGet(daeSolver,solver,err,error,*999)
     NULLIFY(cellMLEquations)
     CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-    DO cellmlIdx=1,cellMLEquations%numberOfCellMLEnvironments
+    CALL CellMLEquations_NumberOfCellMLEnvironmentsGet(cellMLEquations,numberOfCellMLEnvironments,err,error,*999)
+    DO cellmlIdx=1,numberOfCellMLEnvironments
       NULLIFY(cellML)
       CALL CellMLEquations_CellMLGet(cellMLEquations,cellMLIdx,cellML,err,error,*999)
       NULLIFY(cellMLModelsField)
@@ -2052,6 +2070,7 @@ CONTAINS
       NULLIFY(modelsField)
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
  
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
@@ -2063,8 +2082,8 @@ CONTAINS
       NULLIFY(cellMLStateField)
       NULLIFY(stateField)
       NULLIFY(stateData)
-      IF(ASSOCIATED(cellML%stateField)) THEN
-        CALL CellML_CellMLStateFieldGet(cellML,cellMLStateField,err,error,*999)
+      CALL CellML_CellMLStateFieldExists(cellML,cellMLStateField,err,error,*999)
+      IF(ASSOCIATED(cellMLStateField)) THEN
         CALL CellMLStateField_StateFieldGet(cellMLStateField,stateField,err,error,*999)
         CALL Field_ParameterSetDataGet(stateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & stateData,err,error,*999)
@@ -2074,8 +2093,8 @@ CONTAINS
       NULLIFY(cellMLParametersField)
       NULLIFY(parametersField)
       NULLIFY(parametersData)
-      IF(ASSOCIATED(cellML%parametersField)) THEN
-        CALL CellML_CellMLParametersFieldGet(cellML,cellMLParametersField,err,error,*999)
+      CALL CellML_CellMLParametersFieldExists(cellML,cellMLParametersField,err,error,*999)
+      IF(ASSOCIATED(cellMLParametersField)) THEN
         CALL CellMLParametersField_ParametersFieldGet(cellMLParametersField,parametersField,err,error,*999)
         CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & parametersData,err,error,*999)
@@ -2085,19 +2104,23 @@ CONTAINS
       NULLIFY(cellMLIntermediateField)
       NULLIFY(intermediateField)
       NULLIFY(intermediateData)
-      IF(ASSOCIATED(cellML%intermediateField)) THEN
-        CALL CellML_CellMLIntermediateFieldGet(cellML,cellMLIntermediateField,err,error,*999)
+      CALL CellML_CellMLIntermediateFieldExists(cellML,cellMLIntermediateField,err,error,*999)
+      IF(ASSOCIATED(cellMLIntermediateField)) THEN
         CALL CellMLIntermediateField_IntermediateFieldGet(cellMLIntermediateField,intermediateField,err,error,*999)
         CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & intermediateData,err,error,*999)                            
       ENDIF
 
+      CALL CellMLModelsField_OnlyOneModelIndexGet(cellMLModelsField,onlyOneModelIndex,err,error,*999)
+      CALL CellML_MaximumNumberOfIntermediateGet(cellML,maximumNumberOfIntermediates,err,error,*999)
+      CALL CellML_MaximumNumberOfParametersGet(cellML,maximumNumberOfParameters,err,error,*999)
+      CALL CellML_MaximumNumberOfStateGet(cellML,maximumNumberOfStates,err,error,*999)
+      
       !Integrate these CellML equations
-      CALL SolverDAEEulerForward_Integrate(forwardEulerSolver,cellML,modelsVariable% &
-        & totalNumberOfDofs,daeSolver%startTime,daeSolver%endTime,daeSolver%initialStep, &
-        & cellML%modelsField%onlyOneModelIndex,modelsData,cellML% &
-        & maximumNumberOfState,stateData,cellML%maximumNumberOfParameters, &
-        & parametersData,cellML%maximumNumberOfIntermediate,intermediateData,err,error,*999)
+      CALL SolverDAEEulerForward_Integrate(forwardEulerSolver,cellML,totalNumberOfDofs, &
+        & daeSolver%startTime,daeSolver%endTime,daeSolver%initialStep, &
+        & onlyOneModelIndex,modelsData,maximumNumberOfStates,stateData,maximumNumberOfParameters, &
+        & parametersData,maximumNumberOfIntermediates,intermediateData,err,error,*999)
       
       !Restore field data
       CALL FieldVariable_ParameterSetDataRestore(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
@@ -2295,7 +2318,7 @@ CONTAINS
       CALL SolverDAEEuler_ForwardEulerSolverGet(eulerSolver,forwardEulerSolver,err,error,*999)
       SELECT CASE(solverLibraryType)
       CASE(SOLVER_CMISS_LIBRARY)
-        forwardEulerSolver%libraryType=SOLVER_CMISS_LIBRARY
+        forwardEulerSolver%solverLibrary=SOLVER_CMISS_LIBRARY
       CASE(SOLVER_PETSC_LIBRARY)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
@@ -2823,16 +2846,18 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PetscTSType) :: ts !<The PETSc TS type
-    REAL(DP) :: finalSolvedTime,timeStep
-    TYPE(PetscVecType) :: petscCurrentStates !<The initial and final states for the DAE
-    TYPE(CellMLPETScContextType), POINTER :: ctx !<The passed through context
     INTEGER(INTG) :: dofIdx,dofOrderType,modelIdx,numberOfStates,stateEndDOF,stateIdx,stateStartDOF,arrayIdx
-    REAL(DP), ALLOCATABLE  :: statesTemp(:),ratesTemp(:)
     INTEGER(INTG), ALLOCATABLE :: arrayIndices(:)
+    REAL(DP) :: finalSolvedTime,timeStep
+    REAL(DP), ALLOCATABLE  :: statesTemp(:),ratesTemp(:)
     TYPE(CellMLModelType), POINTER :: cellMLModel
+    TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
+    TYPE(CellMLPETScContextType), POINTER :: ctx !<The passed through context
+    TYPE(FieldType), POINTER :: modelsField
     TYPE(VARYING_STRING) :: localError
+    TYPE(PetscTSType) :: ts !<The PETSc ts type
     TYPE(PetscVecType) :: petscRates
+    TYPE(PetscVecType) :: petscCurrentStates !<The initial and final states for the DAE
     EXTERNAL :: Problem_SolverDAECellMLRHSPetsc 
     
     ENTERS("SolverDAEBDF_Integrate",err,error,*999)
@@ -2840,7 +2865,6 @@ CONTAINS
     NULLIFY(ctx)
     timeStep=endTime-startTime
     IF(.NOT.ASSOCIATED(bdfSolver)) CALL FlagError("BDF solver is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellLML environment is not associated.",err,error,*999)
     
     NULLIFY(cellMLModelsField)
     CALL CellML_CellMLModelsField(cellML,cellMLModelsField,err,error,*999)
@@ -2858,7 +2882,7 @@ CONTAINS
           NULLIFY(cellMLModel)
           CALL CellML_CellMLModelGet(cellML,onlyOneModelIndex,cellMLModel,err,error,*999)
           !determine no. of states in model and allocate necessary arrays
-          numberOfStates = cellMLModel%numberOfState
+          CALL CellMLModel_NumberOfStatesGet(cellMLModel,numberOfStates,err,error,*999)
           ALLOCATE(statesTemp(0:numberOfStates-1),STAT=err)
           ALLOCATE(ratesTemp(0:numberOfStates-1),STAT=err)
           ALLOCATE(arrayIndices(0:numberOfStates-1),STAT=err)
@@ -2877,32 +2901,32 @@ CONTAINS
               ENDDO !stateIdx
               
               !create PETSC states vector to initialize solver
-              CALL Petsc_VecCreateSeq(PETSC_COMM_SELF,numberOfStates,petscCurrentStates,err,error,*999)
-              !CALL Petsc_VecSetSizes(petscCurrentStates,PETSC_DECIDE,(numberOfStates),err,error,*999)
-              !CALL Petsc_VecSetFromOptions(petscCurrentStates,err,error,*999)
+              CALL PETSc_VecCreateSeq(PETSC_COMM_SELF,numberOfStates,petscCurrentStates,err,error,*999)
+              !CALL PETSc_VecSetSizes(petscCurrentStates,PETSC_DECIDE,(numberOfStates),err,error,*999)
+              !CALL PETSc_VecSetFromOptions(petscCurrentStates,err,error,*999)
                       
               !create PETSC rates vector to return values from evaluating rhs routine
-              CALL Petsc_VecCreateSeq(PETSC_COMM_SELF,numberOfStates,petscRates,err,error,*999)
-              !CALL Petsc_VecSetSizes(petscRates,PETSC_DECIDE,(numberOfStates),err,error,*999)
-              !CALL Petsc_VecSetFromOptions(petscRates,err,error,*999)
+              CALL PETSc_VecCreateSeq(PETSC_COMM_SELF,numberOfStates,petscRates,err,error,*999)
+              !CALL PETSc_VecSetSizes(petscRates,PETSC_DECIDE,(numberOfStates),err,error,*999)
+              !CALL PETSc_VecSetFromOptions(petscRates,err,error,*999)
               
               !Set up PETSC TS context for sundials BDF solver
-              CALL Petsc_TSCreate(PETSC_COMM_SELF,ts,err,error,*999)
-              CALL Petsc_TSSetProblemType(ts,PETSC_TS_NONLINEAR,err,error,*999)
-              CALL Petsc_TSSetType(ts,PETSC_TS_SUNDIALS,err,error,*999)
-              CALL Petsc_TSSundialsSetType(ts,PETSC_SUNDIALS_BDF,err,error,*999)
-              CALL Petsc_TSSundialsSetTolerance(ts,0.0000001_DP,0.0000001_DP,err,error,*999)
+              CALL PETSc_TSCreate(PETSC_COMM_SELF,ts,err,error,*999)
+              CALL PETSc_TSSetProblemType(ts,PETSC_TS_NONLINEAR,err,error,*999)
+              CALL PETSc_TSSetType(ts,PETSC_TS_SUNDIALS,err,error,*999)
+              CALL PETSc_TSSundialsSetType(ts,PETSC_SUNDIALS_BDF,err,error,*999)
+              CALL PETSc_TSSundialsSetTolerance(ts,0.0000001_DP,0.0000001_DP,err,error,*999)
               !set the initial solution to the current state
-              CALL Petsc_VecSetValues(petscCurrentStates,(numberOfStates),arrayIndices,statesTemp,PETSC_INSERT_VALUES, &
+              CALL PETSc_VecSetValues(petscCurrentStates,(numberOfStates),arrayIndices,statesTemp,PETSC_INSERT_VALUES, &
                 & err,error,*999)
-              CALL Petsc_VecAssemblyBegin(petscCurrentStates,err,error,*999)
-              CALL Petsc_VecAssemblyEnd(petscCurrentStates,err,error,*999)
-              CALL Petsc_TSSetSolution(TS,petscCurrentStates,err,error,*999)
+              CALL PETSc_VecAssemblyBegin(petscCurrentStates,err,error,*999)
+              CALL PETSc_VecAssemblyEnd(petscCurrentStates,err,error,*999)
+              CALL PETSc_TSSetSolution(ts,petscCurrentStates,err,error,*999)
               
               !set up the time data
-              CALL Petsc_TSSetInitialTimeStep(ts,startTime,timeIncrement,err,error,*999)
-              CALL Petsc_TSSetDuration(ts,5000,endTime,err,error,*999)
-              CALL Petsc_TSSetExactFinalTime(ts,.TRUE.,err,error,*999)
+              CALL PETSc_TSSetInitialTimeStep(ts,startTime,timeIncrement,err,error,*999)
+              CALL PETSc_TSSetDuration(ts,5000,endTime,err,error,*999)
+              CALL PETSc_TSSetExactFinalTime(ts,.TRUE.,err,error,*999)
               
               IF(diagnostics1) THEN
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DAE start time = ",startTime,err,error,*999)
@@ -2911,25 +2935,25 @@ CONTAINS
                       
               !set rhs function and pass through the cellml model context 
               CALL Solver_DAECellMLPETScContextSet(ctx,bdfSolver%DAESolver%solver,cellML,dofIdx,err,error,*999)
-              CALL Petsc_TSSetRHSFunction(TS,petscRates,Problem_SolverDAECellMLRHSPetsc,ctx,err,error,*999)
+              CALL PETSc_TSSetRHSFunction(ts,petscRates,Problem_SolverDAECellMLRHSPetsc,ctx,err,error,*999)
                       
-              CALL Petsc_TSSolve(TS,petscCurrentStates,finalSolvedTime,err,error,*999)
+              CALL PETSc_TSSolve(ts,petscCurrentStates,finalSolvedTime,err,error,*999)
               
               IF(diagnostics1) &
                 & CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Final solved time = ",finalSolvedTime,err,error,*999)
               
               !update the states to new integrated values
-              CALL Petsc_VecAssemblyBegin(petscCurrentStates,err,error,*999)
-              CALL Petsc_VecAssemblyEnd(petscCurrentStates,err,error,*999)
-              CALL Petsc_VecGetValues(petscCurrentStates,numberOfStates,arrayIndices,statesTemp,err,error,*999)
+              CALL PETSc_VecAssemblyBegin(petscCurrentStates,err,error,*999)
+              CALL PETSc_VecAssemblyEnd(petscCurrentStates,err,error,*999)
+              CALL PETSc_VecGetValues(petscCurrentStates,numberOfStates,arrayIndices,statesTemp,err,error,*999)
               
               DO stateIdx=1,numberOfStates                      
                 stateData(stateStartDOF+stateIdx-1)=statesTemp(stateIdx-1)
               ENDDO
-              CALL Petsc_TSFinalise(TS,err,error,*999) 
+              CALL PETSc_TSFinalise(ts,err,error,*999) 
             ENDIF !modelIdx
-            CALL Petsc_VecDestroy(petscCurrentStates,err,error,*999)
-            CALL Petsc_VecDestroy(petscRates,err,error,*999)
+            CALL PETSc_VecDestroy(petscCurrentStates,err,error,*999)
+            CALL PETSc_VecDestroy(petscRates,err,error,*999)
           ENDDO !dofIdx
         ENDIF
       ENDIF !dof continguous
@@ -2958,7 +2982,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: cellmlIdx
+    INTEGER(INTG) :: cellmlIdx,maximumNumberOfIntermediate,maximumNumberOfParameters,maximumNumberOfState, &
+      & numberOfCellMLEnvironments,onlyOneModelIndex,totalNumberOfDOFs
     INTEGER(INTG), POINTER :: modelsData(:)
     REAL(DP), POINTER :: intermediateData(:),parametersData(:),stateData(:)
     TYPE(CellMLType), POINTER :: cellML
@@ -2982,7 +3007,8 @@ CONTAINS
     CALL SolverDAE_SolverGet(daeSolver,solver,err,error,*999)
     NULLIFY(cellMLEquations)
     CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-    DO cellmlIdx=1,cellMLEquations%numberOfCellMLEnvironments
+    CALL CellMLEquations_NumberOfCellMLEnvironmentsGet(cellMLEquations,numberOfCellMLEnvironments,err,error,*999)
+    DO cellmlIdx=1,numberOfCellMLEnvironments
       NULLIFY(cellML)
       CALL CellMLEquations_CellMLGet(cellMLEquations,cellMLIdx,cellML,err,error,*999)
       NULLIFY(cellMLModelsField)
@@ -2990,6 +3016,7 @@ CONTAINS
       NULLIFY(modelsField)
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
  
 !!TODO: Maybe move this getting of fields earlier up the DAE solver chain? For now keep here.
@@ -3001,8 +3028,8 @@ CONTAINS
       NULLIFY(cellMLStateField)
       NULLIFY(stateField)
       NULLIFY(stateData)
-      IF(ASSOCIATED(cellML%stateField)) THEN
-        CALL CellML_CellMLStateFieldGet(cellML,cellMLStateField,err,error,*999)
+      CALL CellML_CellMLStateFieldExists(cellML,cellMLStateField,err,error,*999)
+      IF(ASSOCIATED(cellMLStateField)) THEN
         CALL CellMLStateField_StateFieldGet(cellMLStateField,stateField,err,error,*999)
         CALL Field_ParameterSetDataGet(stateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,stateData,err,error,*999)
       ENDIF
@@ -3011,8 +3038,8 @@ CONTAINS
       NULLIFY(cellMLParametersField)
       NULLIFY(parametersField)
       NULLIFY(parametersData)
-      IF(ASSOCIATED(cellML%parametersField)) THEN
-        CALL CellML_CellMLParametersFieldGet(cellML,cellMLParametersField,err,error,*999)
+      CALL CellML_CellMLParametersFieldExists(cellML,cellMLParametersField,err,error,*999)
+      IF(ASSOCIATED(cellMLParametersField)) THEN
         CALL CellMLParametersField_ParametersFieldGet(cellMLParametersField,parametersField,err,error,*999)
         CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parametersData,err,error,*999)
       ENDIF
@@ -3021,19 +3048,22 @@ CONTAINS
       NULLIFY(cellMLIntermediateField)
       NULLIFY(intermediateField)
       NULLIFY(intermediateData)
-      IF(ASSOCIATED(cellML%intermediateField)) THEN
-        CALL CellML_CellMLIntermediateFieldGet(cellML,cellMLIntermediateField,err,error,*999)
+      CALL CellML_CellMLIntermediateFieldExists(cellML,cellMLIntermediateField,err,error,*999)
+      IF(ASSOCIATED(cellMLIntermediateField)) THEN
         CALL CellMLIntermediateField_IntermediateFieldGet(cellMLIntermediateField,intermediateField,err,error,*999)
         CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,intermediateData, &
           & err,error,*999)
       ENDIF
                     
+      CALL CellMLModelsField_OnlyOneModelIndexGet(cellMLModelsField,onlyOneModelIndex,err,error,*999)
+      CALL CellML_MaximumNumberOfIntermediateGet(cellML,maximumNumberOfIntermediate,err,error,*999)
+      CALL CellML_MaximumNumberOfParametersGet(cellML,maximumNumberOfParameters,err,error,*999)
+      CALL CellML_MaximumNumberOfStateGet(cellML,maximumNumberOfState,err,error,*999)
+      
       !Integrate these CellML equations
-      CALL SolverDAEBDF_Integrate(bdfSolver,cellML,modelsVariable% &
-        & totalNumberOfDofs,daeSolver%startTime,daeSolver%endTime,daeSolver%initialStep, &
-        & cellML%modelsField%onlyOneModelIndex,modelsData,cellML% &
-        & maximumNumberOfState,stateData,cellML%maximumNumberOfParameters, &
-        & parametersData,cellML%maximumNumberOfIntermediate,intermediateData,err,error,*999)
+      CALL SolverDAEBDF_Integrate(bdfSolver,cellML,totalNumberOfDofs,daeSolver%startTime,daeSolver%endTime,daeSolver%initialStep, &
+        & onlyOneModelIndex,modelsData,maximumNumberOfState,stateData,maximumNumberOfParameters,parametersData, &
+        & maximumNumberOfIntermediate,intermediateData,err,error,*999)
       
       !Restore field data
       CALL FieldVariable_ParameterSetDataRestore(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
@@ -3222,11 +3252,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: cellmlIdx
+    INTEGER(INTG) :: cellmlIdx,maximumNumberOfIntermediates,maximumNumberOfParameters,maximumNumberOfStates, &
+      & numberOfCellMLEnvironments,onlyOneModelIndex,totalNumberOfDOFs
     INTEGER(INTG), POINTER :: modelsData(:)
     REAL(DP), POINTER :: intermediateData(:),parametersData(:),stateData(:)
     TYPE(CellMLType), POINTER :: cellML
     TYPE(CellMLEquationsType), POINTER :: cellMLEquations
+    TYPE(CellMLIntermediateFieldType), POINTER :: cellMLIntermediateField
+    TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
+    TYPE(CellMLParametersFieldType), POINTER :: cellMLParametersField
+    TYPE(CellMLStateFieldType), POINTER :: cellMLStateField
     TYPE(DAESolverType), POINTER :: daeSolver
     TYPE(FieldVariableType), POINTER :: modelsVariable
     TYPE(FieldType), POINTER :: modelsField,stateField,parametersField,intermediateField
@@ -3244,7 +3279,8 @@ CONTAINS
     CALL SolverDAE_SolverGet(daeSolver,solver,err,error,*999)
     NULLIFY(cellMLEquations)
     CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-    DO cellmlIdx=1,cellMLEquations%numberOfCellMLEnvironments
+    CALL CellMLEquations_NumberOfCellMLEnvironments(cellMLEquations,numberOfCellMLEnvironments,err,error,*999)
+    DO cellmlIdx=1,numberOfCellMLEnvironments
       NULLIFY(cellML)
       CALL CellML_CellMLEquationsGet(cellML,cellMLEquations,err,error,*999)
       NULLIFY(cellMLModelsField)
@@ -3253,6 +3289,7 @@ CONTAINS
       CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
       NULLIFY(modelsVariable)
       CALL Field_VariableGet(modelsField,FIELD_U_VARIABLE_TYPE,modelsVariable,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(modelsVariable,totalNumberOfDOFs,err,error,*999)
       CALL FieldVariable_ParameterSetDataGet(modelsVariable,FIELD_VALUES_SET_TYPE,modelsData,err,error,*999)
        
       !Make sure CellML fields have been updated to the current value of any mapped fields
@@ -3262,8 +3299,8 @@ CONTAINS
       NULLIFY(cellMLStateField)
       NULLIFY(stateField)
       NULLIFY(stateData)
-      IF(ASSOCIATED(cellML%stateField)) THEN
-        CALL CellML_CellMLStateFieldGet(cellML,cellMLStateField,err,error,*999)
+      CALL CellML_CellMLStateFieldExists(cellML,cellMLStateField,err,error,*999)
+      IF(ASSOCIATED(cellMLStateField)) THEN
         CALL CellMLStateField_StateFieldGet(cellMLStateField,stateField,err,error,*999)
         CALL Field_ParameterSetDataGet(stateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,stateData,err,error,*999)
       ENDIF
@@ -3272,8 +3309,8 @@ CONTAINS
       NULLIFY(cellMLParametersField)
       NULLIFY(parametersField)
       NULLIFY(parametersData)
-      IF(ASSOCIATED(cellML%parametersField)) THEN
-        CALL CellML_CellMLParametersFieldGet(cellML,cellMLParametersField,err,error,*999)
+      CALL CellML_CellMLParametersFieldExists(cellML,cellMLParametersField,err,error,*999)
+      IF(ASSOCIATED(cellMLParametersField)) THEN
         CALL CellMLParametersField_ParametersField(cellMLParametersField,parametersField,err,error,*999)
         CALL Field_ParameterSetDataGet(parametersField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & parametersData,err,error,*999)
@@ -3281,18 +3318,24 @@ CONTAINS
                     
       !Get the intermediate information if this environment has any.
       NULLIFY(cellMLIntermediateField)
-      CALL CellML_CellMLIntermediateFieldGet(cellML,cellMLIntermediateField,err,error,*999)
-      CALL CellMLIntermediateField_IntermediateFieldGet(cellMLIntermediateField,intermediateField,err,error,*999)
-      CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-        & intermediateData,err,error,*999)                            
+      NULLIFY(intermediateField)
+      NULLIFY(intermediateData)
+      CALL CellML_CellMLIntermediateFieldExists(cellML,cellMLIntermediateField,err,error,*999)
+      IF(ASSOCIATED(cellMLIntermediateField)) THEN
+        CALL CellMLIntermediateField_IntermediateFieldGet(cellMLIntermediateField,intermediateField,err,error,*999)
+        CALL Field_ParameterSetDataGet(intermediateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+          & intermediateData,err,error,*999)                            
       ENDIF
 
+      CALL CellMLModelsField_OnlyOneModelIndexGet(cellMLModelsField,onlyOneModelIndex,err,error,*999)
+      CALL CellML_MaximumNumberOfIntermediateGet(cellML,maximumNumberOfIntermediates,err,error,*999)
+      CALL CellML_MaximumNumberOfParametersGet(cellML,maximumNumberOfParameters,err,error,*999)
+      CALL CellML_MaximumNumberOfStateGet(cellML,maximumNumberOfStates,err,error,*999)
+        
       !Call the external solver to integrate these CellML equations
-      CALL SolverDAEExternal_Integrate(modelsVariable%totalNumberOfDofs,daeSolver%startTime, &
-        & daeSolver%endTime,daeSolver%initialStep,cellML%modelsField% &
-        & onlyOneModelIndex,modelsData,cellML%maximumNumberOfState,stateData, &
-        & cellML%maximumNumberOfParameters,parametersData,cellML% &
-        & maximumNumberOfIntermediate,intermediateData,ERR)
+      CALL SolverDAEExternal_Integrate(totalNumberOfDofs,daeSolver%startTime,daeSolver%endTime,daeSolver%initialStep, &
+        & onlyOneModelIndex,modelsData,maximumNumberOfStates,stateData,maximumNumberOfParameters,parametersData, &
+        & maximumNumberOfIntermediates,intermediateData,err)
       IF(err/=0) CALL FlagError("Error from external solver integrate.",err,error,*999)
       
       !Restore field data
@@ -3351,11 +3394,9 @@ CONTAINS
     
     ENTERS("Solver_DAECellMLRHSEvaluate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(cellMLModel)) CALL FlagError("Model is not associated.",err,error,*999)
-    
-    numberOfStates=cellMLModel%numberOfState
-    numberOfIntermediates=cellMLModel%numberOfIntermediate
-    numberOfParameters=cellMLModel%numberOfParameters
+    CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
+    CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
+    CALL CellMLModel_NumberOfStatesGet(cellMLModel,numberOfStates,err,error,*999)
     IF(numberOfStates>0) THEN
       IF(.NOT.ASSOCIATED(stateData)) CALL FlagError("State data is not associated.",err,error,*999)
       IF(.NOT.ASSOCIATED(rateData)) CALL FlagError("Rate data is not associated.",err,error,*999)
@@ -3512,7 +3553,7 @@ CONTAINS
             CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rateData(rateStartDOF:rateEndDOF), &
               & intermediates,parameters(parameterStartDOF:parameterEndDOF))
 
-#enidf            
+#endif            
             
             !Copy intermediate data from temporary array
             DO intermediateIdx=1,numberOfIntermediates
@@ -3678,7 +3719,7 @@ CONTAINS
           IF(rateDataOffset>1.OR.numberOfStates==0) THEN
             !Rates data is not contiguous or there are no rates
 
-            ASSERT_WITH_CELLMl()
+            ASSERT_WITH_CELLML()
 
 #ifdef WITH_CELLML
             
@@ -3963,19 +4004,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: cellmlIdx
+    INTEGER(INTG) :: cellmlIdx,numberOfCellMLEnvironments,solverOutputType
     TYPE(CellMLType), POINTER :: cellML
     TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(CellMLStateFieldType), POINTER :: cellMLStateField
+    TYPE(FieldType), POINTER :: stateField
     TYPE(SolverType), POINTER :: solver
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverDAE_Solve",err,error,*999)
 
-    IF(ASSOCIATED(daeSolver)) CALL FlagError("Differential-algebraic equation solver is not associated.",err,error,*999)
-
     NULLIFY(solver)
-    CALL SolverDAE_SolverGet(daeSolver,solver,err,error,*9990
+    CALL SolverDAE_SolverGet(daeSolver,solver,err,error,*999)
+    CALL Solver_OutputTypeGet(solver,solverOutputType,err,error,*999)
+    
     SELECT CASE(daeSolver%daeSolveType)
     CASE(SOLVER_DAE_EULER)
       CALL SolverDAEEuler_Solve(daeSolver%eulerSolver,err,error,*999)
@@ -3996,19 +4038,18 @@ CONTAINS
         & TRIM(NumberToVString(daeSolver%daeSolveType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    
-    IF(solver%outputType>SOLVER_SOLVER_OUTPUT) THEN
+
+    IF(solverOutputType>SOLVER_SOLVER_OUTPUT) THEN
       
-#ifdef TAUPROF
-      CALL TAU_STATIC_PHASE_START("Solution Output Phase")
-#endif
       NULLIFY(cellMLEquations)
       CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+      CALL CellMLEquations_NumberOfCellMLEnvironmentsGet(cellMLEquations,numberOfCellMLEnvironments,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver State vectors:",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of CellML environments = ",cellMLEquations%numberOfCellMLEnvironments, &
-        & err,error,*999)
-      DO cellmlIdx=1,cellMLEquations%numberOfCellMLEnvironments
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of CellML environments = ",numberOfCellMLEnvironments,err,error,*999)
+
+!!TODO WHY IS THIS LOOPING OVER THE ENVIRONMENTS? THE OUTPUT BELOW DOES NOT CHANGE WITH cellmlIdx      
+      DO cellmlIdx=1,numberOfCellMLEnvironments
         NULLIFY(cellML)
         CALL CellML_CellMLEquationsGet(cellMLEquations,cellML,err,error,*999)
         NULLIFY(cellMLStateField)
@@ -4019,10 +4060,6 @@ CONTAINS
         CALL Field_ParameterSetOutput(GENERAL_OUTPUT_TYPE,stateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
       ENDDO !cellmlIdx
               
-#ifdef TAUPROF
-           CALL TAU_STATIC_PHASE_STOP("Solution Output Phase")
-#endif
-           
     ENDIF
          
     EXITS("SolverDAE_Solve")
@@ -4217,35 +4254,50 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dependentVariableType,dynamicVariableType,equationsSetIdx,interfaceConditionIdx, &
-      & lagrangeVariableType,linearLibraryType,linearMatrixIdx,nonlinearLibraryTYpe,rhsVariableType
+    INTEGER(INTG) :: dampingMatrixNumber,dependentVariableType,dynamicVariableType,equationsSetIdx,interfaceConditionIdx, &
+      & lagrangeVariableType,linearLibraryType,linearMatrixIdx,massMatrixNumber,nonlinearLibraryType,numberOfEquationsSets, &
+      & numberOfInterfaceConditions,numberOfLinearMatrices,numberOfResiduals,numberOfResidualVariables,numberOfSources, &
+      & residualIdx,residualVariableIdx,rhsVariableType,solverVariableIdx,sourceIdx,sparsityType,symmetryType,variablePositionIdx
+    LOGICAL :: lumped
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector
+    TYPE(DomainMappingType), POINTER :: colsDomainMapping,rowsDomainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,linearVariable,residualVariable, &
-      & rhsVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,lhsVariable,linearVariable, &
+      & residualVariable,rhsVariable,solverVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(SolverType), POINTER :: linearSolver,nonlinearSolver,solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariablesType), POINTER :: solverVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverDynamic_CreateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
     NULLIFY(solver)
     CALL SolverDynamic_SolverGet(dynamicSolver,solver,err,error,*999)
     SELECT CASE(dynamicSolver%solverLibrary)
@@ -4255,10 +4307,15 @@ CONTAINS
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      NULLIFY(solverMatrixToEquationsMap)
+      CALL SolverMapping_SolverMatricesToEquationsMapGet(solverMapping,1,solverMatrixToEquationsMap,err,error,*999)
+      NULLIFY(solverVariables)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariables,err,error,*999)
       !Initialise for explicit solve
       dynamicSolver%explicit=ABS(dynamicSolver%theta(dynamicSolver%degree))<ZERO_TOLERANCE
       !Loop over the equations set in the solver equations
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(dependentVariable)
         dependentVariableType=0
         NULLIFY(equationsSet)
@@ -4271,14 +4328,36 @@ CONTAINS
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         NULLIFY(vectorMapping)
         CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-        dynamicMapping=>vectorMapping%dynamicMapping
+        NULLIFY(lhsMapping)
+        CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+        NULLIFY(lhsVariable)
+        CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+        NULLIFY(rowsDomainMapping)
+        CALL FieldVariable_DomainMappingGet(lhsVariable,rowsDomainMapping,err,error,*999)
+        NULLIFY(vectorMatrices)
+        CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+        !Dynamic variables and matrices
+        CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+        NULLIFY(dynamicVariable)
+        dynamicVariableType=0
         IF(ASSOCIATED(dynamicMapping)) THEN
           NULLIFY(dynamicVariable)
           CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
-          dependentVariable=>dynamicVariable
-          dependentVariableType=dynamicVariable%variableType
+          !Sanity check that the dynamic variable is in the list of solver variables
+          CALL SolverMappingVariables_VariableInListCheck(solverVariables,dynamicVariable,variablePositionIdx,err,error,*999)
+          IF(variablePositionIdx==0) THEN
+            localError="The dynamic variable for equations set number "// &
+              & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))// &
+              & " is not present in the list of solver matrix variables."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          CALL FieldVariable_VariableTypeGet(dynamicVariable,dynamicVariableType,err,error,*999)
           !Set up the parameter sets to hold the required solver parameters
-          !1st degree or higher so set up displacement parameter sets        
+          !1st degree or higher so set up displacement parameter sets
+          CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)          
           IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN                   
             !2nd degree or higher so set up velocity parameter sets
             CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
@@ -4291,112 +4370,200 @@ CONTAINS
               CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
                 & err,error,*999)
             ENDIF
-          ENDIF
-                            
+          ENDIF                            
           !Create the dynamic matrices temporary vector for matrix-vector products
-          NULLIFY(vectorMatrices)
-          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(dynamicMatrices)
           CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-          IF(.NOT.ASSOCIATED(dynamicMatrices%tempVector)) THEN
-            CALL DistributedVector_CreateStart(dynamicVariable%domainMapping,dynamicMatrices%tempVector,err,error,*999)
+          NULLIFY(tempDistributedVector)
+          CALL EquationsMatricesDynamic_TempDistributedVectorExists(dynamicMatrices,tempDistributedVector,err,error,*999)
+          IF(.NOT.ASSOCIATED(tempDistributedVector)) THEN
+            CALL DistributedVector_CreateStart(rowsDomainMapping,dynamicMatrices%tempVector,err,error,*999)
             CALL DistributedVector_DataTypeSet(dynamicMatrices%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
             CALL DistributedVector_CreateFinish(dynamicMatrices%tempVector,err,error,*999)
           ENDIF
           !Check to see if we have an explicit solve
           IF(dynamicSolver%explicit) THEN
-            IF(dynamicMapping%dampingMatrixNumber/=0) THEN
+            CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
+            IF(dampingMatrixNumber/=0) THEN
               NULLIFY(dampingMatrix)
-              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%dampingMatrixNumber, &
-                & dampingMatrix,err,error,*999)
-              dynamicSolver%explicit=dynamicSolver%explicit.AND.dampingMatrix%lumped
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+              CALL EquationsMatrix_LumpedFlagGet(dampingMatrix,lumped,err,error,*999)
+              dynamicSolver%explicit=dynamicSolver%explicit.AND.lumped
             ENDIF
-            IF(dynamicMapping%massMatrixNumber/=0) THEN
-             NULLIFY(massMatrix)
-              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber, &
-                & dampingMatrix,err,error,*999)
-              dynamicSolver%explicit=dynamicSolver%explicit.AND.massMatrix%lumped
+            CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
+            IF(massMatrixNumber/=0) THEN
+              NULLIFY(massMatrix)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+              CALL EquationsMatrix_LumpedFlagGet(massMatrix,lumped,err,error,*999)
+              dynamicSolver%explicit=dynamicSolver%explicit.AND.lumped
             ENDIF
           ENDIF
         ENDIF
           
-        IF(dependentVariableType==0) THEN
-          !We now allow for static equation sets for dynamic solvers to be able to couple static eqs - dynamic eqs
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            IF(dynamicSolver%linearity/=SOLVER_DYNAMIC_NONLINEAR) THEN
-              localError="The specified dynamic solver linearity type of "// &
-                & TRIM(NumberToVString(dynamicSolver%linearity,"*",err,error))// &
-                & " is invalid for a nonlinear equations mapping."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-            !Default to first variable type for now
-            NULLIFY(residualVariable)
-            CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,FIELD_U_VARIABLE_TYPE,residualVariable, &
-              & err,error,*999)
-            dependentVariable=>residualVariable
-            dependentVariableType=residualVariable%variableType
-          ENDIF
-        ENDIF
-                        
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
-                        
-        rhsMapping=>vectorMapping%rhsMapping
-        IF(ASSOCIATED(rhsMapping)) THEN
-          NULLIFY(rhsVariable)
-          CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
-          rhsVariableType=rhsMapping%rhsVariableType
-          CALL FieldVariable_ParameterSetEnsureCreated(rhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
-          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-            CALL FieldVariable_ParameterSetEnsureCreated(rhsVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE,err,error,*999)
-            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-              CALL FieldVariable_ParameterSetEnsureCreated(rhsVariable,FIELD_PREVIOUS3_VALUES_SET_TYPE,err,error,*999)
-            ENDIF
-          ENDIF
-        ENDIF
-                        
-        nonlinearMapping=>vectorMapping%nonlinearMapping
+        !We now allow for static equation sets for dynamic solvers to be able to couple static eqs - dynamic eqs
+        NULLIFY(nonlinearMapping)
+        CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
         IF(ASSOCIATED(nonlinearMapping)) THEN
-          NULLIFY(residualVariable)
-          CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,FIELD_U_VARIABLE_TYPE,residualVariable, &
-            & err,error,*999)
-          CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_RESIDUAL_SET_TYPE,err,error,*999)
-          CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,err,error,*999)
-          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-            CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,err,error,*999)
-            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-              CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,err,error,*999)
+          IF(dynamicSolver%linearity/=SOLVER_DYNAMIC_NONLINEAR) THEN
+            localError="The specified dynamic solver linearity type of "// &
+              & TRIM(NumberToVString(dynamicSolver%linearity,"*",err,error))// &
+              & " is invalid for a nonlinear equations mapping."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          NULLIFY(nonlinearMatrices)
+          CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+          !Loop over the residuals
+          CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+          DO residualIdx=1,numberOfResiduals
+            NULLIFY(residualMapping)
+            CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+            CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
+            DO residualVariableIdx=1,numberOfResidualVariables
+              NULLIFY(residualVariable)
+              CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
+              !See if the residual variable is in the list of solver variables
+              CALL SolverMappingVariables_VariableInListCheck(solverVariables,residualVariable,variablePositionIdx,err,error,*999)
+              IF(variablePositionIdx/=0) THEN
+                CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+                CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
+                  & err,error,*999)
+                CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+              ENDIF
+            ENDDO !residualVariableIdx
+            NULLIFY(residualVector)
+            CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+            CALL EquationsMatricesResidual_DistributedVectorEnsureCreated(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+              & err,error,*999)
+            CALL EquationsMatricesResidual_DistributedVectorEnsureCreated(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+              CALL EquationsMatricesResidual_DistributedVectorEnsureCreated(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                & err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                CALL EquationsMatricesResidual_DistributedVectorEnsureCreated(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                  & err,error,*999)
+              ENDIF
             ENDIF
+          ENDDO !residualIdx
+          NULLIFY(tempDistributedVector)
+          CALL EquationsMatricesNonlinear_TempDistributedVectorExists(nonlinearMatrices,tempDistributedVector,err,error,*999)
+          IF(.NOT.ASSOCIATED(tempDistributedVector)) THEN
+            CALL DistributedVector_CreateStart(rowsDomainMapping,nonlinearMatrices%tempVector,err,error,*999)
+            CALL DistributedVector_DataTypeSet(nonlinearMatrices%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+            CALL DistributedVector_CreateFinish(nonlinearMatrices%tempVector,err,error,*999)
           ENDIF
         ENDIF
-                        
+      
         !Check if there are any linear mappings
-        linearMapping=>vectorMapping%linearMapping
+        NULLIFY(linearMapping)
+        CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
         IF(ASSOCIATED(linearMapping)) THEN
-          !If there are any linear matrices create temporary vector for matrix-vector products
-          NULLIFY(vectorMatrices)
-          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-          NULLIFY(dynamicMatrices)
+          NULLIFY(linearMatrices)
           CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-          DO linearMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+          CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+          DO linearMatrixIdx=1,numberOfLinearMatrices
             NULLIFY(linearMatrix)
             CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,linearMatrixIdx,linearMatrix,err,error,*999)
-            IF(.NOT.ASSOCIATED(linearMatrix%tempVector)) THEN
-              NULLIFY(linearVariable)
-              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
-              CALL DistributedVector_CreateStart(linearVariable%domainMapping,linearMatrix%tempVector,err,error,*999)
+            NULLIFY(linearVariable)
+            CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
+            !See if the linear varible is in the list of solver variables
+            CALL SolverMappingVariables_VariableInListCheck(solverVariables,linearVariable,variablePositionIdx,err,error,*999)
+            IF(variablePositionIdx/=0) THEN
+              CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
+                & err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN                   
+                !2nd degree or higher so set up velocity parameter sets
+                CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+                CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,err,error,*999)
+                CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                  !3rd degree or higher so set up acceleration parameter sets
+                  CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+                  CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,err,error,*999)
+                  CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+                    & err,error,*999)
+                ENDIF
+              ENDIF
+            ENDIF
+            !If there are any linear matrices create temporary vector for matrix-vector products
+            NULLIFY(tempDistributedVector)
+            CALL EquationsMatrix_TempDistributedVectorExists(linearMatrix,tempDistributedVector,err,error,*999)
+            IF(.NOT.ASSOCIATED(tempDistributedVector)) THEN
+              CALL DistributedVector_CreateStart(rowsDomainMapping,linearMatrix%tempVector,err,error,*999)
               CALL DistributedVector_DataTypeSet(linearMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
               CALL DistributedVector_CreateFinish(linearMatrix%tempVector,err,error,*999)
             ENDIF
           ENDDO !linearMatrixIdx
+          NULLIFY(tempDistributedVector)
+          CALL EquationsMatricesLinear_TempDistributedVectorExists(linearMatrices,tempDistributedVector,err,error,*999)
+          IF(.NOT.ASSOCIATED(tempDistributedVector)) THEN
+            CALL DistributedVector_CreateStart(rowsDomainMapping,linearMatrices%tempVector,err,error,*999)
+            CALL DistributedVector_DataTypeSet(linearMatrices%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+            CALL DistributedVector_CreateFinish(linearMatrices%tempVector,err,error,*999)
+          ENDIF
+        ENDIF
+
+        NULLIFY(sourcesMapping)
+        CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+        IF(ASSOCIATED(sourcesMapping)) THEN
+          CALL EquationsMatricesVectors_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+          CALL EquationsMappingSources_NumberOfSourcesGet(sourcesMapping,numberOfSources,err,error,*999)
+          DO sourceIdx=1,numberOfSources
+            NULLIFY(sourceVector)
+            CALL EquationMatricsSources_SourceVectorGet(sourceVector,sourceIdx,sourceVector,err,error,*999)
+            CALL EquationsMatricesSource_DistributedVectorEnsureCreated(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+              & err,error,*999)
+            CALL EquationsMatricesSource_DistributedVectorEnsureCreated(sourceVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+              CALL EquationsMatricesSource_DistributedVectorEnsureCreated(sourceVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                & err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                CALL EquationsMatricesSource_DistributedVectorEnsureCreated(sourceVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                  & err,error,*999)
+              ENDIF
+            ENDIF
+          ENDDO !sourceIdx
+          NULLIFY(tempDistributedVector)
+          CALL EquationsMatricesSources_TempDistributedVectorExists(sourceVectors,tempDistributedVector,err,error,*999)
+          IF(.NOT.ASSOCIATED(tempDistributedVector)) THEN
+            CALL DistributedVector_CreateStart(rowsDomainMapping,sourceVectors%tempVector,err,error,*999)
+            CALL DistributedVector_DataTypeSet(sourceVectors%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+            CALL DistributedVector_CreateFinish(sourceVectors%tempVector,err,error,*999)
+          ENDIF
+        ENDIF
+        
+        NULLIFY(rhsMapping)
+        CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
+        IF(ASSOCIATED(rhsMapping)) THEN
+          NULLIFY(rhsVariable)
+          CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
+          CALL FieldVariable_VariableTypeGet(rhsVariable,rhsVariableType,err,error,*999)
+          NULLIFY(rhsVector)
+          CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+          CALL EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+            & err,error,*999)
+          CALL EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+            & err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                & err,error,*999)
+            ENDIF
+          ENDIF
         ENDIF
         
       ENDDO !equationsSetIdx
+      
       !Loop over any interface conditions
-      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+      CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
         NULLIFY(interfaceCondition)
         CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
         NULLIFY(interfaceEquations)
@@ -4407,23 +4574,26 @@ CONTAINS
         CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
         NULLIFY(lagrangeVariable)
         CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
-        lagrangeVariableType=lagrangeVariable%variableType
-        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
-        IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-          !2nd degree or higher so set up velocity parameter sets
-          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
-          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,err,error,*999)
-          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
-            & err,error,*999)
-          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-            !3rd degree or higher so set up acceleration parameter sets
-            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
-            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,err,error,*999)
-            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
-              & err,error,*999)
+        !See if the linear varible is in the list of solver variables
+        CALL SolverMappingVariables_VariableInListCheck(solverVariables,lagrangeVariable,variablePositionIdx,err,error,*999)
+        IF(variablePositionIdx/=0) THEN
+          CALL FieldVariable_VariableTypeGet(lagrangeVariable,lagrangeVariableType,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            !2nd degree or higher so set up velocity parameter sets
+            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              !3rd degree or higher so set up acceleration parameter sets
+              CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+                & err,error,*999)
+            ENDIF
           ENDIF
         ENDIF
       ENDDO !interfaceConditionIdx
@@ -4434,33 +4604,35 @@ CONTAINS
         CALL SolverDynamic_LinkedLinearSolverGet(dynamicSolver,linearSolver,err,error,*999)
         CALL Solver_LibraryTypeGet(linearSolver,linearLibraryType,err,error,*999)
         NULLIFY(solverMatrices)
-        CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
         CALL SolverMatrices_LibraryTypeSet(solverMatrices,linearLibraryType,err,error,*999)
         IF(dynamicSolver%explicit) THEN
-          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+          CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
         ELSE
-          SELECT CASE(solverEquations%sparsityType)
+          CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+          SELECT CASE(sparsityType)
           CASE(SOLVER_SPARSE_MATRICES)
-            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+            CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
           CASE(SOLVER_FULL_MATRICES)
-            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+            CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
           CASE DEFAULT
-            localError="The specified solver equations sparsity type of "// &
-              & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+            localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+              & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-          SELECT CASE(solverEquations%symmetryType)
+          CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+          SELECT CASE(symmetryType)
           CASE(SOLVER_SYMMETRIC_MATRICES)
             CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
           CASE(SOLVER_UNSYMMETRIC_MATRICES)
             CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
           CASE DEFAULT
-            localError="The specified solver equations symmetry type of "// &
-              & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))//" is invalid."
+            localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+              & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDIF
-        CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
         !Link linear solver
         linearSolver%solverEquations=>solver%solverEquations
         !Finish the creation of the linear solver
@@ -4468,36 +4640,37 @@ CONTAINS
       ELSE IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
         NULLIFY(nonlinearSolver)
         CALL SolverDynamic_LinkedNonlinearSolverGet(dynamicSolver,nonlinearSolver,err,error,*999)
-       CALL Solver_LibraryTypeGet(nonlinearSolver,nonlinearLibraryType,err,error,*999)
+        CALL Solver_LibraryTypeGet(nonlinearSolver,nonlinearLibraryType,err,error,*999)
         NULLIFY(solverMatrices)
-        CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
         CALL SolverMatrices_LibraryTypeSet(solverMatrices,nonlinearLibraryType,err,error,*999)
         IF(dynamicSolver%explicit) THEN
-          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+          CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
         ELSE
-          SELECT CASE(solverEquations%sparsityType)
+          CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+          SELECT CASE(sparsityType)
           CASE(SOLVER_SPARSE_MATRICES)
-            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+            CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
           CASE(SOLVER_FULL_MATRICES)
-            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+            CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
           CASE DEFAULT
-            localError="The specified solver equations sparsity type of "// &
-              & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+            localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+              & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-          SELECT CASE(solverEquations%symmetryType)
+          CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+          SELECT CASE(symmetryType)
           CASE(SOLVER_SYMMETRIC_MATRICES)
             CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
           CASE(SOLVER_UNSYMMETRIC_MATRICES)
             CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
           CASE DEFAULT
-            localError="The specified solver equations symmetry type of "// &
-              & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))// &
+            localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDIF
-        CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
         !Link nonlinear solver
         nonlinearSolver%solverEquations=>solver%solverEquations
         !Finish the creation of the nonlinear solver
@@ -4590,10 +4763,9 @@ CONTAINS
     !Local Variables
 
     ENTERS("Solver_DynamicFinalise",err,error,*999)
+    
     IF(ASSOCIATED(dynamicSolver)) THEN
-      IF(ALLOCATED(dynamicSolver%theta)) THEN
-        DEALLOCATE(dynamicSolver%theta)
-      ENDIF
+      IF(ALLOCATED(dynamicSolver%theta)) DEALLOCATE(dynamicSolver%theta)
       CALL Solver_Finalise(dynamicSolver%linearSolver,err,error,*999)
       CALL Solver_Finalise(dynamicSolver%nonlinearSolver,err,error,*999)
       DEALLOCATE(dynamicSolver)
@@ -4709,7 +4881,7 @@ CONTAINS
     INTEGER(INTG) :: linearSolveType,nonlinearSolveType
     TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer the dynamic solver to finalise
     TYPE(LinearSolverType), POINTER :: linearSolver !<A pointer the dynamic solver to finalise
-    TYPE(NewtonNonlinearSolverType), POINTER :: newtonSolver !<A pointer the dynamic solver to finalise
+    TYPE(NewtonSolverType), POINTER :: newtonSolver !<A pointer the dynamic solver to finalise
     TYPE(VARYING_STRING) :: localError
   
     ENTERS("Solver_DynamicLinearityTypeSet",err,error,*999)
@@ -4719,9 +4891,9 @@ CONTAINS
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
 
-    IF(linearityType/=dynamicSolver%linearityType) THEN
+    IF(linearityType/=dynamicSolver%linearity) THEN
 
-      CALL SOLVER_LINKED_SOLVER_REMOVE(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+      CALL Solver_LinkedSolverRemove(solver,SOLVER_LINEAR_TYPE,err,error,*999)
       CALL Solver_Finalise(dynamicSolver%linearSolver,err,error,*999)
       CALL Solver_Finalise(dynamicSolver%nonlinearSolver,err,error,*999)
       
@@ -4733,7 +4905,7 @@ CONTAINS
         dynamicSolver%linearity=SOLVER_DYNAMIC_LINEAR
         CALL Solver_Initialise(dynamicSolver%linearSolver,err,error,*999)
         CALL Solver_LinearInitialise(dynamicSolver%linearSolver,err,error,*999)
-        CALL SOLVER_LINKED_SOLVER_ADD(solver,dynamicSolver%linearSolver,SOLVER_LINEAR_TYPE,err,error,*999)
+        CALL Solver_LinkedSolverAdd(solver,dynamicSolver%linearSolver,SOLVER_LINEAR_TYPE,err,error,*999)
         CALL SolverLinear_LinearSolveTypeGet(dynamicSolver%linearSolver%linearSolver,linearSolveType,err,error,*999)
         IF(linearSolveType==SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE) &
           & CALL Solver_LinearIterativeSolutionInitialiseTypeSet(dynamicSolver%linearSolver,SOLVER_SOLUTION_INITIALISE_ZERO, &
@@ -4745,16 +4917,16 @@ CONTAINS
         dynamicSolver%linearity=SOLVER_DYNAMIC_NONLINEAR
         CALL Solver_Initialise(dynamicSolver%nonlinearSolver,err,error,*999)
         CALL Solver_NonlinearInitialise(dynamicSolver%nonlinearSolver,err,error,*999)
-        CALL SOLVER_LINKED_SOLVER_ADD(solver,dynamicSolver%nonlinearSolver,SOLVER_NONLINEAR_TYPE,err,error,*999)
+        CALL Solver_LinkedSolverAdd(solver,dynamicSolver%nonlinearSolver,SOLVER_NONLINEAR_TYPE,err,error,*999)
         CALL SolverNonlinear_NonlinearSolveType(dynamicSolver%nonlinearSolver%nonlinearSolver,nonlinearSolveType,err,error,*999)
         IF(nonlinearSolveType==SOLVER_NONLINEAR_NEWTON) THEN
-          CALL Solver_NewtonSolutionInitialiseTypeSet(dynamicSolver%nonlinearSolver,SOLVER_SOLUTION_INITIALISE_ZERO, &
-            & err,error,*999)
+          CALL Solver_NewtonSolutionInitialiseTypeSet(dynamicSolver%nonlinearSolver%newtonSolver, &
+            & SOLVER_SOLUTION_INITIALISE_ZERO,err,error,*999)
           NULLIFY(newtonSolver)
-          CALL SolverNonlinear_NewtonSolverGet(dynamicSolver%nonlinearSolver%nonlinearSolve,newtonSolver,err,error,*999)
+          CALL SolverNonlinear_NewtonSolverGet(dynamicSolver%nonlinearSolver,newtonSolver,err,error,*999)
           NULLIFY(linearSolver)
           CALL SolverNonlinearNewton_LinearSolverGet(newtonSolver,linearSolver,err,error,*999)
-          CALL SolverLinear_LinearSolveTypeGet(linearSolver%linearSolver,linearSolveType,err,error,*999)
+          CALL SolverLinear_LinearSolveTypeGet(linearSolver,linearSolveType,err,error,*999)
           IF(linearSolveType==SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE) &
             & CALL Solver_LinearIterativeSolutionInitialiseTypeSet(linearSolver,SOLVER_SOLUTION_INITIALISE_ZERO,err,error,*999)
         ENDIF        
@@ -4784,7 +4956,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dynamicVariableType,equationsSetIdx
+    INTEGER(INTG) :: dynamicVariableType,equationsSetIdx,linearMatrixIdx,numberOfEquationsSets,numberOfLinearMatrices &
+      & ,numberOfResiduals,numberOfResidualVariables,residualIdx,residualVariableIdx,variablePositionIdx
     REAL(DP) :: deltaT,firstMeanPredictionFactor,secondMeanPredictionFactor,thirdMeanPredictionFactor
     REAL(DP) :: firstPredictionFactor,secondPredictionFactor,thirdPredictionFactor
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
@@ -4792,13 +4965,19 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: linearMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldVariableType), POINTER :: dynamicVariable
+    TYPE(FieldVariableType), POINTER :: dynamicVariable,linearVariable,residualVariable
+    TYPE(FieldVariablesListType), POINTER :: processedVariablesList
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariablesType), POINTER :: solverVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: localError
    
@@ -4833,7 +5012,7 @@ CONTAINS
     ENDIF
     NULLIFY(solverEquations)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    NULLIFY(soverMapping)
+    NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
@@ -4841,8 +5020,15 @@ CONTAINS
       & ((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
       & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)))) &
       & THEN
+      !We now need to calculate the the mean predicited displacement, velocity and accelerations for any field variables in
+      !the solver matrix. We only want to do this to a field variable once and so we need to be careful that we only process
+      !variables that are shared between equations sets or dynamic, nonlinear and linear matrices once.
+      NULLIFY(processedVariablesList)
+      CALL FieldVariablesList_CreateStart(processedVariablesList,err,error,*999)
+      CALL FieldVariablesList_CreateFinish(processedVariablesList,err,error,*999)
       !Loop over the equations sets
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(dependentField)
@@ -4855,170 +5041,264 @@ CONTAINS
         CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
         NULLIFY(vectorMapping)
         CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-        dynamicMapping=>vectorMapping%dynamicMapping
+        NULLIFY(dynamicMapping)
+        CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+        NULLIFY(dynamicVariable)
         IF(ASSOCIATED(dynamicMapping)) THEN
-          dynamicVariableType=dynamicMapping%dynamicVariableType
           NULLIFY(dynamicVariable)
-          CALL Field_VariableGet(dependentField,dynamicVariableType,dynamicVariable,err,error,*999)
+          CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
+          CALL FieldVariable_VariableTypeGet(dynamicVariable,dynamicVariableType,err,error,*999)
           IF(dynamicSolver%solverInitialised) THEN
-            !CPB: THIS MESSES UP DYNANIC BC'S. HOWEVER, IT CLEARLY WAS ADDED FOR A REASON (I THINK TO DO
-            !     WITH MONODOMAIN AND SPLITTING. COMMENT FOR NOW.
-            !
+            !Check if we have already processed this variable
+            CALL FieldVariablesList_VariableInListCheck(processedVariablesList,dynamicVariable,variablePositionIdx,err,error,*999)
+            IF(variablePositionIdx/=0) THEN
+              !CPB: THIS MESSES UP DYNANIC BC'S. HOWEVER, IT CLEARLY WAS ADDED FOR A REASON (I THINK TO DO
+              !     WITH MONODOMAIN AND SPLITTING. COMMENT FOR NOW.
+              !
 !!As the dynamic solver may be part of a workflow of solvers within a control loop it is possible
 !!that the current dependent field values are not equal to the current previous values that were set
 !!at the beginning of the control loop. 
 !!Copy the current field values to the previous values
-            !CALL Field_ParameterSetsCopy(dependentField,dynamicVariableType,FIELD_VALUES_SET_TYPE, &
-            !  & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
-            IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) &
-              & CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
-              & 1.0_DP,err,error,*999)
-            !Calculate the mean predicted and predicted values for this dependent field.
-            SELECT CASE(dynamicSolver%degree)
-            CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-              !The mean predicited displacement is the current displacement
-              CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
-              IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                !The predicted displacement is just the current displacement
-                CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                  & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
-              ENDIF
-            CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-              !The mean predicted displacement comes from the previous displacement and the previous velocity
-              CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                & [firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
-                & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-              !The mean predicted velocity is the current velocity
-              CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
-                & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
-              IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                !The predicted displacement comes from the previous displacement and the previous velocity
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                  & [firstPredictionFactor,secondPredictionFactor], &
-                  & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
-                  & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-              END IF
-            CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-              !The mean predicted displacement comes from the previous displacement and the previous
-              !velocity and acceleration
-              CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                & [firstMeanPredictionFactor,secondMeanPredictionFactor, &
-                & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
-                & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-              !The mean predicted velocity comes from the previous velocity and acceleration
-              CALL Field_ParameterSetsAdd(dynamicVariable, &
-                & [firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
-                & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
-              !The mean predicted acceleration is the current acceleration
-              CALL FieldVariable_ParameterSetsCopy(dynamicVariable, &
-                & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP, &
-                & err,error,*999)
-              IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                !The predicted displacement comes from the previous displacement and the previous
-                !velocity and acceleration
-                CALL FieldVariablr_ParameterSetsAdd(dynamicVariable, &
-                  & [firstPredictionFactor,secondPredictionFactor, &
-                  & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                  & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
-                  & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-              END IF
-            CASE DEFAULT
-              localError="The dynamic solver degree of "// &
-                & TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)                        
-            END SELECT
-          ENDIF
-        ELSE          
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            dynamicVariableType=FIELD_U_VARIABLE_TYPE
-            NULLIFY(dynamicVariable)
-            CALL Field_VariableGet(dependentField,dynamicVariableType,dynamicVariable,err,error,*999)
-            IF(dynamicSolver%solverInitialised) THEN
-              !As the dynamic solver may be part of a workflow of solvers within a control loop it is possible
-              !that the current dependent field values are not equal to the current previous values that were set
-              !at the beginning of the control loop. 
-              !Copy the current field values to the previous values
-              CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_VALUES_SET_TYPE, &
-                & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
-              IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                CALL FieldVariable_ParameterSetsCopy(dynamicVariable, &
-                  & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP, &
-                  & err,error,*999)
-              ENDIF
+              !CALL Field_ParameterSetsCopy(dependentField,dynamicVariableType,FIELD_VALUES_SET_TYPE, &
+              !  & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+              IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) &
+                & CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+                & 1.0_DP,err,error,*999)
               !Calculate the mean predicted and predicted values for this dependent field.
               SELECT CASE(dynamicSolver%degree)
               CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
                 !The mean predicited displacement is the current displacement
-                CALL FieldVariable_ParameterSetsCopy(dynamicVariable, &
-                  & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, & 
-                  & err,error,*999)
+                CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                  & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
                 IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   !The predicted displacement is just the current displacement
-                  CALL FieldVariable_ParameterSetsCopy(dynamicVariable, &
-                    & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, &
-                    & err,error,*999)
+                  CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                    & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
                 ENDIF
               CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
                 !The mean predicted displacement comes from the previous displacement and the previous velocity
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                  & [firstMeanPredictionFactor,secondMeanPredictionFactor], &
+                CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
                   & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                   & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                 !The mean predicted velocity is the current velocity
-                CALL FieldVariable_ParameterSetsCopy(dynamicVariable, &
-                  & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
+                CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                  & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                 IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   !The predicted displacement comes from the previous displacement and the previous velocity
-                  CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                    & [firstPredictionFactor,secondPredictionFactor], &
+                  CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstPredictionFactor,secondPredictionFactor], &
                     & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                     & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-                END IF
+                ENDIF
               CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
                 !The mean predicted displacement comes from the previous displacement and the previous
                 !velocity and acceleration
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                  & [firstMeanPredictionFactor,secondMeanPredictionFactor, &
-                  & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                  & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
-                  & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor, &
+                  & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                  & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                 !The mean predicted velocity comes from the previous velocity and acceleration
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                  & [firstMeanPredictionFactor,secondMeanPredictionFactor], &
+                CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
                   & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                   & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
                 !The mean predicted acceleration is the current acceleration
-                CALL FieldVariable_ParameterSetsCopy(dynamicVariable, &
-                  & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP, &
-                  & err,error,*999)
-                IF(dynamicSolver%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
+                  & FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
+                IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   !The predicted displacement comes from the previous displacement and the previous
                   !velocity and acceleration
-                  CALL FieldVariable_ParameterSetsAdd(dynamicVariable, &
-                    & [firstPredictionFactor,secondPredictionFactor, &
-                    & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
-                    & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
-                    & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-                END IF
+                  CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstPredictionFactor,secondPredictionFactor, &
+                    & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                    & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                ENDIF
               CASE DEFAULT
                 localError="The dynamic solver degree of "// &
                   & TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)                        
               END SELECT
-            ENDIF!initialised
-            NULLIFY(nonlinearMapping)
-          ELSE
-            localError="Neither equations mapping dynamic mapping nor equations mapping nonlinear "// &
-              & "mapping is associated for equations set index number "// &
-              & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF!nonlinear mapping
-        ENDIF!dynamic mapping
+              CALL FieldVariablesList_VariableAdd(processedVariablesList,dynamicVariable,err,error,*999)
+            ENDIF
+          ENDIF
+        ENDIF !dynamic mapping
+        
+        NULLIFY(nonlinearMapping)
+        CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+        IF(ASSOCIATED(nonlinearMapping)) THEN
+          IF(dynamicSolver%solverInitialised) THEN
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+            DO residualIdx=1,numberOfResiduals
+              NULLIFY(residualMapping)
+              CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+              CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables, &
+                & err,error,*999)
+              DO residualVariableIdx=1,numberOfResidualVariables
+                NULLIFY(residualVariable)
+                CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
+                !Check if the residual variable is in the solver variables
+                CALL SolverMappingVariables_VariableInListCheck(solverVariables,residualVariable,variablePositionIdx, &
+                  & err,error,*999)
+                IF(variablePositionIdx/=0) THEN
+                  !Check if the variable has already been processed
+                  CALL FieldVariablesList_VariableInListCheck(processedVariablesList,residualVariable,variablePositionIdx, &
+                    & err,error,*999)
+                  IF(variablePositionIdx==0) THEN
+                    !CPB: THIS MESSES UP DYNANIC BC'S. HOWEVER, IT CLEARLY WAS ADDED FOR A REASON (I THINK TO DO
+                    !     WITH MONODOMAIN AND SPLITTING. COMMENT FOR NOW.
+                    !
+                    !!As the dynamic solver may be part of a workflow of solvers within a control loop it is possible
+                    !!that the current dependent field values are not equal to the current previous values that were set
+                    !!at the beginning of the control loop. 
+                    !!Copy the current field values to the previous values
+                    !CALL FieldVariable_ParameterSetsCopy(residualVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                    !  & 1.0_DP,err,error,*999)
+                    !IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+                    !  CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_RESIDUAL_SET_TYPE, &
+                    !    & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+                    !ENDIF
+                    !Calculate the mean predicted and predicted values for this dependent field.
+                    SELECT CASE(dynamicSolver%degree)
+                    CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
+                      !The mean predicited displacement is the current displacement
+                      CALL FieldVariable_ParameterSetsCopy(residualVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                        & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
+                      IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+                        !The predicted displacement is just the current displacement
+                        CALL FieldVariable_ParameterSetsCopy(residualVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                          & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
+                      ENDIF
+                    CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
+                      !The mean predicted displacement comes from the previous displacement and the previous velocity
+                      CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstMeanPredictionFactor, &
+                        & secondMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                        & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                      !The mean predicted velocity is the current velocity
+                      CALL FieldVariable_ParameterSetsCopy(residualVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                        & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
+                      IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+                        !The predicted displacement comes from the previous displacement and the previous velocity
+                        CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstPredictionFactor,secondPredictionFactor], &
+                          & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                          & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                      END IF
+                    CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
+                      !The mean predicted displacement comes from the previous displacement and the previous
+                      !velocity and acceleration
+                      CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor, &
+                        & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                        & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                        & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                      !The mean predicted velocity comes from the previous velocity and acceleration
+                      CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
+                        & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                        & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
+                      !The mean predicted acceleration is the current acceleration
+                      CALL FieldVariable_ParameterSetsCopy(residualVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
+                        & FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
+                      IF(dynamicSolver%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                        !The predicted displacement comes from the previous displacement and the previous
+                        !velocity and acceleration
+                        CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstPredictionFactor,secondPredictionFactor, &
+                          & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                          & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                          & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                      END IF
+                    CASE DEFAULT
+                      localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
+                        & " is invalid."
+                      CALL FlagError(localError,err,error,*999)                        
+                    END SELECT
+                  ENDIF
+                ENDIF
+              ENDDO !residualVariableIdx
+            ENDDO !residualIdx
+          ENDIF!initialised
+        ENDIF !nonlinear mapping
+        
+        NULLIFY(linearMapping)
+        CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+        IF(ASSOCIATED(linearMapping)) THEN
+          IF(dynamicSolver%solverInitialised) THEN
+            NULLIFY(linearMatrices)
+            CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+            CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+            DO linearMatrixIdx=1,numberOfLinearMatrices
+              NULLIFY(linearMatrix)
+              CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,linearMatrixIdx,linearMatrix,err,error,*999)
+              NULLIFY(linearVariable)
+              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
+              !See if the linear varible is in the list of solver variables
+              CALL SolverMappingVariables_VariableInListCheck(solverVariables,linearVariable,variablePositionIdx,err,error,*999)
+              IF(variablePositionIdx/=0) THEN
+                !Check if the variable has already been processed
+                CALL FieldVariablesList_VariableInListCheck(processedVariablesList,residualVariable,variablePositionIdx, &
+                  & err,error,*999)
+                IF(variablePositionIdx==0) THEN
+                  !CPB: THIS MESSES UP DYNANIC BC'S. HOWEVER, IT CLEARLY WAS ADDED FOR A REASON (I THINK TO DO
+                  !     WITH MONODOMAIN AND SPLITTING. COMMENT FOR NOW.
+                  !
+!!As the dynamic solver may be part of a workflow of solvers within a control loop it is possible
+!!that the current dependent field values are not equal to the current previous values that were set
+!!at the beginning of the control loop. 
+!!Copy the current field values to the previous values
+                  !CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                  !  & 1.0_DP,err,error,*999)
+                  !IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+                  !  CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_RESIDUAL_SET_TYPE, &
+                  !    & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+                  !ENDIF
+                  !Calculate the mean predicted and predicted values for this dependent field.
+                  SELECT CASE(dynamicSolver%degree)
+                  CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
+                    !The mean predicited displacement is the current displacement
+                    CALL FieldVariable_ParameterSetsCopy(linearVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                      & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
+                    IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+                      !The predicted displacement is just the current displacement
+                      CALL FieldVariable_ParameterSetsCopy(linearVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                        & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP,err,error,*999)
+                    ENDIF
+                  CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
+                    !The mean predicted displacement comes from the previous displacement and the previous velocity
+                    CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
+                      & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                      & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                    !The mean predicted velocity is the current velocity
+                    CALL FieldVariable_ParameterSetsCopy(linearVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                      & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
+                    IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+                      !The predicted displacement comes from the previous displacement and the previous velocity
+                      CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstPredictionFactor,secondPredictionFactor], &
+                        & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                        & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                    ENDIF
+                  CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
+                    !The mean predicted displacement comes from the previous displacement and the previous
+                    !velocity and acceleration
+                    CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor, &
+                      & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                      & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                    !The mean predicted velocity comes from the previous velocity and acceleration
+                    CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
+                      & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                      & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
+                    !The mean predicted acceleration is the current acceleration
+                    CALL FieldVariable_ParameterSetsCopy(linearVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
+                      & FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
+                    IF(dynamicSolver%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                      !The predicted displacement comes from the previous displacement and the previous
+                      !velocity and acceleration
+                      CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstPredictionFactor,secondPredictionFactor, &
+                        & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+                        & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                    ENDIF
+                  CASE DEFAULT
+                    localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)                        
+                  END SELECT
+                ENDIF
+              ENDIF
+            ENDDO !linearMatrixIdx
+          ENDIF
+        ENDIF !linear mapping
       ENDDO !equationsSetIdx
     ENDIF
 
@@ -5155,160 +5435,150 @@ CONTAINS
     
     ENTERS("Solver_DynamicSchemeSet",err,error,*999)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(solver%solverFinished) THEN
-        CALL FlagError("The solver has already been finished.",err,error,*999)
-      ELSE
-        IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
-          dynamicSolver=>SOLVER%dynamicSolver
-          IF(ASSOCIATED(dynamicSolver)) THEN
-            SELECT CASE(scheme)
-            CASE(SOLVER_DYNAMIC_EULER_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_EULER_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,0.0_DP,err,error,*999)
-            CASE(SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,1.0_DP,err,error,*999)
-            CASE(SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,1.0_DP/2.0_DP,err,error,*999)
-            CASE(SOLVER_DYNAMIC_GALERKIN_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_GALERKIN_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,2.0_DP/3.0_DP,err,error,*999)
-            CASE(SOLVER_DYNAMIC_ZLAMAL_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_ZLAMAL_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[5.0_DP/6.0_DP,2.0_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[3.0_DP/2.0_DP,2.0_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[1.0848_DP,1.0_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[1.2184_DP,1.292_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_NEWMARK1_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_NEWMARK1_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              beta=0.5_DP
-              gamma=2.0_DP
-              CALL Solver_DynamicThetaSet(solver,[gamma,2.0_DP*beta],err,error,*999)
-            CASE(SOLVER_DYNAMIC_NEWMARK2_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_NEWMARK2_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              beta=0.3025_DP
-              gamma=0.6_DP
-              CALL Solver_DynamicThetaSet(solver,[gamma,2.0_DP*beta],err,error,*999)
-            CASE(SOLVER_DYNAMIC_NEWMARK3_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_NEWMARK3_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              beta=0.25_DP
-              gamma=0.5_DP
-              CALL Solver_DynamicThetaSet(solver,[gamma,2.0_DP*beta],err,error,*999)
-            CASE(SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[2.0_DP,11.0_DP/3.0_DP,6.0_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[1.84_DP,3.07_DP,4.5_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[0.80_DP,1.03_DP,1.29_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_HOUBOLT_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_HOUBOLT_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              CALL Solver_DynamicThetaSet(solver,[2.0_DP,11.0_DP/3.0_DP,6.0_DP],err,error,*999)
-            CASE(SOLVER_DYNAMIC_WILSON_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_WILSON_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              theta=1.4_DP
-              CALL Solver_DynamicThetaSet(solver,[theta,theta**2,theta**3],err,error,*999)
-            CASE(SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              alpha=-0.1_DP
-              beta=0.3025_DP
-              gamma=0.5_DP-alpha
-              CALL Solver_DynamicThetaSet(solver,[1.0_DP-alpha,2.0_DP/3.0_DP-alpha+2.0_DP*beta,6.0_DP*beta],err,error,*999)
-            CASE(SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              alpha=-0.1_DP
-              beta=1.0_DP/6.0_DP-1.0_DP/2.0_DP*alpha
-              gamma=1.0_DP/2.0_DP-alpha
-              CALL Solver_DynamicThetaSet(solver,[1.0_DP-alpha,1.0_DP-2.0_DP*alpha,1.0_DP-3.0_DP*alpha],err,error,*999)
-            CASE(SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              alpha=-0.1_DP
-              beta=0.3025_DP
-              gamma=0.5_DP-alpha
-              CALL Solver_DynamicThetaSet(solver,[1.0_DP,2.0_DP/3.0_DP+2.0_DP*beta-2.0_DP*alpha**2, &
-                & 6.0_DP*beta*(1.0_DP+alpha)],err,error,*999)
-            CASE(SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME
-              CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
-              CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-              alpha=-0.3_DP
-              beta=0.3025_DP
-              gamma=0.5_DP-alpha
-              CALL Solver_DynamicThetaSet(solver,[1.0_DP,2.0_DP/3.0_DP+2.0_DP*beta-2.0_DP*alpha**2, &
-                & 6.0_DP*beta*(1.0_DP+alpha)],err,error,*999)
-            CASE(SOLVER_DYNAMIC_USER_DEFINED_SCHEME)
-              dynamicSolver%scheme=SOLVER_DYNAMIC_USER_DEFINED_SCHEME
-            CASE DEFAULT
-              localError="The specified scheme of "//TRIM(NumberToVString(scheme,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Dynamic solver is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The specified solver is not a dynamic solver.",err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
-    ENDIF
+    CALL Solver_AssertNotFinished(solver,err,error,*999)
+    CALL Solver_AssertIsDynamic(solver,err,error,*999)
+    NULLIFY(dynamicSolver)
+    CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
     
+    SELECT CASE(scheme)
+    CASE(SOLVER_DYNAMIC_EULER_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_EULER_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,0.0_DP,err,error,*999)
+    CASE(SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,1.0_DP,err,error,*999)
+    CASE(SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,1.0_DP/2.0_DP,err,error,*999)
+    CASE(SOLVER_DYNAMIC_GALERKIN_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_GALERKIN_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,2.0_DP/3.0_DP,err,error,*999)
+    CASE(SOLVER_DYNAMIC_ZLAMAL_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_ZLAMAL_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[5.0_DP/6.0_DP,2.0_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[3.0_DP/2.0_DP,2.0_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[1.0848_DP,1.0_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[1.2184_DP,1.292_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_NEWMARK1_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_NEWMARK1_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      beta=0.5_DP
+      gamma=2.0_DP
+      CALL Solver_DynamicThetaSet(solver,[gamma,2.0_DP*beta],err,error,*999)
+    CASE(SOLVER_DYNAMIC_NEWMARK2_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_NEWMARK2_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      beta=0.3025_DP
+      gamma=0.6_DP
+      CALL Solver_DynamicThetaSet(solver,[gamma,2.0_DP*beta],err,error,*999)
+    CASE(SOLVER_DYNAMIC_NEWMARK3_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_NEWMARK3_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      beta=0.25_DP
+      gamma=0.5_DP
+      CALL Solver_DynamicThetaSet(solver,[gamma,2.0_DP*beta],err,error,*999)
+    CASE(SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[2.0_DP,11.0_DP/3.0_DP,6.0_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[1.84_DP,3.07_DP,4.5_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[0.80_DP,1.03_DP,1.29_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_HOUBOLT_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_HOUBOLT_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      CALL Solver_DynamicThetaSet(solver,[2.0_DP,11.0_DP/3.0_DP,6.0_DP],err,error,*999)
+    CASE(SOLVER_DYNAMIC_WILSON_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_WILSON_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      theta=1.4_DP
+      CALL Solver_DynamicThetaSet(solver,[theta,theta**2,theta**3],err,error,*999)
+    CASE(SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      alpha=-0.1_DP
+      beta=0.3025_DP
+      gamma=0.5_DP-alpha
+      CALL Solver_DynamicThetaSet(solver,[1.0_DP-alpha,2.0_DP/3.0_DP-alpha+2.0_DP*beta,6.0_DP*beta],err,error,*999)
+    CASE(SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      alpha=-0.1_DP
+      beta=1.0_DP/6.0_DP-1.0_DP/2.0_DP*alpha
+      gamma=1.0_DP/2.0_DP-alpha
+      CALL Solver_DynamicThetaSet(solver,[1.0_DP-alpha,1.0_DP-2.0_DP*alpha,1.0_DP-3.0_DP*alpha],err,error,*999)
+    CASE(SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      alpha=-0.1_DP
+      beta=0.3025_DP
+      gamma=0.5_DP-alpha
+      CALL Solver_DynamicThetaSet(solver,[1.0_DP,2.0_DP/3.0_DP+2.0_DP*beta-2.0_DP*alpha**2, &
+        & 6.0_DP*beta*(1.0_DP+alpha)],err,error,*999)
+    CASE(SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME
+      CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_THIRD_DEGREE,err,error,*999)
+      CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+      alpha=-0.3_DP
+      beta=0.3025_DP
+      gamma=0.5_DP-alpha
+      CALL Solver_DynamicThetaSet(solver,[1.0_DP,2.0_DP/3.0_DP+2.0_DP*beta-2.0_DP*alpha**2, &
+        & 6.0_DP*beta*(1.0_DP+alpha)],err,error,*999)
+    CASE(SOLVER_DYNAMIC_USER_DEFINED_SCHEME)
+      dynamicSolver%scheme=SOLVER_DYNAMIC_USER_DEFINED_SCHEME
+    CASE DEFAULT
+      localError="The specified scheme of "//TRIM(NumberToVString(scheme,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
     EXITS("Solver_DynamicSchemeSet")
     RETURN
 999 ERRORSEXITS("Solver_DynamicSchemeSet",err,error)
     RETURN 1
+    
   END SUBROUTINE Solver_DynamicSchemeSet
 
   !
   !================================================================================================================================
+  !
   
   !>Solve a dynamic solver 
   SUBROUTINE SolverDynamic_Solve(dynamicSolver,err,error,*)
@@ -5318,138 +5588,117 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: solverMatrixIdx
+    INTEGER(INTG) :: numberOfSolverMatrices,solverMatrixIdx
+    TYPE(DistributedVectorType), POINTER :: distributedSolverVector
     TYPE(SolverType), POINTER :: linearSolver,solver,nonlinearSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverDynamic_Solve",err,error,*999)
-
-    IF(ASSOCIATED(dynamicSolver)) THEN
-      SELECT CASE(dynamicSolver%solverLibrary)
-      CASE(SOLVER_CMISS_LIBRARY)
-        solver=>dynamicSolver%solver
-        IF(ASSOCIATED(solver)) THEN          
-          SELECT CASE(dynamicSolver%LINEARITY)
-          CASE(SOLVER_DYNAMIC_LINEAR)
-            !Solve the linear dynamic problem
-            linearSolver=>dynamicSolver%linearSolver
-            IF(ASSOCIATED(linearSolver)) THEN
-              IF(dynamicSolver%solverInitialised) THEN
-                !Assemble the solver equations
-                CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
-                CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_ONLY,err,error,*999)
-                !Solve the linear system
-                CALL Solver_Solve(linearSolver,err,error,*999)
-                !Update dependent field with solution
-                CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
-             ELSE
-                !If we need to initialise the solver
-                IF((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
-                  & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)) THEN
-                  !Assemble the solver equations
-                  CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
-                  CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_ONLY,err,error,*999)
-                  !Solve the linear system
-                  CALL Solver_Solve(linearSolver,err,error,*999)
-                  !Update dependent field with solution
-                  CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
-                ENDIF
-                !Set initialised flag
-                dynamicSolver%solverInitialised=.TRUE.
-              ENDIF
-            ELSE
-              CALL FlagError("Dynamic solver linear solver is not associated.",err,error,*999)
-            ENDIF
-          CASE(SOLVER_DYNAMIC_NONLINEAR) 
-            !Solve the nonlinear dynamic problem
-            nonlinearSolver=>dynamicSolver%nonlinearSolver
-            IF(ASSOCIATED(nonlinearSolver)) THEN
-              IF(dynamicSolver%solverInitialised) THEN
-                !Calculate predicted values
-                CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
-                !Solve the nonlinear system
-                CALL Solver_Solve(nonlinearSolver,err,error,*999)
-                !Update dependent field with solution
-                CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
-              ELSE
-                !If we need to initialise the solver
-                IF((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
-                  & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)) THEN
-                  !No nonlinear solver for the first (starting) time step.
-                  !Use the nonlinear solvers linear solver to find starting velocities and accelerations etc.
-                  NULLIFY(linearSolver)
-                  CALL SolverNonlinear_LinearSolverGet(nonlinearSolver,linearSolver,err,error,*999)
-                  !Assemble the solver equations
-                  CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
-                  CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_RESIDUAL_ONLY,err,error,*999)
-                  !Solve
-                  CALL Solver_Solve(linearSolver,err,error,*999)
-                ELSE
-                  !Assemble the solver equations for the intial values of the residual and RHS.
-                  CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
-                  CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
-                ENDIF
-                !Update dependent field with solution
-                CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
-                !Set initialised flag
-                dynamicSolver%solverInitialised=.TRUE.
-              ENDIF
-            ELSE
-              CALL FlagError("Dynamic solver nonlinear solver is not associated.",err,error,*999)
-            ENDIF
-          CASE DEFAULT
-            localError="The dynamic solver linearity type of "// &
-              & TRIM(NumberToVString(dynamicSolver%LINEARITY,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-
-          IF(dynamicSolver%solverInitialised) dynamicSolver%numberOfSolves=dynamicSolver%numberOfSolves+1
-          
-          IF(solver%outputType>=SOLVER_SOLVER_OUTPUT) THEN
-            
-#ifdef TAUPROF
-            CALL TAU_STATIC_PHASE_START("Solution Output Phase")
-#endif
-            solverEquations=>solver%solverEquations
-            IF(ASSOCIATED(solverEquations)) THEN
-              solverMatrices=>solverEquations%solverMatrices
-              IF(ASSOCIATED(solverMatrices)) THEN
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",err,error,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",solverMatrices%numberOfMatrices, &
-                  & err,error,*999)
-                DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
-                  CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solverMatrixIdx, &
-                    & err,error,*999)
-                  CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrices%matrices(solverMatrixIdx)%ptr% &
-                    & SOLVER_VECTOR,err,error,*999)
-                ENDDO !solverMatrixIdx
-              ELSE
-                CALL FlagError("Solver equations solver matrices is not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver solver equations is not associated.",err,error,*999)
-            ENDIF
-            
-#ifdef TAUPROF
-            CALL TAU_STATIC_PHASE_STOP("Solution Output Phase")
-#endif
-          ENDIF
+    
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+    
+    SELECT CASE(dynamicSolver%solverLibrary)
+    CASE(SOLVER_CMISS_LIBRARY)
+      NULLIFY(solver)
+      CALL SolverDynamic_SolverGet(dynamicSolver,solver,err,error,*999)
+      SELECT CASE(dynamicSolver%linearity)
+      CASE(SOLVER_DYNAMIC_LINEAR)
+        !Solve the linear dynamic problem
+        NULLIFY(linearSolver)
+        CALL SolverDynamic_LinkedLinearSolverGet(dynamicSolver,linearSolver,err,error,*999)
+        IF(dynamicSolver%solverInitialised) THEN
+          !Assemble the solver equations
+          CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
+          CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_ONLY,err,error,*999)
+          !Solve the linear system
+          CALL Solver_Solve(linearSolver,err,error,*999)
+          !Update dependent field with solution
+          CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
         ELSE
-          CALL FlagError("Dynamic solver solver is not associated.",err,error,*999)
+          !If we need to initialise the solver
+          IF((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
+            & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)) THEN
+            !Assemble the solver equations
+            CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
+            CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_ONLY,err,error,*999)
+            !Solve the linear system
+            CALL Solver_Solve(linearSolver,err,error,*999)
+            !Update dependent field with solution
+            CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
+          ENDIF
+          !Set initialised flag
+          dynamicSolver%solverInitialised=.TRUE.
         ENDIF
-      CASE(SOLVER_PETSC_LIBRARY)
-        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(SOLVER_DYNAMIC_NONLINEAR) 
+        !Solve the nonlinear dynamic problem
+        NULLIFY(nonlinearSolver)
+        CALL SolverDynamic_LinkedNonlinearSolverGet(dynamicSolver,nonlinearSolver,err,error,*999)
+        IF(dynamicSolver%solverInitialised) THEN
+          !Calculate predicted values
+          CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
+          !Solve the nonlinear system
+          CALL Solver_Solve(nonlinearSolver,err,error,*999)
+          !Update dependent field with solution
+          CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
+        ELSE
+          !If we need to initialise the solver
+          IF((dynamicSolver%order==SOLVER_DYNAMIC_FIRST_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
+            & (dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE)) THEN
+            !No nonlinear solver for the first (starting) time step.
+            !Use the nonlinear solvers linear solver to find starting velocities and accelerations etc.
+            NULLIFY(linearSolver)
+            CALL SolverNonlinear_LinearSolverGet(nonlinearSolver,linearSolver,err,error,*999)
+            !Assemble the solver equations
+            CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
+            CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_RESIDUAL_ONLY,err,error,*999)
+            !Solve
+            CALL Solver_Solve(linearSolver,err,error,*999)
+          ELSE
+            !Assemble the solver equations for the intial values of the residual and RHS.
+            CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
+            CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
+          ENDIF
+          !Update dependent field with solution
+          CALL Solver_VariablesDynamicFieldUpdate(solver,err,error,*999)
+          !Set initialised flag
+          dynamicSolver%solverInitialised=.TRUE.
+        ENDIF
       CASE DEFAULT
-        localError="The solver library type of "// &
-          & TRIM(NumberToVString(dynamicSolver%solverLibrary,"*",err,error))//" is invalid."
+        localError="The dynamic solver linearity type of "// &
+          & TRIM(NumberToVString(dynamicSolver%linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      CALL FlagError("Dynamic solver is not associated.",err,error,*999)
-    ENDIF
+
+      IF(dynamicSolver%solverInitialised) dynamicSolver%numberOfSolves=dynamicSolver%numberOfSolves+1
+          
+      IF(solver%outputType>=SOLVER_SOLVER_OUTPUT) THEN
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMatrices)
+        CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",err,error,*999)
+        CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",numberOfSolverMatrices,err,error,*999)
+        DO solverMatrixIdx=1,numberOfSolverMatrices
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solverMatrixIdx,err,error,*999)
+          NULLIFY(solverMatrix)
+          CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
+          NULLIFY(distributedSolverVector)
+          CALL SolverMatrix_DistributedSolverVectorGet(solverMatrix,distributedSolverVector,err,error,*999)
+          CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,distributedSolverVector,err,error,*999)
+        ENDDO !solverMatrixIdx
+      ENDIF
+            
+    CASE(SOLVER_PETSC_LIBRARY)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The solver library type of "//TRIM(NumberToVString(dynamicSolver%solverLibrary,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     EXITS("SolverDynamic_Solve")
     RETURN
@@ -5814,7 +6063,7 @@ CONTAINS
       CALL SolverMapping_NumberOfSolverMatricesSet(solverMapping,2,err,error,*999)
     CASE DEFAULT
       localError="The solver type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))//" is invalid."
-      CALL FlagError(localError,err,error,*999)7
+      CALL FlagError(localError,err,error,*999)
     END SELECT
     solverEquations=>solver%solverEquations
          
@@ -5865,11 +6114,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: equationsLinearity,equationsTimeDependence,solverLinearity,solverTimeDependence
+    LOGICAL :: timeCompatible,linearityCompatible
     TYPE(EquationsType), POINTER :: equations
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
-    LOGICAL :: timeCompatible,linearityCompatible
     
     ENTERS("SolverEquations_EquationsSetAdd",err,error,*999)
 
@@ -5886,16 +6136,20 @@ CONTAINS
     timeCompatible=.TRUE.
     linearityCompatible=.TRUE.
     !Check solver equations and equations set time dependence is compatible
-    SELECT CASE(solverEquations%timeDependence)
+    CALL SolverEquations_TimeDependenceGet(solverEquations,solverTimeDependence,err,error,*999)
+    CALL SolverEquations_LinearityGet(solverEquations,solverLinearity,err,error,*999)
+    CALL Equations_TimeDependenceGet(equations,equationsTimeDependence,err,error,*999)
+    CALL Equations_LinearityGet(equations,equationsLinearity,err,error,*999)
+    SELECT CASE(solverTimeDependence)
     CASE(SOLVER_EQUATIONS_STATIC,SOLVER_EQUATIONS_QUASISTATIC)
-      SELECT CASE(equations%timeDependence)
+      SELECT CASE(equationsTimeDependence)
       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
         !OK
       CASE DEFAULT
         timeCompatible=.FALSE.
       END SELECT
     CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC)
-      SELECT CASE(equations%timeDependence)                  
+      SELECT CASE(equationsTimeDependence)                  
       CASE(EQUATIONS_STATIC)
         !OK for now, just to test!!!
       CASE(EQUATIONS_QUASISTATIC)
@@ -5908,7 +6162,7 @@ CONTAINS
         timeCompatible=.FALSE.
       END SELECT
     CASE(SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
-      SELECT CASE(equations%timeDependence)
+      SELECT CASE(equationsTimeDependence)
       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC)
         !Not implemented, this needs to be checked to see that it works
         !timeCompatible=.FALSE.
@@ -5922,28 +6176,27 @@ CONTAINS
       END SELECT
     CASE DEFAULT
       timeCompatible=.FALSE.
-      localError="Invalid time dependence for solver equations, "// &
-        & TRIM(NumberToVString(solverEquations%timeDependence,"*",err,error))//"."
+      localError="Invalid time dependence for solver equations, "//TRIM(NumberToVString(solverTimeDependence,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     IF(.NOT.timeCompatible) THEN
-      localError="Invalid equations set up. The time dependence of the equations set to add ("// &
-        & TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
-        & ") is not compatible with the solver equations time dependence ("// &
-        & TRIM(NumberToVString(solverEquations%timeDependence,"*",err,error))//")."
+      localError="Invalid equations set up. The time dependence of the equations set to add of "// &
+        & TRIM(NumberToVString(equationsTimeDependence,"*",err,error))// &
+        & " is not compatible with the solver equations time dependence of "// &
+        & TRIM(NumberToVString(solverTimeDependence,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     !Check solver equations and equations set linearity is compatible
-    SELECT CASE(solverEquations%linearity)
+    SELECT CASE(solverLinearity)
     CASE(SOLVER_EQUATIONS_LINEAR)
-      SELECT CASE(equations%linearity)
+      SELECT CASE(equationsLinearity)
       CASE(EQUATIONS_LINEAR)
         !OK
       CASE DEFAULT
         linearityCompatible=.FALSE.
       END SELECT
     CASE(SOLVER_EQUATIONS_NONLINEAR)
-      SELECT CASE(equations%linearity)
+      SELECT CASE(equationsLinearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR)
         !OK
       CASE DEFAULT
@@ -5951,15 +6204,14 @@ CONTAINS
       END SELECT
     CASE DEFAULT
       linearityCompatible=.FALSE.
-      localError="Invalid linearity for solver equations, "// &
-        & TRIM(NumberToVString(solverEquations%,linearity"*",err,error))//"."
+      localError="The solver equations linearity of "//TRIM(NumberToVString(solverLinearity,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     IF (.NOT.linearityCompatible) THEN
       localError="Invalid equations set up. The linearity of the equations set to add of "// &
-        & TRIM(NumberToVString(equations%linearity,"*",err,error))// &
+        & TRIM(NumberToVString(equationsLinearity,"*",err,error))// &
         & " is not compatible with the solver equations linearity of "// &
-        & TRIM(NumberToVString(solverEquations%linearity,"*",err,error))//"."
+        & TRIM(NumberToVString(solverLinearity,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(timeCompatible.AND.linearityCompatible) &
@@ -5989,7 +6241,7 @@ CONTAINS
 
     IF(ASSOCIATED(solverEquations)) THEN
       IF(ASSOCIATED(solverEquations%solverMapping)) CALL SolverMapping_Destroy(solverEquations%solverMapping,err,error,*999)
-      IF(ASSOCIATED(solverEquations%solverMatrices)) CALL SOLVER_MATRICES_DESTROY(solverEquations%solverMatrices,err,error,*999)
+      IF(ASSOCIATED(solverEquations%solverMatrices)) CALL SolverMatrices_Destroy(solverEquations%solverMatrices,err,error,*999)
       IF(ASSOCIATED(solverEquations%boundaryConditions)) CALL BoundaryConditions_Destroy(solverEquations%boundaryConditions, &
         & err,error,*999)
     ENDIF
@@ -6108,8 +6360,8 @@ CONTAINS
     CASE(SOLVER_EQUATIONS_NONLINEAR)
       solverEquations%linearity=SOLVER_EQUATIONS_NONLINEAR
     CASE DEFAULT
-      localError="The specified solver equations linearity type of "// &
-        & TRIM(NumberToVString(linearityType,"*",err,error))//" is invalid."
+      localError="The specified solver equations linearity type of "//TRIM(NumberToVString(linearityType,"*",err,error))// &
+        & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
@@ -6426,12 +6678,12 @@ CONTAINS
     CALL Solver_GeometricTransformationSolverGet(solver,geometricTransformationSolver,err,error,*999)
     
     geometricTransformationSolver%transformationMatrices=0.0_DP
-    DO incrementIdx=1,solver%geometricTransformationSolver%numberOfIncrements
-      DO i=1,SIZE(solver%geometricTransformationSolver%transformationMatrices,1)
-        solver%geometricTransformationSolver%transformationMatrices(i,i,incrementIdx)=1.0_DP
+    DO incrementIdx=1,geometricTransformationSolver%numberOfIncrements
+      DO i=1,SIZE(geometricTransformationSolver%transformationMatrices,1)
+        geometricTransformationSolver%transformationMatrices(i,i,incrementIdx)=1.0_DP
       ENDDO !i
     ENDDO !incrementIdx
-    IF(ALLOCATED(solver%geometricTransformationSolver%scalings)) DEALLOCATE(solver%geometricTransformationSolver%scalings)
+    IF(ALLOCATED(geometricTransformationSolver%scalings)) DEALLOCATE(geometricTransformationSolver%scalings)
         
     EXITS("Solver_GeometricTransformationClear")
     RETURN    
@@ -6454,7 +6706,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfGeoemtricComponents,i,j
+    INTEGER(INTG) :: numberOfGeometricComponents,i,j
     TYPE(FieldType), POINTER :: geometricField
     TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(GeometricTransformationSolverType), POINTER :: geometricTransformationSolver
@@ -6462,7 +6714,6 @@ CONTAINS
     ENTERS("Solver_GeometricTransformationFieldSet",err,error,*999)
     
     CALL Solver_AssertIsGeometricTransformation(solver,err,error,*999)
-    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
     NULLIFY(geometricTransformationSolver)
     CALL Solver_GeometricTransformationSolverGet(solver,geometricTransformationSolver,err,error,*999)
     NULLIFY(fieldVariable)
@@ -6470,24 +6721,24 @@ CONTAINS
     NULLIFY(geometricField)
     CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
     NULLIFY(geometricVariable)
-    CALL Field_VariableGet(field,FIELD_U_VARIABLE_TYPE,err,error,*999)
-    CALL FieldVarible_NumberOfComponentsGet(geometricVariable,numberOfGeometricComponents,err,error,*999)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfGeometricComponents,err,error,*999)
     IF(ALLOCATED(geometricTransformationSolver%transformationMatrices)) &
       & CALL FlagError("Transformation matrices are already allocated for the geometric transformation solver.", &
       & err,error,*999)
     IF(geometricTransformationSolver%arbitraryPath) THEN !Allocate memory for transformation matrix at each load increment if the transformation is arbitrary at each step
-      ALLOCATE(geometricTransformationSolver%transformationMatrices(numberOfGeoemtricComponents+1, &
-        & numberOfGeoemtricComponents+1,geometricTransformationSolver%numberOfIncrements),STAT=err)
+      ALLOCATE(geometricTransformationSolver%transformationMatrices(numberOfGeometricComponents+1, &
+        & numberOfGeometricComponents+1,geometricTransformationSolver%numberOfIncrements),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate transformation matrices for geometric transformation solver.",err,error,*999)
     ELSE !Only allocate 1 matrix if the transformation is uni-directional.
-      ALLOCATE(geometricTransformationSolver%transformationMatrices(numberOfGeoemtricComponents+1, &
-        & numberOfGeoemtricComponents+1,1),STAT=err)
+      ALLOCATE(geometricTransformationSolver%transformationMatrices(numberOfGeometricComponents+1, &
+        & numberOfGeometricComponents+1,1),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate transformation matrices for geometric transformation solver.",err,error,*999)
     ENDIF
     geometricTransformationSolver%transformationMatrices=0.0_DP
     ! Set all transformation matrices to be identity matrices
     DO i=1,SIZE(geometricTransformationSolver%transformationMatrices,3)
-      DO j=1,numberOfGeoemtricComponents+1
+      DO j=1,numberOfGeometricComponents+1
         geometricTransformationSolver%transformationMatrices(j,j,i)=1.0_DP
       ENDDO !j
     ENDDO !i
@@ -6752,8 +7003,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfGeometricComponents,i
+    INTEGER(INTG) :: numberOfGeometricComponents,i,variableType
     REAL(DP) :: transformationMatrix(4,4),translationMatrix(4,4)
+    TYPE(FieldType), POINTER :: field
     TYPE(GeometricTransformationSolverType), POINTER :: geometricTransformationSolver
     TYPE(VARYING_STRING) :: localError
 
@@ -6826,7 +7078,7 @@ CONTAINS
       geometricTransformationSolver%numberOfIncrements=0
       NULLIFY(geometricTransformationSolver%field)
       geometricTransformationSolver%fieldVariableType=0
-      NULLIFY(geometricTransformationSolver%fieldVariabl)
+      NULLIFY(geometricTransformationSolver%fieldVariable)
       DEALLOCATE(geometricTransformationSolver)
     ENDIF
         
@@ -6849,11 +7101,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr,loopType,maximumNumberOfIterations
     TYPE(SolversType), POINTER :: solvers
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ControlLoopWhileType), POINTER :: whileLoop
     TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
-    INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("Solver_GeometricTransformationInitialise",err,error,*998)
@@ -6872,22 +7124,21 @@ CONTAINS
     CALL Solver_SolversGet(solver,solvers,err,error,*999)
     NULLIFY(controlLoop)
     CALL Solvers_ControlLoopGet(solvers,controlLoop,err,error,*999)
-    IF(controlLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
-      NULLIFY(whileLoop)
-      CALL ControlLoop_WhileLoopGet(controlLoop,whileLoop,err,error,*999)
-      geometricTransformationSolver%numberOfIncrements=whileLoop%maximumNumberOfIterations
-    ELSE IF(controlLoop%loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
-      NULLIFY(loadIncrementLoop)
-      CALL ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*999)
-      geometricTransformationSolver%numberOfIncrements=loadIncrementLoop%maximumNumberOfIterations
+    CALL ControlLoop_LoopTypeGet(controlLoop,loopType,err,error,*999)
+    IF(loopType==CONTROL_WHILE_LOOP_TYPE) THEN
+      CALL ControlLoop_MaximmNumberOfIterationsGet(controlLoop,maximumNumberOfIterations,err,error,*999)
+      solver%geometricTransformationSolver%numberOfIncrements=maximumNumberOfIterations
+    ELSE IF(loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+      CALL ControlLoop_MaximmNumberOfIterationsGet(controlLoop,maximumNumberOfIterations,err,error,*999)
+      solver%geometricTransformationSolver%numberOfIncrements=maximumNumberOfIterations
     ELSE
       !For other loop types set number of increment to be 1  
-      geometricTransformationSolver%numberOfIncrements=1
+      solver%geometricTransformationSolver%numberOfIncrements=1
     ENDIF
     !Nullify field
-    NULLIFY(geometricTransformationSolver%field)
-    geometricTransformationSolver%fieldVariableType=0
-    NULLIFY(geometricTransformationSolver%fieldVariable)
+    NULLIFY(solver%geometricTransformationSolver%field)
+    solver%geometricTransformationSolver%fieldVariableType=0
+    NULLIFY(solver%geometricTransformationSolver%fieldVariable)
        
     EXITS("Solver_GeometricTransformationInitialise")
     RETURN
@@ -6910,23 +7161,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(SolverType), POINTER :: linkedNonlinearSolver
             
-    NULLIFY(cellMLSolver)
-    
-    ENTERS("Solver_NewtonCellMLEvaluatorCreate",err,error,*998)
+    ENTERS("Solver_NewtonCellMLEvaluatorCreate",err,error,*999)
 
-    IF(ASSOCIATED(cellMLSolver)) CALL FlagError("CellML solver is already associated.",err,error,*998)
+    IF(ASSOCIATED(cellMLSolver)) CALL FlagError("CellML solver is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     
     NULLIFY(nonlinearSolver)
-    IF(ASSOCIATED(solver%dynamicSolver)) THEN
+    NULLIFY(dynamicSolver)
+    CALL Solver_DynamicSolverExists(solver,dynamicSolver,err,error,*999)
+    IF(ASSOCIATED(dynamicSolver)) THEN
       NULLIFY(linkedNonlinearSolver)
-      CALL SolverDynamic_LinkedNonlinearSolver(solver%dynamicSolver,linkedNonlinearSolver,err,error,*999)
+      CALL SolverDynamic_LinkedNonlinearSolver(dynamicSolver,linkedNonlinearSolver,err,error,*999)
       CALL Solver_NonlinearSolverGet(linkedNonlinearSolver,nonlinearSolver,err,error,*999)
-     ELSE
+    ELSE
       CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
     ENDIF
     NULLIFY(newtonSolver)
@@ -6935,6 +7187,7 @@ CONTAINS
       & CALL FlagError("Newton solver CellML evaluator solver is already associated.",err,error,*999)
     ALLOCATE(newtonSolver%cellMLEvaluatorSolver,STAT=err)
     IF(err/=0) CALL FlagError("Cannot allocate CellML evaluator solver.",err,error,*999)
+    NULLIFY(cellMLSolver)
     CALL SolverNonlinearNewton_CellMLEvaluatorSolverGet(newtonSolver,cellMLSolver,err,error,*999)
     NULLIFY(cellMLSolver%solvers)
     CALL Solver_Initialise(cellMLSolver,err,error,*999)
@@ -7167,7 +7420,7 @@ CONTAINS
       IF(linkingSolver%solveType==SOLVER_NONLINEAR_TYPE) THEN
         NULLIFY(nonlinearSolver)
         CALL Solver_NonlinearSolverGet(linkingSolver,nonlinearSolver,err,error,*999)
-        CALL SolverNonlinear_LibraryTypeGet(nonlinearSolver,nonlinearLibraryType)
+        CALL SolverNonlinear_LibraryTypeGet(nonlinearSolver,nonlinearLibraryType,err,error,*999)
         linearSolver%linkedNewtonPetSCSolver=(nonlinearLibraryTYpe==SOLVER_PETSC_LIBRARY)
       ENDIF
     ENDIF
@@ -7253,7 +7506,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: groupCommunicator
+    INTEGER(INTG) :: groupCommunicator,numberOfMatrices,sparsityType,symmetryType
     TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
@@ -7287,40 +7540,42 @@ CONTAINS
         CALL Solver_SolverEquationsGet(linkingSolver,solverEquations,err,error,*999)
         NULLIFY(solverMatrices)
         CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-        solverEquations=>SOLVER%linkingSolver%solverEquations
+        solverEquations=>solver%linkingSolver%solverEquations
       ELSE
         !Set up solver matrices
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         !Create the solver matrices
         NULLIFY(solverMatrices)
-        CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
         CALL SolverMatrices_LibraryTypeSet(solverMatrices,directSolver%solverLibrary,err,error,*999)
-        SELECT CASE(solverEquations%sparsityType)
+        CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+        SELECT CASE(sparsityType)
         CASE(SOLVER_SPARSE_MATRICES)
-          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+          CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
         CASE(SOLVER_FULL_MATRICES)
-          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+          CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
         CASE DEFAULT
-          localError="The specified solver equations sparsity type of "// &
-            & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        SELECT CASE(solverEquations%symmetryType)
+        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+        SELECT CASE(symmetryType)
         CASE(SOLVER_SYMMETRIC_MATRICES)
           CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
         CASE(SOLVER_UNSYMMETRIC_MATRICES)
           CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
         CASE DEFAULT
-          localError="The specified solver equations symmetry type of "// &
-            & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))//" is invalid."
+          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       ENDIF
-      IF(solverMatrices%numberOfMatrices/=1) THEN
-        localError="The given number of solver matrices of "// &
-          & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
+      CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+      IF(numberOfMatrices/=1) THEN
+        localError="The given number of solver matrices of "//TRIM(NumberToVString(numberOfMatrices,"*",err,error))// &
           & " is invalid. There should only be one solver matrix for a linear direct solver."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -7335,16 +7590,17 @@ CONTAINS
         !Nothing else to do
       CASE(SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_PASTIX_LIBRARY,SOLVER_LAPACK_LIBRARY)
         !Set up solver through PETSc
-        CALL Petsc_KSPCreate(groupCommunicator,directSolver%ksp,err,error,*999)
+        CALL PETSc_KSPCreate(groupCommunicator,directSolver%ksp,err,error,*999)
         
         !Set any further KSP options from the command line options
-        CALL Petsc_KSPSetFromOptions(directSolver%ksp,err,error,*999)
+        CALL PETSc_KSPSetFromOptions(directSolver%ksp,err,error,*999)
         !Set the solver matrix to be the KSP matrix
         NULLIFY(petscMatrix)
         CALL DistributedMatrix_PetSCMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-        CALL Petsc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
+        CALL PETSc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
         !Check that the solver supports the matrix sparsity type
-        SELECT CASE(solverEquations%sparsityType)
+        CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+        SELECT CASE(sparsityType)
         CASE(SOLVER_FULL_MATRICES)
           SELECT CASE(directSolver%solverLibrary)
           CASE(SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_PASTIX_LIBRARY)
@@ -7357,25 +7613,29 @@ CONTAINS
             CALL FlagError("Solver library does not support sparse matrices. Please use full matrices "// &
               & "or select another solver library type for the linear direct solver.",err,error,*999)
           END SELECT
+        CASE DEFAULT
+          localError="The solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
         !Set the KSP type to preonly
-        CALL Petsc_KSPSetType(directSolver%ksp,PETSC_KSPPREONLY,err,error,*999)
+        CALL PETSc_KSPSetType(directSolver%ksp,PETSC_KSPPREONLY,err,error,*999)
         !Get the pre-conditioner
-        CALL Petsc_KSPGetPC(directSolver%ksp,directSolver%pc,err,error,*999)
+        CALL PETSc_KSPGetPC(directSolver%ksp,directSolver%pc,err,error,*999)
         !Set the PC type to LU
-        CALL Petsc_PCSetType(directSolver%pc,PETSC_PCLU,err,error,*999)
+        CALL PETSc_PCSetType(directSolver%pc,PETSC_PCLU,err,error,*999)
         SELECT CASE(directSolver%solverLibrary)
         CASE(SOLVER_MUMPS_LIBRARY)
           !Set the PC factorisation package to MUMPS
-          CALL Petsc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_MUMPS,err,error,*999)
+          CALL PETSc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_MUMPS,err,error,*999)
         CASE(SOLVER_SUPERLU_LIBRARY)
           !Set the PC factorisation package to SuperLU_DIST
-          CALL Petsc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_SUPERLU_DIST,err,error,*999)
+          CALL PETSc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_SUPERLU_DIST,err,error,*999)
         CASE(SOLVER_LAPACK_LIBRARY)
           CALL FlagError("LAPACK not available in this version of PETSc.",err,error,*999)
         CASE(SOLVER_PASTIX_LIBRARY)
           !Set the PC factorisation package to PaStiX
-          CALL Petsc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_PASTIX,err,error,*999)
+          CALL PETSc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_PASTIX,err,error,*999)
         END SELECT
       CASE(SOLVER_SPOOLES_LIBRARY)
         CALL FlagError("Not implemented.",err,error,*999)
@@ -7386,8 +7646,7 @@ CONTAINS
       CASE(SOLVER_ESSL_LIBRARY)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The solver library type of "// &
-          & TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))//" is invalid."
+        localError="The solver library type of "//TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(SOLVER_DIRECT_CHOLESKY)
@@ -7513,8 +7772,7 @@ CONTAINS
       CASE(SOLVER_PASTIX_LIBRARY)
         directSolver%solverLibrary=SOLVER_PASTIX_LIBRARY
       CASE DEFAULT
-        localError="The specified solver library type of "// &
-          & TRIM(NumberToVString(solverLibraryType,"*",err,error))// &
+        localError="The specified solver library type of "//TRIM(NumberToVString(solverLibraryType,"*",err,error))// &
           & " is invalid for a LU direct linear solver."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -7523,13 +7781,10 @@ CONTAINS
     CASE(SOLVER_DIRECT_SVD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The direct linear solver type of "// &
-        & TRIM(NumberToVString(directSolver%directSolverType,"*",err,error))//" is invalid."
+      localError="The direct linear solver type of "//TRIM(NumberToVString(directSolver%directSolverType,"*",err,error))// &
+        & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-  ELSE
-    
-    ENDIF
         
     EXITS("SolverLinearDirect_LibraryTypeSet")
     RETURN
@@ -7560,12 +7815,12 @@ CONTAINS
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(SOLVER_MUMPS_LIBRARY)
         !Call MUMPS through PETSc
-        CALL Petsc_PCFinalise(directSolver%pc,err,error,*999)
-        CALL Petsc_KSPFinalise(directSolver%ksp,err,error,*999)
+        CALL PETSc_PCFinalise(directSolver%pc,err,error,*999)
+        CALL PETSc_KSPFinalise(directSolver%ksp,err,error,*999)
       CASE(SOLVER_SUPERLU_LIBRARY)
         !Call SuperLU through PETSc
-        CALL Petsc_PCFinalise(directSolver%pc,err,error,*999)
-        CALL Petsc_KSPFinalise(directSolver%ksp,err,error,*999)
+        CALL PETSc_PCFinalise(directSolver%pc,err,error,*999)
+        CALL PETSc_KSPFinalise(directSolver%ksp,err,error,*999)
       CASE(SOLVER_SPOOLES_LIBRARY)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(SOLVER_UMFPACK_LIBRARY)
@@ -7576,15 +7831,14 @@ CONTAINS
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(SOLVER_LAPACK_LIBRARY)
         !Call SuperLU through PETSc
-        CALL Petsc_PCFinalise(directSolver%pc,err,error,*999)
-        CALL Petsc_KSPFinalise(directSolver%ksp,err,error,*999)
+        CALL PETSc_PCFinalise(directSolver%pc,err,error,*999)
+        CALL PETSc_KSPFinalise(directSolver%ksp,err,error,*999)
       CASE(SOLVER_PASTIX_LIBRARY)
         !Call PaStiX through PETSc
-        CALL Petsc_PCFinalise(directSolver%pc,err,error,*999)
-        CALL Petsc_KSPFinalise(directSolver%ksp,err,error,*999)
+        CALL PETSc_PCFinalise(directSolver%pc,err,error,*999)
+        CALL PETSc_KSPFinalise(directSolver%ksp,err,error,*999)
       CASE DEFAULT
-        localError="The solver library type of "// &
-          & TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))// &
+        localError="The solver library type of "//TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))// &
           & " is invalid for a LU direct linear solver."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -7619,8 +7873,8 @@ CONTAINS
     !Default to MUMPS library
     directSolver%solverLibrary=SOLVER_MUMPS_LIBRARY
     !Call MUMPS through PETSc
-    CALL Petsc_PCInitialise(directSolver%pc,err,error,*999)
-    CALL Petsc_KSPInitialise(directSolver%ksp,err,error,*999)
+    CALL PETSc_PCInitialise(directSolver%pc,err,error,*999)
+    CALL PETSc_KSPInitialise(directSolver%ksp,err,error,*999)
        
     EXITS("SolverLinearDirect_LUInitialise")
     RETURN
@@ -7646,6 +7900,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: numberOfMatrices
     TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
@@ -7668,7 +7923,7 @@ CONTAINS
     SELECT CASE(directSolver%directSolverType)
     CASE(SOLVER_DIRECT_LU)
       SELECT CASE(directSolver%solverLibrary)
-      CASE(SOLVER_MUMPS_LIBRARY)
+      CASE(SOLVER_MUMPS_LIBRARY)        
         solverEquations=>solver%solverEquations
         NULLIFY(solverMatrices)
         IF(ASSOCIATED(solverEquations)) THEN
@@ -7677,17 +7932,15 @@ CONTAINS
         ELSE
           !No solver equations. See if there are solver equations in the linking solver.
           linkingSolver=>solver%linkingSolver
-          IF(ASSOCIATED(linkingSolver)) THEN
-            NULLIFY(linkingSolverEquations)
-            CALL Solver_SolverEquationsGet(linkingSolver,linkingSolverEquations,err,error,*999)
-            CALL SolverEquations_SolverMatricesGet(linkingSolverEquations,solverMatrices,err,error,*999)
-           ELSE
-            CALL FlagError("Solver matrices could not be found for solver or linking solver.",err,error,*999)
-          ENDIF
+          IF(.NOT.ASSOCIATED(linkingSolver)) &
+            & CALL FlagError("Solver matrices could not be found for solver or linking solver.",err,error,*999)
+          NULLIFY(linkingSolverEquations)
+          CALL Solver_SolverEquationsGet(linkingSolver,linkingSolverEquations,err,error,*999)
+          CALL SolverEquations_SolverMatricesGet(linkingSolverEquations,solverMatrices,err,error,*999)
         ENDIF
-        IF(solverMatrices%numberOfMatrices/=1) THEN
-          localError="The given number of solver matrices of "// &
-            & TRIM(NumberToVstring(solverMatrices%numberOfMatrices,"*",err,error))// &
+        CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+        IF(numberOfMatrices/=1) THEN
+          localError="The given number of solver matrices of "//TRIM(NumberToVstring(numberOfMatrices,"*",err,error))// &
             & " is invalid. There should only be one solver matrix for a linear direct solver."
           CALL FlagError(localError,err,error,*999)
         ENDIF
@@ -7698,14 +7951,13 @@ CONTAINS
         NULLIFY(petscMatrix)
         CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
         !Call MatGetFactor to create matrix petscFactoredMatrix from preconditioner context
-        CALL Petsc_PCFactorSetUpMatSolverPackage(directSolver%pc,err,error,*999)
-        CALL Petsc_PCFactorGetMatrix(directSolver%pc,petscFactoredMatrix,err,error,*999)
+        CALL PETSc_PCFactorSetUpMatSolverPackage(directSolver%pc,err,error,*999)
+        CALL PETSc_PCFactorGetMatrix(directSolver%pc,petscFactoredMatrix,err,error,*999)
         !Set ICNTL(icntl)=ivalue
-        CALL Petsc_MatMumpsSetIcntl(petscFactoredMatrix,icntl,ivalue,err,error,*999)
+        CALL PETSc_MatMumpsSetIcntl(petscFactoredMatrix,icntl,ivalue,err,error,*999)
       CASE DEFAULT
-        localError="The solver library type of "// &
-          & TRIM(NumberToVstring(directSolver%solverLibrary,"*",err,error))//" is invalid. "// &
-          & "Use MUMPS library when calling Solver_MumpsSetIcntl"
+        localError="The solver library type of "//TRIM(NumberToVstring(directSolver%solverLibrary,"*",err,error))// &
+          & " is invalid. Use the MUMPS library when calling Solver_MumpsSetIcntl"
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(SOLVER_DIRECT_CHOLESKY)
@@ -7713,8 +7965,7 @@ CONTAINS
     CASE(SOLVER_DIRECT_SVD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The direct solver type of "// &
-        & TRIM(NumberToVstring(directSolver%directSolverType,"*",err,error))// &
+      localError="The direct solver type of "//TRIM(NumberToVstring(directSolver%directSolverType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7742,15 +7993,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(LinearSolverType), POINTER :: linearSolver
+    INTEGER(INTG) :: numberOfMatrices
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(LinearDirectSolverType), POINTER :: directSolver
+    TYPE(LinearSolverType), POINTER :: linearSolver
+    TYPE(PetscMatType) :: petscFactoredMatrix !<The factored matrix obtained by calling MatGetFactor() from PETSc-MUMPS interface 
     TYPE(SolverType), POINTER :: linkingSolver
     TYPE(SolverEquationsType), POINTER :: linkingSolverEquations,solverEquations
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
-    TYPE(PetscMatType) :: petscFactoredMatrix !<The factored matrix obtained by calling MatGetFactor() from PETSc-MUMPS interface 
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Solver_MumpsSetCntl",err,error,*999)
@@ -7773,17 +8025,15 @@ CONTAINS
         ELSE
           !No solver equations. See if there are solver equations in the linking solver.
           linkingSolver=>solver%linkingSolver
-          IF(ASSOCIATED(linkingSolver)) THEN
-            NULLIFY(linkingSolverEquations)
-            CALL Solver_SolverEquationsGet(linkingSolver,linkingSolverEquations,err,error,*999)
-            CALL SolverEquations_SolverMatricesGet(linkingSolverEquations,solverMatrices,err,error,*999)
-           ELSE
-            CALL FlagError("Solver matrices could not be found for solver or linking solver.",err,error,*999)
-          ENDIF
+          IF(.NOT.ASSOCIATED(linkingSolver)) &
+            & CALL FlagError("Solver matrices could not be found for solver or linking solver.",err,error,*999)
+          NULLIFY(linkingSolverEquations)
+          CALL Solver_SolverEquationsGet(linkingSolver,linkingSolverEquations,err,error,*999)
+          CALL SolverEquations_SolverMatricesGet(linkingSolverEquations,solverMatrices,err,error,*999)
         ENDIF
-        IF(solverMatrices%numberOfMatrices/=1) THEN
-          localError="The given number of solver matrices of "// &
-            & TRIM(NumberToVstring(solverMatrices%numberOfMatrices,"*",err,error))// &
+        CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+        IF(numberOfMatrices/=1) THEN
+          localError="The given number of solver matrices of "//TRIM(NumberToVstring(numberOfMatrices,"*",err,error))// &
             & " is invalid. There should only be one solver matrix for a linear direct solver."
           CALL FlagError(localError,err,error,*999)
         ENDIF
@@ -7794,14 +8044,13 @@ CONTAINS
         NULLIFY(petscMatrix)
         CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
         !Call MatGetFactor to create matrix petscFactoredMatrix from preconditioner context
-        CALL Petsc_PCFactorSetUpMatSolverPackage(directSolver%pc,err,error,*999)
-        CALL Petsc_PCFactorGetMatrix(directSolver%pc,petscFactoredMatrix,err,error,*999)
+        CALL PETSc_PCFactorSetUpMatSolverPackage(directSolver%pc,err,error,*999)
+        CALL PETSc_PCFactorGetMatrix(directSolver%pc,petscFactoredMatrix,err,error,*999)
         !Set CNTL(icntl)=val
-        CALL Petsc_MatMumpsSetCntl(petscFactoredMatrix,icntl,val,err,error,*999)
+        CALL PETSc_MatMumpsSetCntl(petscFactoredMatrix,icntl,val,err,error,*999)
       CASE DEFAULT
-        localError="The solver library type of "// &
-          & TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))//" is invalid. "// &
-          & "Use MUMPS library when calling Solver_MumpsSetCntl"
+        localError="The solver library type of "//TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))// &
+          & " is invalid. Use the MUMPS library when calling Solver_MumpsSetCntl"
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(SOLVER_DIRECT_CHOLESKY)
@@ -7809,8 +8058,7 @@ CONTAINS
     CASE(SOLVER_DIRECT_SVD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The direct solver type of "// &
-        & TRIM(NumberToVString(directSolver%directSolverType,"*",err,error))// &
+      localError="The direct solver type of "//TRIM(NumberToVString(directSolver%directSolverType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7834,9 +8082,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: globalRow,localRowIdx,storageType
+    INTEGER(INTG) :: globalRow,localRowIdx,numberOfMatrices,numberOfRows,storageType
     REAL(DP) :: solverValue,matrixValue
     REAL(DP), POINTER :: rhsData(:)
+    LOGICAL :: updateMatrix
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(DistributedVectorType), POINTER :: rhsVector,solverVector
@@ -7861,14 +8110,15 @@ CONTAINS
     CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    IF(solverMatrices%numberOfMatrices/=1) THEN
-      localError="The number of solver matrices of "// &
-        & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
+    CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    IF(numberOfMatrices/=1) THEN
+      localError="The number of solver matrices of "//TRIM(NumberToVString(numberOfMatrices,"*",err,error))// &
         & " is invalid. There should only be one solver matrix for a linear direct solver."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     NULLIFY(solverMatrix)
     CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
+    CALL SolverMatrix_UpdateMatrixGet(solverMatrix,updateMatrix,err,error,*999)
     NULLIFY(distributedMatrix)
     CALL SolverMatrices_SolverDistributedMatrixGet(solverMatrices,1,distributedMatrix,err,error,*999)
     NULLIFY(rhsVector)
@@ -7880,13 +8130,15 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       NULLIFY(rowDOFsMapping)
-      CALL SolverMapping_RowDOFSMappingGet(solverMapping,rowDOFSMapping,err,errror,*999)
+      CALL SolverMapping_RowDOFSMappingGet(solverMapping,rowDOFsMapping,err,error,*999)
       CALL DistributedVector_DataGet(rhsVector,rhsData,err,error,*999)
-      DO localRowIdx=1,solverMapping%numberOfRows
-        globalRow=rowDOFsMapping%localToGlobalMap(localRowIdx)
+      CALL SolverMapping_NumberOfRowsGet(solverMapping,numberOfRows,err,error,*999)
+      DO localRowIdx=1,numberOfRows
+        CALL DomainMapping_LocalToGlobalGet(rowDOFsMapping,localRowIdx,globalRow,err,error,*999)
         CALL DistributedMatrix_ValuesGet(distributedMatrix,localRowIdx,globalRow,matrixValue,err,error,*999)
         IF(ABS(matrixValue)<=ZERO_TOLERANCE) THEN
-          localError="The linear solver matrix has a zero pivot at local row "//TRIM(NumberToVString(localRowIdx,"*",err,error))//"."
+          localError="The linear solver matrix has a zero pivot at local row "// &
+            & TRIM(NumberToVString(localRowIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
         solverValue=rhsData(localRowIdx)/matrixValue
@@ -7907,13 +8159,13 @@ CONTAINS
           CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
           NULLIFY(petscMatrix)
           CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-          IF(solverMatrix%updateMatrix) THEN
-            CALL Petsc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
+          IF(updateMatrix) THEN
+            CALL PETSc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
           ELSE
-            CALL Petsc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
+            CALL PETSc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
           ENDIF
           !Solve the linear system
-          CALL Petsc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
+          CALL PETSc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
         CASE(SOLVER_SUPERLU_LIBRARY)
           !Call SuperLU through PETSc
           NULLIFY(rhsPETScVector)
@@ -7922,13 +8174,13 @@ CONTAINS
           CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
           NULLIFY(petscMatrix)
           CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-          IF(solverMatrix%updateMatrix) THEN
-            CALL Petsc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
+          IF(updateMatrix) THEN
+            CALL PETSc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
           ELSE
-            CALL Petsc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
+            CALL PETSc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
           ENDIF
           !Solve the linear system
-          CALL Petsc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
+          CALL PETSc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
         CASE(SOLVER_SPOOLES_LIBRARY)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(SOLVER_UMFPACK_LIBRARY)
@@ -7944,14 +8196,13 @@ CONTAINS
           NULLIFY(solverPETScVector)
           CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
           NULLIFY(petscMatrix)
-          CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-          IF(solverMatrix%updateMatrix) THEN
-            CALL Petsc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
+          IF(updateMatrix) THEN
+            CALL PETSc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
           ELSE
-            CALL Petsc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
+            CALL PETSc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
           ENDIF
           !Solve the linear system
-          CALL Petsc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
+          CALL PETSc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
         CASE(SOLVER_PASTIX_LIBRARY)
           !Call PASTIX through PETSc
           NULLIFY(rhsPETScVector)
@@ -7960,13 +8211,13 @@ CONTAINS
           CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
           NULLIFY(petscMatrix)
           CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-          IF(solverMatrix%updateMatrix) THEN
-            CALL Petsc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
+          IF(updateMatrix) THEN
+            CALL PETSc_KSPSetOperators(directSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
           ELSE
-            CALL Petsc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
+            CALL PETSc_PCSetReusePreconditioner(directSolver%pc,.TRUE.,err,error,*999)
           ENDIF
           !Solve the linear system
-          CALL Petsc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
+          CALL PETSc_KSPSolve(directSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999) 
         CASE DEFAULT
           localError="The solver library type of "//TRIM(NumberToVString(directSolver%solverLibrary,"*",err,error))// &
             & " is invalid for a LU direct linear solver."
@@ -8222,8 +8473,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: groupCommunicator
+    INTEGER(INTG) :: groupCommunicator,sparsityType,symmetryType
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
+    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(NewtonLinesearchSolverType), POINTER :: newtonLinesearchSolver
@@ -8258,36 +8510,38 @@ CONTAINS
       NULLIFY(linkingSolver)
       CALL Solver_LinkingSolverExists(solver,linkingSolver,err,error,*999)
       IF(ASSOCIATED(linkingSolver)) THEN
-        CALL Solver_SolverEquationsGet(linkingSolver,solverEqutions,err,error,*999)
+        CALL Solver_SolverEquationsGet(linkingSolver,solverEquations,err,error,*999)
         NULLIFY(solverMatrices)
         CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       ELSE
         !Create the solver matrices and vectors
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMatrices)
-        CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
         CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
-        SELECT CASE(solverEquations%sparsityType)
+        CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+        SELECT CASE(sparsityType)
         CASE(SOLVER_SPARSE_MATRICES)
-          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+          CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
         CASE(SOLVER_FULL_MATRICES)
-          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+          CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
         CASE DEFAULT
-          localError="The specified solver equations sparsity type of "// &
-            & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        SELECT CASE(solverEquations%symmetryType)
+        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+        SELECT CASE(symmetryType)
         CASE(SOLVER_SYMMETRIC_MATRICES)
           CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
         CASE(SOLVER_UNSYMMETRIC_MATRICES)
           CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
         CASE DEFAULT
-          localError="The specified solver equations symmetry type of "// &
-            & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))//" is invalid."
+          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       ENDIF
       !Create the PETSc KSP solver
       IF(linearSolver%linkedNewtonPetSCSolver) THEN
@@ -8301,11 +8555,11 @@ CONTAINS
           CASE(SOLVER_NEWTON_LINESEARCH)
             NULLIFY(newtonLinesearchSolver)
             CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,newtonLinesearchSolver,err,error,*999)
-            CALL Petsc_SnesGetKSP(newtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SnesGetKSP(newtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE(SOLVER_NEWTON_TRUSTREGION)
             NULLIFY(newtonTrustregionSolver)
             CALL SolverNonlinearNewton_TrustregionSolverGet(newtonSolver,newtonTrustregionSolver,err,error,*999)
-            CALL Petsc_SnesGetKSP(newtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SnesGetKSP(newtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE DEFAULT
             localError="The Newton solve type of "// &
               & TRIM(NumberToVString(newtonSolver%newtonSolveType,"*",err,error))//"is invalid."
@@ -8318,11 +8572,11 @@ CONTAINS
           CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
             NULLIFY(quasiNewtonLinesearchSolver)
             CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
-            CALL Petsc_SnesGetKSP(quasiNewtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SnesGetKSP(quasiNewtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE(SOLVER_QUASI_NEWTON_TRUSTREGION)
             NULLIFY(quasiNewtonTrustregionSolver)
             CALL SolverNonlinearQuasiNewton_TrustregionSolverGet(quasiNewtonSolver,quasiNewtonTrustregionSolver,err,error,*999)
-            CALL Petsc_SnesGetKSP(quasiNewtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SnesGetKSP(quasiNewtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE DEFAULT
             localError="The Quasi-Newton solve type of "// &
               & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonSolveType,"*",err,error))//"is invalid."
@@ -8330,59 +8584,59 @@ CONTAINS
           END SELECT
         ENDIF
       ELSE
-        CALL Petsc_KSPCreate(groupCommunicator,iterativeSolver%ksp,err,error,*999)
+        CALL PETSc_KSPCreate(groupCommunicator,iterativeSolver%ksp,err,error,*999)
       ENDIF
       !Set the iterative solver type
       SELECT CASE(iterativeSolver%iterativeSolverType)
       CASE(SOLVER_ITERATIVE_RICHARDSON)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPRICHARDSON,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPRICHARDSON,err,error,*999)
       CASE(SOLVER_ITERATIVE_CHEBYSHEV)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCHEBYSHEV,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCHEBYSHEV,err,error,*999)
       CASE(SOLVER_ITERATIVE_CONJUGATE_GRADIENT)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCG,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCG,err,error,*999)
       CASE(SOLVER_ITERATIVE_BICONJUGATE_GRADIENT)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPBICG,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPBICG,err,error,*999)
       CASE(SOLVER_ITERATIVE_GMRES)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPGMRES,err,error,*999)
-        CALL Petsc_KSPGMRESSetRestart(iterativeSolver%ksp,iterativeSolver%gmresRestart,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPGMRES,err,error,*999)
+        CALL PETSc_KSPGMRESSetRestart(iterativeSolver%ksp,iterativeSolver%gmresRestart,err,error,*999)
       CASE(SOLVER_ITERATIVE_BiCGSTAB)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPBCGS,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPBCGS,err,error,*999)
       CASE(SOLVER_ITERATIVE_CONJGRAD_SQUARED)
-        CALL Petsc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCGS,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCGS,err,error,*999)
       CASE DEFAULT
         localError="The iterative solver type of "// &
           & TRIM(NumberToVString(iterativeSolver%iterativeSolverType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       !Get the pre-conditioner
-      CALL Petsc_KSPGetPC(iterativeSolver%ksp,iterativeSolver%pc,err,error,*999)
+      CALL PETSc_KSPGetPC(iterativeSolver%ksp,iterativeSolver%pc,err,error,*999)
       !Set the pre-conditioner type
       SELECT CASE(iterativeSolver%iterativePreconditionerType)
       CASE(SOLVER_ITERATIVE_NO_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCNONE,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCNONE,err,error,*999)
       CASE(SOLVER_ITERATIVE_JACOBI_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCJACOBI,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCJACOBI,err,error,*999)
       CASE(SOLVER_ITERATIVE_BLOCK_JACOBI_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCBJACOBI,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCBJACOBI,err,error,*999)
       CASE(SOLVER_ITERATIVE_SOR_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCSOR,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCSOR,err,error,*999)
       CASE(SOLVER_ITERATIVE_INCOMPLETE_CHOLESKY_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCICC,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCICC,err,error,*999)
       CASE(SOLVER_ITERATIVE_INCOMPLETE_LU_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCILU,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCILU,err,error,*999)
       CASE(SOLVER_ITERATIVE_ADDITIVE_SCHWARZ_PRECONDITIONER)
-        CALL Petsc_PCSetType(iterativeSolver%pc,PETSC_PCASM,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCASM,err,error,*999)
       CASE DEFAULT
         localError="The iterative preconditioner type of "// &
           & TRIM(NumberToVString(iterativeSolver%iterativePreconditionerType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       !Set the tolerances for the KSP solver
-      CALL Petsc_KSPSetTolerances(iterativeSolver%ksp,iterativeSolver%relativeTolerance, &
+      CALL PETSc_KSPSetTolerances(iterativeSolver%ksp,iterativeSolver%relativeTolerance, &
         & iterativeSolver%absoluteTolerance,iterativeSolver%divergenceTolerance, &
         & iterativeSolver%maximumNumberOfIterations,err,error,*999)
       !Set any further KSP options from the command line options
-      CALL Petsc_KSPSetFromOptions(iterativeSolver%ksp,err,error,*999)
+      CALL PETSc_KSPSetFromOptions(iterativeSolver%ksp,err,error,*999)
       !Set the solver matrix to be the KSP matrix
       IF(solverMatrices%numberOfMatrices/=1) THEN
         localError="The number of solver matrices of "// &
@@ -8396,7 +8650,7 @@ CONTAINS
       CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,distributedMatrix,err,error,*999)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      CALL Petsc_KSPSetOperators(iterativeSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
+      CALL PETSc_KSPSetOperators(iterativeSolver%ksp,petscMatrix%matrix,petscMatrix%matrix,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(iterativeSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -8423,6 +8677,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(LinearSolverType), POINTER :: linearSolver
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Solver_LinearIterativeDivergenceToleranceSet",err,error,*999)
@@ -8469,8 +8725,8 @@ CONTAINS
       linearSolver=>iterativeSolver%linearSolver
       IF(ASSOCIATED(linearSolver)) THEN
         IF(.NOT.linearSolver%linkedNewtonPetSCSolver) THEN
-          CALL Petsc_PCFinalise(iterativeSolver%pc,err,error,*999)
-          CALL Petsc_KSPFinalise(iterativeSolver%ksp,err,error,*999)
+          CALL PETSc_PCFinalise(iterativeSolver%pc,err,error,*999)
+          CALL PETSc_KSPFinalise(iterativeSolver%ksp,err,error,*999)
         ENDIF
       ENDIF
       DEALLOCATE(iterativeSolver)
@@ -8505,7 +8761,7 @@ CONTAINS
     CALL Solver_AssertIsLinear(solver,err,error,*999)
     NULLIFY(linearSolver)
     CALL Solver_LinearSolverGet(solver,linearSolver,err,error,*999)
-    CALL SolverLinear_AssertIsIterative(solver,err,error,*999)
+    CALL SolverLinear_AssertIsIterative(linearSolver,err,error,*999)
     NULLIFY(iterativeSolver)
     CALL SolverLinear_IterativeSolverGet(linearSolver,iterativeSolver,err,error,*999)
     IF(iterativeSolver%iterativeSolverType/=SOLVER_ITERATIVE_GMRES) &
@@ -8558,8 +8814,8 @@ CONTAINS
     linearSolver%iterativeSolver%absoluteTolerance=1.0E-10_DP
     linearSolver%iterativeSolver%divergenceTolerance=1.0E5_DP
     linearSolver%iterativeSolver%gmresRestart=30
-    CALL Petsc_PCInitialise(linearSolver%iterativeSolver%pc,err,error,*999)
-    CALL Petsc_KSPInitialise(linearSolver%iterativeSolver%ksp,err,error,*999)
+    CALL PETSc_PCInitialise(linearSolver%iterativeSolver%pc,err,error,*999)
+    CALL PETSc_KSPInitialise(linearSolver%iterativeSolver%ksp,err,error,*999)
         
     EXITS("SolverLinear_IterativeInitialise")
     RETURN
@@ -8681,6 +8937,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(LinearSolverType), POINTER :: linearSolver
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Solver_LinearIterativeMaximumIterationsSet",err,error,*999)
@@ -8718,6 +8976,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(LinearSolverType), POINTER :: linearSolver
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Solver_LinearIterativePreconditionerTypeSet",err,error,*999)
@@ -8780,6 +9040,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(LinearSolverType), POINTER :: linearSolver
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Solver_LinearIterativeRelativeToleranceSet",err,error,*999)
@@ -8862,10 +9124,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: convergedReason,globalRow,localRow,numberOfIterations,storageType
+    INTEGER(INTG) :: convergedReason,globalRow,localRow,localRowIdx,numberOfIterations,numberOfMatrices,numberOfRows,storageType
     REAL(DP) :: residualNorm,solverValue,matrixValue
     REAL(DP), POINTER :: rhsData(:)
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedVectorType), POINTER :: rhsVector,solverVector
+    TYPE(DistributedVectorPETScType), POINTER :: rhsPETScVector,solverPETScVector
     TYPE(DomainMappingType), POINTER :: rowDOFsMapping
     TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(SolverType), POINTER :: solver
@@ -8886,9 +9150,9 @@ CONTAINS
     CALL Solver_SolverEquations(solver,solverEquations,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    IF(solverMatrices%numberOfMatrices/=1) THEN
-      localError="The number of solver matrices of "// &
-        & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
+    CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    IF(numberOfMatrices/=1) THEN
+      localError="The number of solver matrices of "//TRIM(NumberToVString(numberOfMatrices,"*",err,error))// &
         & " is invalid. There should only be one solver matrix for a linear direct solver."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -8904,11 +9168,12 @@ CONTAINS
     IF(storageType==DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      CALL SolverMapping_NumberOfRowsGet(solverMapping,numberOfRows,err,error,*999)
       NULLIFY(rowDOFsMapping)
-      CALL SolverMapping_RowDOFSMappingGet(solverMapping,rowDOFSMapping,err,errror,*999)
+      CALL SolverMapping_RowDOFSMappingGet(solverMapping,rowDOFSMapping,err,error,*999)
       CALL DistributedVector_DataGet(rhsVector,rhsData,err,error,*999)
-      DO localRowIdx=1,solverMapping%numberOfRows
-        globalRow=rowDOFsMapping%localToGlobalMap(localRowIdx)
+      DO localRowIdx=1,numberOfRows
+        CALL DomainMapping_LocalToGlobalGet(rowDOFsMapping,localRowIdx,globalRow,,err,error,*999)
         CALL DistributedMatrix_ValuesGet(distributedMatrix,localRowIdx,globalRow,matrixValue,err,error,*999)
         IF(ABS(matrixValue)<=ZERO_TOLERANCE) THEN
           localError="The linear solver matrix has a zero pivot at local row "// &
@@ -8933,12 +9198,12 @@ CONTAINS
           !Zero the solution vector
           CALL DistributedVector_AllValuesSet(solverVector,0.0_DP,err,error,*999)
           !Tell PETSc that the solution vector is zero
-          CALL Petsc_KSPSetInitialGuessNonZero(iterativeSolver%ksp,.FALSE.,err,error,*999)
+          CALL PETSc_KSPSetInitialGuessNonZero(iterativeSolver%ksp,.FALSE.,err,error,*999)
         CASE(SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD)
           !Make sure the solver vector contains the current dependent field values
           CALL Solver_SolutionUpdate(solver,err,error,*999)
           !Tell PETSc that the solution vector is nonzero
-          CALL Petsc_KSPSetInitialGuessNonZero(iterativeSolver%ksp,.TRUE.,err,error,*999)
+          CALL PETSc_KSPSetInitialGuessNonZero(iterativeSolver%ksp,.TRUE.,err,error,*999)
         CASE(SOLVER_SOLUTION_INITIALISE_NO_CHANGE)
           !Do nothing
         CASE DEFAULT
@@ -8948,13 +9213,13 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT                              
        !Set the tolerances for the KSP solver in case user has updated them
-        CALL Petsc_KSPSetTolerances(iterativeSolver%ksp,iterativeSolver%relativeTolerance, &
+        CALL PETSc_KSPSetTolerances(iterativeSolver%ksp,iterativeSolver%relativeTolerance, &
           & iterativeSolver%absoluteTolerance,iterativeSolver%divergenceTolerance, &
           & iterativeSolver%maximumNumberOfIterations,err,error,*999)
         !Solver the linear system                             
-        CALL Petsc_KSPSolve(iterativeSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
+        CALL PETSc_KSPSolve(iterativeSolver%ksp,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
         !Check for convergence
-        CALL Petsc_KSPGetConvergedReason(iterativeSolver%ksp,convergedReason,err,error,*999)
+        CALL PETSc_KSPGetConvergedReason(iterativeSolver%ksp,convergedReason,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_KSP_DIVERGED_NULL)
           CALL FlagWarning("Linear iterative solver did not converge. PETSc diverged null.",err,error,*999)
@@ -8979,9 +9244,9 @@ CONTAINS
           !Output solution characteristics
           CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteString(GENERAL_OUTPUT_TYPE,"Linear iterative solver parameters:",err,error,*999)
-          CALL Petsc_KSPGetIterationNumber(iterativeSolver%ksp,numberOfIterations,err,error,*999)
+          CALL PETSc_KSPGetIterationNumber(iterativeSolver%ksp,numberOfIterations,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",numberOfIterations,err,error,*999)
-          CALL Petsc_KSPGetResidualNorm(iterativeSolver%ksp,residualNorm,err,error,*999)
+          CALL PETSc_KSPGetResidualNorm(iterativeSolver%ksp,residualNorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final residual norm = ",residualNorm,err,error,*999)
           SELECT CASE(convergedReason)
           CASE(PETSC_KSP_CONVERGED_RTOL)
@@ -9136,10 +9401,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: solverMatrixIdx
+    INTEGER(INTG) :: numberOfMatrices,solverMatrixIdx
+    TYPE(DistributedVectorType), POINTER :: distributedSolverVector
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverLinear_Solve",err,error,*999)
@@ -9171,18 +9438,21 @@ CONTAINS
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",solverMatrices%numberOfMatrices,err,error,*999)
-      DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
+      CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",numberOfMatrices,err,error,*999)
+      DO solverMatrixIdx=1,numberOfMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solverMatrixIdx,err,error,*999)
-        CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,solverMatrix%solverVector,err,error,*999)
+        NULLIFY(distributedSolverVector)
+        CALL SolverMatrix_DistributedSolverVectorGet(solverMatrix,distributedSolverVector,err,error,*999)
+        CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,distributedSolverVector,err,error,*999)
       ENDDO !solverMatrixIdx
     ENDIF
         
     IF(.NOT.ASSOCIATED(solver%linkingSolver)) THEN
       !Update depenent field with solution
-      CALL SOLVER_VARIABLES_FIELD_UPDATE(solver,err,error,*999)
+      CALL Solver_VariablesFieldUpdate(solver,err,error,*999)
     ENDIF
         
     EXITS("SolverLinear_Solve")
@@ -9237,7 +9507,7 @@ CONTAINS
           & TRIM(NumberToVString(solver%linearSolver%linearSolveType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      SOLVER%linearSolver%linearSolveType=linearSolveType
+      solver%linearSolver%linearSolveType=linearSolveType
     ENDIF
     
     EXITS("Solver_LinearTypeSet")
@@ -9266,68 +9536,86 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dynamicVariableType,equationsMatrixIdx,equationsRowNumber,equationsSetIdx,linearVariableType, &
-      & rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,solverRowIdx,solverRowNumber, &
-      & solverMatrixIdx,residualVariableDOF,variableBoundaryCondition,variableType,equationsMatrixIdx2, &
-      & variableGlobalDOF,variableDOF,equationsMatrixNumber,dependentVariableType, &
-      & equationsColumnNumber,dirichletIdx, &
-      & interfaceConditionIdx,interfaceMatrixIdx,interfaceColumnNumber, &
-      & interfaceVariableType,numberOfInterfaceMatrices, inputIteration
-    INTEGER(INTG) :: currentIteration,outputIteration
+    INTEGER(INTG) :: currentIteration,dampingMatrixNumber,dependentVariableType,dirichletIdx,dynamicVariableType, &
+      & equationsColumnNumber,equationsMatrixIdx,equationsMatrixIdx2,equationsMatrixNumber,equationsRowNumber, &
+      & equationsSetIdx,inputIteration,interfaceColumnNumber,interfaceConditionIdx,interfaceMatrixIdx,interfaceVariableType, &
+      & jacobianMatrixIdx,linearMatrixIdx,linearVariableType,massMatrixNumber,numberOfEquationsSets,numberOfInterfaceConditions, &
+      & numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfRows, &
+      & numberOfSolverMatrices,numberOfSources,outputIteration,residualIdx,residualVariableDOF,rhsBoundaryCondition,rhsGlobalDOF, &
+      & rhsVariableDOF,rhsVariableType,solverRowIdx,solverRowNumber,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
+      & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableBoundaryCondition,variableDOF, &
+      & variableGlobalDOF,variablePositionIdx,variableType
+    INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:),equationsRowToRHSDOFMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
-    REAL(DP) :: dampingMatrixCoefficient,deltaT,dofValue,dynamicValue,firstUpdateFactor,residualValue, &
-      & linearValue,linearValueSum,massMatrixCoefficient,nonlinearValue,rhsValue,rowCouplingCoefficient, &
-      & secondUpdateFactor,sourceValue,stiffnessMatrixCoefficient,VALUEQ,jacobianMatrixCoefficient,alphaValue, &
-      & dynamicDisplacementFactor,dynamicVelocityFactor,dynamicAccelerationFactor, &
-      & currentFunctionFactor,previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor
-    REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
-    REAL(DP) :: matrixCoefficients(2)=[0.0_DP,0.0_DP]
+    REAL(DP) :: alphaValue,currentFunctionFactor,currentTime,dampingMatrixCoefficient,deltaT,dofValue, &
+      & dynamicAccelerationFactor,dynamicDisplacementFactor,dynamicValue,dynamicVelocityFactor,firstUpdateFactor, &
+      & jacobianMatrixCoefficient,linearValue,linearValueSum,massMatrixCoefficient,matrixCoefficient, &
+      & matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue,previousFunctionFactor,previous2FunctionFactor, &
+      & previous3FunctionFactor,residualCoefficient,residualValue,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
+      & sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
       & previous3ResidualParameters(:), previousRHSParameters(:),previous2RHSParameters(:),previous3RHSParameters(:), &
       & rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
-    LOGICAL :: hasIntegratedValues,interfaceMatrixDynamic
+    LOGICAL :: hasIntegratedValues,hasTranspose,interfaceMatrixDynamic,updateRHS,updateSolverMatrix
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: rhsBoundaryConditions,dependentBoundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: rhsBoundaryConditions,dependentBoundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(DistributedMatrixType), POINTER :: previousSolverDistributedMatrix,solverDistributedMatrix
-    TYPE(DistributedVectorType), POINTER :: dependentVector,dynamicTempVector,equationsRHSVector,distributedSourceVector, &
-      & linearTempVector,predictedMeanAccelerationVector,predictedMeanDisplacementVector,predictedMeanVelocityVector, &
-      & solverRHSVector,solverResidualVector,residualVector,incrementalVector,interfaceTempVector, &
-      & lagrangeVector
-    TYPE(DomainMappingType), POINTER :: residualDomainMapping,rhsDomainMapping,variableDomainMapping
+    TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,linearDistributedMatrix,massDistributedMatrix, &
+      & previousSolverDistributedMatrix,solverDistributedMatrix,stiffnessDistributedMatrix
+    TYPE(DistributedVectorType), POINTER :: currentRHSVector,currentSourceVector,dependentVector,distributedResidualVector, &
+      & distributedSourceVector, &
+      & dynamicTempVector,equationsRHSVector,incrementalVector,interfaceTempVector,lagrangeVector,linearTempVector, &
+      & nonlinearTempVector,predictedMeanAccelerationVector,predictedMeanDisplacementVector,predictedMeanVelocityVector, &
+      & previousResidualVector,previous2ResidualVector,previous3ResidualVector,previousRHSVector,previous2RHSVector, &
+      & previous3RHSVector,previousSourceVector,previous2SourceVector,previous3SourceVector,solverRHSVector, &
+      & solverResidualVector,sourcesTempVector
+    TYPE(DomainMappingType), POINTER :: lhsDomainMapping,residualDomainMapping,rhsDomainMapping,variableDomainMapping
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix,equationsMatrix
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: linearMatrixToSolverMatrixMap
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,linearVariable,rhsVariable,interfaceVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lhsVariable,linearVariable,rhsVariable,interfaceVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMappingRHSType), POINTER :: interfaceRHSMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap
     TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector
-    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceToSolverMap
-    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianToSolverMap
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
+    TYPE(SolverType), POINTER :: linkingSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariablesType), POINTER :: solverVariablesList
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
@@ -9342,10 +9630,12 @@ CONTAINS
       CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
     ELSE IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
       NULLIFY(linkingSolver)
-      CALL Solver_LinkingSolverGet(solver,linkingSolver)
+      CALL Solver_LinkingSolverGet(solver,linkingSolver,err,error,*999)
       CALL Solver_DynamicSolverGet(linkingSolver,dynamicSolver,err,error,*999)
     ELSE
-      CALL FlagError("Dynamic solver solve type is not associated.",err,error,*999)
+      localError="The solver solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))// &
+        & " is invalid for for dynamic assembly."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 
     NULLIFY(controlLoop)
@@ -9396,10 +9686,12 @@ CONTAINS
     
     NULLIFY(solverEquations)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-    NULLIFY(solverMapping)
-    CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    NULLIFY(solverMapping)
+    CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
 
     NULLIFY(previousSolverDistributedMatrix)
     
@@ -9419,21 +9711,22 @@ CONTAINS
         ENDIF
         !Just deal with one solver matrix for now. 
         solverMatrixIdx=1
-        IF(solverMapping%numberOfSolverMatrices/=solverMatrixIdx) &
-          & CALL FlagError("Invalid number of solver matrices.",err,error,*999)
+        CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
+        IF(numberOfSolverMatrices/=solverMatrixIdx) CALL FlagError("Invalid number of solver matrices.",err,error,*999)
 
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
-        IF(solverMatrix%updateMatrix) THEN
+        CALL SolverMatrix_UpdateMatrixGet(solverMatrix,updateSolverMatrix,err,error,*999)
+        IF(updateSolverMatrix) THEN
           NULLIFY(solverDistributedMatrix)
-          CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,distributedMatrix,err,error,*999)    
+          CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)    
           !Initialise matrix to zero
           CALL DistributedMatrix_AllValuesSet(solverDistributedMatrix,0.0_DP,err,error,*999)
           !Get the check data
           NULLIFY(matrixCheckData)
           CALL DistributedMatrix_DataGet(solverDistributedMatrix,matrixCheckData,err,error,*999)
           !Loop over the equations sets
-          DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+          DO equationsSetIdx=1,numberOfEquationsSets
             NULLIFY(equationsSet)
             CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
             NULLIFY(equations)
@@ -9444,106 +9737,154 @@ CONTAINS
             CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
             NULLIFY(vectorMatrices)
             CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-            dynamicMapping=>vectorMapping%dynamicMapping
+            NULLIFY(equationsSetToSolverMatricesMap)
+            CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+              & err,error,*999)
+            NULLIFY(equationsMatricesToSolverMatrixMap)
+            CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
+              & equationsMatricesToSolverMatrixMap,err,error,*999)
+            NULLIFY(dynamicMapping)
+            CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
             IF(ASSOCIATED(dynamicMapping)) THEN
               NULLIFY(dynamicMatrices)
               CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-              IF(dynamicSolver%solverInitialised) THEN                      
-                IF(dynamicMapping%stiffnessMatrixNumber/=0) THEN
+              IF(dynamicSolver%solverInitialised) THEN
+                CALL EquationsMappingDynamic_StiffnessMatrixNumberGet(dynamicMapping,stiffnessMatrixNumber,err,error,*999)
+                IF(stiffnessMatrixNumber/=0) THEN
                   NULLIFY(stiffnessMatrix)
-                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%stiffnessMatrixNumber, &
-                    & stiffnessMatrix,err,error,*999)
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,stiffnessMatrixCoefficient,stiffnessMatrix, &
+                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix, &
+                    & err,error,*999)
+                  CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
+                  matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
+                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,stiffnessMatrix, &
                     & err,error,*999)
                 ENDIF
-                IF(dynamicMapping%dampingMatrixNumber/=0) THEN
+                CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
+                IF(dampingMatrixNumber/=0) THEN
                   NULLIFY(dampingMatrix)
-                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%dampingMatrixNumber, &
-                    & dampingMatrix,err,error,*999)
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,dampingMatrixCoefficient,dampingMatrix, &
+                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix, &
                     & err,error,*999)
+                  CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
+                  matrixCoefficient=matrixCoefficient*dampingMatrixCoefficient
+                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,dampingMatrix,err,error,*999)
                 ENDIF
-                IF(dynamicMapping%massMatrixNumber/=0) THEN
+                CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
+                IF(massMatrixNumber/=0) THEN
                   NULLIFY(massMatrix)
-                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber, &
-                    & massMatrix,err,error,*999)
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,massMatrixCoefficient,massMatrix, &
-                    & err,error,*999)
+                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+                  CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
+                  matrixCoefficient=matrixCoefficient*massMatrixCoefficient
+                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,massMatrix,err,error,*999)
                 ENDIF
               ELSE
                 IF(dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND. &
                   & dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  IF(dynamicMapping%massMatrixNumber==0) &
-                    & CALL FlagError("Can not perform initial solve with no mass matrix.",err,error,*999)
+                  CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
+                  IF(massMatrixNumber==0) CALL FlagError("Can not perform initial solve with no mass matrix.",err,error,*999)
                   NULLIFY(massMatrix)
-                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber, &
-                    & massMatrix,err,error,*999)
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,-1.0_DP,massMatrix,err,error,*999)
+                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+                  CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
+                  matrixCoefficient=-1.0_DP*matrixCoefficient
+                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,massMatrix,err,error,*999)
                 ELSE
-                  IF(dynamicMapping%dampingMatrixNumber==0) &
-                    & CALL FlagError("Can not perform initial solve with no damping matrix.",err,error,*999)
+                  CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
+                  IF(dampingMatrixNumber==0) CALL FlagError("Can not perform initial solve with no damping matrix.",err,error,*999)
                   NULLIFY(dampingMatrix)
-                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%dampingMatrixNumber, &
-                    & dampingMatrix,err,error,*999)
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,-1.0_DP,dampingMatrix,err,error,*999)
+                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+                  CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
+                  matrixCoefficient=-1.0_DP*matrixCoefficient
+                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,dampingMatrix,err,error,*999)
                 ENDIF
               ENDIF !dynamic solver initialised
             ENDIF
-!!TODO: What if we had and equations set that contained a linear matrix that was mapped to the dynamic variable??? It should be added in like a K matrix?
-            NULLIFY(jacobianToSolverMap)
-            NULLIFY(jacobianMatrix)
-            nonlinearMapping=>vectorMapping%nonlinearMapping
+            NULLIFY(nonlinearMapping)
+            CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
             IF(ASSOCIATED(nonlinearMapping)) THEN
-              IF(selectionType==solverMatrices_ALL.OR. &
+              IF(selectionType==SOLVER_MATRICES_ALL.OR. &
                 & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
                 & selectionType==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
-!!TODO: What about equations set that do not have the residual variable the same as the dynamic variable???                
                 !Now set the values from the equations Jacobian
-                CALL SolverMapping_SolverNumberOfJacobianMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+                CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap, &
                   & numberOfJacobianMatrices,err,error,*999)
                 DO jacobianMatrixIdx=1,numberOfJacobianMatrices
-                  NULLIFY(jacobianToSolverMap)
-                  CALL SolverMapping_JacobianToSolverMapGet(solverMapping,equationsSetIndex,jacobianMatrixIdx,solverMatrixIdx, &
-                    & jacobianToSolverMap,err,error,*999)
+                  NULLIFY(jacobianMatrixToSolverMatrixMap)
+                  CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                    & jacobianMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
                   NULLIFY(jacobianMatrix)
-                  CALL SolverMappingJacobianToSolverMap_JacobianMatrixGet(jacobianToSolverMap,jacobianMatrix,err,error,*999)
-                  CALL SolverMatrix_JacobianMatrixAdd(solverMatrix,equationsSetIdx,jacobianMatrixCoefficient,jacobianMatrix, &
-                    & err,error,*999)
-                ENDDO !equationsMatrixIdx
+                  CALL SolverMappingJMToSMMap_JacobianMatrixGet(jacobianMatrixToSolverMatrixMap,jacobianMatrix,err,error,*999)
+                  CALL JacobianMatrix_MatrixCoefficientGet(jacobianMatrix,matrixCoefficient,err,error,*999)
+                  matrixCoefficient=matrixCoefficient*jacobianMatrixCoefficient
+                  CALL SolverMatrix_JacobianMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,jacobianMatrix,err,error,*999)
+                ENDDO !jacobianMatrixIdx
               ENDIF
+            ENDIF
+            NULLIFY(linearMapping)
+            CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+            IF(ASSOCIATED(linearMapping)) THEN
+              CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap, &
+                & numberOfLinearMatrices,err,error,*999)
+              DO linearMatrixIdx=1,numberOfLinearMatrices
+                NULLIFY(linearMatrixToSolverMatrixMap)
+                CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                  & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)
+                NULLIFY(linearMatrix)
+                CALL SolverMappingEMToSMMap_EquationsMatrix(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
+                CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
+                CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,linearMatrix,err,error,*999)
+              ENDDO !equationsMatrixIdx
             ENDIF
           ENDDO !equationsSetIdx
           !Loop over any interface conditions
-          DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+          DO interfaceConditionIdx=1,numberOfInterfaceConditions
+            NULLIFY(interfaceConditionToSolverMatricesMap)
+            CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+              & interfaceConditionToSolverMatricesMap,err,error,*999)
+            NULLIFY(interfaceMatricesToSolverMatrixMap)
+            CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
+              & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
             !Loop over the interface matrices
-            CALL SolverMapping_SolverNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+            CALL SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet(interfaceMatricesToSolverMatrixMap, &
               & numberOfInterfaceMatrices,err,error,*999)
             DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
-              NULLIFY(interfaceToSolverMap)
-              CALL SolverMapping_InterfaceToSolverMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx,solverMatrixIdx, &
-                & interfaceToSolverMap,err,error,*999)
+              NULLIFY(interfaceMatrixToSolverMatrixMap)
+              CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
+                & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*999)
               NULLIFY(interfaceMatrix)
-              CALL SolverMappingInterfaceToSolverMap_InterfaceMatrixGet(interfaceToSolverMap,interfaceMatrix,err,error,*999)
-              SELECT CASE(interfaceMatrix%interfaceMatrixTimeDependenceType)
+              CALL SolverMappingIMToSMMap_InterfaceMatrixGet(interfaceMatrixToSolverMatrixMap,interfaceMatrix,err,error,*999)
+              CALL InterfaceMatrix_MatrixCoefficientGet(interfaceMatrix,matrixCoefficients(1),err,error,*999)
+              CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceMatrix,timeDependenceType,err,error,*999)
+              SELECT CASE(timeDependenceType)
               CASE(INTERFACE_MATRIX_STATIC)
-                matrixCoefficients(1)=stiffnessMatrixCoefficient
+                matrixCoefficients(1)=matrixCoefficients(1)*stiffnessMatrixCoefficient
               CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
-                matrixCoefficients(1)=dampingMatrixCoefficient
+                matrixCoefficients(1)=matrixCoefficients(1)*dampingMatrixCoefficient
               CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
-                matrixCoefficients(1)=massMatrixCoefficient
+                matrixCoefficients(1)=matrixCoefficients(1)*massMatrixCoefficient
               CASE DEFAULT
-                CALL FlagError("Not implemented.",Err,Error,*999)
-              END SELECT
-              IF(interfaceMatrix%hasTranspose) THEN
-                SELECT CASE(interfaceMatrix%interfaceMatrixTransposeTimeDependenceType)
+                localError="The interface matrix time dependence type of "// &
+                  & TRIM(NumberToVString(timeDependenceType,"*",err,error))//" is invalid for interface matrix index "// &
+                  & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//" of interface condition index "// &
+                  & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT              
+              CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+              IF(hasTranspose) THEN
+                CALL InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,matrixCoefficients(2),err,error,*999)
+                CALL InterfaceMatrix_TransposeTimeDependenceTypeGet(interfaceMatrix,transposeTimeDependenceType,err,error,*999)
+                SELECT CASE(transposeTimeDependenceType)
                 CASE(INTERFACE_MATRIX_STATIC)
-                  matrixCoefficients(2)=stiffnessMatrixCoefficient
+                  matrixCoefficients(2)=matrixCoefficients(2)*stiffnessMatrixCoefficient
                 CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
-                  matrixCoefficients(2)=dampingMatrixCoefficient
+                  matrixCoefficients(2)=matrixCoefficients(2)*dampingMatrixCoefficient
                 CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
-                  matrixCoefficients(2)=massMatrixCoefficient
+                  matrixCoefficients(2)=matrixCoefficients(2)*massMatrixCoefficient
                 CASE DEFAULT
-                  CALL FlagError("Not implemented.",Err,Error,*999)
+                  localError="The interface matrix transpose time dependence type of "// &
+                    & TRIM(NumberToVString(transposeTimeDependenceType,"*",err,error))// &
+                    & " is invalid for interface matrix index "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+                    & " of interface condition index "//TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
                 END SELECT
               ELSE
                 matrixCoefficients(2)=0.0_DP
@@ -9567,8 +9908,10 @@ CONTAINS
           !Restore check data
           CALL DistributedMatrix_DataRestore(solverDistributedMatrix,matrixCheckData,err,error,*999)
         ENDIF !Update matrix
+        
         IF(ASSOCIATED(previousSolverDistributedMatrix)) &
           & CALL DistributedMatrix_UpdateFinish(previousSolverDistributedMatrix,err,error,*999)
+        
         IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
           CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
           CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -9579,7 +9922,7 @@ CONTAINS
           CALL Profiling_TimingsOutput(1,"Solver matrices assembly",userElapsed,systemElapsed,err,error,*999)
         ENDIF
       ENDIF
-    ENDIF
+    ENDIF !Calculate solver matrix
 
     NULLIFY(solverRHSVector)
     IF(selectionType==SOLVER_MATRICES_ALL.OR. &
@@ -9593,7 +9936,9 @@ CONTAINS
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
-      IF(solverMatrices%updateRHSVector) THEN
+      
+      CALL SolverMatrices_UpdateRHSGet(solverMatrices,updateRHS,err,error,*999)
+      IF(updateRHS) THEN
         CALL SolverMatrices_RHSDistributedVectorGet(solverMatrices,solverRHSVector,err,error,*999)
         !Initialise the RHS to zero
         CALL DistributedVector_AllValuesSet(solverRHSVector,0.0_DP,err,error,*999)          
@@ -9601,7 +9946,7 @@ CONTAINS
         NULLIFY(solverRHSCheckData)
         CALL DistributedVector_DataGet(solverRHSVector,solverRHSCheckData,err,error,*999)             
         !Loop over the equations sets
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+        DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           NULLIFY(dependentField)
@@ -9614,78 +9959,101 @@ CONTAINS
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+          NULLIFY(lhsMapping)
+          CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+          NULLIFY(lhsVariable)
+          CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+          NULLIFY(lhsDomainMapping)
+          CALL FieldVariable_DomainMappingGet(lhsVariable,lhsDomainMapping,err,error,*999)
+          CALL EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*999)
+          CALL EquationsMappingLHS_TotalNumberOfRowsGet(lhsMapping,totalNumberOfRows,err,error,*999)
+          
           interfaceMatrixDynamic=.FALSE.
-          dynamicMapping=>vectorMapping%dynamicMapping
+          NULLIFY(dynamicTempVector)
+          NULLIFY(dynamicMapping)
+          CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
           IF(ASSOCIATED(dynamicMapping)) THEN
-            dynamicVariableType=dynamicMapping%dynamicVariableType
             !Calculate the dynamic contributions
             NULLIFY(dynamicVariable)
             CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
+            CALL FieldVariable_VariableTypeGet(dynamicVariable,dynamicVariableType,err,error,*999)
             NULLIFY(dynamicMatrices)
             CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-            dynamicTempVector=>dynamicMatrices%tempVector
+            CALL EquationsMatricesDynamic_TempDistributedVectorGet(dynamicMatrices,dynamicTempVector,err,error,*999)
             !Initialise the dynamic temporary vector to zero
             CALL DistributedVector_AllValuesSet(dynamicTempVector,0.0_DP,err,error,*999)
-            IF(dynamicMapping%stiffnessMatrixNumber/=0) THEN
+            CALL EquationsMappingDynamic_StiffnessMatrixNumberGet(dynamicMapping,stiffnessMatrixNumber,err,error,*999)
+            IF(stiffnessMatrixNumber/=0) THEN
               NULLIFY(stiffnessMatrix)
-              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%stiffnessMatrixNumber, &
-                & stiffnessMatrix,err,error,*999)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix, &
+                & err,error,*999)
+              NULLIFY(stiffnessDistributedMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
               NULLIFY(predictedMeanDisplacementVector)
-              CALL Field_ParameterSetVectorGet(dependentField,dynamicVariableType, &
-                & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,predictedMeanDisplacementVector, &
-                & err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,stiffnessMatrix%matrix, &
-                & .FALSE.,predictedMeanDisplacementVector,dynamicTempVector,err,error,*999)                
+              CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
+                & predictedMeanDisplacementVector,err,error,*999)              
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                & stiffnessDistributedMatrix,.FALSE.,predictedMeanDisplacementVector,dynamicTempVector,err,error,*999)         
             ENDIF
-            IF(dynamicMapping%dampingMatrixNumber/=0.AND. &
-              & dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+            CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
+            IF(dampingMatrixNumber/=0.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
               NULLIFY(dampingMatrix)
-              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%dampingMatrixNumber, &
-                & dampingMatrix,err,error,*999)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+              NULLIFY(dampingDistributedMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
               NULLIFY(predictedMeanVelocityVector)
-              CALL Field_ParameterSetVectorGet(dependentField,dynamicVariableType, &
-                & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,predictedMeanVelocityVector, &
-                & err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,dampingMatrix%matrix, &
-                & .FALSE.,predictedMeanVelocityVector,dynamicTempVector,err,error,*999)
+              CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
+                & predictedMeanVelocityVector,err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                & dampingDistributedMatrix,.FALSE.,predictedMeanVelocityVector,dynamicTempVector,err,error,*999)
             ENDIF
-            IF(dynamicMapping%massMatrixNumber/=0.AND. &
-              & dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
+            IF(massMatrixNumber/=0.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
               NULLIFY(massMatrix)
-              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber, &
-                & massMatrix,err,error,*999)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+              NULLIFY(massDistributedMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
               NULLIFY(predictedMeanAccelerationVector)
-              CALL Field_ParameterSetVectorGet(dependentField,dynamicVariableType, &
-                & FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,predictedMeanAccelerationVector, &
-                & err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,massMatrix%matrix, &
-                & .FALSE.,predictedMeanAccelerationVector,dynamicTempVector,err,error,*999)
+              CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+                & predictedMeanAccelerationVector,err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                & massDistributedMatrix,.FALSE.,predictedMeanAccelerationVector,dynamicTempVector,err,error,*999)
             ENDIF
             !Work out if there are any interface matrices mapped to the dynamic variable.
-            interfConditionLoop: DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+            CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+            interfConditionLoop: DO interfaceConditionIdx=1,numberOfInterfaceConditions
               NULLIFY(interfaceCondition)
               CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+              NULLIFY(interfaceConditionToSolverMatricesMap)
+              CALL SolverMapping_InterfaceConditionsToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+                & interfaceConditionToSolverMatricesMap,err,error,*999)
+              NULLIFY(interfaceMatricesToSolverMatrixMap)
+              CALL SolverMappingICSToSMMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
+                & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
               NULLIFY(interfaceEquations)
               CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
               NULLIFY(interfaceMapping)
               CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
               NULLIFY(interfaceMatrices)
               CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-              CALL SolverMapping_SolverNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+              CALL SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet(interfaceMatricesToSolverMatrixMap, &
                 & numberOfInterfaceMatrices,err,error,*999)
               interfaceMatrixLoop: DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
-                NULLIFY(interfaceToSolverMap)
-                CALL SolverMapping_InterfaceToSolverMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
-                  & solverMatrixIdx,interfaceToSolverMap,err,error,*999)
+                NULLIFY(interfaceMatrixToSolverMatrixMap)
+                CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
+                  & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*999)
                 NULLIFY(interfaceMatrix)
-                CALL SolverMappingInterfaceToSolverMap_InterfaceMatrixGet(interfaceToSolverMap,interfaceMatrix,err,error,*999)
-                IF(interfaceMatrix%hasTranspose) THEN
-                  dependentVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%VARIABLE
-                  IF(.NOT.ASSOCIATED(dependentVariable)) THEN
-                    localError="The interface dependent variable is not associated for interface matrix number "// &
-                      & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
-                    CALL FlagError(localError,err,error,*999)
-                  ENDIF
+                CALL SolverMappingIMToSMMap_InterfaceMatrixGet(interfaceMatrixToSolverMatrixMap,interfaceMatrix,err,error,*999)
+                CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+                IF(hasTranspose) THEN
+                  NULLIFY(interfaceMatrixToVarMap)
+                  CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,interfaceMatrixIdx, &
+                    & interfaceMatrixToVarMap,err,error,*999)
+                  NULLIFY(dependentVariable)
+                  CALL InterfaceMappingIMToVarMap_VariableGet(interfaceMatrixToVarMap,dependentVariable,err,error,*999)
                   IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
                     interfaceMatrixDynamic=.TRUE.
                     EXIT interfConditionLoop
@@ -9693,119 +10061,218 @@ CONTAINS
                 ENDIF
                ENDDO interfaceMatrixLoop !interfaceMatrixIdx
             ENDDO interfConditionLoop !interfaceConditionIdx
-          ENDIF
-          nonlinearMapping=>vectorMapping%nonlinearMapping
+          ENDIF !dynamic mapping
+          
+          NULLIFY(nonlinearMapping)
+          CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
           IF(ASSOCIATED(nonlinearMapping)) THEN
-            !Default to FIELD_U_VARIABLE_TYPE
-            dynamicVariableType=FIELD_U_VARIABLE_TYPE
-            !Get the nonlinear vector contribute to the RHS values if nonlinear solve
-            IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN 
-              NULLIFY(previousResidualParameters)
-              CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-                & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,previousResidualParameters,err,error,*999)
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                NULLIFY(previous2ResidualParameters)
-                CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-                  & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,previous2ResidualParameters,err,error,*999)
+            NULLIFY(nonlinearMatrices)
+            CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+            NULLIFY(nonlinearTempVector)
+            CALL EquationsMatricesNonlinear_DistributedTempVectorGet(nonlinearMatrices,nonlinearTempVector,err,error,*999)
+            CALL DistributedVector_AllValuesSet(nonlinearTempVector,0.0_DP,err,error,*999)
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+            DO residualIdx=1,numberOfResiduals
+              NULLIFY(residualMapping)
+              CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+              CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
+              NULLIFY(residualVector)
+              CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+              !Get the nonlinear vector contribute to the RHS values if nonlinear solve
+              IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN 
+                NULLIFY(previousResidualVector)
+                CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+                  & previousResidualVector,err,error,*999)
+                residualCoefficient=residualCoefficient*previousFunctionFactor
+                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                  & residualCoefficient,previousResidualVector,err,error,*999)
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                  NULLIFY(previous2ResidualVector)
+                  CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                    & previous2ResidualVector,err,error,*999)
+                  residualCoefficient=residualCoefficient*previous2FunctionFactor
+                  CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                    & residualCoefficient,previous2ResidualVector,err,error,*999)
+                  IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                    NULLIFY(previous3ResidualVector)
+                    CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                      & previous3ResidualVector,err,error,*999)
+                    residualCoefficient=residualCoefficient*previous3FunctionFactor
+                    CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                      & residualCoefficient,previous3ResidualVector,err,error,*999)
+                  ENDIF
+                ENDIF
               ENDIF
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                NULLIFY(previous3ResidualParameters)
-                CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-                  & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,previous3ResidualParameters,err,error,*999)
-              ENDIF
-            ENDIF
-          ENDIF
-          !Calculate the contributions from any linear matrices 
-          linearMapping=>vectorMapping%linearMapping
+            ENDDO !residualIdx
+          ENDIF !nonlinear mapping
+          
+          !Calculate the contributions from any linear matrices
+          NULLIFY(linearTempVector)
+          NULLIFY(linearMapping)
+          CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
           IF(ASSOCIATED(linearMapping)) THEN
             NULLIFY(linearMatrices)
             CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-            DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+            CALL EquationsMatricesLinear_DistributedTempVectorGet(linearMatrices,linearTempVector,err,error,*999)
+            CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+            DO equationsMatrixIdx=1,numberOfLinearMatrices
               NULLIFY(linearMatrix)
               CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
-              linearVariableType=linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%variableType                
-              linearVariable=>linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%variable
-              IF(ASSOCIATED(linearVariable)) THEN
-!!TODO: Need to work out if the linear variable is a a dynamic variable (in which case it gets added to the stiffness matrix) or
-!!if it is not a dynamic variable (and thus by definition doesn't change with time) in which case it goes to the RHS. 
-                linearTempVector=>linearMatrix%tempVector
+              NULLIFY(linearVariable)
+              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
+              CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+                & err,error,*999)
+              IF(variablePositionIdx==0) THEN
+                !Linear matrix variable is not on the LHS so take the matrix times vector over to the RHS.
+                NULLIFY(linearDistributedMatrix)
+                CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
+                CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                NULLIFY(linearTempVector)              
+                CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
                 !Initialise the linear temporary vector to zero
                 CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)                  
                 NULLIFY(dependentVector)
-                CALL Field_ParameterSetVectorGet(dependentField,linearVariableType, &
-                  & FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                  & 1.0_DP,linearMatrix%matrix,.FALSE.,dependentVector,linearTempVector,err,error,*999)
-              ELSE
-                CALL FlagError("Linear variable is not associated.",err,error,*999)
+                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                  & linearDistributedMatrix,.FALSE.,dependentVector,linearTempVector,err,error,*999)
               ENDIF
             ENDDO !equationsMatrixIdx
-          ENDIF
-          sourcesMapping=>vectorMapping%sourcesMapping
+          ENDIF !linear mapping
+
+          !Add in any source vectors
+          NULLIFY(sourcesTempVector)
+          NULLIFY(sourcesMapping)
+          CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
           IF(ASSOCIATED(sourcesMapping)) THEN
-            NULLIFY(sourceVector)
-!!TODO: can source vectors change with time. If so then they need to have previous function factors applied. 
-            CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,1,sourceVector,err,error,*999)
-            distributedSourceVector=>sourceVector%vector
-          ENDIF
-          rhsMapping=>vectorMapping%rhsMapping
-          IF(ASSOCIATED(rhsMapping)) THEN
-            rhsVariableType=rhsMapping%rhsVariableType
-            boundaryConditions=>solverEquations%boundaryConditions
-            IF(.NOT.ASSOCIATED(boundaryConditions)) &
-              & CALL FlagError("Equations set boundary conditions is not associated.",err,error,*999)
-!!TODO: what if the equations set doesn't have a RHS vector??? Will be sorted once LHS mapping is implemented.
-            rhsVariableType=rhsMapping%rhsVariableType
-            rhsVariable=>rhsMapping%rhsVariable
-            rhsDomainMapping=>rhsVariable%domainMapping
-            CALL Field_ParameterSetCreated(rhsVariable%field,rhsVariableType, &
-              & FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues,err,error,*999)
-            NULLIFY(rhsBoundaryConditions)
-            CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
-            IF(.NOT.ASSOCIATED(rhsBoundaryConditions)) &
-              & CALL FlagError("RHS boundary conditions variable is not associated.",err,error,*999)
-            !Update RHS field by integrating any point Neumann conditions
-            CALL BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*999)
-            !Get values and previous values
-            NULLIFY(currentValuesVector)
-            CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-              FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999)
-            NULLIFY(previousValuesVector)
-            CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-              FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector,err,error,*999)
-            NULLIFY(rhsParameters)
-            CALL Field_ParameterSetDataGet(dependentField,rhsVariableType, &
-              & FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
-            NULLIFY(previousRHSParameters)
-            CALL Field_ParameterSetDataGet(dependentField,rhsVariableType, &
-              & FIELD_PREVIOUS_VALUES_SET_TYPE,previousRHSParameters,err,error,*999)
-            IF(hasIntegratedValues) THEN
-              NULLIFY(rhsIntegratedParameters)
-              CALL Field_ParameterSetDataGet(dependentField,rhsVariableType, &
-                & FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters,err,error,*999)                
-            ENDIF
-            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-              NULLIFY(previousVelocityVector)
-              CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-                FIELD_PREVIOUS_VELOCITY_SET_TYPE,previousVelocityVector,err,error,*999)
-              NULLIFY(previous2RHSParameters)
-              CALL Field_ParameterSetDataGet(dependentField,rhsVariableType, &
-                & FIELD_PREVIOUS2_VALUES_SET_TYPE,previous2RHSParameters,err,error,*999)
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                NULLIFY(previousAccelerationVector)
-                CALL Field_ParameterSetDataGet(dependentField,dynamicVariableType, &
-                  FIELD_PREVIOUS_ACCELERATION_SET_TYPE,previousAccelerationVector,err,error,*999)
-                NULLIFY(previous3RHSParameters)
-                CALL Field_ParameterSetDataGet(dependentField,rhsVariableType, &
-                  & FIELD_PREVIOUS3_VALUES_SET_TYPE,previous3RHSParameters,err,error,*999)
+            NULLIFY(sourceVectors)
+            CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+            CALL EquationsMatricesSources_DistributedTempVectorGet(sourceVectors,sourcesTempVector,err,error,*999)
+            CALL DistributedVector_AllValuesSet(sourcesTempVector,0.0_DP,err,error,*999)
+            CALL EquaitonsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*999)
+            DO sourceIdx=1,numberOfSources
+              NULLIFY(sourceMapping)
+              CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,sourceIdx,sourceMapping,err,error,*999)
+              CALL EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*999)
+              NULLIFY(sourceVector)
+              CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
+              NULLIFY(distributedSourceVector)
+              CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                & distributedSourceVector,err,error,*999)
+              sourceCoefficient=sourceCoefficient*currentFunctionFactor
+              CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                & currentSourceVector,err,error,*999)
+              NULLIFY(previousSourceVector)
+              CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+                & previousSourceVector,err,error,*999)
+              sourceCoefficient=sourceCoefficient*previousFunctionFactor
+              CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                & previousSourceVector,err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                NULLIFY(previous2SourceVector)
+                CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                  & previous2SourceVector,err,error,*999)
+                sourceCoefficient=sourceCoefficient*previous2FunctionFactor
+                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,soureCoefficient, &
+                  & previous2SourceVector,err,error,*999)     
               ENDIF
-            ENDIF
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                NULLIFY(previous3SourceVector)
+                CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                  & previous3SourceVector,err,error,*999)
+                sourceCoefficient=sourceCoefficient*previous3FunctionFactor
+                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                  & previous3SourceVector,err,error,*999) 
+              ENDIF
+            ENDDO !sourceIdx
+          ENDIF !source mapping
+          
+          NULLIFY(boundaryConditions)
+          CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+          NULLIFY(rhsVariable)
+          NULLIFY(rhsMapping)
+          CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
+          IF(ASSOCIATED(rhsMapping)) THEN
+            CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
+            CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
+              & err,error,*999)
             NULLIFY(rhsVector)
             CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-            equationsRHSVector=>rhsVector%vector
+            NULLIFY(currentRHSVector)
+            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
+              & err,error,*999)
+            NULLIFY(previousRHSVector)
+            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR,previousRHSVector, &
+              & err,error,*999)
+            CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousRHSParameters, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+              NULLIFY(previous2RHSVector)
+              CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR,previous2RHSVector, &
+                & err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                NULLIFY(previous3RHSVector)
+                CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR,previous3RHSVector, &
+                  & err,error,*999)
+              ENDIF
+            ENDIF
+            IF(hasIntegratedValues) THEN
+              !Update RHS field by integrating any point Neumann conditions
+              NULLIFY(rhsBoundaryConditions)
+              CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
+!!TODO: NEED TO FIX INTEGRATED FLUX MATRIX CALCULATION. THE MATRIX CURRENTLY USES THE RHS FOR THE ROWS BUT IT SHOULD USE THE
+!!      LHS. IT SHOULD BE POSSIBLE TO USE A DIFFERENT BASIS FOR THE FLUX INTERPOLATION THAN FOR THE DEPENDENT INTERPOLATION.
+              CALL BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*999)
+              NULLIFY(rhsIntegratedParameters)
+              CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
+                & err,error,*999) 
+            ENDIF
+          ENDIF
+
+          !Create solver RHS vector from the equations dynamic, linear, nonlinear, sources and RHS.
+!!TODO: what if the equations set doesn't have a RHS vector??? Will be sorted once LHS mapping is implemented.
+ 
+          NULLIFY(rhsBoundaryConditions)
+          CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
+          !Update RHS field by integrating any point Neumann conditions
+          CALL BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*999)
+          !Get values and previous values
+          IF(.NOT.ASSOCIATED(dynamicVariable)) CALL FlagError("Dynamic variable is not associated.",err,error,*999)
+          NULLIFY(currentValuesVector)
+          CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999)
+          NULLIFY(previousValuesVector)
+          CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector, &
+            & err,error,*999)
+          NULLIFY(rhsParameters)
+          CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
+          NULLIFY(previousRHSParameters)
+          CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousRHSParameters, &
+            & err,error,*999)
+          IF(hasIntegratedValues) THEN
+            NULLIFY(rhsIntegratedParameters)
+            CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
+              & err,error,*999) 
+          ENDIF
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+              NULLIFY(previousVelocityVector)
+              CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,previousVelocityVector, &
+                & err,error,*999)
+              NULLIFY(previous2RHSParameters)
+              CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE,previous2RHSParameters, &
+                & err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                NULLIFY(previousAccelerationVector)
+                CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
+                  & previousAccelerationVector,err,error,*999)
+                NULLIFY(previous3RHSParameters)
+                CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS3_VALUES_SET_TYPE,previous3RHSParameters, &
+                  & err,error,*999)
+              ENDIF
+            ENDIF
+            NULLIFY(equationsRowToRHSDOFMap)
+            CALL EquationsMatricesRHS_EquationsRowToRHSDOFMapGet(rhsVector,equationsRowToRHSDOFMap,err,error,*999)
             !Loop over the rows in the equations set
-            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-              rhsVariableDOF=rhsMapping%equationsRowToRHSDofMap(equationsRowNumber)
+            DO equationsRowNumber=1,totalNumberOfRows
+              rhsVariableDOF=equationsRowToRHSDofMap(equationsRowNumber)
               !Get the dynamic contribution to the RHS values               
               IF(ASSOCIATED(dynamicTempVector)) THEN
                 CALL DistributedVector_ValuesGet(dynamicTempVector,equationsRowNumber,dynamicValue,err,error,*999)
@@ -9815,9 +10282,12 @@ CONTAINS
               !Get the linear matrices contribution to the RHS values if there are any
               IF(ASSOCIATED(linearMapping)) THEN
                 linearValueSum=0.0_DP
-                DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
-                  linearMatrix=>linearMatrices%matrices(equationsMatrixIdx)%ptr
-                  linearTempVector=>linearMatrix%tempVector
+                CALL EquationMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+                DO equationsMatrixIdx=1,numberOfLinearMatrices
+                  NULLIFY(linearMatrix)
+                  CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
+                  NULLIFY(linearTempVector)
+                  CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
                   CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
                   linearValueSum=linearValueSum+linearValue
                 ENDDO !equationsMatrixIdx
@@ -9833,10 +10303,16 @@ CONTAINS
                 sourceValue=0.0_DP
               ENDIF
               !Get the nonlinear vector contribute to the RHS values if nonlinear solve
-              IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN 
-                nonlinearMapping=>vectorMapping%nonlinearMapping
+              IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
+                CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
                 IF(ASSOCIATED(nonlinearMapping)) THEN
-                  residualVariableDOF=nonlinearMapping%equationsRowToResidualDOFMap(equationsRowNumber)
+!!TODO: Allow for multiple residuals.
+                  NULLIFY(residualMapping)
+                  CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
+                  NULLIFY(equationsRowToResidualDOFMap)
+                  CALL EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap, &
+                    & err,error,*999)
+                  residualVariableDOF=equationsRowToResidualDOFMap(equationsRowNumber)
                   nonlinearValue=previousResidualParameters(residualVariableDOF)*previousFunctionFactor
                   IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                     nonlinearValue=nonlinearValue+previous2ResidualParameters(residualVariableDOF)*previous2FunctionFactor
@@ -9851,17 +10327,17 @@ CONTAINS
               ENDIF
               rhsValue=dynamicValue+linearValue+sourceValue+nonlinearValue
               !Loop over the solver rows associated with this equations set row
-              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,solverMapping% &
-                & equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap(equationsRowNumber), &
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector, &
+                & solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap(equationsRowNumber), &
                 & -1.0_DP,rhsValue,err,error,*999)
               IF(hasIntegratedValues) THEN
                 !Add any Neumann integrated values, b = f + N q
-                CALL DistributedVector_ValuesAdd(equationsRHSVector,equationsRowNumber, &
-                  & rhsIntegratedParameters(rhsVariableDOF),err,error,*999)
+                CALL DistributedVector_ValuesAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,equationsRHSVector, &
+                  & equationsRowNumber,rhsIntegratedParameters(rhsVariableDOF),err,error,*999)
               ENDIF
             ENDDO !equationsRowNumber
 
-            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
+            DO equationsRowNumber=1,totalNumberOfRows
               !Get the dynamic contribution to the the RHS values
               rhsVariableDOF=rhsMapping%equationsRowToRHSDofMap(equationsRowNumber)
               rhsGlobalDOF=rhsDomainMapping%localToGlobalMap(rhsVariableDOF)
@@ -9879,9 +10355,9 @@ CONTAINS
                   IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) &
                     & rhsValue=rhsValue+previous3RHSParameters(rhsVariableDOF)*previous3FunctionFactor                    
                 ENDIF
-                CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,solverMapping% &
-                  & equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap(equationsRowNumber), &
-                  & 1.0_DP,rhsValue,err,error,*999)
+                CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector, &
+                  & solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
+                  & equationsRowToSolverRowsMap(equationsRowNumber),1.0_DP,rhsValue,err,error,*999)
                 !Note: for cases in which the boundary condition does not change with time then alpha will be
                 !      implicitly zero and the contribution to the RHS will have been included above with the dynamic value.
                 !      However, for cases in which the boundary condition is changing we need to compute the corresponding
@@ -9892,7 +10368,8 @@ CONTAINS
                 dependentVariableType=dependentVariable%variableType
                 variableDomainMapping=>dependentVariable%domainMapping
                 NULLIFY(dependentBoundaryConditions)
-                CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,dependentBoundaryConditions,err,error,*999)
+                CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,dependentBoundaryConditions, &
+                  & err,error,*999)
                 variableDOF=dynamicMapping%equationsRowToVariableDOFMaps(equationsRowNumber)
                 variableGlobalDOF=variableDomainMapping%localToGlobalMap(variableDOF)
                 variableBoundaryCondition=dependentBoundaryConditions%dofTypes(variableGlobalDOF)
@@ -9983,7 +10460,7 @@ CONTAINS
                           CALL SolverMappingInterfaceToSolverMap_InterfaceMatrixGet(interfaceToSolverMap,interfaceMatrix, &
                             & err,error,*999)
                           IF(interfaceMatrix%hasTranspose) THEN
-                            dependentVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%variable
+                            dependentVariable=>interfaceMapping%interfaceMatrixToVarMaps(interfaceMatrixIdx)%variable
                             IF(.NOT.ASSOCIATED(dependentVariable)) THEN
                               localError="The interface dependent variable is not associated for interface matrix number "// &
                                 & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
@@ -10000,7 +10477,7 @@ CONTAINS
                               CASE DEFAULT
                                 CALL FlagError("Not implemented.",err,error,*999)
                               END SELECT
-                              interfaceColumnNumber=interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)% &
+                              interfaceColumnNumber=interfaceMapping%interfaceMatrixToVarMaps(interfaceMatrixIdx)% &
                                 & variableDOFToRowMap(variableDof)
                               CALL DistributedMatrix_MatrixColumnAdd(interfaceMatrix%matrix,.TRUE.,interfaceColumnNumber, &
                                 & interfaceColToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
@@ -10056,25 +10533,26 @@ CONTAINS
                   & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
-              IF(.NOT.dynamicSolver%solverInitialised) THEN
-                !Copy current RHS i.e., RHS at time zero, to previous RHSs to initialise
-                !Only do this for non Ghost rows
-                IF(equationsRowNumber<=rhsDomainMapping%boundaryFinish) THEN
-                  !Get the equations RHS contribution
-                  CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
+              ENDIF
+            ENDDO !equationsRowNumber
+            IF(.NOT.dynamicSolver%solverInitialised) THEN
+              !Copy current RHS i.e., RHS at time zero, to previous RHSs to initialise
+              !Only do this for non Ghost rows
+              IF(equationsRowNumber<=rhsDomainMapping%boundaryFinish) THEN
+                !Get the equations RHS contribution
+                CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
+                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
+                  & FIELD_PREVIOUS_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
+                IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
                   CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                    & FIELD_PREVIOUS_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-                  IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+                    & FIELD_PREVIOUS2_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
+                  IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                     CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                      & FIELD_PREVIOUS2_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-                    IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                      CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                        & FIELD_PREVIOUS3_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-                    ENDIF
+                      & FIELD_PREVIOUS3_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
                   ENDIF
                 ENDIF
               ENDIF
-            ENDDO !equationsRowNumber
+            ENDIF
             IF(ASSOCIATED(nonlinearMapping)) &
               & CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
               & err,error,*999)
@@ -10106,10 +10584,11 @@ CONTAINS
           ENDIF
         ENDDO !equationsSetIdx
         !Add in any rows from any interface conditions
-        DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+        DO interfaceConditionIdx=1,numberOfInterfaceConditions
           NULLIFY(interfaceCondition)
           CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-          SELECT CASE(interfaceCondition%METHOD)
+          CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+          SELECT CASE(interfaceConditionMethod)
           CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
             NULLIFY(interfaceEquations)
             CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
@@ -10117,32 +10596,18 @@ CONTAINS
             CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
             NULLIFY(interfaceMatrices)
             CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-            interfaceLagrange=>interfaceCondition%LAGRANGE
-            IF(ASSOCIATED(interfaceLagrange)) THEN
-              lagrangeField=>interfaceLagrange%lagrangeField
-              IF(ASSOCIATED(lagrangeField)) THEN
-                interfaceRHSMapping=>interfaceMapping%rhsMapping
-                IF(ASSOCIATED(interfaceRHSMapping)) THEN
-                  interfaceRHSVector=>interfaceMatrices%rhsVector
-                  IF(ASSOCIATED(interfaceRHSVector)) THEN
-                    NULLIFY(interfaceColToSolverRowsMap)
-                    CALL SolverMapping_InterfaceColToSolverRowsMapGet(solverMapping,interfaceConditionIdx, &
-                      & interfaceColToSolverRowsMap,err,error,*999)                        
-                    !Worry about BCs on the Lagrange variables later.
-                    CALL DistributedVector_VectorCoupleAdd(solverRHSVector,interfaceColToSolverRowsMap,1.0_DP, &
-                      & interfaceRHSVector%rhsVector,err,error,*999)
-                  ELSE
-                    CALL FlagError("Interface matrices RHS vector is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Interface mapping RHS mapping is not associated.",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Interface Lagrange field is not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
-            ENDIF
+            NULLIFY(interfaceRHSMapping)
+            CALL InterfaceMapping_RHSMappingGet(interfaceMapping,interfaceRHSMapping,err,error,*999)
+            NULLIFY(interfaceRHSVector)
+            CALL InterfaceMatrices_RHSVectorGet(interfaceMatrices,interfaceRHSVector,err,error,*999)
+            NULLIFY(interfaceColToSolverRowsMap)
+            CALL SolverMapping_InterfaceColToSolverRowsMapGet(solverMapping,interfaceConditionIdx, &
+              & interfaceColToSolverRowsMap,err,error,*999)
+            NULLIFY(interfaceRHSDistributedVector)
+            CALL InterfaceMatricesRHS_DistributedVectorGet(interfaceRHSVector,interfaceRHSDistributedVector,err,error,*999)
+            !Worry about BCs on the Lagrange variables later.
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverRHSVector, &
+              & interfaceColToSolverRowsMap,1.0_DP,interfaceRHSDistributedVector,err,error,*999)
           CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
@@ -10161,6 +10626,7 @@ CONTAINS
         !Restore the solver RHS check data                 
         CALL DistributedVector_DataRestore(solverRHSVector,solverRHSCheckData,err,error,*999)            
       ENDIF !Update RHS
+      
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -10170,7 +10636,8 @@ CONTAINS
           & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
         CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
       ENDIF
-    ENDIF
+      
+    ENDIF !Calculate solver RHS
 
     NULLIFY(solverResidualVector)
     IF(selectionType==SOLVER_MATRICES_ALL.OR. &
@@ -10178,322 +10645,387 @@ CONTAINS
       & selectionType==SOLVER_MATRICES_RESIDUAL_ONLY.OR. &
       & selectionType==SOLVER_MATRICES_LINEAR_RESIDUAL_ONLY.OR. &
       & selectionType==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
-      
+
       !Assemble residual vector
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
-      IF(solverMatrices%updateResidual) THEN
-        solverResidualVector=>solverMatrices%RESIDUAL
-        IF(ASSOCIATED(solverResidualVector)) THEN
-          !Initialise the residual to zero
-          CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
-          !Get the solver residual check data
-          NULLIFY(solverResidualCheckData)
-          CALL DistributedVector_DataGet(solverResidualVector,solverResidualCheckData,err,error,*999)
-          !Loop over the equations sets
-          DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-            NULLIFY(equationsSet)
-            CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-            NULLIFY(dependentField)
-            CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-            NULLIFY(equations)
-            CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-            NULLIFY(vectorEquations)
-            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-            NULLIFY(vectorMatrices)
-            CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-            NULLIFY(vectorMapping)
-            CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-            NULLIFY(dynamicMapping)               
-            dynamicMapping=>vectorMapping%dynamicMapping
-            IF(ASSOCIATED(dynamicMapping)) THEN
-              dynamicVariableType=dynamicMapping%dynamicVariableType
-              !Calculate the dynamic contributions
-              NULLIFY(dynamicVariable)
-              CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
-              NULLIFY(dynamicMatrices)
-              CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-              dynamicTempVector=>dynamicMatrices%tempVector
-              !Initialise the dynamic temporary vector to zero
-              CALL DistributedVector_AllValuesSet(dynamicTempVector,0.0_DP,err,error,*999)
-              NULLIFY(incrementalVector)
-              !Define the pointer to the incrementalVector
-              CALL Field_ParameterSetVectorGet(dependentField,dynamicVariableType, &
-                & FIELD_INCREMENTAL_VALUES_SET_TYPE,incrementalVector,err,error,*999)
-              IF(dynamicMapping%stiffnessMatrixNumber/=0) THEN
-                NULLIFY(stiffnessMatrix)
-                CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%stiffnessMatrixNumber, &
-                  & stiffnessMatrix,err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, & 
-                  & stiffnessMatrixCoefficient,stiffnessMatrix%matrix,.FALSE.,incrementalVector, & 
-                  & dynamicTempVector,err,error,*999)
-              ENDIF
-              IF(dynamicMapping%dampingMatrixNumber/=0.AND. &
-                & dynamicSolver%degree>=SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-                NULLIFY(dampingMatrix)
-                CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%dampingMatrixNumber, &
-                  & dampingMatrix,err,error,*999)
+
+      CALL SolverMatrices_UpdateResidualGet(solverMatrices,updateResidual,err,error,*999)
+      IF(updateResidual) THEN
+        NULLIFY(solverResidualVector)
+        CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,solverResidualVector,err,error,*999)
+        !Get the list of solver variables
+        NULLIFY(solverMatrixToEquationsSetMap)
+        CALL SolverMapping_SolverMatrixToEquationsSetMapGet(solverMapping,1,solverMatrixToEquationsSetMap,err,error,*999)
+        NULLIFY(solverVariablesList)
+        CALL SolverMappingSMToESMap_VariableListGet(solverMatrixToEquationSetMap,solverVariablesList,err,error,*999)
+        !Initialise the residual to zero
+        CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
+        !Get the solver residual check data
+        NULLIFY(solverResidualCheckData)
+        CALL DistributedVector_DataGet(solverResidualVector,solverResidualCheckData,err,error,*999)
+        !Loop over the equations sets
+        DO equationsSetIdx=1,numberOfEquationsSets
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(dependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          NULLIFY(vectorMatrices)
+          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+          NULLIFY(vectorMapping)
+          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+          NULLIFY(lhsMapping)
+          CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+          NULLIFY(lhsVariable)
+          CALL EquationsMappingLHS_VariableGet(lhsMapping,lhsVariable,err,error,*999)
+          NULLIFY(lhsDomainMapping)
+          CALL FieldVariable_DomainMappingGet(lhsVariable,lhsDomainMapping,err,error,*999)
+
+          NULLIFY(dynamicMapping)
+          CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+          IF(ASSOCIATED(dynamicMapping)) THEN
+            !Calculate the dynamic contributions
+            NULLIFY(dynamicVariable)
+            CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
+            NULLIFY(dynamicMatrices)
+            CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+            NULLIFY(dynamicTempVector)
+            CALL EquationsMatricesDynamic_TempDistributedVectorGet(dynamicMatrices,dynamicTempVector,err,error,*999)
+            !Initialise the dynamic temporary vector to zero
+            CALL DistributedVector_AllValuesSet(dynamicTempVector,0.0_DP,err,error,*999)
+            NULLIFY(incrementalVector)
+            !Define the pointer to the incrementalVector
+            CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,incrementalVector, &
+              & err,error,*999)
+            CALL EquationsMappingDynamic_StiffnessMatrixNumberGet(dynamicMapping,stiffnessMatrixNumber,err,error,*999)
+            IF(stiffnessMatrixNumber/=0) THEN
+              NULLIFY(stiffnessMatrix)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix, &
+                & err,error,*999)
+              NULLIFY(distributedStiffnessMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,distributedStiffnessMatrix,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
+              matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                & distributedStiffnessMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+            ENDIF
+            CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
+            IF(dampingMatrixNumber/=0.AND.dynamicSolver%degree>=SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+              NULLIFY(dampingMatrix)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+              NULLIFY(distributedDampingMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,distributedDampingMatrix,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
+              matrixCoefficient=matrixCoefficient*dampingMatrixCoefficient
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                & matrixCoefficient,distributedDampingMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+            ENDIF
+            CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
+            IF(massMatrixNumber/=0.AND.dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+              NULLIFY(massMatrix)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+              NULLIFY(distributedMassMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(massMatrix,distributedMassMatrix,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
+              matrixCoefficient=matrixCoefficient*massMatrixCoefficient
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                & matrixCoefficient,distributedMassMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+            ENDIF
+          ENDIF
+
+          !Calculate the contributions from any linear matrices
+          NULLIFY(linearMapping)
+          CALL EquationsMapping_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+          IF(ASSOCIATED(linearMapping)) THEN
+            NULLIFY(linearMatrices)
+            CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+            !Get the linear temporary vector
+            NULLIFY(linearTempVector)
+            CALL EquationsMatricesLinear_TempDistributedVectorGet(linearMatrices,linearTempVector,err,error,*999)
+            !Initialise the temp vector to zero.
+            CALL DistributeVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)
+            CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+            DO equationsMatrixIdx=1,numberOfLinearMatrices
+              NULLIFY(linearMatrix)
+              CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
+              NULLIFY(linearVariable)
+              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
+              !Check if the linear variable is on the left or right hand sides
+              CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+                & err,error,*999)
+              IF(variablePositionIdx/=0) THEN
+                !The linear variable is a LHS variable to add it to the residual
+                !Get the matrix coefficient
+                CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
+                !Get the incremental parameter set.
+                NULLIFY(incrementalVector)
+                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,incrementalVector, &
+                  & err,error,*999)
+                !Get the distributed matrix
+                NULLIFY(distributedLinearMatrix)
+                CALL EquationMatrix_DistributedMatrixGet(linearMatrix,distributedLinearMatrix,err,error,*999)
+                !Add the linear matrix times the incremental vector
                 CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                  & dampingMatrixCoefficient,dampingMatrix%matrix,.FALSE.,incrementalVector, & 
-                  & dynamicTempVector,err,error,*999)
+                  & matrixCoefficient,distributedLinearMatrix,.FALSE.,incrementalVector,linearTempVector,err,error,*999)
               ENDIF
-              IF(dynamicMapping%massMatrixNumber/=0.AND. &
-                & dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                NULLIFY(massMatrix)
-                CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber, &
-                  & massMatrix,err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                  & massMatrixCoefficient,massMatrix%matrix,.FALSE.,incrementalVector, & 
-                  & dynamicTempVector,err,error,*999)
+            ENDDO !equationsMatrixIdx
+          ENDIF
+
+          !Calculate the contribution from nonlinear residuals
+          NULLIFY(nonlinearMapping)
+          CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+          IF(ASSOCIATED(nonlinearMapping)) THEN
+            NULLIFY(nonlinearMatrices)
+            CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+            !Get the temp vector
+            NULLIFY(nonlinearTempVector)
+            CALL EquationsMatricesNonlinear_TempDistributedVectorGet(nonlinearMatrices,nonlinearTempVector,err,error,*999)
+            !Initialise the temp vector
+            CALL DistributedVector_AllValuesSet(nonlinearTempVector,0.0_DP,err,error,*999)
+            !Loop over the residuals
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMaping,numberOfResiduals,err,error,*999)            
+            DO residualIdx=1,numberOfResiduals
+              NULLIFY(residualMapping)
+              CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+              !Loop over residual variables
+              includeResidual=.FALSE.              
+              CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
+              DO variableIdx=1,numberOfResidualVariables
+                NULLIFY(residualVariable)
+                CALL EquationsMappingResidual_VariableGet(residualMapping,variableIdx,residualVariable,err,error,*999)
+                !Check if the variable is on the LHS
+                CALL SolverMappingVariables(solverVariablesList,residualVariable,variablePositionIdx,err,error,*999)
+                IF(variablePositionIdx/=0) THEN
+                  includeResidual=.TRUE.
+                  EXIT
+                ENDIF
+              ENDDO !variableIdx
+              IF(includeResidual) THEN
+                NULLIFY(residualVector)
+                CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+                CALL EquationsMatricesResidual_VectorCoefficientGet(residualVector,vectorCoefficient,err,error,*999)
+                vectorCoefficient=vectorCoefficient*currentFunctionFactor
+                NULLIFY(residualDistributedVector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                  & residualDistributedVector,err,error,*999)
+                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,nonlinearTempVector, &
+                  & vectorCoefficient,residualDistributedVector,err,error,*999)
               ENDIF
-            ENDIF
-            !Calculate the contributions from any linear matrices
-!!TODO: This should only be for matrices that are mapped to the dynamic variable?
-            linearMapping=>vectorMapping%linearMapping
-            IF(ASSOCIATED(linearMapping)) THEN
-              NULLIFY(linearMatrices)
-              CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-              DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
-                NULLIFY(linearMatrix)
-                CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
-                linearVariableType=linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%variableType
-                linearVariable=>linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%variable
-                IF(ASSOCIATED(linearVariable)) THEN
-                  linearTempVector=>linearMatrix%tempVector
-                  !Initialise the linear temporary vector to zero
-                  CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)
-                  NULLIFY(dependentVector)
-                  CALL Field_ParameterSetVectorGet(dependentField,linearVariableType, &
-                    & FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
-                  CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                    & 1.0_DP,linearMatrix%MATRIX,.FALSE.,dependentVector,linearTempVector,err,error,*999)
-                ELSE
-                  CALL FlagError("Linear variable is not associated.",err,error,*999)
-                ENDIF
-              ENDDO !equationsMatrixIdx
-            ENDIF
-            !Calculate the solver residual
-            nonlinearMapping=>vectorMapping%nonlinearMapping
-            IF(ASSOCIATED(nonlinearMapping)) THEN
-              NULLIFY(nonlinearMatrices)
-              CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-              residualVector=>nonlinearMatrices%residual
-              NULLIFY(residualDomainMapping)
-              CALL DistributedVector_RowMappingGet(residualVector,residualDomainMapping,err,error,*999)
-              !Loop over the rows in the equations set
-              DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-                IF(solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                  & equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
-                  !Get the equations residual contribution
-                  CALL DistributedVector_ValuesGet(residualVector,equationsRowNumber,residualValue,err,error,*999)
-                  residualValue=residualValue*currentFunctionFactor
-                  !Get the linear matrices contribution to the RHS values if there are any.
-!!TODO: this should only be for linear matrices mapped to the dynamic variable???
-                  IF(ASSOCIATED(linearMapping)) THEN
-                    linearValueSum=0.0_DP
-                    DO equationsMatrixIdx2=1,linearMatrices%numberOfLinearMatrices
-                      linearMatrix=>linearMatrices%matrices(equationsMatrixIdx2)%ptr
-                      linearTempVector=>linearMatrix%tempVector
-                      CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
-                      linearValueSum=linearValueSum+linearValue
-                    ENDDO !equationsMatrixIdx2
-                    residualValue=residualValue+linearValueSum
-                  ENDIF
-                  IF(ASSOCIATED(dynamicMapping)) THEN
-                    !Get the dynamic contribution to the residual values
-                    CALL DistributedVector_ValuesGet(dynamicTempVector,equationsRowNumber,dynamicValue,err,error,*999)
-                    residualValue=residualValue+dynamicValue
-                  ENDIF
-                  !Loop over the solver rows associated with this equations set residual row
-                  DO solverRowIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                    & equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols
-                    solverRowNumber=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                      & equationsRowToSolverRowsMap(equationsRowNumber)%rowCols(solverRowIdx)
-                    rowCouplingCoefficient=solverMapping%equationsSetToSolverMatricesMap( &
-                      & equationsSetIdx)%equationsRowToSolverRowsMap(equationsRowNumber)% &
-                      & couplingCoefficients(solverRowIdx)
-                    VALUE=residualValue*rowCouplingCoefficient
-                    !Add in nonlinear residual values
-                    CALL DistributedVector_ValuesAdd(solverResidualVector,solverRowNumber,VALUE,err,error,*999)
-                  ENDDO !solverRowIdx
-                ENDIF
-                IF(.NOT.dynamicSolver%solverInitialised) THEN
-                  !Copy current residual i.e., residual at time zero, to previous residuals to initialise
-                  IF(equationsRowNumber<=residualDomainMapping%boundaryFinish) THEN
-                    !Get the equations residual contribution
-                    CALL DistributedVector_ValuesGet(residualVector,equationsRowNumber,residualValue,err,error,*999)
-                    variableDOF=dynamicMapping%equationsRowToVariableDOFMaps(equationsRowNumber)
-                    CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                      & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,variableDOF,residualValue,err,error,*999)
-                    IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-                      CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                        & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,variableDOF,residualValue,err,error,*999)
-                      IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                        CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                          & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,variableDOF,residualValue,err,error,*999)
-                      ENDIF
-                    ENDIF
-                  ENDIF
-                ENDIF
-              ENDDO !equationsRowNumber
-            ENDIF
-          ENDDO !equationsSetIdx
+            ENDDO !residualIdx
+          ENDIF
 
-          !Loop over the interface conditions
-          DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-            NULLIFY(interfaceCondition)
-            CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-            NULLIFY(interfaceEquations)
-            CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-            NULLIFY(interfaceMapping)
-            CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
-            NULLIFY(interfaceMatrices)
-            CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-            lagrangeField=>interfaceCondition%LAGRANGE%lagrangeField
-            IF(ASSOCIATED(lagrangeField)) THEN
-              SELECT CASE(interfaceCondition%method)
-              CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-                numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
-              CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-                numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices-1
+          !Calculate the solver residual
+          NULLIFY(equationsRowToSolverRowsMap)
+          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
+            & err,error,*999)
+
+          !Couple the equations set vectors to the solver residual vector
+          IF(ASSOCIATED(dynamicMapping)) &
+            & CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverResidualVector, &
+            & equationsRowToSolverRowsMap,1.0_DP,dynamicTempVector,err,error,*999)
+          IF(ASSOCIATED(linearMapping)) &
+            & CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverResidualVector, &
+            & equationsRowToSolverRowsMap,1.0_DP,linearTempVector,err,error,*999)
+          IF(ASSOCIATED(nonlinearMapping)) &
+            & CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverResidualVector, &
+            & equationsRowToSolverRowsMap,1.0_DP,nonlinearTempVector,err,error,*999)
+
+          IF(.NOT.dynamicSolver%solverInitialised) THEN
+            IF(ASSOCIATED(nonlinearMapping)) THEN              
+              !Copy current residual i.e., residual at time zero, to previous residuals to initialise
+              DO residualIdx=1,numberOfResiduals
+                NULLIFY(residualVector)
+                CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+                NULLIFY(currentResidualVector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                  & currentResidualVector,err,error,*999)
+                NULLIFY(previousResidualVector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+                  & previousResidualVector,err,error,*999)
+                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,prevousResidualVector,1.0_DP, &
+                  & currentResidualVector,err,error,*999)
+                IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+                  NULLIFY(previous2ReidualVector)
+                  CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                    & previous2ResidualVector,err,error,*999)
+                  CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,prevous2ResidualVector,1.0_DP, &
+                    & currentResidualVector,err,error,*999)
+                  IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                    NULLIFY(previous3ReidualVector)
+                    CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                      & previous3ResidualVector,err,error,*999)
+                    CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,prevous3ResidualVector,1.0_DP, &
+                      & currentResidualVector,err,error,*999)
+                  ENDIF
+                ENDIF
+              ENDDO !residualIdx
+            ENDIF
+          ENDIF
+        ENDDO !equationsSetIdx
+
+        !Loop over the interface conditions
+        DO interfaceConditionIdx=1,numberOfInterfaceConditions
+          NULLIFY(interfaceCondition)
+          CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+          NULLIFY(interfaceEquations)
+          CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+          NULLIFY(interfaceMapping)
+          CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
+          NULLIFY(interfaceMatrices)
+          CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
+          CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+          CALL InterfaceMapping_NumberOfInterfaceMatricesGet(interfaceMapping,numberOfInterfaceMatrices,err,error,*999)
+          IF(interfaceConditionMethod==INTERFACE_CONDITION_PENALTY_METHOD) numberOfInterfaceMatrices=numberOfInterfaceMatrices-1
+          
+          NULLIFY(interfaceConditionToSolverMatricesMap)
+          CALL SolverMapping_InterfaceConditionToSolverMatricesMap(interfaceCondition,interfaceConditionIdx, &
+            & interfaceConditionToSolverMatricesMap,err,error,*999)
+          !Get the Lagrange vector
+          NULLIFY(lagrangeVariable)
+          CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
+          NULLIFY(lagrangeDistributedVector)
+          CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,lagrangeDistributedVector, &
+            & err,error,*999)
+
+          !Calculate the contributions from any interface matrices
+          DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
+            !Calculate the interface matrix-Lagrange vector product residual contribution
+            NULLIFY(interfaceMatrix)
+            CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+            CALL InterfaceMatrix_MatrixCoefficientGet(interfaceMatrix,matrixCoefficients(1),err,error,*999)
+            NULLIFY(interfaceTempVector)
+            CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
+            !Get the interface matrix mappings to the solver matrix
+            NULLIFY(interfaceMatrixToSolverMatricesMap)
+            CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMap(interfaceConditionToSolverMatricesMap, &
+              & interfaceMatrixIdx,interfaceMatrixToSolverMatriceMap,err,error,*999)
+            NULLIFY(interfaceRowToSolverRowsMap)
+            CALL SolverMappingIMToSMSMap_InterfaceRowToSolverRowsGet(interfaceMatrixToSolverMatricesMap, &
+              & interfaceRowToSolverRowsMap,err,error,*999)
+            CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceMatrix,timeDependenceType,err,error,*999)
+            SELECT CASE(timeDependenceType)
+            CASE(INTERFACE_MATRIX_STATIC)
+              matrixCoefficients(1)=matrixCoefficients(1)*stiffnessMatrixCoefficient
+            CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
+              matrixCoefficients(1)=matrixCoefficients(1)*dampingMatrixCoefficient
+            CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
+              matrixCoefficients(1)=matrixCoefficients(1)*massMatrixCoefficient
+            CASE DEFAULT
+              localError="The time dependence type of "//TRIM(NumberToVString(timeDependenceType,"*",err,error))// &
+                & " for interface matrix "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+                & " of interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
+                & " is invalid or not implemented."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+
+            NULLIFY(interfaceDistributedMatrix)
+            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
+            
+            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficients(1), &
+              & interfaceDistributedMatrix,.FALSE.,lagrangeDistributedVector,interfaceTempVector,err,error,*999)
+            
+            !Add interface matrix residual contribution to the solver residual
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
+            
+            CALL InterfaceMatrix_HasTranspose(interfaceMatrix,hasTranspose,err,error,*999)
+            IF(hasTranspose) THEN
+              CALL InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,matrixCoefficients(2),err,error,*999)
+              CALL InterfaceMatrix_TransposeTimeDependenceTypeGet(interfaceMatrix,transposeTimeDependenceType,err,error,*999)
+              SELECT CASE(TransposeTimeDependenceType)
+              CASE(INTERFACE_MATRIX_STATIC)
+                matrixCoefficients(2)=matrixCoefficients(2)*stiffnessMatrixCoefficient
+              CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
+                matrixCoefficients(2)=matrixCoefficients(2)*dampingMatrixCoefficient
+              CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
+                matrixCoefficients(2)=matrixCoefficients(2)*massMatrixCoefficient
+              CASE DEFAULT
+                localError="The transpose time dependence type of "// &
+                  & TRIM(NumberToVString(transposeTimeDependenceType,"*",err,error))//" for interface matrix "// &
+                  & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//" of interface condition number "// &
+                  & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//" is invalid or not implemented."
+                CALL FlagError(localError,err,error,*999)
               END SELECT
-              !Calculate the contributions from any interface matrices
-              DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
-                !Calculate the interface matrix-Lagrange vector product residual contribution
-                interfaceMatrix=>interfaceMatrices%matrices(interfaceMatrixIdx)%ptr
-                IF(ASSOCIATED(interfaceMatrix)) THEN
-                  interfaceVariableType=interfaceMapping%lagrangeVariableType
-                  interfaceVariable=>interfaceMapping%lagrangeVariable
-                  IF(ASSOCIATED(interfaceVariable)) THEN
-                    interfaceTempVector=>interfaceMatrix%tempVector
-                    !Initialise the linear temporary vector to zero
-                    CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-                    NULLIFY(lagrangeVector)
-                    !CALL Field_ParameterSetVectorGet(lagrangeField,interfaceVariableType, &
-                    !  & FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)                      
-                    CALL Field_ParameterSetVectorGet(lagrangeField,interfaceVariableType, &
-                      & FIELD_INCREMENTAL_VALUES_SET_TYPE,lagrangeVector,err,error,*999)                      
-                    SELECT CASE(interfaceMatrix%interfaceMatrixTimeDependenceType)
-                    CASE(INTERFACE_MATRIX_STATIC)
-                      matrixCoefficients(1)=stiffnessMatrixCoefficient
-                    CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
-                      matrixCoefficients(1)=dampingMatrixCoefficient
-                    CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
-                      matrixCoefficients(1)=massMatrixCoefficient
-                    CASE DEFAULT
-                      CALL FlagError("Not implemented.",Err,Error,*999)
-                    END SELECT
-                    IF(interfaceMatrix%hasTranspose) THEN
-                      SELECT CASE(interfaceMatrix%interfaceMatrixTransposeTimeDependenceType)
-                      CASE(INTERFACE_MATRIX_STATIC)
-                        matrixCoefficients(2)=stiffnessMatrixCoefficient
-                      CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
-                        matrixCoefficients(2)=dampingMatrixCoefficient
-                      CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
-                        matrixCoefficients(2)=massMatrixCoefficient
-                      CASE DEFAULT
-                        CALL FlagError("Not implemented.",Err,Error,*999)
-                      END SELECT
-                    ELSE
-                      matrixCoefficients(2)=0.0_DP
-                    ENDIF
+           
+              !Calculate the transposed interface matrix-dependent variable product residual contribution
+              NULLIFY(interfaceMatrixToVarMap)
+              CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,interfaceMatrixIdx,interfaceMatrixToVarMap, &
+                & err,error,*999)          
+              NULLIFY(dependentVariable)
+              CALL InterfaceMappingIMToVMap_VariableGet(interfaceMatrixToVarMap,dependentVariable,err,error,*999)
+              !Get the temp vector
+              NULLIFY(transposeInterfaceTempVector)
+              CALL InterfaceMatrix_TransposeTempDistributedVectorGet(interfaceMatrix,transposeInterfaceTempVector,err,error,*999)
+              !Initialise the interface temporary vector to zero
+              CALL DistributedVector_AllValuesSet(transposeInterfaceTempVector,0.0_DP,err,error,*999)
+              NULLIFY(dependentDistributedVector)
+              CALL FieldVariable_ParameterSetVectorGet(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
+              & dependentDistributedVector,err,error,*999)
+              NULLIFY(transposeInterfaceDistributedMatrix)
+              CALL InterfaceMatrix_TransposeDistributedMatrixGet(interfaceMatrix,transposeInterfaceDistributedMatrix, &
+                & err,error,*999)
+            
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficients(2), &
+                & transposeInterfaceDistributedMatrix,.FALSE.,dependentDistributedVector,transposeInterfaceTempVector, &
+                & err,error,*999)
+              
+              !Add interface matrix residual contribution to the solver residual.
+              !The number of columns in the interface matrix is equivalent to the
+              !number of rows of the transposed interface matrices
+              NULLIFY(interfaceColToSolverRowsMap)
+              CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+                & interfaceColToSolverRowsMap,err,error,*999)
+              
+              CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+                & interfaceColToSolverRowsMap,1.0_DP,transposeInterfaceTempVector,err,error,*999)
+            ENDIF !has transpose
+          ENDDO !interfaceMatrixIdx
+          IF(interfaceConditionMethod==INTERFACE_CONDITION_PENALTY_METHOD) THEN
+            CALL InterfaceMapping_NumberOfInterfaceMatrices(interfaceMapping,interfaceMatrixIdx,err,error,*999)         
+            !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
+            NULLIFY(interfaceMatrix)
+            CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+            NULLIFY(interfaceDistributedMatrix)
+            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
+            NULLIFY(interfaceTempVector)
+            CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
+!!TODO: should this be the field values or the incremental vector???
+            NULLIFY(lagrangeDistributedVector)
+            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeDistributedVector, &
+              & err,error,*999)
+            
+            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+            & interfaceDistributedMatrix,.FALSE.,lagrangeDistributedVector,interfaceTempVector,err,error,*999)
 
-                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                      & matrixCoefficients(1),interfaceMatrix%matrix,.FALSE.,lagrangeVector,interfaceTempVector, &
-                      & err,error,*999)
-
-                    !Add interface matrix residual contribution to the solver residual
-                    CALL DistributedVector_VectorCoupleAdd(solverResidualVector,solverMapping%interfaceConditionToSolverMatricesMap( &
-                      & interfaceConditionIdx)%interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)% &
-                      & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
-                    
-                  ELSE
-                    CALL FlagError("Interface variable is not associated.",err,error,*999)
-                  ENDIF
-                  !Calculate the transposed interface matrix-dependent variable product residual contribution
-                  dependentVariableType=interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%variableType
-                  dependentVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%VARIABLE
-                  IF(ASSOCIATED(dependentVariable)) THEN
-                    interfaceTempVector=>interfaceMatrix%tempTransposeVector
-                    !Initialise the linear temporary vector to zero
-                    CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-                    NULLIFY(dependentVector)
-                    dependentField=>dependentVariable%field
-                    !hard-coded for now TODO under the assumption that the first equations set is the solid
-                    !equations set and the second equations set is the fluid equations set
-                    !FSI only - needs to be extended/generalized for other coupled problems TODO
-                    !IF(interfaceMatrixIdx==1) THEN
-                      CALL Field_ParameterSetVectorGet(dependentField,dependentVariableType, &
-                        & FIELD_INCREMENTAL_VALUES_SET_TYPE,dependentVector,err,error,*999)
-                    !ELSE
-                    !  CALL Field_ParameterSetVectorGet(dependentField,dependentVariableType, &
-                    !    & FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
-                    !ENDIF
-                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                      & matrixCoefficients(2),interfaceMatrix%matrixTranspose,.FALSE.,dependentVector, &
-                      & interfaceTempVector,err,error,*999)
-
-                    !Add interface matrix residual contribution to the solver residual.
-                    !The number of columns in the interface matrix is equivalent to the
-                    !number of rows of the transposed interface matrices
-                    CALL DistributedVector_VectorCoupleAdd(solverResidualVector,solverMapping%interfaceConditionToSolverMatricesMap( &
-                      & interfaceConditionIdx)%interfaceColToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
-
-                   ELSE
-                    CALL FlagError("Dependent variable is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Interface matrix is not associated.",err,error,*999)
-                ENDIF
-              ENDDO !interfaceMatrixIdx
-              SELECT CASE(interfaceCondition%METHOD)
-              CASE(interfaceCondition_PENALTY_METHOD)
-                interfaceMatrixIdx=interfaceMapping%numberOfInterfaceMatrices
-                !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
-                interfaceMatrix=>interfaceMatrices%matrices(interfaceMatrixIdx)%ptr
-                IF(ASSOCIATED(interfaceMatrix)) THEN
-                  interfaceVariableType=interfaceMapping%lagrangeVariableType
-                  interfaceVariable=>interfaceMapping%lagrangeVariable
-                  IF(ASSOCIATED(interfaceVariable)) THEN
-                    interfaceTempVector=>interfaceMatrix%tempVector
-                    !Initialise the linear temporary vector to zero
-                    CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-                    NULLIFY(lagrangeVector)
-                    CALL Field_ParameterSetVectorGet(lagrangeField,interfaceVariableType, &
-                      & FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
-                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-                      & interfaceMatrix%MATRIX,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
-                    !Add interface matrix residual contribution to the solver residual
-                    CALL DistributedVector_VectorCoupleAdd(solverResidualVector,solverMapping%interfaceConditionToSolverMatricesMap( &
-                      & interfaceConditionIdx)%interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)% &
-                      & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
-                  ELSE
-                    CALL FlagError("Interface variable is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  localError="Interface matrix is not associated for linear matrix number "// &
-                    & TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-              END SELECT
-            ELSE
-              CALL FlagError("Interface Lagrange field is not associated.",err,error,*999)
-            ENDIF
-          ENDDO !interfaceConditionIdx
-          !
-          !Start the update the solver residual vector values
-          CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
-          !Restore the solver residual check data
-          CALL DistributedVector_DataRestore(solverResidualVector,solverResidualCheckData,err,error,*999)
-
-        ELSE
-          CALL FlagError("The solver residual vector is not associated.",err,error,*999)
-        ENDIF
+            !Add interface matrix residual contribution to the solver residual
+            NULLIFY(interfaceRowToSolverRowsMap)
+            CALL SolverMappingICToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+              & interfaceRowToSolverRowsMap,err,error,*999)
+            
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
+          ENDIF
+        ENDDO !interfaceConditionIdx
+        !
+        !Start the update the solver residual vector values
+        CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
+        !Restore the solver residual check data
+        CALL DistributedVector_DataRestore(solverResidualVector,solverResidualCheckData,err,error,*999)
       ENDIF !Update residual
-      IF(ASSOCIATED(solverResidualVector)) &
-        & CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
+      
+      IF(ASSOCIATED(solverResidualVector)) CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
+      
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -10503,42 +11035,41 @@ CONTAINS
           & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
         CALL Profiling_TimingsOutput(1,"Solver residual assembly",userElapsed,systemElapsed,err,error,*999)
       ENDIF
-    ENDIF
-
+      
+    ENDIF !Calculate solver residual
+    
     IF(dynamicSolver%solverInitialised) THEN
       !Set the first part of the next time step. Note that we do not have to add in the previous time value as it is
       !already there from when we copied the values to the previous time step.
       !Loop over the equations sets
       IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+        DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(dependentField)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           NULLIFY(vectorEquations)
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-          dynamicMapping=>vectorMapping%dynamicMapping
+          NULLIFY(dynamicMapping)
+          CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMaping,err,error,*999)
           IF(ASSOCIATED(dynamicMapping)) THEN
-            dynamicVariableType=dynamicMapping%dynamicVariableType
+            NULLIFY(dynamicVariable)
+            CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
             SELECT CASE(dynamicSolver%degree)
             CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
               !Do nothing. Increment will be added after the solve.
             CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-              CALL Field_ParameterSetsAdd(dependentField,dynamicVariableType,firstUpdateFactor, &
-                & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
-            CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-              CALL Field_ParameterSetsAdd(dependentField,dynamicVariableType,[firstUpdateFactor, &
-                & secondUpdateFactor],[FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE], &
+              CALL FieldVariable_ParameterSetsAdd(dynamicVariable,firstUpdateFactor,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
                 & FIELD_VALUES_SET_TYPE,err,error,*999)
-              CALL Field_ParameterSetsAdd(dependentField,dynamicVariableType,firstUpdateFactor, &
-                & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+            CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
+              CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstUpdateFactor,secondUpdateFactor], &
+                & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE],FIELD_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetsAdd(dynamicVariable,firstUpdateFactor,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
+                & FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
             CASE DEFAULT
-              localError="The dynamic solver degree of "// &
-                & TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))//" is invalid."
+              localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ENDIF
@@ -10548,7 +11079,7 @@ CONTAINS
       
     !If required output the solver matrices
     IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) THEN
-      CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)
+      CALL SolverMatrices_Output(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)
     ENDIF
     
     EXITS("Solver_DynamicAssemble")
@@ -10584,7 +11115,7 @@ CONTAINS
     LOGICAL :: subtractFixedBCsFromResidual,hasIntegratedValues
     TYPE(RealDPPtrType), ALLOCATABLE :: dependentParameters(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: dependentBoundaryConditions,rhsBoundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,rhsBoundaryConditions
     TYPE(DistributedMatrixType), POINTER :: previousSolverDistributedMatrix,solverDistributedMatrix
     TYPE(DistributedVectorType), POINTER :: lagrangeVector,dependentVector,distributedSourceVector,equationsRHSVector, &
       & linearTempVector,interfaceTempVector,residualVector,solverResidualVector,solverRHSVector
@@ -10632,6 +11163,9 @@ CONTAINS
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+    
     !Assemble the solver matrices
     NULLIFY(previousSolverDistributedMatrix)
     IF(selectionType==SOLVER_MATRICES_ALL.OR. &
@@ -10644,16 +11178,18 @@ CONTAINS
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
       !Loop over the solver matrices
-      DO solverMatrixIdx=1,solverMapping%numberOfSolverMatrices
+      CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
+      DO solverMatrixIdx=1,numberOfSolverMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
-        IF(solverMatrix%updateMatrix) THEN
+        CALL SolverMatrix_UpdateMatrixGet(solverMatrix,updateMatrix,err,error,*999)
+        IF(updateMatrix) THEN
           NULLIFY(solverDistributedMatrix)
           CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
           !Initialise matrix to zero
           CALL DistributedMatrix_AllValuesSet(solverDistributedMatrix,0.0_DP,err,error,*999)
           !Loop over the equations sets
-          DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+          DO equationsSetIdx=1,numberOfEquationsSets
             !First Loop over the linear equations matrices mapped to this solver matrix
             CALL SolverMapping_SolverNumberOfLinearMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
               & numberOfLinearMatrices,err,error,*999)
@@ -10867,8 +11403,8 @@ CONTAINS
             CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
               & interfaceRowToSolverRowsMap,err,error,*999)
             !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,interfaceRowToSolverRowsMap,1.0_DP, &
-              & interfaceTempVector,err,error,*999)
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
             !Calculate the transposed interface matrix-dependent variable product residual contribution
             NULLIFY(dependentVariable)
             CALL InterfaceMapping_MatrixVariableGet(interfaceMapping,interfaceMatrixIdx,dependentVariable,err,error,*999)
@@ -10886,8 +11422,8 @@ CONTAINS
             CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
               & err,error,*999)             
             !Add interface matrix residual contribution to the solver residual.
-            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,interfaceColToSolverRowsMap,1.0_DP, &
-              & interfaceTempVector,err,error,*999)
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceColToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
           ENDDO !interfaceMatrixIdx
           SELECT CASE(interfaceCondition%method)
           CASE(INTERFACE_CONDITION_PENALTY_METHOD)
@@ -10911,8 +11447,8 @@ CONTAINS
             CALL SolverMapping_interfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIx,interfaceMatrixIdx, &
               & interfaceRowToSolverRowsMap,err,error,*999)
             !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,interfaceRowToSolverRowsMap,1.0_DP, &
-              & interfaceTempVector,err,error,*999)
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
           END SELECT
         ENDDO !interfaceConditionIdx
         !Start the update the solver residual vector values
@@ -11410,7 +11946,7 @@ CONTAINS
     NULLIFY(nonlinearSolver%quasiNewtonSolver%linearSolver%solvers)
     CALL Solver_Initialise(nonlinearSolver%quasiNewtonSolver%linearSolver,err,error,*999)
     CALL Solver_LinearInitialise(nonlinearSolver%quasiNewtonSolver%linearSolver,err,error,*999)
-    CALL SOLVER_LINKED_SOLVER_ADD(solver,nonlinearSolver%quasiNewtonSolver%linearSolver,SOLVER_LINEAR_TYPE,err,error,*999)
+    CALL Solver_LinkedSolverAdd(solver,nonlinearSolver%quasiNewtonSolver%linearSolver,SOLVER_LINEAR_TYPE,err,error,*999)
         
     EXITS("SolverNonlinear_QuasiNewtonInitialise")
     RETURN
@@ -11644,7 +12180,8 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Loop over the equations set in the solver equations
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(dependentField)
@@ -11655,6 +12192,12 @@ CONTAINS
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         NULLIFY(vectorMapping)
         CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+        NULLIFY(lhsMapping)
+        CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+        NULLIFY(lhsVariable)
+        CALL EquationsMappingLHS_VariableGet(lhsMapping,lhsVariable,err,error,*999)
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(lhsVariable,domainMapping,err,error,*999)
         NULLIFY(linearMapping)
         CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
         IF(ASSOCIATED(linearMapping)) THEN
@@ -11663,14 +12206,11 @@ CONTAINS
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(linearMatrices)
           CALL EquationsMatricesVector_LinearMatricesGet(vectorMatricees,linearMatrices,err,error,*999)
-          DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+          CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+          DO equationsMatrixIdx=1,numberOfLinearMatrices
             NULLIFY(equationsMatrix)
             CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,equationsMatrix,err,error,*999)
             IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
-              NULLIFY(linearVariable)
-              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
-              NULLIFY(domainMapping)
-              CALL FieldVariable_DomainMappingGet(linearVariable,domainMapping,err,error,*999)
               CALL DistributedVector_CreateStart(domainMapping,equationsMatrix%tempVector,err,error,*999)
               CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
               CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,err,error,*999)
@@ -11679,7 +12219,8 @@ CONTAINS
         ENDIF
       ENDDO !equationsSetIdx
       !Loop over the interface conditions
-      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+      CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
         NULLIFY(interfaceCondition)
         CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,err,*999)
         NULLIFY(lagrangeField)
@@ -11693,7 +12234,8 @@ CONTAINS
         NULLIFY(lagrangeVariable)
         CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
         !Create temporary vector for matrix-vector products
-        DO interfaceMatrixIdx=1,interfaceMapping%numberOfInterfaceMatrices
+        CALL InterfaceMapping_NumberOfInterfaceMatricesGet(interfaceMapping,numberOfInterfaceMatrices,err,error,*999)
+        DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
           NULLIFY(interfaceMatrix)
           CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
           IF(.NOT.ASSOCIATED(interfaceMatrix%tempVector)) THEN
@@ -11702,29 +12244,32 @@ CONTAINS
             NULLIFY(domainMapping)
             CALL FieldVariable_DomainMappingGet(interfaceVariable,domainMapping,err,error,*999)
             !Set up the temporary interface distributed vector to be used with interface matrices
-            CALL DistributedVector_CreateStart(domainMapping,nterfaceMatrix%tempVector,err,error,*999)
+            CALL DistributedVector_CreateStart(domainMapping,interfaceMatrix%tempVector,err,error,*999)
             CALL DistributedVector_DataTypeSet(interfaceMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
             CALL DistributedVector_CreateFinish(interfaceMatrix%tempVector,err,error,*999)
             !Set up the temporary interface distributed vector to be used with transposed interface matrices
+            NULLIFY(domainMapping)
+            CALL FieldVariable_DomainMappingGet(lagrangeVariable,domainMapping,err,error,*999)
             CALL DistributedVector_CreateStart(domainMapping,interfaceMatrix%tempTransposeVector,err,error,*999)
-            CALL DistributedVector_DataTypeSet(interfaceMatrix%tempTransposeVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+            CALL DistributedVector_DataTypeSet(interfaceMatrix%tempTransposeVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
+              & err,error,*999)
             CALL DistributedVector_CreateFinish(interfaceMatrix%tempTransposeVector,err,error,*999)
           ENDIF
         ENDDO !interfaceMatrixIdx
       ENDDO !interfaceConiditionIdx
       !Create the PETSc SNES solver
-      CALL Petsc_SnesCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SnesCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Quasi-Newton line search solver
-      CALL Petsc_SnesSetType(linesearchSolver%snes,PETSC_SNESQN,err,error,*999)
+      CALL PETSc_SnesSetType(linesearchSolver%snes,PETSC_SNESQN,err,error,*999)
       !Following routines don't work for petsc version < 3.5.
       !Set the nonlinear Quasi-Newton type
       SELECT CASE(quasiNewtonSolver%quasiNewtonType)
       CASE(SOLVER_QUASI_NEWTON_LBFGS)
-        CALL Petsc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_LBFGS,err,error,*999)
+        CALL PETSc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_LBFGS,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_GOODBROYDEN)
-        CALL Petsc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BROYDEN,err,error,*999)
+        CALL PETSc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BROYDEN,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_BADBROYDEN)
-        CALL Petsc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BADBROYDEN,err,error,*999)
+        CALL PETSc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BADBROYDEN,err,error,*999)
       CASE DEFAULT
         localError="The specified nonlinear Quasi-Newton type of "// &
           & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonType,"*",err,error))//" is invalid."
@@ -11733,11 +12278,11 @@ CONTAINS
       !Set the nonlinear Quasi-Newton restart type
       SELECT CASE(quasiNewtonSolver%restartType)
       CASE(SOLVER_QUASI_NEWTON_RESTART_NONE)
-        CALL Petsc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_NONE,err,error,*999)
+        CALL PETSc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_NONE,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_RESTART_POWELL)
-        CALL Petsc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_POWELL,err,error,*999)
+        CALL PETSc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_POWELL,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_RESTART_PERIODIC)
-        CALL Petsc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_PERIODIC,err,error,*999)
+        CALL PETSc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_PERIODIC,err,error,*999)
       CASE DEFAULT
         localError="The specified nonlinear Quasi-Newton restart type of "// &
           & TRIM(NumberToVString(quasiNewtonSolver%restartType,"*",err,error))//" is invalid."
@@ -11746,13 +12291,13 @@ CONTAINS
       !Set the nonlinear Quasi-Newton scale type
       SELECT CASE(quasiNewtonSolver%scaleType)
       CASE(SOLVER_QUASI_NEWTON_SCALE_NONE)
-        CALL Petsc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_NONE,err,error,*999)
+        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_NONE,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_SCALE_SHANNO)
-        CALL Petsc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_SHANNO,err,error,*999)
+        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_SHANNO,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_SCALE_LINESEARCH)
-        CALL Petsc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_LINESEARCH,err,error,*999)
+        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_LINESEARCH,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_SCALE_JACOBIAN)
-        CALL Petsc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_JACOBIAN,err,error,*999)
+        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_JACOBIAN,err,error,*999)
       CASE DEFAULT
         localError="The specified nonlinear Quasi-Newton scale type of "// &
           & TRIM(NumberToVString(quasiNewtonSolver%scaleType,"*",err,error))//" is invalid."
@@ -11764,30 +12309,31 @@ CONTAINS
       NULLIFY(linkedLinearSolver)
       CALL SolverNonlinearQuasiNewton_LinkedLinearSolverGet(quasiNewtonSolver,linkedLinearSolver,err,error,*999)
       NULLIFY(solverMatrices)
-      CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
-      SELECT CASE(solverEquations%sparsityType)
+      CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+      SELECT CASE(sparsityType)
       CASE(SOLVER_SPARSE_MATRICES)
-        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+        CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
       CASE(SOLVER_FULL_MATRICES)
-        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+        CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
       CASE DEFAULT
-        localError="The specified solver equations sparsity type of "// &
-          & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+        localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+          & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      SELECT CASE(solverEquations%symmetryType)
+      CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+      SELECT CASE(symmetryType)
       CASE(SOLVER_SYMMETRIC_MATRICES)
         CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
       CASE(SOLVER_UNSYMMETRIC_MATRICES)
         CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
       CASE DEFAULT
-        localError="The specified solver equations symmetry type of "// &
-          & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))// &
+        localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       !Link linear solver
       linkedLinearSolver%solverEquations=>solver%solverEquations
       !Finish the creation of the linear solver
@@ -11799,11 +12345,11 @@ CONTAINS
       CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
         NULLIFY(directSolver)
         CALL SolverLinear_DirectSolverGet(linearSolver,directSolver,err,error,*999)
-        CALL Petsc_SnesSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
+        CALL PETSc_SnesSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
       CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
         NULLIFY(iterativeSolver)
         CALL SolverLinear_IterativeSolverGet(linearSolver,iterativeSolver,err,error,*999)
-        CALL Petsc_SnesSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+        CALL PETSc_SnesSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
       CASE DEFAULT
         localError="The linear solver type of "//TRIM(NumberToVString(linearSolver%linearSolveType,"*",err,error))// &
           & " is invalid."
@@ -11815,13 +12361,13 @@ CONTAINS
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
       !Pass the linesearch solver object rather than the temporary solver
-      CALL Petsc_SnesSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
+      CALL PETSc_SnesSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
         & linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       SELECT CASE(linesearchSolver%quasiNewtonSolver%convergenceTestType)
       CASE(SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT)
         !Default convergence test, do nothing
       CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM,SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO)
-        CALL Petsc_SnesSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
+        CALL PETSc_SnesSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
           & linesearchSolver%quasiNewtonSolver%nonlinearSolver%SOLVER,err,error,*999)
       CASE DEFAULT
         localError="The specified convergence test type of "//TRIM(NumberToVString(linesearchSolver% &
@@ -11846,34 +12392,35 @@ CONTAINS
       CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
         solverJacobian%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
         !Pass the linesearch solver object rather than the temporary solver
-        CALL Petsc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianEvaluatePetsc,linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
         solverJacobian%updateMatrix=.FALSE. !Petsc will fill in the Jacobian values
         CALL DistributedMatrix_Form(jacobianMatrix,err,error,*999)
-        SELECT CASE(solverEquations%sparsityType)
+        CALL SolverEquations_SparsityType(solverEquations,sparsityType,err,error,*999)
+        SELECT CASE(sparsityType)
         CASE(SOLVER_SPARSE_MATRICES)
-          CALL Petsc_MatColoringCreate(jacobianPETScMatrix%matrix,linesearchSolver%jacobianMatColoring,err,error,*999)
-          CALL Petsc_MatColoringSetType(linesearchSolver%jacobianMatColoring,PETSC_MATCOLORING_SL,err,error,*999)
-          CALL Petsc_MatColoringSetFromOptions(linesearchSolver%jacobianMatColoring,err,error,*999)
-          CALL Petsc_MatColoringApply(linesearchSolver%jacobianMatColoring,linesearchSolver%jacobianISColoring,err,error,*999)
-          CALL Petsc_MatColoringDestroy(linesearchSolver%jacobianMatColoring,err,error,*999)
-          CALL Petsc_MatFDColoringCreate(jacobianPETScMatrix%matrix,linesearchSolver%jacobianISColoring, &
+          CALL PETSc_MatColoringCreate(jacobianPETScMatrix%matrix,linesearchSolver%jacobianMatColoring,err,error,*999)
+          CALL PETSc_MatColoringSetType(linesearchSolver%jacobianMatColoring,PETSC_MATCOLORING_SL,err,error,*999)
+          CALL PETSc_MatColoringSetFromOptions(linesearchSolver%jacobianMatColoring,err,error,*999)
+          CALL PETSc_MatColoringApply(linesearchSolver%jacobianMatColoring,linesearchSolver%jacobianISColoring,err,error,*999)
+          CALL PETSc_MatColoringDestroy(linesearchSolver%jacobianMatColoring,err,error,*999)
+          CALL PETSc_MatFDColoringCreate(jacobianPETScMatrix%matrix,linesearchSolver%jacobianISColoring, &
             & linesearchSolver%jacobianMatFDColoring,err,error,*999)
-          CALL Petsc_MatFDColoringSetFunction(linesearchSolver%jacobianMatFDColoring,Problem_SolverResidualEvaluatePetsc, &
+          CALL PETSc_MatFDColoringSetFunction(linesearchSolver%jacobianMatFDColoring,Problem_SolverResidualEvaluatePetsc, &
             & linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
-          CALL Petsc_MatFDColoringSetFromOptions(linesearchSolver%jacobianMatFDColoring,err,error,*999)
-          CALL Petsc_MatFDColoringSetup(jacobianPETScMatrix%matrix,linesearchSolver%jacobianISColoring, &
+          CALL PETSc_MatFDColoringSetFromOptions(linesearchSolver%jacobianMatFDColoring,err,error,*999)
+          CALL PETSc_MatFDColoringSetup(jacobianPETScMatrix%matrix,linesearchSolver%jacobianISColoring, &
             & linesearchSolver%jacobianMatFDColoring,err,error,*999)
-          CALL Petsc_ISColoringDestroy(linesearchSolver%jacobianISColoring,err,error,*999)
+          CALL PETSc_ISColoringDestroy(linesearchSolver%jacobianISColoring,err,error,*999)
         CASE(SOLVER_FULL_MATRICES)
           !Do nothing
         CASE DEFAULT
-          localError="The specified solver equations sparsity type of "// &
-            & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+          localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        CALL Petsc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianFDCalculatePetsc,linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE DEFAULT
         localError="The Jacobian calculation type of "// &
@@ -11884,38 +12431,38 @@ CONTAINS
       IF(solver%outputType>=SOLVER_MONITOR_OUTPUT) THEN
         !Set the monitor
         !Pass the linesearch solver object rather than the temporary solver
-        CALL Petsc_SnesMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
+        CALL PETSc_SnesMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
           & linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       ENDIF
-      CALL Petsc_SnesGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SnesGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
       !Set the line search type and order where applicable
       SELECT CASE(linesearchSolver%linesearch_type)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH_BASIC)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH_L2)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_L2,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_L2,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH_CP)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
       CASE DEFAULT
         localError="The nonlinear Quasi-Newton line search type of "// &
           & TRIM(NumberToVString(linesearchSolver%linesearch_type,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       !Set step tolerances, leave iterative line search options as defaults
-      CALL Petsc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       IF(linesearchSolver%linesearchMonitorOutput) THEN
-        CALL Petsc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
+        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
       ELSE
-        CALL Petsc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
+        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
       ENDIF
       !Set the tolerances for the SNES solver
-      CALL Petsc_SnesSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
+      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations,err,error,*999)
       !Set any further SNES options from the command line options
-      CALL Petsc_SnesSetFromOptions(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SnesSetFromOptions(linesearchSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(linesearchSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -11945,11 +12492,11 @@ CONTAINS
     ENTERS("SolverNonlinearQuasiNewton_LinesearchFinalise",err,error,*999)
 
     IF(ASSOCIATED(linesearchSolver)) THEN
-      CALL Petsc_ISColoringFinalise(linesearchSolver%jacobianISColoring,err,error,*999)
-      CALL Petsc_MatColoringFinalise(linesearchSolver%jacobianMatColoring,err,error,*999)
-      CALL Petsc_MatFDColoringFinalise(linesearchSolver%jacobianMatFDColoring,err,error,*999)
-      CALL Petsc_SnesLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
-      CALL Petsc_SnesFinalise(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_ISColoringFinalise(linesearchSolver%jacobianISColoring,err,error,*999)
+      CALL PETSc_MatColoringFinalise(linesearchSolver%jacobianMatColoring,err,error,*999)
+      CALL PETSc_MatFDColoringFinalise(linesearchSolver%jacobianMatFDColoring,err,error,*999)
+      CALL PETSc_SnesLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SnesFinalise(linesearchSolver%snes,err,error,*999)
       DEALLOCATE(linesearchSolver)
     ENDIF
         
@@ -11990,11 +12537,11 @@ CONTAINS
     quasiNewtonSolver%linesearchSolver%linesearchType=SOLVER_QUASI_NEWTON_LINESEARCH_CP
     quasiNewtonSolver%linesearchSolver%linesearchMaxstep=1.0E8_DP
     quasiNewtonSolver%linesearchSolver%linesearchStepTolerance=CONVERGENCE_TOLERANCE
-    CALL Petsc_MatColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianMatColoring,err,error,*999)
-    CALL Petsc_ISColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianISColoring,err,error,*999)
-    CALL Petsc_MatFDColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianMatFDColoring,err,error,*999)
-    CALL Petsc_SnesInitialise(quasiNewtonSolver%linesearchSolver%snes,err,error,*999)
-    CALL Petsc_SnesLinesearchInitialise(quasiNewtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
+    CALL PETSc_MatColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianMatColoring,err,error,*999)
+    CALL PETSc_ISColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianISColoring,err,error,*999)
+    CALL PETSc_MatFDColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianMatFDColoring,err,error,*999)
+    CALL PETSc_SnesInitialise(quasiNewtonSolver%linesearchSolver%snes,err,error,*999)
+    CALL PETSc_SnesLinesearchInitialise(quasiNewtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
     quasiNewtonSolver%linesearchSolver%linesearchMonitorOutput=.FALSE.
         
     EXITS("SolverNonlinearQuasiNewton_LinesearchInitialise")
@@ -12066,7 +12613,7 @@ CONTAINS
     INTEGER(INTG) :: convergedReason,numberOfIterations
     REAL(DP) :: functionNorm
     TYPE(DistributedVectorType), POINTER :: rhsVector,solverVector
-    TYPE(DistributedPETScVectorType), POINTER :: rhsPETScVector,solverPETScVector
+    TYPE(DistributedVectorPETScType), POINTER :: rhsPETScVector,solverPETScVector
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(PetscVecType) :: functionPETScVector
@@ -12090,9 +12637,9 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    IF(solverMatrices%numberOfMatrices/=1) THEN
-      localError="The number of solver matrices of "// &
-        & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
+    CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    IF(numberOfMatrices/=1) THEN
+      localError="The number of solver matrices of "//TRIM(NumberToVString(numberOfMatrices,"*",err,error))// &
         & " is invalid. There should only be one solver matrix for a Quasi-Newton linesearch solver."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -12125,17 +12672,17 @@ CONTAINS
       NULLIFY(solverPETScVector)
       CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
       !Set step tolerances, leave iterative line search options as defaults in case the user has changed them
-      CALL Petsc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       !Set the tolerances for the SNES solver in case the user has changed them
-      CALL Petsc_SnesSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
+      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations,err,error,*999)
       !Solve the nonlinear equations     
-      CALL Petsc_SnesSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
+      CALL PETSc_SnesSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
       !Check for convergence
-      CALL Petsc_SnesGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
+      CALL PETSc_SnesGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
       SELECT CASE(convergedReason)
       CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
         CALL FlagWarning("Nonlinear line search solver did not converge. PETSc diverged function count.",err,error,*999)
@@ -12154,10 +12701,10 @@ CONTAINS
         !Output solution characteristics
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Quasi-Newton linesearch solver parameters:",err,error,*999)
-        CALL Petsc_SnesGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
+        CALL PETSc_SnesGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",numberOfIterations,err,error,*999)
-        CALL Petsc_SnesGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
-        CALL Petsc_VecNorm(functionPETScVector,PETSC_NORM_2,functionNorm,err,error,*999)
+        CALL PETSc_SnesGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
+        CALL PETSc_VecNorm(functionPETScVector,PETSC_NORM_2,functionNorm,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final function norm = ",functionNorm,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_SNES_CONVERGED_FNORM_ABS)
@@ -12530,7 +13077,7 @@ CONTAINS
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator
     TYPE(DistributedVectorType), POINTER :: residualVector
-    TYPE(DistributedPETScVectorType), POINTER :: residualPETScVector
+    TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -12573,7 +13120,8 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Loop over the equations set in the solver equations
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(equations)
@@ -12584,6 +13132,12 @@ CONTAINS
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         NULLIFY(vectorMapping)
         CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+        NULLIFY(lhsMapping)
+        CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+        NULLIFY(lhsVariable)
+        CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(lhsVariable,domainMapping,err,error,*999)
         NULLIFY(linearMapping)
         CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
         IF(ASSOCIATED(linearMapping)) THEN
@@ -12592,14 +13146,11 @@ CONTAINS
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(linearMatrices)
           CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-          DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+          CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+          DO equationsMatrixIdx=1,numberOfLinearMatrices
             NULLIFY(equationsMatrix)
             CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,equationsMatrix,err,error,*999)
             IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
-              NULLIFY(linearVariable)
-              CALL EquationsMappingLinear_MatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
-              NULLIFY(domainMapping)
-              CALL FieldVariable_DomainMappingGet(linearVariable,domainMapping,err,error,*999)
               CALL DistributedVector_CreateStart(domainMapping,equationsMatrix%tempVector,err,error,*999)
               CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
               CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,err,error,*999)
@@ -12609,45 +13160,45 @@ CONTAINS
       ENDDO !equationsSetIdx                  
       !Create the solver matrices and vectors
       NULLIFY(solverMatrices)
-      CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
-      SELECT CASE(solverEquations%symmetryType)
+      CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+      SELECT CASE(symmetryType)
       CASE(SOLVER_SYMMETRIC_MATRICES)
         CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
       CASE(SOLVER_UNSYMMETRIC_MATRICES)
         CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
       CASE DEFAULT
-        localError="The specified solver equations symmetry type of "// &
-          & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))// &
+        localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       !Create the PETSc SNES solver
-      CALL Petsc_SnesCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SnesCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Quasi-Newton trust region solver
-      CALL Petsc_SnesSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
+      CALL PETSc_SnesSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
-      CALL Petsc_SnesSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
+      CALL PETSc_SnesSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
         & Problem_SolverResidualEvaluatePetsc,trustregionSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the Jacobian if necessary
       !Set the trust region delta ???
                   
       !Set the trust region tolerance
-      CALL Petsc_SnesSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
+      CALL PETSc_SnesSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
         & err,error,*999)
       !Set the tolerances for the SNES solver
-      CALL Petsc_SnesSetTolerances(trustregionSolver%snes,quasiNewtonSolver%absoluteTolerance, &
+      CALL PETSc_SnesSetTolerances(trustregionSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)
       !Set any further SNES options from the command line options
-      CALL Petsc_SnesSetFromOptions(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SnesSetFromOptions(trustregionSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(trustregionSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -12691,8 +13242,7 @@ CONTAINS
     NULLIFY(trustregionSolver)
     CALL SolverNonlinearQuasiNewton_TrustregionSolverGet(quasiNewtonSolver,trustregionSolver,err,error,*999)
     IF(trustregionDelta0<=ZERO_TOLERANCE) THEN
-      localError="The specified trust region delta0 of "// &
-        & TRIM(NumberToVString(trustregionDelta0,"*",err,error))// &
+      localError="The specified trust region delta0 of "//TRIM(NumberToVString(trustregionDelta0,"*",err,error))// &
         & " is invalid. The trust region delta0 must be > 0."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -12721,7 +13271,7 @@ CONTAINS
     ENTERS("SolverNonlinearQuasiNewton_TrustregionFinalise",err,error,*999)
 
     IF(ASSOCIATED(trustregionSolver)) THEN      
-      CALL Petsc_SnesFinalise(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SnesFinalise(trustregionSolver%snes,err,error,*999)
       DEALLOCATE(trustregionSolver)
     ENDIF
     
@@ -12759,7 +13309,7 @@ CONTAINS
     quasiNewtonSolver%trustregionSolver%solverLibrary=SOLVER_PETSC_LIBRARY
 !!TODO: set this properly
     quasiNewtonSolver%trustregionSolver%trustregionDelta0=0.01_DP
-    CALL Petsc_SnesInitialise(quasiNewtonSolver%trustregionSolver%snes,err,error,*999)
+    CALL PETSc_SnesInitialise(quasiNewtonSolver%trustregionSolver%snes,err,error,*999)
        
     EXITS("SolverNonlinearQuasiNewton_TrustregionInitialise")
     RETURN
@@ -12850,8 +13400,7 @@ CONTAINS
     NULLIFY(trustregionSolver)
     CALL SolverNonlinearQuasiNewton_TrustregionSolverGet(quasiNewtonSolver,trustregionSolver,err,error,*999)
     IF(trustregionTolerance<=ZERO_TOLERANCE) THEN
-      localError="The specified trust region tolerance of "// &
-        & TRIM(NumberToVString(trustregionTolerance,"*",err,error))// &
+      localError="The specified trust region tolerance of "//TRIM(NumberToVString(trustregionTolerance,"*",err,error))// &
         & " is invalid. The trust region tolerance must be > 0.0."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -13310,7 +13859,7 @@ CONTAINS
     NULLIFY(nonlinearSolver%newtonSolver%linearSolver%solvers)
     CALL Solver_Initialise(nonlinearSolver%newtonSolver%linearSolver,err,error,*999)
     CALL Solver_LinearInitialise(nonlinearSolver%newtonSolver%linearSolver,err,error,*999)
-    CALL SOLVER_LINKED_SOLVER_ADD(solver,nonlinearSolver%newtonSolver%linearSolver,SOLVER_LINEAR_TYPE,err,error,*999)
+    CALL Solver_LinkedSolverAdd(solver,nonlinearSolver%newtonSolver%linearSolver,SOLVER_LINEAR_TYPE,err,error,*999)
         
     EXITS("SolverNonlinear_NewtonInitialise")
     RETURN
@@ -13585,7 +14134,8 @@ CONTAINS
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
       !Loop over the equations set in the solver equations
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(dependentField)
@@ -13596,6 +14146,12 @@ CONTAINS
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         NULLIFY(vectorMapping)
         CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+        NULLIFY(lhsMapping)
+        CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+        NULLIFY(lhsVariable)
+        CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(lhsVariable,domainMapping,err,error,*999)
         NULLIFY(linearMapping)
         CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
         IF(ASSOCIATED(linearMapping)) THEN
@@ -13604,14 +14160,11 @@ CONTAINS
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(linearMatrices)
           CALL EquationsMatricesVector_LinearMatricesGet(vectorMatricees,linearMatrices,err,error,*999)
-          DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+          CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+          DO equationsMatrixIdx=1,numberOfLinearMatrices
             NULLIFY(equationsMatrix)
             CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,equationsMatrix,err,error,*999)
             IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
-              NULLIFY(linearVariable)
-              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
-              NULLIFY(domainMapping)
-              CALL FieldVariable_DomainMappingGet(linearVariable,domainMapping,err,error,*999)
               CALL DistributedVector_CreateStart(domainMapping,equationsMatrix%tempVector,err,error,*999)
               CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
               CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,err,error,*999)
@@ -13620,7 +14173,8 @@ CONTAINS
         ENDIF
       ENDDO !equationsSetIdx
       !Loop over the interface conditions
-      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+      CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
         NULLIFY(interfaceCondition)
         CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,err,*999)
         NULLIFY(lagrangeField)
@@ -13634,7 +14188,8 @@ CONTAINS
         NULLIFY(lagrangeVariable)
         CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
         !Create temporary vector for matrix-vector products
-        DO interfaceMatrixIdx=1,interfaceMapping%numberOfInterfaceMatrices
+        CALL InterfaceMappping_NumberOfInterfaceMatricesGet(interfaceMapping,numberOfInterfaceMatrices,err,error,*999)
+        DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
           NULLIFY(interfaceMatrix)
           CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
           IF(.NOT.ASSOCIATED(interfaceMatrix%tempVector)) THEN
@@ -13643,47 +14198,52 @@ CONTAINS
             NULLIFY(domainMapping)
             CALL FieldVariable_DomainMappingGet(interfaceVariable,domainMapping,err,error,*999)
             !Set up the temporary interface distributed vector to be used with interface matrices
-            CALL DistributedVector_CreateStart(domainMapping,nterfaceMatrix%tempVector,err,error,*999)
+            CALL DistributedVector_CreateStart(domainMapping,interfaceMatrix%tempVector,err,error,*999)
             CALL DistributedVector_DataTypeSet(interfaceMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
             CALL DistributedVector_CreateFinish(interfaceMatrix%tempVector,err,error,*999)
             !Set up the temporary interface distributed vector to be used with transposed interface matrices
+            NULLIFY(domainMapping)
+            CALL FieldVariable_DomainMappingGet(lagrangeVariable,domainMapping,err,error,*999)
             CALL DistributedVector_CreateStart(domainMapping,interfaceMatrix%tempTransposeVector,err,error,*999)
-            CALL DistributedVector_DataTypeSet(interfaceMatrix%tempTransposeVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+            CALL DistributedVector_DataTypeSet(interfaceMatrix%tempTransposeVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
+              & err,error,*999)
             CALL DistributedVector_CreateFinish(interfaceMatrix%tempTransposeVector,err,error,*999)
           ENDIF
         ENDDO !interfaceMatrixIdx
       ENDDO !interfaceConiditionIdx
       !Create the PETSc SNES solver
-      CALL Petsc_SnesCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SnesCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Newton line search solver
-      CALL Petsc_SnesSetType(linesearchSolver%snes,PETSC_SNESNEWTONLS,err,error,*999)
+      CALL PETSc_SnesSetType(linesearchSolver%snes,PETSC_SNESNEWTONLS,err,error,*999)
       !Create the solver matrices and vectors
       NULLIFY(linkedLinearSolver)
       CALL SolverNonlinearQuasiNewton_LinkedLinearSolverGet(quasiNewtonSolver,linkedLinearSolver,err,error,*999)
       NULLIFY(solverMatrices)
-      CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
-      SELECT CASE(solverEquations%sparsityType)
+      CALL SolverEquations_SparsityTypeGet(solverEquations,sparsityType,err,error,*999)
+      SELECT CASE(sparsityType)
       CASE(SOLVER_SPARSE_MATRICES)
-        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+        CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
       CASE(SOLVER_FULL_MATRICES)
-        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+        CALL SolverMatrices_StorageTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
       CASE DEFAULT
-        localError="The specified solver equations sparsity type of "// &
-          & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+        localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+          & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      SELECT CASE(solverEquations%symmetryType)
+      CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+      SELECT CASE(symmetryType)
       CASE(SOLVER_SYMMETRIC_MATRICES)
         CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
       CASE(SOLVER_UNSYMMETRIC_MATRICES)
         CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
       CASE DEFAULT
-        localError="The specified solver equations symmetry type of "// &
-          & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))//" is invalid."
+        localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+          & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       !Link linear solver
       linkedLinearSolver%solverEquations=>solver%solverEquations
       !Finish the creation of the linear solver
@@ -13695,11 +14255,11 @@ CONTAINS
       CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
         NULLIFY(directSolver)
         CALL SolverLinear_DirectSolverGet(linearSolver,directSolver,err,error,*999)
-        CALL Petsc_SnesSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
+        CALL PETSc_SnesSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
       CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
         NULLIFY(iterativeSolver)
         CALL SolverLinear_IterativeSolverGet(linearSolver,iterativeSolver,err,error,*999)
-        CALL Petsc_SnesSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+        CALL PETSc_SnesSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
       CASE DEFAULT
         localError="The linear solver type of "//TRIM(NumberToVString(linearSolver%linearSolveType,"*",err,error))// &
           & " is invalid."
@@ -13711,16 +14271,16 @@ CONTAINS
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
       !Set the solver as a context for the SNES object
-      CALL Petsc_SnesSetApplicationContext(linesearchSolver%snes,linesearchSolver%newtonSolver%nonlinearSolver%solver, &
+      CALL PETSc_SnesSetApplicationContext(linesearchSolver%snes,linesearchSolver%newtonSolver%nonlinearSolver%solver, &
         & err,error,*999)
       !Pass the linesearch solver object rather than the temporary solver
-      CALL Petsc_SnesSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
+      CALL PETSc_SnesSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
         & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       SELECT CASE(linesearchSolver%newtonSolver%convergenceTestType)
       CASE(SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT)
         !Default convergence test, do nothing
       CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM,SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO)
-        CALL Petsc_SnesSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
+        CALL PETSc_SnesSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
           & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE DEFAULT
         localError="The specified convergence test type of "//TRIM(NumberToVString(linesearchSolver% &
@@ -13728,9 +14288,10 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT      
       !Set the Jacobian
-      IF(solverMatrices%numberOfMatrices/=1) THEN
+      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+      IF(numberOfMatrices/=1) THEN
         localError="Invalid number of solver matrices. The number of solver matrices is "// &
-          & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))//" and it should be 1."
+          & TRIM(NumberToVString(numberOfMatrices,"*",err,error))//" and it should be 1."
         CALL FlagError(localError,err,error,*999)
       ENDIF
       NULLIFY(solverJacobian)
@@ -13745,36 +14306,36 @@ CONTAINS
       CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
         solverJacobian%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
         !Pass the linesearch solver object rather than the temporary solver
-        CALL Petsc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianEvaluatePetsc,linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
         solverJacobian%updateMatrix=.FALSE. !Petsc will fill in the Jacobian values
-        CALL DistributedMatrix_Form(jacobianMatrix,err,error,*999)
-        SELECT CASE(solverEquations%sparsityType)
+        CALL DistributedMatrix_Form(jacobianMatrix,err,error,*999)        
+        SELECT CASE(sparsityType)
         CASE(SOLVER_SPARSE_MATRICES)
-          CALL Petsc_MatColoringCreate(jacobianPETScMatrix%matrix,linesearchSolver%jacobianMatColoring,err,error,*999)
-          CALL Petsc_MatColoringSetType(linesearchSolver%jacobianMatColoring,PETSC_MATCOLORING_SL,err,error,*999)
-          CALL Petsc_MatColoringSetFromOptions(linesearchSolver%jacobianMatColoring,err,error,*999)
-          CALL Petsc_MatColoringApply(linesearchSolver%jacobianMatColoring,linesearchSolver%jacobianISColoring,err,error,*999)
-          CALL Petsc_MatColoringDestroy(linesearchSolver%jacobianMatColoring,err,error,*999)
+          CALL PETSc_MatColoringCreate(jacobianPETScMatrix%matrix,linesearchSolver%jacobianMatColoring,err,error,*999)
+          CALL PETSc_MatColoringSetType(linesearchSolver%jacobianMatColoring,PETSC_MATCOLORING_SL,err,error,*999)
+          CALL PETSc_MatColoringSetFromOptions(linesearchSolver%jacobianMatColoring,err,error,*999)
+          CALL PETSc_MatColoringApply(linesearchSolver%jacobianMatColoring,linesearchSolver%jacobianISColoring,err,error,*999)
+          CALL PETSc_MatColoringDestroy(linesearchSolver%jacobianMatColoring,err,error,*999)
           !Compute SNESComputeJacobianDefaultColor data structure
-          CALL Petsc_MatFDColoringCreate(jacobianMatrix%petsc%matrix,linesearchSolver%jacobianISColoring, &
+          CALL PETSc_MatFDColoringCreate(jacobianMatrix%petsc%matrix,linesearchSolver%jacobianISColoring, &
             & linesearchSolver%jacobianMatFDColoring,err,error,*999)
           !Pass the linesearch solver object rather than the temporary solver
-          CALL Petsc_MatFDColoringSetFunction(linesearchSolver%jacobianMatFDColoring,Problem_SolverResidualEvaluatePetsc, &
+          CALL PETSc_MatFDColoringSetFunction(linesearchSolver%jacobianMatFDColoring,Problem_SolverResidualEvaluatePetsc, &
             & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
-          CALL Petsc_MatFDColoringSetFromOptions(linesearchSolver%jacobianMatFDColoring,err,error,*999)
-          CALL Petsc_MatFDColoringSetup(jacobianMatrix%petsc%matrix,linesearchSolver%jacobianISColoring, &
+          CALL PETSc_MatFDColoringSetFromOptions(linesearchSolver%jacobianMatFDColoring,err,error,*999)
+          CALL PETSc_MatFDColoringSetup(jacobianMatrix%petsc%matrix,linesearchSolver%jacobianISColoring, &
             & linesearchSolver%jacobianMatFDColoring,err,error,*999)
-          CALL Petsc_ISColoringDestroy(linesearchSolver%jacobianISColoring,err,error,*999)
+          CALL PETSc_ISColoringDestroy(linesearchSolver%jacobianISColoring,err,error,*999)
         CASE(SOLVER_FULL_MATRICES)
           !Do nothing
         CASE DEFAULT
           localError="The specified solver equations sparsity type of "// &
-            & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+            & TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        CALL Petsc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrixc%matrix, &
+        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrixc%matrix, &
           & Problem_SolverJacobianFDCalculatePetsc,linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE DEFAULT
         localError="The Jacobian calculation type of "// &
@@ -13784,50 +14345,50 @@ CONTAINS
       IF(solver%outputType>=SOLVER_MONITOR_OUTPUT) THEN
         !Set the monitor
         !Pass the linesearch solver object rather than the temporary solver
-        CALL Petsc_SnesMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
+        CALL PETSc_SnesMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
           & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       ENDIF
-      CALL Petsc_SnesGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SnesGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
       !Set the line search type and order where applicable
-      SELECT CASE(linesearchSolver%linesearch_type)
+      SELECT CASE(linesearchSolver%linesearchType)
       CASE(SOLVER_NEWTON_LINESEARCH_NONORMS)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
-        CALL Petsc_SnesLineSearchSetComputeNorms(linesearchSolver%snesLineSearch,.FALSE.,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
+        CALL PETSc_SnesLineSearchSetComputeNorms(linesearchSolver%snesLineSearch,.FALSE.,err,error,*999)
       CASE(SOLVER_NEWTON_LINESEARCH_LINEAR)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
-        CALL Petsc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_LINEAR,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
+        CALL PETSc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_LINEAR,err,error,*999)
       CASE(SOLVER_NEWTON_LINESEARCH_QUADRATIC)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
-        CALL Petsc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_QUADRATIC,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
+        CALL PETSc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_QUADRATIC,err,error,*999)
       CASE(SOLVER_NEWTON_LINESEARCH_CUBIC)
-        CALL Petsc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
-        CALL Petsc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_CUBIC,err,error,*999)
+        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
+        CALL PETSc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_CUBIC,err,error,*999)
       CASE DEFAULT
         localError="The nonlinear Newton line search type of "// &
-          & TRIM(NumberToVString(linesearchSolver%linesearch_type,"*",err,error))//" is invalid."
+          & TRIM(NumberToVString(linesearchSolver%linesearchType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      SELECT CASE(linesearchSolver%linesearch_type)
+      SELECT CASE(linesearchSolver%linesearchType)
       CASE(SOLVER_NEWTON_LINESEARCH_QUADRATIC,SOLVER_NEWTON_LINESEARCH_CUBIC)
         ! Alpha parameter only applicable for back-tracking linesearch
-        CALL Petsc_SnesLineSearchBTSetAlpha(linesearchSolver%snesLineSearch,linesearchSolver%linesearchAlpha,err,error,*999)
+        CALL PETSc_SnesLineSearchBTSetAlpha(linesearchSolver%snesLineSearch,linesearchSolver%linesearchAlpha,err,error,*999)
       END SELECT
       !Set step tolerances, leave iterative line search options as defaults.
 !!TODO: set the rtol, atol, ltol and maxits properly.
-      CALL Petsc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       IF(linesearchSolver%linesearchMonitorOutput) THEN
-        CALL Petsc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
+        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
       ELSE
-        CALL Petsc_SnesLineSearchSetMonitor(linesearchSolvery%snesLineSearch,PETSC_FALSE,err,error,*999)
+        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolvery%snesLineSearch,PETSC_FALSE,err,error,*999)
       ENDIF
       !Set the tolerances for the SNES solver
-      CALL Petsc_SnesSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
+      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
         & newtonSolver%solutionTolerance,newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)            
       !Set any further SNES options from the command line options
-      CALL Petsc_SnesSetFromOptions(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SnesSetFromOptions(linesearchSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(linesearchSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -13857,11 +14418,11 @@ CONTAINS
     ENTERS("SolverNonlinearNewton_LinesearchFinalise",err,error,*999)
 
     IF(ASSOCIATED(linesearchSolver)) THEN
-      CALL Petsc_MatColoringFinalise(linesearchSolver%jacobianMatColoring,err,error,*999)
-      CALL Petsc_ISColoringFinalise(linesearchSolver%jacobianISColoring,err,error,*999)
-      CALL Petsc_MatFDColoringFinalise(linesearchSolver%jacobianMatFDColoring,err,error,*999)
-      CALL Petsc_SnesLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
-      CALL Petsc_SnesFinalise(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_MatColoringFinalise(linesearchSolver%jacobianMatColoring,err,error,*999)
+      CALL PETSc_ISColoringFinalise(linesearchSolver%jacobianISColoring,err,error,*999)
+      CALL PETSc_MatFDColoringFinalise(linesearchSolver%jacobianMatFDColoring,err,error,*999)
+      CALL PETSc_SnesLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SnesFinalise(linesearchSolver%snes,err,error,*999)
       DEALLOCATE(linesearchSolver)
     ENDIF
         
@@ -13902,11 +14463,11 @@ CONTAINS
     newtonSolver%linesearchSolver%linesearchAlpha=0.0001_DP
     newtonSolver%linesearchSolver%linesearchMaxstep=1.0E8_DP
     newtonSolver%linesearchSolver%linesearchStepTolerance=CONVERGENCE_TOLERANCE
-    CALL Petsc_MatColoringInitialise(newtonSolver%linesearchSolver%jacobianMatColoring,err,error,*999)
-    CALL Petsc_ISColoringInitialise(newtonSolver%linesearchSolver%jacobianISColoring,err,error,*999)
-    CALL Petsc_MatFDColoringInitialise(newtonSolver%linesearchSolver%jacobianMatFDColoring,err,error,*999)
-    CALL Petsc_SnesInitialise(newtonSolver%linesearchSolver%snes,err,error,*999)
-    CALL Petsc_SnesLineSearchInitialise(newtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
+    CALL PETSc_MatColoringInitialise(newtonSolver%linesearchSolver%jacobianMatColoring,err,error,*999)
+    CALL PETSc_ISColoringInitialise(newtonSolver%linesearchSolver%jacobianISColoring,err,error,*999)
+    CALL PETSc_MatFDColoringInitialise(newtonSolver%linesearchSolver%jacobianMatFDColoring,err,error,*999)
+    CALL PETSc_SnesInitialise(newtonSolver%linesearchSolver%snes,err,error,*999)
+    CALL PETSc_SnesLineSearchInitialise(newtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
     newtonSolver%linesearchSolver%linesearchMonitorOutput=.FALSE.
         
     EXITS("SolverNonlinearNewton_LinesearchInitialise")
@@ -14033,17 +14594,17 @@ CONTAINS
       NULLIFY(solverPETScVector)
       CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
       !Set step tolerances, leave iterative line search options as defaults in case the user has changed them
-      CALL Petsc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       !Set the tolerances for the SNES solver in case the user has changed them
-      CALL Petsc_SnesSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
+      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
         & newtonSolver%solutionTolerance,newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)     
       !Solve the nonlinear equations
-      CALL Petsc_SnesSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
+      CALL PETSc_SnesSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
       !Check for convergence
-      CALL Petsc_SnesGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
+      CALL PETSc_SnesGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
       SELECT CASE(convergedReason)
       CASE(PETSC_SNES_DIVERGED_FUNCTION_DOMAIN)
         CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged function domain.",err,error,*999)
@@ -14064,10 +14625,10 @@ CONTAINS
         !Output solution characteristics
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Newton linesearch solver parameters:",err,error,*999)
-        CALL Petsc_SnesGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
+        CALL PETSc_SnesGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",numberOfIterations,err,error,*999)
-        CALL Petsc_SnesGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
-        CALL Petsc_VecNorm(functionPETScVector,PETSC_NORM_2,functionNorm,err,error,*999)
+        CALL PETSc_SnesGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
+        CALL PETSc_VecNorm(functionPETScVector,PETSC_NORM_2,functionNorm,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final function norm = ",functionNorm,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_SNES_CONVERGED_FNORM_ABS)
@@ -14444,7 +15005,7 @@ CONTAINS
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator
     TYPE(DistributedVectorType), POINTER :: residualVector
-    TYPE(DistributedPETScVectorType), POINTER :: residualPETScVector
+    TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -14522,7 +15083,7 @@ CONTAINS
       ENDDO !equationsSetIdx                 
       !Create the solver matrices and vectors
       NULLIFY(solverMatrices)
-      CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
       SELECT CASE(solverEquations%symmetryType)
@@ -14536,34 +15097,34 @@ CONTAINS
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       !Create the PETSc SNES solver
-      CALL Petsc_SnesCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SnesCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Newton trust region solver
-      CALL Petsc_SnesSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
+      CALL PETSc_SnesSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
       !Set the solver as the SNES application context
-      CALL Petsc_SnesSetApplicationContext(trustregionSolver%snes, &
+      CALL PETSc_SnesSetApplicationContext(trustregionSolver%snes, &
         & trustregionSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
-      CALL Petsc_SnesSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
+      CALL PETSc_SnesSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
         & Problem_SolverResidualEvaluatePetsc,trustregionSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the Jacobian if necessary
       !Set the trust region delta ???
       
       !Set the trust region tolerance
-      CALL Petsc_SnesSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
+      CALL PETSc_SnesSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
         & err,error,*999)
       !Set the tolerances for the SNES solver
-      CALL Petsc_SnesSetTolerances(trustregionSolver%snes,newtonSolver%absoluteTolerance, &
+      CALL PETSc_SnesSetTolerances(trustregionSolver%snes,newtonSolver%absoluteTolerance, &
         & newtonSolver%relativeTolerance,newtonSolver%solutionTolerance, &
         & newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)
       !Set any further SNES options from the command line options
-      CALL Petsc_SnesSetFromOptions(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SnesSetFromOptions(trustregionSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(trustregionSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -14637,7 +15198,7 @@ CONTAINS
     ENTERS("SolverNonlinearNewton_TrustregionFinalise",err,error,*999)
 
     IF(ASSOCIATED(trustregionSolver)) THEN      
-      CALL Petsc_SnesFinalise(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SnesFinalise(trustregionSolver%snes,err,error,*999)
       DEALLOCATE(trustregionSolver)
     ENDIF
     
@@ -14675,7 +15236,7 @@ CONTAINS
     newtonSolver%trustregionSolver%solverLibrary=SOLVER_PETSC_LIBRARY
 !!TODO: set this properly
     newtonSolver%trustregionSolver%trustregionDelta0=0.01_DP
-    CALL Petsc_SnesInitialise(newtonSolver%trustregionSolver%snes,err,error,*999)
+    CALL PETSc_SnesInitialise(newtonSolver%trustregionSolver%snes,err,error,*999)
         
     EXITS("SolverNonlinearNewton_TrustregionInitialise")
     RETURN
@@ -14915,7 +15476,7 @@ CONTAINS
       CASE(SOLVER_NEWTON_LINESEARCH)
         NULLIFY(newtonLinesearchSolver)
         CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,newtonLinesearchSolver,err,error,*999)
-        CALL Petsc_SnesGetConvergedReason(newtonLinesearchSolver%snes,convergedReason,err,error,*999)
+        CALL PETSc_SnesGetConvergedReason(newtonLinesearchSolver%snes,convergedReason,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
           CALL FlagError("Nonlinear line search solver did not converge. Exit due to PETSc diverged function count.", &
@@ -14950,7 +15511,7 @@ CONTAINS
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
         NULLIFY(quasiNewtonLinesearchSolver)
         CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
-        CALL Petsc_SnesGetConvergedReason(quasiNewtonLinesearchSolver%snes,convergedReason,err,error,*999)
+        CALL PETSc_SnesGetConvergedReason(quasiNewtonLinesearchSolver%snes,convergedReason,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
           CALL FlagError("Nonlinear line search solver did not converge. Exit due to PETSc diverged function count.", &
@@ -15158,11 +15719,11 @@ CONTAINS
       CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM)
         SELECT CASE(newtonSolver%newtonSolveType)
         CASE(SOLVER_NEWTON_LINESEARCH)
-          NULIFY(newtonLinesearchSolver)
+          NULLIFY(newtonLinesearchSolver)
           CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,linesearchSolver,err,error,*999)
           NULLIFY(convergenceTest)
           CALL SolverNonlinearNewtonLinesearch_ConvergenceTestGet(linesearchSolver,convergenceTest,err,error,*999)
-          CALL Petsc_SnesLineSearchGetNorms(newtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
+          CALL PETSc_SnesLineSearchGetNorms(newtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
@@ -15204,7 +15765,7 @@ CONTAINS
           CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
           NULLIFY(convergenceTest)
           CALL SolverNonlinearQuasiNewtonLinesearch_ConvergenceTestGet(quasiNewtonLinesearchSolver,convergenceTest,err,error,*999)
-          CALL Petsc_SnesLineSearchGetNorms(quasiNewtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
+          CALL PETSc_SnesLineSearchGetNorms(quasiNewtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
@@ -15213,11 +15774,11 @@ CONTAINS
           CALL FlagError("The Quasi-Newton trustregion solver is not implemented.",err,error,*999)
         CASE DEFAULT
           localError="The Quasi-Newton solve type of "// &
-            & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonSolveType,"*",err,error))//"is invalid."
+            & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonSolveType,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO)
-        CALL FlagError("The Sum of differentiated ratios of unconstrained to constrained residuals"// &
+        CALL FlagError("The Sum of differentiated ratios of unconstrained to constrained residuals "// &
           &  "convergence test type is not implemented.",err,error,*999)
       END SELECT
       CALL WriteString(GENERAL_OUTPUT_TYPE,"  Quasi-Newton solver information: ",err,error,*999)          
@@ -15326,7 +15887,7 @@ CONTAINS
     NULLIFY(nonlinearSolver)
     CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
     IF(nonlinearSolveType/=nonlinearSolver%nonlinearSolveType) THEN
-      CALL SOLVER_LINKED_SOLVER_REMOVE(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+      CALL Solver_LinkedSolverRemove(solver,SOLVER_LINEAR_TYPE,err,error,*999)
       !Finalise the old solver type
       SELECT CASE(nonlinearSolver%nonlinearSolveType)
       CASE(SOLVER_NONLINEAR_NEWTON)
@@ -15884,105 +16445,82 @@ CONTAINS
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfMatrices
       NULLIFY(solverMatrix)
       CALL SolverMapping_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
-      NULLIFY(domainMapping)
-      CALL SolverMapping_ColumnDOFSMappingGet(solverMapping,solverMatrixIdx,columnDOFSMapping,err,error,*999)
+      NULLIFY(solverMatrixToEquationsMap)
+      CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap,err,error,*999)
+      NULLIFY(columnDOFsMapping)
+      CALL SolverMappingSMToEQSMap_ColumnDOFsMappingGet(solverMatrixToEquationsMap,columnDOFsMapping,err,error,*999)
       NULLIFY(solverVector)
       CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-        CALL SolverMapping_SolverNumberOfVariablesGet(solverMapping,solverMatrixIdx,equationsSetIdx,numberOfVariables, &
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSetToSolverMatricesMap)
+        CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
           & err,error,*999)
+        NULLIFY(equationsMatricesToSolverMatrixMap)
+        CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMap(equationsSetToSolverMatricesMap,solverMatrixIdx, &
+          & equationsMatricesToSolverMatrixMap)
+        CALL SolverMappingEMSToSMMap_NumberOfVariablesGet(equationsMatricesToSolverMatrixMap,numberOfVariables,err,error,*999)
         DO variableIdx=1,numberOfVariables
           NULLIFY(dependentVariable)
-          CALL SolverMapping_SolverVariableGet(solverMapping,solverMatrixIdx,equationsSetIdx,variableIdx,dependentVariable, &
+          CALL SolverMappingEMSToSMMap_VariableGet(equationsMatricesToSolverMatrixMap,variableIdx,dependentVariable, &
             & err,error,*999)
-          variableType=dependentVariable%variableType
-          dependentField=>dependentVariable%FIELD
+          NULLIFY(domainMapping)
+          CALL FieldVariable_DomainMappingGet(dependentVariable,domainMapping,err,error,*999)
+          NULLIFY(varDOFToSolverDOFsMap)
+          CALL SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet(equationsMatricesToSolverMatrixMap,variableIdx, &
+            & varDOFToSolverDOFsMap,err,error,*999)
           NULLIFY(variableData)
           CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_VALUES_SET_TYPE,variableData,err,error,*999)
-          DO variableDOFIdx=1,dependentVariable%numberOfDOFs
-                              columnNumber=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                                & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%VARIABLE_TO_SOLVER_COL_MAPS(variableIdx)% &
-                                & columnNumbers(variableDOFIdx)
-                              IF(columnNumber/=0) THEN
-                                couplingCoefficient=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                                  & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%VARIABLE_TO_SOLVER_COL_MAPS( &
-                                  & variableIdx)%couplingCoefficients(variableDOFIdx)
-                                additiveConstant=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                                  & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%VARIABLE_TO_SOLVER_COL_MAPS( &
-                                  & variableIdx)%ADDITIVECONSTANTS(variableDOFIdx)
-                                dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
-                                localNumber=domainMapping%globalToLocalMap(columnNumber)%localNumber(1)
-                                CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
-                              ENDIF
-                            ENDDO !variableDOFIdx
-                            CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-                              & variableData,err,error,*999)
-                          ELSE
-                            CALL FlagError("Variable is not associated.",err,error,*999)
-                          ENDIF
-                        ENDDO !variableIdx
-                      ENDDO !equationsSetIdx
-                      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-                        lagrangeVariable=>solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-                          & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%lagrangeVariable
-                        IF(ASSOCIATED(dependentVariable)) THEN
-                          variableType=lagrangeVariable%variableType
-                          lagrangeField=>lagrangeVariable%FIELD
-                          NULLIFY(variableData)
-                          CALL Field_ParameterSetDataGet(lagrangeField,variableType,FIELD_VALUES_SET_TYPE,variableData, &
-                            & err,error,*999)
-                          DO variableDOFIdx=1,lagrangeVariable%numberOfDofs
-                            columnNumber=solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-                              & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%lagrangeVariableToSolverColMap% &
-                              & columnNumbers(variableDOFIdx)
-                            IF(columnNumber/=0) THEN
-                              couplingCoefficient=solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-                                & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%lagrangeVariableToSolverColMap% &
-                                & couplingCoefficients(variableDOFIdx)
-                              additiveConstant=solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-                                & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%lagrangeVariableToSolverColMap% &
-                                & ADDITIVECONSTANTS(variableDOFIdx)
-                              dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
-                              localNumber=domainMapping%globalToLocalMap(columnNumber)%localNumber(1)
-                              CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
-                            ENDIF
-                          ENDDO !variableDOFIdx
-                          CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-                            & variableData,err,error,*999)
-                        ELSE
-                          CALL FlagError("Variable is not associated.",err,error,*999)
-                        ENDIF
-                      ENDDO !equationsSetIdx
-                    ELSE
-                      CALL FlagError("Domain mapping is not associated.",err,error,*999)
-                    ENDIF
-                    CALL DistributedVector_UpdateStart(solverVector,err,error,*999)
-                    CALL DistributedVector_UpdateFinish(solverVector,err,error,*999)
-                  ELSE
-                    CALL FlagError("Solver vector is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver matrix is not associated.",err,error,*999)
-                ENDIF
-              ENDDO !solverMatrixIdx
-            ELSE
-              CALL FlagError("Solver matrices solution mapping is not associated.",err,error,*999)
+          CALL FieldVariable_NumberOfDOFsGet(dependentVariable,numberOfDOFs,err,error,*999)
+          DO variableDOFIdx=1,numberOfDOFs
+            CALL SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet(varDOFToSolverDOFsMap,variableDOFIdx,solverDOFIdx, &
+              & couplingCoefficient,additiveConstant,err,error,*999)
+            IF(solverDOFIdx/=0) THEN
+              dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
+              CALL DomainMapping_LocalNumberFromGlobalGet(domainMaping,solverDOFIdx,1,localDOFIdx,err,error,*999)
+              CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
             ENDIF
-          ELSE
-            CALL FlagError("Solver equations solver matrices are not associated.",err,error,*999)
+          ENDDO !variableDOFIdx
+          CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_VALUES_SET_TYPE,variableData,err,error,*999)
+        ENDDO !variableIdx
+      ENDDO !equationsSetIdx
+      !Loop over interface conditions
+      CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
+        NULLIFY(interfaceConditionToSolverMatricesMap)
+        CALL SolverMapping_InterfaceConditionToSolverMatricesMap(solverMapping,interfaceConditionIdx, &
+          & interfaceConditionToSolverMatricesMap,err,error,*999)
+        NULLIFY(interfaceMatricesToSolverMatrixMap)
+        CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMap(interfaceConditionToSolverMatricesMap,solverMatrixIdx, &
+          & interfaceMatricesToSolverMatrixMap,err,error,*999)
+        NULLIFY(lagrangeVariable)
+        CALL SolverMappingIMSToSMMap_LagrangeVariableGet(interfaceMatricesToSolverMatrixMap,lagrangeVariable,err,error,*999)        
+        NULLIFY(domainMapping)
+        CALL FieldVariable_DomainMappingGet(lagrangeVariable,domainMapping,err,error,*999)
+        NULLIFY(varDOFToSolverDOFsMap)
+        CALL SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet(interfaceMatricesToSolverMatrixMap,varDOFToSolverDOFsMap, &
+          & err,error,*999)
+        NULLIFY(variableData)
+        CALL FieldVariable_ParameterSetDataGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,variableData,err,error,*999)
+        CALL FieldVariable_NumberOfDOFsGet(lagrangeVariable,numberOfDOFs,err,error,*999)
+        DO variableDOFIdx=1,numberOfDOFs
+          CALL SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet(varDOFToSolverDOFsMap,variableDOFIdx,solverDOFIdx, &
+            & couplingCoefficient,additiveConstant,err,error,*999)
+          IF(solverDOFIdx/=0) THEN
+            dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
+            CALL DomainMapping_LocalNumberFromGlobalGet(domainMaping,solverDOFIdx,1,localDOFIdx,err,error,*999)
+            CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
           ENDIF
-        ELSE
-          CALL FlagError("Solver solver equations is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
-    ENDIF
+        ENDDO !variableDOFIdx
+        CALL FieldVariable_ParameterSetDataRestore(lagrangeVariable,FIELD_VALUES_SET_TYPE,variableData,err,error,*999)
+      ENDDO !interfaceConditionIdx
+      CALL DistributedVector_UpdateStart(solverVector,err,error,*999)
+      CALL DistributedVector_UpdateFinish(solverVector,err,error,*999)
+    ENDDO !solverMatrixIdx
     
     EXITS("Solver_SolutionUpdate")
     RETURN
@@ -16008,56 +16546,52 @@ CONTAINS
 
     ENTERS("Solver_Solve",err,error,*999)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(solver%solverFinished) THEN
-        IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
-          CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
-          CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)          
-        ENDIF
-        !Solve the system depending on the solver type
-        SELECT CASE(solver%solveType)
-        CASE(SOLVER_LINEAR_TYPE)
-          !Solve linear equations
-          CALL SolverLinear_Solve(solver%linearSolver,err,error,*999)
-        CASE(SOLVER_NONLINEAR_TYPE)
-          !Solve nonlinear equations
-          CALL SolverNonlinear_Solve(solver%nonlinearSolver,err,error,*999)
-        CASE(SOLVER_DYNAMIC_TYPE)
-          !Solve dynamic equations
-          CALL SolverDynamic_Solve(solver%dynamicSolver,err,error,*999)
-        CASE(SOLVER_DAE_TYPE)
-          !Solve differential-algebraic equations
-          CALL SolverDAE_Solve(solver%DAESolver,err,error,*999)
-        CASE(SOLVER_EIGENPROBLEM_TYPE)
-          !Solve eigenproblem
-          CALL SolverEigenproblem_Solve(solver%eigenproblemSolver,err,error,*999)
-        CASE(SOLVER_OPTIMISER_TYPE)
-          !Solve an optimisation problem
-          CALL SolverOptimiser_Solve(solver%optimiserSolver,err,error,*999)
-        CASE(SOLVER_CELLML_EVALUATOR_TYPE)
-          !Solve a CellML evaluator
-          CALL SolverCellMLEvaluator_Solve(solver%cellMLEvaluatorSolver,err,error,*999)
-        CASE DEFAULT
-          localError="The solver type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        !If necessary output the timing information
-        IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
-          CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
-          CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
-          userElapsed=userTime2(1)-userTime1(1)
-          systemElapsed=systemTime2(1)-systemTime1(1)
-          IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
-            & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
-          CALL Profiling_TimingsOutput(1,"Total time for solve",userElapsed,systemElapsed,err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
+    CALL Solver_AssertIsFinish(solver,err,error,*999)
+
+    IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
+      CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)          
     ENDIF
-        
+    
+    !Solve the system depending on the solver type
+    SELECT CASE(solver%solveType)
+    CASE(SOLVER_LINEAR_TYPE)
+      !Solve linear equations
+      CALL SolverLinear_Solve(solver%linearSolver,err,error,*999)
+    CASE(SOLVER_NONLINEAR_TYPE)
+      !Solve nonlinear equations
+      CALL SolverNonlinear_Solve(solver%nonlinearSolver,err,error,*999)
+    CASE(SOLVER_DYNAMIC_TYPE)
+      !Solve dynamic equations
+      CALL SolverDynamic_Solve(solver%dynamicSolver,err,error,*999)
+    CASE(SOLVER_DAE_TYPE)
+      !Solve differential-algebraic equations
+      CALL SolverDAE_Solve(solver%DAESolver,err,error,*999)
+    CASE(SOLVER_EIGENPROBLEM_TYPE)
+      !Solve eigenproblem
+      CALL SolverEigenproblem_Solve(solver%eigenproblemSolver,err,error,*999)
+    CASE(SOLVER_OPTIMISER_TYPE)
+      !Solve an optimisation problem
+      CALL SolverOptimiser_Solve(solver%optimiserSolver,err,error,*999)
+    CASE(SOLVER_CELLML_EVALUATOR_TYPE)
+      !Solve a CellML evaluator
+      CALL SolverCellMLEvaluator_Solve(solver%cellMLEvaluatorSolver,err,error,*999)
+    CASE DEFAULT
+      localError="The solver type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    !If necessary output the timing information
+    IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+      CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
+      CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
+      userElapsed=userTime2(1)-userTime1(1)
+      systemElapsed=systemTime2(1)-systemTime1(1)
+      IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total time for solve",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+       
     EXITS("Solver_Solve")
     RETURN
 999 ERRORSEXITS("Solver_Solve",err,error)
@@ -16070,83 +16604,75 @@ CONTAINS
   !
 
   !>Sets/changes the type for a solver.
-  SUBROUTINE SOLVER_TYPE_SET(solver,SOLVE_TYPE,err,error,*)
+  SUBROUTINE Solver_TypeSet(solver,solveType,err,error,*)
 
     !Argument variables
     TYPE(SolverType), POINTER :: solver !<A pointer the solver to set the solver type for.
-    INTEGER(INTG), INTENT(IN) :: SOLVE_TYPE !<The type of solver to be set \see SolverRoutines_SolverTypes,SolverRoutines
+    INTEGER(INTG), INTENT(IN) :: solveType !<The type of solver to be set \see SolverRoutines_SolverTypes,SolverRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError,localError
     
-    ENTERS("SOLVER_TYPE_SET",err,error,*998)
+    ENTERS("Solver_TypeSet",err,error,*998)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(solver%solverFinished) THEN
-        CALL FlagError("Solver has already been finished.",err,error,*998)
-      ELSE
-        IF(ASSOCIATED(solver%linkingSolver)) THEN
-          CALL FlagError("Can not changed the solver type for a solve that has been linked.",err,error,*998)
-        ELSE
-          IF(SOLVE_TYPE/=solver%solveType) THEN
-            !Initialise the new solver type 
-            SELECT CASE(SOLVE_TYPE)
-            CASE(SOLVER_LINEAR_TYPE)
-              CALL Solver_LinearInitialise(solver,err,error,*999)
-            CASE(SOLVER_NONLINEAR_TYPE)
-              CALL Solver_NonlinearInitialise(solver,err,error,*999)
-            CASE(SOLVER_DYNAMIC_TYPE)
-              CALL Solver_DynamicInitialise(solver,err,error,*999)
-            CASE(SOLVER_DAE_TYPE)
-              CALL Solver_DAEInitialise(solver,err,error,*999)
-            CASE(SOLVER_EIGENPROBLEM_TYPE)
-              CALL Solver_EigenproblemInitialise(solver,err,error,*999)
-            CASE(SOLVER_OPTIMISER_TYPE)
-              CALL Solver_OptimiserInitialise(solver,err,error,*999)
-            CASE(SOLVER_CELLML_EVALUATOR_TYPE)
-              CALL Solver_CellMLEvaluatorInitialise(solver,err,error,*999)
-            CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
-              CALL Solver_GeometricTransformationInitialise(solver,err,error,*999)
-            CASE DEFAULT
-              localError="The specified solve type of "//TRIM(NumberToVString(SOLVE_TYPE,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            !Finalise the old solve type
-            SELECT CASE(solver%solveType)
-            CASE(SOLVER_LINEAR_TYPE)
-              CALL Solver_LinearFinalise(solver%linearSolver,err,error,*999)
-            CASE(SOLVER_NONLINEAR_TYPE)
-              CALL Solver_NonlinearFinalise(solver%nonlinearSolver,err,error,*999)
-            CASE(SOLVER_DYNAMIC_TYPE)
-              CALL Solver_DynamicFinalise(solver%dynamicSolver,err,error,*999)
-            CASE(SOLVER_DAE_TYPE)
-              CALL Solver_DAEFinalise(solver%DAESolver,err,error,*999)
-            CASE(SOLVER_EIGENPROBLEM_TYPE)
-              CALL Solver_EigenproblemFinalise(solver%eigenproblemSolver,err,error,*999)
-            CASE(SOLVER_OPTIMISER_TYPE)
-              CALL Solver_OptimiserFinalise(solver%optimiserSolver,err,error,*999)
-            CASE(SOLVER_CELLML_EVALUATOR_TYPE)
-              CALL Solver_CellMLEvaluatorFinalise(solver%cellMLEvaluatorSolver,err,error,*999)
-            CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
-              CALL Solver_GeometricTransformationFinalise(solver%geometricTransformationSolver,err,error,*999)
-            CASE DEFAULT
-              localError="The solver solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            !Set the solve type
-            solver%solveType=SOLVE_TYPE
-          ENDIF
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*998)
+    CALL Solver_AssertNotFinish(solver,err,error,*998)
+    IF(ASSOCIATED(solver%linkingSolver)) &
+      & CALL FlagError("Can not changed the solver type for a solve that has been linked.",err,error,*998)
+        
+    IF(solveType/=solver%solveType) THEN
+      !Initialise the new solver type 
+      SELECT CASE(solveType)
+      CASE(SOLVER_LINEAR_TYPE)
+        CALL Solver_LinearInitialise(solver,err,error,*999)
+      CASE(SOLVER_NONLINEAR_TYPE)
+        CALL Solver_NonlinearInitialise(solver,err,error,*999)
+      CASE(SOLVER_DYNAMIC_TYPE)
+        CALL Solver_DynamicInitialise(solver,err,error,*999)
+      CASE(SOLVER_DAE_TYPE)
+        CALL Solver_DAEInitialise(solver,err,error,*999)
+      CASE(SOLVER_EIGENPROBLEM_TYPE)
+        CALL Solver_EigenproblemInitialise(solver,err,error,*999)
+      CASE(SOLVER_OPTIMISER_TYPE)
+        CALL Solver_OptimiserInitialise(solver,err,error,*999)
+      CASE(SOLVER_CELLML_EVALUATOR_TYPE)
+        CALL Solver_CellMLEvaluatorInitialise(solver,err,error,*999)
+      CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
+        CALL Solver_GeometricTransformationInitialise(solver,err,error,*999)
+      CASE DEFAULT
+        localError="The specified solve type of "//TRIM(NumberToVString(solveType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      !Finalise the old solve type
+      SELECT CASE(solver%solveType)
+      CASE(SOLVER_LINEAR_TYPE)
+        CALL Solver_LinearFinalise(solver%linearSolver,err,error,*999)
+      CASE(SOLVER_NONLINEAR_TYPE)
+        CALL Solver_NonlinearFinalise(solver%nonlinearSolver,err,error,*999)
+      CASE(SOLVER_DYNAMIC_TYPE)
+        CALL Solver_DynamicFinalise(solver%dynamicSolver,err,error,*999)
+      CASE(SOLVER_DAE_TYPE)
+        CALL Solver_DAEFinalise(solver%DAESolver,err,error,*999)
+      CASE(SOLVER_EIGENPROBLEM_TYPE)
+        CALL Solver_EigenproblemFinalise(solver%eigenproblemSolver,err,error,*999)
+      CASE(SOLVER_OPTIMISER_TYPE)
+        CALL Solver_OptimiserFinalise(solver%optimiserSolver,err,error,*999)
+      CASE(SOLVER_CELLML_EVALUATOR_TYPE)
+        CALL Solver_CellMLEvaluatorFinalise(solver%cellMLEvaluatorSolver,err,error,*999)
+      CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
+        CALL Solver_GeometricTransformationFinalise(solver%geometricTransformationSolver,err,error,*999)
+      CASE DEFAULT
+        localError="The solver solve type of "//TRIM(NumberToVString(solver%solveType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      !Set the solve type
+      solver%solveType=solveType
     ENDIF
     
-    EXITS("SOLVER_TYPE_SET")
+    EXITS("Solver_TypeSet")
     RETURN
-999 SELECT CASE(SOLVE_TYPE)
+999 SELECT CASE(solveType)
     CASE(SOLVER_LINEAR_TYPE)
       CALL Solver_LinearFinalise(solver%linearSolver,dummyErr,dummyError,*998)
     CASE(SOLVER_NONLINEAR_TYPE)
@@ -16162,10 +16688,10 @@ CONTAINS
     CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
       CALL Solver_GeometricTransformationFinalise(solver%geometricTransformationSolver,err,error,*999)
     END SELECT
-998 ERRORSEXITS("SOLVER_TYPE_SET",err,error)
+998 ERRORSEXITS("Solver_TypeSet",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_TYPE_SET
+  END SUBROUTINE Solver_TypeSet
         
   !
   !================================================================================================================================
@@ -16203,9 +16729,8 @@ CONTAINS
     
     ENTERS("Solver_VariablesDynamicFieldUpdate",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
-    IF(.NOT.solver%solverFinished) CALL FlagError("Solver has not been finished.",err,error,*999)
-    
+    CALL Solver_AssertIsFinished(solver,err,error,*998)
+    CALL Solver_AssertIsDynamic(solver,err,error,*998)    
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
     deltaT=dynamicSolver%timeIncrement
@@ -16215,7 +16740,8 @@ CONTAINS
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfMatrices
       NULLIFY(solverMatrix)
       CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
       NULLIFY(solverVector)
@@ -16223,71 +16749,66 @@ CONTAINS
       !Get the solver variables data
       CALL DistributedVector_DataGet(solverVector,solverData,err,error,*999)
       !Loop over the solver variable dofs
-      DO solverDOFIdx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)%numberOfDOFs
+      NULLIFY(solverMatrixToEquationsMap)
+      CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverIdx,solverMatrixToEquationsMap,err,error,*999)
+      CALL SolverMappingSMToEQSMap_NumberOfDOFsGet(solverMatrixToEquationsMap,numberOfSolverDOFs,err,error,*999)
+      DO solverDOFIdx=1,numberOfSolverDOFs
+        NULLIFY(solverDOFToVariableDOFsMap)
+        CALL SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet(solverMatrixToEquationsMap,solverDOFIdx, &
+          & solverDOFToVariableDOFsMap,err,error,*999)
         !Loop over the equations sets associated with this dof
-        DO equationsDOFIdx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-          & solverDOFToVariableDOFsMap(solverDOFIdx)%numberOfEquationDOFs
-          SELECT CASE(solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-            & solverDOFToVariableDOFsMap(solverDOFIdx)%equationTypes(equationsDOFIdx))
-          CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET)
-            dependentVariable=>solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-              & solverDOFToVariableDOFsMap(solverDOFIdx)%variable(equationsDOFIdx)%ptr
-            IF(.NOT.ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is not associated.",err,error,*999)
-            dynamicVariableType=dependentVariable%variableType
-            NULLIFY(dependentField)
-            CALL FieldVariable_FieldGet(dependentVariable,dependentField,err,error,*999)
-            !Get the dependent field dof the solver dof is mapped to
-            variableDOF=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-              & solverDOFToVariableDOFsMap(solverDOFIdx)%variableDOF(equationsDOFIdx)
-            variableCoefficient=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-              & solverDOFToVariableDOFsMap(solverDOFIdx)%variableCoefficient(equationsDOFIdx)
-            additiveConstant=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-              & solverDOFToVariableDOFsMap(solverDOFIdx)%ADDITIVECONSTANT(equationsDOFIdx)
+        CALL SolverMappingSDOFToVDOFsMap_NumberOfEquationsDOFsGet(solverDOFToVariableDOFsMap,numberOfEquationDOFs,err,error,*999)
+        DO equationsDOFIdx=1,numberOfEquationDOFs
+          CALL SolverMappingSDOFToVDOFsMap_EquationsInfoGet(solverDOFToVariableDOFsMap,equationsDOFIdx,equationType,equationIdx, &
+            & err,error,*999)
+          SELECT CASE(equationType)
+          CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET, &
+            & SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
+            NULLIFY(dependentVariable)
+            CALL SolverMappingSDOFToVDOFsMap_VariableGet(solverDOFToVariableDOFsMap,equationsDOFIdx,dependentVariable, &
+              & err,error,*999)
+            !Get the dependent field DOF the solver DOF is mapped to
+            CALL SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet(solverDOFToVariableDOFsMap,equationsDOFIdx,variableDOF, &
+              & variableCoefficient,additiveConstant,err,error,*999)
             alphaValue=solverData(solverDOFIdx)*variableCoefficient+additiveConstant
-            !Set the dependent field dof
+            !Set the dependent field DOF
             IF(dynamicSolver%solverInitialised) THEN
               SELECT CASE(dynamicSolver%degree)
               CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, & 
-                  & FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF,previousDisplacement, &
-                  & err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF, &
+                  & previousDisplacement,err,error,*999)
                 currentDisplacement=previousDisplacement+deltaT*alphaValue
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VALUES_SET_TYPE,variableDOF,currentDisplacement,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,variableDOF, &
+                  & currentDisplacement,err,error,*999)
               CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, & 
-                  & FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF,previousDisplacement, &
-                  & err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, & 
-                  & FIELD_PREVIOUS_VELOCITY_SET_TYPE,variableDOF,previousVelocity, &
-                  & err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF, &
+                  & previousDisplacement,err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,variableDOF, &
+                  & previousVelocity,err,error,*999)
                 currentDisplacement=previousDisplacement+deltaT*previousVelocity+(deltaT*deltaT/2.0_DP)*alphaValue
                 currentVelocity=previousVelocity+deltaT*alphaValue
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VALUES_SET_TYPE,variableDOF,currentDisplacement,err,error,*999)
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF,currentVelocity,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,variableDOF, &
+                  & currentDisplacement,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF, &
+                  & currentVelocity,err,error,*999)
               CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, & 
-                  & FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF,previousDisplacement, &
-                  & err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, & 
-                  & FIELD_PREVIOUS_VELOCITY_SET_TYPE,variableDOF,previousVelocity, &
-                  & err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, & 
-                  & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,variableDOF,previousAcceleration, &
-                  & err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF, &
+                  & previousDisplacement,err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,variableDOF, &
+                  & previousVelocity,err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,variableDOF, &
+                  & previousAcceleration,err,error,*999)
                 currentDisplacement=previousDisplacement+deltaT*previousVelocity+ &
                   & (deltaT*deltaT/2.0_DP)*previousAcceleration+ &
                   & (deltaT*deltaT*deltaT/6.0_DP)*alphaValue
                 currentVelocity=previousVelocity+deltaT*previousAcceleration+(deltaT*deltaT/2.0_DP)*alphaValue
                 currentAcceleration=previousAcceleration+deltaT*alphaValue
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VALUES_SET_TYPE,variableDOF,currentDisplacement,err,error,*999)
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF,currentVelocity,err,error,*999)
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_ACCELERATION_VALUES_SET_TYPE,variableDOF,currentAcceleration,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,variableDOF, &
+                  & currentDisplacement,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF, &
+                  & currentVelocity,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,variableDOF, &
+                  & currentAcceleration,err,error,*999)
               CASE DEFAULT
                 localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
                   & " is invalid."
@@ -16300,13 +16821,13 @@ CONTAINS
                 CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
                   !Do nothing
                 CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                    & FIELD_INITIAL_VELOCITY_SET_TYPE,variableDOF,alphaValue,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_INITIAL_VELOCITY_SET_TYPE,variableDOF, &
+                    & alphaValue,err,error,*999)
                 CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                    & FIELD_INITIAL_VELOCITY_SET_TYPE,variableDOF,alphaValue,err,error,*999)
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                    & FIELD_INITIAL_ACCELERATION_SET_TYPE,variableDOF,0.0_DP,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_INITIAL_VELOCITY_SET_TYPE,variableDOF, &
+                    & alphaValue,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
+                    & variableDOF,0.0_DP,err,error,*999)
                 CASE DEFAULT
                   localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
                     & " is invalid."
@@ -16314,8 +16835,8 @@ CONTAINS
                 END SELECT
               CASE(SOLVER_DYNAMIC_SECOND_ORDER)
                 IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                    & FIELD_INITIAL_ACCELERATION_SET_TYPE,variableDOF,alphaValue,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
+                    & variableDOF,alphaValue,err,error,*999)
                 ENDIF
               CASE DEFAULT
                 localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
@@ -16323,232 +16844,97 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
-          CASE(SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
-            !
           CASE DEFAULT
-            localError="The equations type of "//TRIM(NumberToVString(solverMapping% &
-              & solverColToEquationsColsMap(solverMatrixIdx)%solverDOFToVariableDOFsMap(solverDOFIdx)% &
-              & equationTypes(equationsDOFIdx),"*",err,error))//" of equations index "// &
-              & TRIM(NumberToVString(equationsDOFIdx,"*",err,error))//" for solver degree-of-freedom "// &
+            localError="The equations type of "//TRIM(NumberToVString(equationType,"*",err,error))//" of equations DOF index "// &
+              & TRIM(NumberToVString(equationsDOFIdx,"*",err,error))//" for solver DOF index "// &
               & TRIM(NumberToVString(solverDOFIdx,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDDO !equationsDOFIdx
       ENDDO !solverDOFIdx
-      !Restore the solver dof data
+      !Restore the solver DOF data
       CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
-      !Start the transfer of the field dofs
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-        NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-        NULLIFY(dependentField)
-        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-        NULLIFY(equations)
-        CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        NULLIFY(vectorMapping)
-        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-        dynamicMapping=>vectorMapping%dynamicMapping
-        IF(ASSOCIATED(dynamicMapping)) THEN
-          dynamicVariableType=dynamicMapping%dynamicVariableType
-          IF(dynamicSolver%solverInitialised) THEN
-            CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-            IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-              CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_VELOCITY_VALUES_SET_TYPE, &
-                & err,error,*999)
-              IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-                  & err,error,*999)
-              ENDIF
+      !Start the transfer of the field DOFs
+      NULLIFY(solverVariablesList)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+      CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+      DO variableIdx=1,numberOfVariables
+        NULLIFY(dependentVariable)
+        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+        IF(dynamicSolver%solverInitialised) THEN
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+            CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+            IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL Field_ParameterSetUpdateStart(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
             ENDIF
-          ELSE
-            SELECT CASE(dynamicSolver%order)
-            CASE(SOLVER_DYNAMIC_FIRST_ORDER)
-              SELECT CASE(dynamicSolver%degree)
-              CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                !Do nothing
-              CASE(SOLVER_DYNAMIC_SECOND_DEGREE)                                  
-                CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                  & err,error,*999)
-              CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                  & err,error,*999)
-                CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                  & err,error,*999)
-              CASE DEFAULT
-                localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE(SOLVER_DYNAMIC_SECOND_ORDER)
-              IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                  & err,error,*999)
-              ENDIF
+          ENDIF
+        ELSE
+          SELECT CASE(dynamicSolver%order)
+          CASE(SOLVER_DYNAMIC_FIRST_ORDER)
+            SELECT CASE(dynamicSolver%degree)
+            CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
+              !Do nothing
+            CASE(SOLVER_DYNAMIC_SECOND_DEGREE)                                  
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INITIAL_VELOCITY_SET_TYPE,err,error,*999)
+            CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INITIAL_VELOCITY_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INITIAL_ACCELERATION_SET_TYPE,err,error,*999)
             CASE DEFAULT
-              localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
+              localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-          ENDIF
-        ELSE
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            dynamicVariableType=FIELD_U_VARIABLE_TYPE
-            IF(dynamicSolver%solverInitialised) THEN
-              CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-              IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-                CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_VELOCITY_VALUES_SET_TYPE, &
-                  & err,error,*999)
-                IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-                    & err,error,*999)
-                ENDIF
-              ENDIF
-            ELSE
-              SELECT CASE(dynamicSolver%order)
-              CASE(SOLVER_DYNAMIC_FIRST_ORDER)
-                SELECT CASE(dynamicSolver%degree)
-                CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                  !Do nothing
-                CASE(SOLVER_DYNAMIC_SECOND_DEGREE)                                  
-                  CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                    & err,error,*999)
-                CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                  CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                    & err,error,*999)
-                  CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                    & err,error,*999)
-                CASE DEFAULT
-                  localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(SOLVER_DYNAMIC_SECOND_ORDER)
-                IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                    & err,error,*999)
-                ENDIF
-              CASE DEFAULT
-                localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
+          CASE(SOLVER_DYNAMIC_SECOND_ORDER)
+            IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INITIAL_ACCELERATION_SET_TYPE,err,error,*999)
             ENDIF
-          ELSE
-            localError="Neither equations mapping dynamic mapping nor equations mapping nonlinear "// &
-              & "mapping is associated for equations set index number "// &
-              & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//"."
+          CASE DEFAULT
+            localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
+              & " is invalid."
             CALL FlagError(localError,err,error,*999)
-          ENDIF
+          END SELECT
         ENDIF
-      ENDDO !equationsSetIdx
-      !Finish the transfer of the field dofs
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-        NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-        NULLIFY(dependentField)
-        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-        NULLIFY(equations)
-        CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        NULLIFY(vectorMapping)
-        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-        dynamicMapping=>vectorMapping%dynamicMapping
-        IF(ASSOCIATED(dynamicMapping))THEN
-          dynamicVariableType=dynamicMapping%dynamicVariableType
-          IF(dynamicSolver%solverInitialised) THEN
-            CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-            IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-              CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_VELOCITY_VALUES_SET_TYPE, &
-                & err,error,*999)
-              IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-                  & err,error,*999)
-              ENDIF
+      ENDDO !variableIdx
+      !Finish the transfer of the field DOFs
+      DO variableIdx=1,numberOfVariables
+        NULLIFY(dependentVariable)
+        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+        IF(dynamicSolver%solverInitialised) THEN
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+            CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+            IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL Field_ParameterSetUpdateFinish(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
             ENDIF
-          ELSE
-            SELECT CASE(dynamicSolver%order)
-            CASE(SOLVER_DYNAMIC_FIRST_ORDER)
-              SELECT CASE(dynamicSolver%degree)
-              CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                !Do nothing
-              CASE(SOLVER_DYNAMIC_SECOND_DEGREE)                                  
-                CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                  & err,error,*999)
-              CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                  & err,error,*999)
-                CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                  & err,error,*999)
-              CASE DEFAULT
-                localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE(SOLVER_DYNAMIC_SECOND_ORDER)
-              IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                  & err,error,*999)
-              ENDIF
+          ENDIF
+        ELSE
+          SELECT CASE(dynamicSolver%order)
+          CASE(SOLVER_DYNAMIC_FIRST_ORDER)
+            SELECT CASE(dynamicSolver%degree)
+            CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
+              !Do nothing
+            CASE(SOLVER_DYNAMIC_SECOND_DEGREE)                                  
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INITIAL_VELOCITY_SET_TYPE,err,error,*999)
+            CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INITIAL_VELOCITY_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INITIAL_ACCELERATION_SET_TYPE,err,error,*999)
             CASE DEFAULT
-              localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
+              localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-          ENDIF
-        ELSE
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            dynamicVariableType=FIELD_U_VARIABLE_TYPE
-            IF(dynamicSolver%solverInitialised) THEN
-              CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_VALUES_SET_TYPE, &
-                & err,error,*999)
-              IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-                CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_VELOCITY_VALUES_SET_TYPE, &
-                  & err,error,*999)
-                IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-                    & err,error,*999)
-                ENDIF
-              ENDIF
-            ELSE
-              SELECT CASE(dynamicSolver%order)
-              CASE(SOLVER_DYNAMIC_FIRST_ORDER)
-                SELECT CASE(dynamicSolver%degree)
-                CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                  !Do nothing
-                CASE(SOLVER_DYNAMIC_SECOND_DEGREE)                                  
-                  CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                    & err,error,*999)
-                CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                  CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_VELOCITY_SET_TYPE, &
-                    & err,error,*999)
-                  CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                    & err,error,*999)
-                CASE DEFAULT
-                  localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(SOLVER_DYNAMIC_SECOND_ORDER)
-                IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-                    & err,error,*999)
-                ENDIF
-              CASE DEFAULT
-                localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
+          CASE(SOLVER_DYNAMIC_SECOND_ORDER)
+            IF(dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INITIAL_ACCELERATION_SET_TYPE,err,error,*999)
             ENDIF
-          ELSE
-            CALL FlagError("Neither dynamic nor nonlinear mapping is associated.",err,error,*999)
-          ENDIF
+          CASE DEFAULT
+            localError="The dynamic solver order of "//TRIM(NumberToVString(dynamicSolver%order,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
         ENDIF
-      ENDDO !equationsSetIdx
+      ENDDO !variableIdx
     ENDDO !solverMatrixIdx
     
     EXITS("Solver_VariablesDynamicFieldUpdate")
@@ -16588,104 +16974,93 @@ CONTAINS
 
     ENTERS("Solver_VariablesDynamicFieldPreviousValuesUpdate",err,error,*999)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(solver%solverFinished) THEN
-        dynamicSolver=>solver%dynamicSolver
-        IF(ASSOCIATED(dynamicSolver)) THEN
-          solverEquations=>solver%solverEquations
-          IF(ASSOCIATED(solverEquations)) THEN
-            solverMatrices=>solverEquations%solverMatrices
-            IF(ASSOCIATED(solverMatrices)) THEN
-              solverMapping=>solverMatrices%solverMapping
-              IF(ASSOCIATED(solverMapping)) THEN
-                DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
-                  !Loop over the variables involved in the solver matrix.
-                  DO variable_idx=1,solverMapping%VARIABLES_LIST(solverMatrixIdx)%numberOfVariables
-                    FIELD_VARIABLE=>solverMapping%VARIABLES_LIST(solverMatrixIdx)%VARIABLES(variable_idx)%VARIABLE
-                    IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                      VARIABLE_TYPE=FIELD_VARIABLE%variableType
-                      FIELD=>FIELD_VARIABLE%FIELD
-                      !Copy the displacements
-                      CALL Field_ParameterSetsCopy(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                        & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
-                      IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                        !Copy velocity
-                        CALL Field_ParameterSetsCopy(FIELD,VARIABLE_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE, &
-                          & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
-                        IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                          !Copy acceleration
-                          CALL Field_ParameterSetsCopy(FIELD,VARIABLE_TYPE,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-                            & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
-                        ENDIF
-                      ENDIF
-                    ELSE
-                      localError="The solver mapping variables list variable is not associated for variable index "// &
-                        & TRIM(NumberToVString(variable_idx,"*",err,error))//"."
-                      CALL FlagError(localError,err,error,*999)
-                    ENDIF
-                  ENDDO !variable_idx
-                  IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                    !Loop over the equations sets and copy any residuals
-                    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-                      equationsSet=>solverMapping%equationsSets(equationsSetIdx)%ptr
-                      IF(ASSOCIATED(equationsSet)) THEN
-                        EQUATIONS=>equationsSet%EQUATIONS
-                        IF(ASSOCIATED(EQUATIONS)) THEN
-                          IF(EQUATIONS%linearity==EQUATIONS_NONLINEAR) THEN
-                            NULLIFY(vectorEquations)
-                            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                            vectorMapping=>vectorEquations%vectorMapping
-                            IF(ASSOCIATED(vectorMapping)) THEN
-                              nonlinearMapping=>vectorMapping%nonlinearMapping
-                              IF(ASSOCIATED(nonlinearMapping)) THEN
-                                DO residual_variable_idx=1,nonlinearMapping%numberOfResidualVariables
-                                  RESIDUAL_VARIABLE=>nonlinearMapping%residualVariables(residual_variable_idx)%ptr
-                                  IF(ASSOCIATED(RESIDUAL_VARIABLE)) THEN
-                                    CALL Field_ParameterSetsCopy(RESIDUAL_VARIABLE%FIELD,RESIDUAL_VARIABLE%variableType, &
-                                      & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
-                                  ELSE
-                                    localError="Nonlinear mapping residual variable is not associated for "// &
-                                      "residual variable index "//TRIM(NumberToVString(residual_variable_idx,"*",err,error))// &
-                                      & "."
-                                    CALL FlagError(localError,err,error,*999)
-                                  ENDIF
-                                ENDDO !residual_variable_idx
-                              ELSE
-                                CALL FlagError("Equations mapping nonlinear mapping is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Equations equations mapping is not associated.",err,error,*999)
-                            ENDIF
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Equations set equations is not associated.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        localError="The solver mapping equations set is not associated for equations set index "// &
-                          & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//"."
-                        CALL FlagError(localError,err,error,*999)
-                      ENDIF
-                    ENDDO !equationsSetIdx
-                  ENDIF
-                ENDDO !solverMatrixIdx
-              ELSE
-                CALL FlagError("Solver matrices solution mapping is not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver equations solver matrices are not associated.",err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Solver solver equations is not associated.",err,error,*999)
+    CALL Solver_AssertIsFinished(solver,err,error,*999)
+    CALL Solver_AssertIsDynamic(solver,err,error,*999)
+    NULLIFY(dynamicSolver)
+    CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
+    NULLIFY(solverEquations)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solver,solverMatrices,err,error,*999)
+    NULLIFY(solverMapping)
+    CALL SolverEquations_SolverMappingGet(solver,solverMapping,err,error,*999)
+    !Loop over the solver matrices
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfMatrices
+      NULLIFY(solverMatrixToEquationsMap)
+      CALL SolverMapping_SolverMatrixToEquationsMap(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap,err,error,*999)
+      !Loop over the variables involved in the solver matrix.
+      NULLIFY(solverVariablesList)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+      CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+      DO variableIdx=1,numberOfVariables
+        NULLIFY(fieldVariable)
+        CALL SolverMappingsVariables_VariableGet(solverVariablesList,variableIdx,fieldVariable,err,error,*999)
+        !Copy the displacements
+        CALL FieldVariable_ParameterSetsCopy(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
+          & err,error,*999)
+        IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+          !Copy velocity
+          CALL FieldVariable_ParameterSetsCopy(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
+            & 1.0_DP,err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+            !Copy acceleration
+            CALL FieldVariable_ParameterSetsCopy(fieldVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+              & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
           ENDIF
-        ELSE
-          CALL FlagError("Solver dynamic solver is not associated.",err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("Solver has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
-    ENDIF
+      ENDDO !variableIdx
+      IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+        !Loop over the equations sets and copy any residuals
+        CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+        DO equationsSetIdx=1,numberOfEquationsSets
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          CALL Equations_LinearityTypeGet(equations,linearityType,err,error,*999)
+          IF(linearityType==EQUATIONS_NONLINEAR) THEN
+            NULLIFY(vectorEquations)
+            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+            NULLIFY(vectorMapping)
+            CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+            NULLIFY(vectorMatrices)
+            CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+            NULLIFY(nonlinearMapping)
+            CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+            NULLIFY(nonlinearMatrices)
+            CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+            DO residualIdx=1,numberOfResiduals
+              NULLIFY(residualVector)
+              CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+              NULLIFY(currentVector)
+              CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                & currentVector,err,error,*999)
+              NULLIFY(previousVector)
+              CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
+                & previousVector,err,error,*999)
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                NULLIFY(previous2Vector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                  & previous2Vector,err,error,*999)
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                  NULLIFY(previous3Vector)
+                  CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+                    & previous3Vector,err,error,*999)
+                  CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,previous3Vector,1.0_DP, &
+                    & previous2Vector,err,error,*999)
+                ENDIF
+                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,previous2Vector,1.0_DP, &
+                  & previousVector,err,error,*999)                
+              ENDIF
+              CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,previousVector,1.0_DP, &
+                & currentVector,err,error,*999)
+            ENDDO !residualIdx
+          ENDIF
+        ENDIF
+      ENDDO !equationsSetIdx
+    ENDDO !solverMatrixIdx
 
     EXITS("Solver_VariablesDynamicFieldPreviousValuesUpdate")
     RETURN
@@ -16736,12 +17111,11 @@ CONTAINS
     NULLIFY(solverData)
     
     ENTERS("Solver_VariablesDynamicNonlinearUpdate",err,error,*998)
-    
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
-    IF(.NOT.solver%solverFinished) CALL FlagError("Solver has not been finished.",err,error,*998)
 
+    CALL Solver_AssertIsFinished(solver,err,error,*998)
     NULLIFY(linkingSolver)
     CALL Solver_LinkingSolverGet(solver,linkingSolver,err,error,*999)
+    CALL Solver_AssertIsDynamic(linkingSolver,err,error,*999)
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(linkingSolver,dynamicSolver,err,error,*999)
     !Define the dynamic alpha factor
@@ -16754,7 +17128,8 @@ CONTAINS
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-      DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
+      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+      DO solverMatrixIdx=1,numberOfMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         NULLIFY(solverVector)
@@ -16762,74 +17137,48 @@ CONTAINS
         !Get the solver variables data                  
         CALL DistributedVector_DataGet(solverVector,solverData,err,error,*999)
         !Loop over the solver variable dofs
-        DO solverDOFIdx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)%numberOfDOFs
+        NULLIFY(solverMatrixToEquationsMap)
+        CALL SolverMapping_SolverMatrixToEquationsMap(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap,err,error,*999)
+        CALL SolverMappingSMToEQSMap_NumberOfDOFsGet(solverMatrixToEquationsMap,numberOfDOFS,err,error,*999)
+        DO solverDOFIdx=1,numberOfDOFs
+          NULLIFY(solverDOFToVariableDOFsMap)
+          CALL SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet(solverMatrixToEquationsMap,solverDOFIdx, &
+            & solverDOFToVariableDOFsMap,err,error,*999)
           !Loop over the equations associated with this dof
-          DO equationsDOFIdx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-            & solverDOFToVariableDOFsMap(solverDOFIdx)%numberOfEquationDOFs
-            SELECT CASE(solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-              & solverDOFToVariableDOFsMap(solverDOFIdx)%equationTypes(equationsDOFIdx))
-            CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET)
-              !Equations set dof.
-              dependentVariable=>solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%variable(equationsDOFIdx)%ptr
-              IF(.NOT.ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is not associated.",err,error,*999)
-              variableType=dependentVariable%variableType
-              equationsSet=>solverMapping%equationsSets(solverMapping% &
-                & solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%equationIndices(equationsDOFIdx))%ptr 
-              IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-              NULLIFY(dependentField)
-              CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-              NULLIFY(equations)
-              CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-              NULLIFY(vectorEquations)
-              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-              NULLIFY(vectorMapping)
-              CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-              !Get the dependent field variable dof the solver dof is mapped to
-              variableDOF=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%variableDOF(equationsDOFIdx)
-              variableCoefficient=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%variableCoefficient(equationsDOFIdx)
-              additiveConstant=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%additiveConstant(equationsDOFIdx)
-              !Store the alpha increment
+          CALL SolverMappingSDOFToVDOFsMap_NumberOfEquationsDOFsGet(solverDOFToVariableDOFsMap,numberOfEquationDOFs,err,error,*999)
+          DO equationsDOFIdx=1,numberOfEquationDOFs
+            CALL SolverMappingSDOFToVDOFsMap_EquationsInfoGet(solverDOFToVariableDOFsMap,equationsDOFIdx,equationType, &
+              & equationIdx,err,error,*999)
+            SELECT CASE(equationType)
+            CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET, &
+              & SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
+              !Get the field variable
+              NULLIFY(dependentVariable)
+              CALL SolverMappingSDOFToVDOFsMap_VariableGet(solverDOFToVariableDOFsMap,equationsDOFIdx,dependentVariable, &
+                & err,error,*999)
+              !Get the dependent field variable DOF the solver DOF is mapped to
+              CALL SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet(solverDOFToVariableDOFsMap,equationsDOFIdx,variableDOF, &
+                & variableCoefficient,additiveConstant,err,error,*999)
               alphaValue=solverData(solverDOFIdx)
-              CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                & FIELD_INCREMENTAL_VALUES_SET_TYPE,variableDOF,alphaValue,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,variableDOF, &
+                & alphaValue,err,error,*999)
               !Calculate solver data only
               alphaDOFValue=alphaValue*variableCoefficient+additiveConstant
-              dynamicMapping=>vectorMapping%dynamicMapping
-              IF(ASSOCIATED(dynamicMapping)) THEN
-                dynamicVariableType=dynamicMapping%dynamicVariableType
-              ELSE
-                nonlinearMapping=>vectorMapping%nonlinearMapping
-                IF(ASSOCIATED(nonlinearMapping)) THEN
-                  !Default to FIELD_U_VARIABLE_TYPE
-                  dynamicVariableType=FIELD_U_VARIABLE_TYPE
-                ELSE
-                  CALL FlagError("Neither dynamic nor nonlinear mapping is associated",err,error,*999)
-                ENDIF
-              ENDIF
               !Get the predicted displacement data       
-              CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                & FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF,previousDisplacement, &
-                & err,error,*999)
+              CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF, &
+                & previousDisplacement,err,error,*999)
               SELECT CASE(dynamicSolver%degree)
               CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
                 currentDisplacement=previousDisplacement+deltaT*alphaDOFValue
               CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF,previousVelocity, &
-                  & err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF, &
+                  & previousVelocity,err,error,*999)
                 currentDisplacement=previousDisplacement+deltaT*previousVelocity+deltaT*deltaT*alphaDOFValue/2.0_DP
               CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF,previousVelocity, &
-                  & err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_ACCELERATION_VALUES_SET_TYPE,variableDOF,previousAcceleration, &
-                  & err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF, &
+                  & previousVelocity,err,error,*999)
+                CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,variableDOF, &
+                  & previousAcceleration,err,error,*999)
                 currentDisplacement=previousDisplacement+deltaT*previousVelocity+ &
                   & deltaT*deltaT*previousAcceleration/2.0_DP+deltaT+deltaT*deltaT*alphaDOFValue/6.0_DP                  
               CASE DEFAULT
@@ -16837,73 +17186,10 @@ CONTAINS
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
-              CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType,FIELD_VALUES_SET_TYPE,variableDOF, &
-                  & currentDisplacement,err,error,*999)
-            CASE(SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
-              !Equations set dof.
-              dependentVariable=>solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%variable(equationsDOFIdx)%ptr
-              !equationsSet=>solverMapping%equationsSets(equationsDOFIdx)%ptr see above
-              
-              interfaceCondition=>solverMapping%interfaceConditions(solverMapping% &
-                & solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%equationIndices(equationsDOFIdx))%ptr
-              
-              IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-              !TODO Generalize
-              NULLIFY(interfaceEquations)
-              CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-              NULLIFY(interfaceMapping)
-              CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
-              NULLIFY(dependentField)
-              CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,dependentField,err,error,*999)
-              variableType=dependentVariable%variableType
-              dynamicVariableType=interfaceMapping%lagrangeVariableType
-              !Get the dependent field variable dof the solver dof is mapped to
-              variableDOF=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%variableDOF(equationsDOFIdx)
-              variableCoefficient=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%variableCoefficient(equationsDOFIdx)
-              additiveConstant=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                & solverDOFToVariableDOFsMap(solverDOFIdx)%additiveConstant(equationsDOFIdx)
-              !Store the alpha increment
-              alphaValue=solverData(solverDOFIdx)
-              CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                & FIELD_INCREMENTAL_VALUES_SET_TYPE,variableDOF,alphaValue,err,error,*999)
-              !Calculate solver data only
-              alphaDOFValue=alphaValue*variableCoefficient+additiveConstant
-              dynamicMapping=>vectorMapping%dynamicMapping
-              CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                & FIELD_PREVIOUS_VALUES_SET_TYPE,variableDOF,previousDisplacement, &
-                & err,error,*999)
-              SELECT CASE(dynamicSolver%degree)
-              CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                currentDisplacement=previousDisplacement+deltaT*alphaDOFValue
-              CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF,previousVelocity, &
-                  & err,error,*999)
-                currentDisplacement=previousDisplacement+deltaT*previousVelocity+deltaT*deltaT*alphaDOFValue/2.0_DP
-              CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_VELOCITY_VALUES_SET_TYPE,variableDOF,previousVelocity, &
-                  & err,error,*999)
-                CALL Field_ParameterSetGetLocalDOF(dependentField,dynamicVariableType, &
-                  & FIELD_ACCELERATION_VALUES_SET_TYPE,variableDOF,previousAcceleration, &
-                  & err,error,*999)
-                currentDisplacement=previousDisplacement+deltaT*previousVelocity+ &
-                  & deltaT*deltaT*previousAcceleration/2.0_DP+deltaT+deltaT*deltaT*alphaDOFValue/6.0_DP                  
-              CASE DEFAULT
-                localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-              CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                & FIELD_VALUES_SET_TYPE,variableDOF,currentDisplacement,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,variableDOF, &
+                & currentDisplacement,err,error,*999)
             CASE DEFAULT
-              localError="The equations type of "//TRIM(NumberToVString(solverMapping% &
-                & solverColToEquationsColsMap(solverMatrixIdx)%solverDOFToVariableDOFsMap(solverDOFIdx)% &
-                & equationTypes(equationsDOFIdx),"*",err,error))//" of equations index "// &
+              localError="The equations type of "//TRIM(NumberToVString(equationType,"*",err,error))//" of equations index "// &
                 & TRIM(NumberToVString(equationsDOFIdx,"*",err,error))//" for solver degree-of-freedom "// &
                 & TRIM(NumberToVString(solverDOFIdx,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
@@ -16913,49 +17199,25 @@ CONTAINS
         !Restore the solver dof data
         CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
         !Start the transfer of the field dofs
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-          NULLIFY(equationsSet)
-          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(dependentField)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-          DO variableIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfVariables
-            variableType=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-              & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%variableTypes(variableIdx)
-            CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-            CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
-              & err,error,*999)
-          ENDDO !variableIdx
-        ENDDO !equationsSetIdx
-        !Finish the transfer of the field dofs
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-          NULLIFY(equationsSet)
-          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(dependentField)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-          DO variableIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfVariables
-            variableType=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-              & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%variableTypes(variableIdx)
-            CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-            CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
-          ENDDO !variableIdx
-        ENDDO !equationsSetIdx
-                
-        !TODO Generalize
-        DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-          NULLIFY(interfaceCondition)
-          CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-          NULLIFY(dependentField)
-          CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,dependentField,err,error,*999)
-          variableType=solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-            & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%lagrangeVariableType
-          CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE,Err,Error,*999)
-          CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE,Err,Error,*999)
-        ENDDO
-      ENDDO !solverMatrixIdx
-     
-    ENDIF
+        NULLIFY(solverVariablesList)
+        CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+        CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+        DO variableIdx=1,numberOfVariables
+          NULLIFY(dependentVariable)
+          CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+        ENDDO !variableIdx
+        !Finish the transfer of the field DOFs
+        DO variableIdx=1,numberOfVariables
+          NULLIFY(dependentVariable)
+          CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+        ENDDO !variableIdx
+
+      ENDDO !solverMatrixIdx     
+    ENDIF !solver initialised
     
     EXITS("Solver_VariablesDynamicNonlinearUpdate")
     RETURN
@@ -16971,201 +17233,135 @@ CONTAINS
   !
 
   !>Updates the dependent variables from the solver solution for static solvers
-  SUBROUTINE SOLVER_VARIABLES_FIELD_UPDATE(solver,err,error,*)
+  SUBROUTINE Solver_VariablesFieldUpdate(solver,err,error,*)
 
     !Argument variables
     TYPE(SolverType), POINTER :: solver !<A pointer the solver to update the variables from
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,equations_idx,equationsSetIdx,solver_dof_idx,solverMatrixIdx,variable_dof,variable_idx, &
-      & VARIABLE_TYPE
-    REAL(DP) :: additiveConstant,solverDOFValue,variable_coefficient
-    REAL(DP), POINTER :: SOLVER_DATA(:)
+    INTEGER(INTG) :: dummyErr,equationsDOFIdx,equationsSetIdx,numberOfSolverDOFs,solverDOFIdx,solverMatrixIdx,variableDOF,variableIdx, &
+      & variableType
+    REAL(DP) :: additiveConstant,solverDOFValue,variableCoefficient
+    REAL(DP), POINTER :: solverData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
-    TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,lagrangeVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,fieldVariable,lagrangeVariable
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariablesType), POINTER :: solverVariablesList
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: dummyError,localError
 
-    NULLIFY(SOLVER_DATA)
+    NULLIFY(solverData)
     
-    ENTERS("SOLVER_VARIABLES_FIELD_UPDATE",err,error,*998)
+    ENTERS("Solver_VariablesFieldUpdate",err,error,*998)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(solver%solverFinished) THEN
-        solverEquations=>solver%solverEquations
-        IF(ASSOCIATED(solverEquations)) THEN
-          solverMatrices=>solverEquations%solverMatrices
-          IF(ASSOCIATED(solverMatrices)) THEN
-            solverMapping=>solverMatrices%solverMapping
-            IF(ASSOCIATED(solverMapping)) THEN
-              DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
-                solverMatrix=>solverMatrices%matrices(solverMatrixIdx)%ptr
-                IF(ASSOCIATED(solverMatrix)) THEN
-                  solverVector=>solverMatrix%solverVector
-                  IF(ASSOCIATED(solverVector)) THEN
-                    !Get the solver variables data
-                    CALL DistributedVector_DataGet(solverVector,SOLVER_DATA,err,error,*999)
-                    !Loop over the solver variable dofs
-                    DO solver_dof_idx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)%numberOfDofs
-                      !Loop over the equations associated with this dof
-                      DO equations_idx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                        & solverDOFToVariableDOFsMap(solver_dof_idx)%numberOfEquationDOFs
-                        SELECT CASE(solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                          & solverDOFToVariableDOFsMap(solver_dof_idx)%equationTypes(equations_idx))
-                        CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET)
-                          !Equations set dof.
-                          dependentVariable=>solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                            & solverDOFToVariableDOFsMap(solver_dof_idx)%variable(equations_idx)%ptr
-                          IF(ASSOCIATED(dependentVariable)) THEN
-                            VARIABLE_TYPE=dependentVariable%variableType
-                            dependentField=>dependentVariable%FIELD
-                            IF(ASSOCIATED(dependentField)) THEN
-                              !Get the dependent field variable dof the solver dof is mapped to
-                              variable_dof=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                                & solverDOFToVariableDOFsMap(solver_dof_idx)%variableDOF(equations_idx)
-                              variable_coefficient=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                                & solverDOFToVariableDOFsMap(solver_dof_idx)%variableCoefficient(equations_idx)
-                              additiveConstant=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                                & solverDOFToVariableDOFsMap(solver_dof_idx)%additiveConstant(equations_idx)
-                              !Set the dependent field variable dof
-                              solverDOFValue=SOLVER_DATA(solver_dof_idx)*variable_coefficient+additiveConstant
-                              CALL Field_ParameterSetUpdateLocalDOF(dependentField,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                                & variable_dof,solverDOFValue,err,error,*999)
-                            ELSE
-                              CALL FlagError("Dependent field is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Dependent variable is not associated.",err,error,*999)
-                          ENDIF
-                        CASE(SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
-                          !Interface condition dof.
-                          lagrangeVariable=>solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                           & solverDOFToVariableDOFsMap(solver_dof_idx)%variable(equations_idx)%ptr
-                          IF(ASSOCIATED(lagrangeVariable)) THEN
-                            VARIABLE_TYPE=lagrangeVariable%variableType
-                            lagrangeField=>lagrangeVariable%FIELD
-                            IF(ASSOCIATED(lagrangeField)) THEN
-                              !Get the dependent field variable dof the solver dof is mapped to
-                              variable_dof=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                                & solverDOFToVariableDOFsMap(solver_dof_idx)%variableDOF(equations_idx)
-                              variable_coefficient=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                                & solverDOFToVariableDOFsMap(solver_dof_idx)%variableCoefficient(equations_idx)
-                              additiveConstant=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                                & solverDOFToVariableDOFsMap(solver_dof_idx)%additiveConstant(equations_idx)
-                              !Set the dependent field variable dof
-                              solverDOFValue=SOLVER_DATA(solver_dof_idx)*variable_coefficient+additiveConstant
-                              CALL Field_ParameterSetUpdateLocalDOF(lagrangeField,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                                & variable_dof,solverDOFValue,err,error,*999)
-                            ELSE
-                              CALL FlagError("Lagrange field is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Lagrange variable is not associated.",err,error,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          localError="The equations type of "//TRIM(NumberToVString(solverMapping% &
-                            & solverColToEquationsColsMap(solverMatrixIdx)%solverDOFToVariableDOFsMap(solver_dof_idx)% &
-                            & equationTypes(equations_idx),"*",err,error))//" of equations index "// &
-                            & TRIM(NumberToVString(equations_idx,"*",err,error))//" for solver degree-of-freedom "// &
-                            & TRIM(NumberToVString(solver_dof_idx,"*",err,error))//" is invalid."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      ENDDO !equations_idx
-                    ENDDO !solver_dof_idx
-                    IF(DIAGNOSTICS2) THEN
-                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Solver matrix index = ",solverMatrixIdx,err,error,*999)
-                      DO solver_dof_idx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)%numberOfDofs
-                        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Solver dof index = ",solver_dof_idx,err,error,*999)
-                        DO equations_idx=1,solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                          & solverDOFToVariableDOFsMap(solver_dof_idx)%numberOfEquationDOFs
-                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Equations index = ",equations_idx,err,error,*999)
-                          variable_dof=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                            & solverDOFToVariableDOFsMap(solver_dof_idx)%variableDOF(equations_idx)
-                          variable_coefficient=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                            & solverDOFToVariableDOFsMap(solver_dof_idx)%variableCoefficient(equations_idx)
-                          additiveConstant=solverMapping%solverColToEquationsColsMap(solverMatrixIdx)% &
-                            & solverDOFToVariableDOFsMap(solver_dof_idx)%additiveConstant(equations_idx)
-                          solverDOFValue=SOLVER_DATA(solver_dof_idx)*variable_coefficient+additiveConstant
-                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable dof = ",variable_dof,err,error,*999)
-                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable coefficient = ",variable_coefficient, &
-                              & err,error,*999)
-                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Additive constant = ",additiveConstant, &
-                              & err,error,*999)
-                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Value = ",solverDOFValue,err,error,*999)
-                        ENDDO
-                      ENDDO
-                    ENDIF
-                    !Restore the solver dof data
-                    CALL DistributedVector_DataRestore(solverVector,SOLVER_DATA,err,error,*999)
-                    !Start the transfer of the field dofs
-                    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-                      equationsSet=>solverMapping%equationsSets(equationsSetIdx)%ptr
-                      IF(ASSOCIATED(equationsSet)) THEN
-                        dependentField=>equationsSet%DEPENDENT%dependentField
-                        DO variable_idx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                          & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfVariables
-                          VARIABLE_TYPE=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                            & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%variableTypes(variable_idx)
-                          CALL Field_ParameterSetUpdateStart(dependentField,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
-                        ENDDO !variable_idx
-                      ELSE
-                        CALL FlagError("Equations set is not associated.",err,error,*999)
-                      ENDIF
-                    ENDDO !equationsSetIdx
-                    !Finish the transfer of the field dofs
-                    DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-                      equationsSet=>solverMapping%equationsSets(equationsSetIdx)%ptr
-                      dependentField=>equationsSet%DEPENDENT%dependentField
-                      DO variable_idx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                        & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfVariables
-                        VARIABLE_TYPE=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                          & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%variableTypes(variable_idx)
-                        CALL Field_ParameterSetUpdateFinish(dependentField,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
-                      ENDDO !variable_idx
-                    ENDDO !equationsSetIdx
-                  ELSE
-                    CALL FlagError("Solver vector is not associated.",err,error,*998)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver matrix is not associated.",err,error,*998)
-                ENDIF
-              ENDDO !solverMatrixIdx
-            ELSE
-              CALL FlagError("Solver matrices solution mapping is not associated.",err,error,*998)
-            ENDIF
-          ELSE
-            CALL FlagError("Solver equations solver matrices are not associated.",err,error,*998)
-          ENDIF
-        ELSE
-          CALL FlagError("Solver solver equations is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver has not been finished.",err,error,*998)
+    CALL Solver_AssertIsFinished(solver,err,error,*999)
+    NULLIFY(solverEquations)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    NULLIFY(solverMatrices)
+    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+    NULLIFY(solverMapping)
+    CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+    CALL SolverMatrices_NumberOfolverMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfSolverMatrices
+      NULLIFY(solverMatrix)
+      CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
+      NULLIFY(solverVector)
+      CALL SolverMatrix_SolverVectorGet(solverMatrix,solverVector,err,error,*999)
+      !Get the solver variables data
+      CALL DistributedVector_DataGet(solverVector,solverData,err,error,*999)
+      !Loop over the solver variable dofs
+      NULLIFY(solverMatrixToEquationsMap)
+      CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap,err,error,*999)
+      CALL SolverMappingSMToEQSMap_NumberOfDOFsGet(solverMatrixToEquationsMap,numberOfSolverDOFs,err,error,*999)            
+      DO solverDOFIdx=1,numberOfSolverDOFs
+        NULLIFY(solverDOFToVariableDOFsMap)
+        CALL SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet(solverMatrixToEquationsMap,solverDOFIdx, &
+          & solverDOFToVariableDOFsMap,err,error,*999)
+        !Loop over the equations associated with this dof
+        CALL SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet(solverDOFToVariableDOFsMap,numberOfEquationDOFs,err,error,*999)
+        DO equationsDOFIdx=1,numberOfEquationDOFs
+          !Get the field variable DOF the solver DOF is mapped to
+          CALL SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet(solverDOFToVariableDOFsMap,equationsDOFIdx,variableDOF, &
+            & variableCoefficient,additiveConstant,err,error,*999)
+          !Calculate the field variable DOF value
+          solverDOFValue=solverData(solverDOFIdx)*variableCoefficient+additiveConstant
+          CALL SolverMappingSDOFToVDOFsMap_EquationsInfoGet(solverDOFToVariableDOFsMap,equationsDOFIdx,equationType,equationIdx, &
+            & err,error,*999)
+          SELECT CASE(equationType)
+          CASE(SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET, &
+            & SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
+            !Equations set DOF.
+            CALL SolverMappingSDOFToVDOFsMap_VariableGet(solverDOFToVariableDOFsMap,equationsDOFIdx,fieldVariable, &
+              & err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,FIELD_VALUES_SET_TYPE,variableDOF,solverDOFValue, &
+              & err,error,*999)
+          CASE DEFAULT
+            localError="The equations type of "//TRIM(NumberToVString(equationType,"*",err,error))// &
+              & " of equations DOF index "//TRIM(NumberToVString(equationsDOFIdx,"*",err,error))//" for solver DOF index "// &
+              & TRIM(NumberToVString(solverDOFIdx,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !equationsDOFIdx
+      ENDDO !solverDOFIdx
+      IF(diagnostics2) THEN
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Solver matrix index = ",solverMatrixIdx,err,error,*999)
+        DO solverDOFIdx=1,numberOfSolverDOFs
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Solver DOF index = ",solverDOFIdx,err,error,*999)
+          NULLIFY(solverDOFToVariableDOFsMap)
+          CALL SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet(solverMatrixToEquationsMap,solverDOFIdx, &
+            & solverDOFToVariableDOFsMap,err,error,*999)
+          !Loop over the equations DOFs associated with this DOF
+          CALL SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet(solverDOFToVariableDOFsMap,numberOfEquationDOFs,err,error,*999)
+          DO equationsDOFIdx=1,numberOfEquationDOFs
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Equations DOF index = ",equationsDOFIdx,err,error,*999)
+            CALL SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet(solverDOFToVariableDOFsMap,equationsDOFIdx,variableDOF, &
+              & variableCoefficient,additiveConstant,err,error,*999)
+            solverDOFValue=solverData(solverDOFIdx)*variableCoefficient+additiveConstant
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable dof = ",variableDOF,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable coefficient = ",variableCoefficient,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Additive constant = ",additiveConstant,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Value = ",solverDOFValue,err,error,*999)
+          ENDDO
+        ENDDO
       ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*998)
-    ENDIF
-    
-    EXITS("SOLVER_VARIABLES_FIELD_UPDATE")
+      !Restore the solver DOF data
+      CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
+      !Start the transfer of the field dofs
+      NULLIFY(solverVariablesList)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+      CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+      DO variableIdx=1,numberOfVariables
+        NULLIFY(fieldVariable)
+        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,fieldVariable,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      ENDDO !variableIdx
+      !Finish the transfer of the field dofs
+      DO variableIdx=1,numberOfVariables
+        NULLIFY(fieldVariable)
+        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,fieldVariable,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      ENDDO !variableIdx
+    ENDDO !solverMatrixIdx
+  
+    EXITS("Solver_VariablesFieldUpdate")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DistributedVector_DataRestore(solverVector,SOLVER_DATA,dummyErr,dummyError,*998)
-998 ERRORSEXITS("SOLVER_VARIABLES_FIELD_UPDATE",err,error)
+999 IF(ASSOCIATED(solverData)) CALL DistributedVector_DataRestore(solverVector,solverData,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Solver_VariablesFieldUpdate",err,error)
     RETURN 1
     
-  END SUBROUTINE SOLVER_VARIABLES_FIELD_UPDATE
+  END SUBROUTINE Solver_VariablesFieldUpdate
   
   !
   !================================================================================================================================
   !
 
   !>Finish the creation of solvers.
-  SUBROUTINE SOLVERS_CREATE_FINISH(solvers,err,error,*)
+  SUBROUTINE Solvers_CreateFinish(solvers,err,error,*)
 
     !Argument variables
     TYPE(SolversType), POINTER :: solvers !<A pointer to the solvers to finish the creation of
@@ -17173,87 +17369,78 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: solverIdx
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(SolverType), POINTER :: SOLVER
    
-    ENTERS("SOLVERS_CREATE_FINISH",err,error,*999)
+    ENTERS("Solvers_CreateFinish",err,error,*999)
 
     CALL Solvers_AssertNotFinished(solvers,err,error,*999)
-    CONTROL_LOOP=>solvers%controlLoop
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN          
-      !Finish the solver creation
-      IF(ALLOCATED(solvers%solvers)) THEN
-        DO solverIdx=1,solvers%numberOfSolvers
-          SOLVER=>solvers%solvers(solverIdx)%ptr
-          IF(ASSOCIATED(solver)) THEN
-            CALL Solver_CreateFinish(solver,err,error,*999)
-          ELSE
-            CALL FlagError("Solver is not associated.",err,error,*999)
-          ENDIF
-        ENDDO !solverIdx            
-        solvers%solversFinished=.TRUE.
-      ELSE
-        CALL FlagError("Solvers solvers is not allocated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solvers control loop is not associated.",err,error,*999)
-    ENDIF
+    NULLIFY(controlLoop)
+    CALL Solvers_ControlLoopGet(solvers,controlLoop,err,error,*999)
+    !Finish the solver creation
+    IF(.NOT.ALLOCATED(solvers%solvers)) CALL FlagError("Solvers solvers is not allocated.",err,error,*999)
+    DO solverIdx=1,solvers%numberOfSolvers
+      NULLIFY(solver)
+      CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+      CALL Solver_CreateFinish(solver,err,error,*999)
+    ENDDO !solverIdx            
+    solvers%solversFinished=.TRUE.
      
-    EXITS("SOLVERS_CREATE_FINISH")
+    EXITS("Solvers_CreateFinish")
     RETURN
-999 ERRORSEXITS("SOLVERS_CREATE_FINISH",err,error)
+999 ERRORSEXITS("Solvers_CreateFinish",err,error)
     RETURN 1
     
-  END SUBROUTINE SOLVERS_CREATE_FINISH
+  END SUBROUTINE Solvers_CreateFinish
 
   !
   !================================================================================================================================
   !
 
   !>Start the creation of a solvers for the control loop. 
-  SUBROUTINE SOLVERS_CREATE_START(CONTROL_LOOP,solvers,err,error,*)
+  SUBROUTINE Solvers_CreateStart(controlLoop,solvers,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to create the solvers for
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to create the solvers for
     TYPE(SolversType), POINTER :: solvers !<On exit, a pointer to the solvers. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: numberOfSubLoops
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("SOLVERS_CREATE_START",err,error,*999)
+    ENTERS("Solvers_CreateStart",err,error,*999)
 
-    CALL ControlLoop_AssertIsFinished(CONTROL_LOOP,err,error,*999)
+    IF(ASSOCIATED(solvers)) CALL FlagError("Solvers is already associated.",err,error,*999)
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
     
-    IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
-      IF(ASSOCIATED(solvers)) THEN
-        CALL FlagError("Solvers is already associated.",err,error,*999)
-      ELSE
-        NULLIFY(solvers)
-        !Initialise the solvers
-        CALL SOLVERS_INITIALISE(CONTROL_LOOP,err,error,*999)
-        !Return the pointer
-        solvers=>CONTROL_LOOP%solvers
-      ENDIF
-    ELSE
+    IF(numberOfSubLoops/=0) THEN
       localError="Invalid control loop setup. The specified control loop has "// &
-        & TRIM(NumberToVString(CONTROL_LOOP%numberOfSubLoops,"*",err,error))// &
+        & TRIM(NumberToVString(controlLoop%numberOfSubLoops,"*",err,error))// &
         & " sub loops. To create solvers the control loop must have 0 sub loops."          
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("SOLVERS_CREATE_START")
+    NULLIFY(solvers)
+    !Initialise the solvers
+    CALL Solvers_Initialise(controlLoop,err,error,*999)
+    !Return the pointer
+    solvers=>controlLoop%solvers
+    
+    EXITS("Solvers_CreateStart")
     RETURN
-999 ERRORSEXITS("SOLVERS_CREATE_START",err,error)
+999 ERRORSEXITS("Solvers_CreateStart",err,error)
     RETURN 1
-  END SUBROUTINE SOLVERS_CREATE_START
+    
+  END SUBROUTINE Solvers_CreateStart
   
   !
   !================================================================================================================================
   !
 
   !>Destroys the solvers
-  SUBROUTINE SOLVERS_DESTROY(solvers,err,error,*)
+  SUBROUTINE Solvers_Destroy(solvers,err,error,*)
 
     !Argument variables
     TYPE(SolversType), POINTER :: solvers !<A pointer to the solvers to destroy
@@ -17261,27 +17448,25 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("SOLVERS_DESTROY",err,error,*999)
+    ENTERS("Solvers_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(solvers)) THEN
-      CALL SOLVERS_FINALISE(solvers,err,error,*999)
-    ELSE
-      CALL FlagError("Solvers is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("SOLVERS_DESTROY")
+    IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solvers is not associated.",err,error,*999)
+    
+    CALL Solvers_Finalise(solvers,err,error,*999)
+      
+    EXITS("Solvers_Destroy")
     RETURN
-999 ERRORSEXITS("SOLVERS_DESTROY",err,error)
+999 ERRORSEXITS("Solvers_Destroy",err,error)
     RETURN 1
     
-  END SUBROUTINE SOLVERS_DESTROY
+  END SUBROUTINE Solvers_Destroy
 
   !
   !================================================================================================================================
   !
 
   !>Finalises the solvers and deallocates all memory
-  SUBROUTINE SOLVERS_FINALISE(solvers,err,error,*)
+  SUBROUTINE Solvers_Finalise(solvers,err,error,*)
 
     !Argument variables
     TYPE(SolversType), POINTER :: solvers !<A pointer to the solvers to finalise
@@ -17290,7 +17475,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: solverIdx
  
-    ENTERS("SOLVERS_FINALISE",err,error,*999)
+    ENTERS("Solvers_Finalise",err,error,*999)
 
     IF(ASSOCIATED(solvers)) THEN
       IF(ALLOCATED(solvers%solvers)) THEN
@@ -17302,56 +17487,52 @@ CONTAINS
       DEALLOCATE(solvers)
     ENDIF
        
-    EXITS("SOLVERS_FINALISE")
+    EXITS("Solvers_Finalise")
     RETURN
-999 ERRORSEXITS("SOLVERS_FINALISE",err,error)
+999 ERRORSEXITS("Solvers_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE SOLVERS_FINALISE
+    
+  END SUBROUTINE Solvers_Finalise
   
   !
   !================================================================================================================================
   !
 
   !>Initialises the solvers for a control loop.
-  SUBROUTINE SOLVERS_INITIALISE(CONTROL_LOOP,err,error,*)
+  SUBROUTINE Solvers_Initialise(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to initialise the solvers for
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to initialise the solvers for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr,solverIdx
     TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("SOLVERS_INITIALISE",err,error,*998)
+    ENTERS("Solvers_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(CONTROL_LOOP%solvers)) THEN
-        CALL FlagError("Solvers is already allocated for this control loop.",err,error,*998)
-      ELSE
-        ALLOCATE(CONTROL_LOOP%solvers,STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate control loop solvers.",err,error,*999)
-        CONTROL_LOOP%solvers%controlLoop=>CONTROL_LOOP
-        CONTROL_LOOP%solvers%solversFinished=.FALSE.
-        CONTROL_LOOP%solvers%numberOfSolvers=1
-        ALLOCATE(CONTROL_LOOP%solvers%solvers(CONTROL_LOOP%solvers%numberOfSolvers),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate solvers solvers.",err,error,*999)
-        DO solverIdx=1,CONTROL_LOOP%solvers%numberOfSolvers
-          NULLIFY(CONTROL_LOOP%solvers%solvers(solverIdx)%ptr)
-          CALL Solvers_SolverInitialise(CONTROL_LOOP%solvers,solverIdx,err,error,*999)
-        ENDDO !solverIdx
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
+    IF(ASSOCIATED(controlLoop%solvers)) CALL FlagError("Solvers is already allocated for this control loop.",err,error,*998)
+    
+    ALLOCATE(controlLoop%solvers,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate control loop solvers.",err,error,*999)
+    controlLoop%solvers%controlLoop=>controlLoop
+    controlLoop%solvers%solversFinished=.FALSE.
+    controlLoop%solvers%numberOfSolvers=1
+    ALLOCATE(controlLoop%solvers%solvers(controlLoop%solvers%numberOfSolvers),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate solvers solvers.",err,error,*999)
+    DO solverIdx=1,controlLoop%solvers%numberOfSolvers
+      NULLIFY(controlLoop%solvers%solvers(solverIdx)%ptr)
+      CALL Solvers_SolverInitialise(controlLoop%solvers,solverIdx,err,error,*999)
+    ENDDO !solverIdx
        
-    EXITS("SOLVERS_INITIALISE")
+    EXITS("Solvers_Initialise")
     RETURN
-999 CALL SOLVERS_FINALISE(CONTROL_LOOP%solvers,dummyErr,dummyError,*998)
-998 ERRORSEXITS("SOLVERS_INITIALISE",err,error)
+999 CALL Solvers_Finalise(controlLoop%solvers,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Solvers_Initialise",err,error)
     RETURN 1
     
-  END SUBROUTINE SOLVERS_INITIALISE
+  END SUBROUTINE Solvers_Initialise
   
  
   !
@@ -17368,51 +17549,51 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: solverIdx, oldNumberOfSolvers
-    TYPE(SolverPtrType), ALLOCATABLE :: OLD_SOLVERS(:)
+    TYPE(SolverPtrType), ALLOCATABLE :: oldSolvers(:)
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("Solvers_NumberOfSolversSet",err,error,*998)
 
     CALL Solvers_AssertNotFinished(solvers,err,error,*999)
-    IF(numberOfSolvers>0) THEN
-      oldNumberOfSolvers=solvers%numberOfSolvers
-      IF(numberOfSolvers/=oldNumberOfSolvers) THEN
-        ALLOCATE(OLD_SOLVERS(oldNumberOfSolvers),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate old solvers.",err,error,*999)
-        DO solverIdx=1,oldNumberOfSolvers
-          OLD_SOLVERS(solverIdx)%ptr=>solvers%solvers(solverIdx)%ptr
-        ENDDO !solverIdx
-        IF(ALLOCATED(solvers%solvers)) DEALLOCATE(solvers%solvers)
-        ALLOCATE(solvers%solvers(numberOfSolvers),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate solvers.",err,error,*999)
-        IF(numberOfSolvers>oldNumberOfSolvers) THEN
-          DO solverIdx=1,oldNumberOfSolvers
-            solvers%solvers(solverIdx)%ptr=>OLD_SOLVERS(solverIdx)%ptr
-          ENDDO !solverIdx
-          solvers%numberOfSolvers=numberOfSolvers
-          DO solverIdx=oldNumberOfSolvers+1,numberOfSolvers
-            NULLIFY(solvers%solvers(solverIdx)%ptr)
-            CALL Solvers_SolverInitialise(solvers,solverIdx,err,error,*999)
-          ENDDO !solution_idx
-        ELSE
-          DO solverIdx=1,numberOfSolvers
-            solvers%solvers(solverIdx)%ptr=>OLD_SOLVERS(solverIdx)%ptr
-          ENDDO !solverIdx
-          DO solverIdx=numberOfSolvers+1,oldNumberOfSolvers
-            CALL Solver_Finalise(OLD_SOLVERS(solverIdx)%ptr,err,error,*999)
-          ENDDO !solverIdx
-          solvers%numberOfSolvers=numberOfSolvers
-        ENDIF
-      ENDIF
-    ELSE
+    IF(numberOfSolvers<=0) THEN
       localError="The specified number of solvers of "//TRIM(NumberToVString(numberOfSolvers,"*",err,error))// &
         & " is invalid. The number of solvers must be > 0."
       CALL FlagError(localError,err,error,*998)
     ENDIF
     
+    oldNumberOfSolvers=solvers%numberOfSolvers
+    IF(numberOfSolvers/=oldNumberOfSolvers) THEN
+      ALLOCATE(oldSolvers(oldNumberOfSolvers),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate old solvers.",err,error,*999)
+      DO solverIdx=1,oldNumberOfSolvers
+        oldSolvers(solverIdx)%ptr=>solvers%solvers(solverIdx)%ptr
+      ENDDO !solverIdx
+      IF(ALLOCATED(solvers%solvers)) DEALLOCATE(solvers%solvers)
+      ALLOCATE(solvers%solvers(numberOfSolvers),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate solvers.",err,error,*999)
+      IF(numberOfSolvers>oldNumberOfSolvers) THEN
+        DO solverIdx=1,oldNumberOfSolvers
+          solvers%solvers(solverIdx)%ptr=>oldSolvers(solverIdx)%ptr
+        ENDDO !solverIdx
+        solvers%numberOfSolvers=numberOfSolvers
+        DO solverIdx=oldNumberOfSolvers+1,numberOfSolvers
+          NULLIFY(solvers%solvers(solverIdx)%ptr)
+          CALL Solvers_SolverInitialise(solvers,solverIdx,err,error,*999)
+        ENDDO !solution_idx
+      ELSE
+        DO solverIdx=1,numberOfSolvers
+          solvers%solvers(solverIdx)%ptr=>oldSolvers(solverIdx)%ptr
+        ENDDO !solverIdx
+        DO solverIdx=numberOfSolvers+1,oldNumberOfSolvers
+          CALL Solver_Finalise(oldSolvers(solverIdx)%ptr,err,error,*999)
+        ENDDO !solverIdx
+        solvers%numberOfSolvers=numberOfSolvers
+      ENDIF
+    ENDIF
+    
     EXITS("Solvers_NumberOfSolversSet")
     RETURN
-999 IF(ALLOCATED(OLD_SOLVERS)) DEALLOCATE(OLD_SOLVERS)
+999 IF(ALLOCATED(oldSolvers)) DEALLOCATE(oldSolvers)
 998 ERRORSEXITS("Solvers_NumberOfSolversSet",err,error)
     RETURN 1
     
@@ -17423,12 +17604,12 @@ CONTAINS
   !
 
   !>Adds a linked solver to the solver. Also sets the solver type for the linked solver, als well as its linking solver.
-  SUBROUTINE SOLVER_LINKED_SOLVER_ADD(solver,SOLVER_TO_LINK,SOLV_TYPE,err,error,*)
+  SUBROUTINE Solver_LinkedSolverAdd(solver,solverToLink,solverTypeToLink,err,error,*)
 
     !Argument variables
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver to add the linked solver to.
-    TYPE(SolverType), POINTER :: SOLVER_TO_LINK !<A pointer the the solver to be linked. 
-    INTEGER(INTG), INTENT(IN) :: SOLV_TYPE !<The solver type of the solver to be linked.
+    TYPE(SolverType), POINTER :: solverToLink !<A pointer the the solver to be linked. 
+    INTEGER(INTG), INTENT(IN) :: solverTypeToLink !<The solver type of the solver to be linked.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17436,121 +17617,112 @@ CONTAINS
     TYPE(SolverPtrType), ALLOCATABLE, TARGET :: oldLinkedSolvers(:)
     INTEGER(INTG) :: solverIdx
 
-    ENTERS("SOLVER_LINKED_SOLVER_ADD",err,error,*999)
+    ENTERS("Solver_LinkedSolverAdd",err,error,*999)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(ASSOCIATED(SOLVER_TO_LINK)) THEN
-        IF(SOLV_TYPE>=1 .AND. SOLV_TYPE<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
-          !does the solver have already linked solvers?
-          IF(solver%numberOfLinkedSolvers==0) THEN
-            !no - then start the creation of linked solvers
-            ALLOCATE(solver%linkedSolvers(1),STAT=err)
-            IF(err/=0) CALL FlagError("Could not allocate linked solvers.",err,error,*999)
-            DO solverIdx=1,SOLVER_NUMBER_OF_SOLVER_TYPES
-              NULLIFY(solver%linkedSolverTypeMap(solverIdx)%ptr)
-            ENDDO !solverIdx
-            solver%linkedSolverTypeMap(SOLV_TYPE)%ptr=>SOLVER_TO_LINK
-            solver%linkedSolvers(1)%ptr=>SOLVER_TO_LINK
-            solver%numberOfLinkedSolvers=solver%numberOfLinkedSolvers+1
-          ELSE IF(solver%numberOfLinkedSolvers>0.AND.solver%numberOfLinkedSolvers<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
-            !yes, there are already linked solvers
-            !check if a solver of the same type has already been linked
-            DO solverIdx=1,solver%numberOfLinkedSolvers
-              IF(solver%linkedSolvers(solverIdx)%ptr%solveType==SOLV_TYPE) THEN
-                localError="The solver has already a linked solver of type "//TRIM(NumberToVString(SOLV_TYPE, &
-                  & "*",err,error))//" attached to it."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !solverIdx
-            ALLOCATE(oldLinkedSolvers(solver%numberOfLinkedSolvers),STAT=err)
-            IF(err/=0) CALL FlagError("Could not old linked solvers.",err,error,*999)
-            DO solverIdx=1,solver%numberOfLinkedSolvers
-              oldLinkedSolvers(solverIdx)%ptr=>solver%linkedSolvers(solverIdx)%ptr
-            ENDDO
-            DEALLOCATE(solver%linkedSolvers)
-            ALLOCATE(solver%linkedSolvers(solver%numberOfLinkedSolvers+1),STAT=err)
-            IF(err/=0) CALL FlagError("Could not new linked solvers.",err,error,*999)
-            DO solverIdx=1,solver%numberOfLinkedSolvers
-              solver%linkedSolvers(solverIdx)%ptr=>oldLinkedSolvers(solverIdx)%ptr
-            ENDDO
-            solver%linkedSolvers(solver%numberOfLinkedSolvers+1)%ptr=>SOLVER_TO_LINK
-            solver%linkedSolverTypeMap(SOLV_TYPE)%ptr=>SOLVER_TO_LINK
-            solver%numberOfLinkedSolvers=solver%numberOfLinkedSolvers+1
-            DEALLOCATE(oldLinkedSolvers)
-          ELSE
-            localError="The number of linked solvers is "//TRIM(NumberToVString(solver%numberOfLinkedSolvers,"*",ERR, &
-              & ERROR))//" but should be between 0 and "//TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-          !set the solver type for the linked solver
-          solver%linkedSolverTypeMap(SOLV_TYPE)%ptr%solveType=SOLV_TYPE
-          !set the linking solver for the linked solver
-          solver%linkedSolverTypeMap(SOLV_TYPE)%ptr%linkingSolver=>SOLVER
-        ELSE
-          localError="The specified solver type is "//TRIM(NumberToVString(SOLV_TYPE,"*",err,error))//&
-            & " but should be between 1 and "//TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solverToLink)) CALL FlagError("The solver to link is not associated.",err,error,*999)
+    IF(solverTypeToLink<1.OR.solverTypeToLink<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
+      localError="The specified solver type to link of "//TRIM(NumberToVString(solverTypeToLink,"*",err,error))//&
+        & " is invalid. The solver type should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    !Does the solver have already linked solvers?
+    IF(solver%numberOfLinkedSolvers==0) THEN
+      !no - then start the creation of linked solvers
+      ALLOCATE(solver%linkedSolvers(1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate linked solvers.",err,error,*999)
+      DO solverIdx=1,SOLVER_NUMBER_OF_SOLVER_TYPES
+        NULLIFY(solver%linkedSolverTypeMap(solverIdx)%ptr)
+      ENDDO !solverIdx
+      solver%linkedSolverTypeMap(solverTypeToLink)%ptr=>solverToLink
+      solver%linkedSolvers(1)%ptr=>solverToLink
+      solver%numberOfLinkedSolvers=solver%numberOfLinkedSolvers+1
+    ELSE IF(solver%numberOfLinkedSolvers>0.AND.solver%numberOfLinkedSolvers<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
+      !yes, there are already linked solvers
+      !check if a solver of the same type has already been linked
+      DO solverIdx=1,solver%numberOfLinkedSolvers
+        IF(solver%linkedSolvers(solverIdx)%ptr%solveType==solverTypeToLink) THEN
+          localError="The solver has already a linked solver of type "// &
+            & TRIM(NumberToVString(solverTypeToLink,"*",err,error))//" attached to it."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("The solver to link is not associated.",err,error,*999)
-      ENDIF
+      ENDDO !solverIdx
+      ALLOCATE(oldLinkedSolvers(solver%numberOfLinkedSolvers),STAT=err)
+      IF(err/=0) CALL FlagError("Could not old linked solvers.",err,error,*999)
+      DO solverIdx=1,solver%numberOfLinkedSolvers
+        oldLinkedSolvers(solverIdx)%ptr=>solver%linkedSolvers(solverIdx)%ptr
+      ENDDO
+      DEALLOCATE(solver%linkedSolvers)
+      ALLOCATE(solver%linkedSolvers(solver%numberOfLinkedSolvers+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not new linked solvers.",err,error,*999)
+      DO solverIdx=1,solver%numberOfLinkedSolvers
+        solver%linkedSolvers(solverIdx)%ptr=>oldLinkedSolvers(solverIdx)%ptr
+      ENDDO
+      solver%linkedSolvers(solver%numberOfLinkedSolvers+1)%ptr=>solverToLink
+      solver%linkedSolverTypeMap(solverTypeToLink)%ptr=>solverToLink
+      solver%numberOfLinkedSolvers=solver%numberOfLinkedSolvers+1
+      DEALLOCATE(oldLinkedSolvers)
     ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
+      localError="The number of linked solvers is "//TRIM(NumberToVString(solver%numberOfLinkedSolvers,"*",err,error))// &
+        & " but should be between 0 and "//TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    !set the solver type for the linked solver
+    solver%linkedSolverTypeMap(solverTypeToLink)%ptr%solveType=solverTypeToLink
+    !set the linking solver for the linked solver
+    solver%linkedSolverTypeMap(solverTypeToLink)%ptr%linkingSolver=>solve
 
-    EXITS("SOLVER_LINKED_SOLVER_ADD")
+    EXITS("Solver_LinkedSolverAdd")
     RETURN
-999 ERRORSEXITS("SOLVER_LINKED_SOLVER_ADD",err,error)
+999 ERRORSEXITS("Solver_LinkedSolverAdd",err,error)
     RETURN 1
-  END SUBROUTINE SOLVER_LINKED_SOLVER_ADD
+    
+  END SUBROUTINE Solver_LinkedSolverAdd
 
   !
   !================================================================================================================================
   !
 
   !>Adds a linked solver to the solver. Also sets the solver type for the linked solver, als well as its linking solver.
-  SUBROUTINE SOLVER_LINKED_SOLVER_REMOVE(solver,SOLV_TYPE,err,error,*)
+  SUBROUTINE Solver_LinkedSolverRemove(solver,solveTypeToRemove,err,error,*)
 
     !Argument variables
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver to add the linked solver to.
-    INTEGER(INTG), INTENT(IN) :: SOLV_TYPE !<The solver type of the solver to be linked.
+    INTEGER(INTG), INTENT(IN) :: solveTypeToRemove !<The solver type of the solver to be linked.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: solverIdx
 
-    ENTERS("SOLVER_LINKED_SOLVER_REMOVE",err,error,*999)
+    ENTERS("Solver_LinkedSolverRemove",err,error,*999)
 
-    IF(ASSOCIATED(solver)) THEN
-      IF(SOLV_TYPE>=1 .AND. SOLV_TYPE<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
-        !Check if there is any linked solvers
-        IF(solver%numberOfLinkedSolvers>0.AND.solver%numberOfLinkedSolvers<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
-          !Check if a solver of the same type has already been linked
-          DO solverIdx=1,solver%numberOfLinkedSolvers
-            IF(solver%linkedSolvers(solverIdx)%ptr%solveType==SOLV_TYPE) THEN
-              DEALLOCATE(solver%linkedSolvers)
-              solver%numberOfLinkedSolvers=solver%numberOfLinkedSolvers-1
-            ENDIF
-          ENDDO !solverIdx
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    IF(solveTypeToRemove<1.OR.solveTypeToRemove>SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
+      localError="The specified solver type is "//TRIM(NumberToVString(solveTypeToRemove,"*",err,error))//&
+        & " but should be between 1 and "//TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    !Check if there is any linked solvers
+    IF(solver%numberOfLinkedSolvers>0.AND.solver%numberOfLinkedSolvers<=SOLVER_NUMBER_OF_SOLVER_TYPES) THEN
+      !Check if a solver of the same type has already been linked
+      DO solverIdx=1,solver%numberOfLinkedSolvers
+        IF(solver%linkedSolvers(solverIdx)%ptr%solveType==solveTypeToRemove) THEN
+          DEALLOCATE(solver%linkedSolvers)
+          solver%numberOfLinkedSolvers=solver%numberOfLinkedSolvers-1
         ENDIF
-      ELSE
-        localError="The specified solver type is "//TRIM(NumberToVString(SOLV_TYPE,"*",err,error))//&
-          & " but should be between 1 and "//TRIM(NumberToVString(SOLVER_NUMBER_OF_SOLVER_TYPES,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
+      ENDDO !solverIdx
     ENDIF
 
-    EXITS("SOLVER_LINKED_SOLVER_REMOVE")
+    EXITS("Solver_LinkedSolverRemove")
     RETURN
-999 ERRORSEXITS("SOLVER_LINKED_SOLVER_REMOVE",err,error)
+999 ERRORSEXITS("Solver_LinkedSolverRemove",err,error)
     RETURN 1
     
-  END SUBROUTINE SOLVER_LINKED_SOLVER_REMOVE
-
-
+  END SUBROUTINE Solver_LinkedSolverRemove
 
   !
   !================================================================================================================================
@@ -17563,7 +17735,7 @@ END MODULE SolverRoutines
 !
 
 !>Called from the PETSc TS solvers to monitor the dynamic solver
-SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC(ts,steps,TIME,X,ctx,ERR)
+SUBROUTINE Solver_TimeSteppingMonitorPETSc(ts,steps,time,X,ctx,err)
 
   USE BaseRoutines
   USE CmissPetscTypes
@@ -17579,7 +17751,7 @@ SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC(ts,steps,TIME,X,ctx,ERR)
   !Argument variables
   TYPE(PetscTSType), INTENT(INOUT) :: ts !<The PETSc ts type
   INTEGER(INTG), INTENT(INOUT) :: steps !<The iteration number
-  REAL(DP), INTENT(INOUT) :: TIME !<The current time
+  REAL(DP), INTENT(INOUT) :: time !<The current time
   TYPE(PetscVecType), INTENT(INOUT) :: X !<The current iterate
   TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
@@ -17587,34 +17759,30 @@ SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC(ts,steps,TIME,X,ctx,ERR)
   TYPE(DAESolverType), POINTER :: daeSolver
   TYPE(VARYING_STRING) :: error,localError
 
-  IF(ASSOCIATED(ctx)) THEN
-    IF(ctx%solveType==SOLVER_DAE_TYPE) THEN
-      daeSolver=>ctx%DAESolver
-
-      CALL SolverDAE_TimeSteppingMonitor(daeSolver,steps,TIME,err,error,*999)
-
-    ELSE
-      localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(ctx%solveType,"*",err,error))// &
-        & " does not correspond to a differntial-algebraic equations solver."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-  ELSE
-    CALL FlagError("Solver context is not associated.",err,error,*999)
+  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*999)
+  IF(ctx%solveType/=SOLVER_DAE_TYPE) THEN
+    localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(ctx%solveType,"*",err,error))// &
+      & " does not correspond to a differntial-algebraic equations solver."
+    CALL FlagError(localError,err,error,*999)
   ENDIF
+  
+  daeSolver=>ctx%DAESolver
+
+  CALL SolverDAE_TimeSteppingMonitor(daeSolver,steps,time,err,error,*999)
 
   RETURN
 999 CALL WriteError(err,error,*998)
 998 CALL FlagWarning("Error monitoring differential-algebraic equations solve.",err,error,*997)
 997 RETURN
   
-END SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC
-
+END SUBROUTINE Solver_TimeSteppingMonitorPETSc
 
 !
 !================================================================================================================================
 !
+
 !>Called from the PETSc SNES solvers to monitor the Newton nonlinear solver
-SUBROUTINE SOLVER_NONLINEAR_MONITOR_PETSC(snes,ITS,NORM,ctx,ERR)
+SUBROUTINE Solver_NonlinearMonitorPETSc(snes,its,norm,ctx,err)
 
   USE BaseRoutines
   USE CmissPetscTypes
@@ -17629,32 +17797,28 @@ SUBROUTINE SOLVER_NONLINEAR_MONITOR_PETSC(snes,ITS,NORM,ctx,ERR)
 
   !Argument variables
   TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The PETSc SNES type
-  INTEGER(INTG), INTENT(INOUT) :: ITS !<The iteration number
-  REAL(DP), INTENT(INOUT) :: NORM !<The residual norm
+  INTEGER(INTG), INTENT(INOUT) :: its !<The iteration number
+  REAL(DP), INTENT(INOUT) :: norm !<The residual norm
   TYPE(SolverType), POINTER :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
   TYPE(VARYING_STRING) :: error,localError
 
-  IF(ASSOCIATED(ctx)) THEN
-    IF(ctx%solveType==SOLVER_NONLINEAR_TYPE) THEN
-      nonlinearSolver=>ctx%nonlinearSolver
-
-      CALL SolverNonlinear_Monitor(nonlinearSolver,ITS,NORM,err,error,*999)
-
-    ELSE
-      localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(ctx%solveType,"*",err,error))// &
-        & " does not correspond to a nonlinear solver."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-  ELSE
-    CALL FlagError("Solver context is not associated.",err,error,*999)
+  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*999)
+  IF(ctx%solveType/=SOLVER_NONLINEAR_TYPE) THEN
+    localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(ctx%solveType,"*",err,error))// &
+      & " does not correspond to a nonlinear solver."
+    CALL FlagError(localError,err,error,*999)
   ENDIF
+  
+  nonlinearSolver=>ctx%nonlinearSolver
+
+  CALL SolverNonlinear_Monitor(nonlinearSolver,its,norm,err,error,*999)
 
   RETURN
 999 CALL WriteError(err,error,*998)
 998 CALL FlagWarning("Error monitoring nonlinear solve.",err,error,*997)
 997 RETURN
   
-END SUBROUTINE SOLVER_NONLINEAR_MONITOR_PETSC
+END SUBROUTINE Solver_NonlinearMonitorPETSc

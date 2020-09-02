@@ -85,6 +85,8 @@ MODULE DomainMappings
 
   PUBLIC DomainMapping_BoundaryStartGet
   
+  PUBLIC DomainMapping_DomainNumberFromGlobalGet
+  
   PUBLIC DomainMapping_Finalise,DomainMapping_Initialise
 
   PUBLIC DomainMapping_GhostFinishGet
@@ -99,9 +101,15 @@ MODULE DomainMappings
   
   PUBLIC DomainMapping_LocalFromGlobalCalculate
 
+  PUBLIC DomainMapping_LocalNumberFromGlobalGet
+
+  PUBLIC DomainMapping_LocalTypeFromGlobalGet
+
   PUBLIC DomainMapping_NumberGet
 
   PUBLIC DomainMapping_NumberOfBoundaryGet
+
+  PUBLIC DomainMapping_NumberOfDomainsFromGlobalGet
 
   PUBLIC DomainMapping_NumberOfInternalGet
 
@@ -255,6 +263,55 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainMapping_BoundaryStartGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the domain number from a global number in a domain in a domain mapping.
+  SUBROUTINE DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalNumber,domainIdx,domainNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the domain number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the domain number for
+    INTEGER(INTG), INTENT(IN) :: domainIdx !<The domain index to get the domain number for
+    INTEGER(INTG), INTENT(OUT) :: domainNumber !<On exit, the domain number for the global number and domain index the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainMapping_DomainNumberFromGlobalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainMapping%globalToLocalMap)) &
+      & CALL FlagError("The global to local map is not allocated in the domain mapping.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>domainMapping%numberOfGlobal) THEN
+      localError="The specified global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for the domain mapping. The global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%numberOfGlobal,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(domainIdx<1.OR.domainIdx>domainMapping%globalToLocalMap(globalNumber)%numberOfDomains) THEN
+      localError="The specified domain index of "//TRIM(NumberToVString(domainIdx,"*",err,error))// &
+        & " is invalid for global number "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " in the domain mapping. The domain index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%globalToLocalMap(globalNumber)%numberOfDomains,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    domainNumber=domainMapping%globalToLocalMap(globalNumber)%domainNumber(domainIdx)
+    
+    EXITS("DomainMapping_DomainNumberFromGlobalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_DomainNumberFromGlobalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_DomainNumberFromGlobalGet
   
   !
   !================================================================================================================================
@@ -522,8 +579,7 @@ CONTAINS
     
     EXITS("DomainMapping_LocalToGlobalGet")
     RETURN
-999 NULLIFY(workGroup)
-998 ERRORSEXITS("DomainMapping_LocalToGlobalGet",err,error)
+999 ERRORSEXITS("DomainMapping_LocalToGlobalGet",err,error)
     RETURN 1
     
   END SUBROUTINE DomainMapping_LocalToGlobalGet
@@ -976,6 +1032,104 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the local number from a global number in a domain in a domain mapping.
+  SUBROUTINE DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalNumber,domainIdx,localNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the local number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the local number for
+    INTEGER(INTG), INTENT(IN) :: domainIdx !<The domain index to get the local number for
+    INTEGER(INTG), INTENT(OUT) :: localNumber !<On exit, the local number for the global number and domain index the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainMapping_LocalNumberFromGlobalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainMapping%globalToLocalMap)) &
+      & CALL FlagError("The global to local map is not allocated in the domain mapping.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>domainMapping%numberOfGlobal) THEN
+      localError="The specified global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for the domain mapping. The global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%numberOfGlobal,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(domainIdx<1.OR.domainIdx>domainMapping%globalToLocalMap(globalNumber)%numberOfDomains) THEN
+      localError="The specified domain index of "//TRIM(NumberToVString(domainIdx,"*",err,error))// &
+        & " is invalid for global number "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " in the domain mapping. The domain index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%globalToLocalMap(globalNumber)%numberOfDomains,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    localNumber=domainMapping%globalToLocalMap(globalNumber)%localNumber(domainIdx)
+    
+    EXITS("DomainMapping_LocalNumberFromGlobalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_LocalNumberFromGlobalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_LocalNumberFromGlobalGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the local number type from a global number in a domain in a domain mapping.
+  SUBROUTINE DomainMapping_LocalTypeFromGlobalGet(domainMapping,globalNumber,domainIdx,localType,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the local type for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the local type for
+    INTEGER(INTG), INTENT(IN) :: domainIdx !<The domain index to get the local type for
+    INTEGER(INTG), INTENT(OUT) :: localType !<On exit, the local type for the global number and domain index the domain mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainMapping_LocalTypeFromGlobalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainMapping%globalToLocalMap)) &
+      & CALL FlagError("The global to local map is not allocated in the domain mapping.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>domainMapping%numberOfGlobal) THEN
+      localError="The specified global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for the domain mapping. The global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%numberOfGlobal,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(domainIdx<1.OR.domainIdx>domainMapping%globalToLocalMap(globalNumber)%numberOfDomains) THEN
+      localError="The specified domain index of "//TRIM(NumberToVString(domainIdx,"*",err,error))// &
+        & " is invalid for global number "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " in the domain mapping. The domain index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%globalToLocalMap(globalNumber)%numberOfDomains,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    localType=domainMapping%globalToLocalMap(globalNumber)%localType(domainIdx)
+    
+    EXITS("DomainMapping_LocalTypeFromGlobalGet")
+    RETURN
+999 ERRORSEXITS("DomainMapping_LocalTypeFromGlobalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMapping_LocalTypeFromGlobalGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the number in a domain mapping.
   SUBROUTINE DomainMapping_NumberGet(domainMapping,mappingIdx,mappingNumber,err,error,*)
 
@@ -1046,30 +1200,42 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of boundary for a domain mapping.
-  SUBROUTINE DomainMapping_NumberOfBoundaryGet(domainMapping,numberOfBoundary,err,error,*)
+  !>Gets the number of domains that a global number in a domain mapping is in.
+  SUBROUTINE DomainMapping_NumberOfDomainsFromGlobalGet(domainMapping,globalNumber,numberOfDomains,err,error,*)
 
     !Argument variables
-    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of boundary for
-    INTEGER(INTG), INTENT(OUT) :: numberOfBoundary !<On exit, the number of boundary for the domain mapping.
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to get the number of domains for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the number of domains for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDomains !<On exit, the number of domains for the global number the domain mapping.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("DomainMapping_NumberOfBoundaryGet",err,error,*999)
+    ENTERS("DomainMapping_NumberOfDomainsFromGlobalGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainMapping%globalToLocalMap)) &
+      & CALL FlagError("The global to local map is not allocated in the domain mapping.",err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>domainMapping%numberOfGlobal) THEN
+      localError="The specified global number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid for the domain mapping. The global number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainMapping%numberOfGlobal,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 #endif    
 
-    numberOfBoundary=domainMapping%numberOfBoundary
+    numberOfDomains=domainMapping%globalToLocalMap(globalNumber)%numberOfDomains
     
-    EXITS("DomainMapping_NumberOfBoundaryGet")
+    EXITS("DomainMapping_NumberOfDomainsFromGlobalGet")
     RETURN
-999 ERRORSEXITS("DomainMapping_NumberOfBoundaryGet",err,error)
+999 ERRORSEXITS("DomainMapping_NumberOfDomainsFromGlobalGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainMapping_NumberOfBoundaryGet
+  END SUBROUTINE DomainMapping_NumberOfDomainsFromGlobalGet
   
   !
   !================================================================================================================================

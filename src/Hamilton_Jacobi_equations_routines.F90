@@ -1594,7 +1594,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL Solvers_CreateStart(CONTROL_LOOP,SOLVERS,err,error,*999)
             CALL Solvers_NumberOfSolversSet(SOLVERS,1,err,error,*999)
             !Set the solver to be a linear solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
@@ -1605,7 +1605,7 @@ CONTAINS
             !Get the solvers
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
+            CALL Solvers_CreateFinish(SOLVERS,err,error,*999)
           CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",err,error))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",err,error))// &

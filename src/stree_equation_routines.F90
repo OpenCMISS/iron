@@ -692,7 +692,7 @@ CONTAINS
       & numberOfVariables,numberOfVersions,outputIteration,pSpecification(3),userNodeNumber,variableIdx,versionIdx
     REAL(DP) :: currentTime,flow,startTime,stopTime,timeIncrement
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop,parentLoop,navierStokesLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes

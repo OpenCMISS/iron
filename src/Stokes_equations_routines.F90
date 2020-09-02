@@ -1943,7 +1943,7 @@ CONTAINS
       & timeIncrement,x(3),xiCoordinates(4)
     REAL(DP), POINTER :: boundaryValues(:),geometricParameters(:),meshVelocityValues(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes

@@ -115,14 +115,36 @@ MODULE InterfaceMatricesAccessRoutines
   PUBLIC InterfaceMatricesRHS_InterfaceMatricesGet
 
   PUBLIC InterfaceMatrix_DistributedMatrixGet
+
+  PUBLIC InterfaceMatrix_HasTransposeGet
   
   PUBLIC InterfaceMatrix_InterfaceMatricesGet
+
+  PUBLIC InterfaceMatrix_MatrixCoefficientGet
+
+  PUBLIC InterfaceMatrix_MatrixNumberGet
+
+  PUBLIC InterfaceMatrix_NumberOfRowsGet
+
+  PUBLIC InterfaceMatrix_StorageTypeGet
+
+  PUBLIC InterfaceMatrix_StructureTypeGet
 
   PUBLIC InterfaceMatrix_TempDistributedVectorGet
   
   PUBLIC InterfaceMatrix_TempTransposeDistributedVectorGet
+
+  PUBLIC InterfaceMatrix_TimeDependenceTypeGet
+
+  PUBLIC InterfaceMatrix_TotalNumberOfRowsGet
   
   PUBLIC InterfaceMatrix_TransposeDistributedMatrixGet
+
+  PUBLIC InterfaceMatrix_TransposeMatrixCoefficientGet
+
+  PUBLIC InterfaceMatrix_TransposeTimeDependenceTypeGet
+
+  PUBLIC InterfaceMatrix_UpdateMatrixGet
   
 CONTAINS
   
@@ -377,7 +399,7 @@ CONTAINS
 
     !Argument variables
     TYPE(InterfaceRHSType), POINTER :: interfaceMatricesRHS !<A pointer to the interface matrices RHS to get the RHS distributed vector for
-    TYPE(DistributedVectorType), POINTER :: distrbutedVector !<On exit, a pointer to the RHS distributed vector in the specified interface matrices RHS. Must not be associated on entry
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<On exit, a pointer to the RHS distributed vector in the specified interface matrices RHS. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -389,7 +411,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interfaceMatricesRHS)) CALL FlagError("Interface matrices RHS is not associated.",err,error,*999)
 #endif    
 
-    distrbutedVector=>interfaceMatricesRHS%vector
+    distributedVector=>interfaceMatricesRHS%rhsVector
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) &
@@ -479,6 +501,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the has transpose flag for an interface matrix.
+  SUBROUTINE InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the has transpose flag for
+    LOGICAL, INTENT(OUT) :: hasTranspose !<On exit, the has transpose flag for specified interface matrix. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_HasTransposeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    hasTranspose=interfaceMatrix%hasTranspose
+       
+    EXITS("InterfaceMatrix_HasTransposeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_HasTransposeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_HasTransposeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the interface matrices for an interface matrix.
   SUBROUTINE InterfaceMatrix_InterfaceMatricesGet(interfaceMatrix,interfaceMatrices,err,error,*)
 
@@ -509,6 +560,151 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_InterfaceMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface matrix coefficient for an interface matrix.
+  SUBROUTINE InterfaceMatrix_MatrixCoefficientGet(interfaceMatrix,interfaceMatrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the interfaces matrix coefficient for
+    REAL(DP), INTENT(OUT) :: interfaceMatrixCoefficient !<On exit, the interface matrix coefficient in the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_MatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    interfaceMatrixCoefficient=interfaceMatrix%matrixCoefficient
+
+    EXITS("InterfaceMatrix_MatrixCoefficientGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_MatrixCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_MatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface matrix number for an interface matrix.
+  SUBROUTINE InterfaceMatrix_MatrixNumberGet(interfaceMatrix,interfaceMatrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the interfaces matrix number for
+    INTEGER(INTG), INTENT(OUT) :: interfaceMatrixNumber !<On exit, the interface matrix number in the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_MatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    interfaceMatrixNumber=interfaceMatrix%matrixNumber
+
+    EXITS("InterfaceMatrix_MatrixNumberGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_MatrixNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_MatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of rows for an interface matrix.
+  SUBROUTINE InterfaceMatrix_NumberOfRowsGet(interfaceMatrix,numberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the number of rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRows !<On exit, the number of rows in the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_NumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    numberOfRows=interfaceMatrix%numberOfRows
+
+    EXITS("InterfaceMatrix_NumberOfRowsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_NumberOfRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_NumberOfRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the storage type for an interface matrix.
+  SUBROUTINE InterfaceMatrix_StorageTypeGet(interfaceMatrix,storageType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the storage type for
+    INTEGER(INTG), INTENT(OUT) :: storageType !<On exit, the storage type of the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_StorageTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    storageType=interfaceMatrix%storageType
+
+    EXITS("InterfaceMatrix_StorageTypeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_StorageTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_StorageTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the structure type for an interface matrix.
+  SUBROUTINE InterfaceMatrix_StructureTypeGet(interfaceMatrix,structureType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the structure type for
+    INTEGER(INTG), INTENT(OUT) :: structureType !<On exit, the structure type of the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_StructureTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    structureType=interfaceMatrix%structureType
+
+    EXITS("InterfaceMatrix_StructureTypeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_StructureTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_StructureTypeGet
 
   !
   !================================================================================================================================
@@ -568,7 +764,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
 #endif    
 
-    tempTransDistributedVector=>interfaceMatrix%tempTranposeVector
+    tempTransDistributedVector=>interfaceMatrix%tempTransposeVector
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(tempTransDistributedVector)) &
@@ -582,6 +778,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_TempTransposeDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of rows for an interface matrix.
+  SUBROUTINE InterfaceMatrix_TotalNumberOfRowsGet(interfaceMatrix,totalNumberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the total number of rows for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfRows !<On exit, the total number of rows in the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_TotalNumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfRows=interfaceMatrix%totalNumberOfRows
+
+    EXITS("InterfaceMatrix_TotalNumberOfRowsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_TotalNumberOfRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_TotalNumberOfRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the time dependence type for an interface matrix.
+  SUBROUTINE InterfaceMatrix_TimeDependenceTypeGet(interfaceMatrix,timeDependenceType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the time dependence type for
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type for the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_TimeDependenceTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    timeDependenceType=interfaceMatrix%interfaceMatrixTimeDependenceType
+
+    EXITS("InterfaceMatrix_TimeDependenceTypeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_TimeDependenceTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_TimeDependenceTypeGet
 
   !
   !================================================================================================================================
@@ -604,7 +858,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
 #endif    
 
-    transposeDistributedMatrix=>interfaceMatrix%tranposeMatrix
+    transposeDistributedMatrix=>interfaceMatrix%matrixTranspose
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(transposeDistributedMatrix)) &
@@ -613,11 +867,98 @@ CONTAINS
        
     EXITS("InterfaceMatrix_TransposeDistributedMatrixGet")
     RETURN
-999 NULLIFY(tranposeDistributedMatrix)
+999 NULLIFY(transposeDistributedMatrix)
 998 ERRORSEXITS("InterfaceMatrices_TranposeDistributedMatrixGet",err,error)
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_TransposeDistributedMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the transpose interface matrix coefficient for an interface matrix.
+  SUBROUTINE InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,transposeMatrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the transpose matrix coefficient for
+    REAL(DP), INTENT(OUT) :: transposeMatrixCoefficient !<On exit, the transpose matrix coefficient in the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_TransposeMatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    transposeMatrixCoefficient=interfaceMatrix%transposeMatrixCoefficient
+
+    EXITS("InterfaceMatrix_TransposeMatrixCoefficientGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_TransposeMatrixCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_TransposeMatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the transpose time dependence type for an interface matrix.
+  SUBROUTINE InterfaceMatrix_TransposeTimeDependenceTypeGet(interfaceMatrix,transposeTimeDependenceType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the transpose time dependence type for
+    INTEGER(INTG), INTENT(OUT) :: transposeTimeDependenceType !<On exit, the transpose time dependence type for the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_TransposeTimeDependenceTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    transposeTimeDependenceType=interfaceMatrix%interfaceMatrixTransposeTimeDependenceType
+
+    EXITS("InterfaceMatrix_TransposeTimeDependenceTypeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_TranposeTimeDependenceTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_TransposeTimeDependenceTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the update matrix filag for an interface matrix.
+  SUBROUTINE InterfaceMatrix_UpdateMatrixGet(interfaceMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the update matrix flag for
+    LOGICAL, INTENT(OUT) :: updateMatrix !<On exit, the update matrix flag for the specified interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_UpdateMatrixGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    updateMatrix=interfaceMatrix%updateMatrix
+
+    EXITS("InterfaceMatrix_UpdateMatrixGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_UpdateMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_UpdateMatrixGet
 
   !
   !================================================================================================================================

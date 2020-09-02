@@ -376,40 +376,29 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_PetscOptionsSetValue
 
- PUBLIC cmfe_BasisType,cmfe_BasisTypesCopy,cmfe_Basis_Finalise&
-   &,cmfe_Basis_Initialise
+ PUBLIC cmfe_BasisType,cmfe_BasisTypesCopy,cmfe_Basis_Finalise,cmfe_Basis_Initialise
 
- PUBLIC cmfe_BoundaryConditionsType,cmfe_BoundaryConditions_Finalise&
-   &,cmfe_BoundaryConditions_Initialise
+ PUBLIC cmfe_BoundaryConditionsType,cmfe_BoundaryConditions_Finalise,cmfe_BoundaryConditions_Initialise
 
  PUBLIC cmfe_CellMLType,cmfe_CellML_Finalise,cmfe_CellML_Initialise
 
- PUBLIC cmfe_CellMLEquationsType,cmfe_CellMLEquations_Finalise&
-   &,cmfe_CellMLEquations_Initialise
+ PUBLIC cmfe_CellMLEquationsType,cmfe_CellMLEquations_Finalise,cmfe_CellMLEquations_Initialise
 
- PUBLIC cmfe_ComputationEnvironmentType&
-   &,cmfe_ComputationEnvironment_Initialise&
-   &,cmfe_ComputationEnvironment_Finalise
+ PUBLIC cmfe_ComputationEnvironmentType,cmfe_ComputationEnvironment_Initialise,cmfe_ComputationEnvironment_Finalise
 
  PUBLIC cmfe_ContextType,cmfe_Context_Finalise,cmfe_Context_Initialise
 
- PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise&
-   &,cmfe_ControlLoop_Initialise,cmfe_ControlLoop_LoadOutputSet
+ PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise,cmfe_ControlLoop_Initialise,cmfe_ControlLoop_LoadOutputSet
 
- PUBLIC cmfe_CoordinateSystemType,cmfe_CoordinateSystem_Finalise&
-   &,cmfe_CoordinateSystem_Initialise
+ PUBLIC cmfe_CoordinateSystemType,cmfe_CoordinateSystem_Finalise,cmfe_CoordinateSystem_Initialise
 
- PUBLIC cmfe_DataPointsType,cmfe_DataPoints_Finalise&
-   &,cmfe_DataPoints_Initialise
+ PUBLIC cmfe_DataPointsType,cmfe_DataPoints_Finalise,cmfe_DataPoints_Initialise
 
- PUBLIC cmfe_DataProjectionType,cmfe_DataProjection_Finalise&
-   &,cmfe_DataProjection_Initialise
+ PUBLIC cmfe_DataProjectionType,cmfe_DataProjection_Finalise,cmfe_DataProjection_Initialise
 
- PUBLIC cmfe_DecompositionType,cmfe_Decomposition_Finalise&
-   &,cmfe_Decomposition_Initialise
+ PUBLIC cmfe_DecompositionType,cmfe_Decomposition_Finalise,cmfe_Decomposition_Initialise
 
- PUBLIC cmfe_DecomposerType,cmfe_Decomposer_Finalise&
-   &,cmfe_Decomposer_Initialise
+ PUBLIC cmfe_DecomposerType,cmfe_Decomposer_Finalise,cmfe_Decomposer_Initialise
 
  PUBLIC cmfe_DistributedMatrixType,cmfe_DistributedVectorType
 
@@ -417,39 +406,29 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_EquationsType,cmfe_Equations_Finalise,cmfe_Equations_Initialise
 
- PUBLIC cmfe_EquationsSetType,cmfe_EquationsSet_Finalise&
-   &,cmfe_EquationsSet_Initialise
+ PUBLIC cmfe_EquationsSetType,cmfe_EquationsSet_Finalise,cmfe_EquationsSet_Initialise
 
  PUBLIC cmfe_FieldType,cmfe_Field_Finalise,cmfe_Field_Initialise
 
- PUBLIC cmfe_FieldsType,cmfe_Fields_Create,cmfe_Fields_Finalise&
-   &,cmfe_Fields_Initialise
+ PUBLIC cmfe_FieldsType,cmfe_Fields_Create,cmfe_Fields_Finalise,cmfe_Fields_Initialise
 
- PUBLIC cmfe_GeneratedMeshType,cmfe_GeneratedMesh_Finalise&
-   &,cmfe_GeneratedMesh_Initialise
+ PUBLIC cmfe_GeneratedMeshType,cmfe_GeneratedMesh_Finalise,cmfe_GeneratedMesh_Initialise
 
  PUBLIC cmfe_HistoryType,cmfe_History_Finalise,cmfe_History_Initialise
 
  PUBLIC cmfe_InterfaceType,cmfe_Interface_Finalise,cmfe_Interface_Initialise
 
- PUBLIC cmfe_InterfaceConditionType,cmfe_InterfaceCondition_Finalise&
-   &,cmfe_InterfaceCondition_Initialise
+ PUBLIC cmfe_InterfaceConditionType,cmfe_InterfaceCondition_Finalise,cmfe_InterfaceCondition_Initialise
 
- PUBLIC cmfe_InterfaceEquationsType,cmfe_InterfaceEquations_Finalise&
-   &,cmfe_InterfaceEquations_Initialise
+ PUBLIC cmfe_InterfaceEquationsType,cmfe_InterfaceEquations_Finalise,cmfe_InterfaceEquations_Initialise
 
- PUBLIC cmfe_InterfaceMeshConnectivityType&
-   &,cmfe_InterfaceMeshConnectivity_Finalise,&
-   & cmfe_InterfaceMeshConnectivity_Initialise
+ PUBLIC cmfe_InterfaceMeshConnectivityType,cmfe_InterfaceMeshConnectivity_Finalise,cmfe_InterfaceMeshConnectivity_Initialise
 
- PUBLIC cmfe_InterfacePointsConnectivityType&
-   &,cmfe_InterfacePointsConnectivity_Initialise,&
-   & cmfe_InterfacePointsConnectivity_Finalise
+ PUBLIC cmfe_InterfacePointsConnectivityType,cmfe_InterfacePointsConnectivity_Initialise,cmfe_InterfacePointsConnectivity_Finalise
 
  PUBLIC cmfe_MeshType,cmfe_Mesh_Finalise,cmfe_Mesh_Initialise
 
- PUBLIC cmfe_MeshElementsType,cmfe_MeshElements_Finalise&
-   &,cmfe_MeshElements_Initialise
+ PUBLIC cmfe_MeshElementsType,cmfe_MeshElements_Finalise,cmfe_MeshElements_Initialise
 
  PUBLIC cmfe_MeshNodesType,cmfe_MeshNodes_Finalise,cmfe_MeshNodes_Initialise
 
@@ -457,15 +436,13 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_ProblemType,cmfe_Problem_Finalise,cmfe_Problem_Initialise
 
- PUBLIC cmfe_QuadratureType,cmfe_Quadrature_Finalise&
-   &,cmfe_Quadrature_Initialise
+ PUBLIC cmfe_QuadratureType,cmfe_Quadrature_Finalise,cmfe_Quadrature_Initialise
 
  PUBLIC cmfe_RegionType,cmfe_Region_Finalise,cmfe_Region_Initialise
 
  PUBLIC cmfe_SolverType,cmfe_Solver_Finalise,cmfe_Solver_Initialise
 
- PUBLIC cmfe_SolverEquationsType,cmfe_SolverEquations_Finalise&
-   &,cmfe_SolverEquations_Initialise
+ PUBLIC cmfe_SolverEquationsType,cmfe_SolverEquations_Finalise,cmfe_SolverEquations_Initialise
 
  PUBLIC cmfe_WorkGroupType,cmfe_WorkGroup_Initialise,cmfe_WorkGroup_Finalise
 
@@ -908,7 +885,7 @@ MODULE OpenCMISS_Iron
  !> \brief Specific boundary condition types, which might only be applicable to certain equation sets.
  !> \see OpenCMISS::Iron::BoundaryConditions,OpenCMISS
  !>@{
- INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FREE = BOUNDARY_CONDITION_FREE !<The dof is free.
+ INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_NONE = BOUNDARY_CONDITION_NONE !<The dof is free.
  INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED = BOUNDARY_CONDITION_FIXED !<The dof is fixed as a boundary condition.
  INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_WALL = BOUNDARY_CONDITION_FIXED_WALL
  INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_INLET = BOUNDARY_CONDITION_FIXED_INLET
@@ -1008,7 +985,7 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj
  END INTERFACE cmfe_BoundaryConditions_ConstrainNodeDofsEqual
 
- PUBLIC CMFE_BOUNDARY_CONDITION_FREE,CMFE_BOUNDARY_CONDITION_FIXED, &
+ PUBLIC CMFE_BOUNDARY_CONDITION_NONE,CMFE_BOUNDARY_CONDITION_FIXED, &
    & CMFE_BOUNDARY_CONDITION_FIXED_WALL,CMFE_BOUNDARY_CONDITION_FIXED_INLET,CMFE_BOUNDARY_CONDITION_MOVED_WALL, &
    & CMFE_BOUNDARY_CONDITION_FREE_WALL,CMFE_BOUNDARY_CONDITION_FIXED_OUTLET,CMFE_BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED, &
    & CMFE_BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE,CMFE_BOUNDARY_CONDITION_IMPERMEABLE_WALL, &

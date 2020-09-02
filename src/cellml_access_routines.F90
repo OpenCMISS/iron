@@ -105,19 +105,35 @@ MODULE CellMLAccessRoutines
 
   PUBLIC CellML_CellMLFieldMapsGet
 
+  PUBLIC CellML_CellMLIntermediateFieldExists
+
   PUBLIC CellML_CellMLIntermediateFieldGet
 
   PUBLIC CellML_CellMLModelGet
   
+  PUBLIC CellML_CellMLModelsFieldExists
+
   PUBLIC CellML_CellMLModelsFieldGet
 
+  PUBLIC CellML_CellMLParametersFieldExists
+  
   PUBLIC CellML_CellMLParametersFieldGet
   
+  PUBLIC CellML_CellMLStateFieldExists
+
   PUBLIC CellML_CellMLStateFieldGet
 
   PUBLIC CellML_IntermediateFieldGet
 
+  PUBLIC CellML_MaximumNumberOfIntermediateGet
+
+  PUBLIC CellML_MaximumNumberOfParametersGet
+
+  PUBLIC CellML_MaximumNumberOfStateGet
+
   PUBLIC CellML_ModelsFieldGet
+
+  PUBLIC CellML_NumberOfModelsGet
 
   PUBLIC CellML_ParametersFieldGet
 
@@ -140,6 +156,14 @@ MODULE CellMLAccessRoutines
   PUBLIC CellMLIntermediateField_CellMLGet
 
   PUBLIC CellMLIntermediateField_IntermediateFieldGet
+
+  PUBLIC CellMLModel_CellMLGet
+  
+  PUBLIC CellMLModel_NumberOfIntermediateGet
+  
+  PUBLIC CellMLModel_NumberOfParametersGet
+  
+  PUBLIC CellMLModel_NumberOfStateGet
   
   PUBLIC CellMLModelMaps_CellMLModelFromMapGet
   
@@ -150,6 +174,8 @@ MODULE CellMLAccessRoutines
   PUBLIC CellMLModelsField_CellMLGet
 
   PUBLIC CellMLModelsField_ModelsFieldGet
+
+  PUBLIC CellMLModelsField_OnlyOneModelIndexGet
   
   PUBLIC CellMLParametersField_AssertIsFinished,CellMLParametersField_AssertNotFinished
 
@@ -328,7 +354,41 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the intermediate field informationfor the specified CellML environment.
+  !>Returns a pointer to the intermediate field information if it exists for the specified CellML environment.
+  SUBROUTINE CellML_CellMLIntermediateFieldExists(cellML,cellMLIntermediateField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check the intermediate field information exists for
+    TYPE(CellMLIntermediateFieldType), POINTER :: cellMLIntermediateField  !<On exit, a pointer to intermediate field information for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CellML_CellMLIntermediateFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLIntermediateField)) CALL FlagError("CellML intermediate field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    cellMLIntermediateField=>cellML%intermediateField
+
+    EXITS("CellML_CellMLIntermediateFieldExists")
+    RETURN
+999 NULLIFY(cellMLIntermediateField)
+998 ERRORSEXITS("CellML_CellMLIntermediateFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_CellMLIntermediateFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the intermediate field information for the specified CellML environment.
   SUBROUTINE CellML_CellMLIntermediateFieldGet(cellML,cellMLIntermediateField,err,error,*)
 
     !Argument variables
@@ -435,7 +495,38 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the models field informationfor the specified CellML environment.
+  !>Returns a pointer to the models field information if it exists for the specified CellML environment.
+  SUBROUTINE CellML_CellMLModelsFieldExists(cellML,cellMLModelsField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check if the models field information exists
+    TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField  !<On exit, a pointer to models field information for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_CellMLModelsFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    cellMLModelsField=>cellML%modelsField
+
+    EXITS("CellML_CellMLModelsFieldExists")
+    RETURN
+999 NULLIFY(cellMLModelsField)
+998 ERRORSEXITS("CellML_CellMLModelsFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_CellMLModelsFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the models field information for the specified CellML environment.
   SUBROUTINE CellML_CellMLModelsFieldGet(cellML,cellMLModelsField,err,error,*)
 
     !Argument variables
@@ -479,7 +570,38 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the parameters field informationfor the specified CellML environment.
+  !>Returns a pointer to the parameters field information if it exists for the specified CellML environment.
+  SUBROUTINE CellML_CellMLParametersFieldExists(cellML,cellMLParametersField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check the parameters field information exists for
+    TYPE(CellMLParametersFieldType), POINTER :: cellMLParametersField  !<On exit, a pointer to parameters field information for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_CellMLParametersFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLParametersField)) CALL FlagError("CellML parameters field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif
+    
+    cellMLParametersField=>cellML%parametersField
+
+    EXITS("CellML_CellMLParametersFieldExists")
+    RETURN
+999 NULLIFY(cellMLParametersField)
+998 ERRORSEXITS("CellML_CellMLParametersFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_CellMLParametersFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the parameters field information for the specified CellML environment.
   SUBROUTINE CellML_CellMLParametersFieldGet(cellML,cellMLParametersField,err,error,*)
 
     !Argument variables
@@ -518,6 +640,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CellML_CellMLParametersFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the state field information if it exists for the specified CellML environment.
+  SUBROUTINE CellML_CellMLStateFieldExists(cellML,cellMLStateField,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to check if the state field information exists for
+    TYPE(CellMLStateFieldType), POINTER :: cellMLStateField  !<On exit, a pointer to state field information for the CellML environment if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_CellMLStateFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLStateField)) CALL FlagError("CellML state field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    cellMLStateField=>cellML%stateField
+
+    EXITS("CellML_CellMLStateFieldExists")
+    RETURN
+999 NULLIFY(cellMLStateField)
+998 ERRORSEXITS("CellML_CellMLStateFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_CellMLStateFieldExists
 
   !
   !================================================================================================================================
@@ -621,6 +774,93 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the maximum number of intermediate variables across all models for the specified CellML environment.
+  SUBROUTINE CellML_MaximumNumberOfIntermediateGet(cellML,maximumNumberOfIntermediate,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to get the maximum number of intermediate variables for
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfIntermediate  !<On exit, the maximum number of intermidate variables across all models for the CellML environment.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_MaximumNumberOfIntermediateGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    maximumNumberOfIntermediate=cellML%maximumNumberOfIntermediate
+
+    EXITS("CellML_MaximumNumberOfIntermediateGet")
+    RETURN
+999 ERRORSEXITS("CellML_MaximumNumberOfIntermediateGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_MaximumNumberOfIntermediateGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the maximum number of parameters variables across all models for the specified CellML environment.
+  SUBROUTINE CellML_MaximumNumberOfParametersGet(cellML,maximumNumberOfParameters,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to get the maximum number of parameters variables for
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfParameters  !<On exit, the maximum number of intermidate variables across all models for the CellML environment.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_MaximumNumberOfParametersGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    maximumNumberOfParameters=cellML%maximumNumberOfParameters
+
+    EXITS("CellML_MaximumNumberOfParametersGet")
+    RETURN
+999 ERRORSEXITS("CellML_MaximumNumberOfParametersGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_MaximumNumberOfParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the maximum number of state variables across all models for the specified CellML environment.
+  SUBROUTINE CellML_MaximumNumberOfStateGet(cellML,maximumNumberOfState,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to get the maximum number of state variables for
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfState  !<On exit, the maximum number of intermidate variables across all models for the CellML environment.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_MaximumNumberOfStateGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    maximumNumberOfState=cellML%maximumNumberOfState
+
+    EXITS("CellML_MaximumNumberOfStateGet")
+    RETURN
+999 ERRORSEXITS("CellML_MaximumNumberOfStateGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_MaximumNumberOfStateGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the models field for the specified CellML environment.
   SUBROUTINE CellML_ModelsFieldGet(cellML,modelsField,err,error,*)
 
@@ -670,6 +910,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CellML_ModelsFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of models for the specified CellML environment.
+  SUBROUTINE CellML_NumberOfModelsGet(cellML,numberOfModels,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML to get the number of models for
+    INTEGER(INTG), INTENT(OUT) :: numberOfModels  !<On exit, the number of models for the CellML environment.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellML_NumberOfModelsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellML)) CALL FlagError("CellML environment is not associated.",err,error,*999)
+#endif    
+    
+    numberOfModels=cellML%numberOfModels
+
+    EXITS("CellML_NumberOfModelsGet")
+    RETURN
+999 ERRORSEXITS("CellML_NumberOfModelsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellML_NumberOfModelsGet
 
   !
   !================================================================================================================================
@@ -1290,6 +1559,129 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the CellML environment for the specified CellML model.
+  SUBROUTINE CellMLModel_CellMLGet(cellMLModel,cellML,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLModelType), POINTER :: cellMLModel  !<A pointer to CellML model to get the CellML environment from
+    TYPE(CellMLType), POINTER :: cellML !<On return, the CellML environment for the CellML model. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellMLModel_CellMLGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellML)) CALL FlagError("CellML environment is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(cellMLModel)) CALL FlagError("CellML model is not associated.",err,error,*999)
+#endif    
+    
+    cellML=>cellMLModel%cellML
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(cellML)) &
+      & CALL FlagError("The CellML environment for the CellML model is not associated.",err,error,*999)
+#endif    
+
+    EXITS("CellMModel_CellMLGet")
+    RETURN
+999 NULLIFY(cellML)
+998 ERRORSEXITS("CellMLModel_CellMLGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellMLModel_CellMLGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of intermediate variables for the specified CellML model.
+  SUBROUTINE CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediate,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLModelType), POINTER :: cellMLModel  !<A pointer to CellML model to get the number of intermediate variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfIntermediate !<On return, the number of intermediate variables for the CellML model.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellMLModel_NumberOfIntermediateGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellMLModel)) CALL FlagError("CellML model is not associated.",err,error,*999)
+#endif    
+    
+    numberOfIntermediate=cellMLModel%numberOfIntermediate
+
+    EXITS("CellMModel_NumberOfIntermediateGet")
+    RETURN
+999 ERRORSEXITS("CellMLModel_NumberOfIntermediateGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellMLModel_NumberOfIntermediateGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of parameters variables for the specified CellML model.
+  SUBROUTINE CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLModelType), POINTER :: cellMLModel  !<A pointer to CellML model to get the number of parameter variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfParameters !<On return, the number of parameters variables for the CellML model.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellMLModel_NumberOfParametersGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellMLModel)) CALL FlagError("CellML model is not associated.",err,error,*999)
+#endif    
+    
+    numberOfParameters=cellMLModel%numberOfParameters
+
+    EXITS("CellMModel_NumberOfParametersGet")
+    RETURN
+999 ERRORSEXITS("CellMLModel_NumberOfParametersGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellMLModel_NumberOfParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of state variables for the specified CellML model.
+  SUBROUTINE CellMLModel_NumberOfStateGet(cellMLModel,numberOfState,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLModelType), POINTER :: cellMLModel  !<A pointer to CellML model to get the number of state variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfState !<On return, the number of state variables for the CellML model.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CellMLModel_NumberOfStateGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellMLModel)) CALL FlagError("CellML model is not associated.",err,error,*999)
+#endif    
+    
+    numberOfState=cellMLModel%numberOfState
+
+    EXITS("CellMModel_NumberOfStateGet")
+    RETURN
+999 ERRORSEXITS("CellMLModel_NumberOfStateGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellMLModel_NumberOfStateGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the from model map for the specified from map index in the CellML model maps.
   SUBROUTINE CellMLModelMaps_CellMLModelFromMapGet(cellMLModelMaps,fromMapIndex,cellMLModelFromMap,err,error,*)
 
@@ -1613,6 +2005,38 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE CellMLModelsField_ModelsFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the only one model index for the specified CellML models field information.
+  SUBROUTINE CellMLModelsField_OnlyOneModelIndexGet(cellMLModelsField,onlyOneModelIndex,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField  !<A pointer to CellML models field information to get the only one model index from
+    INTEGER(INTG), INTENT(OUT) :: onlyOneModelIndex !<On return, the only one model index in the CellML models field information.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CellMLModelsField_OnlyOneModelIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(cellMLModelsField)) CALL FlagError("CellML models field is not associated.",err,error,*999)
+#endif    
+    
+    onlyOneModelIndex=cellMLModelsField%onlyOneModelIndex
+
+    EXITS("CellMModelsField_OnlyOneModelIndexGet")
+    RETURN
+999 ERRORSEXITS("CellMLModelsField_OnlyOneModelIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CellMLModelsField_OnlyOneModelIndexGet
 
   !
   !=================================================================================================================================

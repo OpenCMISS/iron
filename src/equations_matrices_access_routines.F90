@@ -129,6 +129,15 @@ MODULE EquationsMatricesAccessRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the Hessian
   INTEGER(INTG), PARAMETER :: EQUATIONS_HESSIAN_ANALYTIC_CALCULATED=2 !<Use an analytic Hessian evaluation
   !>@}
+  
+  !> \addtogroup EquationsMatricesRoutines_VectorTemporalTypes EquationsMatricesRoutines::VectorTemporalTypes
+  !> \brief The temporal types of equations matrices vectors
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_CURRENT_VECTOR=1 !<The current equations matrices vector
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_PREVIOUS_VECTOR=2 !<The previous equations matrices vector
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_PREVIOUS2_VECTOR=3 !<The second previous equations matrices vector
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_PREVIOUS3_VECTOR=4 !<The third previous equations matrices vector
+  !>@}
  
   !Module types
 
@@ -136,7 +145,7 @@ MODULE EquationsMatricesAccessRoutines
 
   !Interfaces
 
-  PUBLIC EQUATION_MATRIX_LINEAR,EQUATIONS_MATRIX_DYNAMIC
+  PUBLIC EQUATIONS_MATRIX_LINEAR,EQUATIONS_MATRIX_DYNAMIC
 
   PUBLIC EQUATIONS_MATRIX_NO_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE, &
     & EQUATIONS_MATRIX_NODAL_STRUCTURE
@@ -156,9 +165,18 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_HESSIAN_ANALYTIC_CALCULATED
 
+  PUBLIC EQUATIONS_MATRICES_CURRENT_VECTOR,EQUATIONS_MATRICES_PREVIOUS_VECTOR,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
+    & EQUATIONS_MATRICES_PREVIOUS3_VECTOR
+
   PUBLIC EquationsMatricesDynamic_DynamicMappingGet
   
   PUBLIC EquationsMatricesDynamic_EquationsMatrixGet
+
+  PUBLIC EquationsMatricesDynamic_NumberOfDynamicMatricesGet
+
+  PUBLIC EquationsMatricesDynamic_TempDistributedVectorExists
+  
+  PUBLIC EquationsMatricesDynamic_TempDistributedVectorGet
   
   PUBLIC EquationsMatricesDynamic_VectorMatricesGet
 
@@ -166,35 +184,125 @@ MODULE EquationsMatricesAccessRoutines
   
   PUBLIC EquationsMatricesLinear_LinearMappingGet
 
+  PUBLIC EquationsMatricesLinear_NumberOfLinearMatricesGet
+
+  PUBLIC EquationsMatricesLinear_TempDistributedVectorExists
+
+  PUBLIC EquationsMatricesLinear_TempDistributedVectorGet
+
   PUBLIC EquationsMatricesLinear_VectorMatricesGet
 
   PUBLIC EquationsMatricesNonlinear_NonlinearMappingGet
   
+  PUBLIC EquationsMatricesNonlinear_NumberOfResidualsGet
+  
+  PUBLIC EquationsMatricesNonlinear_TempDistributedVectorExists
+
+  PUBLIC EquationsMatricesNonlinear_TempDistributedVectorGet
+
   PUBLIC EquationsMatricesNonlinear_VectorMatricesGet
+
+  PUBLIC EquationsMatricesResidual_DistributedVectorExists
 
   PUBLIC EquationsMatricesResidual_DistributedVectorGet
 
-  PUBLIC EquationsMatriceResidual_JacobianMatrixGet
+  PUBLIC EquationsMatricesResidual_CurrentDistributedVectorExists
 
-  PUBLIC EquationsMatriceResidual_NonlinearMatricesGet
+  PUBLIC EquationsMatricesResidual_CurrentDistributedVectorGet
 
-  PUBLIC EquationsMatriceResidual_ResidualMappingGet
+  PUBLIC EquationsMatricesResidual_PreviousDistributedVectorExists
 
+  PUBLIC EquationsMatricesResidual_PreviousDistributedVectorGet
+
+  PUBLIC EquationsMatricesResidual_Previous2DistributedVectorExists
+
+  PUBLIC EquationsMatricesResidual_Previous2DistributedVectorGet
+
+  PUBLIC EquationsMatricesResidual_Previous3DistributedVectorExists
+
+  PUBLIC EquationsMatricesResidual_Previous3DistributedVectorGet
+
+  PUBLIC EquationsMatricesResidual_JacobianMatrixGet
+
+  PUBLIC EquationsMatricesResidual_NonlinearMatricesGet
+
+  PUBLIC EquationsMatricesResidual_NumberOfJacobiansGet
+
+  PUBLIC EquationsMatricesResidual_ResidualMappingGet
+
+  PUBLIC EquationsMatricesResidual_ResidualNumberGet
+
+  PUBLIC EquationsMatricesResidual_VectorCoefficientGet
+
+  PUBLIC EquationsMatricesResidual_UpdateVectorGet
+
+  PUBLIC EquationsMatricesRHS_DistributedVectorExists
+  
   PUBLIC EquationsMatricesRHS_DistributedVectorGet
+
+  PUBLIC EquationsMatricesRHS_CurrentDistributedVectorExists
+  
+  PUBLIC EquationsMatricesRHS_CurrentDistributedVectorGet
+
+  PUBLIC EquationsMatricesRHS_PreviousDistributedVectorExists
+  
+  PUBLIC EquationsMatricesRHS_PreviousDistributedVectorGet
+
+  PUBLIC EquationsMatricesRHS_Previous2DistributedVectorExists
+  
+  PUBLIC EquationsMatricesRHS_Previous2DistributedVectorGet
+
+  PUBLIC EquationsMatricesRHS_Previous3DistributedVectorExists
+  
+  PUBLIC EquationsMatricesRHS_Previous3DistributedVectorGet
 
   PUBLIC EquationsMatricesRHS_VectorMatricesGet
 
+  PUBLIC EquationsMatricesRHS_VectorCoefficientGet
+
+  PUBLIC EquationsMatricesRHS_UpdateVectorGet
+
   PUBLIC EquationsMatricesScalar_EquationsScalarGet
+
+  PUBLIC EquationsMatricesSource_DistributedVectorExists
 
   PUBLIC EquationsMatricesSource_DistributedVectorGet
 
+  PUBLIC EquationsMatricesSource_CurrentDistributedVectorExists
+
+  PUBLIC EquationsMatricesSource_CurrentDistributedVectorGet
+
+  PUBLIC EquationsMatricesSource_PreviousDistributedVectorExists
+
+  PUBLIC EquationsMatricesSource_PreviousDistributedVectorGet
+
+  PUBLIC EquationsMatricesSource_Previous2DistributedVectorExists
+
+  PUBLIC EquationsMatricesSource_Previous2DistributedVectorGet
+
+  PUBLIC EquationsMatricesSource_Previous3DistributedVectorExists
+
+  PUBLIC EquationsMatricesSource_Previous3DistributedVectorGet
+
+  PUBLIC EquationsMatricesSource_SourceNumberGet
+
   PUBLIC EquationsMatricesSource_SourceVectorsGet
+
+  PUBLIC EquationsMatricesSource_VectorCoefficientGet
+
+  PUBLIC EquationsMatricesSource_UpdateVectorGet
+
+  PUBLIC EquationsMatricesSources_NumberOfSourcesGet
 
   PUBLIC EquationsMatricesSources_SourceVectorGet
 
+  PUBLIC EquationsMatricesSources_TempDistributedVectorExists
+
+  PUBLIC EquationsMatricesSources_TempDistributedVectorGet
+
   PUBLIC EquationsMatricesSources_VectorMatricesGet
 
-  PUBLIC EquationsMatricesVector_AssertIsFinish,EquationsMatricesVector_AssertNotFinished
+  PUBLIC EquationsMatricesVector_AssertIsFinished,EquationsMatricesVector_AssertNotFinished
 
   PUBLIC EquationsMatricesVector_DynamicMatricesExists
 
@@ -230,12 +338,47 @@ MODULE EquationsMatricesAccessRoutines
   
   PUBLIC EquationsMatrix_LinearMatricesGet
 
+  PUBLIC EquationsMatrix_LumpedFlagGet
+
+  PUBLIC EquationsMatrix_MatrixCoefficientGet
+
+  PUBLIC EquationsMatrix_MatrixNumberGet
+
+  PUBLIC EquationsMatrix_NumberOfColumnsGet
+  
+  PUBLIC EquationsMatrix_StorageTypeGet
+
+  PUBLIC EquationsMatrix_StructureTypeGet
+
+  PUBLIC EquationsMatrix_SymmetryFlagGet
+
+  PUBLIC EquationsMatrix_TempDistributedVectorExists
+
   PUBLIC EquationsMatrix_TempDistributedVectorGet
+
+  PUBLIC EquationsMatrix_UpdateMatrixGet
+
+  PUBLIC JacobianMatrix_CalculationTypeGet
 
   PUBLIC JacobianMatrix_DistributedMatrixGet
 
-  PUBLIC JacobianMatrix_NonlinearMatricesGet
+  PUBLIC JacobianMatrix_FiniteDifferenceStepSizeGet
 
+  PUBLIC JacobianMatrix_MatrixCoefficientGet
+
+  PUBLIC JacobianMatrix_MatrixNumberGet
+
+  PUBLIC JacobianMatrix_NumberOfColumnsGet
+  
+  PUBLIC JacobianMatrix_ResidualVectorGet
+
+  PUBLIC JacobianMatrix_StorageTypeGet
+
+  PUBLIC JacobianMatrix_StructureTypeGet
+
+  PUBLIC JacobianMatrix_SymmetryFlagGet
+
+  PUBLIC JacobianMatrix_UpdateMatrixGet
 
 CONTAINS
 
@@ -330,6 +473,102 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesDynamic_EquationsMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of dynamic matrices for dynamic matrices.
+  SUBROUTINE EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to get the number of dynamic matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDynamicMatrices !<On exit, the number of dynamic matrices for the dynamic matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesDynamic_NumberOfDynamicMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
+#endif    
+
+    numberOfDynamicMatrices=dynamicMatrices%numberOfDynamicMatrices
+
+    EXITS("EquationsMatricesDynamic_NumberOfDynamicMatricesGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesDynamic_NumberOfDynamicMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesDynamic_NumberOfDynamicMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the temporary distributed vector for dynamic matrices exists.
+  SUBROUTINE EquationsMatricesDynamic_TempDistributedVectorExists(dynamicMatrices,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to check the temp distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the dynamic matrices if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesDynamic_TempDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>dynamicMatrices%tempVector
+
+    EXITS("EquationsMatricesDynamic_TempDistributedVectorExists")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesDynamic_TempDistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesDynamic_TempDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the temporary distributed vector for dynamic matrices.
+  SUBROUTINE EquationsMatricesDynamic_TempDistributedVectorGet(dynamicMatrices,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to get the temp distributed vector for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the dynamic matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesDynamic_TempDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>dynamicMatrices%tempVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(tempDistributedVector)) &
+      & CALL FlagError("Temporary distributed vector is not associated for the dynamic matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesDynamic_TempDistributedVectorGet")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesDynamic_TempDistributedVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesDynamic_TempDistributedVectorGet
 
   !
   !================================================================================================================================
@@ -463,6 +702,102 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the number of linear matrices for linear matrices.
+  SUBROUTINE EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices !<A pointer to the linear matrices to get the number of linear matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfLinearMatrices !<On exit, the number of linear matrices for the linear matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesLinear_NumberOfLinearMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(linearMatrices)) CALL FlagError("Linear matrices is not associated.",err,error,*999)
+#endif    
+
+    numberOfLinearMatrices=linearMatrices%numberOfLinearMatrices
+
+    EXITS("EquationsMatricesLinear_NumberOfLinearMatricesGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesLinear_NumberOfLinearMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesLinear_NumberOfLinearMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the temporary distributed vector for linear matrices exists.
+  SUBROUTINE EquationsMatricesLinear_TempDistributedVectorExists(linearMatrices,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices !<A pointer to the linear matrices to check the temp distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the linear matrices if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesLinear_TempDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(linearMatrices)) CALL FlagError("Linear matrices is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>linearMatrices%tempVector
+
+    EXITS("EquationsMatricesLinear_TempDistributedVectorExists")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesLinear_TempDistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesLinear_TempDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the temporary distributed vector for linear matrices.
+  SUBROUTINE EquationsMatricesLinear_TempDistributedVectorGet(linearMatrices,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices !<A pointer to the linear matrices to get the temp distributed vector for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the linear matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesLinear_TempDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(linearMatrices)) CALL FlagError("Linear matrices is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>linearMatrices%tempVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(tempDistributedVector)) &
+      & CALL FlagError("Temporary distributed vector is not associated for the linear matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesLinear_TempDistributedVectorGet")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesLinear_TempDistributedVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesLinear_TempDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the vector matrices for linear matrices.
   SUBROUTINE EquationsMatricesLinear_VectorMatricesGet(linearMatrices,vectorMatrices,err,error,*)
 
@@ -542,6 +877,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the number of residuals for nonlinear matrices.
+  SUBROUTINE EquationsMatricesNonlinear_NumberOfResidualsGet(nonlinearMatrices,numberOfResiduals,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices !<A pointer to the nonlinear matrices to get the number of residuals for
+    INTEGER(INTG), INTENT(OUT) :: numberOfResiduals !<On exit, the number of residuals for the nonlinear matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesNonlinear_NumberOfResidualsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(nonlinearMatrices)) CALL FlagError("Nonlinear matrices is not associated.",err,error,*999)
+#endif    
+
+    numberOfResiduals=nonlinearMatrices%numberOfResiduals
+
+    EXITS("EquationsMatricesNonlinear_NumberOfResidualsGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesNonlinear_NumberOfResidualsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesNonlinear_NumberOfResidualsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a residual vector for nonlinear matrices.
   SUBROUTINE EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*)
 
@@ -578,6 +942,7 @@ CONTAINS
         & " of the nonlinear matrices is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsMatricesNonlinear_ResidualVectorGet")
     RETURN
@@ -587,6 +952,73 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesNonlinear_ResidualVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the temporary distributed vector for nonlinear matrices exists.
+  SUBROUTINE EquationsMatricesNonlinear_TempDistributedVectorExists(nonlinearMatrices,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices !<A pointer to the nonlinear matrices to check the temp distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the nonlinear matrices if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesNonlinear_TempDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(nonlinearMatrices)) CALL FlagError("Nonlinear matrices is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>nonlinearMatrices%tempVector
+
+    EXITS("EquationsMatricesNonlinear_TempDistributedVectorExists")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesNonlinear_TempDistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesNonlinear_TempDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the temporary distributed vector for nonlinear matrices.
+  SUBROUTINE EquationsMatricesNonlinear_TempDistributedVectorGet(nonlinearMatrices,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices !<A pointer to the nonlinear matrices to get the temp distributed vector for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the nonlinear matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesNonlinear_TempDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(nonlinearMatrices)) CALL FlagError("Nonlinear matrices is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>nonlinearMatrices%tempVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(tempDistributedVector)) &
+      & CALL FlagError("Temporary distributed vector is not associated for the nonlinear matrices.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesNonlinear_TempDistributedVectorGet")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesNonlinear_TempDistributedVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesNonlinear_TempDistributedVectorGet
 
   !
   !================================================================================================================================
@@ -629,37 +1061,370 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the residual distributed vector for a equations matrices residual vector
-  SUBROUTINE EquationsMatricesResidual_DistributedVectorGet(residualVector,residualDistributedVector,err,error,*)
+  !>Checks that the temporal type residual distributed vector exists for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_DistributedVectorExists(residualVector,temporalType,residualDistributedVector,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the  distributed vector for
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the distributed vector for
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The temporal type of the vector to get \see EquationsMatricesRoutines_VectorTemporalTypes
     TYPE(DistributedVectorType), POINTER :: residualDistributedVector !<On exit, a pointer to the residual distributed vector for the equations matrices residual. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMatricesResidual_DistributedVectorExists",err,error,*998)
+
+    SELECT CASE(temporalType)
+    CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+      CALL EquationsMatricesResidual_CurrentDistributedVectorExists(residualVector,residualDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+      CALL EquationsMatricesResidual_PreviousDistributedVectorExists(residualVector,residualDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+      CALL EquationsMatricesResidual_Previous2DistributedVectorExists(residualVector,residualDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+      CALL EquationsMatricesResidual_Previous3DistributedVectorExists(residualVector,residualDistributedVector,err,error,*998)
+    CASE DEFAULT
+      localError="The specified residual vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+       
+    EXITS("EquationsMatricesResidual_DistributedVectorExists")
+    RETURN
+999 NULLIFY(residualDistributedVector)
+998 ERRORSEXITS("EquationsMatricesResidual_DistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the residual distributed vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_DistributedVectorGet(residualVector,temporalType,residualDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the distributed vector for
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The temporal type of the vector to get \see EquationsMatricesRoutines_VectorTemporalTypes
+    TYPE(DistributedVectorType), POINTER :: residualDistributedVector !<On exit, a pointer to the residual distributed vector for the equations matrices residual. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsMatricesResidual_DistributedVectorGet",err,error,*998)
 
-#ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(residualDistributedVector)) CALL FlagError("Residual distributed vector is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
-#endif    
-
-    residualDistributedVector=>residualVector%residual
-
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(residualDistributedVector)) &
-      & CALL FlagError("The distributed vector is not associated for the residual vector.",err,error,*999)
-#endif    
+    SELECT CASE(temporalType)
+    CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+      CALL EquationsMatricesResidual_CurrentDistributedVectorGet(residualVector,residualDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+      CALL EquationsMatricesResidual_PreviousDistributedVectorGet(residualVector,residualDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+      CALL EquationsMatricesResidual_Previous2DistributedVectorGet(residualVector,residualDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+      CALL EquationsMatricesResidual_Previous3DistributedVectorGet(residualVector,residualDistributedVector,err,error,*998)
+    CASE DEFAULT
+      localError="The specified residual vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("EquationsMatricesResidual_DistributedVectorGet")
     RETURN
-999 NULLIFY(ressidualDistributedVector)
+999 NULLIFY(residualDistributedVector)
 998 ERRORSEXITS("EquationsMatricesResidual_DistributedVectorGet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatricesResidual_DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the current residual distributed vector exists for a equations matrices residual vector 
+  SUBROUTINE EquationsMatricesResidual_CurrentDistributedVectorExists(residualVector,currentResidualDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to check the currrent distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: currentResidualDistributedVector !<On exit, a pointer to the current residual distributed vector for the equations matrices residual if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_CurrentDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(currentResidualDistributedVector)) &
+      & CALL FlagError("The current residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    currentResidualDistributedVector=>residualVector%residual
+      
+    EXITS("EquationsMatricesResidual_CurrentDistributedVectorExists")
+    RETURN
+999 NULLIFY(currentResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_CurrentDistributedVectorExists",err,error)
+    EXITS("EquationsMatricesResidual_CurrentDistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_CurrentDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current residual distributed vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_CurrentDistributedVectorGet(residualVector,currentResidualDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the currrent distributed vector for
+    TYPE(DistributedVectorType), POINTER :: CurrentResidualDistributedVector !<On exit, a pointer to the current residual distributed vector for the equations matrices residual. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_CurrentDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(currentResidualDistributedVector)) &
+      & CALL FlagError("The current residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    currentResidualDistributedVector=>residualVector%residual
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(currentResidualDistributedVector)) &
+      & CALL FlagError("The current distributed vector is not associated for the residual vector.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesResidual_CurrentDistributedVectorGet")
+    RETURN
+999 NULLIFY(currentResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_CurrentDistributedVectorGet",err,error)
+    EXITS("EquationsMatricesResidual_CurrentDistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_CurrentDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the previous residual distributed vector exists for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_PreviousDistributedVectorExists(residualVector,previousResidualDistributedVector, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to check if the previous distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: previousResidualDistributedVector !<On exit, a pointer to the previous residual distributed vector for the equations matrices residual if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_PreviousDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previousResidualDistributedVector)) &
+      & CALL FlagError("Previous residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    previousResidualDistributedVector=>residualVector%previousResidual
+       
+    EXITS("EquationsMatricesResidual_PreviousDistributedVectorExists")
+    RETURN
+999 NULLIFY(previousResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_PreviousDistributedVectorExists",err,error)
+    EXITS("EquationsMatricesResidual_PreviousDistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_PreviousDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the previous residual distributed vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_PreviousDistributedVectorGet(residualVector,previousResidualDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the previous distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previousResidualDistributedVector !<On exit, a pointer to the previous residual distributed vector for the equations matrices residual. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_PreviousDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previousResidualDistributedVector)) &
+      & CALL FlagError("Previous residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    previousResidualDistributedVector=>residualVector%previousResidual
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previousResidualDistributedVector)) &
+      & CALL FlagError("The previous distributed vector is not associated for the residual vector.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesResidual_PreviousDistributedVectorGet")
+    RETURN
+999 NULLIFY(previousResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_PreviousDistributedVectorGet",err,error)
+    EXITS("EquationsMatricesResidual_PreviousDistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_PreviousDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the second previous residual distributed vector exists for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_Previous2DistributedVectorExists(residualVector,previous2ResidualDistributedVector, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to check if the second previous distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: previous2ResidualDistributedVector !<On exit, a pointer to the second previous residual distributed vector for the equations matrices residual if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_Previous2DistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous2ResidualDistributedVector)) &
+      & CALL FlagError("Second previous residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    previous2ResidualDistributedVector=>residualVector%previous2Residual
+       
+    EXITS("EquationsMatricesResidual_Previous2DistributedVectorExists")
+    RETURN
+999 NULLIFY(previous2ResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_Previous2DistributedVectorExists",err,error)
+    EXITS("EquationsMatricesResidual_Previous2DistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_Previous2DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the second previous residual distributed vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_Previous2DistributedVectorGet(residualVector,previous2ResidualDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the second previous distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previous2ResidualDistributedVector !<On exit, a pointer to the second previous residual distributed vector for the equations matrices residual. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_Previous2DistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous2ResidualDistributedVector)) &
+      & CALL FlagError("Second previous residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    previous2ResidualDistributedVector=>residualVector%previous2Residual
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previous2ResidualDistributedVector)) &
+      & CALL FlagError("The second previous distributed vector is not associated for the residual vector.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesResidual_Previous2DistributedVectorGet")
+    RETURN
+999 NULLIFY(previous2ResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_Previous2DistributedVectorGet",err,error)
+    EXITS("EquationsMatricesResidual_Previous2DistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_Previous2DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the third previous residual distributed vector exists for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_Previous3DistributedVectorExists(residualVector,previous3ResidualDistributedVector, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to check if the third previous distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: previous3ResidualDistributedVector !<On exit, a pointer to the third  previous residual distributed vector for the equations matrices residual if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_Previous3DistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous3ResidualDistributedVector)) &
+      & CALL FlagError("Third previous residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    previous3ResidualDistributedVector=>residualVector%previous3Residual
+       
+    EXITS("EquationsMatricesResidual_Previous3DistributedVectorExists")
+    RETURN
+999 NULLIFY(previous3ResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_Previous3DistributedVectorExists",err,error)
+    EXITS("EquationsMatricesResidual_Previous3DistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_Previous3DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the third previous residual distributed vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_Previous3DistributedVectorGet(residualVector,previous3ResidualDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to get the third previous distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previous3ResidualDistributedVector !<On exit, a pointer to the third previous residual distributed vector for the equations matrices residual. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_Previous3DistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous3ResidualDistributedVector)) &
+      & CALL FlagError("The third previous residual distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    previous3ResidualDistributedVector=>residualVector%previous3Residual
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previous3ResidualDistributedVector)) &
+      & CALL FlagError("The third previous distributed vector is not associated for the residual vector.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesResidual_Previous3DistributedVectorGet")
+    RETURN
+999 NULLIFY(previous3ResidualDistributedVector)
+998 ERRORS("EquationsMatricesResidual_Previous3DistributedVectorGet",err,error)
+    EXITS("EquationsMatricesResidual_Previous3DistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_Previous3DistributedVectorGet
 
   !
   !================================================================================================================================
@@ -688,12 +1453,12 @@ CONTAINS
     IF(matrixIdx<1.OR.matrixIdx>residualVector%numberOfJacobians) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid for residual vector number "//TRIM(NumberToVString(residualVector%residualNumber,"*",err,error))// &
-        & ". The matrix index must be >= 1 and <= "//TRIM(NumberToVString(residualMatrices%numberOfJacobians,"*",err,error))//"."
+        & ". The matrix index must be >= 1 and <= "//TRIM(NumberToVString(residualVector%numberOfJacobians,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
     
-    jacobianMatrix=>nonlinearMatrices%jacobians(matrixIdx)%ptr
+    jacobianMatrix=>residualVector%jacobians(matrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(jacobianMatrix)) THEN
@@ -753,6 +1518,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the number of Jacobians for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_NumberOfJacobiansGet(residualVector,numberOfJacobians,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the number of Jacobianas for
+    INTEGER(INTG), INTENT(OUT) :: numberOfJacobians !<On exit, the number of Jacobians for the residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_NumberOfJacobiansGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    numberOfJacobians=residualVector%numberOfJacobians
+
+    EXITS("EquationsMatricesResidual_NumberOfJacobiansGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_NumberOfJacobiansGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_NumberOfJacobiansGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the residual mapping for a residual vector.
   SUBROUTINE EquationsMatricesResidual_ResidualMappingGet(residualVector,residualMapping,err,error,*)
 
@@ -803,29 +1597,162 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the RHS distributed vector for a equations matrices RHS
-  SUBROUTINE EquationsMatricesRHS_DistributedVectorGet(equationsMatricesRHS,rhsDistributedVector,err,error,*)
+  !>Returns the residual number for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_ResidualNumberGet(residualVector,residualNumber,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to get the RHS distributed vector for
-    TYPE(DistributedVectorType), POINTER :: rhsDistributedVector !<On exit, a pointer to the RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the residual number for
+    INTEGER(INTG), INTENT(OUT) :: residualNumber !<On exit, the residual number for the residual vector.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EquationsMatricesRHS_DistributedVectorGet",err,error,*998)
+    ENTERS("EquationsMatricesResidual_ResidualNumberGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(rhsDistributedVector)) CALL FlagError("RHS distributed vector is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
 #endif    
 
-    rhsDistributedVector=>equationsMatricesRHS%vector
+    residualNumber=residualVector%residualNumber
 
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(rhsDistributedVector)) &
-      & CALL FlagError("Equations matrices RHS distributed vector is not associated.",err,error,*999)
+    EXITS("EquationsMatricesResidual_ResidualNumberGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_ResidualNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_ResidualNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the vector coefficient for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet(residualVector,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for the residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
 #endif    
+
+    vectorCoefficient=residualVector%residualCoefficient
+
+    EXITS("EquationsMatricesResidual_VectorCoefficientGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_VectorCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the update flag for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_UpdateVectorGet(residualVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the  update flag for
+    LOGICAL, INTENT(OUT) :: updateVector !<On exit, the update flag for the residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_UpdateVectorGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    updateVector=residualVector%updateResidual
+
+    EXITS("EquationsMatricesResidual_UpdateVectorGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_UpdateVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_UpdateVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that the temporal type rhs distributed vector exists for a equations matrices rhs vector
+  SUBROUTINE EquationsMatricesRHS_DistributedVectorExists(rhsVector,temporalType,rhsDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS to get the distributed vector for
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The temporal type of the vector to get \see EquationsMatricesRoutines_VectorTemporalTypes
+    TYPE(DistributedVectorType), POINTER :: rhsDistributedVector !<On exit, a pointer to the RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMatricesRHS_DistributedVectorExists",err,error,*998)
+
+    SELECT CASE(temporalType)
+    CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+      CALL EquationsMatricesRHS_CurrentDistributedVectorExists(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+      CALL EquationsMatricesRHS_PreviousDistributedVectorExists(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+      CALL EquationsMatricesRHS_Previous2DistributedVectorExists(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+      CALL EquationsMatricesRHS_Previous3DistributedVectorExists(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE DEFAULT
+      localError="The specified RHS vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+       
+    EXITS("EquationsMatricesRHS_DistributedVectorExists")
+    RETURN
+999 NULLIFY(rhsDistributedVector)
+998 ERRORSEXITS("EquationsMatricesRHS_DistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS distributed vector for a equations matrices RHS vector
+  SUBROUTINE EquationsMatricesRHS_DistributedVectorGet(rhsVector,temporalType,rhsDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS to get the distributed vector for
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The temporal type of the vector to get \see EquationsMatricesRoutines_VectorTemporalTypes
+    TYPE(DistributedVectorType), POINTER :: rhsDistributedVector !<On exit, a pointer to the RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMatricesRHS_DistributedVectorGet",err,error,*998)
+
+    SELECT CASE(temporalType)
+    CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+      CALL EquationsMatricesRHS_CurrentDistributedVectorGet(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+      CALL EquationsMatricesRHS_PreviousDistributedVectorGet(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+      CALL EquationsMatricesRHS_Previous2DistributedVectorGet(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+      CALL EquationsMatricesRHS_Previous3DistributedVectorGet(rhsVector,rhsDistributedVector,err,error,*998)
+    CASE DEFAULT
+      localError="The specified RHS vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("EquationsMatricesRHS_DistributedVectorGet")
     RETURN
@@ -834,6 +1761,318 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesRHS_DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the current RHS distributed vector exists for a equations matrices RHS
+  SUBROUTINE EquationsMatricesRHS_CurrentDistributedVectorExists(equationsMatricesRHS,currentRHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to check the current RHS distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: currentRHSDistributedVector !<On exit, a pointer to the current RHS distributed vector for the equations matrices RHS if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_CurrentDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(currentRHSDistributedVector)) &
+      & CALL FlagError("The current RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    currentRHSDistributedVector=>equationsMatricesRHS%vector
+       
+    EXITS("EquationsMatricesRHS_CurrentDistributedVectorExists")
+    RETURN
+999 NULLIFY(currentRHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_CurrentDistributedVectorExists",err,error)
+    EXITS("EquationsMatricesRHS_CurrentDistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_CurrentDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current RHS distributed vector for a equations matrices RHS
+  SUBROUTINE EquationsMatricesRHS_CurrentDistributedVectorGet(equationsMatricesRHS,currentRHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to get the current RHS distributed vector for
+    TYPE(DistributedVectorType), POINTER :: currentRHSDistributedVector !<On exit, a pointer to the current RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_CurrentDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(currentRHSDistributedVector)) &
+      & CALL FlagError("The current RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    currentRHSDistributedVector=>equationsMatricesRHS%vector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(currentRHSDistributedVector)) &
+      & CALL FlagError("Equations matrices current RHS distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesRHS_CurrentDistributedVectorGet")
+    RETURN
+999 NULLIFY(currentRHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_CurrentDistributedVectorGet",err,error)
+    EXITS("EquationsMatricesRHS_CurrentDistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_CurrentDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the previous RHS distributed vector for a equations matrices RHS exists.
+  SUBROUTINE EquationsMatricesRHS_PreviousDistributedVectorExists(equationsMatricesRHS,previousRHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to check the previous RHS distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: previousRHSDistributedVector !<On exit, a pointer to the previous RHS distributed vector for the equations matrices RHS if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_PreviousDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previousRHSDistributedVector)) &
+      & CALL FlagError("THe previous RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    previousRHSDistributedVector=>equationsMatricesRHS%previousRHSVector
+      
+    EXITS("EquationsMatricesRHS_PreviousDistributedVectorExists")
+    RETURN
+999 NULLIFY(previousRHSDistributedVector)
+998 ERRORSEXITS("EquationsMatricesRHS_PreviousDistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_PreviousDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the previous RHS distributed vector for a equations matrices RHS
+  SUBROUTINE EquationsMatricesRHS_PreviousDistributedVectorGet(equationsMatricesRHS,previousRHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to get the previous RHS distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previousRHSDistributedVector !<On exit, a pointer to the previous RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_PreviousDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previousRHSDistributedVector)) &
+      & CALL FlagError("THe previous RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    previousRHSDistributedVector=>equationsMatricesRHS%previousRHSVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previousRHSDistributedVector)) &
+      & CALL FlagError("Equations matrices previous RHS distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesRHS_PreviousDistributedVectorGet")
+    RETURN
+999 NULLIFY(previousRHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_PreviousDistributedVectorGet",err,error)
+    EXITS("EquationsMatricesRHS_PreviousDistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_PreviousDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the second previous RHS distributed vector for a equations matrices RHS exists.
+  SUBROUTINE EquationsMatricesRHS_Previous2DistributedVectorExists(equationsMatricesRHS,previous2RHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to check the second previous RHS distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: previous2RHSDistributedVector !<On exit, a pointer to the second previous RHS distributed vector for the equations matrices RHS if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_Previous2DistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous2RHSDistributedVector)) &
+      & CALL FlagError("THe second previous RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    previous2RHSDistributedVector=>equationsMatricesRHS%previous2RHSVector
+      
+    EXITS("EquationsMatricesRHS_Previous2DistributedVectorExists")
+    RETURN
+999 NULLIFY(previous2RHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_Previous2DistributedVectorExists",err,error)
+    EXITS("EquationsMatricesRHS_Previous2DistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_Previous2DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the second previous RHS distributed vector for a equations matrices RHS
+  SUBROUTINE EquationsMatricesRHS_Previous2DistributedVectorGet(equationsMatricesRHS,previous2RHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to get the second previous RHS distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previous2RHSDistributedVector !<On exit, a pointer to the second previous RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_Previous2DistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous2RHSDistributedVector)) &
+      & CALL FlagError("THe second previous RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    previous2RHSDistributedVector=>equationsMatricesRHS%previous2RHSVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previous2RHSDistributedVector)) &
+      & CALL FlagError("Equations matrices second previous RHS distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesRHS_Previous2DistributedVectorGet")
+    RETURN
+999 NULLIFY(previous2RHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_Previous2DistributedVectorGet",err,error)
+    EXITS("EquationsMatricesRHS_Previous2DistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_Previous2DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the third previous RHS distributed vector for a equations matrices RHS exists.
+  SUBROUTINE EquationsMatricesRHS_Previous3DistributedVectorExists(equationsMatricesRHS,previous3RHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to check the third previous RHS distributed vector exists
+    TYPE(DistributedVectorType), POINTER :: previous3RHSDistributedVector !<On exit, a pointer to the third previous RHS distributed vector for the equations matrices RHS if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_Previous3DistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous3RHSDistributedVector)) &
+      & CALL FlagError("THe third previous RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    previous3RHSDistributedVector=>equationsMatricesRHS%previous3RHSVector
+      
+    EXITS("EquationsMatricesRHS_Previous3DistributedVectorExists")
+    RETURN
+999 NULLIFY(previous3RHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_Previous3DistributedVectorExists",err,error)
+    EXITS("EquationsMatricesRHS_Previous3DistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_Previous3DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the third previous RHS distributed vector for a equations matrices RHS
+  SUBROUTINE EquationsMatricesRHS_Previous3DistributedVectorGet(equationsMatricesRHS,previous3RHSDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: equationsMatricesRHS !<A pointer to the equations matrices RHS to get the third previous RHS distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previous3RHSDistributedVector !<On exit, a pointer to the third previous RHS distributed vector for the equations matrices RHS. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_Previous3DistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous3RHSDistributedVector)) &
+      & CALL FlagError("THe third previous RHS distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesRHS)) CALL FlagError("Equations matrices RHS is not associated.",err,error,*999)
+#endif    
+
+    previous3RHSDistributedVector=>equationsMatricesRHS%previous3RHSVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previous3RHSDistributedVector)) &
+      & CALL FlagError("Equations matrices third previous RHS distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesRHS_Previous3DistributedVectorGet")
+    RETURN
+999 NULLIFY(previous3RHSDistributedVector)
+998 ERRORS("EquationsMatricesRHS_Previous3DistributedVectorGet",err,error)
+    EXITS("EquationsMatricesRHS_Previous2DistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_Previous3DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the vector coefficient for a RHS vector.
+  SUBROUTINE EquationsMatricesRHS_VectorCoefficientGet(rhsVector,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS vector to get the vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for the RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is not associated.",err,error,*999)
+#endif    
+
+    vectorCoefficient=rhsVector%rhsCoefficient
+
+    EXITS("EquationsMatricesRHS_VectorCoefficientGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesRHS_VectorCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_VectorCoefficientGet
 
   !
   !================================================================================================================================
@@ -865,11 +2104,40 @@ CONTAINS
        
     EXITS("EquationsMatricesRHS_VectorMatricesGet")
     RETURN
-999 NULLIFY(vectorMatriecs)
+999 NULLIFY(vectorMatrices)
 998 ERRORSEXITS("EquationsMatricesRHS_VectorMatricesGet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatricesRHS_VectorMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the update flag for a RHS vector.
+  SUBROUTINE EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS vector to get the update flag for
+    LOGICAL, INTENT(OUT) :: updateVector !<On exit, the update flag for the RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_UpdateVectorGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is not associated.",err,error,*999)
+#endif    
+
+    updateVector=rhsVector%updateVector
+
+    EXITS("EquationsMatricesRHS_UpdateVectorGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesRHS_UpdateVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_UpdateVectorGet
 
   !
   !================================================================================================================================
@@ -911,29 +2179,75 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the source distributed vector for a equations matrices source vector
-  SUBROUTINE EquationsMatricesSource_DistributedVectorGet(sourceVector,sourceDistributedVector,err,error,*)
+  !>Checks that the temporal type source distributed vector exists for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_DistributedVectorExists(sourceVector,temporalType,sourceDistributedVector,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to get the source distributed vector for
-    TYPE(DistributedVectorType), POINTER :: sourceDistributedVector !<On exit, a pointer to the source distributed vector for the equations matrices SOURCE. Must not be associated on entry
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source to get the distributed vector for
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The temporal type of the vector to get \see EquationsMatricesRoutines_VectorTemporalTypes
+    TYPE(DistributedVectorType), POINTER :: sourceDistributedVector !<On exit, a pointer to the source distributed vector for the equations matrices source. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMatricesSource_DistributedVectorExists",err,error,*998)
+
+    SELECT CASE(temporalType)
+    CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+      CALL EquationsMatricesSource_CurrentDistributedVectorExists(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+      CALL EquationsMatricesSource_PreviousDistributedVectorExists(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+      CALL EquationsMatricesSource_Previous2DistributedVectorExists(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+      CALL EquationsMatricesSource_Previous3DistributedVectorExists(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE DEFAULT
+      localError="The specified source vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+       
+    EXITS("EquationsMatricesSource_DistributedVectorExists")
+    RETURN
+999 NULLIFY(sourceDistributedVector)
+998 ERRORSEXITS("EquationsMatricesSource_DistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the source distributed vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_DistributedVectorGet(sourceVector,temporalType,sourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source to get the distributed vector for
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The temporal type of the vector to get \see EquationsMatricesRoutines_VectorTemporalTypes
+    TYPE(DistributedVectorType), POINTER :: sourceDistributedVector !<On exit, a pointer to the source distributed vector for the equations matrices source. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsMatricesSource_DistributedVectorGet",err,error,*998)
 
-#ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(sourceDistributedVector)) CALL FlagError("Source distributed vector is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
-#endif    
-
-    sourceDistributedVector=>sourceVector%vector
-
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(sourceDistributedVector)) &
-      & CALL FlagError("The source vector distributed vector is not associated.",err,error,*999)
-#endif    
+    SELECT CASE(temporalType)
+    CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+      CALL EquationsMatricesSource_CurrentDistributedVectorGet(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+      CALL EquationsMatricesSource_PreviousDistributedVectorGet(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+      CALL EquationsMatricesSource_Previous2DistributedVectorGet(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+      CALL EquationsMatricesSource_Previous3DistributedVectorGet(sourceVector,sourceDistributedVector,err,error,*998)
+    CASE DEFAULT
+      localError="The specified source vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
     EXITS("EquationsMatricesSource_DistributedVectorGet")
     RETURN
@@ -942,6 +2256,319 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesSource_DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the current source distributed vector exists for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_CurrentDistributedVectorExists(sourceVector,currentSourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to check the current source distributed vector for
+    TYPE(DistributedVectorType), POINTER :: currentSourceDistributedVector !<On exit, a pointer to the current source distributed vector for the equations matrices source if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_CurrentDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(currentSourceDistributedVector)) &
+      & CALL FlagError("The current source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    currentSourceDistributedVector=>sourceVector%vector
+
+    EXITS("EquationsMatricesSource_CurrentDistributedVectorExists")
+    RETURN
+999 NULLIFY(currentSourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_CurrentDistributedVectorExists",err,error)
+    EXITS("EquationsMatricesSource_CurrentDistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_CurrentDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current source distributed vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_CurrentDistributedVectorGet(sourceVector,currentSourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to get the current source distributed vector for
+    TYPE(DistributedVectorType), POINTER :: currentSourceDistributedVector !<On exit, a pointer to the current source distributed vector for the equations matrices SOURCE. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_CurrentDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(currentSourceDistributedVector)) &
+      & CALL FlagError("The current source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    currentSourceDistributedVector=>sourceVector%vector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(currentSourceDistributedVector)) &
+      & CALL FlagError("The current source vector distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesSource_CurrentDistributedVectorGet")
+    RETURN
+999 NULLIFY(currentSourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_CurrentDistributedVectorGet",err,error)
+    EXITS("EquationsMatricesSource_CurrentDistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_CurrentDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the previous source distributed vector for a equations matrices source vector exists.
+  SUBROUTINE EquationsMatricesSource_PreviousDistributedVectorExists(sourceVector,previousSourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to check the previous source distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: previousSourceDistributedVector !<On exit, a pointer to the previous source distributed vector for the equations matrices source if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_PreviousDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previousSourceDistributedVector)) &
+      & CALL FlagError("Previous source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    previousSourceDistributedVector=>sourceVector%previousSourceVector
+       
+    EXITS("EquationsMatricesSource_PreviousDistributedVectorExists")
+    RETURN
+999 NULLIFY(previousSourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_PreviousDistributedVectorExists",err,error)
+    EXITS("EquationsMatricesSource_PreviousDistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_PreviousDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the previous source distributed vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_PreviousDistributedVectorGet(sourceVector,previousSourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to get the previous source distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previousSourceDistributedVector !<On exit, a pointer to the previous source distributed vector for the equations matrices SOURCE. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_PreviousDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previousSourceDistributedVector)) &
+      & CALL FlagError("Previous source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    previousSourceDistributedVector=>sourceVector%previousSourceVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previousSourceDistributedVector)) &
+      & CALL FlagError("The previous source vector distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesSource_PreviousDistributedVectorGet")
+    RETURN
+999 NULLIFY(previousSourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_PreviousDistributedVectorGet",err,error)
+    EXITS("EquationsMatricesSource_PreviousDistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_PreviousDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the second previous source distributed vector for a equations matrices source vector exists.
+  SUBROUTINE EquationsMatricesSource_Previous2DistributedVectorExists(sourceVector,previous2SourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to check the second previous source distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: previous2SourceDistributedVector !<On exit, a pointer to the second previous source distributed vector for the equations matrices source if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_Previous2DistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous2SourceDistributedVector)) &
+      & CALL FlagError("The second previous source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    previous2SourceDistributedVector=>sourceVector%previous2SourceVector
+       
+    EXITS("EquationsMatricesSource_Previous2DistributedVectorExists")
+    RETURN
+999 NULLIFY(previous2SourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_Previous2DistributedVectorExists",err,error)
+    EXITS("EquationsMatricesSource_Previous2DistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_Previous2DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the second previous source distributed vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_Previous2DistributedVectorGet(sourceVector,previous2SourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to get the second previous source distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previous2SourceDistributedVector !<On exit, a pointer to the second previous source distributed vector for the equations matrices SOURCE. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_Previous2DistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous2SourceDistributedVector)) &
+      & CALL FlagError("The second previous source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    previous2SourceDistributedVector=>sourceVector%previous2SourceVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previous2SourceDistributedVector)) &
+      & CALL FlagError("The second previous source vector distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesSource_Previous2DistributedVectorGet")
+    RETURN
+999 NULLIFY(previous2SourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_Previous2DistributedVectorGet",err,error)
+    EXITS("EquationsMatricesSource_Previous2DistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_Previous2DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the third previous source distributed vector for a equations matrices source vector exists.
+  SUBROUTINE EquationsMatricesSource_Previous3DistributedVectorExists(sourceVector,previous3SourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to check the third previous source distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: previous3SourceDistributedVector !<On exit, a pointer to the third previous source distributed vector for the equations matrices source if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_Previous3DistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous3SourceDistributedVector)) &
+      & CALL FlagError("The third previous source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    previous3SourceDistributedVector=>sourceVector%previous3SourceVector
+       
+    EXITS("EquationsMatricesSource_Previous3DistributedVectorExists")
+    RETURN
+999 NULLIFY(previous3SourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_Previous3DistributedVectorExists",err,error)
+    EXITS("EquationsMatricesSource_Previous3DistributedVectorExists")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_Previous3DistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the third previous source distributed vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_Previous3DistributedVectorGet(sourceVector,previous3SourceDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the equations matrices source vector to get the third previous source distributed vector for
+    TYPE(DistributedVectorType), POINTER :: previous3SourceDistributedVector !<On exit, a pointer to the third previous source distributed vector for the equations matrices SOURCE. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_Previous3DistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(previous3SourceDistributedVector)) &
+      & CALL FlagError("The third previous source distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    previous3SourceDistributedVector=>sourceVector%previous3SourceVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(previous3SourceDistributedVector)) &
+      & CALL FlagError("The third previous source vector distributed vector is not associated.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesSource_Previous3DistributedVectorGet")
+    RETURN
+999 NULLIFY(previous3SourceDistributedVector)
+998 ERRORS("EquationsMatricesSource_Previous3DistributedVectorGet",err,error)
+    EXITS("EquationsMatricesSource_Previous3DistributedVectorGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_Previous3DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the source number for a source vector.
+  SUBROUTINE EquationsMatricesSource_SourceNumberGet(sourceVector,sourceNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source vector to get the source number for
+    INTEGER(INTG), INTENT(OUT) :: sourceNumber !<On exit, the source number for the source vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_SourceNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    sourceNumber=sourceVector%sourceNumber
+
+    EXITS("EquationsMatricesSource_SourceNumberGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_SourceNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_SourceNumberGet
 
   !
   !================================================================================================================================
@@ -964,7 +2591,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
 #endif    
 
-    sourceVectors=>sourceVector%sourceVectors
+    sourceVectors=>sourceVector%sources
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourceVectors)) &
@@ -983,12 +2610,99 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the vector coefficient for a source vector.
+  SUBROUTINE EquationsMatricesSource_VectorCoefficientGet(sourceVector,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source vector to get the vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for the source vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    vectorCoefficient=sourceVector%sourceCoefficient
+
+    EXITS("EquationsMatricesSource_VectorCoefficientGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_VectorCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_VectorCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the update flag for a source vector.
+  SUBROUTINE EquationsMatricesSource_UpdateVectorGet(sourceVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source vector to get the  update flag for
+    LOGICAL, INTENT(OUT) :: updateVector !<On exit, the vector update flag for the source vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_UpdateVectorGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    updateVector=sourceVector%updateVector
+
+    EXITS("EquationsMatricesSource_UpdateVectorGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_UpdateVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_UpdateVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of sources for a equations matrices sources.
+  SUBROUTINE EquationsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors !<A pointer to the source vectors to get the number of sources for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSources !<On exit, the number of sources for the source vectors.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSources_NumberOfSourcesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceVectors)) CALL FlagError("Source vectors is not associated.",err,error,*999)
+#endif    
+
+    numberOfSources=sourceVectors%numberOfSources
+
+    EXITS("EquationsMatricesSources_NumberOfSourcesGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSorurces_NumberOfSourcesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSources_NumberOfSourcesGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a source vector from the source vectors.
   SUBROUTINE EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*)
 
     !Argument variables
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors !<A pointer to the source vectors to get the source vector for
-    INTEGER(INTG), INTENT(IN) :: sourcelIdx !<The source number of the source vector to get
+    INTEGER(INTG), INTENT(IN) :: sourceIdx !<The source number of the source vector to get
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<On exit, a pointer to the specified source vector for the soure vectors. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1019,6 +2733,7 @@ CONTAINS
         & " of the source vectors is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#endif    
        
     EXITS("EquationsMatricesSources_SourceVectorGet")
     RETURN
@@ -1028,6 +2743,73 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesSources_SourceVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the temporary distributed vector for source vectors exists.
+  SUBROUTINE EquationsMatricesSources_TempDistributedVectorExists(sourceVectors,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors !<A pointer to the source vectors to check the temp distributed vector exists for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the source vectors if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSources_TempDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVectors)) CALL FlagError("Source vectors is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>sourceVectors%tempVector
+
+    EXITS("EquationsMatricesSources_TempDistributedVectorExists")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesSources_TempDistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSources_TempDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the temporary distributed vector for source vectors.
+  SUBROUTINE EquationsMatricesSources_TempDistributedVectorGet(sourceVectors,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors !<A pointer to the source vectors to get the temp distributed vector for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the source vectors. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSources_TempDistributedVectorGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceVectors)) CALL FlagError("Source vectors is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>sourceVectors%tempVector
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(tempDistributedVector)) &
+      & CALL FlagError("Temporary distributed vector is not associated for the source vectors.",err,error,*999)
+#endif    
+       
+    EXITS("EquationsMatricesSources_TempDistributedVectorGet")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatricesSources_TempDistributedVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSources_TempDistributedVectorGet
 
   !
   !================================================================================================================================
@@ -1085,7 +2867,7 @@ CONTAINS
 #endif    
 
     IF(.NOT.vectorMatrices%vectorMatricesFinished) &
-      & CALL FlagError("Vector equations matrices has not been finished."
+      & CALL FlagError("Vector equations matrices has not been finished.",err,error,*999)
     
     EXITS("EquationsMatricesVector_AssertIsFinished")
     RETURN
@@ -1443,7 +3225,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
 #endif    
 
-    sourceVectrs=>vectorMatrices%sourceVectors
+    sourceVectors=>vectorMatrices%sourceVectors
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(sourceVectors)) &
@@ -1705,6 +3487,240 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the lumped flag for an equations matrix
+  SUBROUTINE EquationsMatrix_LumpedFlagGet(equationsMatrix,lumpedFlag,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the lumped flag for
+    LOGICAL, INTENT(OUT) :: lumpedFlag !<On exit, the lumped flag of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_LumpedFlagGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    lumpedFlag=equationsMatrix%lumped
+       
+    EXITS("EquationsMatrix_LumpedFlagGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_LumpedFlagGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_LumpedFlagGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix coefficient for an equations matrix
+  SUBROUTINE EquationsMatrix_MatrixCoefficientGet(equationsMatrix,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the matrix coefficient for
+    REAL(DP), INTENT(OUT) :: matrixCoefficient !<On exit, the matrix coefficient of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_MatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    matrixCoefficient=equationsMatrix%matrixCoefficient
+       
+    EXITS("EquationsMatrix_MatrixCoefficientGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_MatrixCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_MatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix number for an equations matrix
+  SUBROUTINE EquationsMatrix_MatrixNumberGet(equationsMatrix,matrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the matrix number for
+    INTEGER(INTG), INTENT(OUT) :: matrixNumber !<On exit, the matrix number of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_MatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    matrixNumber=equationsMatrix%matrixNumber
+       
+    EXITS("EquationsMatrix_MatrixNumberGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_MatrixNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_MatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of columns for an equations matrix
+  SUBROUTINE EquationsMatrix_NumberOfColumnsGet(equationsMatrix,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On exit, the number of columns of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_NumberOfColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    numberOfColumns=equationsMatrix%numberOfColumns
+       
+    EXITS("EquationsMatrix_NumberOfColumnsGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_NumberOfColumnsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_NumberOfColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the storage type for an equations matrix
+  SUBROUTINE EquationsMatrix_StorageTypeGet(equationsMatrix,storageType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the storage type for
+    INTEGER(INTG), INTENT(OUT) :: storageType !<On exit, the storage type of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_StorageTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    storageType=equationsMatrix%storageType
+       
+    EXITS("EquationsMatrix_StorageTypeGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_StorageTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_StorageTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the structure type for an equations matrix
+  SUBROUTINE EquationsMatrix_StructureTypeGet(equationsMatrix,structureType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the structure type for
+    INTEGER(INTG), INTENT(OUT) :: structureType !<On exit, the structure type of the equations matrix. \see EquationsMatricesRoutines_EquationsMatrixStructureType
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_StructureTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    structureType=equationsMatrix%structureType
+       
+    EXITS("EquationsMatrix_StructureTypeGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_StructureTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_StructureTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the symmetry flag for an equations matrix
+  SUBROUTINE EquationsMatrix_SymmetryFlagGet(equationsMatrix,symmetryFlag,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the symmetry flag for
+    LOGICAL, INTENT(OUT) :: symmetryFlag !<On exit, the symmetry flag of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_SymmetryFlagGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    symmetryFlag=equationsMatrix%symmetric
+       
+    EXITS("EquationsMatrix_SymmetryFlagGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_SymmetryFlagGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_SymmetryFlagGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the temp distributed vector for a equations matrix exists
+  SUBROUTINE EquationsMatrix_TempDistributedVectorExists(equationsMatrix,tempDistributedVector,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to check the temp distributed vector existance for
+    TYPE(DistributedVectorType), POINTER :: tempDistributedVector !<On exit, a pointer to the temp distributed vector for the equations matrix if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_TempDistributedVectorExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(tempDistributedVector)) CALL FlagError("Temporary distributed vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    tempDistributedVector=>equationsMatrix%tempVector
+
+    EXITS("EquationsMatrix_TempDistributedVectorExists")
+    RETURN
+999 NULLIFY(tempDistributedVector)
+998 ERRORSEXITS("EquationsMatrix_TempDistributedVectorExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_TempDistributedVectorExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the temp distributed vector for a equations matrix
   SUBROUTINE EquationsMatrix_TempDistributedVectorGet(equationsMatrix,tempDistributedVector,err,error,*)
 
@@ -1736,6 +3752,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatrix_TempDistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the update matrix flag for an equations matrix
+  SUBROUTINE EquationsMatrix_UpdateMatrixGet(equationsMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the update matrix flag for
+    LOGICAL, INTENT(OUT) :: updateMatrix !<On exit, the update matrix flag of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_UpdateMatrixGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    updateMatrix=equationsMatrix%updateMatrix
+       
+    EXITS("EquationsMatrix_UpdateMatrixGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_UpdateMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_UpdateMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the calculation type for an Jacobian matrix
+  SUBROUTINE JacobianMatrix_CalculationTypeGet(jacobianMatrix,calculationType,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to get the calculation type for
+    INTEGER(INTG), INTENT(OUT) :: calculationType !<On exit, the calculation type of the Jacobian matrix. \see EquationsMatricesRoutines_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_CalculationTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    calculationType=jacobianMatrix%jacobianCalculationType
+       
+    EXITS("JacobianMatrix_CalculationTypeGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_CalculationTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_CalculationTypeGet
 
   !
   !================================================================================================================================
@@ -1777,6 +3851,122 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the finite difference step size for an jacobian matrix
+  SUBROUTINE JacobianMatrix_FiniteDifferenceStepSizeGet(jacobianMatrix,finiteDifferenceStepSize,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the finite difference step size for
+    REAL(DP), INTENT(OUT) :: finiteDifferenceStepSize !<On exit, the finite difference step size  of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_FiniteDifferenceStepSizeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    finiteDifferenceStepSize=jacobianMatrix%jacobianFiniteDifferenceStepSize
+       
+    EXITS("JacobianMatrix_FiniteDifferenceStepSizeGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_FiniteDifferenceStepSizeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_FiniteDifferenceStepSizeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix coefficient for an jacobian matrix
+  SUBROUTINE JacobianMatrix_MatrixCoefficientGet(jacobianMatrix,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the matrix coefficient for
+    REAL(DP), INTENT(OUT) :: matrixCoefficient !<On exit, the matrix coefficient of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_MatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    matrixCoefficient=jacobianMatrix%jacobianCoefficient
+       
+    EXITS("JacobianMatrix_MatrixCoefficientGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_MatrixCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_MatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix number for an jacobian matrix
+  SUBROUTINE JacobianMatrix_MatrixNumberGet(jacobianMatrix,matrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the matrix number for
+    INTEGER(INTG), INTENT(OUT) :: matrixNumber !<On exit, the matrix number of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_MatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    matrixNumber=jacobianMatrix%jacobianNumber
+       
+    EXITS("JacobianMatrix_MatrixNumberGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_MatrixNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_MatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of columns for an jacobian matrix
+  SUBROUTINE JacobianMatrix_NumberOfColumnsGet(jacobianMatrix,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On exit, the number of columns of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_NumberOfColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    numberOfColumns=jacobianMatrix%numberOfColumns
+       
+    EXITS("JacobianMatrix_NumberOfColumnsGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_NumberOfColumnsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_NumberOfColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the residual vector for a Jacobian matrix
   SUBROUTINE JacobianMatrix_ResidualVectorGet(jacobianMatrix,residualVector,err,error,*)
 
@@ -1808,6 +3998,122 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE JacobianMatrix_ResidualVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the storage type for an jacobian matrix
+  SUBROUTINE JacobianMatrix_StorageTypeGet(jacobianMatrix,storageType,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the storage type for
+    INTEGER(INTG), INTENT(OUT) :: storageType !<On exit, the storage type of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_StorageTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    storageType=jacobianMatrix%storageType
+       
+    EXITS("JacobianMatrix_StorageTypeGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_StorageTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_StorageTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the structure type for an jacobian matrix
+  SUBROUTINE JacobianMatrix_StructureTypeGet(jacobianMatrix,structureType,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the structure type for
+    INTEGER(INTG), INTENT(OUT) :: structureType !<On exit, the structure type of the jacobian matrix. \see JacobianMatricesRoutines_JacobianMatrixStructureType
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_StructureTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    structureType=jacobianMatrix%structureType
+       
+    EXITS("JacobianMatrix_StructureTypeGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_StructureTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_StructureTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the symmetry flag for an jacobian matrix
+  SUBROUTINE JacobianMatrix_SymmetryFlagGet(jacobianMatrix,symmetryFlag,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the symmetry flag for
+    LOGICAL, INTENT(OUT) :: symmetryFlag !<On exit, the symmetry flag of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_SymmetryFlagGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    symmetryFlag=jacobianMatrix%symmetric
+       
+    EXITS("JacobianMatrix_SymmetryFlagGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_SymmetryFlagGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_SymmetryFlagGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the update matrix flag for an jacobian matrix
+  SUBROUTINE JacobianMatrix_UpdateMatrixGet(jacobianMatrix,updateMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the jacobian matrix to get the update matrix flag for
+    LOGICAL, INTENT(OUT) :: updateMatrix !<On exit, the update matrix flag of the jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_UpdateMatrixGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    updateMatrix=jacobianMatrix%updateJacobian
+       
+    EXITS("JacobianMatrix_UpdateMatrixGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_UpdateMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_UpdateMatrixGet
 
   !
   !================================================================================================================================

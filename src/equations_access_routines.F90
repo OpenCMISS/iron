@@ -59,11 +59,39 @@ MODULE EquationsAccessRoutines
 
   !Module parameters
 
+  !> \addtogroup EquationsRoutines_LinearityTypes Equations::Constants::LinearityTypes
+  !> \brief The equations linearity types
+  !> \see EquationsRoutines,OpenCMISS_EquationsLinearityTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_LINEARITY_TYPES=3 !<The number of equations linearity types defined. \see EquationsRoutines_LinearityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LINEAR=1 !<The equations are linear. \see EquationsRoutines_LinearityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR=2 !<The equations are non-linear. \see EquationsRoutines_LinearityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR_BCS=3 !<The equations have non-linear boundary conditions. \see EquationsRoutines_LinearityTypes,EquationsRoutines
+  !>@}
+
+ 
+  !> \addtogroup EquationsRoutines_TimeDependenceTypes Equations::Constants::TimeDependenceTypes
+  !> \brief The equations time dependence type parameters
+  !> \see EquationsRoutines,OpenCMISS_EquationsTimeDependenceTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_TIME_TYPES=5 !<The number of equations time dependence types defined. \see EquationsRoutines_TimeDependenceTypes,EquationRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_STATIC=1 !<The equations are static and have no time dependence. \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_QUASISTATIC=2 !<The equations are quasi-static. \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_FIRST_ORDER_DYNAMIC=3 !<The equations are first order dynamic. \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SECOND_ORDER_DYNAMIC=4 !<The equations are a second order dynamic. \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_TIME_STEPPING=5 !<The equations are for time stepping. \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
+  !>@}
+
   !Module types
 
   !Module variables
 
   !Interfaces
+
+  PUBLIC NUMBER_OF_EQUATIONS_LINEARITY_TYPES,EQUATIONS_LINEAR,EQUATIONS_NONLINEAR,EQUATIONS_NONLINEAR_BCS
+
+  PUBLIC NUMBER_OF_EQUATIONS_TIME_TYPES,EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC, &
+    & EQUATIONS_SECOND_ORDER_DYNAMIC,EQUATIONS_TIME_STEPPING
 
   PUBLIC Equations_AssertIsFinished,Equations_AssertNotFinished
 
@@ -74,8 +102,18 @@ MODULE EquationsAccessRoutines
   PUBLIC Equations_EquationsSetGet
   
   PUBLIC Equations_InterpolationGet
+
+  PUBLIC Equations_LinearityTypeGet
+  
+  PUBLIC Equations_LumpingTypeGet
+  
+  PUBLIC Equations_OutputTypeGet
   
   PUBLIC Equations_ScalarEquationsGet
+
+  PUBLIC Equations_SparsityTypeGet
+  
+  PUBLIC Equations_TimeDependenceTypeGet
   
   PUBLIC Equations_VectorEquationsGet
 
@@ -223,6 +261,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Equations_AssertIsDynamic",err,error,*999)
 
@@ -257,6 +296,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Equations_AssertIsStatic",err,error,*999)
 
@@ -291,12 +331,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Equations_AssertIsLinear",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
-#ENDIF    
+#endif    
 
     IF(equations%linearity/=EQUATIONS_LINEAR) THEN
       localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))// &
@@ -323,6 +364,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Equations_AssertIsNonlinear",err,error,*999)
 
@@ -417,6 +459,93 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the linearity type for an equations.
+  SUBROUTINE Equations_LinearityTypeGet(equations,linearityType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the linearity type for
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type for the specified equations. \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_LinearityTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif
+
+    linearityType=equations%linearity
+
+    EXITS("Equations_LinearityTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_LinearityTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_LinearityTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the lumping type for an equations.
+  SUBROUTINE Equations_LumpingTypeGet(equations,lumpingType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the lumping type for
+    INTEGER(INTG), INTENT(OUT) :: lumpingType !<On exit, the lumping type for the specified equations. \see EquationsRoutines_EquationsLumpingTypes,EquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_LumpingTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif
+
+    lumpingType=equations%lumpingType
+
+    EXITS("Equations_LumpingTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_LumpingTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_LumpingTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type for an equations.
+  SUBROUTINE Equations_OutputTypeGet(equations,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type for the specified equations.  \see EquationsRoutines_EquationsOutputTypes,EquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_OutputTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif
+
+    outputType=equations%outputType
+
+    EXITS("Equations_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_OutputTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the scalar equations for equations.
   SUBROUTINE Equations_ScalarEquationsGet(equations,scalarEquations,err,error,*)
 
@@ -447,6 +576,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Equations_ScalarEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the sparsity type for an equations.
+  SUBROUTINE Equations_SparsityTypeGet(equations,sparsityType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the sparsity type for
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On exit, the sparsity type for the specified equations. \see EquationsRoutines_EquationsSparsityTypes,EquationsRoutines 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_SparsityTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif
+
+    sparsityType=equations%sparsityType
+
+    EXITS("Equations_SparsityTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_SparsityTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_SparsityTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the time dependence type for an equations.
+  SUBROUTINE Equations_TimeDependenceTypeGet(equations,timeDependenceType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the time dependence type for
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type for the specified equations. \see EquationsSetRoutines_TimeDependenceTypes,EquationsSetRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_TimeDependenceTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+#endif
+
+    timeDependenceType=equations%timeDependence
+
+    EXITS("Equations_TimeDependenceTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_TimeDependenceTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_TimeDependenceTypeGet
 
   !
   !================================================================================================================================
@@ -759,7 +946,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fibreField)) CALL FlagError("Fibre field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
-#enidf    
+#endif    
 
     fibreField=>equationsInterpolation%fibreField
 

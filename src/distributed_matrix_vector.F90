@@ -87,13 +87,6 @@ MODULE DistributedMatrixVector
 
   !Interfaces
 
-  INTERFACE DISTRIBUTED_MATRIX_ALL_VALUES_SET
-    MODULE PROCEDURE DistributedMatrix_AllValuesSetIntg
-    MODULE PROCEDURE DistributedMatrix_AllValuesSetSP
-    MODULE PROCEDURE DistributedMatrix_AllValuesSetDP
-    MODULE PROCEDURE DistributedMatrix_AllValuesSetL
-  END INTERFACE DISTRIBUTED_MATRIX_ALL_VALUES_SET
-
   INTERFACE DistributedMatrix_AllValuesSet
     MODULE PROCEDURE DistributedMatrix_AllValuesSetIntg
     MODULE PROCEDURE DistributedMatrix_AllValuesSetSP
@@ -101,26 +94,12 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_AllValuesSetL
   END INTERFACE DistributedMatrix_AllValuesSet
   
-  INTERFACE DISTRIBUTED_MATRIX_DATA_GET
-    MODULE PROCEDURE DistributedMatrix_DataGetIntg
-    MODULE PROCEDURE DistributedMatrix_DataGetSP
-    MODULE PROCEDURE DistributedMatrix_DataGetDP
-    MODULE PROCEDURE DistributedMatrix_DataGetL
-  END INTERFACE DISTRIBUTED_MATRIX_DATA_GET
-
   INTERFACE DistributedMatrix_DataGet
     MODULE PROCEDURE DistributedMatrix_DataGetIntg
     MODULE PROCEDURE DistributedMatrix_DataGetSP
     MODULE PROCEDURE DistributedMatrix_DataGetDP
     MODULE PROCEDURE DistributedMatrix_DataGetL
   END INTERFACE DistributedMatrix_DataGet
-
-  INTERFACE DISTRIBUTED_MATRIX_DATA_RESTORE
-    MODULE PROCEDURE DistributedMatrix_DataRestoreIntg
-    MODULE PROCEDURE DistributedMatrix_DataRestoreSP
-    MODULE PROCEDURE DistributedMatrix_DataRestoreDP
-    MODULE PROCEDURE DistributedMatrix_DataRestoreL
-  END INTERFACE DISTRIBUTED_MATRIX_DATA_RESTORE
 
   INTERFACE DistributedMatrix_DataRestore
     MODULE PROCEDURE DistributedMatrix_DataRestoreIntg
@@ -129,93 +108,10 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_DataRestoreL
   END INTERFACE DistributedMatrix_DataRestore
 
-  INTERFACE DISTRIBUTED_MATRIX_DATA_TYPE_SET
-    MODULE PROCEDURE DistributedMatrix_DataTypeSet
-  END INTERFACE DISTRIBUTED_MATRIX_DATA_TYPE_SET
-
-  INTERFACE DISTRIBUTED_MATRIX_DESTROY
-    MODULE PROCEDURE DistributedMatrix_Destroy
-  END INTERFACE DISTRIBUTED_MATRIX_DESTROY
-
-  INTERFACE DISTRIBUTED_MATRIX_DUPLICATE
-    MODULE PROCEDURE DistributedMatrix_Duplicate
-  END INTERFACE DISTRIBUTED_MATRIX_DUPLICATE
-
-  INTERFACE DISTRIBUTED_MATRIX_FORM
-    MODULE PROCEDURE DistributedMatrix_Form
-  END INTERFACE DISTRIBUTED_MATRIX_FORM
-
-  INTERFACE DISTRIBUTED_MATRIX_GHOSTING_TYPE_SET
-    MODULE PROCEDURE DistributedMatrix_GhostingTypeSet
-  END INTERFACE DISTRIBUTED_MATRIX_GHOSTING_TYPE_SET
-
-  INTERFACE DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET
-    MODULE PROCEDURE DistributedMatrix_LibraryTypeSet
-  END INTERFACE DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET
-
-  INTERFACE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
-    MODULE PROCEDURE DistributedMatrix_NumberOfNonZerosSet
-  END INTERFACE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
-
-  INTERFACE DISTRIBUTED_MATRIX_OUTPUT
-    MODULE PROCEDURE DistributedMatrix_Output
-  END INTERFACE DISTRIBUTED_MATRIX_OUTPUT
-
-  INTERFACE DISTRIBUTED_MATRIX_OVERRIDE_SET_ON
-    MODULE PROCEDURE DistributedMatrix_OverrideSetOn
-  END INTERFACE DISTRIBUTED_MATRIX_OVERRIDE_SET_ON
-
-  INTERFACE DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF
-    MODULE PROCEDURE DistributedMatrix_OverrideSetOff
-  END INTERFACE DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF
-
-  INTERFACE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET
-    MODULE PROCEDURE DistributedMatrix_StorageLocationsGet
-  END INTERFACE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET
-
-  INTERFACE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
-    MODULE PROCEDURE DistributedMatrix_StorageLocationsSet
-  END INTERFACE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
-  
-  INTERFACE DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
-    MODULE PROCEDURE DistributedMatrix_StorageTypeSet
-  END INTERFACE DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
-
   INTERFACE DistributedMatrix_TransposeRowsColumnsSet
     MODULE PROCEDURE DistributedMatrix_TransposeRowsColumnsSet0
     MODULE PROCEDURE DistributedMatrix_TransposeRowsColumnsSet1
   END INTERFACE DistributedMatrix_TransposeRowsColumnsSet
-
-  INTERFACE DISTRIBUTED_MATRIX_UPDATE_FINISH
-    MODULE PROCEDURE DistributedMatrix_UpdateFinish
-  END INTERFACE DISTRIBUTED_MATRIX_UPDATE_FINISH
-
-  INTERFACE DISTRIBUTED_MATRIX_UPDATE_START
-    MODULE PROCEDURE DistributedMatrix_UpdateStart
-  END INTERFACE DISTRIBUTED_MATRIX_UPDATE_START
-
-  INTERFACE DISTRIBUTED_MATRIX_UPDATE_ISFINISHED
-    MODULE PROCEDURE DistributedMatrix_UpdateIsFinished
-  END INTERFACE DISTRIBUTED_MATRIX_UPDATE_ISFINISHED
-
-  INTERFACE DISTRIBUTED_MATRIX_UPDATE_WAITFINISHED
-    MODULE PROCEDURE DistributedMatrix_UpdateWaitFinished
-  END INTERFACE DISTRIBUTED_MATRIX_UPDATE_WAITFINISHED
-
-  INTERFACE DISTRIBUTED_MATRIX_VALUES_ADD
-    MODULE PROCEDURE DistributedMatrix_ValuesAddIntg
-    MODULE PROCEDURE DistributedMatrix_ValuesAddIntg1    
-    MODULE PROCEDURE DistributedMatrix_ValuesAddIntg2
-    MODULE PROCEDURE DistributedMatrix_ValuesAddSP
-    MODULE PROCEDURE DistributedMatrix_ValuesAddSP1    
-    MODULE PROCEDURE DistributedMatrix_ValuesAddSP2
-    MODULE PROCEDURE DistributedMatrix_ValuesAddDP
-    MODULE PROCEDURE DistributedMatrix_ValuesAddDP1    
-    MODULE PROCEDURE DistributedMatrix_ValuesAddDP2
-    MODULE PROCEDURE DistributedMatrix_ValuesAddL
-    MODULE PROCEDURE DistributedMatrix_ValuesAddL1    
-    MODULE PROCEDURE DistributedMatrix_ValuesAddL2
-  END INTERFACE DISTRIBUTED_MATRIX_VALUES_ADD
 
   INTERFACE DistributedMatrix_ValuesAdd
     MODULE PROCEDURE DistributedMatrix_ValuesAddIntg
@@ -232,21 +128,6 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_ValuesAddL2
   END INTERFACE DistributedMatrix_ValuesAdd
 
-  INTERFACE DISTRIBUTED_MATRIX_VALUES_GET
-    MODULE PROCEDURE DistributedMatrix_ValuesGetIntg
-    MODULE PROCEDURE DistributedMatrix_ValuesGetIntg1    
-    MODULE PROCEDURE DistributedMatrix_ValuesGetIntg2
-    MODULE PROCEDURE DistributedMatrix_ValuesGetSP
-    MODULE PROCEDURE DistributedMatrix_ValuesGetSP1    
-    MODULE PROCEDURE DistributedMatrix_ValuesGetSP2
-    MODULE PROCEDURE DistributedMatrix_ValuesGetDP
-    MODULE PROCEDURE DistributedMatrix_ValuesGetDP1    
-    MODULE PROCEDURE DistributedMatrix_ValuesGetDP2
-    MODULE PROCEDURE DistributedMatrix_ValuesGetL
-    MODULE PROCEDURE DistributedMatrix_ValuesGetL1    
-    MODULE PROCEDURE DistributedMatrix_ValuesGetL2
-  END INTERFACE DISTRIBUTED_MATRIX_VALUES_GET
-
   INTERFACE DistributedMatrix_ValuesGet
     MODULE PROCEDURE DistributedMatrix_ValuesGetIntg
     MODULE PROCEDURE DistributedMatrix_ValuesGetIntg1    
@@ -261,21 +142,6 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_ValuesGetL1    
     MODULE PROCEDURE DistributedMatrix_ValuesGetL2
   END INTERFACE DistributedMatrix_ValuesGet
-
-  INTERFACE DISTRIBUTED_MATRIX_VALUES_SET
-    MODULE PROCEDURE DistributedMatrix_ValuesSetIntg
-    MODULE PROCEDURE DistributedMatrix_ValuesSetIntg1    
-    MODULE PROCEDURE DistributedMatrix_ValuesSetIntg2
-    MODULE PROCEDURE DistributedMatrix_ValuesSetSP
-    MODULE PROCEDURE DistributedMatrix_ValuesSetSP1    
-    MODULE PROCEDURE DistributedMatrix_ValuesSetSP2
-    MODULE PROCEDURE DistributedMatrix_ValuesSetDP
-    MODULE PROCEDURE DistributedMatrix_ValuesSetDP1    
-    MODULE PROCEDURE DistributedMatrix_ValuesSetDP2
-    MODULE PROCEDURE DistributedMatrix_ValuesSetL
-    MODULE PROCEDURE DistributedMatrix_ValuesSetL1    
-    MODULE PROCEDURE DistributedMatrix_ValuesSetL2
-  END INTERFACE DISTRIBUTED_MATRIX_VALUES_SET
 
   INTERFACE DistributedMatrix_ValuesSet
     MODULE PROCEDURE DistributedMatrix_ValuesSetIntg
@@ -292,17 +158,6 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_ValuesSetL2
   END INTERFACE DistributedMatrix_ValuesSet
 
-  INTERFACE DISTRIBUTED_MATRIX_BY_VECTOR_ADD
-    MODULE PROCEDURE DistributedMatrix_MatrixByVectorAdd
-  END INTERFACE DISTRIBUTED_MATRIX_BY_VECTOR_ADD
-  
-  INTERFACE DISTRIBUTED_VECTOR_ALL_VALUES_SET
-    MODULE PROCEDURE DistributedVector_AllValuesSetIntg
-    MODULE PROCEDURE DistributedVector_AllValuesSetSP
-    MODULE PROCEDURE DistributedVector_AllValuesSetDP
-    MODULE PROCEDURE DistributedVector_AllValuesSetL
-  END INTERFACE DISTRIBUTED_VECTOR_ALL_VALUES_SET
-
   INTERFACE DistributedVector_AllValuesSet
     MODULE PROCEDURE DistributedVector_AllValuesSetIntg
     MODULE PROCEDURE DistributedVector_AllValuesSetSP
@@ -310,34 +165,12 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedVector_AllValuesSetL
   END INTERFACE DistributedVector_AllValuesSet
 
-  INTERFACE DISTRIBUTED_VECTOR_COPY
-    MODULE PROCEDURE DistributedVector_CopyIntg
-    MODULE PROCEDURE DistributedVector_CopySP
-    MODULE PROCEDURE DistributedVector_CopyDP
-    MODULE PROCEDURE DistributedVector_CopyL
-  END INTERFACE DISTRIBUTED_VECTOR_COPY
-  
   INTERFACE DistributedVector_Copy
     MODULE PROCEDURE DistributedVector_CopyIntg
     MODULE PROCEDURE DistributedVector_CopySP
     MODULE PROCEDURE DistributedVector_CopyDP
     MODULE PROCEDURE DistributedVector_CopyL
- END INTERFACE DistributedVector_Copy
-
-  INTERFACE DISTRIBUTED_VECTOR_CREATE_FINISH
-    MODULE PROCEDURE DistributedVector_CreateFinish
-  END INTERFACE DISTRIBUTED_VECTOR_CREATE_FINISH
-
-  INTERFACE DISTRIBUTED_VECTOR_CREATE_START
-    MODULE PROCEDURE DistributedVector_CreateStart
-  END INTERFACE DISTRIBUTED_VECTOR_CREATE_START
-  
-  INTERFACE DISTRIBUTED_VECTOR_DATA_GET
-    MODULE PROCEDURE DistributedVector_DataGetIntg
-    MODULE PROCEDURE DistributedVector_DataGetSP
-    MODULE PROCEDURE DistributedVector_DataGetDP
-    MODULE PROCEDURE DistributedVector_DataGetL
-  END INTERFACE DISTRIBUTED_VECTOR_DATA_GET
+  END INTERFACE DistributedVector_Copy
 
   INTERFACE DistributedVector_DataGet
     MODULE PROCEDURE DistributedVector_DataGetIntg
@@ -346,78 +179,12 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedVector_DataGetL
   END INTERFACE DistributedVector_DataGet
 
-  INTERFACE DISTRIBUTED_VECTOR_DATA_RESTORE
-    MODULE PROCEDURE DistributedVector_DataRestoreIntg
-    MODULE PROCEDURE DistributedVector_DataRestoreSP
-    MODULE PROCEDURE DistributedVector_DataRestoreDP
-    MODULE PROCEDURE DistributedVector_DataRestoreL
-  END INTERFACE DISTRIBUTED_VECTOR_DATA_RESTORE
-
   INTERFACE DistributedVector_DataRestore
     MODULE PROCEDURE DistributedVector_DataRestoreIntg
     MODULE PROCEDURE DistributedVector_DataRestoreSP
     MODULE PROCEDURE DistributedVector_DataRestoreDP
     MODULE PROCEDURE DistributedVector_DataRestoreL
   END INTERFACE DistributedVector_DataRestore
-
-  INTERFACE DISTRIBUTED_VECTOR_DATA_TYPE_SET
-    MODULE PROCEDURE DistributedVector_DataTypeSet
-  END INTERFACE DISTRIBUTED_VECTOR_DATA_TYPE_SET
-
-  INTERFACE DISTRIBUTED_VECTOR_DESTROY
-    MODULE PROCEDURE DistributedVector_Destroy
-  END INTERFACE DISTRIBUTED_VECTOR_DESTROY
-
-  INTERFACE DISTRIBUTED_VECTOR_DUPLICATE
-    MODULE PROCEDURE DistributedVector_Duplicate
-  END INTERFACE DISTRIBUTED_VECTOR_DUPLICATE
-
-  INTERFACE DISTRIBUTED_VECTOR_GHOSTING_TYPE_SET
-    MODULE PROCEDURE DistributedVector_GhostingTypeSet
-  END INTERFACE DISTRIBUTED_VECTOR_GHOSTING_TYPE_SET
-
-  INTERFACE DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET
-    MODULE PROCEDURE DistributedVector_LibraryTypeSet
-  END INTERFACE DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET
-
-  INTERFACE DISTRIBUTED_VECTOR_OUTPUT
-    MODULE PROCEDURE DistributedVector_Output
-  END INTERFACE DISTRIBUTED_VECTOR_OUTPUT
-
-  INTERFACE DISTRIBUTED_VECTOR_OVERRIDE_SET_ON
-    MODULE PROCEDURE DistributedVector_OverrideSetOn
-  END INTERFACE DISTRIBUTED_VECTOR_OVERRIDE_SET_ON
-
-  INTERFACE DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF
-    MODULE PROCEDURE DistributedVector_OverrideSetOff
-  END INTERFACE DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF
-
-  INTERFACE DISTRIBUTED_VECTOR_UPDATE_FINISH
-    MODULE PROCEDURE DistributedVector_UpdateFinish
-  END INTERFACE DISTRIBUTED_VECTOR_UPDATE_FINISH
-
-  INTERFACE DISTRIBUTED_VECTOR_UPDATE_START
-    MODULE PROCEDURE DistributedVector_UpdateStart
-  END INTERFACE DISTRIBUTED_VECTOR_UPDATE_START
-
-  INTERFACE DISTRIBUTED_VECTOR_UPDATE_ISFINISHED
-    MODULE PROCEDURE DistributedVector_UpdateIsFinished
-  END INTERFACE DISTRIBUTED_VECTOR_UPDATE_ISFINISHED
-
-  INTERFACE DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED
-    MODULE PROCEDURE DistributedVector_UpdateWaitFinished
-  END INTERFACE DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED
-
-  INTERFACE DISTRIBUTED_VECTOR_VALUES_ADD
-    MODULE PROCEDURE DistributedVector_ValuesAddIntg
-    MODULE PROCEDURE DistributedVector_ValuesAddIntg1
-    MODULE PROCEDURE DistributedVector_ValuesAddSP
-    MODULE PROCEDURE DistributedVector_ValuesAddSP1
-    MODULE PROCEDURE DistributedVector_ValuesAddDP
-    MODULE PROCEDURE DistributedVector_ValuesAddDP1
-    MODULE PROCEDURE DistributedVector_ValuesAddL
-    MODULE PROCEDURE DistributedVector_ValuesAddL1
-  END INTERFACE DISTRIBUTED_VECTOR_VALUES_ADD
 
   INTERFACE DistributedVector_ValuesAdd
     MODULE PROCEDURE DistributedVector_ValuesAddIntg
@@ -430,17 +197,6 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedVector_ValuesAddL1
   END INTERFACE DistributedVector_ValuesAdd
 
-  INTERFACE DISTRIBUTED_VECTOR_VALUES_GET
-    MODULE PROCEDURE DistributedVector_ValuesGetIntg
-    MODULE PROCEDURE DistributedVector_ValuesGetIntg1
-    MODULE PROCEDURE DistributedVector_ValuesGetSP
-    MODULE PROCEDURE DistributedVector_ValuesGetSP1
-    MODULE PROCEDURE DistributedVector_ValuesGetDP
-    MODULE PROCEDURE DistributedVector_ValuesGetDP1
-    MODULE PROCEDURE DistributedVector_ValuesGetL
-    MODULE PROCEDURE DistributedVector_ValuesGetL1
-  END INTERFACE DISTRIBUTED_VECTOR_VALUES_GET
-
   INTERFACE DistributedVector_ValuesGet
     MODULE PROCEDURE DistributedVector_ValuesGetIntg
     MODULE PROCEDURE DistributedVector_ValuesGetIntg1
@@ -451,17 +207,6 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedVector_ValuesGetL
     MODULE PROCEDURE DistributedVector_ValuesGetL1
   END INTERFACE DistributedVector_ValuesGet
-
-  INTERFACE DISTRIBUTED_VECTOR_VALUES_SET
-    MODULE PROCEDURE DistributedVector_ValuesSetIntg
-    MODULE PROCEDURE DistributedVector_ValuesSetIntg1
-    MODULE PROCEDURE DistributedVector_ValuesSetSP
-    MODULE PROCEDURE DistributedVector_ValuesSetSP1
-    MODULE PROCEDURE DistributedVector_ValuesSetDP
-    MODULE PROCEDURE DistributedVector_ValuesSetDP1
-    MODULE PROCEDURE DistributedVector_ValuesSetL
-    MODULE PROCEDURE DistributedVector_ValuesSetL1
-  END INTERFACE DISTRIBUTED_VECTOR_VALUES_SET
 
   INTERFACE DistributedVector_ValuesSet
     MODULE PROCEDURE DistributedVector_ValuesSetIntg
@@ -480,49 +225,23 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedVector_DotProductDp
   END INTERFACE DistributedVector_DotProduct
 
-  INTERFACE DISTRIBUTED_MATRIX_LINKLIST_SET
-    MODULE PROCEDURE DistributedMatrix_LinkListSet
-  END INTERFACE DISTRIBUTED_MATRIX_LINKLIST_SET
-
-  INTERFACE DISTRIBUTED_MATRIX_LINKLIST_GET
-    MODULE PROCEDURE DistributedMatrix_LinkListGet
-  END INTERFACE DISTRIBUTED_MATRIX_LINKLIST_GET
-
-  PUBLIC DISTRIBUTED_MATRIX_ALL_VALUES_SET
-
   PUBLIC DistributedMatrix_AllValuesSet
 
   PUBLIC DistributedMatrix_CreateFinish,DistributedMatrix_CreateStart
 
-  PUBLIC DISTRIBUTED_MATRIX_DATA_GET,DISTRIBUTED_MATRIX_DATA_RESTORE
-
   PUBLIC DistributedMatrix_DataGet,DistributedMatrix_DataRestore
-
-  PUBLIC DISTRIBUTED_MATRIX_DATA_TYPE_SET
 
   PUBLIC DistributedMatrix_DataTypeSet
 
-  PUBLIC DISTRIBUTED_MATRIX_DESTROY
-
   PUBLIC DistributedMatrix_Destroy
-
-  PUBLIC DISTRIBUTED_MATRIX_DUPLICATE
 
   PUBLIC DistributedMatrix_Duplicate
 
-  PUBLIC DISTRIBUTED_MATRIX_FORM
-
   PUBLIC DistributedMatrix_Form
-
-  PUBLIC DISTRIBUTED_MATRIX_GHOSTING_TYPE_SET
 
   PUBLIC DistributedMatrix_GhostingTypeSet
 
-  PUBLIC DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET
-
   PUBLIC DistributedMatrix_LibraryTypeSet
-
-  PUBLIC DISTRIBUTED_MATRIX_LINKLIST_SET,DISTRIBUTED_MATRIX_LINKLIST_GET
 
   PUBLIC DistributedMatrix_LinkListSet,DistributedMatrix_LinkListGet
 
@@ -532,23 +251,13 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedMatrix_MatrixStructureCoupleCalculate
 
-  PUBLIC DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
-
   PUBLIC DistributedMatrix_NumberOfNonZerosSet
-
-  PUBLIC DISTRIBUTED_MATRIX_OUTPUT
 
   PUBLIC DistributedMatrix_Output
 
-  PUBLIC DISTRIBUTED_MATRIX_OVERRIDE_SET_ON,DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF
-
   PUBLIC DistributedMatrix_OverrideSetOn,DistributedMatrix_OverrideSetOff
 
-  PUBLIC DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET,DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
-
   PUBLIC DistributedMatrix_StorageLocationsGet,DistributedMatrix_StorageLocationsSet
-
-  PUBLIC DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
 
   PUBLIC DistributedMatrix_StorageTypeSet
 
@@ -558,90 +267,54 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedMatrix_TransposeTypeSet
 
-  PUBLIC DISTRIBUTED_MATRIX_UPDATE_START,DISTRIBUTED_MATRIX_UPDATE_FINISH
-
   PUBLIC DistributedMatrix_UpdateFinish,DistributedMatrix_UpdateStart
-
-  PUBLIC DISTRIBUTED_MATRIX_UPDATE_ISFINISHED,DISTRIBUTED_MATRIX_UPDATE_WAITFINISHED
 
   PUBLIC DistributedMatrix_UpdateIsFinished,DistributedMatrix_UpdateWaitFinished
 
-  PUBLIC DISTRIBUTED_MATRIX_VALUES_ADD
-
   PUBLIC DistributedMatrix_ValuesAdd
-
-  PUBLIC DISTRIBUTED_MATRIX_VALUES_GET,DISTRIBUTED_MATRIX_VALUES_SET
 
   PUBLIC DistributedMatrix_ValuesGet,DistributedMatrix_ValuesSet
 
-  PUBLIC DISTRIBUTED_MATRIX_BY_VECTOR_ADD
-
   PUBLIC DistributedMatrix_MatrixByVectorAdd
   
-  PUBLIC DISTRIBUTED_VECTOR_ALL_VALUES_SET
-
   PUBLIC DistributedVector_AllValuesSet
-
-  PUBLIC DISTRIBUTED_VECTOR_COPY
 
   PUBLIC DistributedVector_Copy
 
-  PUBLIC DISTRIBUTED_VECTOR_CREATE_FINISH,DISTRIBUTED_VECTOR_CREATE_START
-
   PUBLIC DistributedVector_CreateFinish,DistributedVector_CreateStart
-
-  PUBLIC DISTRIBUTED_VECTOR_DATA_GET,DISTRIBUTED_VECTOR_DATA_RESTORE
 
   PUBLIC DistributedVector_DataGet,DistributedVector_DataRestore
 
-  PUBLIC DISTRIBUTED_VECTOR_DATA_TYPE_SET
-
   PUBLIC DistributedVector_DataTypeSet
-
-  PUBLIC DISTRIBUTED_VECTOR_DESTROY
 
   PUBLIC DistributedVector_Destroy
 
   PUBLIC DistributedVector_DotProduct
 
-  PUBLIC DISTRIBUTED_VECTOR_DUPLICATE
-
   PUBLIC DistributedVector_Duplicate
 
-  PUBLIC DISTRIBUTED_VECTOR_GHOSTING_TYPE_SET
-
   PUBLIC DistributedVector_GhostingTypeSet
-
-  PUBLIC DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET
 
   PUBLIC DistributedVector_LibraryTypeSet
 
   PUBLIC DistributedVector_L2Norm
 
-  PUBLIC DISTRIBUTED_VECTOR_OUTPUT
-
   PUBLIC DistributedVector_Output
 
-  PUBLIC DISTRIBUTED_VECTOR_OVERRIDE_SET_ON,DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF
-
   PUBLIC DistributedVector_OverrideSetOn,DistributedVector_OverrideSetOff
-
-  PUBLIC DISTRIBUTED_VECTOR_UPDATE_START,DISTRIBUTED_VECTOR_UPDATE_FINISH
-
+  
   PUBLIC DistributedVector_UpdateFinish,DistributedVector_UpdateStart
-
-  PUBLIC DISTRIBUTED_VECTOR_UPDATE_ISFINISHED,DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED
 
   PUBLIC DistributedVector_UpdateIsFinished,DistributedVector_UpdateWaitFinished
   
-  PUBLIC DISTRIBUTED_VECTOR_VALUES_ADD
-
   PUBLIC DistributedVector_ValuesAdd
-
-  PUBLIC DISTRIBUTED_VECTOR_VALUES_GET,DISTRIBUTED_VECTOR_VALUES_SET
 
   PUBLIC DistributedVector_ValuesGet,DistributedVector_ValuesSet
 
+  PUBLIC DistributedVector_VectorAdd
+  
+  PUBLIC DistributedVector_VectorCopy
+  
   PUBLIC DistributedVector_VectorCoupleAdd
 
   PUBLIC DistributedVector_VectorRowCoupleAdd
@@ -2129,9 +1802,11 @@ CONTAINS
   !
 
   !>Adds a coupled distributed matrix to a distributed matrix i.e., A = A + alpha.C(B)
-  SUBROUTINE DistributedMatrix_MatrixCoupleAdd(aMatrix,rowCoupling,columnCoupling,alpha,bMatrix,transposeB,err,error,*)
+  SUBROUTINE DistributedMatrix_MatrixCoupleAdd(rowSelectionType,aMatrix,rowCoupling,columnCoupling,alpha,bMatrix,transposeB, &
+    & err,error,*)
 
     !Argument variables
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(DistributedMatrixType), POINTER :: aMatrix !<The distributed matrix to add to
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: columnCoupling(:) !<The column coupling information
@@ -2153,7 +1828,16 @@ CONTAINS
 
     CALL DistributedMatrix_AssertIsFinished(aMatrix,err,error,*999)
     CALL DistributedMatrix_AssertIsFinished(bMatrix,err,error,*999)
-    CALL DistributedMatrix_NumberOfLocalRowsGet(bMatrix,numberOfBRows,err,error,*999)
+    SELECT CASE(rowSelectionType)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
+      CALL DistributedMatrix_TotalNumberOfLocalRowsGet(bMatrix,numberOfBRows,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
+      CALL DistributedMatrix_NumberOfLocalRowsGet(bMatrix,numberOfBRows,err,error,*999)
+    CASE DEFAULT
+      localError="The specified row selection type of "//TRIM(NumberToVString(rowSelectionType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     CALL DistributedMatrix_NumberOfColumnsGet(bMatrix,numberOfBColumns,err,error,*999)
     IF(numberOfBRows/=SIZE(rowCoupling,1)) THEN
       localError="The size of the specified row coupling of "//TRIM(NumberToVString(SIZE(rowCoupling,1),"*",err,error))// &
@@ -9630,10 +9314,127 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds a coupled distributed vector to a distributed vector i.e., a = a + alpha.C(b)
-  SUBROUTINE DistributedVector_VectorCoupleAdd(aVector,rowCoupling,alpha,bVector,err,error,*)
+  !>Adds a distributed vector to a distributed vector i.e., a = a + alpha.b
+  SUBROUTINE DistributedVector_VectorAdd(rowSelectionType,aVector,alpha,bVector,err,error,*)
 
     !Argument variables
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to add to
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
+    TYPE(DistributedVectorType), POINTER :: bVector !<The distributed vector to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: aRowIdx,numberOfARows,numberOfBRows
+    REAL(DP) :: bValue
+    REAL(DP), POINTER :: bVectorData(:)
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedVector_VectorAdd",err,error,*999)
+
+    CALL DistributedVector_AssertIsFinished(aVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(bVector,err,error,*999)
+    SELECT CASE(rowSelectionType)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
+      CALL DistributedVector_TotalNumberOfLocalRowsGet(aVector,numberOfARows,err,error,*999)
+      CALL DistributedVector_TotalNumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
+      CALL DistributedVector_NumberOfLocalRowsGet(aVector,numberOfARows,err,error,*999)
+      CALL DistributedVector_NumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    CASE DEFAULT
+      localError="The specified row selection type of "//TRIM(NumberToVString(rowSelectionType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    IF(numberOfARows/=numberOfBRows) THEN
+      localError="The number of rows in the a vector of "//TRIM(NumberToVString(numberOfARows,"*",err,error))// &
+        & " does not match the number of rows in the b vector of "//TRIM(NumberToVString(numberOfBRows,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    NULLIFY(bVectorData)
+    CALL DistributedVector_DataGet(bVector,bVectorData,err,error,*999)
+    !Loop over the rows of the a vector
+    DO aRowIdx=1,numberOfARows
+      bValue=alpha*bVectorData(aRowIdx)
+      CALL DistributedVector_ValuesAdd(aVector,aRowIdx,bValue,err,error,*999)
+    ENDDO !aRowNumber
+    CALL DistributedVector_DataRestore(bVector,bVectorData,err,error,*999)
+        
+    EXITS("DistributedVector_VectorAdd")
+    RETURN
+999 ERRORSEXITS("DistributedVector_VectorAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedVector_VectorAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Copies a distributed vector to a distributed vector i.e., a = alpha.b
+  SUBROUTINE DistributedVector_VectorCopy(rowSelectionType,aVector,alpha,bVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to copy to
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
+    TYPE(DistributedVectorType), POINTER :: bVector !<The distributed vector to copy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: aRowIdx,numberOfARows,numberOfBRows
+    REAL(DP) :: bValue
+    REAL(DP), POINTER :: bVectorData(:)
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedVector_VectorCopy",err,error,*999)
+
+    CALL DistributedVector_AssertIsFinished(aVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(bVector,err,error,*999)
+    SELECT CASE(rowSelectionType)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
+      CALL DistributedVector_TotalNumberOfLocalRowsGet(aVector,numberOfARows,err,error,*999)
+      CALL DistributedVector_TotalNumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
+      CALL DistributedVector_NumberOfLocalRowsGet(aVector,numberOfARows,err,error,*999)
+      CALL DistributedVector_NumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    CASE DEFAULT
+      localError="The specified row selection type of "//TRIM(NumberToVString(rowSelectionType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    IF(numberOfARows/=numberOfBRows) THEN
+      localError="The number of rows in the a vector of "//TRIM(NumberToVString(numberOfARows,"*",err,error))// &
+        & " does not match the number of rows in the b vector of "//TRIM(NumberToVString(numberOfBRows,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    NULLIFY(bVectorData)
+    CALL DistributedVector_DataGet(bVector,bVectorData,err,error,*999)
+    !Loop over the rows of the a vector
+    DO aRowIdx=1,numberOfARows
+      bValue=alpha*bVectorData(aRowIdx)
+      CALL DistributedVector_ValuesSet(aVector,aRowIdx,bValue,err,error,*999)
+    ENDDO !aRowNumber
+    CALL DistributedVector_DataRestore(bVector,bVectorData,err,error,*999)
+        
+    EXITS("DistributedVector_VectorCopy")
+    RETURN
+999 ERRORSEXITS("DistributedVector_VectorCopy",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedVector_VectorCopy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a coupled distributed vector to a distributed vector i.e., a = a + alpha.C(b)
+  SUBROUTINE DistributedVector_VectorCoupleAdd(rowSelectionType,aVector,rowCoupling,alpha,bVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to add to
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
@@ -9650,7 +9451,16 @@ CONTAINS
 
     CALL DistributedVector_AssertIsFinished(aVector,err,error,*999)
     CALL DistributedVector_AssertIsFinished(bVector,err,error,*999)
-    CALL DistributedVector_NumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    SELECT CASE(rowSelectionType)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
+      CALL DistributedVector_TotalNumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
+      CALL DistributedVector_NumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    CASE DEFAULT
+      localError="The specified row selection type of "//TRIM(NumberToVString(rowSelectionType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     IF(numberOfBRows/=SIZE(rowCoupling,1)) THEN
       localError="The size of the specified row coupling of "//TRIM(NumberToVString(SIZE(rowCoupling,1),"*",err,error))// &
         & " does not match the number of rows in the b vector of "//TRIM(NumberToVString(numberOfBRows,"*",err,error))//"."

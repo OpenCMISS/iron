@@ -325,6 +325,7 @@ CONTAINS
     !Local Variables
 #ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DataPoints_DataProjectionUserGet",err,error,*998)
 

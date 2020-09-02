@@ -2458,7 +2458,7 @@ CONTAINS
 !!THIS NEEDS TO BE CHECKED
 
 #ifdef WITH_PRECHECKS    
-    IF(SIZE(A,1)=/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
     IF(SIZE(A,1)>SIZE(eVector,1)) CALL FlagError("Evector is too small.",err,error,*999)
 #endif
     
@@ -2541,7 +2541,7 @@ CONTAINS
 !!THIS NEEDS TO BE CHECKED
 
 #ifdef WITH_PRECHECKS    
-    IF(SIZE(A,1)=/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
     IF(SIZE(A,1)>SIZE(eVector,1)) CALL FlagError("Evector is too small.",err,error,*999)
 #endif
     
@@ -2872,7 +2872,7 @@ CONTAINS
   !
 
   !Returns the first invariant of a double precision second order matrix A
-  SUBROUTINE InvariantsOne2DP(A,I1,I2,err,error,*)
+  SUBROUTINE InvariantsOne2DP(A,I1,err,error,*)
     
     !Argument variables
     REAL(DP), INTENT(IN) :: A(:,:) !<The second order A matrix to get the invariants for
@@ -4235,13 +4235,13 @@ CONTAINS
     !Argument variables
     REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix to solve the eigenproblem for
     REAL(SP), INTENT(OUT) :: eigenvalues(:) !<On exit, the eigenvalues of A
-    REAL(SP), INTENT(IN) :: eigenvectors(:,:) !<On exit, the eigenvectors of A
+    REAL(SP), INTENT(OUT) :: eigenvectors(:,:) !<On exit, the eigenvectors of A
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: matrixSize
-    INTEGER(INTG), PARAMETER :: lWork=1000
-    REAL(SP) :: B(SIZE(A,1),SIZE(A,2)),det,factor,trace,work(lWork)
+    INTEGER(INTG) :: matrixSize,lWork
+    INTEGER(INTG), PARAMETER :: lWMax=1000
+    REAL(SP) :: B(SIZE(A,1),SIZE(A,2)),det,factor,trace,work(lWMax)
     
     ENTERS("SolveEigenproblemSP",err,error,*999)
 
@@ -4313,13 +4313,13 @@ CONTAINS
     !Argument variables
     REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix to solve the eigenproblem for
     REAL(DP), INTENT(OUT) :: eigenvalues(:) !<On exit, the eigenvalues of A
-    REAL(DP), INTENT(IN) :: eigenvectors(:,:) !<On exit, the eigenvectors of A
+    REAL(DP), INTENT(OUT) :: eigenvectors(:,:) !<On exit, the eigenvectors of A
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: matrixSize
-    INTEGER(INTG), PARAMETER :: lWork=1000
-    REAL(DP) :: B(SIZE(A,1),SIZE(A,2)),det,factor,trace,work(lWork)
+    INTEGER(INTG) :: matrixSize,lWork
+    INTEGER(INTG), PARAMETER :: lWMax=1000
+    REAL(DP) :: B(SIZE(A,1),SIZE(A,2)),det,factor,trace,work(lWMax)
     
     ENTERS("SolveEigenproblemDP",err,error,*999)
 
@@ -4395,8 +4395,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: iPivot(SIZE(A,1)
+    INTEGER(INTG) :: info,iPivot(SIZE(A,1))
     REAL(SP) :: AInv(SIZE(A,1),SIZE(A,2)),det
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolveSmallLinearSystemSP",err,error,*999)
 
@@ -4429,7 +4430,7 @@ CONTAINS
       CALL DGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
       IF(info/=0) THEN
         localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
-        CALL FlagError(localErr,err,error,*999)
+        CALL FlagError(localError,err,error,*999)
       ENDIF
       x=b
     END SELECT
@@ -4455,8 +4456,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: iPivot(SIZE(A,1))
+    INTEGER(INTG) :: info,iPivot(SIZE(A,1))
     REAL(DP) :: AInv(SIZE(A,1),SIZE(A,2)),det
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolveSmallLinearSystemDP",err,error,*999)
 
@@ -4489,7 +4491,7 @@ CONTAINS
       CALL DGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
       IF(info/=0) THEN
         localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
-        CALL FlagError(localErr,err,error,*999)
+        CALL FlagError(localError,err,error,*999)
       ENDIF
       x=b
     END SELECT

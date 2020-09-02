@@ -212,9 +212,9 @@ CONTAINS
       DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
         NULLIFY(interfaceMatrix)
         CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
-        NULLIFY(interfaceMatrixRowsToVarMap)
-        CALL InterfaceMapping_MatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixRowsToVarMap,err,error,*999)
-        CALL InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixRowsToVarMap,rowMeshIdx,err,error,*999)
+        NULLIFY(interfaceMatrixToVarMap)
+        CALL InterfaceMapping_MatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
+        CALL InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixToVarMap,rowMeshIdx,err,error,*999)
         IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
           !If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
           rowsElementNumber=InterfaceElementNumber
@@ -241,9 +241,9 @@ CONTAINS
             & interfaceMatrix%updateMatrix,[InterfaceElementNumber],[InterfaceElementNumber], &
             & rowsFieldVariable,colsFieldVariable,err,error,*999)
         ELSE
-          rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable
+          rowsFieldVariable=>interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%variable
           colsFieldVariable=>interfaceMapping%lagrangeVariable !\todo: TEMPORARY: Needs generalising
-          rowsMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex
+          rowsMeshIdx=interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%meshIndex
           CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%elementMatrix, &
             & interfaceMatrix%updateMatrix,pointsConnectivity%coupledElements(InterfaceElementNumber, &
             & rowsMeshIdx)%elementNumbers,[InterfaceElementNumber],rowsFieldVariable,colsFieldVariable, &
@@ -358,7 +358,7 @@ CONTAINS
         CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
         rowsNumberOfElements=1
         colsNumberOfElements=1
-        rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%VARIABLE
+        rowsFieldVariable=>interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%VARIABLE
         colsFieldVariable=>interfaceMapping%lagrangeVariable !TEMPORARY: Needs generalising
         CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%elementMatrix,rowsFieldVariable, &
           & colsFieldVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
@@ -374,9 +374,9 @@ CONTAINS
         NULLIFY(interfaceMatrix)
         CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
         colsNumberOfElements=1
-        rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable
+        rowsFieldVariable=>interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%variable
         colsFieldVariable=>interfaceMapping%lagrangeVariable !TEMPORARY: Needs generalising
-        rowsMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex
+        rowsMeshIdx=interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%meshIndex
         CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%elementMatrix,rowsFieldVariable, &
           & colsFieldVariable,pointsConnectivity%maxNumberOfCoupledElements(rowsMeshIdx), &
           & colsNumberOfElements,err,error,*999)
@@ -474,7 +474,7 @@ CONTAINS
         CALL InterfaceMapping_MatrixVariableGet(interfaceMapping,matrixNumber,rowVariable,err,error,*999)
         NULLIFY(columnVariable)
         CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,columnVariable,err,error,*999)
-        interfaceMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%meshIndex
+        interfaceMeshIdx=interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%meshIndex
         NULLIFY(rowDOFSDomainMapping)
         CALL FieldVariable_DomainMappingGet(rowVariable,rowDOFSDomainMapping,err,error,*999)
         NULLIFY(columnDOFSDomainMapping)
@@ -747,7 +747,7 @@ CONTAINS
     DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
       NULLIFY(interfaceMatrix)
       CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
-      rowDomainMapping=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%rowDOFsMapping
+      rowDomainMapping=>interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%rowDOFsMapping
       IF(.NOT.ASSOCIATED(rowDomainMapping)) THEN
         localError="Row domain map for interface matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
           & " is not associated."
@@ -944,9 +944,9 @@ CONTAINS
       NULLIFY(interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr)
       CALL InterfaceMatrix_Initialise(interfaceEquations%interfaceMatrices,matrixIdx,err,error,*999)
       interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr%matrixCoefficient = &
-        & interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%matrixCoefficient
+        & interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%matrixCoefficient
       interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr%transposeMatrixCoefficient = &
-        & interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%transposeMatrixCoefficient
+        & interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%transposeMatrixCoefficient
     ENDDO !matrixIdx
     CALL InterfaceMatrices_RHSInitialise(interfaceEquations%interfaceMatrices,err,error,*999)
     interfaceEquatins%interfaceMatrices%rhsVector%rhsCoefficient= &
@@ -1307,10 +1307,10 @@ CONTAINS
     interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
     interfaceMatrix%updateMatrix=.TRUE.
     interfaceMatrix%firstAssembly=.TRUE.
-    interfaceMatrix%hasTranspose=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%hasTranspose
-    interfaceMatrix%numberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%numberOfRows
-    interfaceMatrix%totalNumberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%totalNumberOfRows
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%interfaceMatrix=>interfaceMatrix
+    interfaceMatrix%hasTranspose=interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%hasTranspose
+    interfaceMatrix%numberOfRows=interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%numberOfRows
+    interfaceMatrix%totalNumberOfRows=interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%totalNumberOfRows
+    interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%interfaceMatrix=>interfaceMatrix
     NULLIFY(interfaceMatrix%matrix)
     NULLIFY(interfaceMatrix%matrixTranspose)
     NULLIFY(interfaceMatrix%tempVector)

@@ -126,7 +126,7 @@ CONTAINS
     CALL SolverMapping_RowDOFSMappingGet(solverMapping,rowDomainMap,err,error,*999)
     DO matrixIdx=1,solverMatrices%numberOfMatrices
       NULLIFY(solverMatrix)
-      CALL SolverMatrices_SolverMatrixGet(solvrMatrices,matrixIdx,solverMatrix,err,error,*999)
+      CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIdx,solverMatrix,err,error,*999)
       NULLIFY(columnDomainMap)
       CALL SolverMapping_ColumnDOFSMappingGet(solverMapping,matrixIdx,columnDomainMap,err,error,*999)
       !Create the distributed solver matrix
@@ -258,7 +258,7 @@ CONTAINS
     IF(ASSOCIATED(solverMatrices)) THEN
       IF(ALLOCATED(solverMatrices%matrices)) THEN
         DO matrixIdx=1,SIZE(solverMatrices%matrices,1)
-          CALL SOLVER_MATRIX_FINALISE(solverMatrices%matrices(matrixIdx)%ptr,err,error,*999)
+          CALL SolverMatrix_Finalise(solverMatrices%matrices(matrixIdx)%ptr,err,error,*999)
         ENDDO !matrixIdx
         DEALLOCATE(solverMatrices%matrices)
       ENDIF
@@ -286,7 +286,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,equationsMatrixIdx,equationsSetIdx,matrixIdx
+    INTEGER(INTG) :: dummyErr,equationsMatrixIdx,equationsSetIdx,numberOfDynamicMatrices,numberOfEquationsSets, &
+      & numberOfGlobalRows,numberOfJacobianMatrices,numberOfLinearMatrices,numberOfRows,numberOfSolverMatrices, &
+      & solverEquationsLinearity,solverMatrixIdx
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: dynamicEquationsMatrixToSolverMatrixMap, &
+      & linearEquationsMatrixToSolverMatrixMap
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
+    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: dummyError
 
@@ -298,54 +305,69 @@ CONTAINS
 
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+    CALL SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
+    CALL SolverMapping_NumberOfRowsGet(solverMapping,numberOfRows,err,error,*999)
+    CALL SolverMapping_NumberOfGlobalRowsGet(solverMapping,numberOfGlobalRows,err,error,*999)
+    CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
     
     ALLOCATE(solverEquations%solverMatrices,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver matrices.",err,error,*999)
     solverEquations%solverMatrices%solverEquations=>solverEquations
     solverEquations%solverMatrices%solverMatricesFinished=.FALSE.
     solverEquations%solverMatrices%solverMapping=>solverMapping
-    solverEquations%solverMatrices%numberOfRows=solverMapping%numberOfRows
-    solverEquations%solverMatrices%numberOfGlobalRows=solverMapping%numberOfGlobalRows
+    solverEquations%solverMatrices%numberOfRows=numberOfRows
+    solverEquations%solverMatrices%numberOfGlobalRows=numberOfGlobalRows
     solverEquations%solverMatrices%solverLibraryType=0
     solverEquations%solverMatrices%matrixLibraryType=0
-    solverEquations%solverMatrices%numberOfMatrices=solverMapping%numberOfSolverMatrices
-    ALLOCATE(solverEquations%solverMatrices%matrices(solverMapping%numberOfSolverMatrices),STAT=err)
+    solverEquations%solverMatrices%numberOfMatrices=numberOfSolverMatrices
+    ALLOCATE(solverEquations%solverMatrices%matrices(numberOfSolverMatrices),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate solver matrices matrices.",err,error,*999)
-    DO matrixIdx=1,solverMapping%numberOfSolverMatrices
-      NULLIFY(solverEquations%solverMatrices%matrices(matrixIdx)%ptr)
-      CALL SOLVER_MATRIX_INITIALISE(solverEquations%solverMatrices,matrixIdx,err,error,*999)
-      DO equationsSetIdx=1,SOLVER_MAPPING%numberOfEquationsSets
-        IF(ALLOCATED(solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)%equationsMatricesToSolverMatrixMaps( &
-          & matrixIdx)%dynamicEquationsMatrixToSolverMatrixMaps)) THEN
-          DO equationsMatrixIdx=1,SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(matrixIdx)%numberOfDynamicEquationsMatrices
+    DO solverMatrixIdx=1,numberOfSolverMatrices
+      NULLIFY(solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr)
+      CALL SolverMatrix_Initialise(solverEquations%solverMatrices,solverMatrixIdx,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSetToSolverMatricesMap)
+        CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+          & err,error,*999)
+        NULLIFY(equationsMatricesToSolverMatrixMap)
+        CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
+          & equationsMatricesToSolverMatrixMap,err,error,*999)
+        CALL SolverMappingEMSToSMMap_NumberOfDynamicMatricesGet(equationsMatricesToSolverMatrixMap,numberOfDynamicMatrices, &
+          & err,error,*999)
+        IF(numberOfDynamicMatrices>0) THEN
+          DO equationsMatrixIdx=1,numberOfDynamicMatrices
             !Add the solver matrix to the solvers mapping
-            SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)%equationsMatricesToSolverMatrixMaps( &
-              & matrixIdx)%dynamicEquationsMatrixToSolverMatrixMaps(equationsMatrixIdx)%ptr%solverMatrix=> &
-              & solverEquations%solverMatrices%matrices(matrixIdx)%ptr
+            NULLIFY(dynamicEquationsMatrixToSolverMatrixMap)
+            CALL SolverMappingEMSToSMMap_DynamicEqnsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+              & equationsMatrixIdx,dynamicEquationsMatrixToSolverMatrixMap,err,error,*999)
+            dynamicEquationsMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
           ENDDO !equationsMatrixIdx
         ELSE
-          IF(ALLOCATED(SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(matrixIdx)%JACOBIAN_TO_SOLVER_MATRIX_MAPS)) THEN
-            DO equationsMatrixIdx=1,SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-              & equationsMatricesToSolverMatrixMaps(matrixIdx)%numberOfEquationsJacobians
-              SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                & equationsMatricesToSolverMatrixMaps(matrixIdx)%JACOBIAN_TO_SOLVER_MATRIX_MAPS(equationsMatrixIdx)%ptr% &
-                & solverMatrix=>solverEquations%solverMatrices%matrices(matrixIdx)%ptr
+          CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
+            & err,error,*999)
+          IF(numberOfJacobianMatrices>0) THEN
+            DO equationsMatrixIdx=1,numberOfJacobianMatrices
+              NULLIFY(jacobianMatrixToSolverMatrixMap)
+              CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                & equationsMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
+              jacobianMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
             ENDDO !equationsMatrixIdx
           ELSE
-            DO equationsMatrixIdx=1,SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-              & equationsMatricesToSolverMatrixMaps(matrixIdx)%numberOfLinearEquationsMatrices
+            CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap,numberOfLinearMatrices, &
+            & err,error,*999)
+            DO equationsMatrixIdx=1,numberOfLinearMatrices
               !Add the solver matrix to the solvers mapping
-              SOLVER_MAPPING%equationsSetToSolverMatricesMap(equationsSetIdx)%equationsMatricesToSolverMatrixMaps( &
-                & matrixIdx)%linearEquationsMatrixToSolverMatrixMaps(equationsMatrixIdx)%ptr%solverMatrix=> &
-                & solverEquations%solverMatrices%matrices(matrixIdx)%ptr
+              NULLIFY(linearEquationsMatrixToSolverMatrixMap)
+              CALL SolverMappingEMSToSMMap_LinearEqnsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+              & equationsMatrixIdx,linearEquationsMatrixToSolverMatrixMap,err,error,*999)
+              linearEquationsMatrixToSolverMatrixMap%solverMatrix=>solverEquations%solverMatrices%matrices(solverMatrixIdx)%ptr
             ENDDO !equationsMatrixIdx
           ENDIF
         ENDIF
       ENDDO !equationsSetIdx
-    ENDDO !matrixIdx
-    IF(solverEquations%linearity==PROBLEM_SOLVER_NONLINEAR) THEN
+    ENDDO !solverMatrixIdx
+    CALL SolverEquations_LinearityTypeGet(solverEquations,solverEquationsLinearity,err,error,*999)
+    IF(solverEquationsLinearity==PROBLEM_SOLVER_NONLINEAR) THEN
       solverEquations%solverMatrices%updateResidual=.TRUE.
     ELSE
       solverEquations%solverMatrices%updateResidual=.FALSE.
@@ -592,29 +614,31 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: equationsMatrixNumber,solverMatrixNumber
     TYPE(DistributedMatrixType), POINTER :: equationsDistributedMatrix,solverDistributedMatrix
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsToSolverMap
-    TYPE(MatrixRowColCouplingType), POINTER :: equationsColToSolverColsMap(:)
-    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:)
+    TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: equationsMatrixToSolverMatricesMap
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsColToSolverColsMap(:),equationsRowToSolverRowsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrix_EquationsMatrixAdd",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
     IF(ABS(alpha)>ZERO_TOLERANCE) THEN
       NULLIFY(solverMatrices)
       CALL SolverMatrix_SolverMatricesGet(solverMatrix,solverMatrices,err,error,*999)
       CALL SolverMatrices_AssertIsFinished(solverMatrices,err,error,*999)
       NULLIFY(solverMapping)
-      CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)      
-      linearMatrices=>equationsMatrix%linearMatrices
-      dynamicMatrices=>equationsMatrix%dynamicMatrices
+      CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
+      NULLIFY(linearMatrices)
+      CALL EquationsMatrix_LinearMatricesExists(equationsMatrix,linearMatrices,err,error,*999)
+      NULLIFY(dynamicMatrices)
+      CALL EquationsMatrix_DynamicMatricesExists(equationsMatrix,dynamicMatrices,err,error,*999)
       IF(.NOT.ASSOCIATED(dynamicMatrices).AND..NOT.ASSOCIATED(linearMatrices)) &
         & CALL FlagError("Equations matrix dynamic or linear matrices is not associated.",err,error,*999)
       NULLIFY(vectorMatrices)
@@ -623,21 +647,30 @@ CONTAINS
       ELSE
         CALL EquationsMatricesLinear_VectorMatricesGet(linearMatrices,vectorMatrices,err,error,*999)
       ENDIF
-      CALL EquationsMatricesVector_AssertIsFInished(vectorMatrices,err,error,*999)
+      CALL EquationsMatricesVector_AssertIsFinished(vectorMatrices,err,error,*999)
       NULLIFY(solverDistributedMatrix)
       CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
       NULLIFY(equationsDistributedMatrix)
       CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,equationsDistributedMatrix,err,error,*999)
-      NULLIFY(equationsToSolverMap)
-      CALL SolverMapping_EquationsToSolverMapGet(solverMapping,equationsSetIdx,equationsMatrix%matrixNumber, &
-        & solverMatrix%matrixNumber,equationsToSolverMap,err,error,*999)
-      NULLIFY(equationsRowToSolverRowsMap)
-      CALL SolverMapping_EquationsRowToSolverRowsMapGet(solverMapping,equationsSetIdx,equationsRowToSolverRowsMap,err,error,*999)
-      NULLIFY(equationsColToSolverColsMap)
-      CALL SolverMappingEquationsToSolverMap_EquationsColToSolverColsMapGet(equationsToSolverMap,equationsColToSolverColsMap, &
+      NULLIFY(equationsSetToSolverMatricesMap)
+      CALL SolverMapping_EquationsSetToSolverMatrixMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
         & err,error,*999)
-      CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,equationsRowToSolverRowsMap, &
-        & equationsColToSolverColsMap,alpha,equationsDistributedMatrix,.FALSE.,err,error,*999)                              
+      NULLIFY(equationsRowToSolverRowsMap)
+      CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
+        & err,error,*999)
+      CALL EquationsMatrix_MatrixNumberGet(equationsMatrix,equationsMatrixNumber,err,error,*999)
+      NULLIFY(equationsMatrixToSolverMatricesMap)
+      CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap,equationsMatrixNumber, &
+        & equationsMatrixToSolverMatricesMap,err,error,*999)
+      CALL SolverMatrix_MatrixNumberGet(solverMatrix,solverMatrixNumber,err,error,*999)
+      NULLIFY(equationsMatrixToSolverMatrixMap)
+      CALL SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap,solverMatrixNumber, &
+        & equationsMatrixToSolverMatrixMap,err,error,*999)
+      NULLIFY(equationsColToSolverColsMap)
+      CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap,equationsColToSolverColsMap, &
+        & err,error,*999)
+      CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+        & equationsRowToSolverRowsMap,equationsColToSolverColsMap,alpha,equationsDistributedMatrix,.FALSE.,err,error,*999)
     ENDIF
    
     EXITS("SolverMatrix_EquationsMatrixAdd")
@@ -662,23 +695,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceMatrixNumber,solverMatrixNumber
     INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
     REAL(DP), POINTER :: interfaceMatrixData(:)
-    TYPE(DistributedMatrixType), POINTER :: interfaceDistributedMatrix,solverDistributedMatrix
+    LOGICAL :: hasTranspose
+    TYPE(DistributedMatrixType), POINTER :: interfaceDistributedMatrix,solverDistributedMatrix,transposeDistributedMatrix
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
-    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceToSolverMap
-    TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverColsMap(:)
-    TYPE(MatrixRowColCouplingType), POINTER :: interfaceRowToSolverColsMap(:)
-    TYPE(MatrixRowColCouplingType), POINTER :: interfaceRowToSolverColsMap(:)
-    TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverRowsMap(:)
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap
+    TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverColsMap(:),interfaceColToSolverRowsMap(:), &
+      & interfaceRowToSolverColsMap(:),interfaceRowToSolverRowsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrix_InterfaceMatrixAdd",err,error,*999)
 
-    IF(ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
-    IF(ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
     IF(ABS(alpha(1))>ZERO_TOLERANCE) THEN
       NULLIFY(solverMatrices)
       CALL SolverMatrix_SolverMatricesGet(solverMatrix,solverMatrices,err,error,*999)
@@ -692,29 +726,42 @@ CONTAINS
       CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
       NULLIFY(interfaceDistributedMatrix)
       CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
-      NULLIFY(interfaceToSolverMap)
-      CALL SolverMapping_InterfaceToSolverMap(solverMapping,interfaceConditionIdx,interfaceMatrix%matrixNumber, &
-        & solverMatrix%matrixNumber,interfaceToSolverMap,err,error,*999)
+      NULLIFY(interfaceConditionToSolverMatricesMap)
+      CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+        & interfaceConditionToSolverMatricesMap,err,error,*999)
+      CALL InterfaceMatrix_MatrixNumberGet(interfaceMatrix,interfaceMatrixNumber,err,error,*999)
+      NULLIFY(interfaceMatrixToSolverMatricesMap)
+      CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMap(interfaceConditionToSolverMatricesMap, &
+        & interfaceMatrixNumber,interfaceMatrixToSolverMatricesMap,err,error,*999)
+      CALL SolverMatrix_MatrixNumberGet(solverMatrix,solverMatrixNumber,err,error,*999)
+      NULLIFY(interfaceMatricesToSolverMatrixMap)
+      CALL SolverMappingICTToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
+        & solverMatrixNumber,interfaceMatricesToSolverMatrixMap,err,error,*999)
       NULLIFY(interfaceRowToSolverRowsMap)
-      CALL SolverMapping_InterfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIdx,interfaceMatrix%matrixNumber, &
-        & interfaceRowToSolverRowsMap,err,error,*999)
+      CALL SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceMatrixToSolverMatricesMap,interfaceRowToSolverRowsMap, &
+        & err,error,*999)
       NULLIFY(interfaceColToSolverColsMap)
-      CALL SolverMapping_InterfaceColToSolverColsMapGet(solverMapping,interfaceConditionIdx,solverMatrix%matrixNumber, &
-        & interfaceColToSolverColsMap,err,error,*999)
-      CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,interfaceRowToSolverRowsMap, &
-        & interfaceColToSolverColsMap,alpha(1),interfaceDistributedMatrix,.FALSE.,err,error,*999)                           
-      IF(interfaceMatrix%hasTranspose) THEN
+      CALL SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap,interfaceColToSolverColsMap, &
+        & err,error,*999)
+      CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+        & interfaceRowToSolverRowsMap,interfaceColToSolverColsMap,alpha(1),interfaceDistributedMatrix,.FALSE.,err,error,*999)
+      CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+      IF(hasTranspose) THEN
         IF(ABS(alpha(2))>ZERO_TOLERANCE) THEN
-          NULLIFY(interfaceDistributedMatrix)
-          CALL InterfaceMatrix_TransposeDistributeMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
-          NULLIFY(interfaceColToSolverRowsMap)
-          CALL SolverMapping_InterfaceColToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
-            & err,error,*999)
+          NULLIFY(transposeDistributedMatrix)
+          CALL InterfaceMatrix_TransposeDistributeMatrixGet(interfaceMatrix,transposeDistributedMatrix,err,error,*999)
+          NULLIFY(interfaceMatrixToSolverMatrixMap)
+          CALL SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatrixToSolverMatricesMap,solverMatrixNumber, &
+            & interfaceMatrixToSolverMatrixMap,err,error,*999)
           NULLIFY(interfaceRowToSolverColsMap)
-          CALL SolverMappingInterfaceToSolverMap_InterfaceRowToSolverColsMap(interfaceToSolverMap,interfaceRowToSolverColsMap, &
+          CALL SolverMappingIMToSMMap_InterfaceRowToSolverColsMapGet(interfaceMatrixToSolverMatrixMap,interfaceRowToSolverColsMap, &
             & err,error,*999)
-          CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,interfaceColToSolverRowsMap,interfaceRowToSolverColsMap, &
-            & alpha(2),interfaceDistributedMatrix,.FALSE.,err,error,*999)
+          NULLIFY(interfaceColToSolverRowsMap)
+          CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+            & interfaceColToSolverRowsMap,err,error,*999)
+          CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+            & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,alpha(2),transposeDistributedMatrix,.FALSE., &
+            & err,error,*999)
         ENDIF
       ENDIF !Interface matrix transpose
     ENDIF
@@ -741,26 +788,43 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: jacobianMatrixNumber
     REAL(DP), POINTER :: jacobianMatrixData(:)
     TYPE(DistributedMatrixType), POINTER :: jacobianDistributedMatrix,solverDistributedMatrix
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(JacobianToSolverMapType), POINTER :: jacobianToSolverMap
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
+    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:),jacobianColToSolverColsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrix_JacobianMatrixAdd",err,error,*999)
 
-    IF(ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
-    IF(ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+    
     IF(ABS(alpha)>ZERO_TOLERANCE) THEN
       NULLIFY(solverMatrices)
       CALL SolverMatrix_SolverMatricesGet(solverMatrix,solverMatrices,err,error,*999)
       CALL SolverMatrices_AssertIsFinished(solverMatrices,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
+      NULLIFY(equationsSetToSolverMatricesMap)
+      CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+        & err,error,*999)
+      NULLIFY(equationsRowToSolverRowsMap)
+      CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
+        & err,error,*999)
+      CALL JacobianMatrix_MatrixNumberGet(jacobianMatrix,jacobianMatrixNumber,err,error,*999)
+      NULLIFY(jacobianMatrixToSolverMatrixMap)
+      CALL SolverMappingESToSMSMap_JacobianMatrixToSolverMatrixMapGet(equationsSetToSolverMatricesMap, &
+        & jacobianMatrixNumber,jacobianMatrixToSolverMatrixMap,err,error,*999)
+      NULLIFY(jacobianColToSolverColsMap)
+      CALL SolverMappingJMToSMMap_JacobianColToSolerColsMapGet(jacobianMatrixToSolverMatrixMap,jacobianColToSolverColsMap, &
+        & err,error,*999)
       NULLIFY(residualVector)
       CALL JacobianMatrix_ResidualVectorGet(jacobianMatrix,residualVector,err,error,*999)
       NULLIFY(nonlinearMatrices)
@@ -768,17 +832,12 @@ CONTAINS
       NULLIFY(vectorMatrices)
       CALL EquationsMatricesNonlinear_VectorMatricesGet(nonlinearMatrices,vectorMatrices,err,error,*999)
       CALL EquationsMatricesVector_AssertIsFinished(vectorMatrices,err,error,*999)
-      NULLIFY(jacobianToSolverMap)
-      CALL SolverMapping_JacobianToSolverMapGet(solverMapping,equationsSetIdx,jacobianMatrix%jacobianNumber, &
-        & solverMatrix%matrixNumber,jacobianToSolverMap,err,error,*999)
       NULLIFY(solverDistributedMatrix)
       CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
       NULLIFY(jacobianDistributedMatrix)
       CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,jacobianDistributedMatrix,err,error,*999)
-      CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,solverMapping% &
-        & equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap, &
-        & jacobianToSolverMap%jacobianColToSolverColsMap,alpha,jacobianDistributedMatrix, &
-        & .FALSE.,err,error,*999)
+      CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+        & equationsRowToSolverRowsMap,jacobianColToSolverColsMap,alpha,jacobianDistributedMatrix,.FALSE.,err,error,*999)
     ENDIF
     
     EXITS("SolverMatrix_JacobianMatrixAdd")
@@ -803,25 +862,36 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG)  :: dummyErr,equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx, &
-      & maximumColumnIndices,maximumColumnsPerRow,maximumTransposeColumnsPerRow, &
-      & numberOfColumns,solverColumnIdx,solverMatrixIdx,solverRowNumber
+    INTEGER(INTG)  :: dummyErr,equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceConditionMethod, &
+      & interfaceMatrixIdx,maximumColumnIndices,maximumColumnsPerRow,maximumTransposeColumnsPerRow,numberOfColumns, &
+      & numberOfDynamicMatrices,numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices, &
+      & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfMatrices,numberOfRows,solverColumnIdx,solverMatrixIdx, &
+      & solverRowNumber,storageType
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix,solverDistributedMatrix
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+    LOGICAL :: hasTranspose
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix,solverDistributedMatrix,transposeDistributedMatrix
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsToSolverMap
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
-    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices    
-    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceToSolverMap
-    TYPE(JacobianToSolverMapType), POINTER :: jacobianToSolverMap
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap
     TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsColToSolverColsMap(:),equationsRowToSolverRowsMap(:), &
+      & jacobianColToSolverColsMap(:),interfaceColToSolverColsMap(:),interfaceColToSolverRowsMap(:), &
+      & interfaceRowToSolverColsMap(:),interfaceRowToSolverRowsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -832,6 +902,7 @@ CONTAINS
     IF(ASSOCIATED(rowIndices)) CALL FlagError("Row indices is already associated.",err,error,*998)
     IF(ASSOCIATED(columnIndices)) CALL FlagError("Row indices is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+    
     NULLIFY(solverDistributedMatrix)
     CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
     CALL DistributedMatrix_AssertNotFinished(solverDistributedMatrix,err,error,*999)
@@ -839,7 +910,8 @@ CONTAINS
     CALL SolverMatix_SolverMatricesGet(solverMatrix,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
-    SELECT CASE(solverMatrix%storageType)
+    CALL SolverMatrix_StorageTypeGet(solverMatrix,storageType,err,error,*999)
+    SELECT CASE(storageType)
     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
       CALL FlagError("Can not calculate the structure for a block storage matrix.",err,error,*999)
     CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
@@ -849,10 +921,11 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-      solverMatrixIdx=solverMatrix%matrixNumber
+      CALL SolverMatrix_MatrixNumberGet(solverMatrix,solverMatrixIdx,err,error,*999)
       !Find the maximum number of column indices
       maximumColumnIndices=0
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
         !Loop over dynamic matrices mapped to the solver matrix
         CALL SolverMapping_SolverNumberOfDynamicMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
           & numberOfDynamicMatrices,err,error,*999)
@@ -885,17 +958,19 @@ CONTAINS
           CALL SolverMapping_SolverJacobianMatrixGet(solverMapping,solverMatrixIdx,equationsSetIdx,equationsMatrixIdx, &
             & jacobianMatrix,err,error,*999)
           NULLIFY(distributedMatrix)
-          CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,distributedMatrixGet,err,error,*999)
+          CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,distributedMatrix,err,error,*999)
           CALL DistributedMatrix_MaxColumnsPerRowGet(distributedMatrix,maximumColumnsPerRow,err,error,*999)
           maximumColumnIndices=maximumColumnIndices+maximumColumnsPerRow
         ENDDO !equationsMatrixIdx
       ENDDO !equationsSetIdx
       !Loop over any interface conditions
-      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+      CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
         NULLIFY(interfaceCondition)
         CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-        SELECT CASE(interfaceCondition%method)
-        CASE(interfaceCondition_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+        CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+        SELECT CASE(interfaceConditionMethod)
+        CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
           CALL SolverMapping_SolverNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
             & numberOfInterfaceMatrices,err,error,*999)
           DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
@@ -906,10 +981,11 @@ CONTAINS
             CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,distributedMatrix,err,error,*999)
             CALL DistributedMatrix_MaxColumnsPerRowGet(distributedMatrix,maximumColumnsPerRow,err,error,*999)
             maximumTransposeColumnsPerRow=0
-            IF(interfaceMatrix%hasTranspose) THEN
-              NULLIFY(distributedMatrix)
-              CALL InterfaceMatrix_TransposeDistributedMatrixGet(interfaceMatrix,distributedMatrix,err,error,*999)
-              CALL DistributedMatrix_MaxColumnsPerRowGet(distributedMatrix,maximumTransposeColumnsPerRow,err,error,*999)
+            CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+            IF(hasTranspose) THEN
+              NULLIFY(transposeDistributedMatrix)
+              CALL InterfaceMatrix_TransposeDistributedMatrixGet(interfaceMatrix,transposeDistributedMatrix,err,error,*999)
+              CALL DistributedMatrix_MaxColumnsPerRowGet(transposeDistributedMatrix,maximumTransposeColumnsPerRow,err,error,*999)
             ENDIF
             maximumColumnIndices=maximumColumnIndices+MAX(maximumColumnsPerRow,maximumTransposeColumnsPerRow)
           ENDDO !interfaceMatrixIdx
@@ -918,20 +994,21 @@ CONTAINS
         CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+          localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDDO !interfaceConditionIdx
       !Allocate lists
-      ALLOCATE(columnIndicesLists(solverMapping%numberOfRows),STAT=err)
+      CALL SolverMapping_NumberOfRowsGet(solverMapping,numberOfRows,err,error,*999)
+      ALLOCATE(columnIndicesLists(numberOfRows),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
       !Allocate row indices
-      ALLOCATE(rowIndices(solverMapping%numberOfRows+1),STAT=err)
+      ALLOCATE(rowIndices(numberOfRows+1),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
       rowIndices(1)=1
       !Set up the column indicies lists
-      DO solverRowNumber=1,solverMapping%numberOfRows
+      DO solverRowNumber=1,numberOfRows
         NULLIFY(columnIndicesLists(solverRowNumber)%ptr)
         CALL List_CreateStart(columnIndicesLists(solverRowNumber)%ptr,err,error,*999)
         CALL List_DataTypeSet(columnIndicesLists(solverRowNumber)%ptr,LIST_INTG_TYPE,err,error,*999)
@@ -939,99 +1016,121 @@ CONTAINS
         CALL List_CreateFinish(columnIndicesLists(solverRowNumber)%ptr,err,error,*999)
       ENDDO !solverRowNumber
       !Loop over the equations sets
-      DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+      CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+      DO equationsSetIdx=1,numberOfEquationsSets
+        NULLIFY(equationsSetToSolverMatricesMap)
+        CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+          & err,error,*999)
+        NULLIFY(equationsMatricesToSolverMatrixMap)
+        CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
+          & equationsMatricesToSolverMatrixMap,err,error,*999)
+        NULLIFY(equationsRowToSolverRowsMap)
+        CALL SolverMappingEMSToSMMap_EquationsRowToSolverRowsMapGet(equationsMatricesToSolverMatrixMap, &
+          & equationsRowToSolverRowsMap,err,error,*999)
         !Loop over the dynamic equations matrices mapped to the solver matrix and calculate the col indices by row.
-        CALL SolverMapping_SolverNumberOfDynamicMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
-          & numberOfDynamicMatrices,err,error,*999)
+        CALL SolverMappingEMSToSMMap_NumberOfDynamicMatricesGet(equationsMatricesToSolverMatrixMap,numberOfDynamicMatrices, &
+          & err,error,*999)
         DO equationsMatrixIdx=1,numberOfDynamicMatrices
+          NULLIFY(equationsMatrixToSolverMatrixMap)
+          CALL SolverMappingEMSToSMMap_DynamicEqnsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+            & equationsMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)          
           NULLIFY(equationsMatrix)
-          CALL SolverMapping_SolverDynamicMatrixGet(solverMapping,solverMatrixIdx,equationSetIdx,equationsMatrixIdx, &
-            & equationsMatrix,err,error,*999)
+          CALL SolverMappingEMToSMMap_EquationsMatrixGet(equationsMatrixToSolverMatrixMap,equationsMatrix,err,error,*999)
           NULLIFY(distributedMatrix)
           CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
-          NULLIFY(equationsToSolverMap)
-          !Note: pointers have been checked above
-          equationsToSolverMap=>solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%dynamicEquationsMatrixToSolverMatrixMaps( &
-            & equationsMatrixIdx)%ptr
-          equationsMatrix=>equationsToSolverMap%equationsMatrix
-          dynamicMatrices=>equationsMatrix%dynamicMatrices
-          vectorMatrices=>dynamicMatrices%vectorMatrices
-          distributedMatrix=>equationsMatrix%matrix
-          
-          CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,solverMapping% &
-            & equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap, &
-            & equationsToSolverMap%equationsColToSolverColsMap,columnIndicesLists,err,error,*999)
-          
+          NULLIFY(equationsColToSolverColsMap)
+          CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+            & equationsColToSolverColsMap,err,error,*999)
+          CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,equationsRowToSolverRowsMap, &
+            & equationsColToSolverColsMap,columnIndicesLists,err,error,*999)          
         ENDDO !equationsMatrixIdx
         !Loop over the linear equations matrices mapped to the solver matrix and calculate the col indices by row.
-        DO equationsMatrixIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-          & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfLinearEquationsMatrices
-          !Note: pointers have been checked above
-          equationsToSolverMap=>solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%linearEquationsMatrixToSolverMatrixMaps( &
-            & equationsMatrixIdx)%ptr
-          equationsMatrix=>equationsToSolverMap%equationsMatrix
-          linearMatrices=>equationsMatrix%linearMatrices
-          vectorMatrices=>linearMatrices%vectorMatrices
-          distributedMatrix=>equationsMatrix%matrix
-          
-          CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,solverMapping% &
-            & equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap, &
-            & equationsToSolverMap%equationsColToSolverColsMap,columnIndicesLists,err,error,*999)
-          
+        CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap,numberOfLinearMatrices, &
+          & err,error,*999)
+        DO equationsMatrixIdx=1,numberOfLinearMatrices
+          NULLIFY(equationsMatrixToSolverMatrixMap)
+          CALL SolverMappingEMSToSMMap_LinearEqnsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+            & equationsMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)          
+          NULLIFY(equationsMatrix)
+          CALL SolverMappingEMToSMMap_EquationsMatrixGet(equationsMatrixToSolverMatrixMap,equationsMatrix,err,error,*999)
+          NULLIFY(distributedMatrix)
+          CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,distributedMatrix,err,error,*999)
+          NULLIFY(equationsColToSolverColsMap)
+          CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+            & equationsColToSolverColsMap,err,error,*999)
+          CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,equationsRowToSolverRowsMap, &
+            & equationsColToSolverColsMap,columnIndicesLists,err,error,*999)          
         ENDDO !equationsMatrixIdx
         !Now add any columns from the Jacobians
-        DO equationsMatrixIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-          & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfEquationsJacobians
-          jacobianToSolverMap=>solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-            & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%JACOBIAN_TO_SOLVER_MATRIX_MAPS( &
-            & equationsMatrixIdx)%ptr
-          IF(ASSOCIATED(jacobianToSolverMap)) THEN
-            !Note: pointers have been checked above
-            jacobianMatrix=>jacobianToSolverMap%jacobianMatrix
-            nonlinearMatrices=>jacobianMatrix%nonlinearMatrices
-            vectorMatrices=>nonlinearMatrices%vectorMatrices
-            distributedMatrix=>jacobianMatrix%JACOBIAN
-            
-            CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,solverMapping% &
-              & equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap, &
-              & jacobianToSolverMap%jacobianColToSolverColsMap,columnIndicesLists,err,error,*999)
-            
-          ENDIF
+        CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap,numberOfJacobianMatrices, &
+          & err,error,*999)        
+        DO equationsMatrixIdx=1,numberOfJacobianMatrices
+          NULLIFY(jacobianMatrixToSolverMatrixMap)
+          CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+            & equationsMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)          
+          NULLIFY(jacobianMatrix)
+          CALL SolverMappingJMToSMMap_EquationsMatrixGet(jacobianMatrixToSolverMatrixMap,jacobianMatrix,err,error,*999)
+          NULLIFY(distributedMatrix)
+          CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,distributedMatrix,err,error,*999)
+          NULLIFY(jacobianColToSolverColsMap)
+          CALL SolverMappingJMToSMMap_JacobianColToSolverColMapGet(jacobianMatrixToSolverMatrixMap,jacobianColToSolverColsMap, &
+            & err,error,*999)            
+          CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,equationsRowToSolverRowsMap, &
+            & jacobianColToSolverColsMap,columnIndicesLists,err,error,*999)
         ENDDO !equationsMatrixIdx
         !Now add in any interface matrices columns
-        DO interfaceConditionIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-          & numberOfInterfaceConditions
+        CALL SolverMappingESToSMSMap_NumberOfInterfaceConditionsGet(equationsSettoSolverMatricesMap,numberOfInterfaceConditions, &
+          & err,error,*999)
+        DO interfaceConditionIdx=1,numberOfInterfaceConditions
         ENDDO !interfaceConditionIdx
       ENDDO !equationsSetIdx
-      !Loop over any equations sets
-      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-        INTERFACE_CONDITION=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
-        SELECT CASE(interfaceCondition%METHOD)
+      !Loop over any interface conditions
+      CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
+        NULLIFY(interfaceCondition)
+        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+        CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+        SELECT CASE(interfaceConditionMethod)
         CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-          DO interfaceMatrixIdx=1,solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-            & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%numberOfInterfaceMatrices
-            interfaceToSolverMap=>solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)% &
-              & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%interfaceMatrixToSolverMatrixMaps( &
-              & interfaceMatrixIdx)%ptr
-            interfaceMatrix=>interfaceToSolverMap%interfaceMatrix
-            interfaceMatrices=>interfaceMatrix%interfaceMatrices
-            distributedMatrix=>interfaceMatrix%matrix
-            
-            CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,solverMapping% &
-              & interfaceConditionToSolverMatricesMap(interfaceConditionIdx)%interfaceMatrixToSolverMatricesMaps( &
-              & interfaceMatrixIdx)%interfaceRowToSolverRowsMap,solverMapping%interfaceConditionToSolverMatricesMap( &
-              & interfaceConditionIdx)%interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)% &
-              & interfaceColToSolverColsMap,columnIndicesLists,err,error,*999)
-            
-            IF(interfaceMatrix%hasTranspose) THEN
-              distributedMatrix=>interfaceMatrix%matrixTranspose
-              
-              CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,solverMapping% &
-                & interfaceConditionToSolverMatricesMap(interfaceConditionIdx)%interfaceColToSolverRowsMap, &
-                & interfaceToSolverMap%interfaceRowToSolverColsMap,columnIndicesLists,err,error,*999)
-              
+          NULLIFY(interfaceConditionToSolverMatricesMap)
+          CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+            & interfaceConditionToSolverMatricesMap,err,error,*999)
+          NULLIFY(interfaceColToSolverRowsMap)
+          CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+            & interfaceColToSolverRowsMap,err,error,*999)
+          NULLIFY(interfaceMatricesToSolverMatrixMap)
+          CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
+            & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
+          NULLIFY(interfaceColToSolverColsMap)
+          CALL SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap, &
+            & interfaceColToSolverColsMap,err,error,*999)
+          CALL SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet(interfaceMatricesToSolverMatrixMap, &
+            & numberOfInterfaceMatrices,err,error,*999)
+          DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
+            NULLIFY(interfaceMatrixToSolverMatricesMap)
+            CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMapGet(interfaceConditionToSolverMatricesMap, &
+              & interfaceMatrixIdx,interfaceMatrixToSolverMatricesMap,err,error,*999)
+            NULLIFY(interfaceRowToSolverRowsMap)
+            CALL SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceMatrixToSolverMatricesMap, &
+              & interfaceRowToSolverRowsMap,err,error,*999)            
+            NULLIFY(interfaceMatrixToSolverMatrixMap)
+            CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
+              & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*999)
+            NULLIFY(interfaceMatrix)
+            CALL SolverMappingIMToSMMap_InterfaceMatrixGet(interfaceMatrixToSolverMatrixMap,interfaceMatrix,err,error,*999)
+            NULLIFY(distributedMatrix)
+            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,distributedMatrix,err,error,*999)            
+            CALL DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,.FALSE.,interfaceRowToSolverRowsMap, &
+              &  interfaceColToSolverColsMap,columnIndicesLists,err,error,*999)
+            CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+            IF(hasTranspose) THEN
+              NULLIFY(transposeDistributedMatrix)
+              CALL Interface_TransposeDistributedMatrixGet(interfaceMatrix,transposeDistributedMatrix,err,error,*999)
+              NULLIFY(interfaceRowToSolverColsMap)
+              CALL SolverMappingIMToSMMap_InterfaceRowToSolverColsMapGet(interfaceMatrixToSolverMatrixMap, &
+                & interfaceRowToSolverColsMap,err,error,*999)
+              CALL DistributedMatrix_MatrixStructureCoupleCalculate(transposeDistributedMatrix,.FALSE., &
+                & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,columnIndicesLists,err,error,*999)              
             ENDIF
           ENDDO !interfaceMatrixIdx
         CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
@@ -1039,14 +1138,13 @@ CONTAINS
         CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The interface condition method of "// &
-            & TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+          localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDDO !interfaceConditionIdx
       !Loop over the rows to calculate the number of non-zeros and setup the row indicces
-      DO solverRowNumber=1,solverMapping%numberOfRows
+      DO solverRowNumber=1,numberOfRows
         CALL List_RemoveDuplicates(columnIndicesLists(solverRowNumber)%ptr,err,error,*999)
         CALL List_NumberOfItemsGet(columnIndicesLists(solverRowNumber)%ptr,numberOfColumns,err,error,*999)
         numberOfNonZeros=numberOfNonZeros+numberOfColumns
@@ -1055,9 +1153,8 @@ CONTAINS
       !Allocate and setup the column locations
       ALLOCATE(columnIndices(numberOfNonZeros),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
-      DO solverRowNumber=1,solverMapping%numberOfRows
-        CALL List_DetachAndDestroy(columnIndicesLists(solverRowNumber)%ptr,numberOfColumns,columns, &
-          & err,error,*999)
+      DO solverRowNumber=1,numberOfRows
+        CALL List_DetachAndDestroy(columnIndicesLists(solverRowNumber)%ptr,numberOfColumns,columns,err,error,*999)
         DO solverColumnIdx=1,numberOfColumns
           columnIndices(rowIndices(solverRowNumber)+solverColumnIdx-1)=columns(solverColumnIdx)
         ENDDO !solverColumnIdx
@@ -1073,22 +1170,21 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
-    IF(DIAGNOSTICS1) THEN
+    IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix structure:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix number : ",solverMatrix%matrixNumber, &
-        & err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",solverMatrices%numberOfRows, &
-        & err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",solverMatrix%numberOfColumns, &
-        & err,error,*999)
+      CALL SolverMatrix_MatrixNumberGet(solverMatrix,solverMatrixIdx,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix number : ",solverMatrixIdx,err,error,*999)
+      CALL SolverMatrices_NumberOfRowsGet(solverMatrices,numberOfRows,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",numberOfRows,err,error,*999)
+      CALL SolverMatrix_NumberOfColumnsGet(solverMatrix,numberOfColumns,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",numberOfColumns,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",numberOfNonZeros,err,error,*999)
-      IF(solverMatrices%numberOfRows*solverMatrix%numberOfColumns/=0) THEN
-        sparsity=REAL(numberOfNonZeros,DP)/REAL(solverMatrices%numberOfRows* &
-          & solverMatrix%numberOfColumns,DP)*100.0_DP
+      IF(numberOfRows*numberOfColumns/=0) THEN
+        sparsity=REAL(numberOfNonZeros,DP)/REAL(numberOfRows*numberOfColumns,DP)*100.0_DP
         CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",sparsity,"F6.2", err,error,*999)
       ENDIF
-      IF(DIAGNOSTICS2) THEN
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,solverMatrices%numberOfRows+1,8,8,rowIndices, &
+      IF(diagnostics2) THEN
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfRows+1,8,8,rowIndices, &
           & '("  Row indices    :",8(X,I13))','(18X,8(X,I13))',err,error,*999)
         CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices, &
           & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
@@ -1101,7 +1197,7 @@ CONTAINS
     IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
     IF(ALLOCATED(columns)) DEALLOCATE(columns)
     IF(ALLOCATED(columnIndicesLists)) THEN
-      DO solverRowNumber=1,solverMapping%numberOfRows
+      DO solverRowNumber=1,SIZE(columnIndicesLists,1)
         IF(ASSOCIATED(columnIndicesLists(solverRowNumber)%ptr)) &
           & CALL List_Destroy(columnIndicesLists(solverRowNumber)%ptr,dummyErr,dummyError,*998)
       ENDDO !solverRowNumber
@@ -1117,7 +1213,7 @@ CONTAINS
   !
 
   !>Finalises a solver matrix and deallocates all memory
-  SUBROUTINE SOLVER_MATRIX_FINALISE(solverMatrix,err,error,*)
+  SUBROUTINE SolverMatrix_Finalise(solverMatrix,err,error,*)
 
     !Argument variables
     TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to finalise
@@ -1125,7 +1221,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("SOLVER_MATRIX_FINALISE",err,error,*999)
+    ENTERS("SolverMatrix_Finalise",err,error,*999)
 
     IF(ASSOCIATED(solverMatrix)) THEN
       IF(ASSOCIATED(solverMatrix%matrix)) CALL DistributedMatrix_Destroy(solverMatrix%matrix,err,error,*999)
@@ -1133,100 +1229,99 @@ CONTAINS
       DEALLOCATE(solverMatrix)
     ENDIF
     
-    EXITS("SOLVER_MATRIX_FINALISE")
+    EXITS("SolverMatrix_Finalise")
     RETURN
-999 ERRORSEXITS("SOLVER_MATRIX_FINALISE",err,error)    
+999 ERRORSEXITS("SolverMatrix_Finalise",err,error)    
     RETURN 1
    
-  END SUBROUTINE SOLVER_MATRIX_FINALISE
+  END SUBROUTINE SolverMatrix_Finalise
         
   !
   !================================================================================================================================
   !
 
   !>Forms a solver matrix by initialising the structure of the matrix to zero.
-  SUBROUTINE SOLVER_MATRIX_FORM(solverMatrix,err,error,*)
+  SUBROUTINE SolverMatrix_Form(solverMatrix,err,error,*)
 
     !Argument variables
     TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     
-    ENTERS("SOLVER_MATRIX_FORM",err,error,*999)
+    ENTERS("SolverMatrix_Form",err,error,*999)
 
-    IF(ASSOCIATED(solverMatrix)) THEN
-      CALL DistributedMatrix_Form(solverMatrix%matrix,err,error,*999)
-    ELSE
-      CALL FlagError("Solver matrix is not associated.",err,error,*999)
-    ENDIF
-    
-    EXITS("SOLVER_MATRIX_FORM")
+    NULLIFY(distributedMatrix)
+    CALL SolverMatrix_DistributedMatrixGet(solverMatrix,distributedMatrix,err,error,*999)
+    CALL DistributedMatrix_Form(distributedMatrix,err,error,*999)
+   
+    EXITS("SolverMatrix_Form")
     RETURN
-999 ERRORSEXITS("SOLVER_MATRIX_FORM",err,error)    
+999 ERRORSEXITS("SolverMatrix_Form",err,error)    
     RETURN 1
    
-  END SUBROUTINE SOLVER_MATRIX_FORM
+  END SUBROUTINE SolverMatrix_Form
         
     !
   !================================================================================================================================
   !
 
   !>Initialises a solver matrix
-  SUBROUTINE SOLVER_MATRIX_INITIALISE(solverMatrices,MATRIX_NUMBER,err,error,*)
+  SUBROUTINE SolverMatrix_Initialise(solverMatrices,matrixNumber,err,error,*)
 
     !Argument variables
     TYPE(SolverMatricesType), POINTER :: solverMatrices !<A pointer to the solver matrices to initialise
-    INTEGER(INTG), INTENT(IN) :: MATRIX_NUMBER !<The matrix number in the solver matrices to initialise
+    INTEGER(INTG), INTENT(IN) :: matrixNumber !<The matrix number in the solver matrices to initialise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,numberOfColumns,numberOfMatrices
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: dummyError,localError
     
-    ENTERS("SOLVER_MATRIX_INITIALISE",err,error,*998)
+    ENTERS("SolverMatrix_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(solverMatrices)) THEN
-      IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=solverMatrices%numberOfMatrices) THEN
-        solverMapping=>solverMatrices%solverMapping
-        IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-          IF(ASSOCIATED(solverMatrices%matrices(MATRIX_NUMBER)%ptr)) THEN
-            CALL FlagError("Solver matrix is already associated.",err,error,*998)
-          ELSE
-            ALLOCATE(solverMatrices%matrices(MATRIX_NUMBER)%ptr,STAT=err)
-            IF(err/=0) CALL FlagError("Could not allocate solver matrix.",err,error,*999)
-            solverMatrix=>solverMatrices%matrices(MATRIX_NUMBER)%ptr
-            solverMatrix%matrixNumber=MATRIX_NUMBER
-            solverMatrix%solverMatrices=>solverMatrices
-            solverMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
-            solverMatrix%updateMatrix=.TRUE.
-            solverMatrix%numberOfColumns=SOLVER_MAPPING%solverColToEquationsColsMap(MATRIX_NUMBER)%numberOfColumns
-            SOLVER_MAPPING%solverColToEquationsColsMap(MATRIX_NUMBER)%solverMatrix=>solverMatrix
-            NULLIFY(solverMatrix%solverVector)
-            NULLIFY(solverMatrix%matrix)
-          ENDIF
-        ELSE
-          CALL FlagError("Solver mapping is not associated.",err,error,*998)
-        ENDIF
-      ELSE
-        localError="The specified matrix number of "//TRIM(NumberToVString(MATRIX_NUMBER,"*",err,error))// &
-          & " is invalid. The number must be > 0 and <= "// &
-          & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver matrices is not associated.",err,error,*998)
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
+    IF(matrixNumber<1.OR.matrixNumber>numberOfMatrices) THEN
+      localError="The specified matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The matrix number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(numberOfMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+    IF(ASSOCIATED(solverMatrices%matrices(matrixNumber)%ptr)) THEN
+      localError="The solver matrix for matrix index "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is already associated."
+      CALL FlagError(localError,err,error,*998)
     ENDIF
     
-    EXITS("SOLVER_MATRIX_INITIALISE")
+    NULLIFY(solverMapping)
+    CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
+    NULLIFY(solverMatrixToEquationsMap)
+    CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,matrixNumber,solverMatrixToEquationsMap,err,error,*999)
+    CALL SolverMappingSMToEQSMap_NumberOfColumnsGet(solverMatrixToEquationsMap,numberOfColumns,err,error,*999)
+    
+    ALLOCATE(solverMatrices%matrices(matrixNumber)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate solver matrix.",err,error,*999)
+    solverMatrix=>solverMatrices%matrices(matrixNumber)%ptr
+    solverMatrix%matrixNumber=matrixNumber
+    solverMatrix%solverMatrices=>solverMatrices
+    solverMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    solverMatrix%updateMatrix=.TRUE.
+    solverMatrix%numberOfColumns=numberOfColumns
+    solverMatrixToEquationsMap%solverMatrix=>solverMatrix
+    NULLIFY(solverMatrix%solverVector)
+    NULLIFY(solverMatrix%matrix)
+    
+    EXITS("SolverMatrix_Initialise")
     RETURN
-999 CALL SOLVER_MATRIX_FINALISE(solverMatrices%matrices(MATRIX_NUMBER)%ptr,dummyErr,dummyError,*998)
-998 ERRORSEXITS("SOLVER_MATRIX_INITIALISE",err,error)    
+999 CALL SolverMatrix_Finalise(solverMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
+998 ERRORSEXITS("SolverMatrix_Initialise",err,error)    
     RETURN 1
    
-  END SUBROUTINE SOLVER_MATRIX_INITIALISE
+  END SUBROUTINE SolverMatrix_Initialise
         
   !
   !================================================================================================================================

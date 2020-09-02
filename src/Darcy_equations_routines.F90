@@ -1597,7 +1597,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(MeshElementType), POINTER :: meshElement
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(FieldType), POINTER :: sourceField
@@ -4145,7 +4145,7 @@ CONTAINS
     REAL(DP), POINTER :: initialValues(:)
     REAL(DP), POINTER :: dummyValues1(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -5902,7 +5902,7 @@ CONTAINS
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
     !TYPE(DomainTopologyType), POINTER :: DomainTopology
     TYPE(VARYING_STRING) :: localError
-    !TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    !TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     !TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     !REAL(DP), POINTER :: BOUNDARY_VALUES(:)
 

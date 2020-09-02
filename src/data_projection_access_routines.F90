@@ -677,12 +677,12 @@ CONTAINS
     
     projectionDistance=dataProjection%dataProjectionResults(dataPointGlobalNumber)%distance
 
-    EXITS("DataProjection_ResultDistanceUserGet")
+    EXITS("DataProjection_ResultDistanceGlobalGet")
     RETURN
-999 ERRORSEXITS("DataProjection_ResultDistanceUserGet",err,error)
+999 ERRORSEXITS("DataProjection_ResultDistanceGlobalGet",err,error)
     RETURN 1
 
-  END SUBROUTINE DataProjection_ResultDistanceUserGet
+  END SUBROUTINE DataProjection_ResultDistanceGlobalGet
 
   !
   !================================================================================================================================
@@ -1048,7 +1048,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi)) THEN
       localError="The element xi array is not allocated for global data point number "// &
-        & TRIM(NumberToVString(globalDataPointNumber,"*",err,error))//" for data projection number "// &
+        & TRIM(NumberToVString(dataPointGlobalNumber,"*",err,error))//" for data projection number "// &
         & TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1075,7 +1075,7 @@ CONTAINS
   !
 
   !>Gets the projection exit tag for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultExitTagGlobalGet(dataProjection,dataPointGobalNumber,projectionExitTag,err,error,*)
+  SUBROUTINE DataProjection_ResultExitTagGlobalGet(dataProjection,dataPointGlobalNumber,projectionExitTag,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
@@ -1377,7 +1377,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi)) THEN
       localError="The xi array is not allocated for global data point number "// &
-        & TRIM(NumberToVString(globalDataPointNumber,"*",err,error))//" for data projection number "// &
+        & TRIM(NumberToVString(dataPointGlobalNumber,"*",err,error))//" for data projection number "// &
         & TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1396,7 +1396,7 @@ CONTAINS
 999 ERRORSEXITS("DataProjection_ResultXiGlobalGet",err,error)    
     RETURN 1
 
-  END SUBROUTINE DataProjection_ResultXiUserGet
+  END SUBROUTINE DataProjection_ResultXiGlobalGet
 
   !
   !================================================================================================================================

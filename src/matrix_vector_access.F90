@@ -117,38 +117,12 @@ MODULE MatrixVectorAccessRoutines
 
   !Interfaces
   
-  INTERFACE MATRIX_DATA_GET
-    MODULE PROCEDURE Matrix_DataGetIntg
-    MODULE PROCEDURE Matrix_DataGetSP
-    MODULE PROCEDURE Matrix_DataGetDP
-    MODULE PROCEDURE Matrix_DataGetL
-  END INTERFACE MATRIX_DATA_GET
-
   INTERFACE Matrix_DataGet
     MODULE PROCEDURE Matrix_DataGetIntg
     MODULE PROCEDURE Matrix_DataGetSP
     MODULE PROCEDURE Matrix_DataGetDP
     MODULE PROCEDURE Matrix_DataGetL
   END INTERFACE Matrix_DataGet
-
-  INTERFACE MATRIX_MAX_COLUMNS_PER_ROW_GET
-    MODULE PROCEDURE Matrix_MaxColumnsPerRowGet
-  END INTERFACE MATRIX_MAX_COLUMNS_PER_ROW_GET
-
-  INTERFACE MATRIX_NUMBER_NON_ZEROS_GET
-    MODULE PROCEDURE Matrix_NumberOfNonZerosGet
-  END INTERFACE MATRIX_NUMBER_NON_ZEROS_GET
-
-  INTERFACE MATRIX_STORAGE_TYPE_GET
-    MODULE PROCEDURE Matrix_StorageTypeGet
-  END INTERFACE MATRIX_STORAGE_TYPE_GET
-
-  INTERFACE VECTOR_DATA_GET
-    MODULE PROCEDURE Vector_DataGetIntg
-    MODULE PROCEDURE Vector_DataGetSP
-    MODULE PROCEDURE Vector_DataGetDP
-    MODULE PROCEDURE Vector_DataGetL
-  END INTERFACE VECTOR_DATA_GET
 
   INTERFACE Vector_DataGet
     MODULE PROCEDURE Vector_DataGetIntg
@@ -176,13 +150,9 @@ MODULE MatrixVectorAccessRoutines
 
   PUBLIC Matrix_DataGet
 
-  PUBLIC MATRIX_DATA_GET
-  
   PUBLIC Matrix_DataTypeGet
 
   PUBLIC Matrix_MaxColumnsPerRowGet
-
-  PUBLIC MATRIX_MAX_COLUMNS_PER_ROW_GET
 
   PUBLIC Matrix_MaxNumberOfRowsGet
 
@@ -192,21 +162,21 @@ MODULE MatrixVectorAccessRoutines
 
   PUBLIC Matrix_NumberOfNonZerosGet
 
-  PUBLIC MATRIX_NUMBER_NON_ZEROS_GET
-  
   PUBLIC Matrix_NumberOfRowsGet
 
   PUBLIC Matrix_StorageLocationsGet
 
   PUBLIC Matrix_StorageTransposeLocationsGet
 
-  PUBLIC MATRIX_STORAGE_TYPE_GET
-
   PUBLIC Matrix_StorageTypeGet
 
   PUBLIC Matrix_SymmetryTypeGet
 
   PUBLIC Matrix_TransposeTypeGet
+
+  PUBLIC MatrixRowColCoupling_RowColCouplingInfoGet
+
+  PUBLIC MatrixRowColCoupling_NumberOfRowColsGet
   
   PUBLIC Vector_AssertIsFinished,Vector_AssertNotFinished
  
@@ -214,8 +184,6 @@ MODULE MatrixVectorAccessRoutines
   
   PUBLIC Vector_DataGet
 
-  PUBLIC VECTOR_DATA_GET
-  
   PUBLIC Vector_DataTypeGet
  
 CONTAINS
@@ -958,6 +926,104 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Matrix_TransposeTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the row/col coupling information in the coupling for a row/column in a matrix row/column coupling.
+  SUBROUTINE MatrixRowColCoupling_RowColCouplingInfoGet(matrixRowColCoupling,rowColumnNumber,coupledRowColIdx, &
+    & coupledRowColNumber,couplingCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixRowColCouplingType), POINTER :: matrixRowColCoupling(:) !<A pointer to the matrix row/column coupling
+    INTEGER(INTG), INTENT(IN) :: rowColumnNumber !<The row/column number to get the coupling for
+    INTEGER(INTG), INTENT(IN) :: coupledRowColIdx !<The index of the coupled row/col to get the coupling information for
+    INTEGER(INTG), INTENT(OUT) :: coupledRowColNumber !<On return, the row/col number the specified row/column is coupled to
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On return, the row/col coupling coefficient
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("MatrixRowColCoupling_RowColCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(matrixRowColCoupling)) CALL FlagError("The matrix row column coupling is not associated.",err,error,*999)
+    IF(rowColumnNumber<1.OR.rowColumnNumber>SIZE(matrixRowColCoupling,1)) THEN
+      localError="The specified row/column number of "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+        & " is invalid. The row/column number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(matrixRowColCoupling,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(coupledRowColIdx<1.OR.coupledRowColIdx>matrixRowColCoupling(rowColumnNumber)%numberOfRowCols) THEN
+      localError="The specified row/column index of "//TRIM(NumberToVString(coupledRowColIdx,"*",err,error))// &
+        & " is invalid. The row/column index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(matrixRowColCoupling(rowColumnNumber)%numberOfRowCols,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(matrixRowColCoupling(rowColumnNumber)%rowCols)) THEN
+      localError="The row columns array is not allocated for row/column number "// &
+        & TRIM(NumberToVString(rowColumnNumber,"*",err,error))//" of the matrix row column coupling."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(matrixRowColCoupling(rowColumnNumber)%couplingCoefficients)) THEN
+      localError="The coupling coefficients array is not allocated for row/column number "// &
+        & TRIM(NumberToVString(rowColumnNumber,"*",err,error))//" of the matrix row column coupling."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    coupledRowColNumber=matrixRowColCoupling(rowColumnNumber)%rowCols(coupledRowColIdx)
+    couplingCoefficient=matrixRowColCoupling(rowColumnNumber)%couplingCoefficients(coupledRowColIdx)
+
+    EXITS("MatrixRowColCoupling_RowColCouplingInfoGet")
+    RETURN
+999 ERRORSEXITS("MatrixRowColCoupling_RowColCouplingInfoGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MatrixRowColCoupling_RowColCouplingInfoGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of row/cols in the coupling for a row/column in a matrix row/column coupling.
+  SUBROUTINE MatrixRowColCoupling_NumberOfRowColsGet(matrixRowColCoupling,rowColumnNumber,numberOfRowCols,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixRowColCouplingType), POINTER :: matrixRowColCoupling(:) !<A pointer to the matrix row/column coupling
+    INTEGER(INTG), INTENT(IN) :: rowColumnNumber !<The row/column number to get the coupling for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRowCols !<On return, the number of row/cols the specified row/column is coupled to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("MatrixRowColCoupling_NumberOfRowColsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(matrixRowColCoupling)) CALL FlagError("The matrix row column coupling is not associated.",err,error,*999)
+    IF(rowColumnNumber<1.OR.rowColumnNumber>SIZE(matrixRowColCoupling,1)) THEN
+      localError="The specified row/column number of "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+        & " is invalid. The row/column number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(matrixRowColCoupling,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    numberOfRowCols=matrixRowColCoupling(rowColumnNumber)%numberOfRowCols
+
+    EXITS("MatrixRowColCoupling_NumberOfRowColsGet")
+    RETURN
+999 ERRORSEXITS("MatrixRowColCoupling_NumberOfRowColsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MatrixRowColCoupling_NumberOfRowColsGet
 
   !
   !=================================================================================================================================

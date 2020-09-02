@@ -848,6 +848,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is not associated.",err,error,*999)
+#endif    
     
     region=>generatedMesh%region
     IF(.NOT.ASSOCIATED(region)) THEN

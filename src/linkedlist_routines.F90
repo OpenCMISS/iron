@@ -4,51 +4,52 @@ MODULE LinkedList_routines
 #include "macros.h"  
 
   USE BaseRoutines
-  USE CONSTANTS
-  USE KINDS
+  USE Constants
+  USE Kinds
   USE ISO_VARYING_STRING
-  implicit none
+
+  IMPLICIT NONE
   
-  private  ! by default
+  PRIVATE  ! by default
 
   ! types
-  type LinkedListItem
-    integer(intg) :: data
-    type(LinkedListItem),pointer :: next => NULL()
-  end type
+  TYPE LinkedListItem
+    INTEGER(INTG) :: data
+    TYPE(LinkedListItem),pointer :: next => NULL()
+  END TYPE
 
-  type LinkedList
-    type(LinkedListItem),pointer :: root => NULL()
-    type(LinkedListItem),pointer :: last => NULL()
-  end type
+  TYPE LinkedList
+    TYPE(LinkedListItem),pointer :: root => NULL()
+    TYPE(LinkedListItem),pointer :: last => NULL()
+  END TYPE
 
-  interface LinkedList_Add
-    module procedure LinkedList_Add_Data
-    module procedure LinkedList_Add_List
-  end interface
+  INTERFACE LinkedList_Add
+    MODULE PROCEDURE LinkedList_Add_Data
+    MODULE PROCEDURE LinkedList_Add_List
+  END INTERFACE
 
   ! public types
-  public :: LinkedListItem,LinkedList
+  PUBLIC :: LinkedListItem,LinkedList
 
   ! public subs
-  public :: LinkedList_Add,LinkedList_Destroy,LinkedList_Remove_First,LinkedList_Remove_Last
-  public :: LinkedList_is_Empty,LinkedList_to_Array
+  PUBLIC :: LinkedList_Add,LinkedList_Destroy,LinkedList_Remove_First,LinkedList_Remove_Last
+  PUBLIC :: LinkedList_is_Empty,LinkedList_to_Array
 
 contains
 
 ! -------------------------------------------------------------------
 
   !> initialises or adds a piece of data to list
-  SUBROUTINE LinkedList_Add_Data(list,data,ERR,ERROR,*)
+  SUBROUTINE LinkedList_Add_Data(list,data,err,error,*)
 
     TYPE(LinkedList),INTENT(INOUT) :: list
     INTEGER(INTG),INTENT(IN) :: data
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     ! local variables
-    TYPE(LinkedListItem),pointer :: current
+    TYPE(LinkedListItem), POINTER :: current
 
-    ENTERS("LinkedList_Add_Data",ERR,ERROR,*999)
+    ENTERS("LinkedList_Add_Data",err,error,*999)
 
     if (associated(list%root)) then
       ! add to the tail end (for now)
@@ -64,28 +65,30 @@ contains
 
     EXITS("LinkedList_Add_Data")
     RETURN
-999 ERRORSEXITS("LinkedList_Add_Data",ERR,ERROR)
+999 ERRORSEXITS("LinkedList_Add_Data",err,error)
     RETURN 1
 
-  End SUBROUTINE LinkedList_Add_Data
+  END SUBROUTINE LinkedList_Add_Data
 
 
 ! -------------------------------------------------------------------
 
   !> adds all data from one list to another
-  Subroutine LinkedList_Add_List(list,addlist,ERR,ERROR,*)
-    type(LinkedList),intent(inout) :: list
-    type(LinkedList),intent(in) :: addlist
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+  SUBROUTINE LinkedList_Add_List(list,addlist,err,error,*)
+    TYPE(LinkedList),intent(inout) :: list
+    TYPE(LinkedList),intent(in) :: addlist
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     ! local variables
-    type(LinkedListItem),pointer :: current
+    TYPE(LinkedListItem), POINTER :: current
 
+    ENTERS("LinkedList_Add_List",err,error,*999)
+    
     if (LinkedList_is_Empty(addlist)) return
 
     current => addlist%root
     do
-      call LinkedList_Add_Data(list,current%data,ERR,ERROR,*999)
+      call LinkedList_Add_Data(list,current%data,err,error,*999)
       if (associated(current%next)) then
         current => current%next
       else
@@ -95,21 +98,23 @@ contains
 
     EXITS("LinkedList_Add_List")
     RETURN
-999 ERRORSEXITS("LinkedList_Add_List",ERR,ERROR)
+999 ERRORSEXITS("LinkedList_Add_List",err,error)
     RETURN 1
 
-  End Subroutine LinkedList_Add_List
+  END SUBROUTINE LinkedList_Add_List
 
 ! -------------------------------------------------------------------
 
   !> removes the first item from list and returns its value in data
-  Subroutine LinkedList_Remove_First(list,data,ERR,ERROR,*)
-    type(LinkedList),intent(inout) :: list
-    integer(intg),intent(out) :: data
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+  SUBROUTINE LinkedList_Remove_First(list,data,err,error,*)
+    TYPE(LinkedList),intent(inout) :: list
+    INTEGER(INTG),intent(out) :: data
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     ! local variables
-    type(LinkedListItem),pointer :: next
+    TYPE(LinkedListItem), POINTER :: next
+    
+    ENTERS("LinkedList_Remove_First",err,error,*999)
     
     if (associated(list%root)) then
       data = list%root%data
@@ -122,24 +127,31 @@ contains
         list%last => NULL()
       endif
     else
-      write(*,*) ">>> warning: linked list is empty and cannot remove first item"
+      CALL FlagWarning("Linked list is empty and cannot remove first item.",err,error,*999)
     endif
 
-  End Subroutine LinkedList_Remove_First
+    EXITS("LinkedList_Remove_First")
+    RETURN
+999 ERRORSEXITS("LinkedList_Remove_First",err,error)
+    RETURN 1
+    
+  END SUBROUTINE LinkedList_Remove_First
 
 ! -------------------------------------------------------------------
 
   !> removes the first item from list and returns its value in data
-  Subroutine LinkedList_Remove_Last(list,data,ERR,ERROR,*)
-    type(LinkedList),intent(inout) :: list
-    integer(intg),intent(out) :: data
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+  SUBROUTINE LinkedList_Remove_Last(list,data,err,error,*)
+    TYPE(LinkedList),intent(inout) :: list
+    INTEGER(INTG),intent(out) :: data
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     ! local variables
-    type(LinkedListItem),pointer :: current
+    TYPE(LinkedListItem), POINTER :: current
 
+    ENTERS("LinkedList_Remove_Last",err,error,*999)
+    
     if (.not.associated(list%root)) then
-      write(*,*) ">>> warning: linked list is empty and cannot remove last item"
+      CALL FlagWarning("linked list is empty and cannot remove last item.",err,error,*999)
       return
     endif
     current => list%root
@@ -166,19 +178,26 @@ contains
       endif
     enddo
 
-  End Subroutine LinkedList_Remove_Last
+    EXITS("LinkedList_Remove_Last")
+    RETURN
+999 ERRORSEXITS("LinkedList_Remove_Last",err,error)
+    RETURN 1
+    
+  END SUBROUTINE LinkedList_Remove_Last
 
 ! -------------------------------------------------------------------
 
   !> will delete and deallocate all items
-  Subroutine LinkedList_Destroy(list,ERR,ERROR,*)
+  SUBROUTINE LinkedList_Destroy(list,err,error,*)
 
     TYPE(LinkedList), INTENT(inout) :: list
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     ! local variables
     TYPE(LinkedListItem), POINTER :: current,next
 
+    ENTERS("LinkedList_Destroy",err,error,*999)
+    
     if (.not.associated(list%root)) return
 
     current => list%root
@@ -196,13 +215,18 @@ contains
     list%root => NULL()
     list%last => NULL()
 
-  End SUBROUTINE LinkedList_Destroy
+    EXITS("LinkedList_Destroy")
+    RETURN
+999 ERRORSEXITS("LinkedList_Destroy",err,error)
+    RETURN 1
+    
+   END SUBROUTINE LinkedList_Destroy
 
 ! -------------------------------------------------------------------
 
   !> returns true if the list is empty
   Function LinkedList_is_Empty(list)
-    type(LinkedList),intent(in) :: list
+    TYPE(LinkedList),intent(in) :: list
     logical :: LinkedList_is_Empty
 
     LinkedList_is_Empty = .true.
@@ -213,15 +237,17 @@ contains
 ! -------------------------------------------------------------------
 
   !> copies out the data to an allocatable array
-  Subroutine LinkedList_to_Array(list,array,ERR,ERROR,*)
-    type(LinkedList),intent(in) :: list
-    integer(INTG),allocatable,intent(out) :: array(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+  SUBROUTINE LinkedList_to_Array(list,array,err,error,*)
+    TYPE(LinkedList),intent(in) :: list
+    INTEGER(INTG),allocatable,intent(out) :: array(:)
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     ! local variables
-    integer(INTG) :: i,n
-    type(LinkedListItem),pointer :: current
+    INTEGER(INTG) :: i,n
+    TYPE(LinkedListItem), POINTER :: current
 
+    ENTERS("LinkedList_to_Array",err,error,*999)
+    
     ! return zero-size array if list is empty
     if (LinkedList_is_Empty(list)) then
       allocate(array(0))
@@ -250,6 +276,10 @@ contains
       current => current%next
     enddo
 
-  End Subroutine LinkedList_to_Array
+    EXITS("LinkedList_to_Array")
+    RETURN
+999 ERRORSEXITS("LinkedList_to_Array",err,error)
+    RETURN 1
+  END SUBROUTINE LinkedList_to_Array
 
 End Module LinkedList_routines

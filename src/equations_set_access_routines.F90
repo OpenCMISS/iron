@@ -71,7 +71,7 @@ MODULE EquationsSetAccessRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_OPTIMISATION_CLASS=8
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTI_PHYSICS_CLASS=9
 
-  !Problem types
+  !Equations set types
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NO_TYPE=0
   !Elasticity class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTICITY_TYPE=1
@@ -104,6 +104,7 @@ MODULE EquationsSetAccessRoutines
   !Bioelectrics class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE=1
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE=2
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE=3
 
   !Modal class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE=1
@@ -387,29 +388,6 @@ MODULE EquationsSetAccessRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NODAL_SOLUTION_METHOD=8 !<Similar to Finite Element Method with looping over nodes instead of elements 
   !>@}
 
-  !> \addtogroup EquationsSetRoutines_LinearityTypes EquationsSet::Constants::LinearityTypes
-  !> \brief The equations linearity types
-  !> \see EquationsSetRoutines,OPENCMISS_EquationsLinearityTypes
-  !>@{
-  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_LINEARITY_TYPES=3 !<The number of equations linearity types defined. \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_LINEAR=1 !<The equations are linear. \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR=2 !<The equations are non-linear. \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR_BCS=3 !<The equations have non-linear boundary conditions. \see EquationsSetRoutines_LinearityTypes,EquationsSetRoutines
-  !>@}
-
- 
-  !> \addtogroup EquationsSetRoutines_TimeDependenceTypes EquationsSet::Constants::TimeDependenceTypes
-  !> \brief The equations time dependence type parameters
-  !> \see EquationsSetRoutines,OPENCMISS_EquationsTimeDependenceTypes
-  !>@{
-  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_TIME_TYPES=5 !<The number of equations time dependence types defined. \see EquationsSetRoutines_TimeDependenceTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_STATIC=1 !<The equations are static and have no time dependence. \see EquationsSetRoutines_TimeDependenceTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_QUASISTATIC=2 !<The equations are quasi-static. \see EquationsSetRoutines_TimeDependenceTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_FIRST_ORDER_DYNAMIC=3 !<The equations are first order dynamic. \see EquationsSetRoutines_TimeDependenceTypes,EquationsSetRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SECOND_ORDER_DYNAMIC=4 !<The equations are a second order dynamic. \see EquationsSetRoutines_TimeDependenceTypes,EquationsRoutines
-  INTEGER(INTG), PARAMETER :: EQUATIONS_TIME_STEPPING=5 !<The equations are for time stepping. \see EquationsSetRoutines_TimeDependenceTypes,EquationsRoutines
-  !>@}
-
   !Module parameters
   !> \addtogroup EquationsSetRoutines_TensorTypes EquationsSet::Constants::TensorTypes
   !> \brief Type of tensor for an EquationsSet
@@ -635,6 +613,7 @@ MODULE EquationsSetAccessRoutines
     & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, &
     & EQUATIONS_SET_MEMBRANE_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
     & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
     & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE, &
     & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
     & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE,EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
@@ -680,7 +659,7 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE,EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE,EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE
 
-  PUBLIC EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE, &
+  PUBLIC EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE, &
     & EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE,EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE, &
     & EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
     & EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE, &
@@ -688,10 +667,8 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE,EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE
 
-  PUBLIC EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE,EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE, &
-    & EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE,EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE, &
-    & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE,EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE, &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE, &
+  PUBLIC EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE,EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE, &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE, &
     & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE,EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE
 
   PUBLIC EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE,EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, &
@@ -699,19 +676,16 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE
 
-  PUBLIC EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE,EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
-    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE,EQUATIONS_SET_QUADRATIC_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
-    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVECTION_DIFFUSION_SUBTYPE,EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
+  PUBLIC EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE,EQUATIONS_SET_QUADRATIC_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
     & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE,EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE
 
   PUBLIC EQUATIONS_SET_ADVECTION_SUBTYPE
 
-  PUBLIC EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE,EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, &
-    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE,EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+  PUBLIC EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE,EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
     & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
     & EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
     & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
     & EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE,EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
@@ -752,11 +726,6 @@ MODULE EquationsSetAccessRoutines
   PUBLIC NUMBER_OF_EQUATIONS_SET_SOLUTION_METHODS,EQUATIONS_SET_FEM_SOLUTION_METHOD,EQUATIONS_SET_BEM_SOLUTION_METHOD, &
     & EQUATIONS_SET_FD_SOLUTION_METHOD,EQUATIONS_SET_FV_SOLUTION_METHOD,EQUATIONS_SET_GFEM_SOLUTION_METHOD, &
     & EQUATIONS_SET_GFD_SOLUTION_METHOD,EQUATIONS_SET_GFV_SOLUTION_METHOD,EQUATIONS_SET_NODAL_SOLUTION_METHOD
-
-  PUBLIC NUMBER_OF_EQUATIONS_LINEARITY_TYPES,EQUATIONS_LINEAR,EQUATIONS_NONLINEAR,EQUATIONS_NONLINEAR_BCS
-
-  PUBLIC NUMBER_OF_EQUATIONS_TIME_TYPES,EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC, &
-    & EQUATIONS_SECOND_ORDER_DYNAMIC,EQUATIONS_TIME_STEPPING
 
   PUBLIC EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR,EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
     & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR,EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR, &
@@ -848,6 +817,8 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_AssertEquationsIsFinished,EquationsSet_AssertEquationsNotFinished
   
+  PUBLIC EquationsSet_AssertEquationsFieldIsCreated,EquationsSet_AssertEquationsFieldNotCreated  
+  
   PUBLIC EquationsSet_AssertIndependentIsCreated,EquationsSet_AssertIndependentNotCreated
   
   PUBLIC EquationsSet_AssertIndependentIsFinished,EquationsSet_AssertIndependentNotFinished
@@ -874,8 +845,14 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EquationsSet_EquationsGet
 
+  PUBLIC EquationsSet_EquationsFieldExists
+
+  PUBLIC EquationsSet_EquationsFieldGet
+
   PUBLIC EquationsSet_EquationsSetsGet
 
+  PUBLIC EquationsSet_EquationsSetFieldExists
+  
   PUBLIC EquationsSet_EquationsSetFieldGet
   
   PUBLIC EquationsSet_FibreFieldExists
@@ -1766,6 +1743,43 @@ CONTAINS
   !=================================================================================================================================
   !
 
+  !>Assert that the equations field setup has been created for an equations set
+  SUBROUTINE EquationsSet_AssertEquationsFieldIsCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations field created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertEquationsFieldIsCreated",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif
+    
+    IF(.NOT.ASSOCIATED(equationsSet%equationsField)) THEN
+      localError="Equations field has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AsserEquationsFieldIsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertEquationsFieldIsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertEquationsFieldIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
   !>Assert that the independent setup has been created for an equations set
   SUBROUTINE EquationsSet_AssertIndependentIsCreated(equationsSet,err,error,*)
 
@@ -1798,6 +1812,43 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_AssertIndependentIsCreated
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that the equations field setup has not been created for an equations set
+  SUBROUTINE EquationsSet_AssertEquationsFieldNotCreated(equationsSet,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to assert the equations field created status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AssertEquationsFieldNotCreated",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif
+    
+    IF(ASSOCIATED(equationsSet%equationsField)) THEN
+      localError="Equations field has already been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("EquationsSet_AssertEquationsFieldNotCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AssertEquationsFieldNotCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AssertEquationsFieldNotCreated
 
   !
   !=================================================================================================================================
@@ -2443,6 +2494,79 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the equations field for an equations set if it exists.
+  SUBROUTINE EquationsSet_EquationsFieldExists(equationsSet,equationsField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the equations materials for
+    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField !<On exit, a pointer to the equations field in the specified equations set if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsSet_EquationsFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsField)) CALL FlagError("Equations field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif    
+
+    equationsField=>equationsSet%equationsField
+     
+    EXITS("EquationsSet_EquationsFieldExists")
+    RETURN
+999 NULLIFY(equationsField)
+998 ERRORSEXITS("EquationsSet_EquationsFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_EquationsFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equations field for an equations set.
+  SUBROUTINE EquationsSet_EquationsFieldGet(equationsSet,equationsField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the equations field for
+    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField !<On exit, a pointer to the equations field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif 
+ 
+    ENTERS("EquationsSet_EquationsFieldGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsField)) CALL FlagError("Equations field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif    
+
+    equationsField=>equationsSet%equationsField
+     
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(equationsField)) THEN
+      localError="Equations field is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    EXITS("EquationsSet_FieldGet")
+    RETURN
+999 NULLIFY(equationsField)
+998 ERRORSEXITS("EquationsSet_EquationsFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_EquationsFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations for an equations set.
   SUBROUTINE EquationsSet_EquationsGet(equationsSet,equations,err,error,*)
 
@@ -2535,6 +2659,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the equations set field for an equations set if it exists.
+  SUBROUTINE EquationsSet_EquationsSetFieldExists(equationsSet,equationsSetField,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the equations set field for
+    TYPE(FieldType), POINTER :: equationsSetField !<On exit, a pointer to the equations set field in the specified equations set if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsSet_FibreFieldExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsSetField)) CALL FlagError("Equations set field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+#endif    
+
+    IF(ASSOCIATED(equationsSet%equationsField)) THEN
+      equationsSetField=>equationsSet%equationsField%equationsSetField
+    ELSE
+      NULLIFY(equationsSetField)
+    ENDIF
+      
+    EXITS("EquationsSet_EquationsSetFieldExists")
+    RETURN
+999 NULLIFY(equationsSetField)
+998 ERRORSEXITS("EquationsSet_EquationsSetFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_EquationsSetFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations set field for an equations set.
   SUBROUTINE EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*)
 
@@ -2551,9 +2710,17 @@ CONTAINS
 #ifdef WTIH_PRECHECKS    
     IF(ASSOCIATED(equationsSetField)) CALL FlagError("Equations set field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet%equationsField)) THEN
+      localError="Equations field is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "// &
+        & TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
 #endif    
 
-    equationsSetField=>equationsSet%equationsSetField%equationsSetFieldField
+    equationsSetField=>equationsSet%equationsField%equationsSetField
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsSetField)) THEN
@@ -2718,7 +2885,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 #endif
     
-    globallNumber=equationsSet%globalNumber
+    globalNumber=equationsSet%globalNumber
      
     EXITS("EquationsSet_GlobalNumberGet")
     RETURN
@@ -3224,7 +3391,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
 #endif    
         
     NULLIFY(equationsSetRegion)
-    CALL EquationsSet_RegionGet(equationsSet,fieldRegion,err,error,*999)
+    CALL EquationsSet_RegionGet(equationsSet,equationsSetRegion,err,error,*999)
     IF(.NOT.ASSOCIATED(equationsSetRegion,region)) THEN
       localError="Equations set number "//TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))// &
         & " is defined in region number "//TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))// &
@@ -3511,7 +3678,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
     ENDIF
 #ifdef WITH_PRECHECKS
     IF(specificationLength>equationsSet%specificationLength) THEN
-      localError="The specification for equations set number "//TRIM(NumberToVString(equationsSet%userNumber,"*",err,error)))
+      localError="The specification for equations set number "//TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
       IF(ASSOCIATED(equationsSet%region)) &
         & localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
       localError=localError//" does not have enougth specification identifiers. The specification length is "// &

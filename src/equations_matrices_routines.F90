@@ -115,6 +115,12 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_ElementVectorSetup
 
+  PUBLIC EquationsMatricesResidual_DistributedVectorEnsureCreated
+
+  PUBLIC EquationsMatricesRHS_DistributedVectorEnsureCreated
+
+  PUBLIC EquationsMatricesSource_DistributedVectorEnsureCreated
+
   PUBLIC EquationsMatricesVector_HessianOutput
 
   PUBLIC EquationsMatricesVector_JacobianNodeAdd
@@ -1097,6 +1103,240 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Ensure that a particular temporal type distributed vector has been created for a equations matrices residual vector.
+  SUBROUTINE EquationsMatricesResidual_DistributedVectorEnsureCreated(residualVector,temporalType,err,error,*)
+
+    !Argument variables
+    TYPE(ElementMatricesResidualType) :: residualVector !<The residual vector to ensure that the distributed vector is created for.
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The equations matrices vector temporal type to ensure that it has been created. \see EquationsMatricesRoutines_VectorTemporalTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainMappingType), POINTER :: rowsDomainMap
+    TYPE(DistributedVectorType), POINTER :: residualDistributedVector
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(FieldVariableType), POINTER :: lhsVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatricesResidual_DistributedVectorEnsureCreated",err,error,*999)
+
+    NULLIFY(residualDistributedVector)
+    CALL EquationsMatricesResidual_DistributedVectorExists(residualVector,temporalType,residualDistributedVector,err,error,*999)
+    IF(.NOT.ASSOCIATED(residualDistributedVector)) THEN
+      NULLIFY(nonlinearMatrices)
+      CALL EquationsMatricesResidual_NonlinearMatricesGet(residualVector,nonlinearMatrices,err,error,*999)
+      NULLIFY(vectorMatrices)
+      CALL EquationsMatricesNonlinear_VectorMatricesGet(nonlinearMatrices,vectorMatrices,err,error,*999)
+      NULLIFY(vectorMapping)
+      CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+      NULLIFY(lhsMapping)
+      CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+      NULLIFY(lhsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+      NULLIFY(rowsDomainMap)
+      CALL FieldVariable_DomainMappingGet(lhsVariable,rowsDomainMap,err,error,*999)
+      SELECT CASE(temporalType)
+      CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+        NULLIFY(residualVector%residual)
+        CALL DistributedVector_CreateStart(rowsDomainMap,residualVector%residual,err,error,*999)
+        CALL DistributedVector_DataTypeSet(residualVector%residual,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(residualVector%residual,err,error,*999)
+        CALL DistributedVector_AllValuesSet(residualVector%residual,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+        NULLIFY(residualVector%previousResidual)
+        CALL DistributedVector_CreateStart(rowsDomainMap,residualVector%previousResidual,err,error,*999)
+        CALL DistributedVector_DataTypeSet(residualVector%previousResidual,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(residualVector%previousResidual,err,error,*999)
+        CALL DistributedVector_AllValuesSet(residualVector%previousResidual,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+        NULLIFY(residualVector%previous2Residual)
+        CALL DistributedVector_CreateStart(rowsDomainMap,residualVector%previous2Residual,err,error,*999)
+        CALL DistributedVector_DataTypeSet(residualVector%previous2Residual,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(residualVector%previous2Residual,err,error,*999)
+        CALL DistributedVector_AllValuesSet(residualVector%previous2Residual,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+        NULLIFY(residualVector%previous3Residual)
+        CALL DistributedVector_CreateStart(rowsDomainMap,residualVector%previous3Residual,err,error,*999)
+        CALL DistributedVector_DataTypeSet(residualVector%previous3Residual,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(residualVector%previous3Residual,err,error,*999)
+        CALL DistributedVector_AllValuesSet(residualVector%previous3Residual,0.0_DP,err,error,*999)
+      CASE DEFAULT
+        localError="The specified RHS vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDIF
+    
+    EXITS("EquationsMatricesResidual_DistributedVectorEnsureCreated")
+    RETURN
+999 ERRORS("EquationsMatricesResidual_DistributedVectorEnsureCreated",err,error)
+    EXITS("EquationsMatricesResidual_DistributedVectorEnsureCreated")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_DistributedVectorEnsureCreated
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Ensure that a particular temporal type distributed vector has been created for a equations matrices RHS vector.
+  SUBROUTINE EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,temporalType,err,error,*)
+
+    !Argument variables
+    TYPE(ElementMatricesRHSType) :: rhsVector !<The RHS vector to ensure that the distributed vector is created for.
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The equations matrices vector temporal type to ensure that it has been created. \see EquationsMatricesRoutines_VectorTemporalTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainMappingType), POINTER :: rowsDomainMap
+    TYPE(DistributedVectorType), POINTER :: rhsDistributedVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(FieldVariableType), POINTER :: lhsVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatricesRHS_DistributedVectorEnsureCreated",err,error,*999)
+
+    NULLIFY(rhsDistributedVector)
+    CALL EquationsMatricesRHS_DistributedVectorExists(rhsVector,temporalType,rhsDistributedVector,err,error,*999)
+    IF(.NOT.ASSOCIATED(rhsDistributedVector)) THEN
+      NULLIFY(vectorMatrices)
+      CALL EquationsMatricesRHS_VectorMatricesGet(rhsVector,vectorMatrices,err,error,*999)
+      NULLIFY(vectorMapping)
+      CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+      NULLIFY(lhsMapping)
+      CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+      NULLIFY(lhsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+      NULLIFY(rowsDomainMap)
+      CALL FieldVariable_DomainMappingGet(lhsVariable,rowsDomainMap,err,error,*999)
+      SELECT CASE(temporalType)
+      CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+        NULLIFY(rhsVector%vector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,rhsVector%vector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(rhsVector%vector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(rhsVector%vector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(rhsVector%vector,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+        NULLIFY(rhsVector%previousRHSVector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,rhsVector%previousRHSVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(rhsVector%previousRHSVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(rhsVector%previousRHSVector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(rhsVector%previousRHSVector,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+        NULLIFY(rhsVector%previous2RHSVector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,rhsVector%previous2RHSVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(rhsVector%previous2RHSVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(rhsVector%previous2RHSVector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(rhsVector%previous2RHSVector,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+        NULLIFY(rhsVector%previous3RHSVector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,rhsVector%previous3RHSVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(rhsVector%previous3RHSVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(rhsVector%previous3RHSVector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(rhsVector%previous3RHSVector,0.0_DP,err,error,*999)
+      CASE DEFAULT
+        localError="The specified RHS vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDIF
+    
+    EXITS("EquationsMatricesRHS_DistributedVectorEnsureCreated")
+    RETURN
+999 ERRORS("EquationsMatricesRHS_DistributedVectorEnsureCreated",err,error)
+    EXITS("EquationsMatricesRHS_DistributedVectorEnsureCreated")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_DistributedVectorEnsureCreated
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Ensure that a particular temporal type distributed vector has been created for a equations matrices source vector.
+  SUBROUTINE EquationsMatricesSource_DistributedVectorEnsureCreated(sourceVector,temporalType,err,error,*)
+
+    !Argument variables
+    TYPE(ElementMatricesSourceType) :: sourceVector !<The source vector to ensure that the distributed vector is created for.
+    INTEGER(INTG), INTENT(IN) :: temporalType !<The equations matrices vector temporal type to ensure that it has been created. \see EquationsMatricesRoutines_VectorTemporalTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainMappingType), POINTER :: rowsDomainMap
+    TYPE(DistributedVectorType), POINTER :: sourceDistributedVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(FieldVariableType), POINTER :: lhsVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatricesSource_DistributedVectorEnsureCreated",err,error,*999)
+
+    NULLIFY(sourceDistributedVector)
+    CALL EquationsMatricesSource_DistributedVectorExists(sourceVector,temporalType,rhsDistributedVector,err,error,*999)
+    IF(.NOT.ASSOCIATED(sourceDistributedVector)) THEN
+      NULLIFY(sourceVectors)
+      CALL EquationsMatricesSource_SourceVectorsGet(soureVector,sourceVectors,err,error,*999)
+      NULLIFY(vectorMatrices)
+      CALL EquationsMatricesSources_VectorMatricesGet(sourceVectors,vectorMatrices,err,error,*999)
+      NULLIFY(vectorMapping)
+      CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+      NULLIFY(lhsMapping)
+      CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+      NULLIFY(lhsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+      NULLIFY(rowsDomainMap)
+      CALL FieldVariable_DomainMappingGet(lhsVariable,rowsDomainMap,err,error,*999)
+      SELECT CASE(temporalType)
+      CASE(EQUATIONS_MATRICES_CURRENT_VECTOR)
+        NULLIFY(sourceVector%vector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,sourceVector%vector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(sourceVector%vector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(sourceVector%vector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(sourceVector%vector,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS_VECTOR)
+        NULLIFY(sourceVector%previousSourceVector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,sourceVector%previousSourceVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(sourceVector%previousSourceVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(sourceVector%previousSourceVector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(sourceVector%previousSourceVector,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS2_VECTOR)
+        NULLIFY(sourceVector%previous2SourceVector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,sourceVector%previous2SourceVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(sourceVector%previous2SourceVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(sourceVector%previous2SourceVector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(sourceVector%previous2SourceVector,0.0_DP,err,error,*999)
+      CASE(EQUATIONS_MATRICES_PREVIOUS3_VECTOR)
+        NULLIFY(sourceVector%previous3SourceVector)
+        CALL DistributedVector_CreateStart(rowsDomainMap,sourceVector%previous3SourceVector,err,error,*999)
+        CALL DistributedVector_DataTypeSet(sourceVector%previous3SourceVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedVector_CreateFinish(sourceVector%previous3SourceVector,err,error,*999)
+        CALL DistributedVector_AllValuesSet(sourceVector%previous3SourceVector,0.0_DP,err,error,*999)
+      CASE DEFAULT
+        localError="The specified RHS vector temporal type of "//TRIM(NumberToVString(temporalType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDIF
+    
+    EXITS("EquationsMatricesSource_DistributedVectorEnsureCreated")
+    RETURN
+999 ERRORS("EquationsMatricesSource_DistributedVectorEnsureCreated",err,error)
+    EXITS("EquationsMatricesSource_DistributedVectorEnsureCreated")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_DistributedVectorEnsureCreated
+
+  !
+  !================================================================================================================================
+  !
+
   !>Adds the element matrices and rhs vector into the vector equations matrices and rhs vector.
   SUBROUTINE EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*)
 
@@ -2055,7 +2295,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,dummyErr,maxNodalInterpParameters,numberOfComponents
+    INTEGER(INTG) :: componentIdx,dummyErr,maxNodeInterpParameters,numberOfComponents
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsMatrices_NodalMatrixSetup",err,error,*998)
@@ -2069,16 +2309,16 @@ CONTAINS
     nodalMatrix%maxNumberOfRows=0
     CALL FieldVariable_NumberOfComponentsGet(rowsFieldVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      CALL FieldVariable_ComponentMaxNodalInterpParametersGet(rowsFieldVariable,componentIdx,maxNodalInterpParameters, &
+      CALL FieldVariable_ComponentMaxNodeInterpParametersGet(rowsFieldVariable,componentIdx,maxNodeInterpParameters, &
         & err,error,*999)
-      nodalMatrix%maxNumberOfRows=nodalMatrix%maxNumberOfRows+maxNodalInterpParameters
+      nodalMatrix%maxNumberOfRows=nodalMatrix%maxNumberOfRows+maxNodeInterpParameters
     ENDDO !componentIdx
     nodalMatrix%maxNumberOfColumns=0
     CALL FieldVariable_NumberOfComponentsGet(colsFieldVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      CALL FieldVariable_ComponentMaxNodalInterpParametersGet(colsFieldVariable,componentIdx,maxNodalInterpParameters, &
+      CALL FieldVariable_ComponentMaxNodalInterpParametersGet(colsFieldVariable,componentIdx,maxNodeInterpParameters, &
         & err,error,*999)
-      nodalMatrix%maxNumberOfColumns=nodalMatrix%maxNumberOfColumns+maxNodalInterpParameters
+      nodalMatrix%maxNumberOfColumns=nodalMatrix%maxNumberOfColumns+maxNodeInterpParameters
     ENDDO !componentIdx
     ALLOCATE(nodalMatrix%rowDofs(nodalMatrix%maxNumberOfRows),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate nodal matrix row dofs.",err,error,*999)
@@ -2108,7 +2348,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,dummyErr,maxNodalInterpParameters,numberOfComponents
+    INTEGER(INTG) :: componentIdx,dummyErr,maxNodeInterpParameters,numberOfComponents
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsMatrices_NodalVectorSetup",err,error,*998)
@@ -2120,9 +2360,9 @@ CONTAINS
     nodalVector%maxNumberOfRows = 0
     CALL FieldVariable_NumberOfComponentsGet(rowsFieldVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      CALL FieldVariable_ComponentMaxNodalInterpParametersGet(rowsFieldVariable,componentIdx,maxNodalnterpParameters, &
+      CALL FieldVariable_ComponentMaxNodeInterpParametersGet(rowsFieldVariable,componentIdx,maxNodenterpParameters, &
         & err,error,*999)
-      nodalVector%maxNumberOfRows=nodalVector%maxNumberOfRows+maxNodalInterpParameters
+      nodalVector%maxNumberOfRows=nodalVector%maxNumberOfRows+maxNodeInterpParameters
     ENDDO !componentIdx
         
     ALLOCATE(nodalVector%rowDofs(nodalVector%maxNumberOfRows),STAT=err)
@@ -3179,6 +3419,7 @@ CONTAINS
         ENDDO !matrixIdx
         DEALLOCATE(linearMatrices%matrices)
       ENDIF
+      IF(ASSOCIATED(linearMatrices%tempVector)) CALL DistributedVector_Destroy(linearMatrices%tempVector,err,error,*999)
       DEALLOCATE(linearMatrices)
     ENDIF
     
@@ -3229,7 +3470,8 @@ CONTAINS
         NULLIFY(equationsMatrixToVarMap)
         CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
         vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr%matrixCoefficient=equationsMatrixToVarMap%matrixCoefficient
-       ENDDO !matrixIdx
+      ENDDO !matrixIdx
+      NULLIFY(vectorMatrices%linearMatrices%tempVector)
     ENDIF
     
     EXITS("EquationsMatricesVector_LinearInitialise")
@@ -3263,6 +3505,7 @@ CONTAINS
         ENDDO !residualIdx
         DEALLOCATE(nonlinearMatrices%residuals)
       ENDIF
+      IF(ASSOCIATED(nonlinearMatrices%tempVector)) CALL DistributedVector_Destroy(nonlinearMatrices%tempVector,err,error,*999)
       DEALLOCATE(nonlinearMatrices)
     ENDIF
     
@@ -3311,7 +3554,8 @@ CONTAINS
         NULLIFY(vectorMatrices%nonlinearMatrices%residuals(residualIdx)%ptr
         CALL EquationsMatricesNonlinear_ResidualInitialise(vectorMatrices%nonlinearMatrices,residualIdx,err,error,*999)
       ENDDO !residualIdx
-    ENDIF
+      NULLIFY(vectorMatrices%nonlinearMatrices%tempVector)
+   ENDIF
     
     EXITS("EquationsMatricesVector_NonlinearInitialise")
     RETURN
@@ -3384,6 +3628,9 @@ CONTAINS
 
     IF(ASSOCIATED(rhsVector)) THEN
       IF(ASSOCIATED(rhsVector%vector)) CALL DistributedVector_Destroy(rhsVector%vector,err,error,*999)
+      IF(ASSOCIATED(rhsVector%previousRHSVector)) CALL DistributedVector_Destroy(rhsVector%previousRHSVector,err,error,*999)
+      IF(ASSOCIATED(rhsVector%previous2RHSVector)) CALL DistributedVector_Destroy(rhsVector%previous2RHSVector,err,error,*999)
+      IF(ASSOCIATED(rhsVector%previous3RHSVector)) CALL DistributedVector_Destroy(rhsVector%previous3RHSVector,err,error,*999)
       CALL EquationsMatrices_ElementVectorFinalise(rhsVector%elementVector,err,error,*999)
       CALL EquationsMatrices_NodalVectorFinalise(rhsVector%nodalVector,err,error,*999)
       DEALLOCATE(rhsVector)
@@ -3429,6 +3676,9 @@ CONTAINS
       vectorMatrices%rhsVector%updateVector=.TRUE.
       vectorMatrices%rhsVector%firstAssembly=.TRUE.
       NULLIFY(vectorMatrices%rhsVector%vector)
+      NULLIFY(vectorMatrices%rhsVector%previousRHSVector)
+      NULLIFY(vectorMatrices%rhsVector%previous2RHSVector)
+      NULLIFY(vectorMatrices%rhsVector%previous3RHSVector)
       CALL EquationsMatrices_ElementVectorInitialise(vectorMatrices%rhsVector%elementVector,err,error,*999)
       CALL EquationsMatrices_NodalVectorInitialise(vectorMatrices%rhsVector%nodalVector,err,error,*999)
     ENDIF
@@ -3489,6 +3739,7 @@ CONTAINS
         ENDDO !sourceIdx
         DEALLOCATE(sourceVectors%sources)
       ENDIF
+      IF(ASSOCIATED(sourceVectors%tempVector)) CALL DistributedVector_Destroy(sourceVectors%tempVector,err,error,*999)
       DEALLOCATE(sourceVectors)
     ENDIF      
      
@@ -3536,6 +3787,7 @@ CONTAINS
         NULLIFY(vectorMatrices%sourceVectors%sources(sourceIdx)%ptr)
         CALL EquationsMatricesSources_SourceVectorInitialise(vectorMatrices%sourceVectors,sourceIdx,err,error,*999)
       ENDDO !sourceIdx
+      NULLIFY(vectorMatrices%sourceVectors%tempVector)
     ENDIF
     
     EXITS("EquationsMatricesVector_SourcesInitialise")
@@ -4340,6 +4592,12 @@ CONTAINS
 
     IF(ASSOCIATED(residualVector)) THEN
       IF(ASSOCIATED(residualVector%residual)) CALL DistributedVector_Destroy(residualVector%residual,err,error,*999)
+      IF(ASSOCIATED(residualVector%previousResidual)) CALL DistributedVector_Destroy(residualVector%previousResidual, &
+        & err,error,*999)
+      IF(ASSOCIATED(residualVector%previous2Residual)) CALL DistributedVector_Destroy(residualVector%previous2Residual, &
+        & err,error,*999)
+      IF(ASSOCIATED(residualVector%previous3Residual)) CALL DistributedVector_Destroy(residualVector%previous3Residual, &
+        & err,error,*999)
       CALL EquationsMatrices_ElementVectorFinalise(residualVector%elementResidual,err,error,*999)
       CALL EquationsMatrices_NodalVectorFinalise(residualVector%nodalResidual,err,error,*999)
       IF(ALLOCATED(residualVector%jacobians)) THEN
@@ -4405,6 +4663,9 @@ CONTAINS
     residualVector%updateResidual=.TRUE.
     residualVector%firstAssembly=.TRUE.
     NULLIFY(residualVector%residual)
+    NULLIFY(residualVector%previousResidual)
+    NULLIFY(residualVector%previous2Residual)
+    NULLIFY(residualVector%previous3Residual)
     CALL EquationsMatrices_ElementVectorInitialise(residualVector%elementResidual,err,error,*999)
     CALL EquationsMatrices_NodalVectorInitialise(residualVector%nodalResidual,err,error,*999)
     !Allocate and initialise the Jacobians
@@ -4537,6 +4798,12 @@ CONTAINS
 
     IF(ASSOCIATED(sourceVector)) THEN
       IF(ASSOCIATED(sourceVector%vector)) CALL DistributedVector_Destroy(sourceVector%vector,err,error,*999)
+      IF(ASSOCIATED(sourceVector%previousSourceVector)) CALL DistributedVector_Destroy(sourceVector%previousSourceVector, &
+        & err,error,*999)
+      IF(ASSOCIATED(sourceVector%previous2SourceVector)) CALL DistributedVector_Destroy(sourceVector%previous2SourceVector, &
+        & err,error,*999)
+      IF(ASSOCIATED(sourceVector%previous3SourceVector)) CALL DistributedVector_Destroy(sourceVector%previous3SourceVector, &
+        & err,error,*999)
       CALL EquationsMatrices_ElementVectorFinalise(sourceVector%elementVector,err,error,*999)
       CALL EquationsMatrices_NodalVectorFinalise(sourceVector%nodalVector,err,error,*999)
       DEALLOCATE(sourceVector)
@@ -4764,20 +5031,25 @@ CONTAINS
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*998)
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*998)
-    matrixNumber=equationsMatrix%matrixNumber
+    CALL EquationsMatrix_MatrixNumberGet(equationsMatrix,matrixNumber,err,error,*998)
     NULLIFY(lhsMapping)
-    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*998)
     NULLIFY(rowsVariable)
-    CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+    CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*998)
     NULLIFY(dynamicMapping)
     NULLIFY(linearMapping)
     NULLIFY(colsVariable)
+    NULLIFY(equationsMatrixToVarMap)
     IF(ASSOCIATED(dynamicMatrices)) THEN
       CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
       CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,colsVariable,err,error,*999)
+      CALL EquationsMappingDynamic_EquationsMatrixToVarMapGet(dynamicMapping,matrixNumber,equationsMatrixToVarMap, &
+        & err,error,*999)
     ELSE
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixNumber,colsVariable,err,error,*999)
+      CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixNumber,equationsMatrixToVarMap, &
+        & err,error,*999)
     ENDIF
     CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowComponents,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColumnComponents,err,error,*999)
@@ -4815,7 +5087,7 @@ CONTAINS
             CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(rowsDomain)
-            CALL FieldVariable_DomainGet(rowsVariable,rowsDomain,err,error,*999)
+            CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
             CALL FieldVariable_ComponentMaxElementInterpParametersGet(rowsVariable,componentNumber,maxElementInterpParameters, &
               & err,error,*999)
             NULLIFY(rowsDomainTopology)
@@ -4965,7 +5237,7 @@ CONTAINS
           CASE(FIELD_DATA_POINT_DOF_TYPE)
             CALL FlagError("Data point based DOFs is not implemented yet.",err,error,*999)
           CASE DEFAULT
-            localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" has an invalid type."
+            localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" has an invalid type."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDDO !localDOFIdx
@@ -5004,7 +5276,7 @@ CONTAINS
           CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
           NULLIFY(rowsDomainNodes)
           CALL DomainTopology_DomainNodesGet(rowsDomainTopology,rowsDomainNodes,err,error,*999)
-         !Set up list
+          !Set up list
           NULLIFY(columnIndicesLists(localDofIdx)%ptr)
           CALL List_CreateStart(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
           CALL List_DataTypeSet(columnIndicesLists(localDofIdx)%ptr,LIST_INTG_TYPE,err,error,*999)          
@@ -5062,28 +5334,45 @@ CONTAINS
           !columns stores the list of nonzero column indices for each local row (localDOFIdx)
           columnIndices(rowIndices(localDOFIdx)+columnIdx-1)=columns(columnIdx)             
           !global to local columns
-          IF(ASSOCIATED(linearMapping).OR.ASSOCIATED(dynamicMapping)) THEN
-            IF(ASSOCIATED(dynamicMatrices)) THEN
-              localColumn=vectorMatrices%vectorMapping%dynamicMapping &
-                & %equationsMatrixToVarMaps(1)%columnDOFSMapping%globalToLocalMap &
-                & (columns(columnIdx))%localNumber(1)
-              localDOF = localColumn
-              !Column to dof mapping?
-              !localDOF=vectorMatrices%vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%columnToDOFMap(localColumn)
-            ELSE
-              localColumn=vectorMatrices%vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%columnDOFSMapping% &
-                & globalToLocalMap(columns(columnIdx))%localNumber(1)
-              localDOF = localColumn
-            ENDIF
-          ENDIF
-          dofIdx=dependentDofsParamMapping%DOFType(2,localDOF)
-          node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx)
-          component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx)
-          domainNodes=>fieldVariable%components(component)%domain%topology%NODES
-          
-          !Check whether boundary node    
-          IF(domainNodes%nodes(node)%boundaryNode) CALL LinkedList_Add(list(columns(columnIdx)),localDOFIdx,err,error,*999)
-          
+          CALL DomainMapping_LocalNumberFromGlobalGet(columnsDOFsMapping,columns(columnIdx),1,localColumn,err,error,*999)
+          localDOF=localColumn
+          CALL FieldVariable_DOFTypeGet(colsVariable,localDOF,dofType,dofTypeIdx,err,error,*999)
+          SELECT CASE(dofType)
+          CASE(FIELD_CONSTANT_DOF_TYPE)
+            CALL FlagError("Constant based DOFs is not implemented.",err,error,*999)
+          CASE(FIELD_ELEMENT_DOF_TYPE)
+            CALL FieldVariable_DOFParameterGetElement(rowsVariable,dofTypeIdx,elementNumber,componentNumber,err,error,*999)
+            NULLIFY(colsDomain)
+            CALL FieldVariable_ComponentDomainGet(colsVariable,componentNumber,colsDomain,err,error,*999)
+            NULLIFY(colsDomainTopology)
+            CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+            NULLIFY(colsDomainElements)
+            CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
+            CALL DomainElements_ElementBoundaryElementGet(colsDomainElements,elementNumber,boundaryElement,err,error,*999)
+            !Check whether boundary element    
+            IF(boundaryElement) CALL LinkedList_Add(list(columns(columnIdx)),localDOFIdx,err,error,*999)
+          CASE(FIELD_NODE_DOF_TYPE)
+            CALL FieldVariable_DOFParameterGetNode(colsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
+              & componentNumber,err,error,*999)
+            NULLIFY(colsDomain)
+            CALL FieldVariable_ComponentDomainGet(colsVariable,componentNumber,colsDomain,err,error,*999)
+            NULLIFY(colsDomainTopology)
+            CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
+            NULLIFY(colsDomainNodes)
+            CALL DomainTopology_DomainNodesGt(colsDomainTopology,colsDomainNodes,err,error,*999)
+            CALL DomainNodes_NodeBoundaryNodeGet(colsDomainNodes,nodeNumber,boundaryNode,err,error,*999)            
+            !Check whether boundary node    
+            IF(boundaryNode) CALL LinkedList_Add(list(columns(columnIdx)),localDOFIdx,err,error,*999)
+          CASE(FIELD_GRID_POINT_DOF_TYPE)
+            CALL FlagError("Grid point based DOFs is not implemented yet.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_DOF_TYPE)
+            CALL FlagError("Gauss point based DOFs is not implemented yet.",err,error,*999)
+          CASE(FIELD_DATA_POINT_DOF_TYPE)
+            CALL FlagError("Data point based DOFs is not implemented yet.",err,error,*999)
+          CASE DEFAULT
+            localError="Local DOF number "//TRIM(NumberToVString(localDOF,"*",err,error))//" has an invalid type."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT          
         ENDDO !columnIdx
         DEALLOCATE(columns)                                    
       ENDDO !localDOFIdx
@@ -5229,7 +5518,7 @@ CONTAINS
             CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(rowsDomain)
-            CALL FieldVariable_DomainGet(rowsVariable,rowsDomain,err,error,*999)
+            CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
             CALL FieldVariable_ComponentMaxElementInterpParametersGet(rowsVariable,componentNumber,maxElementInterpParameters, &
               & err,error,*999)
             NULLIFY(rowsDomainTopology)

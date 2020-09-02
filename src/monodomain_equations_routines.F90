@@ -1211,7 +1211,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%actionType)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
+            CALL Solvers_CreateStart(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
             CALL Solvers_NumberOfSolversSet(SOLVERS,1,ERR,ERROR,*999)
             !Set the solver to be a first order dynamic solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
@@ -1225,7 +1225,7 @@ CONTAINS
             !Get the solvers
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
             !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
+            CALL Solvers_CreateFinish(SOLVERS,ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%actionType,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%setupType,"*",ERR,ERROR))// &

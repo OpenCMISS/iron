@@ -117,7 +117,7 @@ CONTAINS
     TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping
-    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixRowsToVarMap
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceMapping_Calculate",err,error,*999)
@@ -158,7 +158,7 @@ CONTAINS
       ENDDO !dofIdx
       !Set the number of interface matrices
       interfaceMapping%numberOfInterfaceMatrices=createValuesCache%numberOfInterfaceMatrices
-      ALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMapping%numberOfInterfaceMatrices),STAT=err)
+      ALLOCATE(interfaceMapping%interfaceMatrixToVarMaps(interfaceMapping%numberOfInterfaceMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interface matrix rows to variable maps.",err,error,*999)
       !Loop over the interface matrices and calculate the row mappings
       SELECT CASE(interfaceCondition%method)
@@ -171,7 +171,7 @@ CONTAINS
       END SELECT
       DO matrixIdx=1,numberOfInterfaceMatrices
         !Initialise and setup the interface matrix
-        NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr)
+        NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr)
         CALL InterfaceMapping_MatrixToVarMapInitialise(interfaceMapping,matrixIdx,err,error,*999)
         CALL InterfaceMappingCVC_RowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
         NULLIFY(equationsSet)
@@ -201,34 +201,34 @@ CONTAINS
         CALL InterfaceMappingCVC_TransposeMatrixCoefficientGet(createValuesCache,matrixIdx,transposeMatrixCoefficient, &
           & err,error,*999)
         CALL InterfaceMappingCVS_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
-        NULLIFY(interfaceMatrixRowsToVarMap)
-        CALL InterfaceMapping_InterfaceMatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixRowsToVarMap,err,error,*999)
-        interfaceMatrixRowsToVarMap%equationsSet=>equationsSet
-        interfaceMatrixRowsToVarMap%variableType=variableType
-        interfaceMatrixRowsToVarMap%variable=>fieldVariable
-        interfaceMatrixRowsToVarMap%meshIndex=meshIdx
-        interfaceMatrixRowsToVarMap%matrixCoefficient=matrixCoefficient
-        interfaceMatrixRowsToVarMap%hasTranspose=hasTranspose
+        NULLIFY(interfaceMatrixToVarMap)
+        CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*999)
+        interfaceMatrixToVarMap%equationsSet=>equationsSet
+        interfaceMatrixToVarMap%variableType=variableType
+        interfaceMatrixToVarMap%variable=>fieldVariable
+        interfaceMatrixToVarMap%meshIndex=meshIdx
+        interfaceMatrixToVarMap%matrixCoefficient=matrixCoefficient
+        interfaceMatrixToVarMap%hasTranspose=hasTranspose
         IF(hasTranspose) &
-          & interfaceMatrixRowsToVarMap%transposeMatrixCoefficient=transposeMatrixCoefficient
+          & interfaceMatrixToVarMap%transposeMatrixCoefficient=transposeMatrixCoefficient
         !Set the number of rows
-        interfaceMatrixRowsToVarMap%numberOfRows=numberOfDOFs
-        interfaceMatrixRowsToVarMap%totalNumberOfRows=totalNumberOfDOFs
-        interfaceMatrixRowsToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
+        interfaceMatrixToVarMap%numberOfRows=numberOfDOFs
+        interfaceMatrixToVarMap%totalNumberOfRows=totalNumberOfDOFs
+        interfaceMatrixToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
         !Set the row mapping
-        interfaceMatrixRowsToVarMap%rowDOFsMapping=>domainMapping
-        ALLOCATE(interfaceMatrixRowsToVarMap%variableDOFToRowMap(totalNumberOfDOFs),STAT=err)
+        interfaceMatrixToVarMap%rowDOFsMapping=>domainMapping
+        ALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap(totalNumberOfDOFs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable DOF to row map.",err,error,*999)
         !1-1 mapping for now
         DO dofIdx=1,fieldVariable%totalNumberOfDofs
-          interfaceMatrixRowsToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
+          interfaceMatrixToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
         ENDDO !dofIdx
       ENDDO !matrixIdx
       IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD) THEN
         !Sets up the Lagrange-(Penalty) interface matrix mapping and calculate the row mappings
         matrixIdx = interfaceMapping%numberOfInterfaceMatrices !last of the interface matrices
         !Initialise and setup the interface matrix
-        NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr)
+        NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr)
         CALL InterfaceMapping_MatrixToVarMapInitialise(interfaceMapping,matrixIdx,err,error,*999)
         CALL InterfaceMappingCVC_RowVariableIndexGet(createValuesCache,matrixIdx,meshIdx,err,error,*999)
         NULLIFY(lagrangeVariable)
@@ -243,23 +243,23 @@ CONTAINS
         CALL InterfaceMappingCVC_TransposeMatrixCoefficientGet(createValuesCache,matrixIdx,transposeMatrixCoefficient, &
           & err,error,*999)
         CALL InterfaceMappingCVS_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*999)
-        interfaceMatrixRowsToVarMap%interfaceEquations=>interfaceEquations
-        interfaceMatrixRowsToVarMap%variableType=variableType
-        interfaceMatrixRowsToVarMap%variable=>lagrangeVariable
-        interfaceMatrixRowsToVarMap%meshIndex=meshIdx
-        interfaceMatrixRowsToVarMap%matrixCoefficient=matrixCoefficient
-        interfaceMatrixRowsToVarMap%hasTranspose=hasTranspose
+        interfaceMatrixToVarMap%interfaceEquations=>interfaceEquations
+        interfaceMatrixToVarMap%variableType=variableType
+        interfaceMatrixToVarMap%variable=>lagrangeVariable
+        interfaceMatrixToVarMap%meshIndex=meshIdx
+        interfaceMatrixToVarMap%matrixCoefficient=matrixCoefficient
+        interfaceMatrixToVarMap%hasTranspose=hasTranspose
         !Set the number of rows
-        interfaceMatrixRowsToVarMap%numberOfRows=numberOfDOFs
-        interfaceMatrixRowsToVarMap%totalNumberOfRows=totalNumberOfDOFs
-        interfaceMatrixRowsToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
+        interfaceMatrixToVarMap%numberOfRows=numberOfDOFs
+        interfaceMatrixToVarMap%totalNumberOfRows=totalNumberOfDOFs
+        interfaceMatrixToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
         !Set the row mapping
-        interfaceMatrixRowsToVarMap%rowDOFsMapping=>domainMapping
-        ALLOCATE(interfaceMatrixRowsToVarMap%variableDOFToRowMap(totalNumberOfDofs),STAT=err)
+        interfaceMatrixToVarMap%rowDOFsMapping=>domainMapping
+        ALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap(totalNumberOfDofs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable DOF to row map.",err,error,*999)
         !1-1 mapping for now
         DO dofIdx=1,totalNumberOfDofs
-          interfaceMatrixRowsToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
+          interfaceMatrixToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
         ENDDO !dofIdx
       ENDIF
       !Calculate RHS mappings
@@ -561,12 +561,12 @@ CONTAINS
 
     IF(ASSOCIATED(interfaceMapping)) THEN
       IF(ALLOCATED(interfaceMapping%lagrangeDOFToColumnMap)) DEALLOCATE(interfaceMapping%lagrangeDOFToColumnMap)
-      IF(ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) THEN
-        DO matrixIdx=1,SIZE(interfaceMapping%interfaceMatrixRowsToVarMaps,1)
-          CALL InterfaceMapping_MatrixToVarMapFinalise(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr, &
+      IF(ALLOCATED(interfaceMapping%interfaceMatrixToVarMaps)) THEN
+        DO matrixIdx=1,SIZE(interfaceMapping%interfaceMatrixToVarMaps,1)
+          CALL InterfaceMapping_MatrixToVarMapFinalise(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr, &
             & err,error,*999)
         ENDDO !matrixIdx
-        DEALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps)
+        DEALLOCATE(interfaceMapping%interfaceMatrixToVarMaps)
       ENDIF
       CALL InterfaceMapping_RHSMappingFinalise(interfaceMapping%rhsMapping,err,error,*999)
       CALL InterfaceMapping_CreateValuesCacheFinalise(interfaceMapping%createValuesCache,err,error,*999)
@@ -727,7 +727,7 @@ CONTAINS
     ENTERS("InterfaceMapping_MatrixToVarMapInitialise",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) &
+    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixToVarMaps)) &
       & CALL FlagError("Interface mapping matrix rows to var maps is not allocated.",err,error,*999)
     IF(matrixIdx<=0.OR.matrixIdx>interfaceMapping%numberOfInterfaceMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
@@ -735,27 +735,27 @@ CONTAINS
         & TRIM(NumberToVString(interfaceMapping%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(ASSOCIATED(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr)) THEN
+    IF(ASSOCIATED(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr)) THEN
       localError="The interface matrix rows to variable map is already associated for matrix index "// &
         & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    ALLOCATE(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr,STAT=err)
+    ALLOCATE(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interface matrix rows to variable map.",err,error,*999)
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%matrixNumber=matrixIdx
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%interfaceMatrix)
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%equationsSet)
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%variableType=0
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%variable)
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%meshIndex=0
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%matrixCoefficient=0.0_DP
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%hasTranspose=.FALSE.
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%numberOfRows=0
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%totalNumberOfRows=0
-    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%numberOfGlobalRows=0
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%rowDOFsMapping)          
-    NULLIFY(interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr%variableDOFToRowMap)          
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%matrixNumber=matrixIdx
+    NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%interfaceMatrix)
+    NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%equationsSet)
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%variableType=0
+    NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%variable)
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%meshIndex=0
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%matrixCoefficient=0.0_DP
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%hasTranspose=.FALSE.
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%numberOfRows=0
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%totalNumberOfRows=0
+    interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%numberOfGlobalRows=0
+    NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%rowDOFsMapping)          
+    NULLIFY(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr%variableDOFToRowMap)          
     
     EXITS("InterfaceMapping_MatrixToVarMapInitialise")
     RETURN

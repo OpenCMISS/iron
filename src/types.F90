@@ -1033,7 +1033,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfDomains !<The number of domains that the global number is mapped to a local number in.
     INTEGER(INTG), ALLOCATABLE :: localNumber(:) !<localNumber(domainIdx). The mapped local number for the domain_Ix'th domain for the global number.
     INTEGER(INTG), ALLOCATABLE :: domainNumber(:) !<domainNumber(domainIdx). The domain number for the domainIdx'th domain for which the global number is mapped to a local number
-    INTEGER(INTG), ALLOCATABLE :: localType(:) !<localType(domainIdx). The type of local for the domain_idx'th domain for which the global number is mapped to a local number. The types depend on whether the mapped local number in the domainIdx'th domain is an internal, boundary or ghost local number. \see DOMAIN_MAPPINGS_DomainType
+    INTEGER(INTG), ALLOCATABLE :: localType(:) !<localType(domainIdx). The type of local for the domain_idx'th domain for which the global number is mapped to a local number. The types depend on whether the mapped local number in the domainIdx'th domain is an internal, boundary or ghost local number. \see DomainMappings_DomainType
   END TYPE DomainGlobalMappingType
 
   !>Contains information on the domain mappings (i.e., local and global numberings).
@@ -1575,6 +1575,12 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(FieldVariableType), POINTER :: ptr !<The pointer to the field variable. 
   END TYPE FieldVariablePtrType
 
+  !>A type to store a list of field variables
+  TYPE FieldVariablesListType
+    INTEGER(INTG) :: numberOfVariables !<The number of variables is a list
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: variables(:) !<variables(variableIdx). variables(variableIdx)%ptr is a pointer to the variableIdx'th field variable in the list.
+  END TYPE FieldVariablesListType
+
   !>A type to temporarily hold (cache) the user modifiable values which are used to create a field. 
   TYPE FieldCreateValuesCacheType
     LOGICAL :: labelLocked !<Is .TRUE. if the field label has been locked, .FALSE. if not.
@@ -1671,6 +1677,8 @@ END TYPE GeneratedMeshEllipsoidType
   PUBLIC FieldParameterSetType,FieldParameterSetPtrType,FieldParameterSetsType
 
   PUBLIC FieldVariableType,FieldVariablePtrType
+
+  PUBLIC FieldVariablesListType
 
   PUBLIC FieldCreateValuesCacheType
 
@@ -1825,6 +1833,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     INTEGER(INTG) :: numberOfLinearMatrices !<The number of linear equations matrices defined for the equations set.
     TYPE(EquationsMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrices(matrixIdx)%ptr contains the information on the matrixIdx'th linear equations matrix.
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatricesLinearType
 
   !>Contains information on the residual vectors for nonlinear matrices
@@ -1835,6 +1844,9 @@ END TYPE GeneratedMeshEllipsoidType
     LOGICAL :: updateResidual !<Is .TRUE. if the equations residual vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
     TYPE(DistributedVectorType), POINTER :: residual !<A pointer to the distributed residual vector for nonlinear equations
+    TYPE(DistributedVectorType), POINTER :: previousResidual !<A point to the previous distributed residual vector.
+    TYPE(DistributedVectorType), POINTER :: previous2Residual !<A point to the second previous distributed residual vector.
+    TYPE(DistributedVectorType), POINTER :: previous3Residual !<A point to the third previous distributed residual vector.
     TYPE(ElementVectorType) :: elementResidual !<The element residual information for nonlinear equations. Old CMISS name RE1
     TYPE(NodalVectorType) :: nodalResidual !<The nodal residual information for nonlinear equations.
     INTEGER(INTG) :: nodalResidualCalculated !<The number of the nodal the residual is calculated for, or zero if it isn't calculated
@@ -1853,6 +1865,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     INTEGER(INTG) :: numberOfResiduals !<The number of residuals for this nonlinear matrices
     TYPE(EquationsMatricesResidualPtrType), ALLOCATABLE :: residuals(:) !<residuals(residualIdx). residuals(residualIdx)%ptr is a pointer to the residualIdx'th residual for this nonlinear matrices
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatricesNonlinearType
 
   !>Contains information of the optimisation matrices and vectors for equations matrices
@@ -1885,6 +1898,9 @@ END TYPE GeneratedMeshEllipsoidType
     LOGICAL :: updateVector !<Is .TRUE. if the equations rhs vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this rhs vector has not been assembled
     TYPE(DistributedVectorType), POINTER :: vector !<A pointer to the distributed global rhs vector data \todo rename this RHS_VECTOR
+    TYPE(DistributedVectorType), POINTER :: previousRHSVector !<A pointer to the previous distributed RHS vector data
+    TYPE(DistributedVectorType), POINTER :: previous2RHSVector !<A pointer to the second previous distributed RHS vector data
+    TYPE(DistributedVectorType), POINTER :: previous3RHSVector !<A pointer to the third previous distributed RHS vector data
     TYPE(ElementVectorType) :: elementVector !<The element rhs information
     TYPE(NodalVectorType) :: nodalVector !<The nodal rhs information
   END TYPE EquationsMatricesRHSType
@@ -1897,20 +1913,24 @@ END TYPE GeneratedMeshEllipsoidType
     LOGICAL :: updateVector !<Is .TRUE. if the equations rhs vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this source vector has not been assembled
     TYPE(DistributedVectorType), POINTER :: vector !<A pointer to the distributed source vector data \todo rename this SOURCE_VECTOR
+    TYPE(DistributedVectorType), POINTER :: previousSourceVector !<A pointer to the previous distributed source vector data
+    TYPE(DistributedVectorType), POINTER :: previous2SourceVector !<A pointer to the second previous distributed source vector data
+    TYPE(DistributedVectorType), POINTER :: previous3SourceVector !<A pointer to the third previous distributed source vector data
     TYPE(ElementVectorType) :: elementVector !<The element source information
     TYPE(NodalVectorType) :: nodalVector !<The nodal source information
   END TYPE EquationsMatricesSourceType
 
   !>A buffer type to allow for arrays of pointer to EquationsMatricesSourceType
-  TYPE EquationsMatriceSourcePtrType
+  TYPE EquationsMatricesSourcePtrType
     TYPE(EquationsMatricesSourceType), POINTER :: ptr !<A pointer to the EquationsMatricesSourceType
-  END TYPE EquationsMatriceSourcePtrType
-
+  END TYPE EquationsMatricesSourcePtrType
+  
   !>Contains information on the source vectors for the vector equations matrices.
   TYPE EquationsMatricesSourcesType
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices
     INTEGER(INTG) :: numberOfSources !<The number of sources in the vector equations. 
     TYPE(EquationsMatricesSourcePtrType), ALLOCATABLE :: sources(:) !<sources(sourceIdx). sources(sourceIdx)%ptr is a pointer to the sourceIdx'th source.
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatricesSourcesType
   
   !>Contains information on the scalar equations matrices, vectors and scalars
@@ -1951,8 +1971,6 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC JacobianMatrixType,JacobianMatrixPtrType
 
-  PUBLIC ResidualVectorType,ResidualVectorPtrType
-  
   PUBLIC HessianMatrixType,HessianMatrixPtrType
 
   PUBLIC EquationsMatricesFunctionType
@@ -1967,6 +1985,8 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC EquationsMatricesOptimisationType
 
+  PUBLIC EquationsMatricesResidualType,EquationsMatricesResidualPtrType
+  
   PUBLIC EquationsMatricesRHSType
 
   PUBLIC EquationsMatricesSourceType,EquationsMatricesSourcePtrType
@@ -2130,9 +2150,9 @@ END TYPE GeneratedMeshEllipsoidType
   END TYPE VarToJacobianMatrixMapType
 
   !>A buffer type of pointer to a VarToJacobianMatrixMapType \see Types::VarToJacobianMatrixMapType
-  TYPE VarToEquationsJacobianMapPtrType
+  TYPE VarToJacobianMatrixMapPtrType
     TYPE(VarToJacobianMatrixMapType), POINTER :: ptr !<A pointer to the VarToJacobianMatrixMapType
-  END TYPE VarToEquationsJacobianMapPtrType
+  END TYPE VarToJacobianMatrixMapPtrType
 
   !>Contains information on the equations mapping for a residual 
   TYPE EquationsMappingResidualType
@@ -2143,7 +2163,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variableIdx). The variable type for the variableIdx'th independent residual variable.
     INTEGER(INTG), ALLOCATABLE :: variableTypesMap(:) !<variableTypesMap(variableTypeIdx). The residual variable index for the variableTypeIdx'th variable type. 
     TYPE(FieldVariablePtrType), ALLOCATABLE :: variables(:) !<variables(variableIdx). variables(variableId)%ptr is a pointer to the variableIdx'th residual variable.
-    TYPE(VarToJacobianMatrixPtrType), ALLOCATABLE :: varToJacobianMatrixMaps(:) !<varToJacobianMap(variableIdx). varToJacobianMap(variableIdx)%ptr is a pointer to the mapping from the residual variable to the Jacobain matrix for the variableIdx'th residual variable.
+    TYPE(VarToJacobianMatrixMapPtrType), ALLOCATABLE :: varToJacobianMatrixMaps(:) !<varToJacobianMap(variableIdx). varToJacobianMap(variableIdx)%ptr is a pointer to the mapping from the residual variable to the Jacobain matrix for the variableIdx'th residual variable.
     TYPE(JacobianMatrixToVarMapPtrType), ALLOCATABLE :: jacobianMatrixToVarMaps(:) !<jacobianMatrixToVarMaps(jacobianIdx). <jacobianMatrixToVarMaps(jacobianIdx)%ptr is a pointer to the mapping from the Jacobian matrix to the residual variables for the jacobianIdx'th Jacobian.
     REAL(DP) :: residualCoefficient !<The multiplicative coefficient applied to the residual vector
     INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:) !<equationsRowToResidualDOFMap(rowIdx). The mapping from the rowIdx'th row of the equations to the residual variable DOFs.
@@ -2176,8 +2196,8 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(FieldVariableType), POINTER :: rhsVariable !<A pointer to the variable that is mapped to the RHS vector
     TYPE(DomainMappingType), POINTER :: rhsVariableMapping !<A pointer to the RHS variable domain mapping
     REAL(DP) :: rhsCoefficient !<The multiplicative coefficient applied to the RHS vector
-    INTEGER(INTG), POINTER :: rhsDOFToEquationsRowMap(:) !<rhsDOFToEquationsRowMap(residualDofIdx). The mapping from the rhsDofIdx'th RHS dof in the rhs variable to the equations row.   
-    INTEGER(INTG), POINTER :: equationsRowToRHSDOFMap(:) !<equationsRowToRHSDOFMap(rowIdx). The mapping from the rowIdx'th row of the equations to the RHS dof.   
+    INTEGER(INTG), POINTER :: rhsDOFToEquationsRowMap(:) !<rhsDOFToEquationsRowMap(rhsDOFIdx). The mapping from the rhsDofIdx'th RHS DOF in the rhs variable to the equations row.   
+    INTEGER(INTG), POINTER :: equationsRowToRHSDOFMap(:) !<equationsRowToRHSDOFMap(rowIdx). The mapping from the rowIdx'th row of the equations to the RHS DOF.   
   END TYPE EquationsMappingRHSType
 
   !>Contains information on the equations mapping for a source vector i.e., how a field variable is mapped to the source vector for
@@ -2276,7 +2296,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the equations mapping for dynamic matrices i.e., M.a + C.v + K.u
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<A pointer to the equations mapping for the linear matrices i.e., A.x
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping !<A pointer to the equations mapping for the nonlinear matrices and vectors i.e., g(x,y)
-    TYPE(EquationsMappingSourcesType), POINTER :: sourceMapping !<A pointer to the equations mapping for the source vector i.e., s
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping !<A pointer to the equations mapping for the source vector i.e., s
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the equations mapping for the RHS vector i.e., b
     !Create values cache
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<The create values cache for the vector equations mapping
@@ -2311,6 +2331,8 @@ END TYPE GeneratedMeshEllipsoidType
   PUBLIC EquationsMappingRHSType
 
   PUBLIC EquationsMappingSourceType
+
+  PUBLIC EquationsMappingSourcesType
 
   PUBLIC EquationsMappingScalarCreateValuesCacheType
 
@@ -2407,33 +2429,49 @@ END TYPE GeneratedMeshEllipsoidType
   ! Boundary conditions types
   !
 
+  !>Contains information on the boundary conditions for the row variables
+  TYPE BoundaryConditionsRowVariableType
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions for this boundary conditions variable
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the row field variable for this boundary condition variable
+    INTEGER(INTG) :: numberOfDOFs !<The number of DOFs in the row variable
+    INTEGER(INTG) :: totalNumberOfDOFs !<The total number of DOFs in the row variable
+    INTEGER(INTG), ALLOCATABLE :: rowConditionTypes(:) !<rowConditionTypes(dofIdx). The row DOF boundary condition type. \see BoundaryConditionsRoutines_RowTypes
+  END TYPE BoundaryConditionsRowVariableType
+
+  !>A buffer type to allow for an array of pointers to a BoundaryConditionsRowVariableType \see Types::BoundaryConditionsRowVariableType
+  TYPE BoundaryConditionsRowVariablePtrType
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: ptr !<A pointer to the boundary conditions row variable
+  END TYPE BoundaryConditionsRowVariablePtrType
+
   !>Contains information on the boundary conditions for a dependent field variable
-  TYPE BoundaryConditionVariableType
+  TYPE BoundaryConditionsVariableType
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions for this boundary conditions variable
     INTEGER(INTG) :: variableType !<The type of variable for this variable boundary conditions
     TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable for this boundary condition variable
-    INTEGER(INTG), ALLOCATABLE :: DOFTypes(:) !<DOFTypes(dofIdx). The general boundary condition type (eg. fixed or free) of the dofIdx'th dof in the dependent field variable. \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
+    INTEGER(INTG), ALLOCATABLE :: DOFTypes(:) !<DOFTypes(dofIdx). The general boundary condition type (eg. fixed or free) of the dofIdx'th dof in the dependent field variable. \see  BoundaryConditionsRoutines_DOFTypes
     INTEGER(INTG), ALLOCATABLE :: conditionTypes(:) !<conditionTypes(dofIdx). The specific boundary condition type (eg. incremented pressure) of the dofIdx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOFTypes array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
-    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions !<A pointer to the dirichlet boundary condition type for this boundary condition variable
     INTEGER(INTG) :: numberOfDirichletConditions !<Stores the number of dirichlet conditions associated with this variable
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions !<A pointer to the dirichlet boundary condition type for this boundary condition variable
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
     TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions !<A pointer to the pressure incremented condition type for this boundary condition variable
     INTEGER(INTG), ALLOCATABLE :: dofCounts(:) !<dofCounts(CONDITION_TYPE): The number of DOFs that have a CONDITION_TYPE boundary condition set
     LOGICAL, ALLOCATABLE :: parameterSetRequired(:) !<parameterSetRequired(PARAMETER_SET) is true if any boundary condition has been set that requires the PARAMETER_SET field parameter set
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints !<A pointer to the linear DOF constraints structure.
-  END TYPE BoundaryConditionVariableType
+  END TYPE BoundaryConditionsVariableType
 
-  !>A buffer type to allow for an array of pointers to a BoundaryConditionVariableType \see Types::BoundaryConditionVariableType
+  !>A buffer type to allow for an array of pointers to a BoundaryConditionsVariableType \see Types::BoundaryConditionsVariableType
   TYPE BoundaryConditionsVariablePtrType
-    TYPE(BoundaryConditionVariableType), POINTER :: ptr !<A pointer to the boundary conditions variable
+    TYPE(BoundaryConditionsVariableType), POINTER :: ptr !<A pointer to the boundary conditions variable
   END TYPE BoundaryConditionsVariablePtrType
 
   !>Contains information on the boundary conditions for the solver equations. \see OpenCMISS::Iron::cmfe_BoundaryConditionsType
   TYPE BoundaryConditionsType
     TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations.
     LOGICAL :: boundaryConditionsFinished !<Is .TRUE. if the boundary conditions for the equations set has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: numberOfBoundaryConditionsRowVariables !<The number of boundary conditions row variables
+    TYPE(BoundaryConditionsRowVariablePtrType), ALLOCATABLE :: boundaryConditionsRowVariables(:) !<boundaryConditionsRowVariables(variableIdx). boundaryConditionsRowVariables(variableIdx)%ptr is the pointer to the variableIdx'th boundary conditions row variable. variableIdx ranges from 1 to numberOfBoundaryConditionsRowVariables    
     INTEGER(INTG) :: numberOfBoundaryConditionsVariables !<The number of boundary conditions variables
-    TYPE(BoundaryConditionsVariablePtrType), ALLOCATABLE :: boundaryConditionsVariables(:) !<boundaryConditionsVariables(variableIdx). boundaryConditionsVariables(variableIdx)%PTR is the pointer to the variableIdx'th boundary conditions variable. variableIdx ranges from 1 to numberOfBoundaryConditionsVariables
+    TYPE(BoundaryConditionsVariablePtrType), ALLOCATABLE :: boundaryConditionsVariables(:) !<boundaryConditionsVariables(variableIdx). boundaryConditionsVariables(variableIdx)%ptr is the pointer to the variableIdx'th boundary conditions variable. variableIdx ranges from 1 to numberOfBoundaryConditionsVariables
     INTEGER(INTG) :: neumannMatrixSparsity !<The sparsity type of the Neumann integration matrices. \see SolverRoutines_SparsityTypes,SolverRoutines
   END TYPE BoundaryConditionsType
 
@@ -2444,7 +2482,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   !> Contains information on dofs with associated dirichlet conditions and corresponding non-zero elements in the equations matrices
   TYPE BoundaryConditionsDirichletType
-    INTEGER(INTG), ALLOCATABLE :: dirichletDOFIndices(:)  !<dirichletDOFIndices(dofIdx). Stores the dofIdx of the dofs which are subject to a dirichlet boundary condition \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
+    INTEGER(INTG), ALLOCATABLE :: dirichletDOFIndices(:)  !<dirichletDOFIndices(dofIdx). Stores the dofIdx of the dofs which are subject to a dirichlet boundary condition \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
     TYPE(BoundaryConditionsSparsityIndicesPtrType), ALLOCATABLE :: linearSparsityIndices(:,:) !<linearSparsityIndices(equationsSetIdx,equationsMatrixIdx). Stores the indices of the non-zero elements of the equationsSetIdx'th equation set and equationsMatrixIdx'th linear equation matrix in the columns corresponding to the dofs which are subject to a dirichlet boundary condition
     TYPE(BoundaryConditionsSparsityIndicesPtrType), ALLOCATABLE :: dynamicSparsityIndices(:,:) !<dynamicSparsityIndices(equationsSetIdx,equationsMatrixIdx). Stores the indices of the non-zero elements of the equationsSetIdx'th equation set and equationsMatrixIdx'th dynamic equation matrix in the columns corresponding to the dofs which are subject to a dirichlet boundary condition
   END TYPE BoundaryConditionsDirichletType
@@ -2466,21 +2504,21 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Contains information on dofs associated with pressure incremented conditions
   TYPE BoundaryConditionsPressureIncrementedType
-    INTEGER(INTG), ALLOCATABLE :: pressureIncrementedDOFIndices(:)  !<pressureIncrementedDOFIndices(idx). Stores the dofIdx of the dofs which are subject to a pressure incremented boundary condition \see BoundaryConditionsRoutines_BoundaryConditions,BoundaryConditionsRoutines
+    INTEGER(INTG), ALLOCATABLE :: pressureIncrementedDOFIndices(:)  !<pressureIncrementedDOFIndices(idx). Stores the dofIdx of the dofs which are subject to a pressure incremented boundary condition \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
   END TYPE BoundaryConditionsPressureIncrementedType
 
   !>Describes the value of a DOF as a linear combination of other DOFs.
-  TYPE BoundaryConditionsDofConstraintType
+  TYPE BoundaryConditionsDOFConstraintType
     INTEGER(INTG) :: numberOfDOFs !<The number of other DOFs that contribute to the value of this DOF.
     INTEGER(INTG) :: globalDOF !<The global DOF number of this DOF.
     INTEGER(INTG), ALLOCATABLE :: dofs(:) !<dofs(dofIdx) is the dofIdx'th DOF in the linear combination.
     REAL(DP), ALLOCATABLE :: coefficients(:) !<coefficients(dofIdx) is the linear proportion of the dofIdx'th dof in the value for this DOF.
-  END TYPE BoundaryConditionsDofConstraintType
+  END TYPE BoundaryConditionsDOFConstraintType
 
   !>A pointer to a linear DOF constraint.
-  TYPE BoundaryConditionsDofConstraintPtrType
-    TYPE(BoundaryConditionsDofConstraintType), POINTER :: ptr
-  END TYPE BoundaryConditionsDofConstraintPtrType
+  TYPE BoundaryConditionsDOFConstraintPtrType
+    TYPE(BoundaryConditionsDOFConstraintType), POINTER :: ptr
+  END TYPE BoundaryConditionsDOFConstraintPtrType
 
   !>The coupled equations DOF information for the DOF constraints.
   !>The BoundaryConditionsDofConstraintType describes how an
@@ -2488,27 +2526,29 @@ END TYPE GeneratedMeshEllipsoidType
   !>This data structure describes a solver row or column that is mapped to multiple
   !>equations rows or columns and is used to help build the solver mapping.
   !>The first equation row/column is used as the owner of the solver row/column.
-  TYPE BoundaryConditionsCoupledDofsType
+  TYPE BoundaryConditionsCoupledDOFsType
     INTEGER(INTG) :: numberOfDOFs !<The number of equations rows or columns that are mapped to this solver DOF.
     INTEGER(INTG), ALLOCATABLE :: globalDOFs(:) !<globalDOFs(dofIdx) is the dofIdx'th global DOF mapped to the row/column.
     INTEGER(INTG), ALLOCATABLE :: localDOFs(:) !<localDOFs(dofIdx) is the dofIdx'th local DOF mapped to the row/column.
     REAL(DP), ALLOCATABLE :: coefficients(:) !<coefficients(dofIdx) is the linear proportion of the dofIdx'th dof in the mapping for this row or column.
-  END TYPE BoundaryConditionsCoupledDofsType
+  END TYPE BoundaryConditionsCoupledDOFsType
 
   !>A pointer to the coupled equations DOF information for the DOF constraints.
-  TYPE BoundaryConditionsCoupledDofsPtrType
-    TYPE(BoundaryConditionsCoupledDofsType), POINTER :: ptr
-  END TYPE BoundaryConditionsCoupledDofsPtrType
+  TYPE BoundaryConditionsCoupledDOFsPtrType
+    TYPE(BoundaryConditionsCoupledDOFsType), POINTER :: ptr
+  END TYPE BoundaryConditionsCoupledDOFsPtrType
 
   !>Describes linear constraints between solver DOFs in the solver mapping.
-  TYPE BoundaryConditionsDofConstraintsType
+  TYPE BoundaryConditionsDOFConstraintsType
     INTEGER(INTG) :: numberOfConstraints !<The number of DOF constraints.
     INTEGER(INTG) :: numberOfDOFs !<The number of global DOFs.
-    TYPE(BoundaryConditionsDofConstraintPtrType), ALLOCATABLE :: constraints(:) !<constraints(constraintIdx) is a pointer to the dof constraint for the constraintIdx'th constraint.
-    TYPE(BoundaryConditionsCoupledDofsPtrType), ALLOCATABLE :: dofCouplings(:) !<dofCouplings(dofIdx) is a pointer to the coupled DOF information for the solver row/column corresponding to the dofIdx'th equations DOF.
-  END TYPE BoundaryConditionsDofConstraintsType
+    TYPE(BoundaryConditionsDOFConstraintPtrType), ALLOCATABLE :: constraints(:) !<constraints(constraintIdx)%ptr is a pointer to the dof constraint for the constraintIdx'th constraint.
+    TYPE(BoundaryConditionsCoupledDOFsPtrType), ALLOCATABLE :: dofCouplings(:) !<dofCouplings(dofIdx)%ptr is a pointer to the coupled DOF information for the solver row/column corresponding to the dofIdx'th equations DOF.
+  END TYPE BoundaryConditionsDOFConstraintsType
 
-  PUBLIC BoundaryConditionVariableType,BoundaryConditionsVariablePtrType
+  PUBLIC BoundaryConditionsRowVariableType,BoundaryConditionsRowVariablePtrType
+
+  PUBLIC BoundaryConditionsVariableType,BoundaryConditionsVariablePtrType
 
   PUBLIC BoundaryConditionsType
 
@@ -2520,9 +2560,11 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC BoundaryConditionsPressureIncrementedType
 
-  PUBLIC BoundaryConditionsDofConstraintType,BoundaryConditionsDofConstraintPtrType,BoundaryConditionsDofConstraintsType
+  PUBLIC BoundaryConditionsDOFConstraintType,BoundaryConditionsDoOFonstraintPtrType
 
-  PUBLIC BoundaryConditionsCoupledDofsType,BoundaryConditionsCoupledDofsPtrType
+  PUBLIC BoundaryConditionsCoupledDOFsType,BoundaryConditionsCoupledDOFsPtrType
+
+  PUBLIC BoundaryConditionsDOFConstraintsType
 
   !
   !================================================================================================================================
@@ -2598,12 +2640,12 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP) :: analyticUserParams(20)  !<A small array that can be used to hold various parameters often required in analytic problems. \todo should this be allocated?
   END TYPE EquationsSetAnalyticType
 
-  TYPE EquationsSetEquationsSetFieldType
+  TYPE EquationsSetEquationsFieldType
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set.
     LOGICAL :: equationsSetFieldFinished !<Is .TRUE. if the equations set field for the equations set has finished being created, .FALSE. if not.
     LOGICAL :: equationsSetFieldAutoCreated !<Is .TRUE. if the equations set field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: equationsSetFieldField !<A pointer to the equations set field for the equations set.
-  END TYPE EquationsSetEquationsSetFieldType
+    TYPE(FieldType), POINTER :: equationsSetField !<A pointer to the equations set field for the equations set.
+  END TYPE EquationsSetEquationsFieldType
 
   !>Contains information on an equations set. \see OpenCMISS::Iron::cmfe_EquationsSetType
   TYPE EquationsSetType
@@ -2628,7 +2670,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsSetDerivedType), POINTER :: derived !<A pointer to the derived field information.
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations information for the equations set
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary condition information for the equations set. THIS SHOULD BE CHANGED AS EQUATIONS SETS SHOULDN'T HAVE BOUNDARY CONDITIONS
-    TYPE(EquationsSetEquationsSetFieldType) :: equationsSetField !<A pointer to the equations set field for the equations set.
+    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField !<A pointer to the equations field for the equations set.
   END TYPE EquationsSetType
   
   !>A buffer type to allow for an array of pointers to a EquationsSetType \see Types::EquationsSetType
@@ -2658,7 +2700,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC EquationsSetAnalyticType
 
-  PUBLIC EquationsSetEquationsSetFieldType
+  PUBLIC EquationsSetEquationsFieldType
 
   PUBLIC EquationsSetType,EquationsSetPtrType,EquationsSetsType
   
@@ -2776,7 +2818,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<A pointer to the domain mapping for the columns
     INTEGER(INTG), POINTER :: lagrangeDOFToColumnMap(:) !<lagrangeDOFToColumnMap(dofIdx). The mapping from the dofIdx'th Lagrange dof to the interface matrices column
     INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices that the mapping is set up for.
-    TYPE(InterfaceMatrixToVarMapPtrType), ALLOCATABLE :: interfaceMatrixRowsToVarMaps(:) !<interfaceMatrixRowsToVarMaps(interfaceMatrixIdx). Information for the interface matrix rows to dependent variable maps for the interfaceMatrixIdx'th interface matrix.
+    TYPE(InterfaceMatrixToVarMapPtrType), ALLOCATABLE :: interfaceMatrixToVarMaps(:) !<interfaceMatrixToVarMaps(interfaceMatrixIdx). Information for the interface matrix to dependent variable maps for the interfaceMatrixIdx'th interface matrix.
     TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the interface mapping for the RHS vector.
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
   END TYPE InterfaceMappingType
@@ -2813,10 +2855,10 @@ END TYPE GeneratedMeshEllipsoidType
   TYPE InterfaceEquationsType
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition
     LOGICAL :: interfaceEquationsFinished !<Is .TRUE. if the interface equations have finished being created, .FALSE. if not.
-    INTEGER(INTG) :: outputType !<The output type for the interface equations \see InterfaceEquationsRoutines_OutputTypes,InterfaceEquationsRoutines
-    INTEGER(INTG) :: sparsityType !<The sparsity type for the interface equation matrices of the interface equations \see InterfaceEquationsRoutines_SparsityTypes,InterfaceEquationsRoutines
-    INTEGER(INTG) :: linearity !<The interface equations linearity type \see InterfaceCondition_LinearityTypes,InterfaceCondition
-    INTEGER(INTG) :: timeDependence !<The interface equations time dependence type \see InterfaceCondition_TimeDependenceTypes,InterfaceCondition
+    INTEGER(INTG) :: outputType !<The output type for the interface equations \see InterfaceEquations_OutputTypes,InterfaceEquations
+    INTEGER(INTG) :: sparsityType !<The sparsity type for the interface equation matrices of the interface equations \see InterfaceEquations_SparsityTypes,InterfaceEquations
+    INTEGER(INTG) :: linearity !<The interface equations linearity type \see InterfaceEquations_LinearityTypes,InterfaceEquations
+    INTEGER(INTG) :: timeDependence !<The interface equations time dependence type \see InterfaceEquations_TimeDependenceTypes,InterfaceEquations
     TYPE(InterfaceEquationsInterpolationType), POINTER :: interpolation !<A pointer to the interpolation information used in the interface equations.
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface equations mapping for the interface.
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface equations matrices and vectors used for the interface equations.
@@ -3440,10 +3482,10 @@ END TYPE GeneratedMeshEllipsoidType
   END TYPE NewtonTrustregionSolverType
 
   !>Contains information about the convergence test for a newton solver
-  TYPE NewtonSolverConvergenceTest
+  TYPE NewtonSolverConvergenceTestType
     REAL(DP) :: energyFirstIter !<The energy for the first iteration
     REAL(DP) :: normalisedEnergy !<The normalized energy for the subsequent iterations
-  END TYPE NewtonSolverConvergenceTest
+  END TYPE NewtonSolverConvergenceTestType
 
   !>Contains information for a Newton nonlinear solver
   TYPE NewtonSolverType
@@ -3459,7 +3501,7 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP) :: absoluteTolerance !<The tolerance between the absolute decrease between the solution norm and the initial guess
     REAL(DP) :: relativeTolerance !<The tolerance between the relative decrease between the solution norm and the initial guess
     REAL(DP) :: solutionTolerance !<The tolerance of the change in the norm of the solution
-    TYPE(NewtonSolverConvergenceTest), POINTER :: convergenceTest !<A pointer to the newton solver convergence test 
+    TYPE(NewtonSolverConvergenceTestType), POINTER :: convergenceTest !<A pointer to the newton solver convergence test 
     TYPE(NewtonLinesearchSolverType), POINTER :: linesearchSolver !<A pointer to the Newton line search solver information
     TYPE(NewtonTrustregionSolverType), POINTER :: trustregionSolver !<A pointer to the Newton trust region solver information
     TYPE(SolverType), POINTER :: linearSolver !<A pointer to the linked linear solver
@@ -3508,7 +3550,7 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP) :: absoluteTolerance !<The tolerance between the absolute decrease between the solution norm and the initial guess
     REAL(DP) :: relativeTolerance !<The tolerance between the relative decrease between the solution norm and the initial guess
     REAL(DP) :: solutionTolerance !<The tolerance of the change in the norm of the solution
-    TYPE(NewtonSolverConvergenceTest), POINTER :: convergenceTest !<A pointer to the (Quasi-)Newton solver convergence test 
+    TYPE(NewtonSolverConvergenceTestType), POINTER :: convergenceTest !<A pointer to the (Quasi-)Newton solver convergence test 
     TYPE(QuasiNewtonLinesearchSolverType), POINTER :: linesearchSolver !<A pointer to the Quasi-Newton line search solver information
     TYPE(QuasiNewtonTrustregionSolverType), POINTER :: trustregionSolver !<A pointer to the Quasi-Newton trust region solver information
     TYPE(SolverType), POINTER :: linearSolver !<A pointer to the linked linear solver
@@ -3559,7 +3601,7 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP), ALLOCATABLE :: transformationMatrices(:,:,:) !<transformationMatrices(spatialCoord+1,spatialCoord+1,incrementIdx). 4x4 matrices for 3D transformation, 3x3 for 2D transformation
     TYPE(FieldType), POINTER :: field !<fields to which the geometric transformations are applied 
     INTEGER(INTG) :: fieldVariableType !<The field variable type index to transform
-    TYPE(FieldVariableTYpe), POINTER :: fieldVariable !<The field variable to which the geometric transformations are applied.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<The field variable to which the geometric transformations are applied.
   END TYPE GeometricTransformationSolverType
 
    !>A buffer type to allow for an array of pointers to a SolverType \see Types::SolverType
@@ -3612,7 +3654,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC NewtonLinesearchSolverType,NewtonTrustregionSolverType,NewtonSolverType
 
-  PUBLIC NewtonSolverConvergenceTest
+  PUBLIC NewtonSolverConvergenceTestType
 
   PUBLIC QuasiNewtonLinesearchSolverType,QuasiNewtonTrustregionSolverType,QuasiNewtonSolverType
 
@@ -3628,7 +3670,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC SolverType,SolverPtrType,SolversType
   
-  !p
+  !
   !================================================================================================================================
   !
   ! Solver mapping types
@@ -3636,7 +3678,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Information on an equations matrix to solver matrix map
   TYPE EquationsMatrixToSolverMatrixMapType
-    INTEGER(INTG) :: equationMatrixType !<The type of equations matrix \see SolverMappingRoutines_EquationsMatrixTypes,SolverMappingRoutines
+    INTEGER(INTG) :: equationsMatrixType !<The type of equations matrix \see SolverMappingRoutines_EquationsMatrixTypes,SolverMappingRoutines
     INTEGER(INTG) :: equationsMatrixNumber !<The equations matrix number being mapped.
     INTEGER(INTG) :: solverMatrixNumber !<The solver matrix number being mapped.
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix being mapped.
@@ -3674,16 +3716,16 @@ END TYPE GeneratedMeshEllipsoidType
   END TYPE JacobianMatrixToSolverMatrixMapPtrType
 
   !>Contains information on the mappings between field variable dofs inequations and the solver matrix columns (solver dofs) 
-  TYPE VariableToSolverColMapType
-    INTEGER(INTG), ALLOCATABLE :: columnNumbers(:) !<columnNumbers(variableDOFIdx). The solver column number (solver dof) that the variableDOFIdx'th variable dof is mapped to.
-    REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(variableDOFIdx). The multiplicative constant for the mapping between the variableDOFIdx'th variable dof and the solver dof.
-    REAL(DP), ALLOCATABLE :: additiveConstants(:) !<additiveConstants(variableDOFIdx). The additive constant for the mapping between the variableDOFIdx'th variable dof and the solver dof.
-  END TYPE VariableToSolverColMapType
+  TYPE VariableDOFToSolverDOFsMapType
+    INTEGER(INTG), ALLOCATABLE :: dofNumbers(:) !<dofNumbers(variableDOFIdx). The solver DOF number that the variableDOFIdx'th variable DOF is mapped to.
+    REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(variableDOFIdx). The multiplicative constant for the mapping between the variableDOFIdx'th variable DOF and the solver DOF.
+    REAL(DP), ALLOCATABLE :: additiveConstants(:) !<additiveConstants(variableDOFIdx). The additive constant for the mapping between the variableDOFIdx'th variable dof and the solver DOF.
+  END TYPE VariableDOFToSolverDOFsMapType
 
-  !>A buffer type to the VariableToSolverColMapType \see Types::VariableToSolverColMapType
-  TYPE VariableToSolverColMapPtrType
-    TYPE(VariableToSolverColMapType), POINTER :: ptr !<A pointer to the variableToSolverColMap
-  END TYPE VariableToSolverColMapPtrType
+  !>A buffer type to the VariableDOFToSolverDOFsMapType \see Types::VariableDOFToSolverDOFsMapType
+  TYPE VariableDOFToSolverDOFsMapPtrType
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: ptr !<A pointer to the varDOFToSolverDOFsMap
+  END TYPE VariableDOFToSolverDOFsMapPtrType
 
   TYPE SMInterfaceConditionToEquationsSetMapType
     INTEGER(INTG) :: interfaceConditionIndex
@@ -3698,15 +3740,20 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfVariables !<The number of variables mapped to this solver matrix
     INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variableIdx). The variable type for the variableIdx'th variable that is mapped to the solver matrix.
     TYPE(FieldVariablePtrType), ALLOCATABLE :: variables(:) !<variables(variableIdx). variables(variableIdx)%ptr points to the variableIdx'th variable that is mapped to the solver matrix.
-    TYPE(VariableToSolverColMapPtrType), ALLOCATABLE :: variableToSolverColMaps(:) !<variableToSolverColMaps(variableIdx)%ptr. The mappings from the variable dofs to the solver dofs for the variableIdx'th variable in the equations set that is mapped to the solver matrix.
-    INTEGER(INTG) :: numberOfDynamicEquationsMatrices !<The number of dynamic equations matrices mapped to this solver matrix
-    TYPE(EquationsMatrixToSolverMatrixPtrType), ALLOCATABLE :: dynamicEquationsMatrixToSolverMatrixMaps(:) !<dynamicEquationsMatrixToSolverMatrixMaps(equationsMatrixIdx). The maps from the equations_idx'th linear equations matrix to solver matrix
-    INTEGER(INTG) :: numberOfLinearEquationsMatrices !<The number of linear equations matrices mapped to this solver matrix
-    TYPE(EquationsMatrixToSolverMatrixPtrType), ALLOCATABLE :: linearEquationsMatrixToSolverMatrixMaps(:) !<linearEquationsMatrixToSolverMatrixMaps(equationsMatrixIdx). The maps from the equations_idx'th linear equations matrix to solver matrix
-    INTEGER(INTG) :: numberOfEquationsJacobians !<The number of nonlinear equations Jacobian matrices mapped to this solver matrix
-    TYPE(JacobianMatrixToSolverMatrixMapPtrType), ALLOCATABLE :: jacobianMatrixToSolverMatrixMaps(:) !<jacobianMatrixToSolverMatrixMaps(equationsMatrixIdx). The map from the equationsMatrixIdx'th Jacobian matrix to the solver matrix
+    TYPE(VariableDOFToSolverDOFsMapPtrType), ALLOCATABLE :: varDOFToSolverDOFsMaps(:) !<varDOFToSolverDOFsMaps(variableIdx)%ptr. The mappings from the variable dofs to the solver dofs for the variableIdx'th variable in the equations set that is mapped to the solver matrix.
+    INTEGER(INTG) :: numberOfDynamicMatrices !<The number of dynamic matrices mapped to this solver matrix
+    TYPE(EquationsMatrixToSolverMatrixPtrType), ALLOCATABLE :: dynamicMatrixToSolverMatrixMaps(:) !<dynamicMatrixToSolverMatrixMaps(dynamicMatrixIdx). The maps from the dynamicMatrixIdx'th dynamic matrix to solver matrix
+    INTEGER(INTG) :: numberOfLinearMatrices !<The number of linear matrices mapped to this solver matrix
+    TYPE(EquationsMatrixToSolverMatrixPtrType), ALLOCATABLE :: linearMatrixToSolverMatrixMaps(:) !<linearMatrixToSolverMatrixMaps(linerMatrixIdx). The maps from the linearMatrixIdx'th linear equations matrix to solver matrix
+    INTEGER(INTG) :: numberOfJacobianMatrices !<The number of nonlinear equations Jacobian matrices mapped to this solver matrix
+    TYPE(JacobianMatrixToSolverMatrixMapPtrType), ALLOCATABLE :: jacobianMatrixToSolverMatrixMaps(:) !<jacobianMatrixToSolverMatrixMaps(jacobianMatrixIdx). The map from the jacobianMatrixIdx'th Jacobian matrix to the solver matrix
   END TYPE EquationsMatricesToSolverMatrixMapType
 
+  !>A buffer type to allow for an array of pointers to EquationsMatricesToSolverMatrixMapType
+  TYPE EquationsMatricesToSolverMatrixMapPtrType
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: ptr !<A pointer to EquationsMatricesToSolverMatrixMapType
+  END TYPE EquationsMatricesToSolverMatrixMapPtrType
+  
   !>Contains information on the equations to solver matrix mappings when indexing by equations matrix number
   TYPE EquationsMatrixToSolverMatricesMapType
     INTEGER(INTG) :: equationsMatrixNumber !<The number of the equations matrix for these mappings
@@ -3714,6 +3761,11 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMatrixToSolverMatrixPtrType), ALLOCATABLE :: equationsMatrixToSolverMatrixMaps(:) !<equationsMatrixToSolverMatrixMaps(solverMatrixIdx). The maps from the equation matrix to the solverMatrixIdx'th solver matrix
   END TYPE EquationsMatrixToSolverMatricesMapType
 
+  !>A buffer type to allow for an array of pointers to EquationsMatrixToSolverMatricesMapType
+  TYPE EquationsMatrixToSolverMatricesMapPtrType
+    TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: ptr !<A pointer to EquationsMatrixToSolverMatricesMapType
+  END TYPE EquationsMatrixToSolverMatricesMapPtrType
+  
   !>Contains information on the mappings from an equations set to the solver matrices
   TYPE EquationsSetToSolverMatricesMapType
     INTEGER(INTG) :: equationsSetIndex !<The index of the equations set for these mappings
@@ -3722,9 +3774,9 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfInterfaceConditions !<The number of interface conditions affecting this equations set.
     TYPE(SMInterfaceConditionToEquationsSetMapType), ALLOCATABLE :: interfaceConditionToEquationsSetMaps(:) !<interfaceConditionToEquationsSetMaps(interfaceConditionIdx). Information on the interfaceConditionIdx'th interface condition affecting this equations set
     INTEGER(INTG) :: numberOfSolverMatrices !<The number of solver matrices that matrices in this equations set is mapped to
-    TYPE(EquationsMatricesToSolverMatrixMapType), ALLOCATABLE :: equationsMatricesToSolverMatrixMaps(:) !<equationsMatricesToSolverMatrixMaps(solverMatrixIdx). The mappings from the equations matrices in this equation set to the solverMatrixIdx'th solver_matrix
+    TYPE(EquationsMatricesToSolverMatrixMapPtrType), ALLOCATABLE :: equationsMatricesToSolverMatrixMaps(:) !<equationsMatricesToSolverMatrixMaps(solverMatrixIdx). The mappings from the equations matrices in this equation set to the solverMatrixIdx'th solver_matrix
     INTEGER(INTG) :: numberOfEquationsMatrices !<The number of equations matrices in this equations set mapped to the solver matrices
-    TYPE(EquationsMatrixToSolverMatricesMapType), ALLOCATABLE :: equationsMatrixToSolverMatricesMaps(:) !<equationsMatrixToSolverMatricesMaps(equationsMatrixIdx). The mappings from the equation_matrix_idx'th equations matrix in this equation set to the solver_matrices.
+    TYPE(EquationsMatrixToSolverMatricesMapPtrType), ALLOCATABLE :: equationsMatrixToSolverMatricesMaps(:) !<equationsMatrixToSolverMatricesMaps(equationsMatrixIdx). The mappings from the equation_matrix_idx'th equations matrix in this equation set to the solver_matrices.
     INTEGER(INTG) :: numberOfJacobianMatrices !<The number of Jacobian matrices in this equatons set mapped to the solver matrices
     TYPE(JacobianMatrixToSolverMatrixMapPtrType), ALLOCATABLE :: jacobianMatrixToSolverMatrixMaps(:) !<jacobianMatrixToSolverMatrixMaps(jacobianMatrixIdx). The mappings from the jacobianMatrixIdx'th Jacobian matrix in this equation set to the solver matrices map.
     TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:) !<equationsRowToSolverRowsMap(equationsRowIdx). The mappings from the equationsRowIdx'th equations row to the solver matrices rows.
@@ -3740,15 +3792,20 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: solverMatrixNumber !<The number of the solver matrix for these mappings
     INTEGER(INTG) :: lagrangeVariableType !<LThe variable type for the Lagrange variable that is mapped to the solver matrix.
     TYPE(FieldVariableType), POINTER :: lagrangeVariable !<A pointer to the Lagrange variable that is mapped to the solver matrix.
-    TYPE(VariableToSolverColMapType), POINTER :: lagrangeVariableToSolverColMap !<The mappings from the Lagrange variable dofs to the solver dofs.
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: lagrangeVarDOFToSolverDOFsMap !<The mappings from the Lagrange variable dofs to the solver dofs.
     INTEGER(INTG) :: numberOfDependentVariables !<The number of dependent variables mapped to this solver matrix
     INTEGER(INTG), ALLOCATABLE :: dependentVariableTypes(:) !<dependentVariableTypes(variableIdx). The variable type for the variableIdx'th dependent variable that is mapped to the solver matrix.
     TYPE(FieldVariablePtrType), ALLOCATABLE :: dependentVariables(:) !<dependentVariables(variableIdx). depndentVariables(variableIdx)%ptr points to the variableIdx'th dependent variable that is mapped to the solver matrix.
-    TYPE(VariableToSolverColMapPtrType), ALLOCATABLE :: dependentVariableToSolverColMaps(:) !<dependentVariableToSolverColMaps(interfaceMatrixIdx). The mappings from the dependent variable dofs to the solver dofs for the interfaceMatrixIdx'th interface matrix dependent variable in the interface condition that is mapped to the solver matrix.
+    TYPE(VariableDOFToSolverDOFsMapPtrType), ALLOCATABLE :: dependentVarDOFToSolverDOFsMaps(:) !<dependentVarDOFToSolverDOFsMaps(interfaceMatrixIdx). The mappings from the dependent variable dofs to the solver dofs for the interfaceMatrixIdx'th interface matrix dependent variable in the interface condition that is mapped to the solver matrix.
     INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices mapped to this solver matrix
     TYPE(InterfaceMatrixToSolverMatrixMapPtrType), ALLOCATABLE :: interfaceMatrixToSolverMatrixMaps(:) !<interfaceMatrixToSolverMatrixMaps(interfaceMatrixIdx). The maps from the interfaceMatrixIdx'th interface matrix to solver matrix
     TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverColsMap(:) !<interfaceColToSolverColsMap(columnIdx). The mapping from the columnIdx'th column of this interface matrix to the solver matrix columns.
   END TYPE InterfaceMatricesToSolverMatrixMapType
+
+  !>A buffer type to allow for arrays of pointers to InterfaceMatricesToSolverMatrixMapType
+  TYPE InterfaceMatricesToSolverMatrixMapPtrType
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: ptr !<A pointer to InterfaceMatricesToSolverMatrixMapType
+  END TYPE InterfaceMatricesToSolverMatrixMapPtrType
   
   !>Contains information on the interface to solver matrix mappings when indexing by interface matrix number
   TYPE InterfaceMatrixToSolverMatricesMapType
@@ -3758,6 +3815,11 @@ END TYPE GeneratedMeshEllipsoidType
    TYPE(MatrixRowColCouplingType), POINTER :: interfaceRowToSolverRowsMap(:) !<interfaceRowToSolverRowsMap(interfaceRowIdx). The mapping from the interfaceRowIdx'th interface matrix to a solver row.
   END TYPE InterfaceMatrixToSolverMatricesMapType
 
+  !>A buffer type to allow for arrays of pointers to InterfaceMatrixToSolverMatricesMapType
+  TYPE InterfaceMatrixToSolverMatricesMapPtrType
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: ptr !<A pointer to InterfaceMatrixToSolverMatricesMapType
+  END TYPE InterfaceMatrixToSolverMatricesMapPtrType
+  
   TYPE SMEquationsSetToInterfaceConditionMapType
     INTEGER(INTG) :: equationsSetIndex
     TYPE(EquationsSetType), POINTER :: equationsSet
@@ -3772,55 +3834,87 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfEquationsSets !<The number of equations sets that the interface condition affects
     TYPE(SMEquationsSetToInterfaceConditionMapType), ALLOCATABLE :: equationsSetToInterfaceConditionMaps(:) !<equationsSetToInterfaceConditionMaps(equationsSetIdx). The equations set information of the equationsSetIdx'th equations set that the interface condition affects.
     INTEGER(INTG) :: numberOfSolverMatrices !<The number of solver matrices this interface condition is mapped to
-    TYPE(InterfaceMatricesToSolverMatrixMapType), ALLOCATABLE :: interfaceMatricesToSolverMatrixMaps(:) !<interfaceMatricesToSolverMatrixMaps(solverMatrixIdx). The mappings from the interface matrices in this interface condition to the solverMatrixIdx'th solver_matrix
+    TYPE(InterfaceMatricesToSolverMatrixMapPtrType), ALLOCATABLE :: interfaceMatricesToSolverMatrixMaps(:) !<interfaceMatricesToSolverMatrixMaps(solverMatrixIdx). The mappings from the interface matrices in this interface condition to the solverMatrixIdx'th solver_matrix
     INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices in this interface condition that are mapped to solver matrices
-    TYPE(InterfaceMatrixToSolverMatricesMapType), ALLOCATABLE :: interfaceMatrixToSolverMatricesMaps(:) !<interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx). The mappings from the interfaceMatrixIdx'th interface matrix in this interface condition to the solver_matrices.
+    TYPE(InterfaceMatrixToSolverMatricesMapPtrType), ALLOCATABLE :: interfaceMatrixToSolverMatricesMaps(:) !<interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx). The mappings from the interfaceMatrixIdx'th interface matrix in this interface condition to the solver_matrices.
     TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverRowsMap(:) !<interfaceColToSolverRowsMap(interfaceColumnIdx). The mapping from the interfaceColumnIdx'th interface column to solver rows.
   END TYPE InterfaceConditionToSolverMatricesMapType
 
   !>A buffer type to InterfaceConditionToSolverMatricesMapType \see Types::InterfaceConditionToSolverMatricesMapType
   TYPE InterfaceConditionToSolverMatricesMapPtrType
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: ptr
-  END TYPE InterfaceConditi7onToSolverMatricesMapPtrType
+  END TYPE InterfaceConditionToSolverMatricesMapPtrType
   
  !>Contains information about the mapping from a solver matrix column to dynamic equations matrices and variables
   TYPE SolverColToDynamicEquationsMapType
-    INTEGER(INTG) :: numberOfDynamicEquationsMatrices !<The number of dynamic equations matrices the solver column is mapped to in this equations set
+    INTEGER(INTG) :: numberOfDynamicMatrices !<The number of dynamic matrices the solver column is mapped to in this equations set
     INTEGER(INTG), ALLOCATABLE :: equationsMatrixNumbers(:) !<equationsMatrixNumbers(i). The i'th equations matrix number in the equations that the solver column is mapped to
     INTEGER(INTG), ALLOCATABLE :: equationsColumnNumbers(:) !<equationsColumnNumbers(i). The i'th equations column number in the equation set the solver column is mapped to.
     REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(i). The i'th coupling coefficient for solver column mapping
   END TYPE SolverColToDynamicEquationsMapType
 
-  !>Contains information about the mapping from a solver matrix column to static equations matrices and variables
-  TYPE SolverColToStaticEquationsMapType
-    INTEGER(INTG) :: numberOfLinearEquationsMatrices !<The number of linear equations matrices the solver column is mapped to in this equations set
+  !>A buffer type to allow for arrays of pointers to SolverColToDynamicEquationsMapType
+  TYPE SolverColToDynamicEquationsMapPtrType
+    TYPE(SolverColToDynamicEquationsMapType), POINTER :: ptr !<The pointer to SolverColToDynamicEquationsMapType
+  END TYPE SolverColToDynamicEquationsMapPtrType
+
+  !>Contains information about the mapping from a solver matrix column to linear equations matrices and variables
+  TYPE SolverColToLinearEquationsMapType
+    INTEGER(INTG) :: numberOfLinearMatrices !<The number of linear matrices the solver column is mapped to in this equations set
     INTEGER(INTG), ALLOCATABLE :: equationsMatrixNumbers(:) !<equationsMatrixNumbers(i). The i'th equations matrix number in the equations that the solver column is mapped to
     INTEGER(INTG), ALLOCATABLE :: equationsColumnNumbers(:) !<equationsColumnNumbers(i). The i'th equations column number in the equation set the solver column is mapped to.
     REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(i). The i'th coupling coefficient for solver column mapping
-!!TODO: Maybe split this into a linear and a nonlinear part? The only problem is that would probably use about the same memory???
-    INTEGER(INTG) :: jacobianColumnNumber !<The Jacobian column number in the equations set that the solver column is mapped to.
-    REAL(DP) :: jacobianCouplingCoefficient !<The coupling coefficient for the solver column to Jacobian column mapping.
-  END TYPE SolverColToStaticEquationsMapType
+  END TYPE SolverColToLinearEquationsMapType
 
-  !>Contains information about mapping the solver dof to the field variable dofs in the equations set.
+  !>A buffer type to allow for arrays of pointers to SolverColToLinearEquationsMapType
+  TYPE SolverColToLinearEquationsMapPtrType
+    TYPE(SolverColToLinearEquationsMapType), POINTER :: ptr !<The pointer to SolverColToLinearEquationsMapType
+  END TYPE SolverColToLinearEquationsMapPtrType
+
+  !>Contains information about the mapping from a solver matrix column to nonlinear equations matrices and variables
+  TYPE SolverColToNonlinearEquationsMapType
+    INTEGER(INTG) :: numberOfJacobianMatrices !<The number of Jacobian matrices the solver column is mapped to in this equations set
+    INTEGER(INTG), ALLOCATABLE :: jacobianMatrixNumbers(:) !<jacobianMatrixNumbers(i). The i'th Jacobian matrix number in the equations that the solver column is mapped to
+    INTEGER(INTG), ALLOCATABLE :: jacobianColumnNumbers(:) !<jacobianColumnNumbers(i). The i'th Jacobian column number in the equation set the solver column is mapped to.
+    REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(i). The i'th coupling coefficient for solver column mapping
+  END TYPE SolverColToNonlinearEquationsMapType
+
+  !>A buffer type to allow for arrays of pointers to SolverColToNonlinearEquationsMapType
+  TYPE SolverColToNonlinearEquationsMapPtrType
+    TYPE(SolverColToNonlinearEquationsMapType), POINTER :: ptr !<The pointer to SolverColToNonlinearEquationsMapType
+  END TYPE SolverColToNonlinearEquationsMapPtrType
+
+  !>Contains information about mapping the solver DOF to the field variable DOFs in the equations.
   TYPE SolverDOFToVariableDOFsMapType
-    INTEGER(INTG) :: numberOfEquationDOFs !<The number of equation dofs this solver dof is mapped to
-    INTEGER(INTG), ALLOCATABLE :: equationTypes(:) !<equationTypes(equationDOFIdx). The type of equation of the equationDOFIdx'th dof that the solver dof is mapped to.
-    INTEGER(INTG), ALLOCATABLE :: equationIndices(:) !<equationIndices(equationDOFIdx). The index of either the equations set or interface condition of the equationDOFIdx'th dof that this solver dof is mapped to.
-    TYPE(FieldVariablePtrType), ALLOCATABLE :: variable(:) !<variable(equationDOFIdx)%PTR is a pointer to the field variable that the solver dof is mapped to in the equationDOFIdx'th equation
+    INTEGER(INTG) :: numberOfEquationDOFs !<The number of equation DOFs this solver DOF is mapped to
+    INTEGER(INTG), ALLOCATABLE :: equationTypes(:) !<equationTypes(equationDOFIdx). The type of equation of the equationDOFIdx'th dof that the solver dof is mapped to. \see SolverMappingRoutines_EquationsTypes
+    INTEGER(INTG), ALLOCATABLE :: equationIndices(:) !<equationIndices(equationDOFIdx). The index of either the equations set or interface condition of the equationDOFIdx'th DOF that this solver DOF is mapped to.
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: variable(:) !<variable(equationDOFIdx)%ptr is a pointer to the field variable that the solver dof is mapped to in the equationDOFIdx'th equation
     INTEGER(INTG), ALLOCATABLE :: variableDOF(:) !<variableDOF(equationDOFIdx). The variable dof number that the solver dof is mapped to in the equationDOFIdx'th equation
     REAL(DP), ALLOCATABLE :: variableCoefficient(:) !<variableCoefficient(equationDOFIdx). The mulitplicative coefficient for the mapping to the equationDOFIdx'th equations
     REAL(DP), ALLOCATABLE :: additiveConstant(:) !<additiveConstant(equationDOFIdx). The additive constant for the mapping to the equationDOFIdx'th equations
   END TYPE SolverDOFToVariableDOFsMapType
+
+  !A buffer type to allow for an array of pointers to SolverDOFToVariableDOFsMapType
+  TYPE SolverDOFToVariableDOFsMapPtrType
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: ptr !<A pointer to SolverDOFToVariableDOFsMapType
+  END TYPE SolverDOFToVariableDOFsMapPtrType    
   
   !>Contains information about the mappings from a solver matrix to the equations in an equations set
   TYPE SolverMatrixToEquationsSetMapType
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations in the equations set that these columns map to.
     LOGICAL :: haveDynamic !<Is .TRUE. if there are any dynamic equations in the map.
-    LOGICAL :: haveStatic !<Is .TRUE. if there are any static equations in the map.
-    TYPE(SolverColToDynamicEquationsMapType), ALLOCATABLE :: solverColToDynamicEquationsMaps(:) !<solverColToDynamicEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the dynamic equations in the equations set.
-    TYPE(SolverColToStaticEquationsMapType), ALLOCATABLE :: solverColToStaticEquationsMaps(:) !<solverColToStaticEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the static equations in the equations set.
+    LOGICAL :: haveLinear !<Is .TRUE. if there are any linear equations in the map.
+    LOGICAL :: haveNonlinear !<Is .TRUE. if there are any nonlinear equations in the map.
+    TYPE(SolverColToDynamicEquationsMapPtrType), ALLOCATABLE :: solverColToDynamicEquationsMaps(:) !<solverColToDynamicEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the dynamic equations in the equations set.
+    TYPE(SolverColToLinearEquationsMapPtrType), ALLOCATABLE :: solverColToLinearEquationsMaps(:) !<solverColToLinearEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the linear equations in the equations set.
+    TYPE(SolverColToNonlinearEquationsMapPtrType), ALLOCATABLE :: solverColToNonlinearEquationsMaps(:) !<solverColToLinearEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the nonlinear equations in the equations set.
   END TYPE SolverMatrixToEquationsSetMapType
+
+  !>A buffer type to allow for arrays of pointers to SolverMatrixToEquationsSetMapType
+  TYPE SolverMatrixToEquationsSetMapPtrType
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: ptr !<A pointer to SolverMatrixToEquationsSetMapType
+  END TYPE SolverMatrixToEquationsSetMapPtrType
   
   !>Contains information about the mapping from a solver matrix column to interface equations matrices and variables
   TYPE SolverColToInterfaceEquationsMapType
@@ -3830,14 +3924,24 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(i). The i'th coupling coefficient for solver column mapping
   END TYPE SolverColToInterfaceEquationsMapType
 
+  !>A buffer type to allow for an array of pointers to SolverColToInterfaceEquationsMapType
+  TYPE SolverColToInterfaceEquationsMapPtrType
+    TYPE(SolverColToInterfaceEquationsMapType), POINTER :: ptr !<A pointer to SolverColToInterfaceEquationsMapType
+  END TYPE SolverColToInterfaceEquationsMapPtrType
+
   !>Contains information about the mappings from a solver matrix to the equations in an equations set
   TYPE SolverMatrixToInterfaceConditionMapType
-    TYPE(EquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations in the interface conditionthat these columns map to.
-    TYPE(SolverColToInterfaceEquationsMapType), ALLOCATABLE :: solverColToInterfaceEquationsMaps(:) !<solverColToInterfaceEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the interface equations in the interface condition.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations in the interface conditionthat these columns map to.
+    TYPE(SolverColToInterfaceEquationsMapPtrType), ALLOCATABLE :: solverColToInterfaceEquationsMaps(:) !<solverColToInterfaceEquationsMaps(columnIdx). The mappings from the columnIdx'th column of the solver matrix to the interface equations in the interface condition.
   END TYPE SolverMatrixToInterfaceConditionMapType
+
+  !>A buffer type to allow for an array of pointers to SolverMatrixToInterfaceConditionMapType
+  TYPE SolverMatrixToInterfaceConditionMapPtrType
+    TYPE(SolverMatrixToInterfaceConditionMapType), POINTER :: ptr !<A pointer to SolverMatrixToInterfaceConditionMapType
+  END TYPE SolverMatrixToInterfaceConditionMapPtrType
   
-  !>Contains information on the mappings from a solver matrix to equations sets
-  TYPE SolverColToEquationsMapsType
+  !>Contains information on the mappings from a solver columns to equations 
+  TYPE SolverColsToEquationsMapType
     INTEGER(INTG) :: solverMatrixNumber !<The number of this solver matrix
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping for this solver matrix mapping
     TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix being mappind
@@ -3850,36 +3954,47 @@ END TYPE GeneratedMeshEllipsoidType
 !!TODO: should this be index by solver dof rather than column???
     TYPE(SolverDOFToVariableDOFsMapType), ALLOCATABLE :: solverDOFToVariableDOFsMap(:) !<solverDOFToVariableDOFsMap(dofIdx). The mappings from the dofIdx'th solver dof to the field variables in the equations set.
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
-  END TYPE SolverColToEquationsMapsType
+  END TYPE SolverColsToEquationsMapType
+  
+  !>A buffer type to allow for arrays of pointers to a SolverColToEquationsMapType
+  TYPE SolverColsToEquationsMapPtrType
+    TYPE(SolverColsToEquationsMapType), POINTER :: ptr !<A pointer to SolverColToEquationsMapType
+  END TYPE SolverColsToEquationsMapPtrType
 
   !>Contains information on the mappings from a solver row to the equations.
-  TYPE SolverRowToEquationsMapsType
+  TYPE SolverRowToEquationsMapType
     INTEGER(INTG) :: numberOfEquationsSetRows !<The number of equations set rows the solver row is mapped to. If the rows are interface rows then this will be zero.
     INTEGER(INTG) :: interfaceConditionIndex !<The interface condition index that the solver row is mapped to. If the rows are from an equations set then this will be zero.
     INTEGER(INTG), ALLOCATABLE :: equationsIndex(:) !<equationsIndex(rowColIdx). If the rows are equations set rows then this is the index of the equations set that the rowColIdx'th equations set row belongs to. If the rows are interface rows this will not be allocated.
     INTEGER(INTG), ALLOCATABLE :: rowColNumber(:) !<rowColNumber(rowColIdx). If the rows are equations set rows the rowColIdx'th equations row number that the solver row is mapped to. If the rows are interface rows then the rowColIdx'th column number that the solver row is mapped to.
     REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(rowColIdx). The rowColIdx'th coupling coefficient for the solver row to equations mapping
-  END TYPE SolverRowToEquationsMapsType
+  END TYPE SolverRowToEquationsMapType
+
+  !>A buffer type to allow for arrays of pointers to a SolverRowToEquationsMapType
+  TYPE SolverRowToEquationsMapPtrType
+    TYPE(SolverRowToEquationsMapType), POINTER :: ptr !<A pointer to SolverRowToEquationsMapType
+  END TYPE SolverRowToEquationsMapPtrType
 
   !>Contains information about the cached create values for a solver mapping
   TYPE SolverMappingCreateValuesCacheType
     TYPE(ListPtrType), POINTER :: equationsVariableList(:) !<equationsVariableList(solverMatrixIdx). The list of equations set variables in the solver mapping.
-    TYPE(ListType), POINTER :: equationsRHSVariablesList !<The list of equations RHS variables in the solver mapping.
+    TYPE(ListType), POINTER :: equationsRHSVariableList !<The list of equations RHS variables in the solver mapping.
     INTEGER, ALLOCATABLE :: dynamicVariableType(:) !<dynamicVariableType(equationsSetIdx). The variable type that is mapped to the dynamic matrices for the equationsSetIdx'th equations set.
     INTEGER(INTG), ALLOCATABLE :: matrixVariableTypes(:,:,:) !<matrixVariableTypes(0:variableType,equationsSetIdx,matrixIdx). The list of matrix variable types in the equationsSetIdx'th equations set for the matrixIdx'th solver matrix. matrixVariableTypes(0,equationsSetIdx,matrixIdx) is the number of variable types in the equationsSetIdx'th equations set mapped to the matrixIdx'th solver matrix and matrixVariableTypes(1..,equationsSetIdx,matrixIdx) is the list of the variable types in the equations set.
-    INTEGER(INTG), ALLOCATABLE :: residualVariableTypes(:,:) !<residualVariableTypes(0:variableType,equationsSetIdx). The list of residual variable types in the equationsSetIdx'th equations set. residualVariableTypes(0,equationsSetIdx) is the number of variable types in the equationsSetIdx'th equations set and residualVariableTypes(1..,equationsSetIdx) is the list of the variable types in the equations set.
+    INTEGER(INTG), ALLOCATABLE :: residualVariableTypes(:,:,:) !<residualVariableTypes(0:variableType,residualIdx,equationsSetIdx). The list of residual variable types in the residualIdx'th residual in the equationsSetIdx'th equations set. residualVariableTypes(0,residualIdx,equationsSetIdx) is the number of variable types in the residualIdx'th residual in equationsSetIdx'th equations set and residualVariableTypes(1..,residualIdx,equationsSetIdx) is the list of the variable types in the residual in the equations set.
     INTEGER(INTG), ALLOCATABLE :: rhsVariableType(:) !<rhsVariableType(equationsSetIdx). The variable type that is mapped to the solution RHS for the equationsSetIdx'th equations set
-    INTEGER, ALLOCATABLE :: sourceVariableTypes(:,:) !<sourceVariableTypes(variableType,equationsSetIdx). The source variable type that is mapped to the RHS for the equationsSetIdx'th equations set.
+    INTEGER, ALLOCATABLE :: sourceVariableTypes(:,:,:) !<sourceVariableTypes(variableType,sourceIdx,equationsSetIdx). The source variable type that is mapped to the sourceIdx'th source for the equationsSetIdx'th equations set.
     TYPE(ListPtrType), POINTER :: interfaceVariableList(:) !<interfaceVariableList(solverMatrixIdx). The list of interface condition variables in the solver mapping for the solver_matrix idx'th solver matrix.
     TYPE(ListPtrType), POINTER :: interfaceIndices(:) !<interfaceIndices(equationsSetIdx). The list of interface condition indices in the equationsSetIdx'th equations set.
   END TYPE SolverMappingCreateValuesCacheType
 
+  !>Contains information on a field variable in a solver matrix
   TYPE SolverMappingVariableType
-    TYPE(FieldVariableType), POINTER :: variable
-    INTEGER(INTG) :: variableType
-    INTEGER(INTG) :: numberOfEquations
-    INTEGER(INTG), ALLOCATABLE :: equationTypes(:)
-    INTEGER(INTG), ALLOCATABLE :: equationIndices(:)
+    TYPE(FieldVariableType), POINTER :: variable !<The field variable in the solver matrix
+    INTEGER(INTG) :: variableType !<The field variable type in the solver matrix
+    INTEGER(INTG) :: numberOfEquations !<The number of equations (set or interface) involving this field variable
+    INTEGER(INTG), ALLOCATABLE :: equationTypes(:) !<equationTypes(equationsIdx).
+    INTEGER(INTG), ALLOCATABLE :: equationIndices(:) !<equationIndices(equationsIdx).
   END TYPE SolverMappingVariableType
 
   !>Contains information on the variables involved in a solver matrix
@@ -3898,7 +4013,7 @@ END TYPE GeneratedMeshEllipsoidType
   TYPE SolverMatrixToEquationsMapType
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer back to the solver mapping
     INTEGER(INTG) :: solverMatrixNumber !<The number of this matrix to equations map
-    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix being mappind
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<A pointer to the solver matrix being mapped
     TYPE(SolverMappingVariablesType), POINTER :: variablesList !<The list of variable for the solverMatrixIdx'th solver matrix.
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this distributed solver matrix
     INTEGER(INTG) :: numberOfDOFs !<The number of local dofs (excluding ghost values) in the solver vector associated with this solver matrix
@@ -3909,9 +4024,8 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfInterfaceConditions !<The number of interface conditions mapped to this sovler matrix
     TYPE(SolverMatrixToInterfaceConditionMapPtrType), ALLOCATABLE :: solverMatrixToInterfaceConditionMaps(:) !<solverMatrixToInterfaceConditionMaps(interfaceConditionIdx). The solver matrix to interface condition maps for the interfaceConditionIdx'th interface condition.
 !!TODO: should this be index by solver dof rather than column???
-    TYPE(SolverDOFToVariableDOFsMapType), ALLOCATABLE :: solverDOFToVariableDOFsMap(:) !<solverDOFToVariableDOFsMap(dofIdx). The mappings from the dofIdx'th solver dof to the field variables in the equations set.
-    TYPE(SolverColToEquationsMapsType), POINTER :: solverColToEquationsColsMap !<The mapping from the solverMatrixIdx'th solver matrix to the equations set. 
-   TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
+    TYPE(SolverDOFToVariableDOFsMapPtrType), ALLOCATABLE :: solverDOFToVariableDOFsMaps(:) !<solverDOFToVariableDOFsMaps(dofIdx). A pointer to the mappings from the dofIdx'th solver dof to the field variables in the equations.
+    TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
    END TYPE SolverMatrixToEquationsMapType
 
   !>A buffer type to a SolverMatrixToEquationsMapType \see Types::SolverMatrixToEquationsMapType
@@ -3932,13 +4046,14 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfInterfaceConditions !<The number of interface conditions in the solution mapping.
     TYPE(InterfaceConditionPtrType), ALLOCATABLE :: interfaceConditions(:) !<The list of interface conditions that are in this
     TYPE(InterfaceConditionToSolverMatricesMapPtrType), ALLOCATABLE :: interfaceConditionToSolverMatricesMaps(:) !<interfaceConditionToSolverMatricesMaps(interfaceConditionIdx). The mapping from the interfaceConditionIdx'th interface condition to the solver matrices.
-    TYPE(SolverMatrixToEquationsMapPtrType), ALLOCATABLE :: solverMatrixToEquationsMaps(:) !<solverMatrixToEquationsMaps(solverMatrixIx)> The mapping from the solverMatrixIdx'th solver matrix to the equations (equations set and interface condition) matrices
-    TYPE(SolverMappingVariablesType), ALLOCATABLE :: variablesList(:) !<variablesList(solverMatrixIdx). The list of variable for the solverMatrixIdx'th solver matrix.
-    TYPE(SolverMappingVariablesType), POINTER :: rhsVariablesList !<The list of variables for the RHS vector
-    TYPE(SolverColToEquationsMapsType), ALLOCATABLE :: solverColToEquationsColsMap(:) !<solverColToEquationsColsMap(solverMatrixIdx). The mapping from the solverMatrixIdx'th solver matrix to the equations set. 
-    TYPE(SolverRowToEquationsMapsType), ALLOCATABLE :: solverRowToEquationsRowsMap(:) !<solverRowToEquationsRowsMap(localRowIdx). The mappings from the local_row_idx'th solver row to the equations set rows.
+    !!TODO: This should probably be solverMatricesToEquationsMaps
+    TYPE(SolverMatrixToEquationsMapPtrType), ALLOCATABLE :: solverMatricesToEquationsMaps(:) !<solverMatricesToEquationsMaps(solverMatrixIx). The mapping from the solverMatrixIdx'th solver matrix to the equations (equations set and interface condition) matrices
+    !TYPE(SolverMappingVariablesType), ALLOCATABLE :: variablesList(:) !<variablesList(solverMatrixIdx). The list of variable for the solverMatrixIdx'th solver matrix.
+    !TYPE(SolverColsToEquationsMapsPtrType), ALLOCATABLE :: solverColsToEquationsColsMaps(:) !<solverColsToEquationsColsMap(solverMatrixIdx). The mapping from the solverMatrixIdx'th solver matrix columns to the equations columns. 
+    TYPE(SolverRowToEquationsMapPtrType), ALLOCATABLE :: solverRowToEquationsMaps(:) !<solverRowToEquationsMaps(localRowIdx). The mappings from the local_row_idx'th solver row to the equations set rows.
     !LOGICAL :: HAVE_JACOBIAN !<Is .TRUE. if the Jacobian exists for nonlinear problems.
     TYPE(DomainMappingType), POINTER :: rowDOFsMapping !<The domain mapping for the solver rows.
+    TYPE(SolverMappingVariablesType), POINTER :: rhsVariablesList !<The list of variables for the RHS vector
     TYPE(SolverMappingCreateValuesCacheType), POINTER :: createValuesCache !<The create values cache for the solver mapping
   END TYPE SolverMappingType
 
@@ -3948,33 +4063,49 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC JacobianMatrixToSolverMatrixMapType,JacobianMatrixToSolverMatrixMapPtrType
 
-  PUBLIC VariableToSolverColMapType
+  PUBLIC VariableDOFToSolverDOFsMapType,VariableDOFToSolverDOFsMapPtrType
 
   PUBLIC SMInterfaceConditionToEquationsSetMapType
 
-  PUBLIC EquationsMatricesToSolverMatrixMapType,EquationsMatrixToSolverMatricesMapPtrType
+  PUBLIC EquationsMatricesToSolverMatrixMapType,EquationsMatricesToSolverMatrixMapPtrType
+
+  PUBLIC EquationsMatrixToSolverMatricesMapType,EquationsMatrixToSolverMatricesMapPtrType
 
   PUBLIC EquationsSetToSolverMatricesMapType,EquationsSetToSolverMatricesMapPtrType
 
-  PUBLIC InterfaceMatricesToSolverMatrixMapType,InterfaceMatrixToSolverMatricesMapPtrType
+  PUBLIC InterfaceMatricesToSolverMatrixMapType,InterfaceMatricesToSolverMatrixMapPtrType
+
+  PUBLIC InterfaceMatrixToSolverMatricesMapType,InterfaceMatrixToSolverMatricesMapPtrType
 
   PUBLIC SMEquationsSetToInterfaceConditionMapType
 
   PUBLIC InterfaceConditionToSolverMatricesMapType,InterfaceConditionToSolverMatricesMapPtrType
 
-  PUBLIC SolverColToDynamicEquationsMapType,SolverColToStaticEquationsMapType,SolverColToInterfaceEquationsMapType
+  PUBLIC SolverColToDynamicEquationsMapType,SolverColToDynamicEquationsMapPtrType
 
-  PUBLIC SolverDOFToVariableDOFsMapType
+  PUBLIC SolverColToLinearEquationsMapType,SolverColToLinearEquationsMapPtrType
+
+  PUBLIC SolverColToNonlinearEquationsMapType,SolverColToNonlinearEquationsMapPtrType
+
+  PUBLIC SolverColToInterfaceEquationsMapType,SolverColToInterfaceEquationsMapPtrType
+
+  PUBLIC SolverDOFToVariableDOFsMapType,SolverDOFToVariableDOFsMapPtrType
 
   PUBLIC SolverMatrixToEquationsSetMapType,SolverMatrixToInterfaceConditionMapType
 
-  PUBLIC SolverColToEquationsMapType,SolverRowToEquationsMapType
+  PUBLIC SolverMatrixToEquationsSetMapPtrType,SolverMatrixToInterfaceConditionMapPtrType
+
+  !PUBLIC SolverColsToEquationsMapType,SolverColsToEquationsMapPtrType
+
+  PUBLIC SolverRowToEquationsMapType,SolverRowToEquationsMapPtrType
 
   PUBLIC SolverMappingCreateValuesCacheType
 
   PUBLIC SolverMappingVariableType,SolverMappingVariablesType
 
   PUBLIC SolverMappingDofCouplingsType
+
+  PUBLIC SolverMatrixToEquationsMapType,SolverMatrixToEquationsMapPtrType
 
   PUBLIC SolverMappingType
   

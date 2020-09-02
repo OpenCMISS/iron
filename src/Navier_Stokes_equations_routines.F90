@@ -7153,7 +7153,7 @@ CONTAINS
     LOGICAL :: solidEquationsSetFound=.FALSE.,SolidNodeFound=.FALSE.,fluidEquationsSetFound=.FALSE.,parameterSetCreated
     CHARACTER(70) :: inputFile,tempString
     TYPE(BasisType), POINTER :: basis
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
@@ -9464,7 +9464,7 @@ CONTAINS
     REAL(DP) :: time,value,x(3),xiCoordinates(3),initialValue,tCoordinates(20,3),nodeAnalyticParameters(10)
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
     TYPE(BasisType), POINTER :: basis
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -13034,7 +13034,7 @@ CONTAINS
     LOGICAL :: boundaryNode,boundaryConverged(30),localConverged,MPI_LOGICAL,coupled1D0DBoundary,continueLoop
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: parentLoop,parentLoop2,subLoop
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
@@ -13349,7 +13349,7 @@ CONTAINS
     REAL(DP) :: absoluteCouplingTolerance2,relativeCouplingTolerance
     LOGICAL :: boundaryNode,boundaryConverged(30),localConverged,globalConverged,continueLoop
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -14528,7 +14528,7 @@ CONTAINS
     REAL(DP), POINTER :: impedance(:),flow(:)
     INTEGER(INTG) :: nodeIdx,versionIdx,derivativeIdx,componentIdx,numberOfVersions,numberOfLocalNodes
     INTEGER(INTG) :: dependentDof,boundaryConditionType,k
-    TYPE(BoundaryConditionVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: dependentDomain
     TYPE(DomainNodesType), POINTER :: dependentDomainNodes
@@ -14781,7 +14781,7 @@ CONTAINS
                 CALL Field_ParameterSetUpdateLocalNode(dependentField,FIELD_U_VARIABLE_TYPE, &
                  & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,2,ABoundary,err,error,*999)
 
-              CASE(BOUNDARY_CONDITION_FREE, &
+              CASE(BOUNDARY_CONDITION_NONE, &
                  & BOUNDARY_CONDITION_FIXED, &
                  & BOUNDARY_CONDITION_FIXED_INLET, &
                  & BOUNDARY_CONDITION_FIXED_OUTLET, &

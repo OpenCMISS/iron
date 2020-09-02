@@ -72,7 +72,7 @@ MODULE InterfaceMappingAccessRoutines
 
   PUBLIC InterfaceMapping_InterfaceEquationsGet
 
-  PUBLIC InterfaceMapping_InterfaceMatrixRowsToVarMapGet
+  PUBLIC InterfaceMapping_InterfaceMatrixToVarMapGet
 
   PUBLIC InterfaceMapping_LagrangeVariableGet
 
@@ -80,29 +80,43 @@ MODULE InterfaceMappingAccessRoutines
 
   PUBLIC InterfaceMapping_MatrixVariableGet
 
+  PUBLIC InterfaceMapping_NumberOfColumnsGet
+
+  PUBLIC InterfaceMapping_NumberOfGlobalColumnsGet
+
+  PUBLIC InterfaceMapping_NumberOfInterfaceMatricesGet
+
   PUBLIC InterfaceMapping_RHSMappingExists
 
   PUBLIC InterfaceMapping_RHSMappingGet
+
+  PUBLIC InterfaceMapping_TotalNumberOfColumnsGet
 
   PUBLIC InterfaceMappingCVC_HasTransposeGet
 
   PUBLIC InterfaceMappingCVC_MatrixCoefficientGet
 
-  PUBLIC InterfaceMappingCVS_MatrixColVariableIndexGet
+  PUBLIC InterfaceMappingCVC_MatrixColVariableIndexGet
 
-  PUBLIC InterfaceMappingCVS_MatrixRowVariableIndexGet
+  PUBLIC InterfaceMappingCVC_MatrixRowVariableIndexGet
 
   PUBLIC InterfaceMappingCVC_TransposeMatrixCoefficientGet
 
-  PUBLIC InterfaceMappingIMToVM_InterfaceMatrixGet
+  PUBLIC InterfaceMappingIMToVMap_InterfaceMatrixGet
 
-  PUBLIC InterfaceMappingIMToVM_MeshIndexGet
+  PUBLIC InterfaceMappingIMToVMap_MeshIndexGet
 
-  PUBLIC InterfaceMappingIMToVM_RowDOFsMappingGet
+  PUBLIC InterfaceMappingIMToVMap_NumberOfRowsGet
 
-  PUBLIC InterfaceMappingIMToVM_VariableGet
+  PUBLIC InterfaceMappingIMToVMap_NumberOfGlobalRowsGet
 
-  PUBLIC InterfaceMappingIMToVM_VariableDOFToRowMapGet
+  PUBLIC InterfaceMappingIMToVMap_RowDOFsMappingGet
+
+  PUBLIC InterfaceMappingIMToVMap_TotalNumberOfRowsGet
+
+  PUBLIC InterfaceMappingIMToVMap_VariableGet
+
+  PUBLIC InterfaceMappingIMToVMap_VariableDOFToRowMapGet
 
   CONTAINS
 
@@ -275,12 +289,12 @@ MODULE InterfaceMappingAccessRoutines
   !
 
   !>Gets a interface matrix rows to variable map for an interface mapping.
-  SUBROUTINE InterfaceMapping_InterfaceMatrixRowsToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixRowsToVarMap,err,error,*)
+  SUBROUTINE InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,matrixIdx,interfaceMatrixToVarMap,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the interface matrix rows to variable map for
     INTEGER(INTG), INTENT(IN) :: matrixIdx !<The interface matrix index to get the interface matrix rows to variable map for
-    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixRowsToVarMap !<On exit, a pointer to the specified interface matrix rows to variable map in the interface mapping. Must not be associated on entry
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<On exit, a pointer to the specified interface matrix to variable map in the interface mapping. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -288,11 +302,11 @@ MODULE InterfaceMappingAccessRoutines
     TYPE(VARYING_STRING) :: localError
 #endif
  
-    ENTERS("InterfaceMapping_InterfaceMatrixRowsToVarMapGet",err,error,*998)
+    ENTERS("InterfaceMapping_InterfaceMatrixToVarMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(interfaceMatrixRowsToVarMap)) &
-      & CALL FlagError("Interface matrix rows to variable map is already associated.",err,error,*998)
+    IF(ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
     IF(matrixIdx<1.OR.matrixIdx>interfaceMapping%numberOfInterfaceMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
@@ -300,27 +314,27 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(interfaceMapping%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) &
-      & CALL FlagError("The interface matrix rows to variable maps is not allocated for the interface mapping.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixToVarMaps)) &
+      & CALL FlagError("The interface matrix to variable maps is not allocated for the interface mapping.",err,error,*999)
 #endif    
 
-    interfaceMatrixRowsToVarMap=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%ptr
+    interfaceMatrixToVarMap=>interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(interfaceMatrixRowsToVarMap)) THEN
-      localError="The interface matrix rows to variable map is not associated for matrix index "// &
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) THEN
+      localError="The interface matrix to variable map is not associated for matrix index "// &
         & TRIM(NumberToVString(matrixIdx,"*",err,error))//" in the interface mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
        
-    EXITS("InterfaceMapping_InterfaceMatrixRowsToVarMapGet")
+    EXITS("InterfaceMapping_InterfaceMatrixToVarMapGet")
     RETURN
-999 NULLIFY(interfaceMatrixRowsToVarMap)
-998 ERRORSEXITS("InterfaceMapping_InterfaceMatrixRowsToVarMapGet",err,error)
+999 NULLIFY(interfaceMatrixToVarMap)
+998 ERRORSEXITS("InterfaceMapping_InterfaceMatrixToVarMapGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMapping_InterfaceMatrixRowsToVarMapGet
+  END SUBROUTINE InterfaceMapping_InterfaceMatrixToVarMapGet
 
   !
   !================================================================================================================================
@@ -423,11 +437,16 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(interfaceMapping%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) &
-      & CALL FlagError("The interface matrix row to variable maps is not allocated for the interface mapping.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixToVarMaps)) &
+      & CALL FlagError("The interface matrix rows to variable maps is not allocated for the interface mapping.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%ptr)) THEN
+      localError="The interface matrix rows to variable maps is not associated for matrix number "// &
+        & TRIM(NumberToVString(matrixNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 #endif    
 
-    equationsSet=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%equationsSet
+    equationsSet=>interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%ptr%equationsSet
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
@@ -474,11 +493,16 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(interfaceMapping%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixRowsToVarMaps)) &
-      & CALL FlagError("The interface matrix row to variable maps is not allocated for the interface mapping.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfaceMapping%interfaceMatrixToVarMaps)) &
+      & CALL FlagError("The interface matrix rows to variable maps is not allocated for the interface mapping.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%ptr)) THEN
+      localError="The interface matrix rows to variable maps is not associated for matrix number "// &
+        & TRIM(NumberToVString(matrixNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 #endif    
 
-    matrixVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%variable
+    matrixVariable=>interfaceMapping%interfaceMatrixToVarMaps(matrixNumber)%ptr%variable
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(matrixVariable)) THEN
@@ -495,6 +519,93 @@ MODULE InterfaceMappingAccessRoutines
     RETURN 1
     
   END SUBROUTINE InterfaceMapping_MatrixVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of columns of matrices in an interface mapping.
+  SUBROUTINE InterfaceMapping_NumberOfColumnsGet(interfaceMapping,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On exit, the number of columns of matrices in the interface mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMapping_NumberOfColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfColumns=interfaceMapping%numberOfColumns
+       
+    EXITS("InterfaceMapping_NumberOfColumnsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMapping_NumberOfColumnsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMapping_NumberOfColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of global columns of matrices in an interface mapping.
+  SUBROUTINE InterfaceMapping_NumberOfGlobalColumnsGet(interfaceMapping,numberOfGlobalColumns,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the number of global columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalColumns !<On exit, the number of global columns of matrices in the interface mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMapping_NumberOfGlobalColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfGlobalColumns=interfaceMapping%numberOfGlobalColumns
+       
+    EXITS("InterfaceMapping_NumberOfGlobalColumnsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMapping_NumberOfGlobalColumnsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMapping_NumberOfGlobalColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of interface matrices in an interface mapping.
+  SUBROUTINE InterfaceMapping_NumberOfInterfaceMatricesGet(interfaceMapping,numberOfInterfaceMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the number of interface matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceMatrices !<On exit, the number of the interface matrices in the interface mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMapping_NumberOfInterfaceMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
+#endif    
+
+    numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
+       
+    EXITS("InterfaceMapping_NumberOfInterfaceMatricesGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMapping_NumberOfInterfaceMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMapping_NumberOfInterfaceMatricesGet
 
   !
   !================================================================================================================================
@@ -568,6 +679,35 @@ MODULE InterfaceMappingAccessRoutines
   !================================================================================================================================
   !
 
+  !>Gets the total number of columns of matrices in an interface mapping.
+  SUBROUTINE InterfaceMapping_TotalNumberOfColumnsGet(interfaceMapping,totalNumberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the total number of columns for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfColumns !<On exit, the total number of columns of matrices in the interface mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMapping_TotalNumberOfColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfColumns=interfaceMapping%totalNumberOfColumns
+       
+    EXITS("InterfaceMapping_TotalNumberOfColumnsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMapping_TotalNumberOfColumnsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMapping_TotalNumberOfColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the has transpose for an interface matrix for an interface mapping create values cache.
   SUBROUTINE InterfaceMappingCVC_HasTransposeGet(createValuesCache,matrixIdx,hasTranspose,err,error,*)
 
@@ -592,11 +732,11 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(createValuesCachce%hasTranspose)) &
+    IF(.NOT.ALLOCATED(createValuesCache%hasTranspose)) &
       & CALL FlagError("The has transpose array is not allocated for the create values cache.",err,error,*999)
 #endif    
 
-    hasTranspose=createValuesCache%hasTranpose(matrixIdx)
+    hasTranspose=createValuesCache%hasTranspose(matrixIdx)
        
     EXITS("InterfaceMappingCVC_HasTransposeGet")
     RETURN
@@ -633,7 +773,7 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(createValuesCachce%matrixCoefficients)) &
+    IF(.NOT.ALLOCATED(createValuesCache%matrixCoefficients)) &
       & CALL FlagError("The matrix coefficients array is not allocated for the create values cache.",err,error,*999)
 #endif    
 
@@ -674,7 +814,7 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(createValuesCachce%matrixColFieldVariableIndices)) &
+    IF(.NOT.ALLOCATED(createValuesCache%matrixColFieldVariableIndices)) &
       & CALL FlagError("The matrix column variable indices array is not allocated for the create values cache.",err,error,*999)
 #endif    
 
@@ -692,7 +832,7 @@ MODULE InterfaceMappingAccessRoutines
   !
 
   !>Gets the row variable index for an interface matrix for an interface mapping create values cache.
-  SUBROUTINE InterfaceMappingCVC_MatrixColVariableIndexGet(createValuesCache,matrixIdx,rowVariableIndex,err,error,*)
+  SUBROUTINE InterfaceMappingCVC_MatrixRowVariableIndexGet(createValuesCache,matrixIdx,rowVariableIndex,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the interface mapping create value cache to get the row variable index for
@@ -705,7 +845,7 @@ MODULE InterfaceMappingAccessRoutines
     TYPE(VARYING_STRING) :: localError
 #endif
  
-    ENTERS("InterfaceMappingCVC_MatrixColVariableIndexGet",err,error,*999)
+    ENTERS("InterfaceMappingCVC_MatrixRowVariableIndexGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(createValuesCache)) CALL FlagError("Create values cache is not associated.",err,error,*999)
@@ -715,18 +855,18 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(createValuesCachce%matrixRowFieldVariableIndices)) &
+    IF(.NOT.ALLOCATED(createValuesCache%matrixRowFieldVariableIndices)) &
       & CALL FlagError("The matrix row variable indices array is not allocated for the create values cache.",err,error,*999)
 #endif    
 
     rowVariableIndex=createValuesCache%matrixRowFieldVariableIndices(matrixIdx)
        
-    EXITS("InterfaceMappingCVC_MatrixColVariableIndexGet")
+    EXITS("InterfaceMappingCVC_MatrixRowVariableIndexGet")
     RETURN
-999 ERRORSEXITS("InterfaceMappingCVC_MatrixColVariableIndexGet",err,error)
+999 ERRORSEXITS("InterfaceMappingCVC_MatrixRowVariableIndexGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMappingCVC_MatrixColVariableIndexGet
+  END SUBROUTINE InterfaceMappingCVC_MatrixRowVariableIndexGet
 
   !
   !================================================================================================================================
@@ -756,7 +896,7 @@ MODULE InterfaceMappingAccessRoutines
         & TRIM(NumberToVString(createValuesCache%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(createValuesCachce%transposeMatrixCoefficients)) &
+    IF(.NOT.ALLOCATED(createValuesCache%transposeMatrixCoefficients)) &
       & CALL FlagError("The transpose matrix coefficients array is not allocated for the create values cache.",err,error,*999)
 #endif    
 
@@ -774,7 +914,7 @@ MODULE InterfaceMappingAccessRoutines
   !
 
   !>Gets the interface matrix for an interface matrix to variable map.
-  SUBROUTINE InterfaceMappingIMToVM_InterfaceMatrixGet(interfaceMatrixToVarMap,interfaceMatrix,err,error,*)
+  SUBROUTINE InterfaceMappingIMToVMap_InterfaceMatrixGet(interfaceMatrixToVarMap,interfaceMatrix,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the interface matrix for
@@ -783,7 +923,7 @@ MODULE InterfaceMappingAccessRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceMappingIMToVM_InterfaceMatrixGet",err,error,*998)
+    ENTERS("InterfaceMappingIMToVMap_InterfaceMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS
     IF(ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is already associated.",err,error,*998)
@@ -798,29 +938,29 @@ MODULE InterfaceMappingAccessRoutines
       & CALL FlagError("Interface matrix is not associated for the interface matrix to variable map.",err,error,*999)
 #endif        
        
-    EXITS("InterfaceMappingIMToVM_InterfaceMatrixGet")
+    EXITS("InterfaceMappingIMToVMap_InterfaceMatrixGet")
     RETURN
 999 NULLIFY(interfaceMatrix)
-998 ERRORSEXITS("InterfaceMappingIMToVM_InterfaceMatrixGet",err,error)
+998 ERRORSEXITS("InterfaceMappingIMToVMap_InterfaceMatrixGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMappingIMToVM_InterfaceMatrixGet
+  END SUBROUTINE InterfaceMappingIMToVMap_InterfaceMatrixGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets the mesh index for an interface matrix to variable map.
-  SUBROUTINE InterfaceMappingIMToVM_MeshIndexGet(interfaceMatrixToVarMap,meshIndex,err,error,*)
+  SUBROUTINE InterfaceMappingIMToVMap_MeshIndexGet(interfaceMatrixToVarMap,meshIndex,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the mesh index for
-    INTEGER(INTG), INTENT(OUT) :: meshIndex !<On exit, the mesh index for the interface matrix to variable map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: meshIndex !<On exit, the mesh index for the interface matrix to variable map.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceMappingIMToVM_MeshIndexGet",err,error,*999)
+    ENTERS("InterfaceMappingIMToVMap_MeshIndexGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
@@ -829,19 +969,79 @@ MODULE InterfaceMappingAccessRoutines
 
     meshIndex=interfaceMatrixToVarMap%meshIndex
        
-    EXITS("InterfaceMappingIMToVM_MeshIndexGet")
+    EXITS("InterfaceMappingIMToVMap_MeshIndexGet")
     RETURN
-999 ERRORSEXITS("InterfaceMappingIMToVM_MeshIndexGet",err,error)
+999 ERRORSEXITS("InterfaceMappingIMToVMap_MeshIndexGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMappingIMToVM_MeshIndexGet
+  END SUBROUTINE InterfaceMappingIMToVMap_MeshIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of rows for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_NumberOfRowsGet(interfaceMatrixToVarMap,numberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the number of rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRows !<On exit, the number of rows for the interface matrix to variable map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_NumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    numberOfRows=interfaceMatrixToVarMap%numberOfRows
+       
+    EXITS("InterfaceMappingIMToVMap_NumberOfRowsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMappingIMToVMap_NumberOfRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_NumberOfRowsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of global rows for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_NumberOfGlobalRowsGet(interfaceMatrixToVarMap,numberOfGlobalRows,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the number of global rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalRows !<On exit, the number of global rows for the interface matrix to variable map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_NumberOfGlobalRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    numberOfGlobalRows=interfaceMatrixToVarMap%numberOfGlobalRows
+       
+    EXITS("InterfaceMappingIMToVMap_NumberOfGlobalRowsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMappingIMToVMap_NumberOfGlobalRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_NumberOfGlobalRowsGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets the row DOFs mapping for an interface matrix to variable map.
-  SUBROUTINE InterfaceMappingIMToVM_RowDOFsMappingGet(interfaceMatrixToVarMap,rowDOFsMapping,err,error,*)
+  SUBROUTINE InterfaceMappingIMToVMap_RowDOFsMappingGet(interfaceMatrixToVarMap,rowDOFsMapping,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the row DOFs mapping for
@@ -850,7 +1050,7 @@ MODULE InterfaceMappingAccessRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceMappingIMToVM_RowDOFsMappingGet",err,error,*998)
+    ENTERS("InterfaceMappingIMToVMap_RowDOFsMappingGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS
     IF(ASSOCIATED(rowDOFsMapping)) CALL FlagError("Row DOFs mapping is already associated.",err,error,*998)
@@ -865,20 +1065,50 @@ MODULE InterfaceMappingAccessRoutines
       & CALL FlagError("Row DOFs mapping is not associated for the interface matrix to variable map.",err,error,*999)
 #endif        
        
-    EXITS("InterfaceMappingIMToVM_RowDOFsMappingGet")
+    EXITS("InterfaceMappingIMToVMap_RowDOFsMappingGet")
     RETURN
 999 NULLIFY(rowDOFsMapping)
-998 ERRORSEXITS("InterfaceMappingIMToVM_RowDOFsMappingGet",err,error)
+998 ERRORSEXITS("InterfaceMappingIMToVMap_RowDOFsMappingGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMappingIMToVM_RowDOFsMappingGet
+  END SUBROUTINE InterfaceMappingIMToVMap_RowDOFsMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the total number of rows for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_TotalNumberOfRowsGet(interfaceMatrixToVarMap,totalNumberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the total number of rows for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfRows !<On exit, the total number of rows for the interface matrix to variable map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_TotalNumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfRows=interfaceMatrixToVarMap%totalNumberOfRows
+       
+    EXITS("InterfaceMappingIMToVMap_TotalNumberOfRowsGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMappingIMToVMap_TotalNumberOfRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_TotalNumberOfRowsGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets the dependent variable for an interface matrix to variable map.
-  SUBROUTINE InterfaceMappingIMToVM_VariableGet(interfaceMatrixToVarMap,fieldVariable,err,error,*)
+  SUBROUTINE InterfaceMappingIMToVMap_VariableGet(interfaceMatrixToVarMap,fieldVariable,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the dependent variable for
@@ -887,7 +1117,7 @@ MODULE InterfaceMappingAccessRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceMappingIMToVM_VariableGet",err,error,*998)
+    ENTERS("InterfaceMappingIMToVMap_VariableGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS
     IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
@@ -902,20 +1132,20 @@ MODULE InterfaceMappingAccessRoutines
       & CALL FlagError("Field variable is not associated for the interface matrix to variable map.",err,error,*999)
 #endif        
        
-    EXITS("InterfaceMappingIMToVM_VariableGet")
+    EXITS("InterfaceMappingIMToVMap_VariableGet")
     RETURN
 999 NULLIFY(fieldVariable)
-998 ERRORSEXITS("InterfaceMappingIMToVM_VariableGet",err,error)
+998 ERRORSEXITS("InterfaceMappingIMToVMap_VariableGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMappingIMToVM_VariableGet
+  END SUBROUTINE InterfaceMappingIMToVMap_VariableGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets the variable DOF to row map for an interface matrix to variable map.
-  SUBROUTINE InterfaceMappingIMToVM_VariableDOFToRowMapGet(interfaceMatrixToVarMap,variableDOFToRowMap,err,error,*)
+  SUBROUTINE InterfaceMappingIMToVMap_VariableDOFToRowMapGet(interfaceMatrixToVarMap,variableDOFToRowMap,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the variable DOF to row map for
@@ -924,7 +1154,7 @@ MODULE InterfaceMappingAccessRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceMappingIMToVM_VariableDOFToRowMapGet",err,error,*998)
+    ENTERS("InterfaceMappingIMToVMap_VariableDOFToRowMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS
     IF(ASSOCIATED(variableDOFToRowMap)) CALL FlagError("Variable DOF to row map is already associated.",err,error,*998)
@@ -939,13 +1169,13 @@ MODULE InterfaceMappingAccessRoutines
       & CALL FlagError("The variable DOF to row map is not associated for the interface matrix to variable map.",err,error,*999)
 #endif        
        
-    EXITS("InterfaceMappingIMToVM_VariableDOFToRowMapGet")
+    EXITS("InterfaceMappingIMToVMap_VariableDOFToRowMapGet")
     RETURN
 999 NULLIFY(variableDOFToRowMap)
-998 ERRORSEXITS("InterfaceMappingIMToVM_VariableDOFToRowMapGet",err,error)
+998 ERRORSEXITS("InterfaceMappingIMToVMap_VariableDOFToRowMapGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceMappingIMToVM_VariableDOFToRowMapGet
+  END SUBROUTINE InterfaceMappingIMToVMap_VariableDOFToRowMapGet
 
   !
   !================================================================================================================================

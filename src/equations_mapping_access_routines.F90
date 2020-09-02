@@ -46,6 +46,7 @@ MODULE EquationsMappingAccessRoutines
   
   USE BaseRoutines
   USE ISO_VARYING_STRING
+  USE FieldAccessRoutines
   USE Kinds
   USE Strings
   USE Types
@@ -104,9 +105,9 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingLinear_LinearVariableIndexGet
 
-  PUBLIC EquaitonsMappingLinear_NumberOfLinearMatricesGet
+  PUBLIC EquationsMappingLinear_NumberOfLinearMatricesGet
 
-  PUBLIC EquaitonsMappingLinear_NumberOfLinearVariablesGet
+  PUBLIC EquationsMappingLinear_NumberOfLinearVariablesGet
 
   PUBLIC EquationsMappingLinear_VariableNumberOfMatricesGet
 
@@ -116,7 +117,9 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingNonlinear_ResidualMappingGet
 
-  PUBLIC EquationsMappingResidual_JacobianMatrixToVariableGet
+  PUBLIC EquationsMappingResidual_EquationsRowToResidualDOFMapGet
+
+  PUBLIC EquationsMappingResidual_JacobianMatrixToVariableMapGet
 
   PUBLIC EquationsMappingResidual_JacobianMatrixVariableGet
 
@@ -130,15 +133,23 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingResidual_VariableIndexGet
   
-  PUBLIC EquaitonsMappingResidual_VariableToJacobianMatrixMapGet
+  PUBLIC EquationsMappingResidual_VariableToJacobianMatrixMapGet
   
   PUBLIC EquationsMappingResidual_VariableTypeGet
+
+  PUBLIC EquationsMappingResidual_VectorCoefficientGet
+
+  PUBLIC EquationsMappingRHS_EquationsRowToRHSDOFMapGet
+
+  PUBLIC EquationsMappingRHS_RHSDOFToEquationsRowMapGet
 
   PUBLIC EquationsMappingRHS_RHSVariableGet
   
   PUBLIC EquationsMappingRHS_RHSVariableTypeGet
+
+  PUBLIC EquationsMappingRHS_VectorCoefficientGet
   
-  PUBLIC EquationsMappingScalar_AssertIsFinish,EquationsMappingScalar_AssertNotFinished
+  PUBLIC EquationsMappingScalar_AssertIsFinished,EquationsMappingScalar_AssertNotFinished
   
   PUBLIC EquationsMappingScalar_CreateValuesCacheGet
   
@@ -148,7 +159,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingSources_SourceMappingGet
 
-  PUBLIC EquationsMappingVector_AssertIsFinish,EquationsMappingVector_AssertNotFinished
+  PUBLIC EquationsMappingVector_AssertIsFinished,EquationsMappingVector_AssertNotFinished
   
   PUBLIC EquationsMappingVector_CreateValuesCacheGet
 
@@ -192,9 +203,9 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVectorCVC_ResidualVariableTypeGet
 
-  PUBLIC EquationsMappingVectorCVC_SourceVectorCoefficientGet
+  PUBLIC EquationsMappingVectorCVC_SourceCoefficientGet
   
-  PUBLIC EquationsMappingVectorCVC_SourceVectorVariableTypeGet
+  PUBLIC EquationsMappingVectorCVC_SourceVariableTypeGet
 
   PUBLIC EquationsMappingVectorEMToVMap_EquationsMatrixGet
 
@@ -239,42 +250,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingDynamic_DampingMatrixNumberGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the specified dynamic variable for a dynamic mapping.
-  SUBROUTINE EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the dynamic variable for
-    TYPE(FieldVariableType), POINTER :: dynamicVariable !<On exit, a pointer to the requested dynamic variable. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("EquationsMappingDynamic_DynamicVariableGet",err,error,*998)
-
-#ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(dynamicVariable)) CALL FlagError("Dynamic variable is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
-#endif    
-    
-    dynamicVariable=>dynamicMapping%dynamicVariable
-
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(dynamicVariable)) CALL FlagError("The dynamic variable is not associated.",err,error,*999)
-#endif    
-    
-    EXITS("EquationsMappingDynamic_DynamicVariableGet")
-    RETURN
-999 NULLIFY(dynamicVariable)
-998 ERRORS("EquationsMappingDynamic_DynamicVariableGet",err,error)
-    EXITS("EquationsMappingDynamic_DynamicVariableGet")
-    RETURN 1
-    
-  END SUBROUTINE EquationsMappingDynamic_DynamicVariableGet
 
   !
   !================================================================================================================================
@@ -361,7 +336,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("EquationsMappingDynamic_EquationsMatrixToVariableMap",err,error,*998)
+    ENTERS("EquationsMappingDynamic_EquationsMatrixToVariableMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equationsMatrixToVariableMap)) &
@@ -379,7 +354,7 @@ CONTAINS
     
     equationsMatrixToVariableMap=>dynamicMapping%equationsMatrixToVarMaps(dynamicMatrixIdx)%ptr
 
-#ifdef    
+#ifdef WITH_POSTCHECKS
     IF(.NOT.ASSOCIATED(equationsMatrixToVariableMap)) THEN
       localError="The equations matrix to variable map is not associated for dynamic matrix index "// &
         & TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))//" of the dynamic mapping."
@@ -567,7 +542,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to get the equations row to LHS DOF map for
-    INTEGER(INTG), POINTER :: equationsRowToLHSDOMap(:) !<On exit, a pointer to the equations row to LHS DOF map. Must not be associated on entry.
+    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:) !<On exit, a pointer to the equations row to LHS DOF map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -631,6 +606,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingLHS_LHSDOFToEquationsRowMapGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified LHS variable for a LHS mapping.
+  SUBROUTINE EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to get the LHS variable for
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<On exit, the LHS variable for the LHS mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingLHS_LHSVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(lhsVariable)) CALL FlagError("LHS variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(lhsMapping)) CALL FlagError("LHS mapping is not associated.",err,error,*999)
+#endif    
+   
+    lhsVariable=>lhsMapping%lhsVariable
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(lhsVariable)) CALL FlagError("The LHS variable is not associated for the LHSMapping.",err,error,*999)
+#endif
+    
+    EXITS("EquationsMappingLHS_LHSVariableGet")
+    RETURN
+999 NULLIFY(lhsVariable)
+998 ERRORS("EquationsMappingLHS_LHSVariableGet",err,error)
+    EXITS("EquationsMappingLHS_LHSVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingLHS_LHSVariableGet
 
   !
   !================================================================================================================================
@@ -803,7 +814,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVariableMap
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
 #endif
 #ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
@@ -813,7 +824,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(linearMatrixVariable)) CALL FlagError("Linear matrix variable is already associated.",err,error,*998)
-    NULLIFY(equationsMatrixToVariableMap)
+    NULLIFY(equationsMatrixToVarMap)
     CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,linearMatrixIdx,equationsMatrixToVarMap,err,error,*999)
 #endif    
    
@@ -851,15 +862,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVariableMap
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
 #endif
     
     ENTERS("EquationsMappingLinear_LinearMatrixVariableTypeGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(linearMapping)) CALL FlagError("Linear mapping is not associated.",err,error,*999)
-    NULLIFY(equationsMatrixToVariableMap)
-    NULLIFY(equationsMatrixToVariableMap)
+    NULLIFY(equationsMatrixToVarMap)
     CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,linearMatrixIdx,equationsMatrixToVarMap,err,error,*999)
 #endif    
     
@@ -948,7 +958,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(linearMapping)) CALL FlagError("Linear mapping is not associated.",err,error,*999)    
     IF(linearVariableType<1.OR.linearVariableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-      localError="The specified linear variable type of "//TRIM(NumberToVString(linearVariabletType,"*",err,error))// &
+      localError="The specified linear variable type of "//TRIM(NumberToVString(linearVariableType,"*",err,error))// &
         & " is invalid. The linear variable type should be >=1 and <= "// &
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -957,7 +967,7 @@ CONTAINS
       & CALL FlagError("Linear mapping linear variables type map is not allocated.",err,error,*999)
 #endif    
     
-    linearVariableIdx=linearMapping%linearVariableTypeMap(linearVariableType)
+    linearVariableIdx=linearMapping%linearVariableTypesMap(linearVariableType)
    
     EXITS("EquationsMappingLinear_LinearVariableIndexGet")
     RETURN
@@ -1091,7 +1101,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(linearMapping)) CALL FlagError("Linear mapping is not associated.",err,error,*999)
     IF(linearVariableIdx<1.OR.linearVariableIdx>linearMapping%numberOfLinearVariables) THEN
       localError="The specified linear variable index of "//TRIM(NumberToVString(linearVariableIdx,"*",err,error))// &
-        & " is invalid. The linear variable index should be >= 1 and <= " &
+        & " is invalid. The linear variable index should be >= 1 and <= "// &
         & TRIM(NumberToVString(linearMapping%numberOfLinearVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1104,7 +1114,7 @@ CONTAINS
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(variableToEquationsMatricesMap)) THEN
       localError="The variable to equations matrices map is not associated for linear variable index "// &
-        & TRIM(NumberToVString(linearVariableIdx,"*",err,error)//" of the linear mapping."
+        & TRIM(NumberToVString(linearVariableIdx,"*",err,error))//" of the linear mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
@@ -1174,7 +1184,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(nonlinearMapping)) CALL FlagError("Nonlinear mapping is not associated.",err,error,*999)
     IF(residualIdx<1.OR.residualIdx>nonlinearMapping%numberOfResiduals) THEN
       localError="The specified residual index of "//TRIM(NumberToVString(residualIdx,"*",err,error))// &
-        & " is invalid. The residual index should be >= 1 and <= " &
+        & " is invalid. The residual index should be >= 1 and <= "// &
         & TRIM(NumberToVString(nonlinearMapping%numberOfResiduals,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1187,7 +1197,7 @@ CONTAINS
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(residualMapping)) THEN
       localError="The residual mapping is not associated for residual index "// &
-        & TRIM(NumberToVString(residualIdx,"*",err,error)//" of the nonlinear mapping."
+        & TRIM(NumberToVString(residualIdx,"*",err,error))//" of the nonlinear mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
@@ -1200,6 +1210,44 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingNonlinear_ResidualMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equations row to residual DOF map for a residual mapping.
+  SUBROUTINE EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping !<A pointer to the residual mapping to get the equations row to residual DOF map for
+    INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:) !<On exit, a pointer to the equations row to residual DOF map for the residual mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsRowToResidualDOFMap)) &
+      & CALL FlagError("Equations row to residual DOF map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
+#endif    
+    
+    equationsRowToResidualDOFMap=>residualMapping%equationsRowToResidualDOFMap
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(equationsRowToResidualDOFMap)) &
+      & CALL FlagError("The equations row to residual DOF map is not associated for the residual mapping.",err,error,*999)
+#endif    
+    
+    EXITS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet")
+    RETURN
+999 NULLIFY(equationsRowToResidualDOFMap)
+998 ERRORS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet",err,error)
+    EXITS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingResidual_EquationsRowToResidualDOFMapGet
 
   !
   !================================================================================================================================
@@ -1220,16 +1268,16 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif
     
-    ENTERS("EquationsMappingResidual_JacobianMatrixToVariableMap",err,error,*998)
+    ENTERS("EquationsMappingResidual_JacobianMatrixToVariableMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(jacobianMatrixToVariableMap)) &
       & CALL FlagError("Jacobian matrix to variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
-    IF(jacobianMatrixIdx<1.OR.jacobianMatrixIdx>linearMapping%numberOfJacobianMatrices) THEN
+    IF(jacobianMatrixIdx<1.OR.jacobianMatrixIdx>residualMapping%numberOfJacobianMatrices) THEN
       localError="The specified Jacobian matrix index of "//TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))// &
         & " of residual number "//TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))// &
-        & " is invalid. The Jacobian matrix index should be >=1 and <= "// &
+        & " is invalid. The Jacobian matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(residualMapping%numberOfJacobianMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1245,8 +1293,8 @@ CONTAINS
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(jacobianMatrixToVariableMap)) THEN
       localError="The Jacobian matrix to variable map is not associated for Jacobian matrix index "// &
-        & TRIM(NumberToVString(linearMatrixIdx,"*",err,error))//" of the mapping for residual number "// &
-        & TRIM(NumberToVString(residualMapping,"*",err,error))//"."
+        & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))//" of the mapping for residual number "// &
+        & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
@@ -1276,7 +1324,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVariableMap
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap
 #endif
 #ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
@@ -1286,7 +1334,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(jacobianMatrixVariable)) CALL FlagError("Jacobian matrix variable is already associated.",err,error,*998)
-    NULLIFY(jacobianMatrixToVariableMap)
+    NULLIFY(jacobianMatrixToVarMap)
     CALL EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,jacobianMatrixIdx,jacobianMatrixToVarMap,err,error,*999)
 #endif    
    
@@ -1296,7 +1344,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(jacobianMatrixVariable)) THEN
       localError="The Jacobian matrix variable is not associated for Jacobian matrix index "// &
         & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))//" of residual number "// &
-        & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error)//"."
+        & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
@@ -1326,13 +1374,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVariableMap
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap
 #endif
  
     ENTERS("EquationsMappingResidual_JacobianMatrixVariableTypeGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
-    NULLIFY(jacobianMatrixToVariableMap)
+    NULLIFY(jacobianMatrixToVarMap)
     CALL EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,jacobianMatrixIdx,jacobianMatrixToVarMap,err,error,*999)
 #endif    
    
@@ -1396,7 +1444,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
 #endif    
       
-    numberOfResidualVariables=residualMapping%numberOfResidualVariables
+    numberOfResidualVariables=residualMapping%numberOfVariables
    
     EXITS("EquationsMappingResidual_NumberOfResidualVariablesGet")
     RETURN
@@ -1424,12 +1472,12 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("EquationsMappingNonlinear_VariableGet",err,error,*998)
+    ENTERS("EquationsMappingResidual_VariableGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
-    IF(variableIdx<1.OR.variableIdx>residualMapping%numberOfResidualVariables) THEN
+    IF(variableIdx<1.OR.variableIdx>residualMapping%numberOfVariables) THEN
       localError="The specified residual variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is invalid for residual number "//TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))// &
         & " which has "//TRIM(NumberToVString(residualMapping%numberOfVariables,"*",err,error))//" variables."
@@ -1484,7 +1532,7 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)    
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-      localError="The specified variable type of "//TRIM(NumberToVString(variabletType,"*",err,error))// &
+      localError="The specified variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type should be >=1 and <= "// &
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -1496,7 +1544,7 @@ CONTAINS
     ENDIF
 #endif    
     
-    variableIdx=residualMapping%variableTypeMap(variableType)
+    variableIdx=residualMapping%variableTypesMap(variableType)
    
     EXITS("EquationsMappingResidual_VariableIndexGet")
     RETURN
@@ -1504,7 +1552,7 @@ CONTAINS
     EXITS("EquationsMappingResidual_VariableIndexGet")
     RETURN 1
     
-  END SUBROUTINE EquationsMappingLinear_LinearVariableIndexGet
+  END SUBROUTINE EquationsMappingResidual_VariableIndexGet
 
   !
   !================================================================================================================================
@@ -1533,12 +1581,12 @@ CONTAINS
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
     IF(variableIdx<1.OR.variableIdx>residualMapping%numberOfVariables) THEN
       localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-        & " is invalid for residual number "//TRIM(NumberToVString(residualMapping%residualNumber))// &
+        & " is invalid for residual number "//TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))// &
         & ". The variable index should be >= 1 and <= "// &
         & TRIM(NumberToVString(residualMapping%numberOfVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(residualMapping%varToJacobianMatrixsMaps)) THEN
+    IF(.NOT.ALLOCATED(residualMapping%varToJacobianMatrixMaps)) THEN
       localError="The variable to Jacobian matrix maps is not allocated for the residual mapping for residual number "// &
         & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -1550,7 +1598,7 @@ CONTAINS
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(variableToJacobianMatrixMap)) THEN
       localError="The variable to Jacobian matrix map is not associated for variable index "// &
-        & TRIM(NumberToVString(variableIdx,"*",err,error)//" of the mapping for residual number "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the mapping for residual number "// &
         & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1562,7 +1610,7 @@ CONTAINS
 998 ERRORS("EquationsMappingResidual_VariableToJacobianMatrixMapGet",err,error)
     EXITS("EquationsMappingResidual_VariableToJacobianMatrixMapGet")
     RETURN 1
-e    
+    
   END SUBROUTINE EquationsMappingResidual_VariableToJacobianMatrixMapGet
   
   !
@@ -1595,7 +1643,7 @@ e
     ENDIF
     IF(.NOT.ALLOCATED(residualMapping%variableTypes)) THEN
       localError="Residual variable types is not allocated for residual number "// &
-        & TRIM(NumberToVString(residualMappping%residualNumber,err,error))//"."
+        & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
@@ -1609,6 +1657,110 @@ e
     RETURN 1
     
   END SUBROUTINE EquationsMappingResidual_VariableTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the residual vector coefficient for a residual mapping.
+  SUBROUTINE EquationsMappingResidual_VectorCoefficientGet(residualMapping,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping !<A pointer to the residual mapping to get residual vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for a residual vector of the residual mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMappingResidual_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
+#endif    
+      
+    vectorCoefficient=residualMapping%residualCoefficient
+   
+    EXITS("EquationsMappingResidual_VectorCoefficientGet")
+    RETURN
+999 ERRORS("EquationsMappingResidual_VectorCoefficientGet",err,error)
+    EXITS("EquationsMappingResidual_VectorCoefficientGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingResidual_VectorCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equations row to RHS DOF map for a RHS mapping.
+  SUBROUTINE EquationsMappingRHS_EquationsRowToRHSDOFMapGet(rhsMapping,equationsRowToRHSDOFMap,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the rhs mapping to get the equations row to RHS DOF map for
+    INTEGER(INTG), POINTER :: equationsRowToRHSDOFMap(:) !<On exit, a pointer to the equations row to RHS DOF map for the RHS mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingRHS_EquationsRowToRHSDOFMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsRowToRHSDOFMap)) CALL FlagError("Equations row to RHS DOF map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    equationsRowToRHSDOFMap=>rhsMapping%equationsRowToRHSDOFMap
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(equationsRowToRHSDOFMap)) &
+      & CALL FlagError("The equations row to RHS DOF map is not associated for the RHS mapping.",err,error,*999)
+#endif    
+    
+    EXITS("EquationsMappingRHS_EquationsRowToRHSDOFMapGet")
+    RETURN
+999 NULLIFY(equationsRowToRHSDOFMap)
+998 ERRORS("EquationsMappingRHS_EquationsRowToRHSDOFMapGet",err,error)
+    EXITS("EquationsMappingRHS_EquationsRowToRHSDOFMapGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingRHS_EquationsRowToRHSDOFMapGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS DOF to equations row  map for a RHS mapping.
+  SUBROUTINE EquationsMappingRHS_RHSDOFToEquationsRowMapGet(rhsMapping,rhsDOFToEquationsRowMap,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the rhs mapping to get the RHS DOF to equations row map for
+    INTEGER(INTG), POINTER :: rhsDOFToEquationsRowMap(:) !<On exit, a pointer to the RHS DOF to equations row map for the RHS mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingRHS_RHSDOFToEquationsRowMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(rhsDOFToEquationsRowMap)) CALL FlagError("RHS DOF to equations row map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    rhsDOFToEquationsRowMap=>rhsMapping%rhsDOFToEquationsRowMap
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(rhsDOFToEquationsRowMap)) &
+      & CALL FlagError("The RHS DOF to equations row map is not associated for the RHS mapping.",err,error,*999)
+#endif    
+    
+    EXITS("EquationsMappingRHS_RHSDOFToEquationsRowMapGet")
+    RETURN
+999 NULLIFY(rhsDOFToEquationsRowMap)
+998 ERRORS("EquationsMappingRHS_RHSDOFToEquationsRowMapGet",err,error)
+    EXITS("EquationsMappingRHS_RHSDOFToEquationsRowMapGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingRHS_RHSDOFToEquationsRowMapGet
 
   !
   !================================================================================================================================
@@ -1677,6 +1829,36 @@ e
   END SUBROUTINE EquationsMappingRHS_RHSVariableTypeGet
 
   !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS vector coefficient for a RHS mapping.
+  SUBROUTINE EquationsMappingRHS_VectorCoefficientGet(rhsMapping,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get RHS vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for a RHS vector of the RHS mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMappingRHS_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+      
+    vectorCoefficient=rhsMapping%rhsCoefficient
+   
+    EXITS("EquationsMappingRHS_VectorCoefficientGet")
+    RETURN
+999 ERRORS("EquationsMappingRHS_VectorCoefficientGet",err,error)
+    EXITS("EquationsMappingRHS_VectorCoefficientGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingRHS_VectorCoefficientGet
+
+  !
   !=================================================================================================================================
   !
 
@@ -1696,7 +1878,7 @@ e
 #endif    
 
     IF(.NOT.scalarMapping%scalarMappingFinished) &
-      & CALL FlagError("Scalar equations mapping has not been finished."
+      & CALL FlagError("Scalar equations mapping has not been finished.",err,error,*999)
     
     EXITS("EquationsMappingScalar_AssertIsFinished")
     RETURN
@@ -1912,7 +2094,7 @@ e
 #endif    
 
     IF(.NOT.vectorMapping%vectorMappingFinished) &
-      & CALL FlagError("Vector equations mapping has not been finished."
+      & CALL FlagError("Vector equations mapping has not been finished.",err,error,*999)
     
     EXITS("EquationsMappingVector_AssertIsFinished")
     RETURN
@@ -2304,7 +2486,7 @@ e
     ENTERS("EquationsMappingVector_SourcesMappingExists",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(sourcseMapping)) CALL FlagError("Sources mapping is already associated.",err,error,*998)
+    IF(ASSOCIATED(sourcesMapping)) CALL FlagError("Sources mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
 #endif    
 
@@ -2347,7 +2529,7 @@ e
        
     EXITS("EquationsMappingVector_SourcesMappingGet")
     RETURN
-999 NULLIFY(sourceMapping)
+999 NULLIFY(sourcesMapping)
 998 ERRORSEXITS("EquationsMappingVector_SourcesMappingGet",err,error)
     RETURN 1
     
@@ -2430,7 +2612,7 @@ e
   !
 
   !>Gets the specified dynamic matrix coefficient for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_DynamicMatrixCoefficientGet(createValuesCahce,dynamicMatrixIdx, &
+  SUBROUTINE EquationsMappingVectorCVC_DynamicMatrixCoefficientGet(createValuesCache,dynamicMatrixIdx, &
     & dynamicMatrixCoefficient,err,error,*)
 
     !Argument variables
@@ -2440,6 +2622,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
  
     ENTERS("EquationsMappingVectorCVC_DynamicMatrixCoefficientGet",err,error,*999)
 
@@ -2471,7 +2656,7 @@ e
   !
 
   !>Gets the specified dynamic variable type for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_DynamicVariableTypeGet(createValuesCahce,dynamicVariableType,err,error,*)
+  SUBROUTINE EquationsMappingVectorCVC_DynamicVariableTypeGet(createValuesCache,dynamicVariableType,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the vector mapping create values cache to get the dynamic variable type for
@@ -2502,7 +2687,7 @@ e
   !
 
   !>Gets the specified linear matrix coefficient for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_LinearMatrixCoefficientGet(createValuesCahce,linearMatrixIdx, &
+  SUBROUTINE EquationsMappingVectorCVC_LinearMatrixCoefficientGet(createValuesCache,linearMatrixIdx, &
     & linearMatrixCoefficient,err,error,*)
 
     !Argument variables
@@ -2512,6 +2697,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsMappingVectorCVC_LinearMatrixCoefficientGet",err,error,*999)
 
@@ -2543,7 +2731,7 @@ e
   !
 
   !>Gets the specified linear matrix variable type for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_LinearMatrixVariableTypeGet(createValuesCahce,linearMatrixIdx, &
+  SUBROUTINE EquationsMappingVectorCVC_LinearMatrixVariableTypeGet(createValuesCache,linearMatrixIdx, &
     & linearMatrixVariableType,err,error,*)
 
     !Argument variables
@@ -2553,6 +2741,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
  
     ENTERS("EquationsMappingVectorCVC_LinearMatrixVariableTypeGet",err,error,*999)
 
@@ -2584,7 +2775,7 @@ e
   !
 
   !>Gets the numbr of residual variables for a residual in a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_NumberOfResidualVariablesGet(createValuesCahce,residualIdx, &
+  SUBROUTINE EquationsMappingVectorCVC_NumberOfResidualVariablesGet(createValuesCache,residualIdx, &
     & numberOfResidualVariables,err,error,*)
 
     !Argument variables
@@ -2594,13 +2785,16 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsMappingVectorCVC_NumberOfResidualVariablesGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(createValuesCache)) &
       & CALL FlagError("Vector equations mapping create values cache is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(createValuesCache%numberOfResdiualVariables)) &
+    IF(.NOT.ALLOCATED(createValuesCache%numberOfResidualVariables)) &
       & CALL FlagError("Create values cache linear matrix variable types is not allocated.",err,error,*999)
     IF(residualIdx<1.OR.residualIdx>SIZE(createValuesCache%numberOfResidualVariables,1)) THEN
       localError="The specified residual index of "//TRIM(NumberToVString(residualIdx,"*",err,error))// &
@@ -2625,7 +2819,7 @@ e
   !
 
   !>Gets the specified residual coefficient for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_ResidualCoefficientGet(createValuesCahce,residualIdx,residualCoefficient,err,error,*)
+  SUBROUTINE EquationsMappingVectorCVC_ResidualCoefficientGet(createValuesCache,residualIdx,residualCoefficient,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the vector mapping create values cache to get the residual coefficient for
@@ -2634,6 +2828,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsMappingVectorCVC_ResidualCoefficientGet",err,error,*999)
 
@@ -2665,7 +2862,7 @@ e
   !
 
   !>Gets the specified residual variable type for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_ResidualVariableTypeGet(createValuesCahce,variableIdx,residualIdx, &
+  SUBROUTINE EquationsMappingVectorCVC_ResidualVariableTypeGet(createValuesCache,variableIdx,residualIdx, &
     & residualVariableType,err,error,*)
 
     !Argument variables
@@ -2676,6 +2873,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
  
     ENTERS("EquationsMappingVectorCVC_ResidualVariableTypeGet",err,error,*999)
 
@@ -2713,7 +2913,7 @@ e
   !
 
   !>Gets the specified source coefficient for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_SourceCoefficientGet(createValuesCahce,sourceIdx,sourceCoefficient,err,error,*)
+  SUBROUTINE EquationsMappingVectorCVC_SourceCoefficientGet(createValuesCache,sourceIdx,sourceCoefficient,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the vector mapping create values cache to get the source coefficient for
@@ -2722,6 +2922,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsMappingVectorCVC_SourceCoefficientGet",err,error,*999)
 
@@ -2753,7 +2956,7 @@ e
   !
 
   !>Gets the specified source variable type for a vector equations mapping create values cache.
-  SUBROUTINE EquationsMappingVectorCVC_SourceVariableTypeGet(createValuesCahce,sourceIdx,sourceVariableType,err,error,*)
+  SUBROUTINE EquationsMappingVectorCVC_SourceVariableTypeGet(createValuesCache,sourceIdx,sourceVariableType,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the vector mapping create values cache to get the source variable type for
@@ -2762,6 +2965,9 @@ e
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("EquationsMappingVectorCVC_SourceVariableTypeGet",err,error,*999)
 
@@ -2886,7 +3092,7 @@ e
       & CALL FlagError("Jacobian matrix to variable map is not associated.",err,error,*999)
 #endif    
     
-    jacobianMatrix=>jacobianMatrixToVarMap%jacobianMatrix
+    jacobianMatrix=>jacobianMatrixToVarMap%jacobian
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(jacobianMatrix)) &
@@ -3009,7 +3215,7 @@ e
     
     EXITS("EquationsMappingVectorVToJMMap_VariableGet")
     RETURN
-999 NULLIFY(varToJacobianMatrixsMap)
+999 NULLIFY(variable)
 998 ERRORS("EquationsMappingVectorVToJMMap_VariableGet",err,error)
     EXITS("EquationsMappingVectorVToJMMap_VariableGet")
     RETURN 1

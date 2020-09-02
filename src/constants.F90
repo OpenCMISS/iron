@@ -257,10 +257,10 @@ MODULE Constants
     & PART_DERIV_S4_S4 ] !<PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(nic) gives the partial derivative index for the second derivative in the ni(c)'th direction
 
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(4,4) =  RESHAPE([ &
-    & PART_DERIV_S1_S1, PART_DERIV_S2_S1, PART_DERIV_S3_S1, PART_DERIV_S4_S1, &
-    & PART_DERIV_S1_S2, PART_DERIV_S2_S2, PART_DERIV_S3_S2, PART_DERIV_S4_S2, &
-    & PART_DERIV_S1_S3, PART_DERIV_S2_S3, PART_DERIV_S3_S3, PART_DERIV_S4_S3, &
-    & PART_DERIV_S1_S4, PART_DERIV_S2_S4, PART_DERIV_S3_S4, PART_DERIV_S4_S4, [4,4]) !<PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(nic1,nic2) gives the partial derivative index for the second derivative in the ni(c)1'th and ni(c)2'th direction.
+    & PART_DERIV_S1_S1, PART_DERIV_S1_S2, PART_DERIV_S1_S3, PART_DERIV_S1_S4, &
+    & PART_DERIV_S1_S2, PART_DERIV_S2_S2, PART_DERIV_S2_S3, PART_DERIV_S2_S4, &
+    & PART_DERIV_S1_S3, PART_DERIV_S2_S3, PART_DERIV_S3_S3, PART_DERIV_S3_S4, &
+    & PART_DERIV_S1_S4, PART_DERIV_S2_S4, PART_DERIV_S3_S4, PART_DERIV_S4_S4], [4,4]) !<PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(nic1,nic2) gives the partial derivative index for the second derivative in the ni(c)1'th and ni(c)2'th direction.
 
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_MAXIMUM_MAP(4) = [ PART_DERIV_S1_S1,PART_DERIV_S1_S2,PART_DERIV_S1_S2_S3, &
     & PART_DERIV_S4_S4_S4 ] !<PARTIAL_DERIVATIVE_MAXIMUM_MAP(nic) gives the maximum of partial derivative index for the the ni(c)'th direction

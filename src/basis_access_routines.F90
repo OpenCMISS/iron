@@ -163,6 +163,11 @@ MODULE BasisAccessRoutines
 
   !Interfaces
 
+  INTERFACE Basis_LineXiNormalsGet
+    MODULE PROCEDURE Basis_LineXiNormalsGet0
+    MODULE PROCEDURE Basis_LineXiNormalsGet1
+  END INTERFACE Basis_LineXiNormalsGet
+  
   INTERFACE Basis_QuadratureGaussXiGet
     MODULE PROCEDURE Basis_QuadratureGaussXiGet0
     MODULE PROCEDURE Basis_QuadratureGaussXiGet1
@@ -229,8 +234,6 @@ MODULE BasisAccessRoutines
   PUBLIC Basis_LineElementParameterGet
 
   PUBLIC Basis_LineNodeNumberGet
-
-  PUBLIC Basis_LineNodeNumberOfDerivativesGet
 
   PUBLIC Basis_LineNumberOfNodesGet
 
@@ -578,7 +581,7 @@ CONTAINS
     IF(localDerivativeIdx<1.OR.localDerivativeIdx>basis%numberOfDerivatives(localNodeIdx)) THEN
       localError="The specified local derivative index of "//TRIM(NumberToVString(localDerivativeIdx,"*",err,error))// &
         & " is invalid. The local derivative index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(basis%numberOfDerivatives,"*",err,error))// &
+        & TRIM(NumberToVString(basis%numberOfDerivatives(localNodeIdx),"*",err,error))// &
         & " for local node index "//TRIM(NumberToVString(localNodeIdx,"*",err,error))//" of basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -647,7 +650,7 @@ CONTAINS
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(faceBasis)) THEN
       localError="The face basis is not associated for local face number "// &
-        & TRIM(NumberToVString(localFaceNumber,"*",err,error))//" of basis number "
+        & TRIM(NumberToVString(localFaceNumber,"*",err,error))//" of basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -705,7 +708,8 @@ CONTAINS
     IF(faceParameterIdx<1.OR.faceParameterIdx>basis%elementParametersInLocalFace(0,localFaceNumber)) THEN
       localError="The specified face parameter index of "//TRIM(NumberToVString(faceParameterIdx,"*",err,error))// &
         & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The face parameter index should be >=1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The face parameter index should be >=1 and <= "// &
         & TRIM(NumberToVString(basis%elementParametersInLocalFace(0,localFaceNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -769,7 +773,8 @@ CONTAINS
     IF(localFaceNodeIdx<1.OR.localFaceNodeIdx>basis%numberOfNodesInLocalFace(localFaceNumber)) THEN
       localError="The specified local face node index of "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
         & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face node index should be >= 1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local face node index should be >= 1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodesInLocalFace(localFaceNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -835,7 +840,8 @@ CONTAINS
     IF(localFaceNodeIdx<1.OR.localFaceNodeIdx>basis%numberOfNodesInLocalFace(localFaceNumber)) THEN
       localError="The specified local face node index of "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
         & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face node index should be >=1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local face node index should be >=1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodesInLocalFace(localFaceNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -844,8 +850,9 @@ CONTAINS
       localError="The specified local face derivative index of "//TRIM(NumberToVString(localFaceDerivativeIdx,"*",err,error))// &
         & " is invalid for local face node index "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
         & " of local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face derivative index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(basis%derivativeNumbersInLocalFace(0,localFaceNodeIdxlocalFaceNumber),"*",err,error))//"."
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local face derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%derivativeNumbersInLocalFace(0,localFaceNodeIdx,localFaceNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
@@ -908,7 +915,8 @@ CONTAINS
     IF(localFaceNodeIdx<1.OR.localFaceNodeIdx>basis%numberOfNodesInLocalFace(localFaceNumber)) THEN
       localError="The specified local face node index of "//TRIM(NumberToVString(localFaceNodeIdx,"*",err,error))// &
         & " is invalid for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local face node index should be >=1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local face node index should be >=1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodesInLocalFace(localFaceNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1212,7 +1220,7 @@ CONTAINS
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(lineBasis)) THEN
       localError="The line basis is not associated for local line number "// &
-        & TRIM(NumberToVString(localLineNumber,"*",err,error))//" of basis number "
+        & TRIM(NumberToVString(localLineNumber,"*",err,error))//" of basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1270,7 +1278,8 @@ CONTAINS
     IF(lineParameterIdx<1.OR.lineParameterIdx>basis%elementParametersInLocalLine(0,localLineNumber)) THEN
       localError="The specified line parameter index of "//TRIM(NumberToVString(lineParameterIdx,"*",err,error))// &
         & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The line parameter index should be >=1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The line parameter index should be >=1 and <= "// &
         & TRIM(NumberToVString(basis%elementParametersInLocalLine(0,localLineNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1334,7 +1343,8 @@ CONTAINS
     IF(localLineNodeIdx<1.OR.localLineNodeIdx>basis%numberOfNodesInLocalLine(localLineNumber)) THEN
       localError="The specified local line node index of "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
         & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line node index should be >= 1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local line node index should be >= 1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodesInLocalLine(localLineNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1354,15 +1364,13 @@ CONTAINS
   !
 
   !>Returns the element local derivative index for a line derivative and node index in a local line in a basis.
-  SUBROUTINE Basis_LineNodeDerivativeNumberGet(basis,localLineDerivativeIdx,localLineNodeIdx,localLineNumber, &
-    & localElementDerivativeIdx,err,error,*)
+  SUBROUTINE Basis_LineNodeDerivativeNumberGet(basis,localLineNodeIdx,localLineNumber,localLineDerivativeIdx,err,error,*)
 
     !Argument variables
     TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the element derivative index for
-    INTEGER(INTG), INTENT(IN) :: localLineDerivativeIdx !<The line derivative index to get the equivalent element derivative index for
     INTEGER(INTG), INTENT(IN) :: localLineNodeIdx !<The line node index to get the element derivative index for
     INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the element derivative index for
-    INTEGER(INTG), INTENT(OUT) :: localElementDerivativeIdx !<On exit, the equivalent element derivative index for the line node and derivative index on the local line.
+    INTEGER(INTG), INTENT(OUT) :: localLineDerivativeIdx !<On exit, the line derivative index 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1400,22 +1408,14 @@ CONTAINS
     IF(localLineNodeIdx<1.OR.localLineNodeIdx>basis%numberOfNodesInLocalLine(localLineNumber)) THEN
       localError="The specified local line node index of "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
         & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line node index should be >=1 and <= "// &
+        & " of basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & ". The local line node index should be >=1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodesInLocalLine(localLineNumber),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(localLineDerivativeIdx<1.OR. &
-      & localLineDerivativeIdx>basis%derivativeNumbersInLocalLine(0,localLineNodeIdx,localLineNumber)) THEN
-      localError="The specified local line derivative index of "//TRIM(NumberToVString(localLineDerivativeIdx,"*",err,error))// &
-        & " is invalid for local line node index "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
-        & " of local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line derivative index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(basis%derivativeNumbersInLocalLine(0,localLineNodeIdxlocalLineNumber),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
     
-    localElementDerivativeIdx=basis%derivativeNumbersInLocalLine(localLineDerivativeIdx,localLineNodeIdx,localLineNumber)
+    localLineDerivativeIdx=basis%derivativeNumbersInLocalLine(localLineNodeIdx,localLineNumber)
     
     EXITS("Basis_LineNodeDerivativeNumberGet")
     RETURN
@@ -1423,70 +1423,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_LineNodeDerivativeNumberGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the number of line derivatives for a line  node index in a local line in a basis.
-  SUBROUTINE Basis_LineNodeNumberOfDerivativesGet(basis,localLineNodeIdx,localLineNumber,numberOfNodeDerivatives,err,error,*)
-
-    !Argument variables
-    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the number of node derivatives for
-    INTEGER(INTG), INTENT(IN) :: localLineNodeIdx !<The line node index to get the number of derivatives for
-    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the number of derivatives for
-    INTEGER(INTG), INTENT(OUT) :: numberOfNodeDerivatives !<On exit, the numbe of node derivatives for the line node index on the local line.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
- 
-    ENTERS("Basis_LineNodeNumberOfDerivativesGet",err,error,*999)
-
-#ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(basis%numberOfXi<2) THEN
-      localError="Can only get the line node numbers of derivatives for a basis with > 1 xi directions. The specified basis "// &
-        & "number of "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" has "// &
-        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF    
-    IF(localLineNumber<0.OR.localLineNumber>basis%numberOfLocalLines) THEN
-      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
-        & " is invalid. The local line number should be >= 1 and <= "// &
-        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//" for basis number "// &
-        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(basis%derivativeNumbersInLocalLine)) THEN
-      localError="The derivative numbers in local line array is not allocated for basis number "// &
-        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(basis%numberOfNodesInLocalLine)) THEN
-      localError="The number of nodes in local line array is not allocated for basis number "// &
-        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(localLineNodeIdx<1.OR.localLineNodeIdx>basis%numberOfNodesInLocalLine(localLineNumber)) THEN
-      localError="The specified local line node index of "//TRIM(NumberToVString(localLineNodeIdx,"*",err,error))// &
-        & " is invalid for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
-        & " of basis number "//TRIM(basis%userNumber,"*",err,error))//". The local line node index should be >=1 and <= "// &
-        & TRIM(NumberToVString(basis%numberOfNodesInLocalLine(localLineNumber),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-#endif
-    
-    numberOfNodeDerivatives=basis%derivativeNumbersInLocalLine(0,localLineNodeIdx,localLineNumber)
-    
-    EXITS("Basis_LineNodeNumberOfDerivativesGet")
-    RETURN
-999 ERRORSEXITS("Basis_LineNodeNumberOfDerivativesGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Basis_LineNodeNumberOfDerivativesGet
 
   !
   !================================================================================================================================
@@ -1543,13 +1479,44 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the xi normal direction for a local line in a basis.
-  SUBROUTINE Basis_LineXiNormalGet(basis,localLineNumber,lineXiNormal,err,error,*)
+  !>Returns the xi normal direction for a local line in a 2D basis.
+  SUBROUTINE Basis_LineXiNormalsGet0(basis,localLineNumber,lineXiNormal,err,error,*)
     
     !Argument variables
     TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the xi normal direction for
     INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the xi normal direction for
-    INTEGER(INTG), INTENT(OUT) :: lineXiNormal !<On exit, the xi normal direction for the local line. \see Constants_ElementNormalXiDirections
+    INTEGER(INTG), INTENT(OUT) :: lineXiNormal !<lineXiNormal. On exit, the xi normal direction for the local line. \see Constants_ElementNormalXiDirections
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: lineXiNormals(1)
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Basis_LineXiNormalsGet0",err,error,*999)
+
+    CALL Basis_LineXiNormalsGet1(basis,localLineNumber,lineXiNormals,err,error,*999)    
+    lineXiNormal=lineXiNormals(1)
+    
+    EXITS("Basis_LineXiNormalsGet0")
+    RETURN
+999 ERRORSEXITS("Basis_LineXiNormalsGet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LineXiNormalsGet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the xi normal directions for a local line in a basis.
+  SUBROUTINE Basis_LineXiNormalsGet1(basis,localLineNumber,lineXiNormals,err,error,*)
+    
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the xi normal direction for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the xi normal direction for
+    INTEGER(INTG), INTENT(OUT) :: lineXiNormals(:) !<lineXiNormals(xiCoordIdx). On exit, the xi normal direction for the local line. \see Constants_ElementNormalXiDirections
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1557,7 +1524,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("Basis_LineXiNormalGet",err,error,*999)
+    ENTERS("Basis_LineXiNormalsGet1",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
@@ -1574,21 +1541,28 @@ CONTAINS
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(basis%localLineXiNormal)) THEN
+    IF(.NOT.ALLOCATED(basis%localLineXiNormals)) THEN
       localError="The local line xi normal array is not allocated for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(basis%localLineXiNormals,1)<(basis%numberOfXi-1)) THEN
+      localError="The local line xi normal array is too small. The size of the xi normal array is "// &
+        & TRIM(NumberToVString(SIZE(basis%localLineXiNormals,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(basis%numberOfXi-1,"*",err,error))//" for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
     
-    lineXiNormal=basis%localLineXiNormal(localLineNumber)
+    lineXiNormals(1:basis%numberOfXi-1)=basis%localLineXiNormals(1:basis%numberOfXi-1,localLineNumber)
     
-    EXITS("Basis_LineXiNormalGet")
+    EXITS("Basis_LineXiNormalsGet1")
     RETURN
-999 ERRORSEXITS("Basis_LineXiNormalGet",err,error)
+999 ERRORSEXITS("Basis_LineXiNormalsGet1",err,error)
     RETURN 1
     
-  END SUBROUTINE Basis_LineXiNormalGet
+  END SUBROUTINE Basis_LineXiNormalsGet1
 
   !
   !================================================================================================================================
@@ -1623,7 +1597,7 @@ CONTAINS
     IF(.NOT.ALLOCATED(basis%xiNormalLocalFace)) THEN
       localError="The xi normal local face array is not allocated for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif   
 
@@ -1660,7 +1634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#if WITH_CHECKS
+#ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
     
@@ -1691,7 +1665,7 @@ CONTAINS
     IF(.NOT.ALLOCATED(basis%xiNormalsLocalLine)) THEN
       localError="The xi normals local line array is not allocated for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
 
@@ -1905,7 +1879,7 @@ CONTAINS
     IF(.NOT.ALLOCATED(basis%numberOfNodesXic)) THEN
       localError="The number of nodes xi coordinate array is not allocated for basis number "// &
         & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
    
@@ -2319,7 +2293,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
     
-    ENTERS("BasisQuadratureScheme_GaussPositionGet",err,error,*999)
+    ENTERS("BasisQuadratureScheme_GaussBasisFunctionGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
@@ -2347,12 +2321,12 @@ CONTAINS
 
     gaussBasisFunction=quadratureScheme%gaussBasisFunctions(elementParameterIdx,partialDerivativeIdx,gaussIdx)
     
-    EXITS("BasisQuadratureScheme_GaussPositionGet")
+    EXITS("BasisQuadratureScheme_GaussBasisFunctionGet")
     RETURN
-999 ERRORSEXITS("BasisQuadratureScheme_GaussPositionGet",err,error)    
+999 ERRORSEXITS("BasisQuadratureScheme_GaussBasisFunctionGet",err,error)    
     RETURN 1
     
-  END SUBROUTINE BasisQuadratureScheme_GaussPositionGet
+  END SUBROUTINE BasisQuadratureScheme_GaussBasisFunctionGet
   
   !
   !================================================================================================================================
@@ -2386,7 +2360,7 @@ CONTAINS
       & CALL FLagError("Gauss positions are not allocated for the quadrature scheme.",err,error,*999)
     IF(SIZE(gaussPosition,1)<SIZE(quadratureScheme%gaussPositions,1)) THEN
       localError="The size of the specified Gauss position array of "// &
-        & TRIM(NumberToVString(SIZE(gaussPosition,1),"*",err,error)//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(SIZE(gaussPosition,1),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(SIZE(quadratureScheme%gaussPositions,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF

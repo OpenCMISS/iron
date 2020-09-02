@@ -918,6 +918,18 @@ MODULE FieldRoutines
   PUBLIC FieldVariable_ParameterSetVectorGet
 
   PUBLIC FieldVariable_ParametersToFieldVariableParametersCopy
+
+  PUBLIC FieldVariablesList_CreateStart,FieldVariablesList_CreateFinish
+
+  PUBLIC FieldVariablesList_Destroy
+  
+  PUBLIC FieldVariablesList_NumberOfVariablesGet
+  
+  PUBLIC FieldVariablesList_VariableAdd
+  
+  PUBLIC FieldVariablesList_VariableGet
+  
+  PUBLIC FieldVariablesList_VariableInListCheck
   
   PUBLIC Fields_Finalise,Fields_Initialise
   
@@ -13097,16 +13109,16 @@ CONTAINS
     !Local Variables
     TYPE(FieldVariableType), POINTER :: fieldVariable
 
-    ENTERS("FieldVariable_ParameterSetUpdateStart",err,error,*999)
+    ENTERS("Field_ParameterSetUpdateStart",err,error,*999)
 
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
     CALL FieldVariable_ParameterSetUpdateStart(fieldVariable,fieldSetType,err,error,*999)
 
-    EXITS("FieldVariable_ParameterSetUpdateStart")
+    EXITS("Field_ParameterSetUpdateStart")
     RETURN
-999 ERRORSEXITS("FieldVariable_ParameterSetUpdateStart",err,error)
+999 ERRORSEXITS("Field_ParameterSetUpdateStart",err,error)
     RETURN 1
 
   END SUBROUTINE Field_ParameterSetUpdateStart
@@ -21260,6 +21272,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("FieldVariable_ParameterSetUpdateNodeL",err,error)
     RETURN 1
+    
   END SUBROUTINE FieldVariable_ParameterSetUpdateNodeL
 
   !
@@ -21621,6 +21634,315 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParametersToFieldVariableParametersCopy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of in a field variables list. 
+  SUBROUTINE FieldVariablesList_CreateStart(fieldVariablesList,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to start the creation of. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariablesList_CreateStart",err,error,*999)
+
+    CALL FieldVariablesList_Initialise(fieldVariablesList,err,error,*999)
+    
+    EXITS("FieldVariablesList_CreateStart")
+    RETURN
+999 ERRORSEXITS("FieldVariablesList_CreateStart",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_CreateStart
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the creation of in a field variables list. 
+  SUBROUTINE FieldVariablesList_CreateFinish(fieldVariablesList,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to finish creating. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariablesList_CreateFinish",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is not associated.",err,error,*999)
+#endif    
+
+    !Do nothing for now
+    
+    EXITS("FieldVariablesList_CreateFinish")
+    RETURN
+999 ERRORSEXITS("FieldVariablesList_CreateFinish",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_CreateFinish
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys a field variables list. 
+  SUBROUTINE FieldVariablesList_Destroy(fieldVariablesList,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to destroy. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariablesList_Destroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is not associated.",err,error,*999)
+
+    CALL FieldVariablesList_Finalise(fieldVariablesList,err,error,*999)
+    
+    EXITS("FieldVariablesList_Destroy")
+    RETURN
+999 ERRORSEXITS("FieldVariablesList_Destroy",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_Destroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a field variables list and deallocates all memory
+  SUBROUTINE FieldVariablesList_Finalise(fieldVariablesList,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariablesList_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(fieldVariablesList)) THEN
+      IF(ALLOCATED(fieldVariablesList%variables)) DEALLOCATE(fieldVariablesList%variables)
+      DEALLOCATE(fieldVariablesList)
+    ENDIF
+   
+    EXITS("FieldVariablesList_Finalise")
+    RETURN
+999 ERRORSEXITS("FieldVariablesList_Finalise",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of in a field variables list. 
+  SUBROUTINE FieldVariablesList_Initialise(fieldVariablesList,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to create. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("FieldVariablesList_Initialise",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is already associated.",err,error,*998)
+#endif    
+    
+    ALLOCATE(fieldVariablesList,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate field variables list.",err,error,*999)
+    fieldVariablesList%numberOfVariables=0
+    
+    EXITS("FieldVariablesList_Initialise")
+    RETURN
+999 CALL FieldVariablesList_Finalise(fieldVariablesList,dummyErr,dummyError,*998)
+998 ERRORSEXITS("FieldVariablesList_Initialise",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of variables in a field variables list. 
+  SUBROUTINE FieldVariablesList_NumberOfVariablesGet(fieldVariablesList,numberOfVariables,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to get the number of variables for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On exit, the number of variables in the field variables list.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariablesList_NumberOfVariablesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is not associated.",err,error,*999)
+#endif    
+    
+    numberOfVariables=fieldVariablesList%numberOfVariables
+    
+    EXITS("FieldVariablesList_NumberOfVariablesGet")
+    RETURN
+999  ERRORSEXITS("FieldVariablesList_NumberOfVariablesGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_NumberOfVariablesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a field variable to a field variables list. 
+  SUBROUTINE FieldVariablesList_VariableAdd(fieldVariablesList,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to add the field variable to.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add to the field variables list.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: variableIdx
+    LOGICAL :: variableFound
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: newVariablesList(:)
+
+    ENTERS("FieldVariablesList_VariableAdd",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("The field variable to add is not associated.",err,error,*999)
+#endif    
+
+    ALLOCATE(newVariablesList(fieldVariablesList%numberOfVariables+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new variables list.",err,error,*999)
+    variableFound=.FALSE.
+    DO variableIdx=1,fieldVariablesList%numberOfVariables
+      IF(ASSOCIATED(fieldVariable,fieldVariablesList%variables(variableIdx)%ptr)) THEN
+        variableFound=.TRUE.
+        EXIT
+      ELSE
+        newVariablesList(variableIdx)%ptr=>fieldVariablesList%variables(variableIdx)%ptr
+      ENDIF
+    ENDDO !variableIdx
+    IF(variableFound) THEN
+      IF(ALLOCATED(newVariablesList)) DEALLOCATE(newVariablesList)
+    ELSE
+      newVariablesList(fieldVariablesList%numberOfVariables+1)%ptr=>fieldVariable
+      CALL MOVE_ALLOC(newVariablesList,fieldVariablesList%variables)
+      fieldVariablesList%numberOfVariables=fieldVariablesList%numberOfVariables+1
+    ENDIF
+
+    EXITS("FieldVariablesList_VariableAdd")
+    RETURN
+999 IF(ALLOCATED(newVariablesList)) DEALLOCATE(newVariablesList)
+    ERRORSEXITS("FieldVariablesList_VariableAdd",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_VariableAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a field variable at the specified variable position index in a field variables list. 
+  SUBROUTINE FieldVariablesList_VariableGet(fieldVariablesList,variablePositionIdx,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to get the field variable for
+    INTEGER(INTG), INTENT(IN) :: variablePositionIdx !<The variable position index in the list of field variables to get.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, A pointer to the specified field variable in the field variables list. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("FieldVariablesList_VariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("The field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is not associated.",err,error,*999)
+    IF(variablePositionIdx<0.OR.variablePositionIdx>fieldVariablesList%numberOfVariables) THEN
+      localError="The specified variable position index of "//TRIM(NumberToVString(variablePositionIdx,"*",err,error))// &
+        & " is invalid. The variable position index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariablesList%numberOfVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariablesList%variables)) &
+      & CALL FlagError("The field variables list variables array is not allocated.",err,error,*999)
+#endif    
+    
+    fieldVariable=>fieldVariablesList%variables(variablePositionIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(fieldVariable)) THEN
+      localError="The field variable at position index "//TRIM(NumberToVString(variablePositionIdx,"*",err,error))// &
+        & " in the field variables list is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    EXITS("FieldVariablesList_VariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORSEXITS("FieldVariablesList_VariableGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_VariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if fieldVariable is in the fieldVariablesList. If the fieldVariable is in the list then variableIdx will return the index position of that fieldVariable in the list. If the fieldVariable is not in the list the variableIdx will be zero on exit. 
+  SUBROUTINE FieldVariablesList_VariableInListCheck(fieldVariablesList,fieldVariable,variablePositionIdx,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariablesListType), POINTER :: fieldVariablesList !<A pointer to the field variables list to check if the field variable is in the list
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to check the field variables list for
+    INTEGER(INTG), INTENT(OUT) :: variablePositionIdx !<On exit, the variable position index of the field varible in the field variables list if it exists and 0 if it doesn't
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: variableIdx
+    LOGICAL :: variableFound
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: newVariablesList(:)
+
+    ENTERS("FieldVariablesList_VariableInListCheck",err,error,*999)
+
+    variablePositionIdx=0
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariablesList)) CALL FlagError("Field variables list is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("The field variable to add is not associated.",err,error,*999)
+#endif    
+
+    DO variableIdx=1,fieldVariablesList%numberOfVariables
+      IF(ASSOCIATED(fieldVariable,fieldVariablesList%variables(variableIdx)%ptr)) THEN
+        variablePositionIdx=variableIdx
+        EXIT
+      ENDIF
+    ENDDO !variableIdx
+ 
+    EXITS("FieldVariablesList_VariableInListCheck")
+    RETURN
+999 ERRORSEXITS("FieldVariablesList_VariableInListCheck",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariablesList_VariableInListCheck
 
   !
   !================================================================================================================================

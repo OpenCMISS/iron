@@ -582,6 +582,8 @@ MODULE SolverAccessRoutines
 
   PUBLIC CellMLEquations_LinearityTypeGet
 
+  PUBLIC CellMLEquations_NumberOfCellMLEnvironmentsGet
+
   PUBLIC CellMLEquations_SolverGet
 
   PUBLIC CellMLEquations_TimeDependenceTypeGet
@@ -590,7 +592,7 @@ MODULE SolverAccessRoutines
 
   PUBLIC Solver_AssertIsFinished,Solver_AssertNotFinished
 
-  PUBLIC Solver_AssertIsDAESolver,Solver_AssertIsDynamic,Solver_AssertIsGeometricTransformation,Solver_AssertIsLinear, &
+  PUBLIC Solver_AssertIsDAE,Solver_AssertIsDynamic,Solver_AssertIsGeometricTransformation,Solver_AssertIsLinear, &
     & Solver_AssertIsNonlinear,Solver_AssertIsOptimiser
   
   PUBLIC Solver_CellMLEquationsGet
@@ -607,9 +609,9 @@ MODULE SolverAccessRoutines
 
   PUBLIC Solver_DynamicLinearityTypeGet
   
-  PUBLIC Solver_DynamicLinearSolverGet
+  PUBLIC Solver_DynamicLinkedLinearSolverGet
   
-  PUBLIC Solver_DynamicNonlinearSolverGet
+  PUBLIC Solver_DynamicLinkedNonlinearSolverGet
 
   PUBLIC Solver_DynamicRestartGet
   
@@ -953,6 +955,33 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE CellMLEquations_LinearityTypeGet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of CellML environments for CellML equations
+  SUBROUTINE CellMLEquations_NumberOfCellMLEnvironmentsGet(cellMLEquations,numberOfCellMLEnvironments,err,error,*)
+
+    !Argument variables
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations !<A pointer the CellML equations to get the number of CellML environments for
+    INTEGER(INTG), INTENT(OUT) :: numberOfCellMLEnvironments !<On exit, the number of CellML environments for the CellML equations.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("CellMLEquations_NumberOfCellMLEnvironmentsGet",err,error,*999)
+
+    CALL CellMLEquations_AssertIsFinished(cellMLEquations,err,error,*999)
+   
+    numberOfCellMLEnvironments=cellMLEquations%numberOfCellMLEnvironments
+   
+    EXITS("CellMLEquations_NumberOfCellMLEnvironmentsGet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_NumberOfCellMLEnvironmentsGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_NumberOfCellMLEnvironmentsGet
         
   !
   !================================================================================================================================
@@ -1687,7 +1716,7 @@ CONTAINS
   SUBROUTINE SolverDAE_AdamsMoultonSolverGet(daeSolver,adamsMoultonSolver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Adams-Moulton solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Adams-Moulton solver for
     TYPE(AdamsMoultonDAESolverType), POINTER :: adamsMoultonSolver !<On exit, a pointer to the Adams-Moulton solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1722,7 +1751,7 @@ CONTAINS
   SUBROUTINE SolverDAE_BDFSolverGet(daeSolver,bdfSolver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the BDF solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the BDF solver for
     TYPE(BDFDAESolverType), POINTER :: bdfSolver !<On exit, a pointer to the BDF solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1753,11 +1782,46 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the Crank-Nicolson solver for a DAE solver.
+  SUBROUTINE SolverDAE_CrankNicolsonSolverGet(daeSolver,crankNicolsonSolver,err,error,*)
+
+    !Argument variables
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Crank-Nicolson solver for
+    TYPE(CrankNicolsonDAESolverType), POINTER :: crankNicolsonSolver !<On exit, a pointer to the Crank-Nicolson solver for the specified DAE solver. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverDAE_CrankNicolsonSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(crankNicolsonSolver)) CALL FlagError("Crank-Nicolson solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(daeSolver)) CALL FlagError("DAE solver is not associated.",err,error,*999)
+#endif    
+
+    crankNicolsonSolver=>daeSolver%crankNicolsonSolver
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(crankNicolsonSolver)) CALL FlagError("DAE Solver Crank-Nicolson solver is not associated.",err,error,*999)
+#endif    
+    
+    EXITS("SolverDAE_CrankNicolsonSolverGet")
+    RETURN
+999 NULLIFY(crankNicolsonSolver)
+998 ERRORSEXITS("SolverDAE_CrankNicolsonSolverGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverDAE_CrankNicolsonSolverGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the Euler solver for a DAE solver.
   SUBROUTINE SolverDAE_EulerSolverGet(daeSolver,eulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Euler solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Euler solver for
     TYPE(EulerDAESolverType), POINTER :: eulerSolver !<On exit, a pointer to the Euler solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1792,7 +1856,7 @@ CONTAINS
   SUBROUTINE SolverDAE_ExternalSolverGet(daeSolver,externalSolver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Euler solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Euler solver for
     TYPE(ExternalDAESolverType), POINTER :: externalSolver !<On exit, a pointer to the external solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1894,7 +1958,7 @@ CONTAINS
   SUBROUTINE SolverDAE_RungeKuttaSolverGet(daeSolver,rungeKuttaSolver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Runge-Kutta solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Runge-Kutta solver for
     TYPE(RungeKuttaDAESolverType), POINTER :: rungeKuttaSolver !<On exit, a pointer to the Runge-Kutta solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1929,7 +1993,7 @@ CONTAINS
   SUBROUTINE SolverDAE_RushLarsonSolverGet(daeSolver,rushLarsonSolver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Rush-Larson solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the Rush-Larson solver for
     TYPE(RushLarsonDAESolverType), POINTER :: rushLarsonSolver !<On exit, a pointer to the Rush-Larson solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1964,7 +2028,7 @@ CONTAINS
   SUBROUTINE SolverDAE_SolverGet(daeSolver,solver,err,error,*)
 
     !Argument variables
-    TYPE(SolverDAEType), POINTER :: daeSolver !<A pointer to the DAE solver to get the solver for
+    TYPE(DAESolverType), POINTER :: daeSolver !<A pointer to the DAE solver to get the solver for
     TYPE(SolverType), POINTER :: solver !<On exit, a pointer to the solver for the specified DAE solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2030,7 +2094,7 @@ CONTAINS
   SUBROUTINE SolverDAEBDF_DAESolverGet(bdfSolver,daeSolver,err,error,*)
 
     !Argument variables
-    TYPE(BDFSolverDAEType), POINTER :: bdfSolver !<A pointer to the BDF solver to get the DAE solver for
+    TYPE(BDFDAESolverType), POINTER :: bdfSolver !<A pointer to the BDF solver to get the DAE solver for
     TYPE(DAESolverType), POINTER :: daeSolver !<On exit, a pointer to the DAE solver for the specified BDF solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2065,7 +2129,7 @@ CONTAINS
   SUBROUTINE SolverDAEEuler_BackwardEulerSolverGet(eulerSolver,backwardEulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(EulerSolverDAEType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the backward Euler solver for
+    TYPE(EulerDAESolverType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the backward Euler solver for
     TYPE(BackwardEulerDAESolverType), POINTER :: backwardEulerSolver !<On exit, a pointer to the backward Euler solver for the specified Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2100,7 +2164,7 @@ CONTAINS
   SUBROUTINE SolverDAEEuler_ForwardEulerSolverGet(eulerSolver,forwardEulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(EulerSolverDAEType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the forward Euler solver for
+    TYPE(EulerDAESolverType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the forward Euler solver for
     TYPE(ForwardEulerDAESolverType), POINTER :: forwardEulerSolver !<On exit, a pointer to the forward Euler solver for the specified Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2135,7 +2199,7 @@ CONTAINS
   SUBROUTINE SolverDAEEuler_ImprovedEulerSolverGet(eulerSolver,improvedEulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(EulerSolverDAEType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the improved Euler solver for
+    TYPE(EulerDAESolverType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the improved Euler solver for
     TYPE(ImprovedEulerDAESolverType), POINTER :: improvedEulerSolver !<On exit, a pointer to the improved Euler solver for the specified Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2196,7 +2260,7 @@ CONTAINS
       CALL SolverDAEEuler_ForwardEulerSolverGet(eulerSolver,forwardEulerSolver,err,error,*999)
       solverLibraryType=forwardEulerSolver%solverLibrary
     CASE(SOLVER_DAE_EULER_IMPROVED)
-      NULLIFY(improvedEuler)
+      NULLIFY(improvedEulerSolver)
       CALL SolverDAEEuler_ImprovedEulerSolverGet(eulerSolver,improvedEulerSolver,err,error,*999)
       solverLibraryType=improvedEulerSolver%solverLibrary
     CASE DEFAULT
@@ -2220,7 +2284,7 @@ CONTAINS
   SUBROUTINE SolverDAEEuler_DAESolverGet(eulerSolver,daeSolver,err,error,*)
 
     !Argument variables
-    TYPE(EulerSolverDAEType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the DAE solver for
+    TYPE(EulerDAESolverType), POINTER :: eulerSolver !<A pointer to the Euler solver to get the DAE solver for
     TYPE(DAESolverType), POINTER :: daeSolver !<On exit, a pointer to the DAE solver for the specified Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2255,7 +2319,7 @@ CONTAINS
   SUBROUTINE SolverDAEEulerBackward_EulerSolverGet(backwardEulerSolver,eulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(BackwardEulerSolverDAEType), POINTER :: backwardEulerSolver !<A pointer to the backward Euler solver to get the Euler solver for
+    TYPE(BackwardEulerDAESolverType), POINTER :: backwardEulerSolver !<A pointer to the backward Euler solver to get the Euler solver for
     TYPE(EulerDAESolverType), POINTER :: eulerSolver !<On exit, a pointer to the Euler solver for the specified backward Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2268,7 +2332,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(backwardEulerSolver)) CALL FlagError("Backward Euler solver is not associated.",err,error,*999)
 #endif    
 
-    eulerSolver=>backwardEulerSolver%eulerSolver
+    eulerSolver=>backwardEulerSolver%eulerDAESolver
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(eulerSolver)) CALL FlagError("Backward Euler Solver Euler solver is not associated.",err,error,*999)
@@ -2290,7 +2354,7 @@ CONTAINS
   SUBROUTINE SolverDAEEulerForward_EulerSolverGet(forwardEulerSolver,eulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(ForwardEulerSolverDAEType), POINTER :: forwardEulerSolver !<A pointer to the forward Euler solver to get the Euler solver for
+    TYPE(ForwardEulerDAESolverType), POINTER :: forwardEulerSolver !<A pointer to the forward Euler solver to get the Euler solver for
     TYPE(EulerDAESolverType), POINTER :: eulerSolver !<On exit, a pointer to the Euler solver for the specified forward Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2303,7 +2367,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(forwardEulerSolver)) CALL FlagError("Forward Euler solver is not associated.",err,error,*999)
 #endif    
 
-    eulerSolver=>forwardEulerSolver%eulerSolver
+    eulerSolver=>forwardEulerSolver%eulerDAESolver
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(eulerSolver)) CALL FlagError("Forward Euler Solver Euler solver is not associated.",err,error,*999)
@@ -2325,7 +2389,7 @@ CONTAINS
   SUBROUTINE SolverDAEEulerImproved_EulerSolverGet(improvedEulerSolver,eulerSolver,err,error,*)
 
     !Argument variables
-    TYPE(ImprovedEulerSolverDAEType), POINTER :: improvedEulerSolver !<A pointer to the improved Euler solver to get the Euler solver for
+    TYPE(ImprovedEulerDAESolverType), POINTER :: improvedEulerSolver !<A pointer to the improved Euler solver to get the Euler solver for
     TYPE(EulerDAESolverType), POINTER :: eulerSolver !<On exit, a pointer to the Euler solver for the specified improved Euler solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2338,7 +2402,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(improvedEulerSolver)) CALL FlagError("Improved Euler solver is not associated.",err,error,*999)
 #endif    
 
-    eulerSolver=>improvedEulerSolver%eulerSolver
+    eulerSolver=>improvedEulerSolver%eulerDAESolver
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(eulerSolver)) CALL FlagError("Improved Euler Solver Euler solver is not associated.",err,error,*999)
@@ -2360,7 +2424,7 @@ CONTAINS
   SUBROUTINE SolverDAEExternal_DAESolverGet(externalSolver,daeSolver,err,error,*)
 
     !Argument variables
-    TYPE(ExternalSolverDAEType), POINTER :: externalSolver !<A pointer to the external solver to get the DAE solver for
+    TYPE(ExternalDAESolverType), POINTER :: externalSolver !<A pointer to the external solver to get the DAE solver for
     TYPE(DAESolverType), POINTER :: daeSolver !<On exit, a pointer to the DAE solver for the specified external solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2559,6 +2623,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
  
     ENTERS("Solver_DynamicLinkedLinearSolverGet",err,error,*998)
 
@@ -2597,6 +2662,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
  
     ENTERS("Solver_DynamicLinkedNonlinearSolverGet",err,error,*998)
 
@@ -2896,7 +2962,7 @@ CONTAINS
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
-#endfif    
+#endif
     
     EXITS("Solver_OptimiserSolverGet")
     RETURN
@@ -2948,13 +3014,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(SolverType), POINTER :: linkedLinearSolver,linkedNonlinearSolver
 
     ENTERS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error,*998)
 
-#Ifdef WITH_PRECHECKS    
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(cellMLSolver)) CALL FlagError("CellML solver is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     
@@ -2987,7 +3054,8 @@ CONTAINS
     
     EXITS("Solver_QuasiNewtonLinkedCellMLSolverGet")
     RETURN
-999 ERRORSEXITS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error)
+999 NULLIFY(cellMLSolver)
+998 ERRORSEXITS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error)
     RETURN 1
    
   END SUBROUTINE Solver_QuasiNewtonLinkedCellMLSolverGet
@@ -3864,7 +3932,8 @@ CONTAINS
  
     EXITS("SolverEquations_BoundaryConditionsGet")
     RETURN
-999 ERRORSEXITS("SolverEquations_BoundaryConditionsGet",err,error)
+999 NULLIFY(boundaryConditions)
+998 ERRORSEXITS("SolverEquations_BoundaryConditionsGet",err,error)
     RETURN 1
 
   END SUBROUTINE SolverEquations_BoundaryConditionsGet
@@ -4028,7 +4097,7 @@ CONTAINS
 #endif    
 
     field=>geometricTransformationSolver%field
-    variableType=geometricTransformationSolver%variableType
+    variableType=geometricTransformationSolver%fieldVariableType
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Geometric transformation solver field is not associated.",err,error,*999)
@@ -4215,6 +4284,76 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the direct solver for a linear solver. 
+  SUBROUTINE SolverLinear_DirectSolverGet(linearSolver,directSolver,err,error,*)
+
+    !Argument variables
+    TYPE(LinearSolverType), POINTER :: linearSolver !<A pointer to the linear solver to get the direct solver for
+    TYPE(LinearDirectSolverType), POINTER :: directSolver !<On exit, a pointer to the direct solver for the specified linear solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverLinear_DirectSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(directSolver)) CALL FlagError("Direct solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is not associated.",err,error,*999)
+#endif    
+
+    directSolver=>linearSolver%directSolver
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(directSolver)) CALL FlagError("Linear solver direct solver is not associated.",err,error,*999)
+#endif    
+ 
+    EXITS("SolverLinear_DirectSolverGet")
+    RETURN
+999 NULLIFY(directSolver)
+998 ERRORSEXITS("SolverLinear_DirectSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverLinear_DirectSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the iterative solver for a linear solver. 
+  SUBROUTINE SolverLinear_IterativeSolverGet(linearSolver,iterativeSolver,err,error,*)
+
+    !Argument variables
+    TYPE(LinearSolverType), POINTER :: linearSolver !<A pointer to the linear solver to get the iterative solver for
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver !<On exit, a pointer to the iterative solver for the specified linear solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverLinear_IterativeSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(iterativeSolver)) CALL FlagError("Iterative solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is not associated.",err,error,*999)
+#endif    
+
+    iterativeSolver=>linearSolver%iterativeSolver
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(iterativeSolver)) CALL FlagError("Linear solver iterative solver is not associated.",err,error,*999)
+#endif    
+ 
+    EXITS("SolverLinear_IterativeSolverGet")
+    RETURN
+999 NULLIFY(iterativeSolver)
+998 ERRORSEXITS("SolverLinear_IterativeSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverLinear_IterativeSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the type of library to use for a linear solver.
   SUBROUTINE SolverLinear_LibraryTypeGet(linearSolver,solverLibraryType,err,error,*)
 
@@ -4336,6 +4475,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the linear solver for a direct linear solver. 
+  SUBROUTINE SolverLinearDirect_LinearSolverGet(directSolver,linearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(LinearDirectSolverType), POINTER :: directSolver !<A pointer to the direct solver to get the linear solver for
+    TYPE(LinearSolverType), POINTER :: linearSolver !<On exit, a pointer to the linear solver for the specified direct solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverLinearDirect_LinearSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(directSolver)) CALL FlagError("Direct linear solver is not associated.",err,error,*999)
+#endif    
+
+    linearSolver=>directSolver%linearSolver
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Linear direct solver linear solver is not associated.",err,error,*999)
+#endif    
+ 
+    EXITS("SolverLinearDirect_LinearSolverGet")
+    RETURN
+999 NULLIFY(linearSolver)
+998 ERRORSEXITS("SolverLinearDirect_LinearSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverLinearDirect_LinearSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the type of library to use for an iterative linear solver.
   SUBROUTINE SolverLinearIterative_LibraryTypeGet(iterativeSolver,solverLibraryType,err,error,*)
 
@@ -4383,6 +4557,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the linear solver for a iterative linear solver. 
+  SUBROUTINE SolverLinearIterative_LinearSolverGet(iterativeSolver,linearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver !<A pointer to the iterative solver to get the linear solver for
+    TYPE(LinearSolverType), POINTER :: linearSolver !<On exit, a pointer to the linear solver for the specified iterative solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverLinearIterative_LinearSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(iterativeSolver)) CALL FlagError("Iterative linear solver is not associated.",err,error,*999)
+#endif    
+
+    linearSolver=>iterativeSolver%linearSolver
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Linear iterative solver linear solver is not associated.",err,error,*999)
+#endif    
+ 
+    EXITS("SolverLinearIterative_LinearSolverGet")
+    RETURN
+999 NULLIFY(linearSolver)
+998 ERRORSEXITS("SolverLinearIterative_LinearSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverLinearIterative_LinearSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
   !>Assert that a nonlinear solver is a Newton solver
   SUBROUTINE SolverNonlinear_AssertIsNewton(nonlinearSolver,err,error,*)
 
@@ -4400,7 +4609,7 @@ CONTAINS
 #endif    
 
     IF(nonlinearSolver%nonlinearSolveType/=SOLVER_NONLINEAR_NEWTON) THEN
-      localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolvernonlinearSolveType,"*",err,error))// &
+      localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))// &
         & " does not correspond to the required Newton nonlinear solve type."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -4433,7 +4642,7 @@ CONTAINS
 #endif    
 
     IF(nonlinearSolver%nonlinearSolveType/=SOLVER_NONLINEAR_QUASI_NEWTON) THEN
-      localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolvernonlinearSolveType,"*",err,error))// &
+      localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolver%nonlinearSolveType,"*",err,error))// &
         & " does not correspond to the required quasi Newton nonlinear solve type."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -4537,7 +4746,7 @@ CONTAINS
       linearSolver=>nonlinearSolver%nonlinearSolver%quasiNewtonSolver%linearSolver
     CASE DEFAULT
       localError="The nonlinear solver type of "// &
-        & TRIM(NumberToVString(nonlinearSolver%nonlinearSolver%%nonlinearSolveType,"*",err,error))//" is invalid."
+        & TRIM(NumberToVString(nonlinearSolver%nonlinearSolver%nonlinearSolveType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
 #ifdef WITH_POSTCHECKS    
@@ -4732,7 +4941,7 @@ CONTAINS
 
     !Argument variables
     TYPE(NewtonSolverType), POINTER :: newtonSolver !<A pointer to the Newton nonlinear solver to get the convergence test for
-    TYPE(NewtonConvergenceTestType), POINTER :: convergenceTest !<On exit, a pointer to the convergence test for the specified Newton nonlinear solver. Must not be associated on entry
+    TYPE(NewtonSolverConvergenceTestType), POINTER :: convergenceTest !<On exit, a pointer to the convergence test for the specified Newton nonlinear solver. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4817,7 +5026,7 @@ CONTAINS
   SUBROUTINE SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,linesearchSolver,err,error,*)
 
     !Argument variables
-    TYPE(NewtonSolverType), POINTER :: quasiNewtonSolver !<A pointer to the Newton nonlinear solver to get the linesearch solver for
+    TYPE(NewtonSolverType), POINTER :: newtonSolver !<A pointer to the Newton nonlinear solver to get the linesearch solver for
     TYPE(NewtonLinesearchSolverType), POINTER :: linesearchSolver !<On exit, a pointer to the linesearch solver for the specified Newton nonlinear solver. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4830,10 +5039,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(newtonSolver)) CALL FlagError("Newton nonlinear solver is not associated.",err,error,*999)
 #endif    
 
-    linesearchSolver=>newtonSolver%linsearchSolver
+    linesearchSolver=>newtonSolver%linesearchSolver
 
 #ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(linesearch)) &
+    IF(.NOT.ASSOCIATED(linesearchSolver)) &
       & CALL FlagError("Newton nonlinear solver linesearch solver is not associated.",err,error,*999)
 #endif    
  
@@ -4973,10 +5182,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(newtonSolver)) CALL FlagError("Newton nonlinear solver is not associated.",err,error,*999)
 #endif    
 
-    trustregionSolver=>newtonSolver%linsearchSolver
+    trustregionSolver=>newtonSolver%trustregionSolver
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(trustregion)) &
+    IF(.NOT.ASSOCIATED(trustregionSolver)) &
       & CALL FlagError("Newton nonlinear solver trustregion solver is not associated.",err,error,*999)
 #endif    
  
@@ -5140,7 +5349,7 @@ CONTAINS
 
     !Argument variables
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver !<A pointer to the quasi Newton nonlinear solver to get the convergence test for
-    TYPE(NewtonConvergenceTestType), POINTER :: convergenceTest !<On exit, a pointer to the convergence test for the specified quasi Newton nonlinear solver. Must not be associated on entry
+    TYPE(NewtonSolverConvergenceTestType), POINTER :: convergenceTest !<On exit, a pointer to the convergence test for the specified quasi Newton nonlinear solver. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5196,7 +5405,7 @@ CONTAINS
     SELECT CASE(quasiNewtonSolver%quasiNewtonSolveType)
     CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
 #ifdef WITH_PRECHECKS      
-      NULLIFY(linearchSolver)
+      NULLIFY(linesearchSolver)
       CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,linesearchSolver,err,error,*999)
 #endif      
       solverLibraryType=quasiNewtonSolver%linesearchSolver%solverLibrary
@@ -5205,7 +5414,7 @@ CONTAINS
       NULLIFY(trustregionSolver)
       CALL SolverNonlinearQuasiNewtonGet(quasiNewtonSolver,trustregionSolver,err,error,*999)
 #endif      
-      solverLibraryType==quasiNewtonSolver%trustregionSolver%solverLibrary
+      solverLibraryType=quasiNewtonSolver%trustregionSolver%solverLibrary
     CASE DEFAULT
       localError="The Quasi-Newton solver type of "// &
         & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonSolveType,"*",err,error))//" is invalid."
@@ -5241,10 +5450,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(quasiNewtonSolver)) CALL FlagError("Quasi Newton nonlinear solver is not associated.",err,error,*999)
 #endif    
 
-    linesearchSolver=>quasiNewtonSolver%linsearchSolver
+    linesearchSolver=>quasiNewtonSolver%linesearchSolver
 
 #ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(linesearch)) &
+    IF(.NOT.ASSOCIATED(linesearchSolver)) &
       & CALL FlagError("Quasi Newton nonlinear solver linesearch solver is not associated.",err,error,*999)
 #endif    
  
@@ -5389,10 +5598,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(quasiNewtonSolver)) CALL FlagError("Quasi Newton nonlinear solver is not associated.",err,error,*999)
 #endif    
 
-    trustregionSolver=>quasiNewtonSolver%linsearchSolver
+    trustregionSolver=>quasiNewtonSolver%trustregionSolver
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(trustregion)) &
+    IF(.NOT.ASSOCIATED(trustregionSolver)) &
       & CALL FlagError("Quasi Newton nonlinear solver trustregion solver is not associated.",err,error,*999)
 #endif    
  
@@ -5465,7 +5674,7 @@ CONTAINS
 
     quasiNewtonSolver=>trustregionSolver%quasiNewtonSolver
 
-#if WITH_POSTCHECKS    
+#ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(quasiNewtonSolver)) &
       & CALL FlagError("Quasi Newton nonlinear trustregion solver quasi Newton solver is not associated.",err,error,*999)
 #endif    

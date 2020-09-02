@@ -937,7 +937,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("InterfaceMeshConnectivity_CoupledElementNumberGet",err,error,*998)
+    ENTERS("InterfaceMeshConnectivity_CoupledElementNumberGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
@@ -958,7 +958,7 @@ CONTAINS
       & CALL FlagError("The element connectivity array is not allocated for the interface mesh connectivity.",err,error,*999)
 #endif    
 
-    coupledElementNumber=interfaceMeshConnectivity%elementConnectivity(interfaceElementNumber,meshIndex)
+    coupledElementNumber=interfaceMeshConnectivity%elementConnectivity(interfaceElementNumber,meshIndex)%coupledElementNumber
     
     EXITS("InterfaceMeshConnectivity_CoupledElementNumberGet")
     RETURN

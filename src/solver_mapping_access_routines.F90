@@ -69,7 +69,7 @@ MODULE SolverMappingAccessRoutines
   !>@}
  
   !> \addtogroup SolverMappingRoutines_EquationsTypes SolverMappingRoutines::EquationsTypes
-  !> \brief Equations Matrix types
+  !> \brief Equations types for solver mapping
   !> \see SolverMappingRoutines
   !>@{
   INTEGER(INTG), PARAMETER :: SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET=1 !<The equations in the solver mapping is from an equations set \see SolverMappingRoutines_EquationsTypes,SolverMappingRoutines
@@ -83,9 +83,10 @@ MODULE SolverMappingAccessRoutines
 
   !Interfaces
 
-  PUBLIC SOLVER_MAPPING_EQUATIONS_DYNAMIC_MATRIX,SOLVER_MAPPING_EQUATIONS_LINEAR_MATRIX
+  PUBLIC SOLVER_MAPPING_EQUATIONS_DYNAMIC_MATRIX,SOLVER_MAPPING_EQUATIONS_LINEAR_MATRIX,SOLVER_MAPPING_EQUATIONS_NONLINEAR_MATRIX
 
-  PUBLIC SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET,SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION
+  PUBLIC SOLVER_MAPPING_EQUATIONS_EQUATIONS_SET,SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION, &
+    & SOLVER_MAPPING_EQUATIONS_INTERFACE_TRANSPOSE
 
   PUBLIC SolverMapping_AssertIsFinished,SolverMapping_AssertNotFinished
 
@@ -93,11 +94,11 @@ MODULE SolverMappingAccessRoutines
 
   PUBLIC SolverMapping_CreateValuesCacheGet
   
-  PUBLIC SolverMapping_DynamicEquationsMatrixToSolverMatrixGet
+  PUBLIC SolverMapping_DynamicMatrixToSolverMatrixGet
   
   PUBLIC SolverMapping_EMSToSMMapNumberOfDynamicMatricesGet
 
-  PUBLIC SolverMapping_EMSToSMMapNumberOfJacobianMatricesGet
+  !PUBLIC SolverMapping_IMSToSMMapNumberOfJacobianMatricesGet
 
   PUBLIC SolverMapping_EMSToSMMapNumberOfLinearMatricesGet
 
@@ -105,7 +106,7 @@ MODULE SolverMappingAccessRoutines
 
   PUBLIC SolverMapping_EMSToSMMapVariableGet
 
-  PUBLIC SolverMapping_EMSToSMMapVariableToSolverColMapGet
+  PUBLIC SolverMapping_EMSToSMMapVariableDOFToSolverDOFsMapGet
 
   PUBLIC SolverMapping_EquationsSetGet
 
@@ -115,9 +116,9 @@ MODULE SolverMappingAccessRoutines
   
   PUBLIC SolverMapping_EquationsSetToSolverMatricesMapGet
 
-  PUBLIC SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet
+  PUBLIC SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet
 
-  PUBLIC SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet
+  PUBLIC SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet
 
   PUBLIC SolverMapping_InterfaceColToSolverColsMapGet
 
@@ -137,31 +138,47 @@ MODULE SolverMappingAccessRoutines
   
   PUBLIC SolverMapping_JacobianMatrixToSolverMatrixMapGet
 
-  PUBLIC SolverMapping_LinearEquationsMatrixToSolverMatrixGet
+  PUBLIC SolverMapping_LinearMatrixToSolverMatrixGet
+
+  PUBLIC SolverMapping_NumberOfEquationsSetsGet
+
+  PUBLIC SolverMapping_NumberOfInterfaceConditionsGet
+
+  PUBLIC SolverMapping_NumberOfSolverMatricesGet
+
+  PUBLIC SolverMapping_NumberOfRowsGet
+
+  PUBLIC SolverMapping_NumberOfGlobalRowsGet
   
   PUBLIC SolverMapping_RowDOFSMappingGet
 
-  PUBLIC SolverMapping_SolverColToEquationsColMapGet
-
   PUBLIC SolverMapping_SolverMatrixToEquationsMapGet
 
-  PUBLIC SolverMappingCreateValuesCache_EquationsVariableListGet
-  
-  PUBLIC SolverMappingCreateValuesCache_InterfaceVariableListGet
-  
-  PUBLIC SolverMappingCreateValuesCache_RHSVariableListGet
-  
-  PUBLIC SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet
+  PUBLIC SolverMapping_SolverRowToEquationsMapGet
 
-  PUBLIC SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixMapGet
+  PUBLIC SolverMappingCVC_EquationsVariableListGet
+  
+  PUBLIC SolverMappingCVC_InterfaceVariableListGet
+  
+  PUBLIC SolverMappingCVC_RHSVariableListGet
+  
+  PUBLIC SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet
 
-  PUBLIC SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet
+  PUBLIC SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet
+
+  PUBLIC SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet
 
   PUBLIC SolverMappingEMSToSMMap_NumberOfDynamicMatricesGet
 
   PUBLIC SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet
-
+  
   PUBLIC SolverMappingEMSToSMMap_NumberOfLinearMatricesGet
+
+  PUBLIC SolverMappingEMSToSMMap_NumberOfVariablesGet
+
+  PUBLIC SolverMappingEMSToSMMap_VariableGet
+
+  PUBLIC SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet
 
   PUBLIC SolverMappingEMToSMMap_EquationsColToSolverColsMapGet
 
@@ -169,11 +186,15 @@ MODULE SolverMappingAccessRoutines
 
   PUBLIC SolverMappingEMToSMMap_SolverMatrixGet
 
-  PUBLIC SolverMappingEMToSMMap_VariableGet
-  
+  PUBLIC SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet
+
+  PUBLIC SolverMappingEMToSMSMap_NumberOfSolverMatricesGet
+
   PUBLIC SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet
 
   PUBLIC SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet
+
+  PUBLIC SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet
 
   PUBLIC SolverMappingESToSMSMap_JacobianMatrixToSolverMatrixMapGet
 
@@ -183,9 +204,31 @@ MODULE SolverMappingAccessRoutines
 
   PUBLIC SolverMappingESToSMSMap_NumberOfSolverMatricesGet
 
+  PUBLIC SolverMappingESToSMSMap_SolverMappingGet
+
+  PUBLIC SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet
+
   PUBLIC SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet
 
+  PUBLIC SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet
+
+  PUBLIC SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet
+
+  PUBLIC SolverMappingIMToSMSMap_NumberOfSolverMatricesGet
+
+  PUBLIC SolverMappingIMSToSMMap_DependentVariableGet
+  
+  PUBLIC SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet
+  
+  PUBLIC SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet
+  
   PUBLIC SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet
+  
+  PUBLIC SolverMappingIMSToSMMap_LagrangeVariableGet
+
+  PUBLIC SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet
+  
+  PUBLIC SolverMappingIMSToSMMap_NumberOfDependentVariablesGet
   
   PUBLIC SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet
   
@@ -200,6 +243,90 @@ MODULE SolverMappingAccessRoutines
   PUBLIC SolverMappingJMToSMMap_JacobianMatrixGet
   
   PUBLIC SolverMappingJMToSMMap_SolverMatrixGet
+
+  PUBLIC SolverMappingSColToDEQSMap_DynamicCouplingInfoGet
+  
+  PUBLIC SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet
+  
+  PUBLIC SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet
+  
+  PUBLIC SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet
+  
+  PUBLIC SolverMappingSColToLEQSMap_LinearCouplingInfoGet
+  
+  PUBLIC SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet
+  
+  PUBLIC SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet
+  
+  PUBLIC SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet
+  
+  PUBLIC SolverMappingSDOFToVDOFsMap_EquationsInfoGet
+
+  PUBLIC SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet
+
+  PUBLIC SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet
+
+  PUBLIC SolverMappingSDOFToVDOFsMap_VariableGet
+
+  PUBLIC SolverMappingSMToEQSMap_ColumnDOFsMappingGet
+
+  PUBLIC SolverMappingSMToEQSMap_NumberOfColumnsGet
+
+  PUBLIC SolverMappingSMToEQSMap_NumberOfDOFsGet
+ 
+  PUBLIC SolverMappingSMToEQSMap_NumberOfEquationsSetsGet
+
+  PUBLIC SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet
+
+  PUBLIC SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet
+
+  PUBLIC SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet
+  
+  PUBLIC SolverMappingSMToEQSMap_SolverMappingGet
+
+  PUBLIC SolverMappingSMToEQSMap_SolverMatrixGet
+
+  PUBLIC SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet
+
+  PUBLIC SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet
+
+  PUBLIC SolverMappingSMToEQSMap_TotalNumberOfDOFsGet
+ 
+  PUBLIC SolverMappingSMToEQSMap_VariablesListGet
+
+  PUBLIC SolverMappingSMToESMap_EquationsGet
+  
+  PUBLIC SolverMappingSMToESMap_HaveEquationsGet
+
+  PUBLIC SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet
+
+  PUBLIC SolverMappingSMToESMap_SolverColToLinearEquationsMapGet
+
+  PUBLIC SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet
+
+  PUBLIC SolverMappingSMToICMap_InterfaceEquationsGet
+
+  PUBLIC SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet
+
+  PUBLIC SolverMappingSRowToEQSMap_EquationsSetCouplingInfoGet
+
+  PUBLIC SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet
+  
+  PUBLIC SolverMappingSRowToEQSMap_InterfaceConditionIndexGet
+
+  PUBLIC SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet
+
+  PUBLIC SolverMappingVariables_NumberOfVariablesGet
+
+  PUBLIC SolverMappingVariables_VariableEquationInfoGet
+
+  PUBLIC SolverMappingVariables_VariableGet
+
+  PUBLIC SolverMappingVariables_VariableInListCheck
+
+  PUBLIC SolverMappingVariables_VariableNumberOfEquationsGet
+
+  PUBLIC SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet
 
 CONTAINS
 
@@ -264,11 +391,11 @@ CONTAINS
   !
   
   !>Returns a pointer to the column DOFs mapping for a solver matrix index for solver mapping.
-  SUBROUTINE SolverMapping_ColumnDOFSMappingGet(solverMapping,matrixIndex,columnDOFSMapping,err,error,*)
+  SUBROUTINE SolverMapping_ColumnDOFSMappingGet(solverMapping,matrixIdx,columnDOFSMapping,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the column DOFs mapping for
-    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The matrix index in the solver mapping to get the column DOFs mapping for
+    INTEGER(INTG), INTENT(IN) :: matrixIdx !<The matrix index in the solver mapping to get the column DOFs mapping for
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<On exit, a pointer to the specified column DOFs mapping. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -282,22 +409,26 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(columnDOFSMapping)) CALL FlagError("Column DOFs mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
-    IF(matrixIndex<1.OR.matrixIndex>solverMapping%numberOfSolverMatrices) THEN
-      localError="The specified matrix index of "//TRIM(NumberToVString(matrixIndex,"*",err,error))// &
+    IF(matrixIdx<1.OR.matrixIdx>solverMapping%numberOfSolverMatrices) THEN
+      localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid. The index must be >= 1 and <= "// &
         & TRIM(NumberToVString(solverMapping%numberOfSolverMatrices,"*",err,error))//"."      
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(ALLOCATED(solverMapping%solverColToEquationsColsMap)) &
-      & CALL FlagError("The solver column to equations columns map is not allocated for the solver mapping.",err,error,*999)
+    IF(ALLOCATED(solverMapping%solverMatricesToEquationsMaps)) &
+      & CALL FlagError("The solver matrices to equations map is not allocated for the solver mapping.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solverMapping%solverMatricesToEquationsMaps(matrixIdx)%ptr)) THEN
+      localError="The solver matrices to equations maps is not associated for matrix index "// &
+        & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+    ENDIF
 #endif    
 
-    columnDOFSMapping=>solverMapping%solverColToEquationsColsMap(matrixIndex)%columnDOFSMapping
+    columnDOFSMapping=>solverMapping%solverMatricesToEquationsMaps(matrixIdx)%ptr%columnDOFSMapping
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(columnDOFSMapping)) THEN
       localError="The column DOFs mapping for the specified matrix index of "// &
-        & TRIM(NumberToVString(matrixIndex,"*",err,error))//" is not associated."      
+        & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."      
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
@@ -350,21 +481,21 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns a dynamic equations matrix in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_DynamicEquationsMatrixToSolverMatrixGet(solverMapping,solverMatrixIndex,equationsSetIdx, &
-    & dynamicMatrixIdx,dynamicEquationsMatrix,err,error,*)
+  !>Returns a dynamic matrix in an equations set mapped to a solver matrix in a solver mapping.
+  SUBROUTINE SolverMapping_DynamicMatrixToSolverMatrixGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+    & dynamicMatrixIdx,dynamicMatrix,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the number of dynamic matrices for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the dynamic matrix for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the dynamic matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(IN) :: dynamicMatrixIdx !<The dynamic matrix index of the equations matrix to the solver matrix
-    TYPE(EquationsMatrixIdx), POINTER :: dynamicMatrix !<On return the specified dynamic matrix. Must not be associated on entry.
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix !<On return the specified dynamic matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(DynamicEquationsMatrixToSolverMatrixMapType), POINTER :: dynamicEquationsMatrixToSolverMatrixMap
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: dynamicMatrixToSolverMatrixMap
     TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
 #endif
@@ -372,31 +503,31 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMapping_DynamicEquationsMatrixToSolverMatrixGet",err,error,*998)
+    ENTERS("SolverMapping_DynamicMatrixToSolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(dynamicMatrix)) CALL FlagError("Dynamic equations matrix is already associated.",err,eror,*998)
+    IF(ASSOCIATED(dynamicMatrix)) CALL FlagError("Dynamic matrix is already associated.",err,error,*998)
     NULLIFY(equationsSetToSolverMatricesMap)
     CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
       & err,error,*999)
     NULLIFY(equationsMatricesToSolverMatrixMap)
     CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
       & equationsMatricesToSolverMatrixMap,err,error,*999)
-    NULLIFY(dynamicEquationsMatrixToSolverMatrixMap)
-    CALL SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-      & dynamicMatrixIdx,dynamicEquationsMatrixToSolverMatrixMap,err,error,*999)
+    NULLIFY(dynamicMatrixToSolverMatrixMap)
+    CALL SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+      & dynamicMatrixIdx,dynamicMatrixToSolverMatrixMap,err,error,*999)
 #endif    
 
-    dynamicEquationsMatrix=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
+    dynamicMatrix=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
       & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-      & dynamicEquationsMatrixToSolverMatrixMaps(dynamicMatrixIdx)%ptr%equationsMatrix
+      & dynamicMatrixToSolverMatrixMaps(dynamicMatrixIdx)%ptr%equationsMatrix
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(dynamicEquationsMatrix)) THEN
-      localError="The dynamic equations matrix is not associated for the dynamic matrix index of "// &
+    IF(.NOT.ASSOCIATED(dynamicMatrix)) THEN
+      localError="The dynamic matrix is not associated for the dynamic matrix index of "// &
         & TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))// &
-        & " of the dynamic equations matrix to solver matrix maps for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & " of the dynamic matrix to solver matrix maps for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping."
@@ -404,25 +535,25 @@ CONTAINS
     ENDIF
 #endif    
       
-    EXITS("SolverMapping_DynamicEquationsMatrixToSolverMatrixGet")
+    EXITS("SolverMapping_DynamicMatrixToSolverMatrixGet")
     RETURN
-999 NULLIFY(dynamicEquationsMatrix)
-998 ERRORSEXITS("SolverMapping_DynamicEquationsMatrixToSolverMatrixGet",err,error)
+999 NULLIFY(dynamicMatrix)
+998 ERRORSEXITS("SolverMapping_DynamicMatrixToSolverMatrixGet",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMapping_DynamicEquationsMatrixToSolverMatrixGet
+  END SUBROUTINE SolverMapping_DynamicMatrixToSolverMatrixGet
   
   !
   !================================================================================================================================
   !
   
   !>Returns the number of dynamic matrices in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapNumberOfDynamicMatricesGet(solverMapping,solverMatrixIndex,equationsSetIdx, &
+  SUBROUTINE SolverMapping_EMSToSMMapNumberOfDynamicMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
     & numberOfDynamicMatrices,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of dynamic matrices for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the number of dynamic matrices for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the number of dynamic matrices for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the dynamic matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: numberOfDynamicMatrices !<On exit, the number of dynamic matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -445,7 +576,7 @@ CONTAINS
 #endif    
     
     numberOfDynamicMatrices=solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
-      & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfDynamicEquationsMatrices
+      & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfDynamicMatrices
       
     EXITS("SolverMapping_EMSToSMMapNumberOfDynamicMatricesGet")
     RETURN
@@ -459,96 +590,96 @@ CONTAINS
   !
   
   !>Returns the number of interface matrices in an interface condition mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIndex,interfaceConditionIdx, &
+  SUBROUTINE SolverMapping_IMSToSMMapNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
     & numberOfInterfaceMatrices,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of interface matrices for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the number of interface matrices for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the number of interface matrices for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index containing the interface matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceMatrices !<On exit, the number of interface matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
-    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
 #endif
  
-    ENTERS("SolverMapping_EMSToSMMapNumberOfInterfaceMatricesGet",err,error,*999)
+    ENTERS("SolverMapping_IMSToSMMapNumberOfInterfaceMatricesGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
-    NULLIFY(equationsSetToSolverMatricesMap)
-    CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
-      & err,error,*999)
-    NULLIFY(equationsMatricesToSolverMatrixMap)
-    CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
-      & equationsMatricesToSolverMatrixMap,err,error,*999)
+    NULLIFY(interfaceConditionToSolverMatricesMap)
+    CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+      & interfaceConditionToSolverMatricesMap,err,error,*999)
+    NULLIFY(interfaceMatricesToSolverMatrixMap)
+    CALL SolverMappingESToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap,solverMatrixIdx, &
+      & interfaceMatricesToSolverMatrixMap,err,error,*999)
 #endif    
     
     numberOfInterfaceMatrices=solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
       & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfInterfaceMatrices
       
-    EXITS("SolverMapping_EMSToSMMapNumberOfInterfaceMatricesGet")
+    EXITS("SolverMapping_IMSToSMMapNumberOfInterfaceMatricesGet")
     RETURN
-999 ERRORSEXITS("SolverMapping_EMSToSMMapNumberOfInterfaceMatricesGet",err,error)
+999 ERRORSEXITS("SolverMapping_IMSToSMMapNumberOfInterfaceMatricesGet",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMapping_EMSToSMMapNumberOfInterfaceMatricesGet
+  END SUBROUTINE SolverMapping_IMSToSMMapNumberOfInterfaceMatricesGet
   
   !
   !================================================================================================================================
   !
   
-  !>Returns the number of Jacobian matrices in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapNumberOfJacobianMatricesGet(solverMapping,solverMatrixIndex,equationsSetIdx, &
-    & numberOfJacobianMatrices,err,error,*)
+  !!>Returns the number of Jacobian matrices in an interface condition mapped to a solver matrix in a solver mapping.
+  !SUBROUTINE SolverMapping_IMSToSMMapNumberOfJacobianMatricesGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
+  !  & numberOfJacobianMatrices,err,error,*)
 
-    !Argument variables
-    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of Jacobian matrices for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the number of Jacobian matrices for
-    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the Jacobian matrices mapped to the solver matrix
-    INTEGER(INTG), INTENT(OUT) :: numberOfJacobianMatrices !<On exit, the number of Jacobian matrices mapped to the solver matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+  !  !Argument variables
+  !  TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of Jacobian matrices for
+  !  INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the number of Jacobian matrices for
+  !  INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index containing the Jacobian matrices mapped to the solver matrix
+  !  INTEGER(INTG), INTENT(OUT) :: numberOfJacobianMatrices !<On exit, the number of Jacobian matrices mapped to the solver matrix
+  !  INTEGER(INTG), INTENT(OUT) :: err !<The error code
+  !  TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_PRECHECKS
-    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
-    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
-#endif
+!#ifdef WITH_PRECHECKS
+  !  TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
+  !  TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
+!#endif
  
-    ENTERS("SolverMapping_EMSToSMMapNumberOfJacobianMatricesGet",err,error,*999)
+  !  ENTERS("SolverMapping_IMSToSMMapNumberOfJacobianMatricesGet",err,error,*999)
 
-#ifdef WITH_PRECHECKS    
-    NULLIFY(equationsSetToSolverMatricesMap)
-    CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
-      & err,error,*999)
-    NULLIFY(equationsMatricesToSolverMatrixMap)
-    CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
-      & equationsMatricesToSolverMatrixMap,err,error,*999)
-#endif    
+!#ifdef WITH_PRECHECKS    
+  !  NULLIFY(interfaceConditionToSolverMatricesMap)
+  !  CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionidx, &
+  !    & interfaceConditionToSolverMatricesMap,err,error,*999)
+  !  NULLIFY(interfaceMatricesToSolverMatrixMap)
+  !  CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap,solverMatrixIdx, &
+  !    & interfaceMatricesToSolverMatrixMap,err,error,*999)
+!#endif    
     
-    numberOfJacobianMatrices=solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
-      & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfEquationsJacobians
+  !  numberOfJacobianMatrices=solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
+  !    & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfEquationsJacobians
       
-    EXITS("SolverMapping_EMSToSMMapNumberOfJacobianMatricesGet")
-    RETURN
-999 ERRORSEXITS("SolverMapping_EMSToSMMapNumberOfJacobianMatricesGet",err,error)
-    RETURN 1
+  !  EXITS("SolverMapping_IMSToSMMapNumberOfJacobianMatricesGet")
+  !  RETURN
+!999 ERRORSEXITS("SolverMapping_IMSToSMMapNumberOfJacobianMatricesGet",err,error)
+  !  RETURN 1
     
-  END SUBROUTINE SolverMapping_EMSToSMMapNumberOfJacobianMatricesGet
+  !END SUBROUTINE SolverMapping_IMSToSMMapNumberOfJacobianMatricesGet
   
   !
   !================================================================================================================================
   !
   
   !>Returns the number of linear matrices in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapNumberOfLinearMatricesGet(solverMapping,solverMatrixIndex,equationsSetIdx, &
+  SUBROUTINE SolverMapping_EMSToSMMapNumberOfLinearMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
     & numberOfLinearMatrices,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of linear matrices for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the number of linear matrices for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the number of linear matrices for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the linear matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: numberOfLinearMatrices !<On exit, the number of linear matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -571,7 +702,7 @@ CONTAINS
 #endif    
     
     numberOfLinearMatrices=solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
-      & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfLinearEquationsMatrices
+      & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%numberOfLinearMatrices
       
     EXITS("SolverMapping_EMSToSMMapNumberOfLinearMatricesGet")
     RETURN
@@ -585,12 +716,12 @@ CONTAINS
   !
   
   !>Returns the number of variables in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapNumberOfVariablesGet(solverMapping,solverMatrixIndex,equationsSetIdx,numberOfVariables, &
+  SUBROUTINE SolverMapping_EMSToSMMapNumberOfVariablesGet(solverMapping,solverMatrixIdx,equationsSetIdx,numberOfVariables, &
     & err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of variables for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the number of variables for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the number of variables for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the variables mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On exit, the number of variables mapped to the solver matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -627,12 +758,12 @@ CONTAINS
   !
   
   !>Returns the variable in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapVariableGet(solverMapping,solverMatrixIndex,equationsSetIdx,variableIdx,fieldVariable, &
+  SUBROUTINE SolverMapping_EMSToSMMapVariableGet(solverMapping,solverMatrixIdx,equationsSetIdx,variableIdx,fieldVariable, &
     & err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the variable for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the variable for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the variable for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the variables mapped to the solver matrix
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the equations set mapped to the solver matrix
     TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the specified field variable mapped to the solver matrix. Must not be associated on entry
@@ -659,7 +790,7 @@ CONTAINS
       & equationsMatricesToSolverMatrixMap,err,error,*999)
     IF(variableIdx<1.OR.variableIdx>equationsMatricesToSolverMatrixMap%numberOfVariables) THEN
       localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-        & " is invalid for the solver matrix index of "//TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & " is invalid for the solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping. The variable index should be >= 1 and <= "// &
@@ -668,7 +799,7 @@ CONTAINS
     ENDIF
     IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%variables)) THEN
       localError="The variables array is not allocated for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps sm the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping."
@@ -683,7 +814,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(fieldVariable)) THEN
       localError="The field variable is not associated for the specified variable index of "// &
         & TRIM(NumberToVString(variableIdx,"*",err,error))//" for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations to solver matrix maps sm for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver map of the solver mapping."
@@ -704,15 +835,15 @@ CONTAINS
   !
   
   !>Returns the variable to solver col map in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_EMSToSMMapVariableToSolverColMapGet(solverMapping,solverMatrixIndex,equationsSetIdx,variableIdx, &
-    & variableToSolverColMap,err,error,*)
+  SUBROUTINE SolverMapping_EMSToSMMapVariableDOFToSolverDOFsMapGet(solverMapping,solverMatrixIdx,equationsSetIdx,variableIdx, &
+    & varDOFToSolverDOFsMap,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the variable to solver col map for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the variable to solver col map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the variable to solver col map for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the variables mapped to the solver matrix
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the equations set mapped to the solver matrix
-    TYPE(VariableToSolverColMapType), POINTER :: variableToSolverColMap !<On exit, a pointer to the specified variable to solver col map for the solver matrix. Must not be associated on entry
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: varDOFToSolverDOFsMap !<On exit, a pointer to the specified variable to solver col map for the solver matrix. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -724,10 +855,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMapping_EMSToSMMapVariableToSolverColMapGet",err,error,*998)
+    ENTERS("SolverMapping_EMSToSMMapVariableDOFToSolverDOFsMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(variableToSolverColMap)) CALL FlagError("Variable to solver col map is already associated.",err,error,*998)
+    IF(ASSOCIATED(varDOFToSolverDOFsMap)) CALL FlagError("Variable DOF to solver DOFs map is already associated.",err,error,*998)
     NULLIFY(equationsSetToSolverMatricesMap)
     CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
       & err,error,*999)
@@ -736,16 +867,16 @@ CONTAINS
       & equationsMatricesToSolverMatrixMap,err,error,*999)
     IF(variableIdx<1.OR.variableIdx>equationsMatricesToSolverMatrixMap%numberOfVariables) THEN
       localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-        & " is invalid for the solver matrix index of "//TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & " is invalid for the solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping. The variable index should be >= 1 and <= "// &
         & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%variableToSolverColMaps)) THEN
-      localError="The variable to solver col maps array is not allocated for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%varDOFToSolverDOFsMaps)) THEN
+      localError="The variable DOF to solver DOFs maps array is not allocated for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps sm the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping."
@@ -753,15 +884,15 @@ CONTAINS
     ENDIF
 #endif    
      
-   variableToSolverColMap=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
+   varDOFToSolverDOFsMap=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
      & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-     & variableToSolverColMaps(variableIdx)%ptr
+     & varDOFToSolverDOFsMaps(variableIdx)%ptr
 
 #ifdef WITH_POSTCHECKS   
-    IF(.NOT.ASSOCIATED(variableToSolverColMap)) THEN
-      localError="The variable to solver col map is not associated for the specified variable index of "// &
+    IF(.NOT.ASSOCIATED(varDOFToSolverDOFsMap)) THEN
+      localError="The variable DOF to solver DOFs map is not associated for the specified variable index of "// &
         & TRIM(NumberToVString(variableIdx,"*",err,error))//" for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping."
@@ -769,13 +900,13 @@ CONTAINS
     ENDIF
 #endif    
       
-    EXITS("SolverMapping_EMSToSMMapVariableToSolverColMapGet")
+    EXITS("SolverMapping_EMSToSMMapVariableDOFToSolverDOFsMapGet")
     RETURN
-999 NULLIFY(variableToSolverColMap)
-998 ERRORSEXITS("SolverMapping_EMSToSMMapVariableToSolverColMapGet",err,error)
+999 NULLIFY(varDOFToSolverDOFsMap)
+998 ERRORSEXITS("SolverMapping_EMSToSMMapVariableDOFToSolverDOFsMapGet",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMapping_EMSToSMMapVariableToSolverColMapGet
+  END SUBROUTINE SolverMapping_EMSToSMMapVariableDOFToSolverDOFsMapGet
   
   !
   !================================================================================================================================
@@ -883,12 +1014,12 @@ CONTAINS
   !
   
   !>Returns a pointer to the equations matrix to solver matrix map for a solver mapping.
-  SUBROUTINE SolverMapping_EquationsMatrixToSolverMatrixMapGet(solverMapping,equationsSetIndex,equationsMatrixIndex, &
-    & solverMatrixIndex,equationsMatrixToSolverMatrixMap,err,error,*)
+  SUBROUTINE SolverMapping_EquationsMatrixToSolverMatrixMapGet(solverMapping,equationsSetIdx,equationsMatrixIdx, &
+    & solverMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the equations matrix to solver matrix map for
-    INTEGER(INTG), INTENT(IN) :: equationsSetIndex !<The equations set index in the solver mapping to get the equations matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index in the solver mapping to get the equations matrix to solver matrix map for
     INTEGER(INTG), INTENT(IN) :: equationsMatrixIdx !<The equations matrix index for the equations matrix to solver matrix map
     INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index for the equations matrix to solver matrix map
     TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap !<On exit, a pointer to the specified equations matrix to solver matrix map. Must not be associated on entry.
@@ -897,7 +1028,7 @@ CONTAINS
     !Local Variables
 #ifdef WITH_PRECHECKS
     TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: equationsMatrixToSolverMatricesMap
-   TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap    
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap    
 #endif
 #ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
@@ -909,10 +1040,10 @@ CONTAINS
     IF(ASSOCIATED(equationsMatrixToSolverMatrixMap)) &
       & CALL FlagError("Equations matrix to solver matrix map is already associated.",err,error,*998)
     NULLIFY(equationsSetToSolverMatricesMap)
-    CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSet,equationsSetToSolverMatricesMap, &
+    CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
       & err,error,*999)
     NULLIFY(equationsMatrixToSolverMatricesMap)
-    CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap,equationsMatrixIndex, &
+    CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap,equationsMatrixIdx, &
       & equationsMatrixToSolverMatricesMap,err,error,*999)
     IF(solverMatrixIdx<1.OR.solverMatrixIdx>equationsMatrixToSolverMatricesMap%numberOfSolverMatrices) THEN
       localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))//&
@@ -923,27 +1054,27 @@ CONTAINS
         & TRIM(NumberToVString(equationsMatrixToSolverMatricesMap%numberOfSolverMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)      
     ENDIF
-    IF(.NOT.ALLOCATED(equationsMatrixToSolverMatriceMap%equationsMatrixToSolverMatrixMaps)) THEN
+    IF(.NOT.ALLOCATED(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps)) THEN
       localError="The equations matrix to solver matrix maps is not allocated for the equations matrix index of "// &
         & TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))//&
         & " of the equations matrix to solver matrices maps for the equations set index of "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//" of the equations set to solver matrices maps "// &
         & "of the solver mapping."
     ENDIF
- #endif    
+#endif    
     
     equationsMatrixToSolverMatrixMap=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
       & equationsMatrixToSolverMatricesMaps(equationsMatrixIdx)%ptr% &
-      & equationsMatrixToSolverMatrixMaps(solverMatrixIndex)%ptr
+      & equationsMatrixToSolverMatrixMaps(solverMatrixIdx)%ptr
     
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsMatrixToSolverMatrixMap)) THEN
       localError="The equations matrix to solver matrix map is not associated for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrix to solver matrix maps of the equations matrix index of "// &
-        & TRIM(NumberToVString(equationsMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
         & " of the equations matrix to solver matrices maps for the equations set index of "// &
-        & TRIM(NumberToVString(equationsSetIndex,"*",err,error))// &
+        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices maps of the solver mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -982,7 +1113,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSetToSolverMatricesMap)) &
       & CALL FlagError("Equations set to solver matrices map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
-    IF(equationsSetIdx1.OR.equationsSetIdx>solverMapping%numberOfEquationsSets) THEN
+    IF(equationsSetIdx.OR.equationsSetIdx>solverMapping%numberOfEquationsSets) THEN
       localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " is invalid for the solver mapping. The index must be >= 1 and <= "// &
         & TRIM(NumberToVString(solverMapping%numberOfEquationsSets,"*",err,error))//"."
@@ -1015,14 +1146,14 @@ CONTAINS
   !
   
   !>Returns the Lagrange variable to solver col map in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet(solverMapping,solverMatrixIndex,interfaceConditionIdx, &
-    & lagrangeVariableToSolverColMap,err,error,*)
+  SUBROUTINE SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
+    & lagrangeVarDOFToSolverDOFsMap,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the Lagrange variable to solver col map for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the Lagrange variable to solver col map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the Lagrange variable to solver col map for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index containing the Lagrange variable mapped to the solver matrix
-    TYPE(VariableToSolverColMapType), POINTER :: lagrangeVariableToSolverColMap !<On exit, a pointer to the specified Lagrange variable to solver col map for the solver matrix. Must not be associated on entry
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: lagrangeVarDOFToSolverDOFsMap !<On exit, a pointer to the specified Lagrange variable DOF to solver DOFs map for the solver matrix. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1034,11 +1165,11 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet",err,error,*998)
+    ENTERS("SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(lagrangeVariableToSolverColMap)) &
-      & CALL FlagError("Lagrange variable to solver col map is already associated.",err,error,*998)
+    IF(ASSOCIATED(lagrangeVarDOFToSolverDOFsMap)) &
+      & CALL FlagError("Lagrange variable DOF to solver DOFs map is already associated.",err,error,*998)
     NULLIFY(interfaceConditionToSolverMatricesMap)
     CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
       & interfaceConditionToSolverMatricesMap,err,error,*999)
@@ -1047,14 +1178,14 @@ CONTAINS
       & interfaceMatricesToSolverMatrixMap,err,error,*999)
 #endif    
      
-   lagrangeVariableToSolverColMap=>solverMapping%InterfaceConditionToSolverMatricesMaps(equationsSetIdx)%ptr% &
+   lagrangeVarDOFToSolverDOFsMap=>solverMapping%InterfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
      & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-     & lagrangeVariableToSolverColMap
+     & lagrangeVarDOFToSolverDOFsMap
 
 #ifdef WITH_POSTCHECKS   
-    IF(.NOT.ASSOCIATED(lagrangeVariableToSolverColMap)) THEN
-      localError="The Lagrange variable to solver col map is not associated for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+    IF(.NOT.ASSOCIATED(lagrangeVarDOFToSolverDOFsMap)) THEN
+      localError="The Lagrange variable DOF to solver DOFs map is not associated for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the interface matrices to solver matrix maps for the interface condition index "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
         & " of the interface condition to solver matrices map of the solver mapping."
@@ -1062,29 +1193,29 @@ CONTAINS
     ENDIF
 #endif    
       
-    EXITS("SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet")
+    EXITS("SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet")
     RETURN
-999 NULLIFY(lagrangeVariableToSolverColMap)
-998 ERRORS("SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet",err,error)
-    EXITS("SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet")
+999 NULLIFY(lagrangeVarDOFToSolverDOFsMap)
+998 ERRORS("SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet",err,error)
+    EXITS("SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet")
     RETURN 1
     
-  END SUBROUTINE SolverMapping_IMSToSMMapLagrangeVariableToSolverColMapGet
+  END SUBROUTINE SolverMapping_IMSToSMMapLagrangeVarDOFToSolverDOFsMapGet
   
   !
   !================================================================================================================================
   !
   
   !>Returns the dependent variable to solver col map in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet(solverMapping,solverMatrixIndex,interfaceConditionIdx, &
-    & variableIdx,dependentVariableToSolverColMap,err,error,*)
+  SUBROUTINE SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
+    & variableIdx,dependentVarDOFToSolverDOFsMap,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the dependent variable to solver col map for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the dependent variable to solver col map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the dependent variable to solver col map for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index containing the dependent variable mapped to the solver matrix
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index of the dependent variable mapped to the solver matrix
-    TYPE(VariableToSolverColMapType), POINTER :: dependentVariableToSolverColMap !<On exit, a pointer to the specified dependent variable to solver col map for the solver matrix. Must not be associated on entry
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: dependentVarDOFToSolverDOFsMap !<On exit, a pointer to the specified dependent variable DOF to solver DOFs map for the solver matrix. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1096,11 +1227,11 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet",err,error,*998)
+    ENTERS("SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(dependentVariableToSolverColMap)) &
-      & CALL FlagError("Dependent variable to solver col map is already associated.",err,error,*998)
+    IF(ASSOCIATED(dependentVarDOFToSolverDOFsMap)) &
+      & CALL FlagError("Dependent variable DOF to solver DOFs map is already associated.",err,error,*998)
     NULLIFY(interfaceConditionToSolverMatricesMap)
     CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
       & interfaceConditionToSolverMatricesMap,err,error,*999)
@@ -1109,16 +1240,16 @@ CONTAINS
       & interfaceMatricesToSolverMatrixMap,err,error,*999)
     IF(variableIdx<1.OR.variableIdx>interfaceMatricesToSolverMatrixMap%numberOfDependentVariables) THEN
       localError="The specified dependent variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-        & " is invalid for the solver matrix index of "//TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & " is invalid for the solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the interface matrices to solver matrix maps for the interface condition index "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//" of the interface condition to solver matrices map of "// &
         & "the solver mapping. The dependent variable index should be >= 1 and <= "// &
         & TRIM(NumberToVString(interfaceMatricesToSolverMatrixMap%numberOfDependentVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(interfaceMatricesToSolverMatrixMap%dependentVariableToSolverColMaps)) THEN
-      localError="The dependent variable to solver col maps array is not allocated for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+    IF(.NOT.ALLOCATED(interfaceMatricesToSolverMatrixMap%dependentVarDOFToSolverDOFsMaps)) THEN
+      localError="The dependent variable DOF to solver DOFs maps array is not allocated for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the interface matrices to solver matrix maps of the interface condition index "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
         & " of the interface condition to solver matrices map of the solver mapping."
@@ -1126,15 +1257,15 @@ CONTAINS
     ENDIF
 #endif    
      
-   dependentVariableToSolverColMap=>solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
+   dependentVarDOFToSolverDOFsMap=>solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
      & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-     & dependentVariableToSolverColMaps(variableIdx)%ptr
+     & dependentVarDOFToSolverDOFsMaps(variableIdx)%ptr
 
 #ifdef WITH_POSTCHECKS   
-    IF(.NOT.ASSOCIATED(dependentVariableToSolverColMap)) THEN
-      localError="The dependent variable to solver col map is not associated for the specified variable index of "// &
+    IF(.NOT.ASSOCIATED(dependentVarDOFToSolverDOFsMap)) THEN
+      localError="The dependent variable DOF to solver DOFs map is not associated for the specified variable index of "// &
         & TRIM(NumberToVString(variableIdx,"*",err,error))//" for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the interface matrices to solver matrix maps for the interface condition index "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
         & " of the interface condition to solver matrices map of the solver mapping."
@@ -1142,34 +1273,34 @@ CONTAINS
     ENDIF
 #endif    
       
-    EXITS("SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet")
+    EXITS("SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet")
     RETURN
-999 NULLIFY(dependentVariableToSolverColMap)
-998 ERRORS("SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet",err,error)
-    EXITS("SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet")
+999 NULLIFY(dependentVarDOFToSolverDOFsMap)
+998 ERRORS("SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet",err,error)
+    EXITS("SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet")
     RETURN 1
     
-  END SUBROUTINE SolverMapping_IMSToSMMapDependentVariableToSolverColMapGet
+  END SUBROUTINE SolverMapping_IMSToSMMapDependentVarDOFToSolverDOFsMapGet
   
   !
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the interface col to solver cols map for solver mapping.
-  SUBROUTINE SolverMapping_InterfaceColToSolverColsMapGet(solverMapping,interfaceConditionIdx,solverMatrixIndex, &
+  !>Returns a pointer to the interface col to solver cols map for solver mapping.xs
+  SUBROUTINE SolverMapping_InterfaceColToSolverColsMapGet(solverMapping,interfaceConditionIdx,solverMatrixIdx, &
     & interfaceColToSolverColsMap,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the interface col to solver cols map for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index in the solver mapping to get the interface col to solver cols map for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the interface col to solver cols map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the interface col to solver cols map for
     TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverColsMap(:) !<On exit, a pointer to the specified interface col to solver cols map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
-    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatricesMap
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
 #endif
 #ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
@@ -1182,14 +1313,14 @@ CONTAINS
       & CALL FlagError("Interface col to solver cols map is already associated.",err,error,*998)
     NULLIFY(interfaceConditionToSolverMatricesMap)
     CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
-      & interfaceConditionsToSolverMatricesMap,err,error,*999)
+      & interfaceConditionToSolverMatricesMap,err,error,*999)
     NULLIFY(interfaceMatricesToSolverMatrixMap)
-    CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap,solverMatrixIdx, &
+    CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap,solverMatrixIdx, &
       & interfaceMatricesToSolverMatrixMap,err,error,*999)
 #endif
 
-    interfaceColToSolverColsMap=>solverMapping%interfaceConditionToSolverMatricesMap(interfaceConditionIdx)%ptr% &
-      & interfaceMatricesToSolverMatrixMaps(solverMatrixIndex)%ptr%interfaceColToSolverColsMap
+    interfaceColToSolverColsMap=>solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
+      & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr%interfaceColToSolverColsMap
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceColToSolverColsMap)) THEN
@@ -1281,7 +1412,7 @@ CONTAINS
  
     ENTERS("SolverMapping_InterfaceConditionGet",err,error,*998)
 
- #ifdef WITH_PRECHECKS    
+#ifdef WITH_PRECHECKS    
    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
     IF(interfaceConditionIdx<1.OR.interfaceConditionIdx>solverMapping%numberOfInterfaceConditions) THEN
@@ -1327,7 +1458,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-ifdef WITH_CHECKS    
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
 #endif    
  
@@ -1370,21 +1501,21 @@ ifdef WITH_CHECKS
   !
   
   !>Returns a interface equations matrix in an interface condition mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_InterfaceEquationsMatrixToSolverMatrixGet(solverMapping,solverMatrixIndex,interfaceConditionIdx, &
+  SUBROUTINE SolverMapping_InterfaceEquationsMatrixToSolverMatrixGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
     & interfaceMatrixIdx,interfaceEquationsMatrix,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the interface equations matrix for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the interface equations matrix for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the interface equations matrix for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index containing the interface matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The interface matrix index of the interface equations matrix to the solver matrix
-    TYPE(EquationsMatrixIdx), POINTER :: interfaceEquationsMatrix !<On return the specified interface equations matrix. Must not be associated on entry.
+    TYPE(InterfaceMatrixType), POINTER :: interfaceEquationsMatrix !<On return the specified interface equations matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
-    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMaps
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
     TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap
 #endif
 #ifdef WITH_POSTCHECKS    
@@ -1394,15 +1525,15 @@ ifdef WITH_CHECKS
     ENTERS("SolverMapping_InterfaceEquationsMatrixToSolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(interfaceEquationsMatrix)) CALL FlagError("Interface equations matrix is already associated.",err,eror,*998)
+    IF(ASSOCIATED(interfaceEquationsMatrix)) CALL FlagError("Interface equations matrix is already associated.",err,error,*998)
     NULLIFY(interfaceConditionToSolverMatricesMap)
     CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
       & interfaceConditionToSolverMatricesMap,err,error,*999)
-    NULLIFY(interfaceMatricesToSolverMatrixMaps)
+    NULLIFY(interfaceMatricesToSolverMatrixMap)
     CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap,solverMatrixIdx, &
-      & interfaceMatricesToSolverMatrixMaps,err,error,*999)
+      & interfaceMatricesToSolverMatrixMap,err,error,*999)
     NULLIFY(interfaceMatrixToSolverMatrixMap)
-    CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMaps,interfaceMatrixIdx, &
+    CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap,interfaceMatrixIdx, &
       & interfaceMatrixToSolverMatrixMap,err,error,*999)
 #endif    
 
@@ -1415,7 +1546,7 @@ ifdef WITH_CHECKS
       localError="The interface equations matrix is not associated for the interface matrix index of "// &
         & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
         & " of the interface matrix to solver matrix maps for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the interface matrices to solver matrix maps for the interface condition index "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
         & " of the interface condition to solver matrices map of the solver mapping."
@@ -1444,7 +1575,7 @@ ifdef WITH_CHECKS
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index in the solver mapping to get the interface matrix to solver matrix map for
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The interface matrix index for the interface matrix to solver matrix map
     INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index for the interface matrix to solver matrix map
-    TYPE(InterfaceToSolverMapsType), POINTER :: interfaceMatrixToSolverMatrixMap !<On exit, a pointer to the specified interface matrix to solver matrix map. Must not be associated on entry.
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap !<On exit, a pointer to the specified interface matrix to solver matrix map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1465,18 +1596,18 @@ ifdef WITH_CHECKS
     CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
       & interfaceConditionToSolverMatricesMap,err,error,*999)
     NULLIFY(interfaceMatrixToSolverMatricesMap)
-    CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMapGet(interfaceMatrixToSolverMatricesMap,interfaceMatrixIdx, &
+    CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMapGet(interfaceConditionToSolverMatricesMap,interfaceMatrixIdx, &
       & interfaceMatrixToSolverMatricesMap,err,error,*999)
-    IF(solverMatrixIdx<1.OR.solverMatrixIdx>interfaceMatrixToSolverMatriceMap%numberOfSolverMatrices) THEN
+    IF(solverMatrixIdx<1.OR.solverMatrixIdx>interfaceMatrixToSolverMatricesMap%numberOfSolverMatrices) THEN
       localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))//&
         & " is invalid for the interface matrix index of "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//&
         & " of the interface matrix to solver matrices maps for the interface condition index of "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//" of the interface condition to solver matrices maps "// &
         & "of the solver mapping. The solver matrix index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(interfaceMatrixToSolverMatriceMap%numberOfSolverMatrices,"*",err,error))//"."
+        & TRIM(NumberToVString(interfaceMatrixToSolverMatricesMap%numberOfSolverMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)      
     ENDIF
-    IF(.NOT.ALLOCATED(interfaceMatrixToSolverMatriceMap%interfaceMatrixToSolverMatrixMaps)) THEN
+    IF(.NOT.ALLOCATED(interfaceMatrixToSolverMatricesMap%interfaceMatrixToSolverMatrixMaps)) THEN
       localError="The interface matrix to solver matrix maps is not allocated for the interface matrix index of "// &
         & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//&
         & " of the interface matrix to solver matrices maps for the interface condition index of "// &
@@ -1516,20 +1647,20 @@ ifdef WITH_CHECKS
   !
   
   !>Returns a pointer to the interface row to solver rows map for solver mapping.
-  SUBROUTINE SolverMapping_InterfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIndex, &
+  SUBROUTINE SolverMapping_InterfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
     & interfaceRowToSolverRowsMap,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the interface row to solver rows map for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index in the solver mapping to get the interface row to solver rows map for
-    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIndex !<The solver matrix index in the solver mapping to get the interface row to solver rows map for
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The solver matrix index in the solver mapping to get the interface row to solver rows map for
     TYPE(MatrixRowColCouplingType), POINTER :: interfaceRowToSolverRowsMap(:) !<On exit, a pointer to the specified interface row to solver rows map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
-    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatricesMap
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap
 #endif
 #ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
@@ -1549,7 +1680,7 @@ ifdef WITH_CHECKS
 #endif    
 
     interfaceRowToSolverRowsMap=>solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
-      & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIndex)%ptr%interfaceRowToSolverRowsMap
+      & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)%ptr%interfaceRowToSolverRowsMap
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceRowToSolverRowsMap)) THEN
@@ -1574,15 +1705,15 @@ ifdef WITH_CHECKS
   !
   
   !>Returns a Jacobian equations matrix in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_JacobianEquationsMatrixToSolverMatrixGet(solverMapping,solverMatrixIndex,equationsSetIdx, &
-    & jacobianMatrixIdx,jacobianMatrix,err,error,*)
+  SUBROUTINE SolverMapping_JacobianEquationsMatrixToSolverMatrixGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+    & jacobianMatrixIdx,jacobianEquationsMatrix,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the Jacobian equations matrix for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the Jacobian equations matrix for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the Jacobian equations matrix for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the Jacobian matrices mapped to the solver matrix
     INTEGER(INTG), INTENT(IN) :: jacobianMatrixIdx !<The Jacobian matrix index of the Jacobian matrix to the solver matrix
-    TYPE(EquationsMatrixIdx), POINTER :: jacobianEquationsMatrix !<On return the specified Jacobian equations matrix. Must not be associated on entry.
+    TYPE(JacobianMatrixType), POINTER :: jacobianEquationsMatrix !<On return the specified Jacobian equations matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1598,7 +1729,7 @@ ifdef WITH_CHECKS
     ENTERS("SolverMapping_JacobianEquationsMatrixToSolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian equations matrix is already associated.",err,eror,*998)
+    IF(ASSOCIATED(jacobianEquationsMatrix)) CALL FlagError("Jacobian equations matrix is already associated.",err,error,*998)
     NULLIFY(equationsSetToSolverMatricesMap)
     CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
       & err,error,*999)
@@ -1610,7 +1741,7 @@ ifdef WITH_CHECKS
       & jacobianMatrixToSolverMatrixMap,err,error,*999)
 #endif
     
-    jacobianEquationsMatrix=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr &
+    jacobianEquationsMatrix=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
       & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
       & jacobianMatrixToSolverMatrixMaps(jacobianMatrixIdx)%ptr%jacobianMatrix
 
@@ -1619,7 +1750,7 @@ ifdef WITH_CHECKS
       localError="The Jacobian equations matrix is not associated for the Jacobian matrix index of "// &
         & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))// &
         & " of the Jacobian matrix to solver matrix maps for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices maps of the solver mapping."
@@ -1640,13 +1771,13 @@ ifdef WITH_CHECKS
   !
   
   !>Returns a pointer to the Jacobian matrix to solver matrix map for a solver mapping.
-  SUBROUTINE SolverMapping_JacobianMatrixToSolverMatrixMapGet(solverMapping,equationsSetIndex,jacobianMatrixIndex, &
+  SUBROUTINE SolverMapping_JacobianMatrixToSolverMatrixMapGet(solverMapping,equationsSetIdx,jacobianMatrixIdx, &
     & jacobianMatrixToSolverMatrixMap,err,error,*)
     
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the Jacobian matrix to solver matrix map for
-    INTEGER(INTG), INTENT(IN) :: equationsSetIndex !<The equations set index in the solver mapping to get the Jacobian matrix to solver matrix map for
-    INTEGER(INTG), INTENT(IN) :: jacobianMatrixIndex !<The jacobian matrix index for the Jacobian matrix to solver matrix map
+    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index in the solver mapping to get the Jacobian matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: jacobianMatrixIdx !<The jacobian matrix index for the Jacobian matrix to solver matrix map
     TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap !<On exit, a pointer to the specified Jacobian matrix to solver matrix map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1666,30 +1797,30 @@ ifdef WITH_CHECKS
     NULLIFY(equationsSetToSolverMatricesMap)
     CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
       & err,error,*999)    
-    IF(jacobianMatrixIndex<1.OR.jacobianMatrixIndex>SIZE(equationsSetToSolverMatricesMap%jacobianMatrixToSolverMatrixMaps,1)) THEN
-      localError="The specified Jacobian matrix index of "//TRIM(NumberToVString(jacobianMatrixIndex,"*",err,error))// &
-        & " is invalid for the equations set index of "//TRIM(NumberToVString(equationsSetIndex,"*",err,error))// &
+    IF(jacobianMatrixIdx<1.OR.jacobianMatrixIdx>SIZE(equationsSetToSolverMatricesMap%jacobianMatrixToSolverMatrixMaps,1)) THEN
+      localError="The specified Jacobian matrix index of "//TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))// &
+        & " is invalid for the equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping. The Jacobian matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(SIZE(equationsSetToSolverMatricesMap%jacobianMatrixToSolverMatrixMaps,1),"*",err,error))//"."
-      CALL FlagError(localError,err,eror,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(equationsSetToSolverMatricesMap%jacobianMatrixToSolverMatrixMaps)) THEN
       localError="The Jacobian matrix to solver matrix maps is not allocated for the equations set index of "// &
-        & TRIM(NumberToVString(equationsSetIndex,"*",err,error))// &
+        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping."
-      CALL FlagError(localError,err,eror,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
    
-    jacobianMatrixToSolverMatrixMap=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIndex)%ptr% &
-      & jacobianMatrixToSolverMatrixMaps(jacobianMatrixIndex)%ptr
+    jacobianMatrixToSolverMatrixMap=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
+      & jacobianMatrixToSolverMatrixMaps(jacobianMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(jacobianMatrixToSolverMatrixMap)) THEN
       localError="The Jacobian matrix to solver matrix map is not associated for the Jacobian matrix index of "// &
-        & TRIM(NumberToVString(jacobianMatrixIndex,"*",err,error))// &
+        & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))// &
         & " of the Jacobian matrix to solver matrix maps of the equations set index of "// &
-        & TRIM(NumberToVString(equationsSetIndex,"*",err,error))// &
+        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equation set to solver matrices maps of the solver mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1708,21 +1839,21 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
-  !>Returns a linear equations matrix in an equations set mapped to a solver matrix in a solver mapping.
-  SUBROUTINE SolverMapping_LinearEquationsMatrixToSolverMatrixGet(solverMapping,solverMatrixIndex,equationsSetIdx, &
+  !>Returns a linear matrix in an equations set mapped to a solver matrix in a solver mapping.
+  SUBROUTINE SolverMapping_LinearMatrixToSolverMatrixGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
     & linearMatrixIdx,linearMatrix,err,error,*)
 
     !Argument variables
-    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the linear equations matrix for
-    INTEGER(INTG), INTENT(IN) :: solverMatrixIndex !<The solver matrix index in the solver mapping to get the linear equations matrix for
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the linear matrix for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in the solver mapping to get the linear matrix for
     INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index containing the linear matrices mapped to the solver matrix
-    INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The linear matrix index of the linear equations matrix to the solver matrix
-    TYPE(EquationsMatrixIdx), POINTER :: linearEquationsMatrix !<On return the specified linear equations matrix. Must not be associated on entry.
+    INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The linear matrix index of the linear matrix to the solver matrix
+    TYPE(EquationsMatrixType), POINTER :: linearMatrix !<On return the specified linear matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(LinearEquationsMatrixToSolverMatrixMapType), POINTER :: linearEquationsMatrixToSolverMatrixMap
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: linearMatrixToSolverMatrixMap
     TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
 #endif
@@ -1730,31 +1861,31 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMapping_LinearEquationsMatrixToSolverMatrixGet",err,error,*998)
+    ENTERS("SolverMapping_LinearMatrixToSolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(linearMatrix)) CALL FlagError("Linear equations matrix is already associated.",err,eror,*998)
+    IF(ASSOCIATED(linearMatrix)) CALL FlagError("Linear equations matrix is already associated.",err,error,*998)
     NULLIFY(equationsSetToSolverMatricesMap)
     CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
       & err,error,*999)
     NULLIFY(equationsMatricesToSolverMatrixMap)
     CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
       & equationsMatricesToSolverMatrixMap,err,error,*999)
-    NULLIFY(linearEquationsMatrixToSolverMatrixMap)
-    CALL SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-      & linearMatrixIdx,linearEquationsMatrixToSolverMatrixMap,err,error,*999)
+    NULLIFY(linearMatrixToSolverMatrixMap)
+    CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+      & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)
 #endif    
 
-    linearEquationsMatrix=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
+    linearMatrix=>solverMapping%equationsSetToSolverMatricesMaps(equationsSetIdx)%ptr% &
       & equationsMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr% &
-      & linearEquationsMatrixToSolverMatrixMaps(linearMatrixIdx)%ptr%equationsMatrix
+      & linearMatrixToSolverMatrixMaps(linearMatrixIdx)%ptr%equationsMatrix
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(linearEquationsMatrix)) THEN
-      localError="The linear equations matrix is not associated for the linear matrix index of "// &
+    IF(.NOT.ASSOCIATED(linearMatrix)) THEN
+      localError="The linear matrix is not associated for the linear matrix index of "// &
         & TRIM(NumberToVString(linearMatrixIdx,"*",err,error))// &
-        & " of the linear equations matrix to solver matrix maps for the solver matrix index of "// &
-        & TRIM(NumberToVString(solverMatrixIndex,"*",err,error))// &
+        & " of the linear matrix to solver matrix maps for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " of the equations matrices to solver matrix maps for the equations set index "// &
         & TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
         & " of the equations set to solver matrices map of the solver mapping."
@@ -1762,13 +1893,158 @@ ifdef WITH_CHECKS
     ENDIF
 #endif    
       
-    EXITS("SolverMapping_LinearEquationsMatrixToSolverMatrixGet")
+    EXITS("SolverMapping_LinearMatrixToSolverMatrixGet")
     RETURN
-999 NULLIFY(linearEquationsMatrix)
-998 ERRORSEXITS("SolverMapping_LinearEquationsMatrixToSolverMatrixGet",err,error)
+999 NULLIFY(linearMatrix)
+998 ERRORSEXITS("SolverMapping_LinearMatrixToSolverMatrixGet",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMapping_LinearEquationsMatrixToSolverMatrixGet
+  END SUBROUTINE SolverMapping_LinearMatrixToSolverMatrixGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of equations sets in a solver mapping.
+  SUBROUTINE SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of equations sets for
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquationsSets !<On exit, the number of equations sets in the solver mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_NumberOfEquationsSetsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+#endif
+
+    numberOfEquationsSets=solverMapping%numberOfEquationsSets
+      
+    EXITS("SolverMapping_NumberOfEquationsSetsGet")
+    RETURN
+999 ERRORSEXITS("SolverMapping_NumberOfEquationsSetsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_NumberOfEquationsSetsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of interface conditions in a solver mapping.
+  SUBROUTINE SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of interface conditions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceConditions !<On exit, the number of interface conditions in the solver mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_NumberOfInterfaceConditionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+#endif
+
+    numberOfInterfaceConditions=solverMapping%numberOfInterfaceConditions
+      
+    EXITS("SolverMapping_NumberOfInterfaceConditionsGet")
+    RETURN
+999 ERRORSEXITS("SolverMapping_NumberOfInterfaceConditionsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_NumberOfInterfaceConditionsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of solver matrices in a solver mapping.
+  SUBROUTINE SolverMapping_NumberOfSolverMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of solver matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSolverMatrices !<On exit, the number of solver matrices in the solver mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_NumberOfSolverMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+#endif
+
+    numberOfSolverMatrices=solverMapping%numberOfSolverMatrices
+      
+    EXITS("SolverMapping_NumberOfSolverMatricesGet")
+    RETURN
+999 ERRORSEXITS("SolverMapping_NumberOfSolverMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_NumberOfSolverMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of rows in a solver mapping.
+  SUBROUTINE SolverMapping_NumberOfRowsGet(solverMapping,numberOfRows,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfRows !<On exit, the number of rows in the solver mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_NumberOfRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+#endif
+
+    numberOfRows=solverMapping%numberOfRows
+      
+    EXITS("SolverMapping_NumberOfRowsGet")
+    RETURN
+999 ERRORSEXITS("SolverMapping_NumberOfRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_NumberOfRowsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of global rows in a solver mapping.
+  SUBROUTINE SolverMapping_NumberOfGlobalRowsGet(solverMapping,numberOfGlobalRows,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the number of global rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalRows !<On exit, the number of global rows in the solver mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_NumberOfGlobalRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+#endif
+
+    numberOfGlobalRows=solverMapping%numberOfGlobalRows
+      
+    EXITS("SolverMapping_NumberOfGlobalRowsGet")
+    RETURN
+999 ERRORSEXITS("SolverMapping_NumberOfGlobalRowsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_NumberOfGlobalRowsGet
   
   !
   !================================================================================================================================
@@ -1779,7 +2055,7 @@ ifdef WITH_CHECKS
 
     !Argument variables
     TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the row dofs mapping for
-    TYPE(DomainMappingType), POINTER :: rowDOFSMappng !<On exit, a pointer to the specified row DOFS mapping. Must not be associated on entry.
+    TYPE(DomainMappingType), POINTER :: rowDOFSMapping !<On exit, a pointer to the specified row DOFS mapping. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1835,11 +2111,11 @@ ifdef WITH_CHECKS
         & " is invalid. The solver matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(solverMapping%numberOfSolverMatrices,"*",err,error))//"."
     ENDIF
-    IF(.NOT.ALLOCATED(solverMapping%solverMatrixToEquationsMaps)) &
-      & CALL FlagError("The solver matrix to equations maps is not allocated for the solver mapping.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverMapping%solverMatricesToEquationsMaps)) &
+      & CALL FlagError("The solver matrices to equations maps is not allocated for the solver mapping.",err,error,*999)
 #endif
 
-    solverMatrixToEquationsMap=>solverMapping%solverMatrixToEquationsMaps(solverMatrix)%ptr
+    solverMatrixToEquationsMap=>solverMapping%solverMatricesToEquationsMaps(solverMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) THEN
@@ -1861,8 +2137,59 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
+  !>Returns a pointer to the solver row to equations map for a solver mapping.
+  SUBROUTINE SolverMapping_SolverRowToEquationsMapGet(solverMapping,rowIdx,solverRowToEquationsMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the solver row to equations map for
+    INTEGER(INTG), INTENT(IN) :: rowIdx !<The row index to get the solver row to equations map for
+    TYPE(SolverRowToEquationsMapType), POINTER :: solverRowToEquationsMap !<On exit, a pointer to the specified solver row to equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("SolverMapping_SolverRowToEquationsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverRowToEquationsMap)) &
+      & CALL FlagError("The solver row to equations map is already associated.",err,error,*998)  
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+    IF(rowIdx<1.OR.rowIdx>solverMapping%numberOfRows) THEN
+      localError="The specified solver row index of "//TRIM(NumberToVString(rowIdx,"*",err,error))// &
+        & " is invalid. The solver row index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMapping%numberOfRows,"*",err,error))//"."
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMapping%solverRowToEquationsMaps)) &
+      & CALL FlagError("The solver row to equations maps is not allocated for the solver mapping.",err,error,*999)
+#endif
+
+    solverRowToEquationsMap=>solverMapping%solverRowToEquationsMaps(rowIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverRowToEquationsMap)) THEN
+      localError="The solver row to equations map is not associated for row index "// &
+        & TRIM(NumberToVString(rowIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMapping_SolverRowToEquationsMapGet")
+    RETURN
+999 NULLIFY(solverRowToEquationsMap)
+998 ERRORSEXITS("SolverMapping_SolverRowToEquationsMapGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_SolverRowToEquationsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to a equations variable list for solver mapping create values cache.
-  SUBROUTINE SolverMappingCreateValuesCache_EquationsVariableListGet(createValuesCache,solverMatrixIdx,equationsVariableList, &
+  SUBROUTINE SolverMappingCVC_EquationsVariableListGet(createValuesCache,solverMatrixIdx,equationsVariableList, &
     & err,error,*)
 
     !Argument variables
@@ -1876,7 +2203,7 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif
  
-    ENTERS("SolverMappingCreateValuesCache_EquationsVariableListGet",err,error,*998)
+    ENTERS("SolverMappingCVC_EquationsVariableListGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(equationsVariableList)) &
@@ -1891,7 +2218,7 @@ ifdef WITH_CHECKS
     ENDIF
 #endif
 
-    equationsVariableList=>createValuesCache%equationsVariableList(solverMatrix)%ptr
+    equationsVariableList=>createValuesCache%equationsVariableList(solverMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(equationsVariableList)) THEN
@@ -1901,21 +2228,21 @@ ifdef WITH_CHECKS
     ENDIF
 #endif    
       
-    EXITS("SolverMappingCreateValuesCache_EquationsVariableListGet")
+    EXITS("SolverMappingCVC_EquationsVariableListGet")
     RETURN
 999 NULLIFY(equationsVariableList)
-998 ERRORS("SolverMappingCreateValuesCache_EquationsVariableListGet",err,error)
-    EXITS("SolverMappingCreateValuesCache_EquationsVariableListGet")
+998 ERRORS("SolverMappingCVC_EquationsVariableListGet",err,error)
+    EXITS("SolverMappingCVC_EquationsVariableListGet")
     RETURN 1
     
-  END SUBROUTINE SolverMappingCreateValuesCache_EquationsVariableListGet
+  END SUBROUTINE SolverMappingCVC_EquationsVariableListGet
   
   !
   !================================================================================================================================
   !
   
   !>Returns a pointer to a interface variable list for solver mapping create values cache.
-  SUBROUTINE SolverMappingCreateValuesCache_InterfaceVariableListGet(createValuesCache,solverMatrixIdx,interfaceVariableList, &
+  SUBROUTINE SolverMappingCVC_InterfaceVariableListGet(createValuesCache,solverMatrixIdx,interfaceVariableList, &
     & err,error,*)
 
     !Argument variables
@@ -1929,7 +2256,7 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif
  
-    ENTERS("SolverMappingCreateValuesCache_InterfaceVariableListGet",err,error,*998)
+    ENTERS("SolverMappingCVC_InterfaceVariableListGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceVariableList)) &
@@ -1940,11 +2267,11 @@ ifdef WITH_CHECKS
     IF(solverMatrixIdx<1.OR.solverMatrixIdx>SIZE(createValuesCache%interfaceVariableList,1)) THEN
       localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " is invalid. The solver matrix index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(SIZE(createValuesCache%interfacesVariableList,1),"*",err,error))//"."
+        & TRIM(NumberToVString(SIZE(createValuesCache%interfaceVariableList,1),"*",err,error))//"."
     ENDIF
 #endif
 
-    interfaceVariableList=>createValuesCache%interfaceVariableList(solverMatrix)%ptr
+    interfaceVariableList=>createValuesCache%interfaceVariableList(solverMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceVariableList)) THEN
@@ -1954,21 +2281,21 @@ ifdef WITH_CHECKS
     ENDIF
 #endif    
       
-    EXITS("SolverMappingCreateValuesCache_InterfaceVariableListGet")
+    EXITS("SolverMappingCVC_InterfaceVariableListGet")
     RETURN
 999 NULLIFY(interfaceVariableList)
-998 ERRORS("SolverMappingCreateValuesCache_InterfaceVariableListGet",err,error)
-    EXITS("SolverMappingCreateValuesCache_InterfaceVariableListGet")
+998 ERRORS("SolverMappingCVC_InterfaceVariableListGet",err,error)
+    EXITS("SolverMappingCVC_InterfaceVariableListGet")
     RETURN 1
     
-  END SUBROUTINE SolverMappingCreateValuesCache_InterfaceVariableListGet
+  END SUBROUTINE SolverMappingCVC_InterfaceVariableListGet
   
   !
   !================================================================================================================================
   !
   
   !>Returns a pointer to a RHS variable list for solver mapping create values cache.
-  SUBROUTINE SolverMappingCreateValuesCache_RHSVariableListGet(createValuesCache,rhsVariableList,err,error,*)
+  SUBROUTINE SolverMappingCVC_RHSVariableListGet(createValuesCache,rhsVariableList,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the solver mapping create values cache to get the RHS variable list for
@@ -1977,7 +2304,7 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("SolverMappingCreateValuesCache_RHSVariableListGet",err,error,*998)
+    ENTERS("SolverMappingCVC_RHSVariableListGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(rhsVariableList)) &
@@ -1985,34 +2312,34 @@ ifdef WITH_CHECKS
     IF(.NOT.ASSOCIATED(createValuesCache)) CALL FlagError("Solver mapping create values cache is not associated.",err,error,*999)
 #endif
 
-    rhsVariableList=>createValuesCache%equaitonsRHSVariableList
+    rhsVariableList=>createValuesCache%equationsRHSVariableList
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(rhsVariableList)) &
       & CALL FlagError("The RHS variable list is not associated for the solver mapping create values cache.",err,error,*999)
 #endif    
       
-    EXITS("SolverMappingCreateValuesCache_RHSVariableListGet")
+    EXITS("SolverMappingCVC_RHSVariableListGet")
     RETURN
 999 NULLIFY(rhsVariableList)
-998 ERRORS("SolverMappingCreateValuesCache_RHSVariableListGet",err,error)
-    EXITS("SolverMappingCreateValuesCache_RHSVariableListGet")
+998 ERRORS("SolverMappingCVC_RHSVariableListGet",err,error)
+    EXITS("SolverMappingCVC_RHSVariableListGet")
     RETURN 1
     
-  END SUBROUTINE SolverMappingCreateValuesCache_EquationsVariableListGet
+  END SUBROUTINE SolverMappingCVC_RHSVariableListGet
   
   !
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the dynamic equations matrix to solver matrix map for an equations matrices to solver matrix map.
-  SUBROUTINE SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-    & dynamicEquationsMatrixIdx,dynamicEquationsMatrixToSolverMatrixMap,err,error,*)
+  !>Returns a pointer to the dynamic matrix to solver matrix map for an equations matrices to solver matrix map.
+  SUBROUTINE SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+    & dynamicMatrixIdx,dynamicMatrixToSolverMatrixMap,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the dynamic equations matrix to solver matrix map for
-    INTEGER(INTG), INTENT(IN) :: dynamicEquationsMatrixIdx !<The dynamic equations matrix index to get the dynamic equations matrix to solver matrix for
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: dynamicEquationsMatrixToSolverMatrixMap !<On exit, a pointer to the specified dynamic equations matrix to solver matrix map. Must not be associated on entry.
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the dynamic matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: dynamicMatrixIdx !<The dynamic equations matrix index to get the dynamic matrix to solver matrix for
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: dynamicMatrixToSolverMatrixMap !<On exit, a pointer to the specified dynamic matrix to solver matrix map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2020,59 +2347,56 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixGet",err,error,*998)
+    ENTERS("SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(dynamicEquationsMatrixToSolverMatrixMap)) &
-      & CALL FlagError("Dynamic equations matrix to solver matrix map is already associated.",err,error,*998)
+    IF(ASSOCIATED(dynamicMatrixToSolverMatrixMap)) &
+      & CALL FlagError("Dynamic matrix to solver matrix map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsMatricesToSolverMatrixMap)) &
       & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
-    IF(dynamicEquationsMatrixIdx<1.OR. &
-      & dynamicEquationsMatrixIdx>equationsMatricesToSolverMatrixMap%numberOfDynamicEquationsMatrices) THEN
-      localError="The specified dynamic equations matrix index of "// &
-        & TRIM(NumberToVString(dynamicEquationMatrixIdx,"*",err,error))//" is invalid for the equations matrices to solver "// &
+    IF(dynamicMatrixIdx<1.OR.dynamicMatrixIdx>equationsMatricesToSolverMatrixMap%numberOfDynamicMatrices) THEN
+      localError="The specified dynamic matrix index of "// &
+        & TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))//" is invalid for the equations matrices to solver "// &
         & "matrix map. The dynamic equations matrix index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfDynamicEquationsMatrices,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfDynamicMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.MOT.ALLOCATED(equationsMatricesToSolverMatrixMap%dynamicEquationsMatrixToSolverMatrixMaps)) &
+    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%dynamicMatrixToSolverMatrixMaps)) &
       & CALL FlagError("The dynamic equations to solver matrix maps array is not allocated for the equations matrices to "// &
       & "solver matrix map.",err,error,*999)
 #endif    
 
-    dynamicEquationsMatrixToSolverMap=>equationsMatricesToSolverMatrixMap% &
-      & dynamicEquationsMatrixToSolverMatrixMaps(dynamicEquationsMatrixIdx)%ptr
+    dynamicMatrixToSolverMatrixMap=>equationsMatricesToSolverMatrixMap%dynamicMatrixToSolverMatrixMaps(dynamicMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(dynamicEquationsMatrix)) THEN
-      localError="The dynamic equations matrix to solver map is not associated for dynamic equations matrix index "// &
-        & TRIM(NumberToVString(dynamicEquationsMatrix,"*",err,error))// &
-        & " of the equations matrices to solver matrix map."
+    IF(.NOT.ASSOCIATED(dynamicMatrixToSolverMatrixMap)) THEN
+      localError="The dynamic matrix to solver map is not associated for dynamic matrix index "// &
+        & TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))//" of the equations matrices to solver matrix map."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
       
-    EXITS("SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet")
+    EXITS("SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet")
     RETURN
-999 NULLIFY(dynamicEquationsMatrix)
-998 ERRORS("SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet",err,error)
-    EXITS("SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet")
+999 NULLIFY(dynamicMatrixToSolverMatrixMap)
+998 ERRORS("SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet",err,error)
+    EXITS("SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet")
     RETURN 1
     
-  END SUBROUTINE SolverMappingEMSToSMMap_DynamicEquationsMatrixToSolverMatrixMapGet
+  END SUBROUTINE SolverMappingEMSToSMMap_DynamicMatrixToSolverMatrixMapGet
   
   !
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the Jacobian equations matrix to solver matrix map for an equations matrices to solver matrix map.
-  SUBROUTINE SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-    & jacobianEquationsMatrixIdx,jacobianEquationsMatrixToSolverMatrixMap,err,error,*)
+  !>Returns a pointer to the Jacobian matrix to solver matrix map for an equations matrices to solver matrix map.
+  SUBROUTINE SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+    & jacobianMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the Jacobian equations matrix to solver matrix map for
-    INTEGER(INTG), INTENT(IN) :: jacobianEquationsMatrixIdx !<The Jacobian equations matrix index to get the Jacobian equations matrix to solver matrix for
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: jacobianEquationsMatrixToSolverMatrixMap !<On exit, a pointer to the specified Jacobian equations matrix to solver matrix map. Must not be associated on entry.
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the Jacobian matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: jacobianMatrixIdx !<The Jacobian matrix index to get the Jacobian matrix to solver matrix for
+    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap !<On exit, a pointer to the specified Jacobian matrix to solver matrix map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2080,59 +2404,56 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixGet",err,error,*998)
+    ENTERS("SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(jacobianEquationsMatrixToSolverMatrixMap)) &
-      & CALL FlagError("Jacobian equations matrix to solver matrix map is already associated.",err,error,*998)
+    IF(ASSOCIATED(jacobianMatrixToSolverMatrixMap)) &
+      & CALL FlagError("Jacobian matrix to solver matrix map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsMatricesToSolverMatrixMap)) &
       & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
-    IF(jacobianEquationsMatrixIdx<1.OR. &
-      & jacobianEquationsMatrixIdx>equationsMatricesToSolverMatrixMap%numberOfJacobianEquationsMatrices) THEN
-      localError="The specified Jacobian equations matrix index of "// &
-        & TRIM(NumberToVString(jacobianEquationMatrixIdx,"*",err,error))//" is invalid for the equations matrices to solver "// &
-        & "matrix map. The Jacobian equations matrix index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfJacobianEquationsMatrices,"*",err,error))//"."
+    IF(jacobianMatrixIdx<1.OR.jacobianMatrixIdx>equationsMatricesToSolverMatrixMap%numberOfJacobianMatrices) THEN
+      localError="The specified Jacobian matrix index of "// &
+        & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))//" is invalid for the equations matrices to solver "// &
+        & "matrix map. The Jacobian matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfJacobianMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.MOT.ALLOCATED(equationsMatricesToSolverMatrixMap%jacobianEquationsMatrixToSolverMatrixMaps)) &
+    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%jacobianMatrixToSolverMatrixMaps)) &
       & CALL FlagError("The Jacobian equations to solver matrix maps array is not allocated for the equations matrices to "// &
       & "solver matrix map.",err,error,*999)
 #endif    
 
-    jacobianEquationsMatrixToSolverMap=>equationsMatricesToSolverMatrixMap% &
-      & jacobianEquationsMatrixToSolverMatrixMaps(jacobianEquationsMatrixIdx)%ptr
+    jacobianMatrixToSolverMatrixMap=>equationsMatricesToSolverMatrixMap%jacobianMatrixToSolverMatrixMaps(jacobianMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(jacobianEquationsMatrix)) THEN
-      localError="The Jacobian equations matrix to solver map is not associated for Jacobian equations matrix index "// &
-        & TRIM(NumberToVString(jacobianEquationsMatrix,"*",err,error))// &
-        & " of the equations matrices to solver matrix map."
+    IF(.NOT.ASSOCIATED(jacobianMatrixToSolverMatrixMap)) THEN
+      localError="The Jacobian matrix to solver map is not associated for Jacobian equations matrix index "// &
+        & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))//" of the equations matrices to solver matrix map."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
       
-    EXITS("SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixMapGet")
+    EXITS("SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet")
     RETURN
-999 NULLIFY(jacobianEquationsMatrix)
-998 ERRORS("SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixMapGet",err,error)
-    EXITS("SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixMapGet")
+999 NULLIFY(jacobianMatrixToSolverMatrixMap)
+998 ERRORS("SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet",err,error)
+    EXITS("SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet")
     RETURN 1
     
-  END SUBROUTINE SolverMappingEMSToSMMap_JacobianEquationsMatrixToSolverMatrixMapGet
+  END SUBROUTINE SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet
   
   !
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the linear equations matrix to solver matrix map for an equations matrices to solver matrix map.
-  SUBROUTINE SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-    & linearEquationsMatrixIdx,linearEquationsMatrixToSolverMatrixMap,err,error,*)
+  !>Returns a pointer to the linear matrix to solver matrix map for an equations matrices to solver matrix map.
+  SUBROUTINE SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+    & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the linear equations matrix to solver matrix map for
-    INTEGER(INTG), INTENT(IN) :: linearEquationsMatrixIdx !<The linear equations matrix index to get the linear equations matrix to solver matrix for
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: linearEquationsMatrixToSolverMatrixMap !<On exit, a pointer to the specified linear equations matrix to solver matrix map. Must not be associated on entry.
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the linear matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The linear matrix index to get the linear matrix to solver matrix for
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: linearMatrixToSolverMatrixMap !<On exit, a pointer to the specified linear matrix to solver matrix map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2140,46 +2461,43 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixGet",err,error,*998)
+    ENTERS("SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(linearEquationsMatrixToSolverMatrixMap)) &
-      & CALL FlagError("Linear equations matrix to solver matrix map is already associated.",err,error,*998)
+    IF(ASSOCIATED(linearMatrixToSolverMatrixMap)) &
+      & CALL FlagError("Linear matrix to solver matrix map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsMatricesToSolverMatrixMap)) &
       & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
-    IF(linearEquationsMatrixIdx<1.OR. &
-      & linearEquationsMatrixIdx>equationsMatricesToSolverMatrixMap%numberOfLinearEquationsMatrices) THEN
-      localError="The specified linear equations matrix index of "// &
-        & TRIM(NumberToVString(linearEquationMatrixIdx,"*",err,error))//" is invalid for the equations matrices to solver "// &
-        & "matrix map. The linear equations matrix index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfLinearEquationsMatrices,"*",err,error))//"."
+    IF(linearMatrixIdx<1.OR.linearMatrixIdx>equationsMatricesToSolverMatrixMap%numberOfLinearMatrices) THEN
+      localError="The specified linear matrix index of "//TRIM(NumberToVString(linearMatrixIdx,"*",err,error))// &
+        & " is invalid for the equations matrices to solver matrix map. "// &
+        & "The linear equations matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfLinearMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.MOT.ALLOCATED(equationsMatricesToSolverMatrixMap%linearEquationsMatrixToSolverMatrixMaps)) &
-      & CALL FlagError("The linear equations to solver matrix maps array is not allocated for the equations matrices to "// &
+    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%linearMatrixToSolverMatrixMaps)) &
+      & CALL FlagError("The linear matrix to solver matrix maps array is not allocated for the equations matrices to "// &
       & "solver matrix map.",err,error,*999)
 #endif    
 
-    linearEquationsMatrixToSolverMap=>equationsMatricesToSolverMatrixMap% &
-      & linearEquationsMatrixToSolverMatrixMaps(linearEquationsMatrixIdx)%ptr
+    linearMatrixToSolverMatrixMap=>equationsMatricesToSolverMatrixMap%linearMatrixToSolverMatrixMaps(linearMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(linearEquationsMatrix)) THEN
-      localError="The linear equations matrix to solver map is not associated for linear equations matrix index "// &
-        & TRIM(NumberToVString(linearEquationsMatrix,"*",err,error))// &
-        & " of the equations matrices to solver matrix map."
+    IF(.NOT.ASSOCIATED(linearMatrixToSolverMatrixMap)) THEN
+      localError="The linear matrix to solver map is not associated for linear matrix index "// &
+        & TRIM(NumberToVString(linearMatrixIdx,"*",err,error))//" of the equations matrices to solver matrix map."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
       
-    EXITS("SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet")
+    EXITS("SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet")
     RETURN
-999 NULLIFY(linearEquationsMatrix)
-998 ERRORS("SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet",err,error)
-    EXITS("SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet")
+999 NULLIFY(linearMatrixToSolverMatrixMap)
+998 ERRORS("SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet",err,error)
+    EXITS("SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet")
     RETURN 1
     
-  END SUBROUTINE SolverMappingEMSToSMMap_LinearEquationsMatrixToSolverMatrixMapGet
+  END SUBROUTINE SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet
   
   !
   !================================================================================================================================
@@ -2203,7 +2521,7 @@ ifdef WITH_CHECKS
       & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
 #endif    
     
-    numberOfDynamicMatrices=equationsMatricesToSolverMatrixMap%numberOfDynamicEquationsMatrices
+    numberOfDynamicMatrices=equationsMatricesToSolverMatrixMap%numberOfDynamicMatrices
       
     EXITS("SolverMappingEMSToSMMap_NumberOfDynamicMatricesGet")
     RETURN
@@ -2234,7 +2552,7 @@ ifdef WITH_CHECKS
       & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
 #endif    
     
-    numberOfJacobianMatrices=equationsMatricesToSolverMatrixMap%numberOfJacobianEquationsMatrices
+    numberOfJacobianMatrices=equationsMatricesToSolverMatrixMap%numberOfJacobianMatrices
       
     EXITS("SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet")
     RETURN
@@ -2265,7 +2583,7 @@ ifdef WITH_CHECKS
       & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
 #endif    
     
-    numberOfLinearMatrices=equationsMatricesToSolverMatrixMap%numberOfLinearEquationsMatrices
+    numberOfLinearMatrices=equationsMatricesToSolverMatrixMap%numberOfLinearMatrices
       
     EXITS("SolverMappingEMSToSMMap_NumberOfLinearMatricesGet")
     RETURN
@@ -2278,8 +2596,146 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
+  !>Returns the number of variables in an equations matrices to solver matrix map.
+  SUBROUTINE SolverMappingEMSToSMMap_NumberOfVariablesGet(equationsMatricesToSolverMatrixMap,numberOfVariables,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the number of variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On exit, the number of variables  mapped to the solver matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingEMSToSMMap_NumberOfVariablesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(equationsMatricesToSolverMatrixMap)) &
+      & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfVariables=equationsMatricesToSolverMatrixMap%numberOfVariables
+      
+    EXITS("SolverMappingEMSToSMMap_NumberOfVariablesGet")
+    RETURN
+999 ERRORSEXITS("SolverMappingEMSToSMMap_NumberOfVariablesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingEMSToSMMap_NumberOfVariablesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the variableIdx'th field variable in an equations matrices to solver matrix map.
+  SUBROUTINE SolverMappingEMSToSMMap_VariableGet(equationsMatricesToSolverMatrixMap,variableIdx,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the field variable for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index to get the field variable for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the specified field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingEMSToSMMap_VariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesToSolverMatrixMap)) &
+      & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>equationsMatricesToSolverMatrixMap%numberOfVariables) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid for the equations matrices to solver matrix map. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%variables)) &
+      & CALL FlagError("The variables array is not allocated for the equations matrices to solver matrix map.",err,error,*999)
+#endif    
+
+    fieldVariable=>equationsMatricesToSolverMatrixMap%variables(variableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable)) THEN
+      localError="The variable is not associated for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " of the equations matrices to solver matrix map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingEMSToSMMap_VariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORS("SolverMappingEMSToSMMap_VariableGet",err,error)
+    EXITS("SolverMappingEMSToSMMap_VariableGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingEMSToSMMap_VariableGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the variableIdx'th variable to solver column map in an equations matrices to solver matrix map.
+  SUBROUTINE SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet(equationsMatricesToSolverMatrixMap,variableIdx, &
+    & varDOFToSolverDOFsMap,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap !<A pointer to the equations matrices to solver matrix map to get the variable to solver col map for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index to get the variable to solver column map for
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: varDOFToSolverDOFsMap !<On exit, a pointer to the specified variable DOF to solver DOFs map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(varDOFToSolverDOFsMap)) CALL FlagError("Variable DOF to solver DOFs map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatricesToSolverMatrixMap)) &
+      & CALL FlagError("Equations matrices to solver matrix map is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>equationsMatricesToSolverMatrixMap%numberOfVariables) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid for the equations matrices to solver matrix map. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(equationsMatricesToSolverMatrixMap%numberOfVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(equationsMatricesToSolverMatrixMap%varDOFToSolverDOFsMaps)) &
+      & CALL FlagError("The variable DOF to solver DOFs map is not allocated for the equations matrices to solver matrix map.", &
+      & err,error,*999)
+#endif    
+
+    varDOFToSolverDOFsMap=>equationsMatricesToSolverMatrixMap%varDOFToSolverDOFsMaps(variableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(varDOFToSolverDOFsMap)) THEN
+      localError="The variable DOF to solver DOFs map is not associated for variable index "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the equations matrices to solver matrix map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet")
+    RETURN
+999 NULLIFY(varDOFToSolverDOFsMap)
+998 ERRORS("SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet",err,error)
+    EXITS("SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingEMSToSMMap_VariableDOFToSolverDOFsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to the equations col to solver cols map for an equations matrix to solver matrix map.
-  SUBROUTINE SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap,
+  SUBROUTINE SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
     & equationsColToSolverColsMap,err,error,*)
 
     !Argument variables
@@ -2367,7 +2823,7 @@ ifdef WITH_CHECKS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("_SolverMatrixGet",err,error,*998)
+    ENTERS("SolverMappingEMToSMMap_SolverMatrixGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is already associated.",err,error,*998)
@@ -2391,6 +2847,95 @@ ifdef WITH_CHECKS
     RETURN 1
     
   END SUBROUTINE SolverMappingEMToSMMap_SolverMatrixGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the equations matrix to solver matrix map for a solver mapping equations matrix to solver matrices map.
+  SUBROUTINE SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap,solverMatrixIdx, &
+    & equationsMatrixToSolverMatrixMap,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: equationsMatrixToSolverMatricesMap !<A pointer to the solver mapping equations matrix to solver matrices map to get the equations matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index to get the equations matrix to solver matrix map for
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap !<On exit, a pointer to the specified equations matrix to solver matrix map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsMatrixToSolverMatrixMap)) &
+      & CALL FlagError("Equations matrix to solver matrix map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsMatrixToSolverMatricesMap))  &
+      & CALL FlagError("Equations matrix to solver matrices map is not associated.",err,error,*999)
+    IF(solverMatrixIdx<1.OR.solverMatrixIdx>equationsMatrixToSolverMatricesMap%numberOfSolverMatrices) THEN
+      localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
+        & " is invalid for the equations matrix to solver matrices map. The solver matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(equationsMatrixToSolverMatricesMap%numberOfSolverMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps)) &
+      & CALL FlagError("The equations matrix to solver matrix maps is not allocated for the equations matrix to "// &
+      & "solver matrices map.",err,error,*999)
+#endif    
+    
+    equationsMatrixToSolverMatrixMap=>equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps(solverMatrixIdx)%ptr
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrixToSolverMatrixMap)) THEN
+      localError="The equations matrix to solver matrix map is not associated for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
+        & " of the equations matrix to solver matrices map of the solver mapping."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet")
+    RETURN
+999 NULLIFY(equationsMatrixToSolverMatrixMap)
+998 ERRORS("SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet",err,error)
+    EXITS("SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of solver matrices for a solver mapping equations matrix to solver matrices map.
+  SUBROUTINE SolverMappingEMToSMSMap_NumberOfSolverMatricesGet(equationsMatrixToSolverMatricesMap,numberOfSolverMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: equationsMatrixToSolverMatricesMap !<A pointer to the solver mapping equations matrix to solver matrices map to get the number of solver matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSolverMatrices !<On exit, the number of solver matrices for the equations matrix to solver matrices map for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingEMToSMSMap_NumberOfSolverMatriceset",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrixToSolverMatricesMap))  &
+      & CALL FlagError("Equations matrix to solver matrices map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfSolverMatrices=equationsMatrixToSolverMatricesMap%numberOfSolverMatrices
+          
+    EXITS("SolverMappingEMToSMSMap_NumberOfSolverMatricesGet")
+    RETURN
+999 ERRORS("SolverMappingEMToSMSMap_NumberOfSolverMatricesGet",err,error)
+    EXITS("SolverMappingEMToSMSMap_NumberOfSolverMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingEMToSMSMap_NumberOfSolverMatricesGet
   
   !
   !================================================================================================================================
@@ -2422,7 +2967,7 @@ ifdef WITH_CHECKS
       localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
         & " is invalid for the equations set to solver matrices map. The solver matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(equationsSetToSolverMatricesMap%numberOfSolverMatrices,"*",err,error))//"."
-      CALL FlagError(localError,err,eror,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(equationsSetToSolverMatricesMap%equationsMatricesToSolverMatrixMaps)) &
       & CALL FlagError("The equations matrices to solver matrix maps is not allocated for the equations set to "// &
@@ -2480,7 +3025,7 @@ ifdef WITH_CHECKS
       localError="The specified equations matrix index of "//TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
         & " is invalid for the equations set to solver matrices map. The equations matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(equationsSetToSolverMatricesMap%numberOfEquationsMatrices,"*",err,error))//"."
-      CALL FlagError(localError,err,eror,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(equationsSetToSolverMatricesMap%equationsMatrixToSolverMatricesMaps)) &
       & CALL FlagError("The equations matrix to solver matrices maps is not allocated for the equations set to "// &
@@ -2512,6 +3057,47 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
+  !>Returns a pointer to the equations row to solver rows map for a solver mapping equations set to solver matrices map.
+  SUBROUTINE SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap !<A pointer to the solver mapping equations set to solver matrices map to get the equations row tos solver rows map for
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:) !<On exit, a pointer to the equations row to solver rows map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(equationsRowToSolverRowsMap)) &
+      & CALL FlagError("Equations row to solver rows map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSetToSolverMatricesMap))  &
+      & CALL FlagError("Equations set to solver matrices map is not associated.",err,error,*999)
+#endif    
+    
+    equationsRowToSolverRowsMap=>equationsSetToSolverMatricesMap%equationsRowToSolverRowsMap
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(equationsRowToSolverRowsMap)) &
+      & CALL FlagError("The equations row to solver rows map for the equations set to solver matrices map is not associated.", &
+      & err,error,*999)
+#endif
+      
+    EXITS("SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet")
+    RETURN
+999 NULLIFY(equationsRowToSolverRowsMap)
+998 ERRORS("SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet",err,error)
+    EXITS("SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to the Jacobian matrix to solver matrix map for a solver mapping equations set to solver matrices map.
   SUBROUTINE SolverMappingESToSMSMap_JacobianMatrixToSolverMatrixMapGet(equationsSetToSolverMatricesMap,jacobianMatrixIdx, &
     & jacobianMatrixToSolverMatrixMap,err,error,*)
@@ -2538,7 +3124,7 @@ ifdef WITH_CHECKS
       localError="The specified Jacobian matrix index of "//TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))// &
         & " is invalid for the equations set to solver matrices map. The Jacobian matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(equationsSetToSolverMatricesMap%numberOfJacobianMatrices,"*",err,error))//"."
-      CALL FlagError(localError,err,eror,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(equationsSetToSolverMatricesMap%jacobianMatrixToSolverMatrixMaps)) &
       & CALL FlagError("The Jacobian matrix to solver matrix maps is not allocated for the equations set to "// &
@@ -2602,12 +3188,12 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
-  !>Returns the number of Jacobian matrices for a solver mapping jacobian set to solver matrices map.
-  SUBROUTINE SolverMappingESToSMSMap_NumberOfJacobianMatricesGet(jacobianSetToSolverMatricesMap,numberOfJacobianMatrices, &
+  !>Returns the number of Jacobian matrices for a solver mapping equations set to solver matrices map.
+  SUBROUTINE SolverMappingESToSMSMap_NumberOfJacobianMatricesGet(equationsSetToSolverMatricesMap,numberOfJacobianMatrices, &
     & err,error,*)
 
     !Argument variables
-    TYPE(JacobianSetToSolverMatricesMapType), POINTER :: jacobianSetToSolverMatricesMap !<A pointer to the solver mapping equations set to solver matrices map to get the number of Jacobian matrices for
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap !<A pointer to the solver mapping equations set to solver matrices map to get the number of Jacobian matrices for
     INTEGER(INTG), INTENT(OUT) :: numberOfJacobianMatrices !<On exit, the number of Jacobian matrices in the equations set to solver matrices map. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2666,6 +3252,149 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
+  !>Returns a pointer to the solver mapping for a solver mapping equations set to solver matrices map.
+  SUBROUTINE SolverMappingESToSMSMap_SolverMappingGet(equationsSetToSolverMatricesMap,solverMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap !<A pointer to the solver mapping equations set to solver matrices map to get the solver mapping for
+    TYPE(SolverMappingType), POINTER :: solverMapping !<On exit, a pointer to the solver mapping for the equations set to solver matrices map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingESToSMSMap_SolverMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverMapping)) &
+      & CALL FlagError("Solver mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSetToSolverMatricesMap))  &
+      & CALL FlagError("Equations set to solver matrices map is not associated.",err,error,*999)
+#endif    
+    
+    solverMapping=>equationsSetToSolverMatricesMap%solverMapping
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) &
+      & CALL FlagError("The solver mapping for the equations set to solver matrices map is not associated.",err,error,*999)
+#endif
+      
+    EXITS("SolverMappingESToSMSMap_SolverMappingGet")
+    RETURN
+999 NULLIFY(solverMapping)
+998 ERRORS("SolverMappingESToSMSMap_SolverMappingGet",err,error)
+    EXITS("SolverMappingESToSMSMap_SolverMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingESToSMSMap_SolverMappingGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the interface column to solver rows map for a solver mapping interface condition to solver matrices map.
+  SUBROUTINE SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+    & interfaceColToSolverRowsMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap !<A pointer to the solver mapping interface condition to solver matrices map to get the interface column to solver rows map for
+    TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverRowsMap(:) !<On exit, a pointer to the specified interface column to sovler rows map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceColToSolverRowsMap)) &
+      & CALL FlagError("Interface column to solver rows map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceConditionToSolverMatricesMap))  &
+      & CALL FlagError("Interface condition to solver matrices map is not associated.",err,error,*999)
+#endif    
+    
+    interfaceColToSolverRowsMap=>interfaceConditionToSolverMatricesMap%interfaceColToSolverRowsMap
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(interfaceColToSolverRowsMap)) THEN
+      localError="The interface column to solver rows map is not associated for the interface condition to solver "// &
+        & "matrices map of the solver mapping."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet")
+    RETURN
+999 NULLIFY(interfaceColToSolverRowsMap)
+998 ERRORS("SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet",err,error)
+    EXITS("SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the interface matrices to solver matrix map for a solver mapping interface condition to solver matrices map.
+  SUBROUTINE SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
+    & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap !<A pointer to the solver mapping interface condition to solver matrices map to get the interface matrices to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index in to get the interface matrices to solver matrix map for
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<On exit, a pointer to the specified interface matrices to solver matrix map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceMatricesToSolverMatrixMap)) &
+      & CALL FlagError("Interface matrices to solver matrix map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceConditionToSolverMatricesMap))  &
+      & CALL FlagError("Interface condition to solver matrices map is not associated.",err,error,*999)
+    IF(solverMatrixIdx<1.OR.solverMatrixIdx>interfaceConditionToSolverMatricesMap%numberOfSolverMatrices) THEN
+      localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
+        & " is invalid for the interface condition to solver matrices map. The solver matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceConditionToSolverMatricesMap%numberOfSolverMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceConditionToSolverMatricesMap%interfaceMatricesToSolverMatrixMaps)) &
+      & CALL FlagError("The interface matrices to solver matrix maps is not allocated for the interface condition to "// &
+      & "solver matrices map.",err,error,*999)
+#endif    
+    
+    interfaceMatricesToSolverMatrixMap=>interfaceConditionToSolverMatricesMap% &
+      & interfaceMatricesToSolverMatrixMaps(solverMatrixIdx)%ptr
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap)) THEN
+      localError="The interface matrices to solver matrix map is not associated for the solver matrix index of "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
+        & " of the interface condition to solver matrices map of the solver mapping."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet")
+    RETURN
+999 NULLIFY(interfaceMatricesToSolverMatrixMap)
+998 ERRORS("SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet",err,error)
+    EXITS("SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to the interface matrix to solver matrices map for a solver mapping interface condition to solver matrices map.
   SUBROUTINE SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMapGet(interfaceConditionToSolverMatricesMap, &
     & interfaceMatrixIdx,interfaceMatrixToSolverMatricesMap,err,error,*)
@@ -2688,11 +3417,11 @@ ifdef WITH_CHECKS
       & CALL FlagError("Interface matrix to solver matrices map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceConditionToSolverMatricesMap))  &
       & CALL FlagError("Interface condition to solver matrices map is not associated.",err,error,*999)
-    IF(interfaceMatrixIdx<1.OR.interfaceMatrixIdx>interfaceConditionToSolverMatricesMap%nuberOfInterfaceMatrices)) THEN
+    IF(interfaceMatrixIdx<1.OR.interfaceMatrixIdx>interfaceConditionToSolverMatricesMap%numberOfInterfaceMatrices) THEN
       localError="The specified interface matrix index of "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
         & " is invalid for the interface condition to solver matrices map. The interface matrix index should be >= 1 and <= "// &
         & TRIM(NumberToVString(interfaceConditionToSolverMatricesMap%numberOfInterfaceMatrices,"*",err,error))//"."
-      CALL FlagError(localError,err,eror,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(interfaceConditionToSolverMatricesMap%interfaceMatrixToSolverMatricesMaps)) &
       & CALL FlagError("The interface matrix to solver matrices maps is not allocated for the interface condition to "// &
@@ -2700,7 +3429,7 @@ ifdef WITH_CHECKS
 #endif    
     
     interfaceMatrixToSolverMatricesMap=>interfaceConditionToSolverMatricesMap% &
-      & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIndex)%ptr
+      & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)%ptr
     
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceMatrixToSolverMatricesMap)) THEN
@@ -2764,7 +3493,7 @@ ifdef WITH_CHECKS
   !
   
   !>Returns a pointer to the interface row to solver cols map for an interface matrix to solver matrix map.
-  SUBROUTINE SolverMappingIMToSMMap_InterfaceRowToSolverColsMapGet(interfaceMatrixToSolverMatrixMap,
+  SUBROUTINE SolverMappingIMToSMMap_InterfaceRowToSolverColsMapGet(interfaceMatrixToSolverMatrixMap, &
     & interfaceRowToSolverColsMap,err,error,*)
 
     !Argument variables
@@ -2805,7 +3534,7 @@ ifdef WITH_CHECKS
   !
   
   !>Returns a pointer to the solver matrix for an interface matrix to solver matrix map.
-  SUBROUTINE SolverMappingIMToSMMap_SolverMatrixGet(interfaceToSolverMap,solverMatrix,err,error,*)
+  SUBROUTINE SolverMappingIMToSMMap_SolverMatrixGet(interfaceMatrixToSolverMatrixMap,solverMatrix,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap !<A pointer to the interface matrix to solver matrix map to get the solver matrix for
@@ -2843,8 +3572,495 @@ ifdef WITH_CHECKS
   !================================================================================================================================
   !
   
+  !>Returns a pointer to the variableIdx'th dependent variable for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_DependentVariableGet(interfaceMatricesToSolverMatrixMap,variableIdx,dependentVariable, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the dependent variable for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The dependent variable index in to get
+    TYPE(FieldVariableType), POINTER :: dependentVariable !<On exit, a pointer to the specified dependent variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingIMSToSMMap_DependentVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(dependentVariable)) &
+      & CALL FlagError("Dependent variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>interfaceMatricesToSolverMatrixMap%numberOfDependentVariables) THEN
+      localError="The specified dependent variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid for the interface matrices to solver matrix map. The dependent variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMatricesToSolverMatrixMap%numberOfDependentVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMatricesToSolverMatrixMap%dependentVariables)) &
+      & CALL FlagError("The dependent variables array is not allocated for the interface matrices to solver matrix map.", &
+      & err,error,*999)
+#endif    
+    
+    dependentVariable=>interfaceMatricesToSolverMatrixMap%dependentVariables(variableIdx)%ptr
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(dependentVariable)) THEN
+      localError="The dependent variable is not associated for the dependent variable index of "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " of the interface matrices to solver matrix map of the solver mapping."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingIMSToSMMap_DependentVariableGet")
+    RETURN
+999 NULLIFY(dependentVariable)
+998 ERRORS("SolverMappingIMSToSMMap_DependentVariableGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_DependentVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_DependentVariableGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the dependent variable DOF to solver DOFs map for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet(interfaceMatricesToSolverMatrixMap,interfaceMatrixIdx, &
+    & dependentVarDOFToSolverDOFsMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the dependent variable DOF to solver DOFs map for
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The interface matrix index to get the dependent variable DOF to solver DOFs map
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: dependentVarDOFToSolverDOFsMap !<On exit, a pointer to the dependent variable DOF to solver DOFs map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(dependentVarDOFToSolverDOFsMap)) &
+      & CALL FlagError("Dependent variable DOF to solver DOFs map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+    IF(interfaceMatrixIdx<1.OR.interfaceMatrixIdx>interfaceMatricesToSolverMatrixMap%numberOfInterfaceMatrices) THEN
+      localError="The specified interface matrix index of "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+        & " is invalid. The interface matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMatricesToSolverMatrixMap%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMatricesToSolverMatrixMap%dependentVarDOFToSolverDOFsMaps)) &
+      & CALL FlagError("The dependent variable DOF to solver DOFs map is not allocated for the interface matrices to solver"// &
+      & " matrix map.",err,error,*999)
+#endif    
+    
+    dependentVarDOFToSolverDOFsMap=>interfaceMatricesToSolverMatrixMap%dependentVarDOFToSolverDOFsMaps(interfaceMatrixIdx)%ptr
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(dependentVarDOFToSolverDOFsMap)) THEN
+      localError="The dependent variable DOF to solver DOFs map is not associated for "// &
+        & " interface matrix index "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+        & " of the interface matrices to solver matrix map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet")
+    RETURN
+999 NULLIFY(dependentVarDOFToSolverDOFsMap)
+998 ERRORS("SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_DependentVarDOFToSolverDOFsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the interface column to solver columns map for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap, &
+    & interfaceColToSolverColsMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the interface column to solver columns map for
+    TYPE(MatrixRowColCouplingType), POINTER :: interfaceColToSolverColsMap(:) !<On exit, a pointer to the interface column to solver columns map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceColToSolverColsMap)) &
+      & CALL FlagError("Interface column to solver columns map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+#endif    
+    
+    interfaceColToSolverColsMap=>interfaceMatricesToSolverMatrixMap%interfaceColToSolverColsMap
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(interfaceColToSolverColsMap)) THEN
+      localError="The interface column to solver columns map is not associated for the interface matrices to solver "// &
+        & "matrix map of the solver mapping."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet")
+    RETURN
+999 NULLIFY(interfaceColToSolverColsMap)
+998 ERRORS("SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the interface matrix to solver matrix map for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
+    & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the interface matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The interface matrix index in to get the interface matrix to solver matrix map for
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap !<On exit, a pointer to the specified interface matrix to solver matrix map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceMatrixToSolverMatrixMap)) &
+      & CALL FlagError("Interface matrix to solver matrix map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+    IF(interfaceMatrixIdx<1.OR.interfaceMatrixIdx>interfaceMatricesToSolverMatrixMap%numberOfInterfaceMatrices) THEN
+      localError="The specified interface matrix index of "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+        & " is invalid for the interface matrices to solver matrix map. The interface matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMatricesToSolverMatrixMap%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMatricesToSolverMatrixMap%interfaceMatrixToSolverMatrixMaps)) &
+      & CALL FlagError("The interface matrix to solver matrix maps is not allocated for the interface matrices to "// &
+      & "solver matrix map.",err,error,*999)
+#endif    
+    
+    interfaceMatrixToSolverMatrixMap=>interfaceMatricesToSolverMatrixMap% &
+      & interfaceMatrixToSolverMatrixMaps(interfaceMatrixIdx)%ptr
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrixToSolverMatrixMap)) THEN
+      localError="The interface matrix to solver matrix map is not associated for the interface matrix index of "// &
+        & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+        & " of the interface matrices to solver matrix map of the solver mapping."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+      
+    EXITS("SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet")
+    RETURN
+999 NULLIFY(interfaceMatrixToSolverMatrixMap)
+998 ERRORS("SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the Lagrange variable for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_LagrangeVariableGet(interfaceMatricesToSolverMatrixMap,lagrangeVariable,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the Lagrange variable for
+    TYPE(FieldVariableType), POINTER :: lagrangeVariable !<On exit, a pointer to the Lagrange variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingIMSToSMMap_LagrangeVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(lagrangeVariable)) CALL FlagError("Lagrange variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+#endif    
+    
+    lagrangeVariable=>interfaceMatricesToSolverMatrixMap%lagrangeVariable
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(lagrangeVariable)) &
+      & CALL FlagError("The Lagrange variable is not associated for the interface matrices to solver matrix map.",err,error,*999)
+#endif
+      
+    EXITS("SolverMappingIMSToSMMap_LagrangeVariableGet")
+    RETURN
+999 NULLIFY(lagrangeVariable)
+998 ERRORS("SolverMappingIMSToSMMap_LagrangeVariableGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_LagrangeVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_LagrangeVariableGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the Lagrange variable DOF to solver DOFs map for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet(interfaceMatricesToSolverMatrixMap, &
+    & lagrangeVarDOFToSolverDOFsMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the Lagrange variable to solver column map for
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: lagrangeVarDOFToSolverDOFsMap !<On exit, a pointer to the Lagrange variable DOF to solver DOFs map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(lagrangeVarDOFToSolverDOFsMap)) &
+      & CALL FlagError("Lagrange variable DOF to solver DOFs map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+#endif    
+    
+    lagrangeVarDOFToSolverDOFsMap=>interfaceMatricesToSolverMatrixMap%lagrangeVarDOFToSolverDOFsMap
+    
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(lagrangeVarDOFToSolverDOFsMap)) &
+      & CALL FlagError("The Lagrange variable DOF to solver DOFs map is not associated for the interface matrices to solver "// &
+      & "matrix map.",err,error,*999)
+#endif
+      
+    EXITS("SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet")
+    RETURN
+999 NULLIFY(lagrangeVarDOFToSolverDOFsMap)
+998 ERRORS("SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_LagrangeVarDOFToSolverDOFsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of interface matrices for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet(interfaceMatricesToSolverMatrixMap,numberOfInterfaceMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the number of interface matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceMatrices !<On exit, the number of interface matrices for the interface matrices to solver matrix map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfInterfaceMatrices=interfaceMatricesToSolverMatrixMap%numberOfInterfaceMatrices
+          
+    EXITS("SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet")
+    RETURN
+999 ERRORS("SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of dependent variables for a solver mapping interface matrices to solver matrix map.
+  SUBROUTINE SolverMappingIMSToSMMap_NumberOfDependentVariablesGet(interfaceMatricesToSolverMatrixMap,numberOfDependentVariables, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap !<A pointer to the solver mapping interface matrices to solver matrix map to get the number of dependent variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDependentVariables !<On exit, the number of dependent variables for the interface matrices to solver matrix map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingIMSToSMMap_NumberOfDependentVariablesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatricesToSolverMatrixMap))  &
+      & CALL FlagError("Interface matrices to solver matrix map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfDependentVariables=interfaceMatricesToSolverMatrixMap%numberOfInterfaceMatrices
+          
+    EXITS("SolverMappingIMSToSMMap_NumberOfDependentVariablesGet")
+    RETURN
+999 ERRORS("SolverMappingIMSToSMMap_NumberOfDependentVariablesGet",err,error)
+    EXITS("SolverMappingIMSToSMMap_NumberOfDependentVariablesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMSToSMMap_NumberOfDependentVariablesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the interface matrix to solver matrix map for a solver matrix index in an interface matrix to a solver matrices map.
+  SUBROUTINE SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatrixToSolverMatricesMap, &
+    & solverMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap !<A pointer to the interface matrix to solver matrices map to get the interface matrix to solver matrix map for
+    INTEGER(INTG), INTENT(IN) :: solverMatrixIdx !<The solver matrix index to get the interface matrix to solver matrix map for.
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap !<On exit, the interface matrix to solver matrix map for the specified solver matrix index for the interface matrix to solver matrices map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(interfaceMatrixToSolverMatrixMap)) &
+      & CALL FlagError("Interface matrix to solver matrix map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrixToSolverMatricesMap)) &
+      & CALL FlagError("Interface matrix to solver matrices map is not associated.",err,error,*999)
+    IF(solverMatrixIdx<1.OR.solverMatrixIdx>interfaceMatrixToSolverMatricesMap%numberOfSolverMatrices) THEN
+      localError="The specified solver matrix index of "//TRIM(NumberToVString(solverMatrixIdx,"*",err,error))// &
+        & " is invalid for the interface matrices to solver matrix map. The solver matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMatrixToSolverMatricesMap%numberOfSolverMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMatrixToSolverMatricesMap%interfaceMatrixToSolverMatrixMaps)) &
+      & CALL FlagError("The interface matrix to solver matrix maps array is not allocated for the interface matrix "// &
+      & "to solver matrices map.",err,error,*999)
+#endif    
+    
+    interfaceMatrixToSolverMatrixMap=>interfaceMatrixToSolverMatricesMap%interfaceMatrixToSolverMatrixMaps(solverMatrixIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToSolverMatrixMap)) THEN
+      localError="The interface matrix to solver matrix map is not associated for solver matrix index "// &
+        & TRIM(NumberToVString(solverMatrixIdx,"*",err,error))//" of the interface matrix to solver matrices map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet")
+    RETURN
+999 NULLIFY(interfaceMatrixToSolverMatrixMap)
+998 ERRORSEXITS("SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMToSMSMap_InterfaceMatrixToSolverMatrixMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the interface row to solver rows map in an interface matrix to a solver matrices map.
+  SUBROUTINE SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceMatrixToSolverMatricesMap, &
+    & interfaceRowToSolverRowsMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap !<A pointer to the interface matrix to solver matrices map to get the interface row to solver rows map for
+    TYPE(MatrixRowColCouplingType), POINTER :: interfaceRowToSolverRowsMap(:) !<On exit, the interface row to solver rows map for the interface matrix to solver matrices map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(interfaceRowToSolverRowsMap)) &
+      & CALL FlagError("Interface row to solver rows map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrixToSolverMatricesMap)) &
+      & CALL FlagError("Interface matrix to solver matrices map is not associated.",err,error,*999)
+#endif    
+    
+    interfaceRowToSolverRowsMap=>interfaceMatrixToSolverMatricesMap%interfaceRowToSolverRowsMap
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(interfaceRowToSolverRowsMap)) &
+      CALL FlagError("The interface row to solver rows map is not associated for the interface matrices to solver matrix map.", &
+      & err,error,*999)
+#endif    
+      
+    EXITS("SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet")
+    RETURN
+999 NULLIFY(interfaceRowToSolverRowsMap)
+998 ERRORSEXITS("SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of solver matrices in an interface matrix to a solver matrices map.
+  SUBROUTINE SolverMappingIMToSMSMap_NumberOfSolverMatricesGet(interfaceMatrixToSolverMatricesMap,numberOfSolverMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap !<A pointer to the interface matrix to solver matrices map to get the number of solver matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSolverMatrices !<On exit, the number of solver matrices in the interface matrix to solver matrices mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingIMToSMSMap_NumberOfSolverMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToSolverMatricesMap)) &
+      & CALL FlagError("Interface matrix to solver matrices map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfSolverMatrices=interfaceMatrixToSolverMatricesMap%numberOfSolverMatrices
+    
+    EXITS("SolverMappingIMToSMSMap_NumberOfSolverMatricesGet")
+    RETURN
+999 ERRORSEXITS("SolverMappingIMToSMSMap_NumberOfSolverMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingIMToSMSMap_NumberOfSolverMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns a pointer to the Jacobian col to solver cols map for an Jacobian matrix to solver matrix map.
-  SUBROUTINE SolverMappingJMToSMMap_JacobianColToSolverColsMapGet(jacobianMatrixToSolverMatrixMap,
+  SUBROUTINE SolverMappingJMToSMMap_JacobianColToSolverColsMapGet(jacobianMatrixToSolverMatrixMap, &
     & jacobianColToSolverColsMap,err,error,*)
 
     !Argument variables
@@ -2958,5 +4174,1869 @@ ifdef WITH_CHECKS
   !
   !================================================================================================================================
   !
+  
+  !>Returns the dynamic matrix coupling information for a dynamic matrix in solver column to dynamic equations map.
+  SUBROUTINE SolverMappingSColToDEQSMap_DynamicCouplingInfoGet(solverColToDynamicEquationsMap,dynamicMatrixIdx, &
+    & dynamicMatrixNumber,columnNumber,couplingCoefficient,err,error,*)
 
+    !Argument variables
+    TYPE(SolverColToDynamicEquationsMapType), POINTER :: solverColToDynamicEquationsMap !<A pointer to the solver column to dynamic equations map to get the dynamic coupling information for
+    INTEGER(INTG), INTENT(IN) :: dynamicMatrixIdx !<The dynamic matrix index to get the coupling information for
+    INTEGER(INTG), INTENT(OUT) :: dynamicMatrixNumber !<On exit, the number of the dynamic matrix in the solver column to dynamic equations map.
+    INTEGER(INTG), INTENT(OUT) :: columnNumber !<On exit, the column number in the dynamic matrix the solver column is coupled to
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the coupling coefficient applied to the solver column to dynamic matrix column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("SolverMappingSColToDEQSMap_DynamicCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToDynamicEquationsMap)) &
+      & CALL FlagError("The solver column to dynamic equations map is not associated.",err,error,*999)
+    IF(dynamicMatrixIdx<1.OR.dynamicMatrixIdx>solverColToDynamicEquationsMap%numberOfDynamicMatrices) THEN
+      localError="The specified dynamic matrix index of "//TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))// &
+        & " is invalid. The dynamic matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverColToDynamicEquationsMap%numberOfDynamicMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverColToDynamicEquationsMap%equationsMatrixNumbers)) &
+      & CALL FlagError("The equations matrix numbers array is not allocated for the solver column to dynamic matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToDynamicEquationsMap%equationsColumnNumbers)) &
+      & CALL FlagError("The equations column numbers array is not allocated for the solver column to dynamic matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToDynamicEquationsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the solver column to dynamic matrices map.", &
+      & err,error,*999)
+#endif    
+
+    dynamicMatrixNumber=solverColToDynamicEquationsMap%equationsMatrixNumbers(dynamicMatrixIdx)
+    columnNumber=solverColToDynamicEquationsMap%equationsColumnNumbers(dynamicMatrixIdx)
+    couplingCoefficient=solverColToDynamicEquationsMap%couplingCoefficients(dynamicMatrixIdx)
+      
+    EXITS("SolverMappingSColToDEQSMap_DynamicCouplingInfoGet")
+    RETURN
+999 dynamicMatrixNumber=0
+    columnNumber=0
+    couplingCoefficient=0.0_DP
+    ERRORS("SolverMappingSColToDEQSMap_DynamicCouplingInfoGet",err,error)
+    EXITS("SolverMappingSColToDEQSMap_DynamicCouplingInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToDEQSMap_DynamicCouplingInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of dynamic matrices for a solver column to dynamic equations map.
+  SUBROUTINE SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet(solverColToDynamicEquationsMap,numberOfDynamicMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToDynamicEquationsMapType), POINTER :: solverColToDynamicEquationsMap !<A pointer to the solver column to dynamic equations map to get the number of dynamic matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDynamicMatrices !<On exit, the number of dynamic equations matrices in the solver column to dynamic equations map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToDynamicEquationsMap)) &
+      & CALL FlagError("The solver column to dynamic equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfDynamicMatrices=solverColToDynamicEquationsMap%numberOfDynamicMatrices
+      
+    EXITS("SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet")
+    RETURN
+999 numberOfDynamicMatrices=0
+    ERRORS("SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet",err,error)
+    EXITS("SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToDEQSMap_NumberOfDynamicMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the interface matrix coupling information for a interface matrix in solver column to interface equations map.
+  SUBROUTINE SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet(solverColToInterfaceEquationsMap,interfaceMatrixIdx, &
+    & interfaceMatrixNumber,columnNumber,couplingCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToInterfaceEquationsMapType), POINTER :: solverColToInterfaceEquationsMap !<A pointer to the solver column to interface equations map to get the interface coupling information for
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The interface matrix index to get the coupling information for
+    INTEGER(INTG), INTENT(OUT) :: interfaceMatrixNumber !<On exit, the number of the interface matrix in the solver column to interface equations map.
+    INTEGER(INTG), INTENT(OUT) :: columnNumber !<On exit, the column number in the interface matrix the solver column is coupled to
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the coupling coefficient applied to the solver column to interface matrix column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToInterfaceEquationsMap)) &
+      & CALL FlagError("The solver column to interface equations map is not associated.",err,error,*999)
+    IF(interfaceMatrixIdx<1.OR.interfaceMatrixIdx>solverColToInterfaceEquationsMap%numberOfInterfaceMatrices) THEN
+      localError="The specified interface matrix index of "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
+        & " is invalid. The interface matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverColToInterfaceEquationsMap%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverColToInterfaceEquationsMap%interfaceMatrixNumbers)) &
+      & CALL FlagError("The interface matrix numbers array is not allocated for the solver column to interface matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToInterfaceEquationsMap%interfaceColumnNumbers)) &
+      & CALL FlagError("The interface column numbers array is not allocated for the solver column to interface matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToInterfaceEquationsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the solver column to interface matrices map.", &
+      & err,error,*999)
+#endif    
+
+    interfaceMatrixNumber=solverColToInterfaceEquationsMap%interfaceMatrixNumbers(interfaceMatrixIdx)
+    columnNumber=solverColToInterfaceEquationsMap%interfaceColumnNumbers(interfaceMatrixIdx)
+    couplingCoefficient=solverColToInterfaceEquationsMap%couplingCoefficients(interfaceMatrixIdx)
+      
+    EXITS("SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet")
+    RETURN
+999 interfaceMatrixNumber=0
+    columnNumber=0
+    couplingCoefficient=0.0_DP
+    ERRORS("SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet",err,error)
+    EXITS("SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToIEQSMap_InterfaceCouplingInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of interface matrices for a solver column to interface equations map.
+  SUBROUTINE SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet(solverColToInterfaceEquationsMap,numberOfInterfaceMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToInterfaceEquationsMapType), POINTER :: solverColToInterfaceEquationsMap !<A pointer to the solver column to interface equations map to get the number of interface matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceMatrices !<On exit, the number of interface matrices in the solver column to interface equations map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToInterfaceEquationsMap)) &
+      & CALL FlagError("The solver column to interface equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfInterfaceMatrices=solverColToInterfaceEquationsMap%numberOfInterfaceMatrices
+      
+    EXITS("SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet")
+    RETURN
+999 numberOfInterfaceMatrices=0
+    ERRORS("SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet",err,error)
+    EXITS("SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToIEQSMap_NumberOfInterfaceMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the linear matrix coupling information for a linear matrix in solver column to linear equations map.
+  SUBROUTINE SolverMappingSColToLEQSMap_LinearCouplingInfoGet(solverColToLinearEquationsMap,linearMatrixIdx, &
+    & linearMatrixNumber,columnNumber,couplingCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToLinearEquationsMapType), POINTER :: solverColToLinearEquationsMap !<A pointer to the solver column to linear equations map to get the linear coupling information for
+    INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The linear matrix index to get the coupling information for
+    INTEGER(INTG), INTENT(OUT) :: linearMatrixNumber !<On exit, the number of the linear matrix in the solver column to linear equations map.
+    INTEGER(INTG), INTENT(OUT) :: columnNumber !<On exit, the column number in the linear matrix the solver column is coupled to
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the coupling coefficient applied to the solver column to linear matrix column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("SolverMappingSColToLEQSMap_LinearCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToLinearEquationsMap)) &
+      & CALL FlagError("The solver column to linear equations map is not associated.",err,error,*999)
+    IF(linearMatrixIdx<1.OR.linearMatrixIdx>solverColToLinearEquationsMap%numberOfLinearMatrices) THEN
+      localError="The specified linear matrix index of "//TRIM(NumberToVString(linearMatrixIdx,"*",err,error))// &
+        & " is invalid. The linear matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverColToLinearEquationsMap%numberOfLinearMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverColToLinearEquationsMap%equationsMatrixNumbers)) &
+      & CALL FlagError("The equations matrix numbers array is not allocated for the solver column to linear matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToLinearEquationsMap%equationsColumnNumbers)) &
+      & CALL FlagError("The equations column numbers array is not allocated for the solver column to linear matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToLinearEquationsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the solver column to linear matrices map.", &
+      & err,error,*999)
+#endif    
+
+    linearMatrixNumber=solverColToLinearEquationsMap%equationsMatrixNumbers(linearMatrixIdx)
+    columnNumber=solverColToLinearEquationsMap%equationsColumnNumbers(linearMatrixIdx)
+    couplingCoefficient=solverColToLinearEquationsMap%couplingCoefficients(linearMatrixIdx)
+      
+    EXITS("SolverMappingSColToLEQSMap_LinearCouplingInfoGet")
+    RETURN
+999 linearMatrixNumber=0
+    columnNumber=0
+    couplingCoefficient=0.0_DP
+    ERRORS("SolverMappingSColToLEQSMap_LinearCouplingInfoGet",err,error)
+    EXITS("SolverMappingSColToLEQSMap_LinearCouplingInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToLEQSMap_LinearCouplingInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of linear matrices for a solver column to linear equations map.
+  SUBROUTINE SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet(solverColToLinearEquationsMap,numberOfLinearMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToLinearEquationsMapType), POINTER :: solverColToLinearEquationsMap !<A pointer to the solver column to linear equations map to get the number of linear matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfLinearMatrices !<On exit, the number of linear matrices in the solver column to linear equations map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToLinearEquationsMap)) &
+      & CALL FlagError("The solver column to linear equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfLinearMatrices=solverColToLinearEquationsMap%numberOfLinearMatrices
+      
+    EXITS("SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet")
+    RETURN
+999 numberOfLinearMatrices=0
+    ERRORS("SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet",err,error)
+    EXITS("SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToLEQSMap_NumberOfLinearMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the Jacobian matrix coupling information for a Jacobian matrix in solver column to nonlinear equations map.
+  SUBROUTINE SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet(solverColToNonlinearEquationsMap,jacobianMatrixIdx, &
+    & jacobianMatrixNumber,columnNumber,couplingCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToNonlinearEquationsMapType), POINTER :: solverColToNonlinearEquationsMap !<A pointer to the solver column to nonlinear equations map to get the Jacobian coupling information for
+    INTEGER(INTG), INTENT(IN) :: jacobianMatrixIdx !<The Jacobian matrix index to get the coupling information for
+    INTEGER(INTG), INTENT(OUT) :: jacobianMatrixNumber !<On exit, the number of the Jacobian matrix in the solver column to nonlinear equations map.
+    INTEGER(INTG), INTENT(OUT) :: columnNumber !<On exit, the column number in the Jacobian matrix the solver column is coupled to
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the coupling coefficient applied to the solver column to nonlinear matrix column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToNonlinearEquationsMap)) &
+      & CALL FlagError("The solver column to nonlinear equations map is not associated.",err,error,*999)
+    IF(jacobianMatrixIdx<1.OR.jacobianMatrixIdx>solverColToNonlinearEquationsMap%numberOfJacobianMatrices) THEN
+      localError="The specified Jacobian matrix index of "//TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))// &
+        & " is invalid. The Jacobian matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverColToNonlinearEquationsMap%numberOfJacobianMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverColToNonlinearEquationsMap%jacobianMatrixNumbers)) &
+      & CALL FlagError("The Jacobian matrix numbers array is not allocated for the solver column to nonlinear matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToNonlinearEquationsMap%jacobianColumnNumbers)) &
+      & CALL FlagError("The Jacobian column numbers array is not allocated for the solver column to nonlinear matrices map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverColToNonlinearEquationsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the solver column to nonlinear matrices map.", &
+      & err,error,*999)
+#endif    
+
+    jacobianMatrixNumber=solverColToNonlinearEquationsMap%jacobianMatrixNumbers(jacobianMatrixIdx)
+    columnNumber=solverColToNonlinearEquationsMap%jacobianColumnNumbers(jacobianMatrixIdx)
+    couplingCoefficient=solverColToNonlinearEquationsMap%couplingCoefficients(jacobianMatrixIdx)
+      
+    EXITS("SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet")
+    RETURN
+999 jacobianMatrixNumber=0
+    columnNumber=0
+    couplingCoefficient=0.0_DP
+    ERRORS("SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet",err,error)
+    EXITS("SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToNLEQSMap_JacobianCouplingInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of Jacobian matrices for a solver column to nonlinear equations map.
+  SUBROUTINE SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet(solverColToNonlinearEquationsMap,numberOfJacobianMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverColToNonlinearEquationsMapType), POINTER :: solverColToNonlinearEquationsMap !<A pointer to the solver column to nonlinear equations map to get the number of Jacobian matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfJacobianMatrices !<On exit, the number of Jacobian equations matrices in the solver column to nonlinear equations map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverColToNonlinearEquationsMap)) &
+      & CALL FlagError("The solver column to nonlinear equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfJacobianMatrices=solverColToNonlinearEquationsMap%numberOfJacobianMatrices
+      
+    EXITS("SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet")
+    RETURN
+999 numberOfJacobianMatrices=0
+    ERRORS("SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet",err,error)
+    EXITS("SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSColToNLEQSMap_NumberOfJacobianMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns equations information for solver DOF mapped to variable DOFs.
+  SUBROUTINE SolverMappingSDOFToVDOFsMap_EquationsInfoGet(solverDOFToVariableDOFsMap,equationDOFIdx,equationType,equationIdx, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap !<A pointer to the solver DOF to variable DOFs map to get the equations information for
+    INTEGER(INTG), INTENT(IN) :: equationDOFIdx !<The equation DOF index to get the equations information for.
+    INTEGER(INTG), INTENT(OUT) :: equationType !<On exit, the type of equation the solver DOF is mapped to. \see SolverMappingRoutines_EquationsTypes
+    INTEGER(INTG), INTENT(OUT) :: equationIdx !<On exit, the index of either the equations set or interface condition the solver DOF is mapped to in the solver mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSDOFToVDOFsMap_EquationsInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverDOFToVariableDOFsMap)) &
+      & CALL FlagError("The solver DOF to variable DOFs map is not associated.",err,error,*999)
+    IF(equationDOFIdx<1.OR.equationDOFIdx>solverDOFToVariableDOFsMap%numberOfEquationDOFs) THEN
+      localError="The specified equation DOF index of "//TRIM(NumberToVString(equationDOFIdx,"*",err,error))// &
+        & " is invalid. The equation DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverDOFToVariableDOFsMap%numberOfEquationDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverDOFToVariableDOFsMap%equationTypes)) &
+      & CALL FlagError("The equations types array is not allocated for the solver DOF to variable DOFs map.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverDOFToVariableDOFsMap%equationIndices)) &
+      & CALL FlagError("The equations indices array is not allocated for the solver DOF to variable DOFs map.",err,error,*999)    
+#endif    
+
+    equationType=solverDOFToVariableDOFsMap%equationTypes(equationDOFIdx)
+    equationIdx=solverDOFToVariableDOFsMap%equationIndices(equationDOFIdx)
+
+!!TODO: check validity?
+      
+    EXITS("SolverMappingSDOFToVDOFsMap_EquationsInfoGet")
+    RETURN
+999 equationType=0
+    equationIdx=0
+    ERRORS("SolverMappingSDOFToVDOFsMap_EquationsInfoGet",err,error)
+    EXITS("SolverMappingSDOFToVDOFsMap_EquationsInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSDOFToVDOFsMap_EquationsInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of equations DOFs that the solver DOF is mapped to for the solver DOF to variable DOFs map.
+  SUBROUTINE SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet(solverDOFToVariableDOFsMap,numberOfEquationDOFs,err,error,*)
+
+    !Argument variables
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap !<A pointer to the solver DOF to variable DOFs map to get the variable DOF coupling information for
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquationDOFs !<On exit, the number of equation DOFs that the solver DOF is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverDOFToVariableDOFsMap)) &
+      & CALL FlagError("The solver DOF to variable DOFs map is not associated.",err,error,*999)
+#endif    
+
+    numberOfEquationDOFs=solverDOFToVariableDOFsMap%numberOfEquationDOFs
+      
+    EXITS("SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet")
+    RETURN
+999 numberOfEquationDOFs=0
+    ERRORS("SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet",err,error)
+    EXITS("SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSDOFToVDOFsMap_NumberOfEquationDOFsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns variable DOF coupling information in the map for the solver DOF mapped to variable DOFs.
+  SUBROUTINE SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet(solverDOFToVariableDOFsMap,equationDOFIdx,variableDOF, &
+    & variableCoefficient,additiveConstant,err,error,*)
+
+    !Argument variables
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap !<A pointer to the solver DOF to variable DOFs map to get the variable DOF coupling information for
+    INTEGER(INTG), INTENT(IN) :: equationDOFIdx !<The equation DOF index to get the variable DOF coupling for.
+    INTEGER(INTG), INTENT(OUT) :: variableDOF !<On exit, the variable DOF that the solver DOF is mapped to.
+    REAL(DP), INTENT(OUT) :: variableCoefficient !<On exit, the coefficient multiplying the solver DOF for the variable DOF coupling.
+    REAL(DP), INTENT(OUT) :: additiveConstant !<On exit, the constant added to the solver DOF for the variable DOF coupling.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverDOFToVariableDOFsMap)) &
+      & CALL FlagError("The solver DOF to variable DOFs map is not associated.",err,error,*999)
+    IF(equationDOFIdx<1.OR.equationDOFIdx>solverDOFToVariableDOFsMap%numberOfEquationDOFs) THEN
+      localError="The specified equations DOF index of "//TRIM(NumberToVString(equationDOFIdx,"*",err,error))// &
+        & " is invalid. The equations DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverDOFToVariableDOFsMap%numberOfEquationDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverDOFToVariableDOFsMap%variableDOF)) &
+      & CALL FlagError("The variable DOF array is not allocated for the solver DOF to variable DOFs map.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverDOFToVariableDOFsMap%variableCoefficient)) &
+      & CALL FlagError("The variable coefficient array is not allocated for the solver DOF to variable DOFs map.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverDOFToVariableDOFsMap%additiveConstant)) &
+      & CALL FlagError("The additive constant array is not allocated for the solver DOF to variable DOFs map.",err,error,*999)
+#endif    
+
+    variableDOF=solverDOFToVariableDOFsMap%variableDOF(equationDOFIdx)
+    variableCoefficient=solverDOFToVariableDOFsMap%variableCoefficient(equationDOFIdx)
+    additiveConstant=solverDOFToVariableDOFsMap%additiveConstant(equationDOFIdx)
+
+!!TODO: check validity?
+      
+    EXITS("SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet")
+    RETURN
+999 variableDOF=0
+    variableCoefficient=0.0_DP
+    additiveConstant=0.0_DP
+    ERRORS("SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet",err,error)
+    EXITS("SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSDOFToVDOFsMap_VariableDOFCouplingGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the field variable containing the variable DOF for solver DOF mapped to variable DOFs.
+  SUBROUTINE SolverMappingSDOFToVDOFsMap_VariableGet(solverDOFToVariableDOFsMap,equationDOFIdx,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap !<A pointer to the solver DOF to variable DOFs map to get the equations information for
+    INTEGER(INTG), INTENT(IN) :: equationDOFIdx !<The equation DOF index to get the equations information for.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the field variable containing the DOF the solver DOF is mapped to. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSDOFToVDOFsMap_VariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("The field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverDOFToVariableDOFsMap)) &
+      & CALL FlagError("The solver DOF to variable DOFs map is not associated.",err,error,*999)
+    IF(equationDOFIdx<1.OR.equationDOFIdx>solverDOFToVariableDOFsMap%numberOfEquationDOFs) THEN
+      localError="The specified equations DOF index of "//TRIM(NumberToVString(equationDOFIdx,"*",err,error))// &
+        & " is invalid. The equations DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverDOFToVariableDOFsMap%numberOfEquationDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverDOFToVariableDOFsMap%variable)) &
+      & CALL FlagError("The variable array is not allocated for the solver DOF to variable DOFs map.",err,error,*999)
+#endif    
+
+    fieldVariable=>solverDOFToVariableDOFsMap%variable(equationDOFIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable)) THEN
+      localError="The field variable for equations DOF index "//TRIM(NumberToVString(equationDOFIdx,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingSDOFToVDOFsMap_VariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORS("SolverMappingSDOFToVDOFsMap_VariableGet",err,error)
+    EXITS("SolverMappingSDOFToVDOFsMap_VariableGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSDOFToVDOFsMap_VariableGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the column DOFs mapping for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_ColumnDOFsMappingGet(solverMatrixToEquationsMap,columnDOFsMapping,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the column DOFs mapping for
+    TYPE(DomainMappingType), POINTER :: columnDOFsMapping !<On exit, a pointer to the specified column DOFs mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_ColumnDOFsMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(columnDOFsMapping)) CALL FlagError("Column DOFs mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    columnDOFsMapping=>solverMatrixToEquationsMap%columnDOFsMapping
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(columnDOFsMapping)) &
+      & CALL FlagError("The column DOFs mapping for the specified solver matrix to equations map is not associated. ", &
+      & err,error,*999)
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_ColumnDOFsMappingGet")
+    RETURN
+999 NULLIFY(columnDOFsMapping)
+998 ERRORS("SolverMappingSMToEQSMap_ColumnDOFsMappingGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_ColumnDOFsMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_ColumnDOFsMappingGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of columns for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_NumberOfColumnsGet(solverMatrixToEquationsMap,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On exit, the number of columns in the solver matrix to equations map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_NumberOfColumnsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfColumns=solverMatrixToEquationsMap%numberOfColumns
+     
+    EXITS("SolverMappingSMToEQSMap_NumberOfColumnsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToEQSMap_NumberOfColumnsGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_NumberOfColumnsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_NumberOfColumnsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of DOFs for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_NumberOfDOFsGet(solverMatrixToEquationsMap,numberOfDOFs,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the number of DOFs for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDOFs !<On exit, the number of DOFs in the solver matrix to equations map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_NumberOfDOFsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfDOFs=solverMatrixToEquationsMap%numberOfDOFs
+     
+    EXITS("SolverMappingSMToEQSMap_NumberOfDOFsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToEQSMap_NumberOfDOFsGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_NumberOfDOFsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_NumberOfDOFsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of equations sets for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_NumberOfEquationsSetsGet(solverMatrixToEquationsMap,numberOfEquationsSets,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the number of equations sets for
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquationsSets !<On exit, the number of equations sets in the solver matrix to equations map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_NumberOfEquationsSetsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfEquationsSets=solverMatrixToEquationsMap%numberOfEquationsSets
+     
+    EXITS("SolverMappingSMToEQSMap_NumberOfEquationsSetsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToEQSMap_NumberOfEquationsSetsGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_NumberOfEquationsSetsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_NumberOfEquationsSetsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of global DOFs for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet(solverMatrixToEquationsMap,numberOfGlobalDOFs,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the number of global DOFs for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGlobalDOFs !<On exit, the number of global DOFs in the solver matrix to equations map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfGlobalDOFs=solverMatrixToEquationsMap%numberOfGlobalDOFs
+     
+    EXITS("SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_NumberOfGlobalDOFsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of interface conditions for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet(solverMatrixToEquationsMap,numberOfInterfaceConditions, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the number of interface conditions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceConditions !<On exit, the number of interface conditions in the solver matrix to equations map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfInterfaceConditions=solverMatrixToEquationsMap%numberOfInterfaceConditions
+     
+    EXITS("SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_NumberOfInterfaceConditionsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the solver DOF to variable DOFs map for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet(solverMatrixToEquationsMap,solverDOFIdx, &
+    & solverDOFToVariableDOFsMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the solver DOF to variable DOFs map for
+    INTEGER(INTG), INTENT(IN) :: solverDOFIdx !<The solver DOF index to get the solver DOF to variables DOF map for
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap !<On exit, a pointer to the solver DOF to varible DOFs map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverDOFToVariableDOFsMap)) &
+      & CALL FlagError("Solver DOF to variable DOFs map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+    IF(solverDOFIdx<1.OR.solverDOFIdx>solverMatrixToEquationsMap%numberOfDOFs) THEN
+      localError="The specified solver DOF index of "//TRIM(NumberToVString(solverDOFIdx,"*",err,error))// &
+        & " is invalid. The solver DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMatrixToEquationsMap%numberOfDOFs,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMatrixToEquationsMap%solverDOFToVariableDOFsMaps)) &
+      & CALL FlagError("The solver DOF to variable DOFs maps is not allocated for the solver matrix to equations map.", &
+      & err,error,*999)    
+#endif    
+
+    solverDOFToVariableDOFsMap=>solverMatrixToEquationsMap%solverDOFToVariableDOFsMaps(solverDOFIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverDOFToVariableDOFsMap)) THEN
+      localError="The solver DOF to variable DOFs map is not associated for solver DOF index "// &
+        & TRIM(NumberToVString(solverDOFIdx,"*",err,error))//" of the solver matrix to equations map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet")
+    RETURN
+999 NULLIFY(solverDOFToVariableDOFsMap)
+998 ERRORS("SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_SolverDOFToVariableDOFsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the solver mapping for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_SolverMappingGet(solverMatrixToEquationsMap,solverMapping,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the solver mapping for
+    TYPE(SolverMappingType), POINTER :: solverMapping !<On exit, a pointer to the specified solver mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_SolverMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    solverMapping=>solverMatrixToEquationsMap%solverMapping
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverMapping)) &
+      & CALL FlagError("The solver mapping for the specified solver matrix to equations map is not associated. ", &
+      & err,error,*999)
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_SolverMappingGet")
+    RETURN
+999 NULLIFY(solverMapping)
+998 ERRORS("SolverMappingSMToEQSMap_SolverMappingGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_SolverMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_SolverMappingGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the solver matrix for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_SolverMatrixGet(solverMatrixToEquationsMap,solverMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the solver matrix for
+    TYPE(SolverMatrixType), POINTER :: solverMatrix !<On exit, a pointer to the specified solver matrix. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_SolverMatrixGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    solverMatrix=>solverMatrixToEquationsMap%solverMatrix
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrix)) &
+      & CALL FlagError("The solver matrix for the specified solver matrix to equations map is not associated. ", &
+      & err,error,*999)
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_SolverMatrixGet")
+    RETURN
+999 NULLIFY(solverMatrix)
+998 ERRORS("SolverMappingSMToEQSMap_SolverMatrixGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_SolverMatrixGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_SolverMatrixGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the solver matrix to equations set map for an equations set index in a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet(solverMatrixToEquationsMap,equationsSetIdx, &
+    & solverMatrixToEquationsSetMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the solver matrix to equations set map for
+    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index to get the solver matrix to equations set map for
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: solverMatrixToEquationsSetMap !<On exit, a pointer to the specified solver matrix to equations set map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverMatrixToEquationsSetMap)) &
+      & CALL FlagError("Solver matrix to equations set map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+    IF(equationsSetIdx<1.OR.equationsSetIdx>solverMatrixToEquationsMap%numberOfEquationsSets) THEN
+      localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
+        & " is invalid. The equations set index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMatrixToEquationsMap%numberOfEquationsSets,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMatrixToEquationsMap%solverMatrixToEquationsSetMaps)) &
+      & CALL FlagError("The solver matrix to equations sets maps is not allocated for the solver matrix to equations map.", &
+      & err,error,*999)
+#endif    
+    
+    solverMatrixToEquationsSetMap=>solverMatrixToEquationsMap%solverMatrixToEquationsSetMaps(equationsSetIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsSetMap)) THEN
+      localError="The solver matrix to equation set map is not associated for equations set index "// &
+        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//" of the solver matrix to equations map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet")
+    RETURN
+999 NULLIFY(solverMatrixToEquationsSetMap)
+998 ERRORS("SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_SolverMatrixToEquationsSetMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the solver matrix to interface condition map for an equations set index in a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet(solverMatrixToEquationsMap,interfaceConditionIdx, &
+    & solverMatrixToInterfaceConditionMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the solver matrix to interface condition map for
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index to get the solver matrix to interface condition map for
+    TYPE(SolverMatrixToInterfaceConditionMapType), POINTER :: solverMatrixToInterfaceConditionMap !<On exit, a pointer to the specified solver matrix to interface condition map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverMatrixToInterfaceConditionMap)) &
+      & CALL FlagError("Solver matrix to equations set map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+    IF(interfaceConditionIdx<1.OR.interfaceConditionIdx>solverMatrixToEquationsMap%numberOfInterfaceConditions) THEN
+      localError="The specified interface condition index of "//TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
+        & " is invalid. The interface condition index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMatrixToEquationsMap%numberOfInterfaceConditions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMatrixToEquationsMap%solverMatrixToInterfaceConditionMaps)) &
+      & CALL FlagError("The solver matrix to interface conditions maps is not allocated for the solver matrix to equations map.", &
+      & err,error,*999)
+#endif    
+    
+    solverMatrixToInterfaceConditionMap=>solverMatrixToEquationsMap%solverMatrixToInterfaceConditionMaps(interfaceConditionIdx)%ptr
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(solverMatrixToInterfaceConditionMap)) THEN
+      localError="The solver matrix to interface condition map is not associated for interface condition index "// &
+        & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//" of the solver matrix to equations map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet")
+    RETURN
+999 NULLIFY(solverMatrixToInterfaceConditionMap)
+998 ERRORS("SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_SolverMatrixToInterfaceConditionMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the total number of DOFs for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_TotalNumberOfDOFsGet(solverMatrixToEquationsMap,totalNumberOfDOFs,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the number of DOFs for
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfDOFs !<On exit, the total number of DOFs in the solver matrix to equations map
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_TotalNumberOfDOFsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+
+    totalNumberOfDOFs=solverMatrixToEquationsMap%totalNumberOfDOFs
+     
+    EXITS("SolverMappingSMToEQSMap_TotalNumberOfDOFsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToEQSMap_TotalNumberOfDOFsGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_TotalNumberOfDOFsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_TotalNumberOfDOFsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to equations variables list for a solver matrix to equations map.
+  SUBROUTINE SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,variablesList,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap !<A pointer to the solver matrix to equations map to get the variables list in the solver matrix to equations map for
+    TYPE(SolverMappingVariablesType), POINTER :: variablesList !<On exit, a pointer to variables in the solver matrix to equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToEQSMap_VariablesListGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(variablesList)) CALL FlagError("Solver variables list is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsMap)) &
+      & CALL FlagError("Solver matrix to equations map is not associated.",err,error,*999)
+#endif    
+    
+    variablesList=>solverMatrixToEquationsMap%variablesList
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(variablesList)) &
+      & CALL FlagError("The solver variables list is not associated for the solver matrix to equations map.",err,error,*999)
+#endif    
+      
+    EXITS("SolverMappingSMToEQSMap_VariablesListGet")
+    RETURN
+999 NULLIFY(variablesList)
+998 ERRORS("SolverMappingSMToEQSMap_VariablesListGet",err,error)
+    EXITS("SolverMappingSMToEQSMap_VariablesListGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToEQSMap_VariablesListGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the equations set row coupling information for a solver row to equations set row.
+  SUBROUTINE SolverMappingSRowToEQSMap_EquationsSetCouplingInfoGet(solverRowToEquationsMap,coupledRowIdx,equationsSetIdx, &
+    & equationsSetRow,couplingCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(SolverRowToEquationsMapType), POINTER :: solverRowToEquationsMap !<A pointer to the solver row to equations map to get the equations set row coupling information for
+    INTEGER(INTG), INTENT(IN) :: coupledRowIdx !<The coupled row index to get the coupling information for
+    INTEGER(INTG), INTENT(OUT) :: equationsSetIdx !<On exit, the equations set index of the coupled solver row
+    INTEGER(INTG), INTENT(OUT) :: equationsSetRow !<On exit, the equations set row of the coupled solver row
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the equations set row coupling coefficient of the coupled solver row
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSRowToEQSMap_EquationsSetCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverRowToEquationsMap)) &
+      & CALL FlagError("Solver row to equations map is not associated.",err,error,*999)
+    !Check that we have an equations set coupling
+    IF(solverRowToEquationsMap%interfaceConditionIndex/=0) &
+      & CALL FlagError("The solver row to equations map is coupled to interface equations and not equations set equations.", &
+      & err,error,*999)
+    IF(coupledRowIdx<1.OR.coupledRowIdx>solverRowToEquationsMap%numberOfEquationsSetRows) THEN
+      localError="The specified equations set row index of "//TRIM(NumberToVString(coupledRowIdx,"*",err,error))// &
+        & " is invalid. The equations set row index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverRowToEquationsMap%numberOfEquationsSetRows,"*",err,error))// &
+        & " for the solver row to equations map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverRowToEquationsMap%equationsIndex)) &
+      & CALL FlagError("The equations index array is not allocated for the solver row to equations map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverRowToEquationsMap%rowColNumber)) &
+      & CALL FlagError("The row column number array is not allocated for the solver row to equations map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverRowToEquationsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the solver row to equations map.", &
+      & err,error,*999)
+#endif    
+
+    equationsSetIdx=solverRowToEquationsMap%equationsIndex(coupledRowIdx)
+    equationsSetRow=solverRowToEquationsMap%rowColNumber(coupledRowIdx)
+    couplingCoefficient=solverRowToEquationsMap%couplingCoefficients(coupledRowIdx)
+     
+    EXITS("SolverMappingSRowToEQSMap_EquationsSetCouplingInfoGet")
+    RETURN
+999 equationsSetIdx=0
+    equationsSetRow=0
+    couplingCoefficient=0.0_DP
+    ERRORS("SolverMappingSRowToEQSMap_EquationsSetCouplingInfoGet",err,error)
+    EXITS("SolverMappingSRowToEQSMap_EquationsSetCouplngInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSRowToEQSMap_EquationsSetCouplingInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the interface condition column coupling information for a solver row to interface condition column.
+  SUBROUTINE SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet(solverRowToEquationsMap,interfaceConditionColumn, &
+    & couplingCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(SolverRowToEquationsMapType), POINTER :: solverRowToEquationsMap !<A pointer to the solver row to equation map to get the interface condition column coupling information for
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionColumn !<On exit, the interface condition column of the coupled solver row
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the interface condition coupling coefficient of the coupled solver row
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverRowToEquationsMap)) &
+      & CALL FlagError("Solver row to equations map is not associated.",err,error,*999)
+    !Check that we have an interface condition coupling
+    IF(solverRowToEquationsMap%numberOfEquationsSetRows/=0) &
+      & CALL FlagError("The solver row to equations map is coupled to equations set equations and not "// &
+      & "interface conditions equations.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverRowToEquationsMap%rowColNumber)) &
+      & CALL FlagError("The row column number array is not allocated for the solver row to equations map.", &
+      & err,error,*999)
+    IF(.NOT.ALLOCATED(solverRowToEquationsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the solver row to equations map.", &
+      & err,error,*999)
+#endif    
+
+    interfaceConditionColumn=solverRowToEquationsMap%rowColNumber(1)
+    couplingCoefficient=solverRowToEquationsMap%couplingCoefficients(1)
+     
+    EXITS("SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet")
+    RETURN
+999 interfaceConditionColumn=0
+    couplingCoefficient=0.0_DP
+    ERRORS("SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet",err,error)
+    EXITS("SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSRowToEQSMap_InterfaceConditionCouplingInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the interface condition index for a solver row to interface condition column.
+  SUBROUTINE SolverMappingSRowToEQSMap_InterfaceConditionIndexGet(solverRowToEquationsMap,interfaceConditionIndex,err,error,*)
+
+    !Argument variables
+    TYPE(SolverRowToEquationsMapType), POINTER :: solverRowToEquationsMap !<A pointer to the solver row to equation map to get the interface condition column coupling information for
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionIndex !<On exit, the interface condition index of the coupled solver row
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSRowToEQSMap_InterfaceConditionIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverRowToEquationsMap)) &
+      & CALL FlagError("Solver row to equations map is not associated.",err,error,*999)
+#endif    
+
+    interfaceConditionIndex=solverRowToEquationsMap%interfaceConditionIndex
+     
+    EXITS("SolverMappingSRowToEQSsMap_InterfaceConditionIndexGet")
+    RETURN
+999 interfaceConditionIndex=0
+    ERRORS("SolverMappingSRowToEQSMap_InterfaceConditionIndexGet",err,error)
+    EXITS("SolverMappingSRowToEQSMap_InterfaceConditionIndexGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSRowToEQSMap_InterfaceConditionIndexGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of equations set rows for a solver row to equations map.
+  SUBROUTINE SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet(solverRowToEquationsMap,numberOfEquationsSetRows,err,error,*)
+
+    !Argument variables
+    TYPE(SolverRowToEquationsMapType), POINTER :: solverRowToEquationsMap !<A pointer to the solver row to equation map to get the number of equaitons set rows for
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquationsSetRows !<On exit, the number of equations set rows of the coupled solver row
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverRowToEquationsMap)) &
+      & CALL FlagError("Solver row to equations map is not associated.",err,error,*999)
+#endif    
+
+    numberOfEquationsSetRows=solverRowToEquationsMap%numberOfEquationsSetRows
+     
+    EXITS("SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet")
+    RETURN
+999 numberOfEquationsSetRows=0
+    ERRORS("SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet",err,error)
+    EXITS("SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the equations for a solver matrix to equations set map.
+  SUBROUTINE SolverMappingSMToESMap_EquationsGet(solverMatrixToEquationsSetMap,equations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: solverMatrixToEquationsSetMap !<A pointer to the solver matrix to equations set map to get the equations for
+    TYPE(EquationsType), POINTER :: equations !<On exit, a pointer to the equations fo the solver matrix to equations set map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToESMap_EquationsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(equations)) CALL FlagError("Equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsSetMap)) &
+      & CALL FlagError("The solver matrix to equations set map is not associated.",err,error,*999)
+#endif    
+    
+    equations=>solverMatrixToEquationsSetMap%equations
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(equations)) &
+      & CALL FlagError("The equations is not associated for the solver matrix to equations set map.",err,error,*999)
+#endif    
+      
+    EXITS("SolverMappingSMToESMap_EquationsGet")
+    RETURN
+999 NULLIFY(equations)
+998 ERRORS("SolverMappingSMToESMap_EquationsGet",err,error)
+    EXITS("SolverMappingSMToESMap_EquationsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToESMap_EquationsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the have equations flags for a solver matrix to equations set map.
+  SUBROUTINE SolverMappingSMToESMap_HaveEquationsGet(solverMatrixToEquationsSetMap,haveDynamic,haveLinear,haveNonlinear, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: solverMatrixToEquationsSetMap !<A pointer to the solver matrix to equations set map to get the have equations for
+    LOGICAL, INTENT(OUT) :: haveDynamic !<On exit, the have dynamic equations flag in the solver matrix to equations set map.
+    LOGICAL, INTENT(OUT) :: haveLinear !<On exit, the have linear equations flag in the solver matrix to equations set map.
+    LOGICAL, INTENT(OUT) :: haveNonlinear !<On exit, the have nonlinear equations flag in the solver matrix to equations set map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingSMToESMap_HaveEquationsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsSetMap)) &
+      & CALL FlagError("The solver matrix to equations set map is not associated.",err,error,*999)
+#endif    
+    
+    haveDynamic=solverMatrixToEquationsSetMap%haveDynamic
+    haveLinear=solverMatrixToEquationsSetMap%haveLinear
+    haveNonlinear=solverMatrixToEquationsSetMap%haveNonlinear
+
+    EXITS("SolverMappingSMToESMap_HaveEquationsGet")
+    RETURN
+999 ERRORS("SolverMappingSMToESMap_HaveEquationsGet",err,error)
+    EXITS("SolverMappingSMToESMap_HaveEquationsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToESMap_HaveEquationsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the solver column to dynamic equations map for a column of a solver matrix to equations set map.
+  SUBROUTINE SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet(solverMatrixToEquationsSetMap,columnIdx, &
+    & solverColToDynamicEquationsMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: solverMatrixToEquationsSetMap !<A pointer to the solver matrix to equations set map to get the solver column to dynamic equations map for
+    INTEGER(INTG), INTENT(IN) :: columnIdx !<The column index to get the solver column to dynamic equations map for
+    TYPE(SolverColToDynamicEquationsMapType), POINTER :: solverColToDynamicEquationsMap !<On exit, a pointer to the solver column to dynamic equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverColToDynamicEquationsMap)) &
+      & CALL FlagError("The solver column to dynamic equations map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsSetMap)) &
+      & CALL FlagError("The solver matrix to equations set map is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverMatrixToEquationsSetMap%solverColToDynamicEquationsMaps)) &
+      & CALL FlagError("The solver column to dynamic equations map is not allocated for the solver matrix to equations set map.", &
+      & err,error,*999)
+    IF(columnIdx<1.OR.columnIdx>SIZE(solverMatrixToEquationsSetMap%solverColToDynamicEquationsMaps,1)) THEN
+      localError="The specified column index of "//TRIM(NumberToVString(columnIdx,"*",err,error))// &
+        & " is invalid. The column index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(solverMatrixToEquationsSetMap%solverColToDynamicEquationsMaps,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+#endif    
+
+    solverColToDynamicEquationsMap=>solverMatrixToEquationsSetMap%solverColToDynamicEquationsMaps(columnIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(solverColToDynamicEquationsMap)) THEN
+      localError="The solver column to dynamic equations map is not associated for column index "// &
+        & TRIM(NumberToVString(columnIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    EXITS("SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet")
+    RETURN
+999 NULLIFY(solverColToDynamicEquationsMap)
+998 ERRORS("SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet",err,error)
+    EXITS("SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToESMap_SolverColToDynamicEquationsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the solver column to linear equations map for a column of a solver matrix to equations set map.
+  SUBROUTINE SolverMappingSMToESMap_SolverColToLinearEquationsMapGet(solverMatrixToEquationsSetMap,columnIdx, &
+    & solverColToLinearEquationsMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: solverMatrixToEquationsSetMap !<A pointer to the solver matrix to equations set map to get the solver column to linear equations map for
+    INTEGER(INTG), INTENT(IN) :: columnIdx !<The column index to get the solver column to linear equations map for
+    TYPE(SolverColToLinearEquationsMapType), POINTER :: solverColToLinearEquationsMap !<On exit, a pointer to the solver column to linear equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToESMap_SolverColToLinearEquationsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverColToLinearEquationsMap)) &
+      & CALL FlagError("The solver column to linear equations map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsSetMap)) &
+      & CALL FlagError("The solver matrix to equations set map is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverMatrixToEquationsSetMap%solverColToLinearEquationsMaps)) &
+      & CALL FlagError("The solver column to linear equations map is not allocated for the solver matrix to equations set map.", &
+      & err,error,*999)
+    IF(columnIdx<1.OR.columnIdx>SIZE(solverMatrixToEquationsSetMap%solverColToLinearEquationsMaps,1)) THEN
+      localError="The specified column index of "//TRIM(NumberToVString(columnIdx,"*",err,error))// &
+        & " is invalid. The column index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(solverMatrixToEquationsSetMap%solverColToLinearEquationsMaps,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+#endif    
+
+    solverColToLinearEquationsMap=>solverMatrixToEquationsSetMap%solverColToLinearEquationsMaps(columnIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(solverColToLinearEquationsMap)) THEN
+      localError="The solver column to linear equations map is not associated for column index "// &
+        & TRIM(NumberToVString(columnIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    EXITS("SolverMappingSMToESMap_SolverColToLinearEquationsMapGet")
+    RETURN
+999 NULLIFY(solverColToLinearEquationsMap)
+998 ERRORS("SolverMappingSMToESMap_SolverColToLinearEquationsMapGet",err,error)
+    EXITS("SolverMappingSMToESMap_SolverColToLinearEquationsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToESMap_SolverColToLinearEquationsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the solver column to nonlinear equations map for a column of a solver matrix to equations set map.
+  SUBROUTINE SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet(solverMatrixToEquationsSetMap,columnIdx, &
+    & solverColToNonlinearEquationsMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToEquationsSetMapType), POINTER :: solverMatrixToEquationsSetMap !<A pointer to the solver matrix to equations set map to get the solver column to nonlinear equations map for
+    INTEGER(INTG), INTENT(IN) :: columnIdx !<The column index to get the solver column to nonlinear equations map for
+    TYPE(SolverColToNonlinearEquationsMapType), POINTER :: solverColToNonlinearEquationsMap !<On exit, a pointer to the solver column to nonlinear equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverColToNonlinearEquationsMap)) &
+      & CALL FlagError("The solver column to nonlinear equations map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToEquationsSetMap)) &
+      & CALL FlagError("The solver matrix to equations set map is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverMatrixToEquationsSetMap%solverColToNonlinearEquationsMaps)) &
+      & CALL FlagError("The solver column to nonlinear equations map is not allocated for the solver matrix to "// &
+      & "equations set map.",err,error,*999)
+    IF(columnIdx<1.OR.columnIdx>SIZE(solverMatrixToEquationsSetMap%solverColToNonlinearEquationsMaps,1)) THEN
+      localError="The specified column index of "//TRIM(NumberToVString(columnIdx,"*",err,error))// &
+        & " is invalid. The column index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(solverMatrixToEquationsSetMap%solverColToNonlinearEquationsMaps,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+#endif    
+
+    solverColToNonlinearEquationsMap=>solverMatrixToEquationsSetMap%solverColToNonlinearEquationsMaps(columnIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(solverColToNonlinearEquationsMap)) THEN
+      localError="The solver column to nonlinear equations map is not associated for column index "// &
+        & TRIM(NumberToVString(columnIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    EXITS("SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet")
+    RETURN
+999 NULLIFY(solverColToNonlinearEquationsMap)
+998 ERRORS("SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet",err,error)
+    EXITS("SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToESMap_SolverColToNonlinearEquationsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the interface equations for a solver matrix to interface condiion map.
+  SUBROUTINE SolverMappingSMToICMap_InterfaceEquationsGet(solverMatrixToInterfaceConditionMap,interfaceEquations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToInterfaceConditionMapType), POINTER :: solverMatrixToInterfaceConditionMap !<A pointer to the solver matrix to interface condition map to get the interface equations for
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<On exit, a pointer to the interface equations. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverMappingSMToICMap_InterfaceEquationsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(interfaceEquations)) CALL FlagError("The interface equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToInterfaceConditionMap)) &
+      & CALL FlagError("The solver matrix to interface condition map is not associated.",err,error,*999)
+#endif    
+
+    interfaceEquations=>solverMatrixToInterfaceConditionMap%interfaceEquations
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(interfaceEquations)) &
+      CALL FlagError("The interface equations map is not associated for solver matrix to interface condition map.",err,error,*999)
+#endif
+
+    EXITS("SolverMappingSMToICMap_InterfaceEquationsGet")
+    RETURN
+999 NULLIFY(interfaceEquations)
+998 ERRORS("SolverMappingSMToICMap_InterfaceEquationsGet",err,error)
+    EXITS("SolverMappingSMToICMap_InterfaceEquationsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToICMap_InterfaceEquationsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the solver column to interface equations map for a column of a solver matrix to interface condiion map.
+  SUBROUTINE SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet(solverMatrixToInterfaceConditionMap,columnIdx, &
+    & solverColToInterfaceEquationsMap,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMatrixToInterfaceConditionMapType), POINTER :: solverMatrixToInterfaceConditionMap !<A pointer to the solver matrix to interface condition map to get the solver column to interface equations map for
+    INTEGER(INTG), INTENT(IN) :: columnIdx !<The column index to get the solver column to interface equations map for
+    TYPE(SolverColToInterfaceEquationsMapType), POINTER :: solverColToInterfaceEquationsMap !<On exit, a pointer to the solver column to interface equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverColToInterfaceEquationsMap)) &
+      & CALL FlagError("The solver column to interface equations map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrixToInterfaceConditionMap)) &
+      & CALL FlagError("The solver matrix to interface condition map is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(solverMatrixToInterfaceConditionMap%solverColToInterfaceEquationsMaps)) &
+      & CALL FlagError("The solver column to interface equations map is not allocated for the solver matrix to "// &
+      & "interface condition map.",err,error,*999)
+    IF(columnIdx<1.OR.columnIdx>SIZE(solverMatrixToInterfaceConditionMap%solverColToInterfaceEquationsMaps,1)) THEN
+      localError="The specified column index of "//TRIM(NumberToVString(columnIdx,"*",err,error))// &
+        & " is invalid. The column index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(solverMatrixToInterfaceConditionMap%solverColToInterfaceEquationsMaps,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+#endif    
+
+    solverColToInterfaceEquationsMap=>solverMatrixToInterfaceConditionMap%solverColToInterfaceEquationsMaps(columnIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(solverColToInterfaceEquationsMap)) THEN
+      localError="The solver column to interface equations map is not associated for column index "// &
+        & TRIM(NumberToVString(columnIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    EXITS("SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet")
+    RETURN
+999 NULLIFY(solverColToInterfaceEquationsMap)
+998 ERRORS("SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet",err,error)
+    EXITS("SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingSMToICMap_SolverColToInterfaceEquationsMapGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of variables in the solver mapping variables list.
+  SUBROUTINE SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the number of variables for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVariables !<On exit, the number of varaibles int he solver variables list.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariables_VariableGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
+#endif    
+    
+    numberOfVariables=solverMappingVariables%numberOfVariables
+      
+    EXITS("SolverMappingVariables_NumberOfVariablesGet")
+    RETURN
+999 ERRORS("SolverMappingVariables_NumberOfVariablesGet",err,error)
+    EXITS("SolverMappingVariables_NumberOfVariablesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariables_NumberOfVariablesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the equation information for a variable in the solver mapping variables list.
+  SUBROUTINE SolverMappingVariables_VariableEquationInfoGet(solverMappingVariables,variableIdx,equationIdx,equationType, &
+    & equationIndex,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the equation information for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the solver variables list to get the equations information for.
+    INTEGER(INTG), INTENT(IN) :: equationIdx !<The equation index of the solver variable in the solver variables list to get the equations information for.
+    INTEGER(INTG), INTENT(OUT) :: equationType !<On exit, the equation type (equations set or interface condition) that the solver variable in solver variables list is mapped to. \see SolverMappingRoutines_EquationsTypes
+    INTEGER(INTG), INTENT(OUT) :: equationIndex !<On exit, the equation set of interface condition equation index that the solver variable in solver variables list is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariables_VariableEquationInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>solverMappingVariables%numberOfVariables) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariables%numberOfVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariables%variables)) &
+      & CALL FlagError("The variables array is not allocated for the solver mapping variables.",err,error,*999)
+    IF(equationIdx<1.OR.equationIdx>solverMappingVariables%variables(variableIdx)%numberOfEquations) THEN
+      localError="The specified equations index of "//TRIM(NumberToVString(equationIdx,"*",err,error))// &
+        & " is invalid. The equations index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariables%variables(variableIdx)%numberOfEquations,"*",err,error))// &
+        & " for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))//" of the solver variables list."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariables%variables(variableIdx)%equationTypes)) THEN
+      localError="The equations types array is not allocated for variable index "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the solver mapping variables."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariables%variables(variableIdx)%equationIndices)) THEN
+      localError="The equations indices array is not allocated for variable index "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the solver mapping variables."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    equationType=solverMappingVariables%variables(variableIdx)%equationTypes(equationIdx)
+    equationIndex=solverMappingVariables%variables(variableIdx)%equationIndices(equationIdx)
+            
+    EXITS("SolverMappingVariables_VariableEquationInfoGet")
+    RETURN
+999 equationType=0
+    equationIndex=0
+    ERRORS("SolverMappingVariables_VariableEquationInfoGet",err,error)
+    EXITS("SolverMappingVariables_VariableEquationInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariables_VariableEquationInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to equations variable for a variableIdx'th variable in the solver mapping variables list.
+  SUBROUTINE SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,variable,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the variables for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index to get.
+    TYPE(FieldVariableType), POINTER :: variable !<On exit, a pointer to variableIdx'th variable in the solver matrix to equations map. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariables_VariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(variable)) CALL FlagError("The solver variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>solverMappingVariables%numberOfVariables) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariables%numberOfVariables,"*",err,error))//"."
+      CALL FlagErro(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariables%variables)) &
+      & CALL FlagErro("The solver mapping variables list variables is not allocated.",err,error,*999)
+#endif    
+    
+    variable=>solverMappingVariables%variables(variableIdx)%variable
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(variable)) THEN
+      localError="The solver mapping variable is not associated for variable index "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//" in the sovler variables list."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingVariables_VariableGet")
+    RETURN
+999 NULLIFY(variable)
+998 ERRORS("SolverMappingVariables_VariableGet",err,error)
+    EXITS("SolverMappingVariables_VariableGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariables_VariableGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Checks to see if a field variable is in the solver mapping variables. If the field variable is in the list then the returned variable position index will correspond to the position in the list. If the field variable is not in the list then the returned variable position index will be zero. 
+  SUBROUTINE SolverMappingVariables_VariableInListCheck(solverMappingVariables,variable,variablePositionIdx,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the variables for
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to variable to check if it is the solver variables list.
+    INTEGER(INTG), INTENT(OUT) :: variablePositionIdx !<On return, the position index of the variable in the solver variables if the variable is in the list. If the variable is not in the solver variables the position index will be zero.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: variableIdx
+    TYPE(FieldVariableType), POINTER :: solverVariable
+ 
+    ENTERS("SolverMappingVariables_VariableInListCheck",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(variable)) CALL FlagError("The field variable is not associated.",err,error,*999)
+#endif    
+
+    variablePositionIdx=0
+    DO variableIdx=1,solverMappingVariables%numberOfVariables
+      solverVariable=>solverMappingVariables%variables(variableIdx)%variable
+      IF(ASSOCIATED(variable,solverVariable)) THEN
+        variablePositionIdx=variableIdx
+        EXIT
+      ENDIF
+    ENDDO !variableIdx
+    
+    EXITS("SolverMappingVariables_VariableInListCheck")
+    RETURN
+999 variablePositionIdx=0
+    ERRORS("SolverMappingVariables_VariableInListCheck",err,error)
+    EXITS("SolverMappingVariables_VariableInListCheck")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariables_VariableInListCheck
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of equations for a variable in the solver mapping variables list.
+  SUBROUTINE SolverMappingVariables_VariableNumberOfEquationsGet(solverMappingVariables,variableIdx,numberOfEquations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the number of equations for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the solver variables list to get the number of equations for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquations !<On exit, the number of equations that the solver variable in solver variables list is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariables_VariableNumberOfEquationsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
+    IF(variableIdx<1.OR.variableIdx>solverMappingVariables%numberOfVariables) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariables%numberOfVariables,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariables%variables)) &
+      & CALL FlagError("The variables array is not allocated for the solver mapping variables.",err,error,*999)
+#endif    
+    
+    numberOfEquations=solverMappingVariables%variables(variableIdx)%numberOfEquations
+            
+    EXITS("SolverMappingVariables_VariableNumberOfEquationsGet")
+    RETURN
+999 numberOfEquations=0
+    ERRORS("SolverMappingVariables_VariableNumberOfEquationsGet",err,error)
+    EXITS("SolverMappingVariables_VariableNumberOfEquationsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariables_VariableNumberOfEquationsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the solver DOF coupling information from a variable DOF in a variable DOF to SolverDOFs map
+  SUBROUTINE SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet(variableDOFToSolverDOFsMap,variableDOFIdx,solverDOFIdx, &
+    & couplingCoefficient,additiveConstant,err,error,*)    
+
+    !Argument variables
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: variableDOFToSolverDOFsMap !<A pointer to the variable DOF to solver DOFs map to get the 
+    INTEGER(INTG), INTENT(IN) :: variableDOFIdx !<The variable DOF index in the variable DOF to sovler DOFs map to get the solver DOF coupling information.
+    INTEGER(INTG), INTENT(OUT) :: solverDOFIdx !<On exit, the solver DOF that the variable DOF is coupled to
+    REAL(DP), INTENT(OUT) :: couplingCoefficient !<On exit, the coupling coefficient between the variable DOF and the solver DOF
+    REAL(DP), INTENT(OUT) :: additiveConstant !<On exit, the additive constant (offset) between the variable DOF and the solver DOF
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(variableDOFToSolverDOFsMap)) &
+      & CALL FlagError("The variable DOF to solver DOFs map is not associated.",err,error,*999)    
+    IF(.NOT.ALLOCATED(variableDOFToSolverDOFsMap%dofNumbers)) &
+      & CALL FlagError("The dof numbers array is not allocated for the variable DOF to solver DOFs map.",err,error,*999)
+    IF(variableDOFIdx<1.OR.variableDOFIdx>SIZE(variableDOFToSolverDOFsMap%dofNumbers,1)) THEN
+      localError="The specified variable DOF index of "//TRIM(NumberToVString(variableDOFIdx,"*",err,error))// &
+        & " is invalid. The variable index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(variableDOFToSolverDOFsMap%dofNumbers,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(variableDOFToSolverDOFsMap%couplingCoefficients)) &
+      & CALL FlagError("The coupling coefficients array is not allocated for the variable DOF to solver DOFs map.",err,error,*999)
+    IF(.NOT.ALLOCATED(variableDOFToSolverDOFsMap%additiveConstants)) &
+      & CALL FlagError("The additive constants array is not allocated for the variable DOF to solver DOFs map.",err,error,*999)
+#endif    
+    
+    solverDOFIdx=variableDOFToSolverDOFsMap%dofNumbers(variableDOFIdx)
+    couplingCoefficient=variableDOFToSolverDOFsMap%couplingCoefficients(variableDOFIdx)
+    additiveConstant=variableDOFToSolverDOFsMap%additiveConstants(variableDOFIdx)
+            
+    EXITS("SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet")
+    RETURN
+999 ERRORS("SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet",err,error)
+    EXITS("SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet
+  
+  !
+  !================================================================================================================================
+  !
+  
 END MODULE SolverMappingAccessRoutines
