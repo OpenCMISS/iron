@@ -47,6 +47,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 !>
+
+!> \defgroup OpenCMISS
 !> The top level OpenCMISS module. This module is the buffer Fortran module between the OpenCMISS library and user code.
 MODULE OpenCMISS
   
@@ -62,36 +64,36 @@ MODULE OpenCMISS
 
   !Module types
 
-  !> \addtogroup OPENCMISS_KindConstants OPENCMISS::Kinds::Constants
+  !> \addtogroup OpenCMISS_KindConstants OpenCMISS::Constants::Kinds
   !> \brief Kind constants.
   !>@{
-  !> \addtogroup OPENCMISS_IntegerKinds OPENCMISS::Kinds::Integers
+  !> \addtogroup OpenCMISS_IntegerKinds OpenCMISS::Constants::Kinds::Integers
   !> \brief Kind parameters for integer data types.
-  !> \see OPENCMISS::Kinds,OPENCMISS
+  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: CMISSIntg = INTG !<Standard integer kind. \see OPENCMISS_IntegerKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSSIntg = SINTG !<Short integer kind. \see OPENCMISS_IntegerKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSLIntg = LINTG !<Long integer kind. \see OPENCMISS_IntegerKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSPtr = PTR !<Pointer integer kind. \see OPENCMISS_IntegerKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSIdx = IDX !<Index integer kind. \see OPENCMISS_IntegerKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSLIdx = LIDX !<Long index integer kind. \see OPENCMISS_IntegerKinds,OPENCMISS
+  INTEGER, PARAMETER :: CMISSIntg = INTG !<Standard integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSSIntg = SINTG !<Short integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSLIntg = LINTG !<Long integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSPtr = PTR !<Pointer integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSIdx = IDX !<Index integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSLIdx = LIDX !<Long index integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_RealKinds OPENCMISS::Kinds::Reals
+  !> \addtogroup OpenCMISS_RealKinds OpenCMISS::Constants::Kinds::Reals
   !> \brief Kind parameters for real data types.
-  !> \see OPENCMISS::Kinds,OPENCMISS
+  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: CMISSSP = SP !<Single precision real kind. \see OPENCMISS_RealKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSDP = DP !<Double precision real kind. \see OPENCMISS_RealKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSQP = QP !<Quadruple precision real kind. \see OPENCMISS_RealKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSRP = RP !<Working precision real kind. \see OPENCMISS_RealKinds,OPENCMISS
+  INTEGER, PARAMETER :: CMISSSP = SP !<Single precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSDP = DP !<Double precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSQP = QP !<Quadruple precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSRP = RP !<Working precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_ComplexKinds OPENCMISS::Kinds::Complex
+  !> \addtogroup OpenCMISS_ComplexKinds OpenCMISS::Constants::Kinds::Complex
   !> \brief Kind parameters for complex data types
-  !> \see OPENCMISS::Kinds,OPENCMISS
+  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: CMISSSPC = SPC !<Single precision complex kind. \see OPENCMISS_ComplexKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSDPC = DPC !<Double precision complex kind. \see OPENCMISS_ComplexKinds,OPENCMISS
-  INTEGER, PARAMETER :: CMISSRPC = RPC !<Working precision complex kind. \see OPENCMISS_ComplexKinds,OPENCMISS
+  INTEGER, PARAMETER :: CMISSSPC = SPC !<Single precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSDPC = DPC !<Double precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
+  INTEGER, PARAMETER :: CMISSRPC = RPC !<Working precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
   !>@}
   !>@}
 

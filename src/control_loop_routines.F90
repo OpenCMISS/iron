@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_ControlLoop OpenCMISS::Iron::ControlLoop
 !> This module handles all control loop routines.
 MODULE ControlLoopRoutines
 

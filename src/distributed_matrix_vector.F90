@@ -1662,6 +1662,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedMatrix_MatrixColumnAdd",err,error,*999)
+
+!!TODO: EXPLOIT MATRIX SYMMETRY FLAG TO HANDLE TRANSPOSED MATRICES    
     
     CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)

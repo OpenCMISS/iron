@@ -71,11 +71,11 @@ MODULE SolverMatricesRoutines
 
   !Interfaces
  
-  PUBLIC SolverMatrix_EquationsMatrixAdd
+  !PUBLIC SolverMatrix_EquationsMatrixAdd
 
-  PUBLIC SolverMatrix_InterfaceMatrixAdd
+  !PUBLIC SolverMatrix_InterfaceMatrixAdd
 
-  PUBLIC SolverMatrix_JacobianMatrixAdd
+  !PUBLIC SolverMatrix_JacobianMatrixAdd
 
   PUBLIC SolverMatrices_CreateFinish,SolverMatrices_CreateStart
 

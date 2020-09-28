@@ -47,13 +47,13 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 !>
-!> The top level OpenCMISS Iron module. This module is the buffer Fortran
-!module between the OpenCMISS Iron library and user code.
 
 ! Eclipse regular expressions to add the DLLEXPORT macro:
 ! Find: ^( *)(SUBROUTINE *)([^\(]*)(\([^\)]*\))
 ! Replace: $1$2$3$4\R$1  !DLLEXPORT($3)
 
+!> \defgroup OpenCMISS_Iron OpenCMISS::Iron
+!> The top level OpenCMISS Iron module. This module is the buffer Fortran module between the OpenCMISS Iron library and user code.
 MODULE OpenCMISS_Iron
 
  USE AnalyticAnalysisRoutines

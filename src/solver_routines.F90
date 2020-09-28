@@ -46,6 +46,7 @@ MODULE SolverRoutines
 
   USE BaseRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
 #ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
 #endif
@@ -240,10 +241,6 @@ MODULE SolverRoutines
 
   PUBLIC Solver_QuasiNewtonJacobianCalculationTypeSet
   
-  PUBLIC Solver_QuasiNewtonLinearSolverGet
-
-  PUBLIC Solver_QuasiNewtonCellMLSolverGet
-
   PUBLIC Solver_QuasiNewtonConvergenceTestTypeSet
 
   PUBLIC Solver_QuasiNewtonLinesearchMaxStepSet
@@ -275,8 +272,6 @@ MODULE SolverRoutines
   PUBLIC Solver_QuasiNewtonSolveTypeSet
 
   PUBLIC Solver_NewtonAbsoluteToleranceSet
-
-  PUBLIC Solver_NewtonLinearSolverGet
 
   PUBLIC Solver_NewtonLinesearchMonitorOutputSet
 
@@ -340,7 +335,7 @@ MODULE SolverRoutines
 
   PUBLIC Solvers_NumberOfSolversSet
 
-  PUBLIC Solver_NewtonCellMLEvaluatorCreate,Solver_CellMLEvaluatorFinalise
+  PUBLIC Solver_CellMLEvaluatorInitialise,Solver_CellMLEvaluatorFinalise
 
   PUBLIC Solver_NewtonCellMLEvaluatorCreate
 
@@ -4879,9 +4874,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: linearSolveType,nonlinearSolveType
-    TYPE(DynamicSolverType), POINTER :: dynamicSolver !<A pointer the dynamic solver to finalise
-    TYPE(LinearSolverType), POINTER :: linearSolver !<A pointer the dynamic solver to finalise
-    TYPE(NewtonSolverType), POINTER :: newtonSolver !<A pointer the dynamic solver to finalise
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
+    TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(SolverType), POINTER :: linearSolver
     TYPE(VARYING_STRING) :: localError
   
     ENTERS("Solver_DynamicLinearityTypeSet",err,error,*999)
@@ -4918,15 +4913,14 @@ CONTAINS
         CALL Solver_Initialise(dynamicSolver%nonlinearSolver,err,error,*999)
         CALL Solver_NonlinearInitialise(dynamicSolver%nonlinearSolver,err,error,*999)
         CALL Solver_LinkedSolverAdd(solver,dynamicSolver%nonlinearSolver,SOLVER_NONLINEAR_TYPE,err,error,*999)
-        CALL SolverNonlinear_NonlinearSolveType(dynamicSolver%nonlinearSolver%nonlinearSolver,nonlinearSolveType,err,error,*999)
+        CALL SolverNonlinear_NonlinearSolveTypeGet(dynamicSolver%nonlinearSolver%nonlinearSolver,nonlinearSolveType,err,error,*999)
         IF(nonlinearSolveType==SOLVER_NONLINEAR_NEWTON) THEN
-          CALL Solver_NewtonSolutionInitialiseTypeSet(dynamicSolver%nonlinearSolver%newtonSolver, &
-            & SOLVER_SOLUTION_INITIALISE_ZERO,err,error,*999)
+          CALL Solver_NewtonSolutionInitialiseTypeSet(dynamicSolver%nonlinearSolver,SOLVER_SOLUTION_INITIALISE_ZERO,err,error,*999)
           NULLIFY(newtonSolver)
-          CALL SolverNonlinear_NewtonSolverGet(dynamicSolver%nonlinearSolver,newtonSolver,err,error,*999)
+          CALL SolverNonlinear_NewtonSolverGet(dynamicSolver%nonlinearSolver%nonlinearSolver,newtonSolver,err,error,*999)
           NULLIFY(linearSolver)
           CALL SolverNonlinearNewton_LinearSolverGet(newtonSolver,linearSolver,err,error,*999)
-          CALL SolverLinear_LinearSolveTypeGet(linearSolver,linearSolveType,err,error,*999)
+          CALL SolverLinear_LinearSolveTypeGet(linearSolver%linearSolver,linearSolveType,err,error,*999)
           IF(linearSolveType==SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE) &
             & CALL Solver_LinearIterativeSolutionInitialiseTypeSet(linearSolver,SOLVER_SOLUTION_INITIALISE_ZERO,err,error,*999)
         ENDIF        
@@ -9536,40 +9530,51 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,dampingMatrixNumber,dependentVariableType,dirichletIdx,dynamicVariableType, &
+    INTEGER(INTG) :: columnNumber,currentIteration,dampingMatrixNumber,dependentVariableType,dirichletIdx,dynamicVariableType, &
       & equationsColumnNumber,equationsMatrixIdx,equationsMatrixIdx2,equationsMatrixNumber,equationsRowNumber, &
-      & equationsSetIdx,inputIteration,interfaceColumnNumber,interfaceConditionIdx,interfaceMatrixIdx,interfaceVariableType, &
-      & jacobianMatrixIdx,linearMatrixIdx,linearVariableType,massMatrixNumber,numberOfEquationsSets,numberOfInterfaceConditions, &
-      & numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfRows, &
+      & equationsSetIdx,inputIteration,interfaceColumnNumber,interfaceConditionIdx,interfaceConditionMethod,interfaceMatrixIdx, &
+      & interfaceVariableType,jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF,lhsVariableDOF, &
+      & linearMatrixIdx,linearVariableIdx, &
+      & linearVariableType,massMatrixNumber,numberOfDirichletConditions,numberOfDynamicMatrices,numberOfEquationsMatrices, &
+      & numberOfEquationsSets, &
+      & numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices, &
+      & numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables,numberOfRows, &
       & numberOfSolverMatrices,numberOfSources,outputIteration,residualIdx,residualVariableDOF,rhsBoundaryCondition,rhsGlobalDOF, &
-      & rhsVariableDOF,rhsVariableType,solverRowIdx,solverRowNumber,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
+      & rhsVariableDOF,rhsVariableType,rowCondition,solverRowIdx,solverRowNumber,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
       & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableBoundaryCondition,variableDOF, &
-      & variableGlobalDOF,variablePositionIdx,variableType
-    INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:),equationsRowToRHSDOFMap(:)
+      & variableGlobalDOF,variableIdx,variablePositionIdx,variableType
+    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToResidualDOFMap(:),equationsRowToRHSDOFMap(:), &
+      & variableDOFToRowMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
-    REAL(DP) :: alphaValue,currentFunctionFactor,currentTime,dampingMatrixCoefficient,deltaT,dofValue, &
-      & dynamicAccelerationFactor,dynamicDisplacementFactor,dynamicValue,dynamicVelocityFactor,firstUpdateFactor, &
-      & jacobianMatrixCoefficient,linearValue,linearValueSum,massMatrixCoefficient,matrixCoefficient, &
-      & matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue,previousFunctionFactor,previous2FunctionFactor, &
-      & previous3FunctionFactor,residualCoefficient,residualValue,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
-      & sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement
+    REAL(DP) :: alphaValue,currentFunctionFactor,currentRHSValue,currentTime,dampingMatrixCoefficient,deltaT,dofValue, &
+      & dynamicAccelerationFactor,dynamicDisplacementFactor,dynamicValue,dynamicVelocityFactor,equationsDampingCoefficient, &
+      & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearValue, &
+      & linearValueSum,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
+      & previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor,previousRHSValue,previous2RHSValue, &
+      & previous3RHSValue,residualCoefficient,residualValue,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
+      & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement, &
+      & transposeMatrixCoefficient,vectorCoefficient
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
-      & previous3ResidualParameters(:), previousRHSParameters(:),previous2RHSParameters(:),previous3RHSParameters(:), &
-      & rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
-    LOGICAL :: hasIntegratedValues,hasTranspose,interfaceMatrixDynamic,updateRHS,updateSolverMatrix
+      & previous3ResidualParameters(:),rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
+    LOGICAL :: hasIntegratedValues,hasTranspose,includeResidual,interfaceMatrixDynamic,updateResidual,updateRHS,updateSolverMatrix
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionsVariableType), POINTER :: rhsBoundaryConditions,dependentBoundaryConditions
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
+    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,lhsBoundaryConditionsVariable, &
+      & rhsBoundaryConditionsVariable
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,linearDistributedMatrix,massDistributedMatrix, &
-      & previousSolverDistributedMatrix,solverDistributedMatrix,stiffnessDistributedMatrix
-    TYPE(DistributedVectorType), POINTER :: currentRHSVector,currentSourceVector,dependentVector,distributedResidualVector, &
-      & distributedSourceVector, &
-      & dynamicTempVector,equationsRHSVector,incrementalVector,interfaceTempVector,lagrangeVector,linearTempVector, &
-      & nonlinearTempVector,predictedMeanAccelerationVector,predictedMeanDisplacementVector,predictedMeanVelocityVector, &
-      & previousResidualVector,previous2ResidualVector,previous3ResidualVector,previousRHSVector,previous2RHSVector, &
-      & previous3RHSVector,previousSourceVector,previous2SourceVector,previous3SourceVector,solverRHSVector, &
-      & solverResidualVector,sourcesTempVector
+    TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,equationsDistributedMatrix,interfaceDistributedMatrix, &
+      & linearDistributedMatrix,massDistributedMatrix,previousSolverDistributedMatrix,solverDistributedMatrix, &
+      & stiffnessDistributedMatrix,transposeInterfaceDistributedMatrix
+    TYPE(DistributedVectorType), POINTER :: currentResidualVector,currentRHSVector,currentSourceVector,dependentDistributedVector, &
+      & distributedResidualVector,distributedSourceVector,dynamicTempVector,equationsRHSVector,incrementalVector, &
+      & interfaceRHSDistributedVector,interfaceTempVector,lagrangeDistributedVector,linearTempVector,nonlinearTempVector, &
+      & predictedMeanAccelerationVector,predictedMeanDisplacementVector,predictedMeanVelocityVector,previousResidualVector, &
+      & previous2ResidualVector,previous3ResidualVector,previousRHSVector,previous2RHSVector,previous3RHSVector, &
+      & previousSourceVector,previous2SourceVector,previous3SourceVector,residualDistributedVector,solverRHSVector, &
+      & solverResidualVector,sourcesTempVector,transposeInterfaceTempVector
     TYPE(DomainMappingType), POINTER :: lhsDomainMapping,residualDomainMapping,rhsDomainMapping,variableDomainMapping
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
@@ -9597,7 +9602,8 @@ CONTAINS
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lhsVariable,linearVariable,rhsVariable,interfaceVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,interfaceVariable,lagrangeVariable,lhsVariable, &
+      & linearVariable,residualVariable,rhsVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
@@ -9607,17 +9613,22 @@ CONTAINS
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
     TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap
     TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap
     TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:),interfaceColToSolverRowsMap(:), &
+      & interfaceRowToSolverRowsMap(:)
     TYPE(SolverType), POINTER :: linkingSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMappingVariablesType), POINTER :: solverVariablesList
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
+    TYPE(VarToEquationsMatricesMapType), POINTER :: dynamicVarToEquationsMatricesMap,linearVarToEquationsMatricesMap
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("Solver_DynamicAssemble",err,error,*999)
@@ -9740,6 +9751,9 @@ CONTAINS
             NULLIFY(equationsSetToSolverMatricesMap)
             CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
               & err,error,*999)
+            NULLIFY(equationsRowToSolverRowsMap)
+            CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap, &
+              & equationsRowToSolverRowsMap,err,error,*999)
             NULLIFY(equationsMatricesToSolverMatrixMap)
             CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
               & equationsMatricesToSolverMatrixMap,err,error,*999)
@@ -9751,49 +9765,113 @@ CONTAINS
               IF(dynamicSolver%solverInitialised) THEN
                 CALL EquationsMappingDynamic_StiffnessMatrixNumberGet(dynamicMapping,stiffnessMatrixNumber,err,error,*999)
                 IF(stiffnessMatrixNumber/=0) THEN
+                  NULLIFY(equationsMatrixToSolverMatricesMap)
+                  CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap, &
+                    & stiffnessMatrixNumber,equationsMatrixToSolverMatricesMap,err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatrixMap)
+                  CALL SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap, &
+                    & solverMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+                  NULLIFY(equationsColToSolverColsMap)
+                  CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+                    & equationsColToSolverColsMap,err,error,*999)
                   NULLIFY(stiffnessMatrix)
                   CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix, &
                     & err,error,*999)
+                  NULLIFY(stiffnessDistributedMatrix)
+                  CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,stiffnessMatrix, &
-                    & err,error,*999)
+                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                    & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,stiffnessDistributedMatrix, &
+                    & .FALSE.,err,error,*999)
                 ENDIF
                 CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
                 IF(dampingMatrixNumber/=0) THEN
+                  NULLIFY(equationsMatrixToSolverMatricesMap)
+                  CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap, &
+                    & dampingMatrixNumber,equationsMatrixToSolverMatricesMap,err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatrixMap)
+                  CALL SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap, &
+                    & solverMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+                  NULLIFY(equationsColToSolverColsMap)
+                  CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+                    & equationsColToSolverColsMap,err,error,*999)
                   NULLIFY(dampingMatrix)
                   CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix, &
                     & err,error,*999)
+                  NULLIFY(dampingDistributedMatrix)
+                  CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*dampingMatrixCoefficient
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,dampingMatrix,err,error,*999)
+                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                    & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,dampingDistributedMatrix, &
+                    & .FALSE.,err,error,*999)
                 ENDIF
                 CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
                 IF(massMatrixNumber/=0) THEN
+                  NULLIFY(equationsMatrixToSolverMatricesMap)
+                  CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap, &
+                    & massMatrixNumber,equationsMatrixToSolverMatricesMap,err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatrixMap)
+                  CALL SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap, &
+                    & solverMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+                  NULLIFY(equationsColToSolverColsMap)
+                  CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+                    & equationsColToSolverColsMap,err,error,*999)
                   NULLIFY(massMatrix)
                   CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+                  NULLIFY(massDistributedMatrix)
+                  CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*massMatrixCoefficient
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,massMatrix,err,error,*999)
+                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                    & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,massDistributedMatrix, &
+                    & .FALSE.,err,error,*999)
                 ENDIF
               ELSE
                 IF(dynamicSolver%order==SOLVER_DYNAMIC_SECOND_ORDER.AND. &
                   & dynamicSolver%degree==SOLVER_DYNAMIC_THIRD_DEGREE) THEN
                   CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
                   IF(massMatrixNumber==0) CALL FlagError("Can not perform initial solve with no mass matrix.",err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatricesMap)
+                  CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap, &
+                    & massMatrixNumber,equationsMatrixToSolverMatricesMap,err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatrixMap)
+                  CALL SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap, &
+                    & solverMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+                  NULLIFY(equationsColToSolverColsMap)
+                  CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+                    & equationsColToSolverColsMap,err,error,*999)
                   NULLIFY(massMatrix)
                   CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+                  NULLIFY(massDistributedMatrix)
+                  CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=-1.0_DP*matrixCoefficient
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,massMatrix,err,error,*999)
+                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                    & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,massDistributedMatrix, &
+                    & .FALSE.,err,error,*999)
                 ELSE
                   CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
                   IF(dampingMatrixNumber==0) CALL FlagError("Can not perform initial solve with no damping matrix.",err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatricesMap)
+                  CALL SolverMappingESToSMSMap_EquationsMatrixToSolverMatricesMapGet(equationsSetToSolverMatricesMap, &
+                    & dampingMatrixNumber,equationsMatrixToSolverMatricesMap,err,error,*999)
+                  NULLIFY(equationsMatrixToSolverMatrixMap)
+                  CALL SolverMappingEMToSMSMap_EquationsMatrixToSolverMatrixMapGet(equationsMatrixToSolverMatricesMap, &
+                    & solverMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
+                  NULLIFY(equationsColToSolverColsMap)
+                  CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap, &
+                    & equationsColToSolverColsMap,err,error,*999)
                   NULLIFY(dampingMatrix)
                   CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+                  NULLIFY(dampingDistributedMatrix)
+                  CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=-1.0_DP*matrixCoefficient
-                  CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,dampingMatrix,err,error,*999)
+                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                    & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,dampingDistributedMatrix, &
+                    & .FALSE.,err,error,*999)
                 ENDIF
               ENDIF !dynamic solver initialised
             ENDIF
@@ -9810,11 +9888,18 @@ CONTAINS
                   NULLIFY(jacobianMatrixToSolverMatrixMap)
                   CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                     & jacobianMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
+                  NULLIFY(jacobianColToSolverColsMap)
+                  CALL SolverMappingJMToSMMap_JacobianColToSolerColsMapGet(jacobianMatrixToSolverMatrixMap, &
+                    & jacobianColToSolverColsMap,err,error,*999)
                   NULLIFY(jacobianMatrix)
                   CALL SolverMappingJMToSMMap_JacobianMatrixGet(jacobianMatrixToSolverMatrixMap,jacobianMatrix,err,error,*999)
+                  NULLIFY(jacobianDistributedMatrix)
+                  CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,jacobianDistributedMatrix,err,error,*999)
                   CALL JacobianMatrix_MatrixCoefficientGet(jacobianMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*jacobianMatrixCoefficient
-                  CALL SolverMatrix_JacobianMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,jacobianMatrix,err,error,*999)
+                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                    & equationsRowToSolverRowsMap,jacobianColToSolverColsMap,matrixCoefficient,jacobianDistributedMatrix, &
+                    & .FALSE.,err,error,*999)
                 ENDDO !jacobianMatrixIdx
               ENDIF
             ENDIF
@@ -9827,11 +9912,18 @@ CONTAINS
                 NULLIFY(linearMatrixToSolverMatrixMap)
                 CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
                   & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)
+                NULLIFY(equationsColToSolverColsMap)
+                CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(linearMatrixToSolverMatrixMap, &
+                  & equationsColToSolverColsMap,err,error,*999)
                 NULLIFY(linearMatrix)
-                CALL SolverMappingEMToSMMap_EquationsMatrix(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
+                CALL SolverMappingEMToSMMap_EquationsMatrixGet(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
+                NULLIFY(linearDistributedMatrix)
+                CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
                 CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
                 matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
-                CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,matrixCoefficient,linearMatrix,err,error,*999)
+                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,linearDistributedMatrix, &
+                  & .FALSE.,err,error,*999)
               ENDDO !equationsMatrixIdx
             ENDIF
           ENDDO !equationsSetIdx
@@ -9840,18 +9932,32 @@ CONTAINS
             NULLIFY(interfaceConditionToSolverMatricesMap)
             CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
               & interfaceConditionToSolverMatricesMap,err,error,*999)
+            NULLIFY(interfaceColToSolverRowsMap)
+            CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+              & interfaceColToSolverRowsMap,err,error,*999)
             NULLIFY(interfaceMatricesToSolverMatrixMap)
             CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
               & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
+            NULLIFY(interfaceColToSolverColsMap)
+            CALL SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap, &
+              & interfaceColToSolverColsMap,err,error,*999)
             !Loop over the interface matrices
             CALL SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet(interfaceMatricesToSolverMatrixMap, &
               & numberOfInterfaceMatrices,err,error,*999)
             DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
+              NULLIFY(interfaceMatrixToSolverMatricesMap)
+              CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMap(interfaceConditionToSolverMatricesMap, &
+                & interfaceMatrixIdx,interfaceMatrixToSolverMatricesMap,err,error,*999)
+              NULLIFY(interfaceRowToSolverRowsMap)
+              CALL SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceMatrixToSolverMatricesMap, &
+                & interfaceRowToSolverRowsMap,err,error,*999)
               NULLIFY(interfaceMatrixToSolverMatrixMap)
               CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
                 & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*999)
               NULLIFY(interfaceMatrix)
               CALL SolverMappingIMToSMMap_InterfaceMatrixGet(interfaceMatrixToSolverMatrixMap,interfaceMatrix,err,error,*999)
+              NULLIFY(interfaceDistributedMatrix)
+              CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
               CALL InterfaceMatrix_MatrixCoefficientGet(interfaceMatrix,matrixCoefficients(1),err,error,*999)
               CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceMatrix,timeDependenceType,err,error,*999)
               SELECT CASE(timeDependenceType)
@@ -9868,8 +9974,16 @@ CONTAINS
                   & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               END SELECT              
+              CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                & interfaceRowToSolverRowsMap,interfaceColToSolverColsMap,matrixCoefficients(1),interfaceDistributedMatrix, &
+                & .FALSE.,err,error,*999)
               CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
               IF(hasTranspose) THEN
+                NULLIFY(interfaceRowToSolverColsMap)
+                CALL SolverMappingIMToSMMap_InterfaceRowToSolverColsMapGet(interfaceMatrixToSolverMatrixMap, &
+                  & interfaceRowToSolverColsMap,err,error,*999)
+                NULLIFY(transposeDistributedMatrix)
+                CALL InterfaceMatrix_TransposeDistributeMatrixGet(interfaceMatrix,transposeDistributedMatrix,err,error,*999)
                 CALL InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,matrixCoefficients(2),err,error,*999)
                 CALL InterfaceMatrix_TransposeTimeDependenceTypeGet(interfaceMatrix,transposeTimeDependenceType,err,error,*999)
                 SELECT CASE(transposeTimeDependenceType)
@@ -9886,11 +10000,10 @@ CONTAINS
                     & " of interface condition index "//TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-              ELSE
-                matrixCoefficients(2)=0.0_DP
+                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,matrixCoefficients(2),transposeDistributedMatrix, &
+                  & .FALSE.,err,error,*999)
               ENDIF
-              CALL SolverMatrix_InterfaceMatrixAdd(solverMatrix,interfaceConditionIdx,matrixCoefficients,interfaceMatrix, &
-                & err,error,*999)
             ENDDO !interfaceMatrixIdx
           ENDDO !interfaceConditionIdx
           !Update the solver matrix values
@@ -9936,7 +10049,7 @@ CONTAINS
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
-      
+
       CALL SolverMatrices_UpdateRHSGet(solverMatrices,updateRHS,err,error,*999)
       IF(updateRHS) THEN
         CALL SolverMatrices_RHSDistributedVectorGet(solverMatrices,solverRHSVector,err,error,*999)
@@ -9944,13 +10057,22 @@ CONTAINS
         CALL DistributedVector_AllValuesSet(solverRHSVector,0.0_DP,err,error,*999)          
         !Get the solver RHS check data                  
         NULLIFY(solverRHSCheckData)
-        CALL DistributedVector_DataGet(solverRHSVector,solverRHSCheckData,err,error,*999)             
+        CALL DistributedVector_DataGet(solverRHSVector,solverRHSCheckData,err,error,*999)
+        !Get the boundary conditions
+        NULLIFY(boundaryConditions)
+        CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+
         !Loop over the equations sets
         DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(dependentField)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(equationsSetToSolverMatricesMap)
+          CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+            & err,error,*999)
+          NULLIFY(equationsRowToSolverRowsMap)
+          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap, &
+            & equationsRowToSolverRowsMap,err,error,*999)
+
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           NULLIFY(vectorEquations)
@@ -9963,11 +10085,28 @@ CONTAINS
           CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
           NULLIFY(lhsVariable)
           CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+          NULLIFY(equationsRowToLHSDOFMap)
+          CALL EquationsMappingLHS_EquationsRowTOLHSDOFMapGet(lhsMapping,equationsRowToLHSDOFMap,err,error,*999)
           NULLIFY(lhsDomainMapping)
           CALL FieldVariable_DomainMappingGet(lhsVariable,lhsDomainMapping,err,error,*999)
+          CALL DomainMapping_BoundaryFinishGet(lhsDomainMapping,lhsBoundaryFinish,err,error,*999)
           CALL EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*999)
           CALL EquationsMappingLHS_TotalNumberOfRowsGet(lhsMapping,totalNumberOfRows,err,error,*999)
-          
+          NULLIFY(currentValuesVector)
+          CALL FieldVariable_ParameterSetDataGet(lhsVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999)
+          NULLIFY(previousValuesVector)
+          CALL FieldVariable_ParameterSetDataGet(lhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector,err,error,*999)
+          NULLIFY(previousVelocityVector)
+          NULLIFY(previousAccelerationVector)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL FieldVariable_ParameterSetDataGet(lhsVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,previousVelocityVector, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL FieldVariable_ParameterSetDataGet(lhsVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,previousAccelerationVector, &
+                & err,error,*999)
+            ENDIF
+          ENDIF
+
           interfaceMatrixDynamic=.FALSE.
           NULLIFY(dynamicTempVector)
           NULLIFY(dynamicMapping)
@@ -9977,6 +10116,10 @@ CONTAINS
             NULLIFY(dynamicVariable)
             CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
             CALL FieldVariable_VariableTypeGet(dynamicVariable,dynamicVariableType,err,error,*999)
+            NULLIFY(dynamicVarToEquationsMatricesMap)
+            CALL EquationsMappingDynamic_VariableToEquationsMatricesMapGet(dynamicMapping,dynamicVarToEquationsMatricesMap, &
+              & err,error,*999)
+            CALL EquationsMappingDynamic_NumberOfDynamicMatricesGet(dynamicMapping,numberOfDynamicMatrices,err,error,*999)
             NULLIFY(dynamicMatrices)
             CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
             CALL EquationsMatricesDynamic_TempDistributedVectorGet(dynamicMatrices,dynamicTempVector,err,error,*999)
@@ -9989,25 +10132,27 @@ CONTAINS
                 & err,error,*999)
               NULLIFY(stiffnessDistributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
-              CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,equationsStiffnessCoefficient,err,error,*999)
               NULLIFY(predictedMeanDisplacementVector)
               CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
                 & predictedMeanDisplacementVector,err,error,*999)              
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsStiffnessCoefficient, &
                 & stiffnessDistributedMatrix,.FALSE.,predictedMeanDisplacementVector,dynamicTempVector,err,error,*999)         
             ENDIF
             CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
-            IF(dampingMatrixNumber/=0.AND.dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+            IF(dampingMatrixNumber/=0) THEN
               NULLIFY(dampingMatrix)
               CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
               NULLIFY(dampingDistributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
-              CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
-              NULLIFY(predictedMeanVelocityVector)
-              CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
-                & predictedMeanVelocityVector,err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                & dampingDistributedMatrix,.FALSE.,predictedMeanVelocityVector,dynamicTempVector,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,equationsDampingCoefficient,err,error,*999)
+              IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+                NULLIFY(predictedMeanVelocityVector)
+                CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
+                  & predictedMeanVelocityVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsDampingCoefficient, &
+                  & dampingDistributedMatrix,.FALSE.,predictedMeanVelocityVector,dynamicTempVector,err,error,*999)
+              ENDIF
             ENDIF
             CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
             IF(massMatrixNumber/=0.AND.dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
@@ -10015,12 +10160,14 @@ CONTAINS
               CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
               NULLIFY(massDistributedMatrix)
               CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
-              CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
-              NULLIFY(predictedMeanAccelerationVector)
-              CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
-                & predictedMeanAccelerationVector,err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                & massDistributedMatrix,.FALSE.,predictedMeanAccelerationVector,dynamicTempVector,err,error,*999)
+              CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,equationsMassCoefficient,err,error,*999)
+              IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                NULLIFY(predictedMeanAccelerationVector)
+                CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+                  & predictedMeanAccelerationVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsMassCoefficient, &
+                  & massDistributedMatrix,.FALSE.,predictedMeanAccelerationVector,dynamicTempVector,err,error,*999)
+              ENDIF
             ENDIF
             !Work out if there are any interface matrices mapped to the dynamic variable.
             CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
@@ -10059,10 +10206,10 @@ CONTAINS
                     EXIT interfConditionLoop
                   ENDIF
                 ENDIF
-               ENDDO interfaceMatrixLoop !interfaceMatrixIdx
+              ENDDO interfaceMatrixLoop !interfaceMatrixIdx
             ENDDO interfConditionLoop !interfaceConditionIdx
           ENDIF !dynamic mapping
-          
+
           NULLIFY(nonlinearMapping)
           CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
           IF(ASSOCIATED(nonlinearMapping)) THEN
@@ -10075,76 +10222,131 @@ CONTAINS
             DO residualIdx=1,numberOfResiduals
               NULLIFY(residualMapping)
               CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
-              CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
-              NULLIFY(residualVector)
-              CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
-              !Get the nonlinear vector contribute to the RHS values if nonlinear solve
-              IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN 
+              rhsResidual=.TRUE.
+              CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
+              DO solverMatrixIdx=1,numberOfSolverMatrices
+                NULLIFY(solverMatrixToEquationsMap)
+                CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
+                  & err,error,*999)
+                NULLIFY(solverVariablesList)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+                DO residualVariableIdx=1,numberOfResidualVariables
+                  CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
+                  CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,residualVariable,variablePositionIdx, &
+                    & err,error,*999)
+                  IF(variablePositionIdx/=0) rhsResidual=.FALSE.
+                ENDDO !residualVariableIdx
+              ENDDO !solverMatrixIdx
+              IF(rhsResidual.OR.solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
+                CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
+                NULLIFY(residualVector)
+                CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+                IF(rhsResidual) THEN
+                  !The residual does not have any variables involved in the solver matrices so take it to the RHS
+                  NULLIFY(currentResidualVector)
+                  CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                    & currentResidualVector,err,error,*999)
+                  vectorCoefficient=residualCoefficient*currentFunctionFactor
+                  CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                    & vectorCoefficient,currentResidualVector,err,error,*999)
+                ENDIF
                 NULLIFY(previousResidualVector)
                 CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
                   & previousResidualVector,err,error,*999)
-                residualCoefficient=residualCoefficient*previousFunctionFactor
+                vectorCoefficient=residualCoefficient*previousFunctionFactor
                 CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
-                  & residualCoefficient,previousResidualVector,err,error,*999)
+                  & vectorCoefficient,previousResidualVector,err,error,*999)
                 IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                   NULLIFY(previous2ResidualVector)
                   CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                     & previous2ResidualVector,err,error,*999)
-                  residualCoefficient=residualCoefficient*previous2FunctionFactor
+                  vectorCoefficient=residualCoefficient*previous2FunctionFactor
                   CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
-                    & residualCoefficient,previous2ResidualVector,err,error,*999)
+                    & vectorCoefficient,previous2ResidualVector,err,error,*999)
                   IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
                     NULLIFY(previous3ResidualVector)
                     CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
                       & previous3ResidualVector,err,error,*999)
-                    residualCoefficient=residualCoefficient*previous3FunctionFactor
+                    vectorCoefficient=residualCoefficient*previous3FunctionFactor
                     CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
-                      & residualCoefficient,previous3ResidualVector,err,error,*999)
+                      & vectorCoefficient,previous3ResidualVector,err,error,*999)
                   ENDIF
                 ENDIF
-              ENDIF
+              ENDIF !rhs or nonlinear residual
             ENDDO !residualIdx
           ENDIF !nonlinear mapping
-          
+
           !Calculate the contributions from any linear matrices
           NULLIFY(linearTempVector)
           NULLIFY(linearMapping)
+          NULLIFY(linearMatrices)
           CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
           IF(ASSOCIATED(linearMapping)) THEN
-            NULLIFY(linearMatrices)
             CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
             CALL EquationsMatricesLinear_DistributedTempVectorGet(linearMatrices,linearTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)                  
             CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
             DO equationsMatrixIdx=1,numberOfLinearMatrices
-              NULLIFY(linearMatrix)
-              CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
               NULLIFY(linearVariable)
               CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
-              CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
-                & err,error,*999)
-              IF(variablePositionIdx==0) THEN
+              rhsLinearMatrix=.TRUE.
+              DO solverMatrixIdx=1,numberOfSolverMatrices
+                NULLIFY(solverMatrixToEquationsMap)
+                CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
+                  & err,error,*999)
+                NULLIFY(solverVariablesList)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+                CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+                  & err,error,*999)
+                IF(variablePositionIdx/=0) rhsLinearMatrix=.FALSE.
+              ENDDO !solverMatrixIdx
+              IF(rhsLinearMatrix) THEN
                 !Linear matrix variable is not on the LHS so take the matrix times vector over to the RHS.
+                NULLIFY(linearMatrix)
+                CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
                 NULLIFY(linearDistributedMatrix)
                 CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
-                CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
-                NULLIFY(linearTempVector)              
-                CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-                !Initialise the linear temporary vector to zero
-                CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)                  
-                NULLIFY(dependentVector)
-                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
+                CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,linearCoefficient,err,error,*999)
+!!TODO: Could store these mat-vec products so that we do not have to do the matrix vector products every time step.
+                NULLIFY(currentDistributedVector)
+                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,currentDistributedVector, &
+                  & err,error,*999)
+                matrixCoefficient=linearCoefficient*currentFunctionFactor
                 CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                  & linearDistributedMatrix,.FALSE.,dependentVector,linearTempVector,err,error,*999)
-              ENDIF
+                  & linearDistributedMatrix,.FALSE.,currentDistributedVector,linearTempVector,err,error,*999)
+                NULLIFY(previousDistributedVector)
+                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                  & previousDistributedVector,err,error,*999)
+                matrixCoefficient=linearCoefficient*previousFunctionFactor
+                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                  & linearDistributedMatrix,.FALSE.,previousDistributedVector,linearTempVector,err,error,*999)
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                  NULLIFY(previous2DistributedVector)
+                  CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE, &
+                    & previous2DistributedVector,err,error,*999)
+                  matrixCoefficient=linearCoefficient*previous2FunctionFactor
+                  CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                    & linearDistributedMatrix,.FALSE.,previous2DistributedVector,linearTempVector,err,error,*999)
+                  IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                    NULLIFY(previous3DistributedVector)
+                    CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_PREVIOUS3_VALUES_SET_TYPE, &
+                      & previous3DistributedVector,err,error,*999)
+                    matrixCoefficient=linearCoefficient*previous3FunctionFactor
+                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                      & linearDistributedMatrix,.FALSE.,previous3DistributedVector,linearTempVector,err,error,*999)
+                  ENDIF
+                ENDIF
+              ENDIF !rhs linear matrix
             ENDDO !equationsMatrixIdx
           ENDIF !linear mapping
 
           !Add in any source vectors
           NULLIFY(sourcesTempVector)
           NULLIFY(sourcesMapping)
+          NULLIFY(sourceVectors)
           CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
           IF(ASSOCIATED(sourcesMapping)) THEN
-            NULLIFY(sourceVectors)
             CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
             CALL EquationsMatricesSources_DistributedTempVectorGet(sourceVectors,sourcesTempVector,err,error,*999)
             CALL DistributedVector_AllValuesSet(sourcesTempVector,0.0_DP,err,error,*999)
@@ -10172,417 +10374,378 @@ CONTAINS
                 CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                   & previous2SourceVector,err,error,*999)
                 sourceCoefficient=sourceCoefficient*previous2FunctionFactor
-                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,soureCoefficient, &
-                  & previous2SourceVector,err,error,*999)     
-              ENDIF
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                NULLIFY(previous3SourceVector)
-                CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
-                  & previous3SourceVector,err,error,*999)
-                sourceCoefficient=sourceCoefficient*previous3FunctionFactor
                 CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
-                  & previous3SourceVector,err,error,*999) 
+                  & previous2SourceVector,err,error,*999)     
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                  NULLIFY(previous3SourceVector)
+                  CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
+                    & previous3SourceVector,err,error,*999)
+                  sourceCoefficient=sourceCoefficient*previous3FunctionFactor
+                  CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                    & previous3SourceVector,err,error,*999) 
+                ENDIF
               ENDIF
             ENDDO !sourceIdx
           ENDIF !source mapping
-          
-          NULLIFY(boundaryConditions)
-          CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+
           NULLIFY(rhsVariable)
           NULLIFY(rhsMapping)
+          NULLIFY(rhsVector)
+          NULLIFY(currentRHSVector)
+          NULLIFY(previousRHSVector)
+          NULLIFY(previous2RHSVector)
+          NULLIFY(previous3RHSVector)
+          NULLIFY(rhsBoundaryConditionsVariable)
+          NULLIFY(rhsIntegratedParameters)
           CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
           IF(ASSOCIATED(rhsMapping)) THEN
             CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
             CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
               & err,error,*999)
-            NULLIFY(rhsVector)
             CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-            NULLIFY(currentRHSVector)
             CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
               & err,error,*999)
-            NULLIFY(previousRHSVector)
             CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR,previousRHSVector, &
               & err,error,*999)
-            CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousRHSParameters, &
-              & err,error,*999)
             IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-              NULLIFY(previous2RHSVector)
               CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR,previous2RHSVector, &
                 & err,error,*999)
               IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                NULLIFY(previous3RHSVector)
                 CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR,previous3RHSVector, &
                   & err,error,*999)
               ENDIF
             ENDIF
+            CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999) 
             IF(hasIntegratedValues) THEN
               !Update RHS field by integrating any point Neumann conditions
-              NULLIFY(rhsBoundaryConditions)
-              CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
+              CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditionsVariable,err,error,*999)
 !!TODO: NEED TO FIX INTEGRATED FLUX MATRIX CALCULATION. THE MATRIX CURRENTLY USES THE RHS FOR THE ROWS BUT IT SHOULD USE THE
 !!      LHS. IT SHOULD BE POSSIBLE TO USE A DIFFERENT BASIS FOR THE FLUX INTERPOLATION THAN FOR THE DEPENDENT INTERPOLATION.
-              CALL BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*999)
-              NULLIFY(rhsIntegratedParameters)
+              CALL BoundaryConditionsVariable_NeumannIntegrate(rhsBoundaryConditionsVariable,err,error,*999)
               CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
                 & err,error,*999) 
             ENDIF
-          ENDIF
-
-          !Create solver RHS vector from the equations dynamic, linear, nonlinear, sources and RHS.
-!!TODO: what if the equations set doesn't have a RHS vector??? Will be sorted once LHS mapping is implemented.
- 
-          NULLIFY(rhsBoundaryConditions)
-          CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
-          !Update RHS field by integrating any point Neumann conditions
-          CALL BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*999)
-          !Get values and previous values
-          IF(.NOT.ASSOCIATED(dynamicVariable)) CALL FlagError("Dynamic variable is not associated.",err,error,*999)
-          NULLIFY(currentValuesVector)
-          CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999)
-          NULLIFY(previousValuesVector)
-          CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector, &
-            & err,error,*999)
-          NULLIFY(rhsParameters)
-          CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
-          NULLIFY(previousRHSParameters)
-          CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousRHSParameters, &
-            & err,error,*999)
-          IF(hasIntegratedValues) THEN
-            NULLIFY(rhsIntegratedParameters)
-            CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
-              & err,error,*999) 
-          ENDIF
-          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-              NULLIFY(previousVelocityVector)
-              CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,previousVelocityVector, &
-                & err,error,*999)
-              NULLIFY(previous2RHSParameters)
-              CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE,previous2RHSParameters, &
-                & err,error,*999)
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                NULLIFY(previousAccelerationVector)
-                CALL FieldVariable_ParameterSetDataGet(dynamicVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
-                  & previousAccelerationVector,err,error,*999)
-                NULLIFY(previous3RHSParameters)
-                CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_PREVIOUS3_VALUES_SET_TYPE,previous3RHSParameters, &
-                  & err,error,*999)
-              ENDIF
-            ENDIF
             NULLIFY(equationsRowToRHSDOFMap)
             CALL EquationsMatricesRHS_EquationsRowToRHSDOFMapGet(rhsVector,equationsRowToRHSDOFMap,err,error,*999)
-            !Loop over the rows in the equations set
-            DO equationsRowNumber=1,totalNumberOfRows
-              rhsVariableDOF=equationsRowToRHSDofMap(equationsRowNumber)
-              !Get the dynamic contribution to the RHS values               
-              IF(ASSOCIATED(dynamicTempVector)) THEN
-                CALL DistributedVector_ValuesGet(dynamicTempVector,equationsRowNumber,dynamicValue,err,error,*999)
-              ELSE
-                dynamicValue=0.0_DP
-              ENDIF
-              !Get the linear matrices contribution to the RHS values if there are any
-              IF(ASSOCIATED(linearMapping)) THEN
-                linearValueSum=0.0_DP
-                CALL EquationMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
-                DO equationsMatrixIdx=1,numberOfLinearMatrices
-                  NULLIFY(linearMatrix)
-                  CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
-                  NULLIFY(linearTempVector)
-                  CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-                  CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
-                  linearValueSum=linearValueSum+linearValue
-                ENDDO !equationsMatrixIdx
-                linearValue=linearValueSum
-              ELSE
-                linearValue=0.0_DP
-              ENDIF
-              !Get the source vector contribute to the RHS values if there are any
-              IF(ASSOCIATED(sourceMapping)) THEN
-                !Add in equations source values
-                CALL DistributedVector_ValuesGet(distributedSourceVector,equationsRowNumber,sourceValue,err,error,*999)
-              ELSE
-                sourceValue=0.0_DP
-              ENDIF
-              !Get the nonlinear vector contribute to the RHS values if nonlinear solve
-              IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
-                CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
-                IF(ASSOCIATED(nonlinearMapping)) THEN
-!!TODO: Allow for multiple residuals.
-                  NULLIFY(residualMapping)
-                  CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,1,residualMapping,err,error,*999)
-                  NULLIFY(equationsRowToResidualDOFMap)
-                  CALL EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap, &
-                    & err,error,*999)
-                  residualVariableDOF=equationsRowToResidualDOFMap(equationsRowNumber)
-                  nonlinearValue=previousResidualParameters(residualVariableDOF)*previousFunctionFactor
-                  IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                    nonlinearValue=nonlinearValue+previous2ResidualParameters(residualVariableDOF)*previous2FunctionFactor
-                    IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) &
-                      & nonlinearValue=nonlinearValue+previous3ResidualParameters(residualVariableDOF)*previous3FunctionFactor
-                  ENDIF
-                ELSE
-                  nonlinearValue=0.0_DP
-                ENDIF
-              ELSE
-                nonlinearValue=0.0_DP
-              ENDIF
-              rhsValue=dynamicValue+linearValue+sourceValue+nonlinearValue
-              !Loop over the solver rows associated with this equations set row
-              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector, &
-                & solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap(equationsRowNumber), &
-                & -1.0_DP,rhsValue,err,error,*999)
+          ENDIF
+
+          NULLIFY(lhsBoundaryConditionsRowVariable)
+          CALL BoundaryConditions_RowVariableGet(boundaryConditions,lhsVariable,lhsBoundaryConditionsRowVariable,err,error,*999)
+          NULLIFY(lhsBoundaryConditionsVariable)
+          CALL BoundaryConditions_VariableGet(boundaryConditions,lhsVariable,lhsBoundaryConditionsVariable,err,error,*999)
+          CALL BoundaryCOnditionsVariable_NumberOfDirichletConditionsGet(lhsBoundaryConditionsVariable, &
+            & numberOfDirichletConditions,err,error,*999)
+          NULLIFY(dirichletBoundaryConditions)
+          IF(numberOfDirichletConditions>0) CALL BoundaryConditionsVariable_DirichletBoundaryConditionsExists( &
+            & lhsBoundaryConditionsVariable,dirichletBoundaryConditions,err,error,*999)
+          NULLIFY(neumannBoundaryConditions)
+          CALL BoundaryConditionsVariable_NeumannBoundaryConditionsExists(lhsBoundaryConditionsVariable, &
+            & neumannBoundaryConditions,err,error,*999)
+
+          !Loop over the rows in the equations set
+          DO equationsRowNumber=1,totalNumberOfRows
+            CALL BoundaryConditionsRowVariable_RowConditionTypeGet(lhsBoundaryConditionsRowVariable,equationsRowNumber, &
+              & rowCondition,err,error,*999)
+
+            !Get the dynamic contribution to the RHS values               
+            IF(ASSOCIATED(dynamicTempVector)) THEN
+              CALL DistributedVector_ValuesGet(dynamicTempVector,equationsRowNumber,dynamicValue,err,error,*999)
+            ELSE
+              dynamicValue=0.0_DP
+            ENDIF
+            !Get the nonlinear contribution to the RHS values               
+            IF(ASSOCIATED(nonlinearTempVector)) THEN
+              CALL DistributedVector_ValuesGet(nonlinearTempVector,equationsRowNumber,nonlinearValue,err,error,*999)
+            ELSE
+              nonlinearValue=0.0_DP
+            ENDIF
+            !Get the linear contribution to the RHS values               
+            IF(ASSOCIATED(linearTempVector)) THEN
+              CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
+            ELSE
+              linearValue=0.0_DP
+            ENDIF
+            !Get the source contribution to the RHS values               
+            IF(ASSOCIATED(sourcesTempVector)) THEN
+              CALL DistributedVector_ValuesGet(sourcesTempVector,equationsRowNumber,sourceValue,err,error,*999)                
+            ELSE
+              sourceValue=0.0_DP
+            ENDIF
+
+            solverRHSValue=dynamicValue+nonlinearValue+linearValue+sourceValue
+
+            IF(ASSOCIATED(rhsMapping)) THEN
+              rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
               IF(hasIntegratedValues) THEN
                 !Add any Neumann integrated values, b = f + N q
-                CALL DistributedVector_ValuesAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,equationsRHSVector, &
-                  & equationsRowNumber,rhsIntegratedParameters(rhsVariableDOF),err,error,*999)
-              ENDIF
-            ENDDO !equationsRowNumber
-
-            DO equationsRowNumber=1,totalNumberOfRows
-              !Get the dynamic contribution to the the RHS values
-              rhsVariableDOF=rhsMapping%equationsRowToRHSDofMap(equationsRowNumber)
-              rhsGlobalDOF=rhsDomainMapping%localToGlobalMap(rhsVariableDOF)
-              rhsBoundaryCondition=rhsBoundaryConditions%dofTypes(rhsGlobalDOF)
-              !Apply boundary conditions
-              SELECT CASE(rhsBoundaryCondition)
-              CASE(BOUNDARY_CONDITION_DOF_FREE)
-                !Get the equations RHS values
-                !CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-                !rhsValue=rhsValue+rhsParameters(rhsVariableDOF)*currentFunctionFactor
-                rhsValue=rhsParameters(rhsVariableDOF)*currentFunctionFactor
-                rhsValue=rhsValue+previousRHSParameters(rhsVariableDOF)*previousFunctionFactor
-                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                  rhsValue=rhsValue+previous2RHSParameters(rhsVariableDOF)*previous2FunctionFactor
-                  IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) &
-                    & rhsValue=rhsValue+previous3RHSParameters(rhsVariableDOF)*previous3FunctionFactor                    
-                ENDIF
-                CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector, &
-                  & solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                  & equationsRowToSolverRowsMap(equationsRowNumber),1.0_DP,rhsValue,err,error,*999)
-                !Note: for cases in which the boundary condition does not change with time then alpha will be
-                !      implicitly zero and the contribution to the RHS will have been included above with the dynamic value.
-                !      However, for cases in which the boundary condition is changing we need to compute the corresponding
-                !      alpha value and include it on the RHS. This alpha value also needs to be set for nolinear problems as
-                !      it will not have come from the nonlinear solver as A.alpha is included in the residual below. 
-                variableType=dynamicMapping%dynamicVariableType
-                dependentVariable=>dynamicMapping%varToEquationsMatricesMaps(variableType)%variable
-                dependentVariableType=dependentVariable%variableType
-                variableDomainMapping=>dependentVariable%domainMapping
-                NULLIFY(dependentBoundaryConditions)
-                CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,dependentBoundaryConditions, &
+                CALL DistributedVector_ValuesAdd(currentRHSVector,equationsRowNumber,rhsIntegratedParameters(rhsVariableDOF), &
                   & err,error,*999)
-                variableDOF=dynamicMapping%equationsRowToVariableDOFMaps(equationsRowNumber)
-                variableGlobalDOF=variableDomainMapping%localToGlobalMap(variableDOF)
-                variableBoundaryCondition=dependentBoundaryConditions%dofTypes(variableGlobalDOF)
-
-                IF(variableBoundaryCondition==BOUNDARY_CONDITION_DOF_FIXED) THEN
-                  SELECT CASE(dynamicSolver%degree)
-                  CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-                    alphaValue=(currentValuesVector(variableDOF)-previousValuesVector(variableDOF))/ &
-                      & dynamicDisplacementFactor
-                  CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-                    alphaValue=(currentValuesVector(variableDOF)- &
-                      & previousValuesVector(variableDOF)- &
-                      & dynamicVelocityFactor*previousVelocityVector(variableDOF))/ &
-                      & dynamicDisplacementFactor
-                  CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-                    alphaValue=(currentValuesVector(variableDOF)- &
-                      & previousValuesVector(variableDOF)- &
-                      & dynamicVelocityFactor*previousVelocityVector(variableDOF) - &
-                      & dynamicAccelerationFactor*previousAccelerationVector(variableDOF))/ &
-                      & dynamicDisplacementFactor
-                  CASE DEFAULT
-                    localError="The dynamic solver degree of "// &
-                      & TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
-                      & " is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-
-                  !Update the incremented values for non-linear problems
-                  IF(ASSOCIATED(nonlinearMapping)) THEN
-                    !Only update if the DOF is not a ghost DOF
-                    IF(variableDOF<=variableDomainMapping%boundaryFinish) & 
-                      & CALL Field_ParameterSetUpdateLocalDOF(dependentField,dynamicVariableType, &
-                      & FIELD_INCREMENTAL_VALUES_SET_TYPE,variableDOF,alphavalue,err,error,*999)
-                  ENDIF
-
-                  IF(ABS(alphaValue)>=ZERO_TOLERANCE) THEN
-                    !Loop over the column entries of the matrices corresponding to the fixed dof column and take over to the RHS.
-                    !First for any equations matrices, then interface matrices.
-                    DO equationsMatrixIdx=1,dynamicMapping%varToEquationsMatricesMaps(variableType)% &
-                      & numberOfEquationsMatrices
-                      equationsMatrixNumber=dynamicMapping%varToEquationsMatricesMaps(variableType)% &
-                        & equationsMatrixNumbers(equationsMatrixIdx)
-                      IF(equationsMatrixNumber==dynamicMapping%stiffnessMatrixNumber) &
-                        & dofValue=alphaValue*stiffnessMatrixCoefficient                        
-                      IF(equationsMatrixNumber==dynamicMapping%dampingMatrixNumber) &
-                        & dofValue=alphaValue*dampingMatrixCoefficient                     
-                      IF(equationsMatrixNumber==dynamicMapping%massMatrixNumber) &
-                        & dofValue=alphaValue*massMatrixCoefficient
-                      equationsMatrix=>dynamicMatrices%matrices(equationsMatrixNumber)%ptr
-                      equationsColumnNumber=dynamicMapping% &
-                        & varToEquationsMatricesMaps(variableType)% &
-                        & dofToColumnsMaps(equationsMatrixIdx)% &
-                        & columnDOF(variableDOF)
-                      IF(.NOT.ASSOCIATED(dependentBoundaryConditions%dirichletBoundaryConditions)) &
-                        & CALL FlagError("Dirichlet boundary conditions is not associated.",err,error,*999)  
-                      IF(dependentBoundaryConditions%numberOfDirichletConditions>0) THEN
-                        DO dirichletIdx=1,dependentBoundaryConditions%numberOfDirichletConditions
-                          IF(dependentBoundaryConditions%dirichletBoundaryConditions% &
-                            & dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
-                        ENDDO !dirichletIdx
-                        CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%matrix,.FALSE.,equationsColumnNumber, &
-                          & solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)%equationsRowToSolverRowsMap, &
-                          & -1.0_DP*dofValue,solverRHSVector,err,error,*999)
-                      ENDIF
-                    ENDDO !matrix_idx
-                    !Loop over any interface matrices which are mapped to the dependent variable with the fixed BC.
-                    IF(interfaceMatrixDynamic) THEN
-                      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-                        NULLIFY(interfaceCondition)
-                        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition, &
-                          & err,error,*999)
-                        NULLIFY(interfaceEquations)
-                        CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-                        NULLIFY(interfaceMapping)
-                        CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
-                        NULLIFY(interfaceMatrices)
-                        CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-                        NULLIFY(interfaceColToSolverRowsMap)
-                        CALL SolverMapping_InterfaceColToSolverRowsMapGet(solverMapping,interfaceConditionIdx, &
-                          & interfaceColToSolverRowsMap,err,error,*999)                        
-                        CALL SolverMapping_SolverNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
-                          & numberOfInterfaceMatrices,err,error,*999)
-                        DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
-                          NULLIFY(interfaceToSolverMap)
-                          CALL SolverMapping_InterfaceToSolverMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
-                            & solverMatrixIdx,interfaceToSolverMap,err,error,*999)
-                          NULLIFY(interfaceMatrix)
-                          CALL SolverMappingInterfaceToSolverMap_InterfaceMatrixGet(interfaceToSolverMap,interfaceMatrix, &
-                            & err,error,*999)
-                          IF(interfaceMatrix%hasTranspose) THEN
-                            dependentVariable=>interfaceMapping%interfaceMatrixToVarMaps(interfaceMatrixIdx)%variable
-                            IF(.NOT.ASSOCIATED(dependentVariable)) THEN
-                              localError="The interface dependent variable is not associated for interface matrix number "// &
-                                & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
-                              CALL FlagError(localError,err,error,*999)
-                            ENDIF
-                            IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
-                              SELECT CASE(interfaceMatrix%interfaceMatrixTransposeTimeDependenceType)
-                              CASE(INTERFACE_MATRIX_STATIC)
-                                dofValue=stiffnessMatrixCoefficient*alphaValue
-                              CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
-                                dofValue=dampingMatrixCoefficient*alphaValue
-                              CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
-                                dofValue=massMatrixCoefficient*alphaValue
-                              CASE DEFAULT
-                                CALL FlagError("Not implemented.",err,error,*999)
-                              END SELECT
-                              interfaceColumnNumber=interfaceMapping%interfaceMatrixToVarMaps(interfaceMatrixIdx)% &
-                                & variableDOFToRowMap(variableDof)
-                              CALL DistributedMatrix_MatrixColumnAdd(interfaceMatrix%matrix,.TRUE.,interfaceColumnNumber, &
-                                & interfaceColToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
-                            ENDIF
-                          ENDIF
-                        ENDDO !interfaceMatrixIdx
-                      ENDDO !interfaceConditionIdx
-                    ENDIF
-                  ENDIF
-                ENDIF
-
-              CASE(BOUNDARY_CONDITION_DOF_FIXED)
-                !Set Neumann boundary conditions
-
-!!TODO: There is a bit of a disconnect with vectors and fields. At the moment for the RHS the f vector is sort of the same
-!!as the rhs field variable that is mapped to it. And thus getting the rhs value from the distributed RHS vector is the same
-!!as getting the value from the field parameters set vector. In reality the RHS f vector is a function of the RHS field variable
-!!and it is not really the same thing. For a lot of things the "function" is an identity matrix or function but this should
-!!not be assumed. Now this affects how things get handled with time. We want to vary the RHS field dofs with time and this
-!!is taken into account by using the previousFunctionFactors below. However, we really should be multiplying the value of the
-!!previous f vector by the previousFunctionFactor and not the previous values of the field variable mapped to the f vector.
-!!This will mean keeping the previous values of the vectors as well as the previous values of the field DOFs. This also
-!!greatly affects how time varying sources are handled! Maybe this is handled with LHS mapping as any matrix/vector that is
-!!not mapped to the solver variables is automatically put on the RHS? Sources (and RHS?) will thus be like any other matrix-vector?
-!!Might handle things like Neumann point fluxes and or linear matrices for linear operations on source fields?
-
-                CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-                rhsValue=rhsValue+rhsParameters(rhsVariableDOF)*currentFunctionFactor
-                rhsValue=rhsValue+previousRHSParameters(rhsVariableDOF)*previousFunctionFactor
-                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                  rhsValue=rhsValue+previous2RHSParameters(rhsVariableDOF)*previous2FunctionFactor
-                  IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) &
-                    & rhsValue=rhsValue+previous3RHSParameters(rhsVariableDOF)*previous3FunctionFactor                    
-                ENDIF
-                !Loop over the solver rows associated with this equations set row
-                DO solverRowIdx=1,solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                  & equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols
-                  solverRowNumber=solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)% &
-                    & equationsRowToSolverRowsMap(equationsRowNumber)%rowCols(solverRowIdx)
-                  rowCouplingCoefficient=solverMapping%equationsSetToSolverMatricesMap( &
-                    & equationsSetIdx)%equationsRowToSolverRowsMap(equationsRowNumber)% &
-                    & couplingCoefficients(solverRowIdx)
-                  VALUE=rhsValue*rowCouplingCoefficient
-                  CALL DistributedVector_ValuesAdd(solverRHSVector,solverRowNumber,VALUE,err,error,*999)
-                ENDDO !solverRowIdx
-              CASE(BOUNDARY_CONDITION_DOF_MIXED)
-                !Set Robin or is it Cauchy??? boundary conditions
-                CALL FlagError("Mixed Boundary Conditions Not implemented.",err,error,*999)
-              CASE DEFAULT
-                localError="The RHS boundary condition of "// &
-                  & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
-                  & " for RHS variable dof number "// &
-                  & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
+              ELSE
+                CALL DistributedVector_ValuesUpdate(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
+                  & err,error,*999)
               ENDIF
-            ENDDO !equationsRowNumber
-            IF(.NOT.dynamicSolver%solverInitialised) THEN
-              !Copy current RHS i.e., RHS at time zero, to previous RHSs to initialise
-              !Only do this for non Ghost rows
-              IF(equationsRowNumber<=rhsDomainMapping%boundaryFinish) THEN
-                !Get the equations RHS contribution
-                CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                  & FIELD_PREVIOUS_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-                IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                    & FIELD_PREVIOUS2_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-                  IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                    CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                      & FIELD_PREVIOUS3_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-                  ENDIF
+              CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,currentRHSValue,err,error,*999)
+              rhsValue=currentRHSValue*currentFunctionFactor
+              CALL DistributedVector_ValuesGet(previousRHSVector,equationsRowNumber,previousRHSValue,err,error,*999)
+              rhsValue=rhsValue+previousRHSValue*previousFunctionFactor
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                CALL DistributedVector_ValuesGet(previous2RHSVector,equationsRowNumber,previous2RHSValue,err,error,*999)
+                rhsValue=rhsValue+previous2RHSValue*previous2FunctionFactor
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                  CALL DistributedVector_ValuesGet(previous3RHSVector,equationsRowNumber,previous3RHSValue,err,error,*999)
+                  rhsValue=rhsValue+previous3RHSValue*previous3FunctionFactor
                 ENDIF
               ENDIF
+            ELSE
+              rhsValue=0.0_DP
             ENDIF
-            IF(ASSOCIATED(nonlinearMapping)) &
-              & CALL Field_ParameterSetUpdateStart(dependentField,dynamicVariableType,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
+
+            !Get the dynamic contribution to the the RHS values
+            lhsVariableDOF=equationsRowToLHSDOFMap(equationsRowNumber)
+            CALL DomainMapping_LocalToGlobalGet(lhsDomainMapping,lhsVariableDOF,lhsGlobalDOF,err,error,*999)
+            CALL BoundaryConditionsVariable_DOFTypeGet(lhsBoundaryConditionsVariable,lhsGlobalDOF,lhsBoundaryCondition, &
               & err,error,*999)
-            CALL Field_ParameterSetDataRestore(dependentField,dynamicVariableType, &
-              & FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector,err,error,*999)
-            CALL Field_ParameterSetDataRestore(dependentField,rhsVariableType, &
-              & FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
-            CALL Field_ParameterSetDataRestore(dependentField,rhsVariableType, &
-              & FIELD_PREVIOUS_VALUES_SET_TYPE,previousRHSParameters,err,error,*999)
-            IF(hasIntegratedValues) THEN
-              CALL Field_ParameterSetDataRestore(dependentField,rhsVariableType, &
-                & FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters,err,error,*999)                
-            ENDIF
-            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-              CALL Field_ParameterSetDataRestore(dependentField,dynamicVariableType, &
-                FIELD_PREVIOUS_VELOCITY_SET_TYPE,previousVelocityVector,err,error,*999)
-              CALL Field_ParameterSetDataRestore(dependentField,rhsVariableType, &
-                & FIELD_PREVIOUS2_VALUES_SET_TYPE,previous2RHSParameters,err,error,*999)                
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                CALL Field_ParameterSetDataRestore(dependentField,dynamicVariableType, &
-                  FIELD_PREVIOUS_ACCELERATION_SET_TYPE,previousAccelerationVector,err,error,*999)
-                CALL Field_ParameterSetDataRestore(dependentField,rhsVariableType, &
-                  & FIELD_PREVIOUS3_VALUES_SET_TYPE,previous3RHSParameters,err,error,*999)
+
+            !Apply boundary conditions
+            SELECT CASE(lhsBoundaryCondition)
+            CASE(BOUNDARY_CONDITION_FREE_ROW)
+              solverRHSValue=solverRHSValue+rhsValue
+              !Loop over the solver rows associated with this equations set row
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                & -1.0_DP,solverRHSValue,err,error,*999)
+            CASE(BOUNDARY_CONDITION_DIRICHLET_ROW)
+!!WHY ARE WE ADDING TO THE RHS ROW IF WE ARE GOING TO ELIMINATE IT?
+              !Get the equations RHS values
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                & -1.0_DP,rhsValue,err,error,*999)
+
+              !Note: Find the incremental alpha values for Dirichlet DOFs
+              !      For cases in which the boundary condition does not change with time then alpha will be
+              !      implicitly zero and the contribution to the RHS will have been included above with the dynamic value.
+              !      However, for cases in which the boundary condition is changing we need to compute the corresponding
+              !      alpha value and include it on the RHS. This alpha value also needs to be set for nolinear problems as
+              !      it will not have come from the nonlinear solver as A.alpha is included in the residual below. 
+              IF(lhsBoundaryCondition==BOUNDARY_CONDITION_DOF_FIXED) THEN
+                SELECT CASE(dynamicSolver%degree)
+                CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
+                  alphaValue=(currentValuesVector(lhsVariableDOF)-previousValuesVector(lhsVariableDOF))/ &
+                    & dynamicDisplacementFactor
+                CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
+                  alphaValue=(currentValuesVector(lhsVariableDOF)- &
+                    & previousValuesVector(lhsVariableDOF)- &
+                    & dynamicVelocityFactor*previousVelocityVector(lhsVariableDOF))/ &
+                    & dynamicDisplacementFactor
+                CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
+                  alphaValue=(currentValuesVector(lhsVariableDOF)- &
+                    & previousValuesVector(lhsVariableDOF)- &
+                    & dynamicVelocityFactor*previousVelocityVector(lhsVariableDOF) - &
+                    & dynamicAccelerationFactor*previousAccelerationVector(lhsVariableDOF))/ &
+                    & dynamicDisplacementFactor
+                CASE DEFAULT
+                  localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+
+                !Update the incremented values for non-linear problems
+                IF(ASSOCIATED(nonlinearMapping)) THEN
+                  !Only update if the DOF is not a ghost DOF
+                  IF(lhsVariableDOF<=lhsBoundaryFinish) CALL FieldVariable_ParameterSetUpdateLocalDOF(lhsVariable, &
+                    & FIELD_INCREMENTAL_VALUES_SET_TYPE,lhsVariableDOF,alphaValue,err,error,*999)
+                ENDIF
+
+                IF(ABS(alphaValue)>=ZERO_TOLERANCE) THEN
+                  !Loop over the column entries of the matrices corresponding to the fixed DOF column and take over to the RHS.
+                  !First for any equations matrices, then interface matrices.
+                  IF(ASSOCIATED(dynamicMapping)) THEN
+                    IF(ASSOCIATED(dynamicVariable,lhsVariable)) THEN
+                      CALL EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(dynamicVarToEquationsMatricesMap, &
+                        & numberOfEquationsMatrices,err,error,*999)
+                      DO equationsMatrixIdx=1,numberOfEquationsMatrices
+                        CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(dynamicVarToEquationsMatricesMap, &
+                          & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
+                        CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(dynamicVarToEquationsMatricesMap, &
+                          & equationsMatrixIdx,lhsVariableDOF,columnNumber,err,error,*999)
+                        IF(equationsMatrixNumber==stiffnessMatrixNumber) &
+                          & dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
+                        IF(equationsMatrixNumber==dynamicMapping%dampingMatrixNumber) &
+                          & dofValue=alphaValue*dampingMatrixCoefficient*equationsDampingCoefficient                    
+                        IF(equationsMatrixNumber==dynamicMapping%massMatrixNumber) &
+                          & dofValue=alphaValue*massMatrixCoefficient*equationsMassCoefficient
+                        NULLIFY(equationsMatrix)
+                        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,equationsMatrixNumber,equationsMatrix, &
+                          & err,error,*999)
+                        NULLIFY(equationsDistributedMatrix)
+                        CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,equationsDistributedMatrix,err,error,*999)
+!!WHAT IS THIS TRYING TO DO?
+                        DO dirichletIdx=1,numberOfDirichletConditions
+                          IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                        ENDDO !dirichletIdx
+                        CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                          & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+                      ENDDO !matrixIdx
+                    ENDIF
+                  ENDIF !dynamic mapping
+                  IF(ASSOCIATED(linearMapping)) THEN
+                    CALL EquationsMappingLinear_NumberOfLinearVariablesGet(linearMapping,numberOfLinearVariables,err,error,*999)
+                    DO linearVariableIdx=1,numberOfLinearVariables
+                      NULLIFY(linearVariable)
+                      CALL EquationsMappingLinear_linearVariableGet(linearMapping,linearVariableIdx,linearVariable,err,error,*999)
+                      IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
+                        NULLIFY(linearVarToEquationsMatricesMap)
+                        CALL EquationsMappingLinear_VariableToEquationsMatricesMapGet(linearMapping,linearVariableIdx, &
+                          & linearVarToEquationsMatricesMap,err,error,*999)
+                        CALL EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(linearVarToEquationsMatricesMap, &
+                          & numberOfEquationsMatrices,err,error,*999)
+                        DO equationsMatrixIdx=1,numberOfEquationsMatrices
+                          CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(linearVarToEquationsMatricesMap, &
+                            & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
+                          CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(linearVarToEquationsMatricesMap, &
+                            & equationsMatrixIdx,lhsVariableDOF,columnNumber,err,error,*999)
+                          NULLIFY(equationsMatrix)
+                          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
+                            & err,error,*999)
+                          CALL EquationsMatrix_MatrixCoefficientGet(equationsMatrix,matrixCoefficient,err,error,*999)
+                          dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
+                          NULLIFY(equationsDistributedMatrix)
+                          CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,equationsDistributedMatrix,err,error,*999)
+!!WHAT IS THIS TRYING TO DO?
+                          DO dirichletIdx=1,numberOfDirichletConditions
+                            IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                          ENDDO !dirichletIdx
+                          CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                            & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+                        ENDDO !matrixidx
+                      ENDIF
+                    ENDDO !linearVariableIdx
+                  ENDIF !linear mapping
+                  !Loop over any interface matrices which are mapped to the dependent variable with the fixed BC.
+                  IF(interfaceMatrixDynamic) THEN
+                    DO interfaceConditionIdx=1,numberOfInterfaceConditions
+                      NULLIFY(interfaceCondition)
+                      CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition, &
+                        & err,error,*999)
+                      NULLIFY(interfaceConditionToSolverMatricesMap)
+                      CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+                        & interfaceConditionToSolverMatricesMap,err,error,*999)
+                      NULLIFY(interfaceMatricesToSolverMatrixMap)
+                      CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
+                        & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
+                      NULLIFY(interfaceEquations)
+                      CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+                      NULLIFY(interfaceMapping)
+                      CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
+                      NULLIFY(interfaceMatrices)
+                      CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
+                      NULLIFY(interfaceColToSolverRowsMap)
+                      CALL SolverMapping_InterfaceColToSolverRowsMapGet(solverMapping,interfaceConditionIdx, &
+                        & interfaceColToSolverRowsMap,err,error,*999)                        
+                      CALL SolverMapping_SolverNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+                        & numberOfInterfaceMatrices,err,error,*999)
+                      DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
+                        NULLIFY(interfaceMatrixToSolverMatrixMap)
+                        CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
+                          & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*999)
+                        NULLIFY(interfaceMatrix)
+                        CALL SolverMappingIMToSMMap_InterfaceMatrixGet(interfaceMatrixToSolverMatrixMap,interfaceMatrix, &
+                          & err,error,*999)
+                        CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
+                        IF(hasTranspose) THEN
+                          NULLIFY(interfaceMatrixToVarMap)
+                          CALL InterfaceMapping_InterfaceMatrixToVarMapGet(interfaceMapping,interfaceMatrixIdx, &
+                            & interfaceMatrixToVarMap,err,error,*999)
+                          NULLIFY(dependentVariable)
+                          CALL InterfaceMappingIMToVMap_VariableGet(interfaceMatrixToVarMap,dependentVariable,err,error,*999)
+                          IF(ASSOCIATED(dependentVariable,lhsVariable)) THEN
+                            CALL InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,transposeMatrixCoefficient, &
+                              & err,error,*999)
+                            CALL InterfaceMatrix_TransposeTimeDependenceTypeGet(interfaceMatrix,transposeTimeDependenceType, &
+                              & err,error,*999)
+                            SELECT CASE(transposeTimeDependenceType)
+                            CASE(INTERFACE_MATRIX_STATIC)
+                              dofValue=transposeMatrixCoefficient*stiffnessMatrixCoefficient*alphaValue
+                            CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
+                              dofValue=transposeMatrixCoefficient*dampingMatrixCoefficient*alphaValue
+                            CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
+                              dofValue=transposeMatrixCoefficient*massMatrixCoefficient*alphaValue
+                            CASE DEFAULT
+                              CALL FlagError("Not implemented.",err,error,*999)
+                            END SELECT
+                            NULLIFY(variableDOFToRowMap)
+                            CALL InterfaceMappingIMToVMap_VariableDOFToRowMapGet(interfaceMatrixToVarMap, &
+                              & variableDOFToRowMap,err,error,*999)
+                            interfaceColumnNumber=variableDOFToRowMap(variableDof)
+                            CALL DistributedMatrix_MatrixColumnAdd(interfaceMatrix%matrix,.TRUE.,interfaceColumnNumber, &
+                              & interfaceColToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+                          ENDIF
+                        ENDIF
+                      ENDDO !interfaceMatrixIdx
+                    ENDDO !interfaceConditionIdx
+                  ENDIF !dynamic interface matrix
+                ENDIF !alpha > 0
+              ENDIF !LHS DOF fixed
+
+            CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
+              !Set Neumann boundary conditions
+              solverRHSValue=solverRHSValue+rhsValue
+              !Loop over the solver rows associated with this equations set row
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                & -1.0_DP,solverRHSValue,err,error,*999)
+            CASE(BOUNDARY_CONDITION_ROBIN_ROW)
+              !Set Robin boundary conditions
+              CALL FlagError("Robin boundary conditions are not implemented.",err,error,*999)
+            CASE(BOUNDARY_CONDITION_CAUCHY_ROW)
+              !Set Cauchy boundary conditions
+              CALL FlagError("Cauchy boundary conditions are not implemented.",err,error,*999)
+            CASE(BOUNDARY_CONDITION_CONSTRAINED_ROW)
+              !Set constrained row boundary conditions
+              CALL FlagError("Constrained row boundary conditions are not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The RHS boundary condition of "// &
+                & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
+                & " for RHS variable dof number "// &
+                & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDDO !equationsRowNumber
+          IF(.NOT.dynamicSolver%solverInitialised) THEN
+            !Copy current RHS i.e., RHS at time zero, to previous RHSs to initialise
+            !Only do this for non Ghost rows
+            CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previousRHSVector,1.0_DP, &
+              & currentRHSVector,err,error,*999)
+            IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
+              CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous2RHSVector,1.0_DP, &
+                & currentRHSVector,err,error,*999)
+              IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous3RHSVector,1.0_DP, &
+                  & currentRHSVector,err,error,*999)
               ENDIF
             ENDIF
-            IF(ASSOCIATED(nonlinearMapping)) &
-              & CALL Field_ParameterSetUpdateFinish(dependentField,dynamicVariableType,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
+          ENDIF
+          IF(ASSOCIATED(nonlinearMapping)) &
+            & CALL FieldVariable_ParameterSetUpdateStart(lhsVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999
+          CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector, &
+            & err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,previousVelocityVector, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
+                & previousAccelerationVector,err,error,*999)
+            ENDIF
+          ENDIF
+
+          IF(ASSOCIATED(rhsMapping)) THEN
+            CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
+            IF(hasIntegratedValues) &
+              & CALL Field_ParameterSetDataRestore(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
               & err,error,*999)
           ENDIF
+          IF(ASSOCIATED(nonlinearMapping)) &
+            & CALL FieldVariable_ParameterSetUpdateFinish(lhsVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
         ENDDO !equationsSetIdx
+        
         !Add in any rows from any interface conditions
         DO interfaceConditionIdx=1,numberOfInterfaceConditions
           NULLIFY(interfaceCondition)
@@ -10626,7 +10789,7 @@ CONTAINS
         !Restore the solver RHS check data                 
         CALL DistributedVector_DataRestore(solverRHSVector,solverRHSCheckData,err,error,*999)            
       ENDIF !Update RHS
-      
+
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -10636,7 +10799,7 @@ CONTAINS
           & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
         CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
       ENDIF
-      
+
     ENDIF !Calculate solver RHS
 
     NULLIFY(solverResidualVector)
@@ -10657,10 +10820,10 @@ CONTAINS
         NULLIFY(solverResidualVector)
         CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,solverResidualVector,err,error,*999)
         !Get the list of solver variables
-        NULLIFY(solverMatrixToEquationsSetMap)
-        CALL SolverMapping_SolverMatrixToEquationsSetMapGet(solverMapping,1,solverMatrixToEquationsSetMap,err,error,*999)
+        NULLIFY(solverMatrixToEquationsMap)
+        CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,1,solverMatrixToEquationsMap,err,error,*999)
         NULLIFY(solverVariablesList)
-        CALL SolverMappingSMToESMap_VariableListGet(solverMatrixToEquationSetMap,solverVariablesList,err,error,*999)
+        CALL SolverMappingSMToEQSMap_VariableListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
         !Initialise the residual to zero
         CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
         !Get the solver residual check data
@@ -10708,34 +10871,34 @@ CONTAINS
               NULLIFY(stiffnessMatrix)
               CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix, &
                 & err,error,*999)
-              NULLIFY(distributedStiffnessMatrix)
-              CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,distributedStiffnessMatrix,err,error,*999)
+              NULLIFY(stiffnessDistributedMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
               CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
               matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
               CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                & distributedStiffnessMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+                & stiffnessDistributedMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
             ENDIF
             CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
             IF(dampingMatrixNumber/=0.AND.dynamicSolver%degree>=SOLVER_DYNAMIC_FIRST_DEGREE) THEN
               NULLIFY(dampingMatrix)
               CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
-              NULLIFY(distributedDampingMatrix)
-              CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,distributedDampingMatrix,err,error,*999)
+              NULLIFY(dampingDistributedMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
               CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
               matrixCoefficient=matrixCoefficient*dampingMatrixCoefficient
               CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                & matrixCoefficient,distributedDampingMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+                & matrixCoefficient,dampingDistributedMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
             ENDIF
             CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
             IF(massMatrixNumber/=0.AND.dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
               NULLIFY(massMatrix)
               CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
-              NULLIFY(distributedMassMatrix)
-              CALL EquationsMatrix_DistributedMatrixGet(massMatrix,distributedMassMatrix,err,error,*999)
+              NULLIFY(massDistributedMatrix)
+              CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
               CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
               matrixCoefficient=matrixCoefficient*massMatrixCoefficient
               CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                & matrixCoefficient,distributedMassMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+                & matrixCoefficient,massDistributedMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
             ENDIF
           ENDIF
 
@@ -10769,11 +10932,11 @@ CONTAINS
                 CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,incrementalVector, &
                   & err,error,*999)
                 !Get the distributed matrix
-                NULLIFY(distributedLinearMatrix)
-                CALL EquationMatrix_DistributedMatrixGet(linearMatrix,distributedLinearMatrix,err,error,*999)
+                NULLIFY(linearDistributedMatrix)
+                CALL EquationMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
                 !Add the linear matrix times the incremental vector
                 CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                  & matrixCoefficient,distributedLinearMatrix,.FALSE.,incrementalVector,linearTempVector,err,error,*999)
+                  & matrixCoefficient,linearDistributedMatrix,.FALSE.,incrementalVector,linearTempVector,err,error,*999)
               ENDIF
             ENDDO !equationsMatrixIdx
           ENDIF
@@ -10790,7 +10953,7 @@ CONTAINS
             !Initialise the temp vector
             CALL DistributedVector_AllValuesSet(nonlinearTempVector,0.0_DP,err,error,*999)
             !Loop over the residuals
-            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMaping,numberOfResiduals,err,error,*999)            
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)            
             DO residualIdx=1,numberOfResiduals
               NULLIFY(residualMapping)
               CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
@@ -10823,7 +10986,7 @@ CONTAINS
 
           !Calculate the solver residual
           NULLIFY(equationsRowToSolverRowsMap)
-          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
+          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
             & err,error,*999)
 
           !Couple the equations set vectors to the solver residual vector
@@ -10849,19 +11012,19 @@ CONTAINS
                 NULLIFY(previousResidualVector)
                 CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
                   & previousResidualVector,err,error,*999)
-                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,prevousResidualVector,1.0_DP, &
+                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previousResidualVector,1.0_DP, &
                   & currentResidualVector,err,error,*999)
                 IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-                  NULLIFY(previous2ReidualVector)
+                  NULLIFY(previous2ResidualVector)
                   CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                     & previous2ResidualVector,err,error,*999)
-                  CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,prevous2ResidualVector,1.0_DP, &
+                  CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous2ResidualVector,1.0_DP, &
                     & currentResidualVector,err,error,*999)
                   IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                    NULLIFY(previous3ReidualVector)
+                    NULLIFY(previous3ResidualVector)
                     CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
                       & previous3ResidualVector,err,error,*999)
-                    CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,prevous3ResidualVector,1.0_DP, &
+                    CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous3ResidualVector,1.0_DP, &
                       & currentResidualVector,err,error,*999)
                   ENDIF
                 ENDIF
@@ -10907,7 +11070,7 @@ CONTAINS
             !Get the interface matrix mappings to the solver matrix
             NULLIFY(interfaceMatrixToSolverMatricesMap)
             CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMap(interfaceConditionToSolverMatricesMap, &
-              & interfaceMatrixIdx,interfaceMatrixToSolverMatriceMap,err,error,*999)
+              & interfaceMatrixIdx,interfaceMatrixToSolverMatricesMap,err,error,*999)
             NULLIFY(interfaceRowToSolverRowsMap)
             CALL SolverMappingIMToSMSMap_InterfaceRowToSolverRowsGet(interfaceMatrixToSolverMatricesMap, &
               & interfaceRowToSolverRowsMap,err,error,*999)
@@ -11053,7 +11216,7 @@ CONTAINS
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
           NULLIFY(dynamicMapping)
-          CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMaping,err,error,*999)
+          CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
           IF(ASSOCIATED(dynamicMapping)) THEN
             NULLIFY(dynamicVariable)
             CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
@@ -11102,18 +11265,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dependentVariableType,interfaceVariableType,equationsColumnNumber,equationsMatrixIdx, &
-      & equationsMatrixNumber,equationsRowNumber,equationsSetIdx, & 
-      & interfaceConditionIdx,interfaceMatrixIdx,linearVariableType,rhsBoundaryCondition, &
-      & rhsGlobalDOF,equationsMatrixIdx2,rhsVariableDOF,rhsVariableType,variableBoundaryCondition,solverMatrixIdx, &
-      & solverRowNumber,variableDOF,variableGlobalDOF,variableIdx,variableType,&
-      & dirichletIdx,numberOfInterfaceMatrices
+    INTEGER(INTG) :: dependentVariableType,dirichletIdx,equationsColumnNumber,equationsMatrixIdx,equationsMatrixIdx2, &
+      & equationsMatrixNumber,equationsRowNumber,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,interfaceVariableType, &
+      & linearVariableType,numberOfEquationsSets,numberOfInterfaceConditions,rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF, &
+      & rhsVariableType,solverMatrixIdx,solverRowNumber,variableDOF,variableGlobalDOF,variableBoundaryCondition,variableIdx, &
+      & variableType
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: dependentValue,linearValue,linearValueSum,residualValue,rhsValue, &
       & sourceValue,rhsIntegratedValue
     REAL(DP), POINTER :: rhsParameters(:),checkData(:),checkData2(:),checkData3(:),checkData4(:)
-    LOGICAL :: subtractFixedBCsFromResidual,hasIntegratedValues
     TYPE(RealDPPtrType), ALLOCATABLE :: dependentParameters(:)
+    LOGICAL :: subtractFixedBCsFromResidual,hasIntegratedValues
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,rhsBoundaryConditions
     TYPE(DistributedMatrixType), POINTER :: previousSolverDistributedMatrix,solverDistributedMatrix
@@ -11156,7 +11318,6 @@ CONTAINS
   
     ENTERS("Solver_StaticAssemble",err,error,*999)
   
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     NULLIFY(solverEquations)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMapping)
@@ -11168,6 +11329,7 @@ CONTAINS
     
     !Assemble the solver matrices
     NULLIFY(previousSolverDistributedMatrix)
+    
     IF(selectionType==SOLVER_MATRICES_ALL.OR. &
       & selectionType==SOLVER_MATRICES_LINEAR_ONLY.OR. &
       & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
@@ -11188,65 +11350,130 @@ CONTAINS
           CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
           !Initialise matrix to zero
           CALL DistributedMatrix_AllValuesSet(solverDistributedMatrix,0.0_DP,err,error,*999)
+          !Get the check data
+          NULLIFY(matrixCheckData)
+          CALL DistributedMatrix_DataGet(solverDistributedMatrix,matrixCheckData,err,error,*999)
+          
           !Loop over the equations sets
           DO equationsSetIdx=1,numberOfEquationsSets
-            !First Loop over the linear equations matrices mapped to this solver matrix
-            CALL SolverMapping_SolverNumberOfLinearMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
-              & numberOfLinearMatrices,err,error,*999)
-            DO linearMatrixIdx=1,numberOfLinearMatrices
-              NULLIFY(equationsToSolverMap)
-              CALL SolverMapping_EquationsToSolverMapGet(solverMapping,equationsSetIdx,linearMatrixIdx,solverMatrixIdx, &
-                & equationsToSolverMap,err,error,*999)
-              NULLIFY(linearMatrix)
-              CALL SolverMappingEquationsToSolverMap_EquationsMatrixGet(equationsToSolverMap,linearMatrix,err,error,*999)
-!!TODO: SHOULD USE MATRIX COEFFICIENT HERE
-!!TODO: MAKE THIS MATRIX COUPLE ADD AND PASS IN COUPLINGS
-              CALL SolverMatrix_EquationsMatrixAdd(solverMatrix,equationsSetIdx,1.0_DP,linearMatrix,err,error,*999)
-            ENDDO !linearMatrixIdx
+            NULLIFY(equationsSetToSolverMatricesMap)
+            CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+              & err,error,*999)
+            NULLIFY(equationsRowToSolverRowsMap)
+            CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap, &
+              & equationsRowToSolverRowsMap,err,error,*999)
+            NULLIFY(equationsMatricesToSolverMatrixMap)
+            CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap,solverMatrixIdx, &
+              & equationsMatricesToSolverMatrixMap,err,error,*999)
+            IF(selectionType==SOLVER_MATRICES_ALL.OR. &
+              & selectionType==SOLVER_MATRICES_LINEAR_ONLY) THEN
+              CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap, &
+                & numberOfLinearMatrices,err,error,*999)
+              DO linearMatrixIdx=1,numberOfLinearMatrices
+                NULLIFY(linearMatrixToSolverMatrixMap)
+                CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                  & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)
+                NULLIFY(equationsColToSolverColsMap)
+                CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(linearMatrixToSolverMatrixMap, &
+                  & equationsColToSolverColsMap,err,error,*999)
+                NULLIFY(linearMatrix)
+                CALL SolverMappingEMToSMMap_EquationsMatrixGet(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
+                NULLIFY(linearDistributedMatrix)
+                CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
+                CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,linearDistributedMatrix, &
+                  & .FALSE.,err,error,*999)
+              ENDDO !equationsMatrixIdx
+            ENDIF
             IF(selectionType==SOLVER_MATRICES_ALL.OR. &
               & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
               & selectionType==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
-              !Now set the values from the equations Jacobian mapped to this solver matrix
-              CALL SolverMapping_SolverNumberOfJacobianMatricesGet(solverMapping,solverMatrixIdx,equationsSetIdx, &
+              !Now set the values from the equations Jacobian
+              CALL SolverMappingEMSToSMMap_NumberOfJacobianMatricesGet(equationsMatricesToSolverMatrixMap, &
                 & numberOfJacobianMatrices,err,error,*999)
               DO jacobianMatrixIdx=1,numberOfJacobianMatrices
-                NULLIFY(jacobianToSolverMap)
-                CALL SolverMapping_JacobianToSolverMapGet(solverMapping,equationsSetIdx,jacobianMatrixIdx,solverMatrixIdx, &
-                  & jacobianToSolverMap,err,error,*999)
+                NULLIFY(jacobianMatrixToSolverMatrixMap)
+                CALL SolverMappingEMSToSMMap_JacobianMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                  & jacobianMatrixIdx,jacobianMatrixToSolverMatrixMap,err,error,*999)
+                NULLIFY(jacobianColToSolverColsMap)
+                CALL SolverMappingJMToSMMap_JacobianColToSolerColsMapGet(jacobianMatrixToSolverMatrixMap, &
+                  & jacobianColToSolverColsMap,err,error,*999)
                 NULLIFY(jacobianMatrix)
-                CALL SolverMappingJacobianToSolverMap_JacobianMatrixGet(jacobianToSolverMap,jacobianMatrix,err,error,*999)
-!!TODO: SHOULD USE MATRIX COEFFICIENT HERE
-!!TODO: MAKE THIS MATRIX COUPLE ADD AND PASS IN COUPLINGS
-                CALL SolverMatrix_JacobianMatrixAdd(solverMatrix,equationsSetIdx,1.0_DP,jacobianMatrix,err,error,*999)
+                CALL SolverMappingJMToSMMap_JacobianMatrixGet(jacobianMatrixToSolverMatrixMap,jacobianMatrix,err,error,*999)
+                NULLIFY(jacobianDistributedMatrix)
+                CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,jacobianDistributedMatrix,err,error,*999)
+                CALL JacobianMatrix_MatrixCoefficientGet(jacobianMatrix,matrixCoefficient,err,error,*999)
+                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  & equationsRowToSolverRowsMap,jacobianColToSolverColsMap,matrixCoefficient,jacobianDistributedMatrix, &
+                  & .FALSE.,err,error,*999)
               ENDDO !jacobianMatrixIdx
             ENDIF
+             
           ENDDO !equationsSetIdx
+          
           !Loop over any interface conditions
-          DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+          DO interfaceConditionIdx=1,numberOfInterfaceConditions
+            NULLIFY(interfaceConditionToSolverMatricesMap)
+            CALL SolverMapping_InterfaceConditionToSolverMatricesMapGet(solverMapping,interfaceConditionIdx, &
+              & interfaceConditionToSolverMatricesMap,err,error,*999)
+            NULLIFY(interfaceColToSolverRowsMap)
+            CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
+              & interfaceColToSolverRowsMap,err,error,*999)
+             NULLIFY(interfaceMatricesToSolverMatrixMap)
+            CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceMatricesToSolverMatricesMap, &
+              & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
+            NULLIFY(interfaceColToSolverColsMap)
+            CALL SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap, &
+              & interfaceColToSolverColsMap,err,error,*999)
             !Loop over the interface matrices mapped to this solver matrix
-            CALL SolverMapping_SolverNumberOfInterfaceMatricesGet(solverMapping,solverMatrixIdx,interfaceConditionIdx, &
+            CALL SolverMappingIMSToSMMap_NumberOfInterfaceMatricesGet(interfaceMatricesToSolverMatrixMap, &
               & numberOfInterfaceMatrices,err,error,*999)
             DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
-              NULLIFY(interfaceToSolverMap)
-              CALL SolverMapping_JacobianToSolverMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx,solverMatrixIdx, &
-                & interfaceToSolverMap,err,error,*999)
+              NULLIFY(interfaceMatrixToSolverMatricesMap)
+              CALL SolverMappingICToSMSMap_InterfaceMatrixToSolverMatricesMap(interfaceConditionToSolverMatricesMap, &
+                & interfaceMatrixIdx,interfaceMatrixToSolverMatricesMap,err,error,*999)
+              NULLIFY(interfaceRowToSolverRowsMap)
+              CALL SolverMappingIMToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceMatrixToSolverMatricesMap, &
+                & interfaceRowToSolverRowsMap,err,error,*999)
+              NULLIFY(interfaceMatrixToSolverMatrixMap)
+              CALL SolverMappingIMSToSMMap_InterfaceMatrixToSolverMatrixMapGet(interfaceMatricesToSolverMatrixMap, &
+                & interfaceMatrixIdx,interfaceMatrixToSolverMatrixMap,err,error,*999)
               NULLIFY(interfaceMatrix)
-              CALL SolverMappingInterfaceToSolverMap_InterfaceMatrixGet(interfaceToSolverMap,interfaceMatrix,err,error,*999)
-!!TODO: SHOULD USE MATRIX COEFFICIENT HERE
-!!TODO: MAKE THIS MATRIX COUPLE ADD AND PASS IN COUPLINGS
-              CALL SolverMatrix_InterfaceMatrixAdd(solverMatrix,interfaceConditionIdx,[1.0_DP,1.0_DP],interfaceMatrix, &
-                & err,error,*999)
+              CALL SolverMappingIMToSMMap_InterfaceMatrixGet(interfaceMatrixToSolverMatrixMap,interfaceMatrix,err,error,*999)
+              NULLIFY(interfaceDistributedMatrix)
+              CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
+              CALL InterfaceMatrix_MatrixCoefficientGet(interfaceMatrix,matrixCoefficients(1),err,error,*999)
+              CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                & interfaceRowToSolverRowsMap,interfaceColToSolverColsMap,matrixCoefficients(1),interfaceDistributedMatrix, &
+                & .FALSE.,err,error,*999)
+              CALL InterfaceMatrix_HasTranspose(interfaceMatrix,hasTranspose,err,error,*999)
+              IF(hasTranspose) THEN
+                NULLIFY(interfaceRowToSolverColsMap)
+                CALL SolverMappingIMToSMMap_InterfaceRowToSolverColsMapGet(interfaceMatrixToSolverMatrixMap, &
+                  & interfaceRowToSolverColsMap,err,error,*999)
+                NULLIFY(transposeDistributedMatrix)
+                CALL InterfaceMatrix_TransposeDistributeMatrixGet(interfaceMatrix,transposeDistributedMatrix,err,error,*999)
+                CALL InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,matrixCoefficients(2),err,error,*999)
+                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,matrixCoefficients(2),transposeDistributedMatrix, &
+                  & .FALSE.,err,error,*999)
+              ENDIF
             ENDDO !interfaceMatrixIdx
           ENDDO !interfaceConditionIdx
+          
           !Update the solver matrix values
           CALL DistributedMatrix_UpdateStart(solverDistributedMatrix,err,error,*999)
           IF(ASSOCIATED(previousSolverDistributedMatrix)) &
             & CALL DistributedMatrix_UpdateFinish(previousSolverDistributedMatrix,err,error,*999)                      
           previousSolverDistributedMatrix=>solverDistributedMatrix
+          
         ENDIF !Update matrix
       ENDDO !solverMatrixIdx
+      
       IF(ASSOCIATED(previousSolverDistributedMatrix)) &
         & CALL DistributedMatrix_UpdateFinish(previousSolverDistributedMatrix,err,error,*999)
+      
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -11256,215 +11483,9 @@ CONTAINS
           & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
         CALL Profiling_TimingsOutput(1,"Solver matrices assembly",userElapsed,systemElapsed,err,error,*999)
       ENDIF
+      
     ENDIF
-    !The solver matrices have only one residual vector
-    NULLIFY(solverResidualVector)
-    IF(selectionType==SOLVER_MATRICES_ALL.OR. &
-      & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
-      & selectionType==SOLVER_MATRICES_RESIDUAL_ONLY.OR. &
-      & selectionType==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
-      !Assemble residual vector
-      !We assemble residual vector before RHS vector, then when assembling the RHS vector we subtract
-      !the RHS terms for fixed BCs from the residual vector as this residual evaluation uses a matrix
-      !vector product of the full equations matrix rather than the reduced solver matrix
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
-        CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
-        CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
-      ENDIF
-      IF(solverMatrices%updateResidual) THEN
-        NULLIFY(solverResidualVector)
-        CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,solverResidualVector,err,error,*999)
-        !Initialise the residual to zero
-        CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
-        !Loop over the equations sets
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
-          NULLIFY(equationsSet)
-          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(dependentField)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-          NULLIFY(equations)
-          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-          NULLIFY(vectorEquations)
-          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-          NULLIFY(vectorMatrices)
-          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-          NULLIFY(vectorMapping)
-          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-          NULLIFY(equationsRowToSolverRowsMap)
-          CALL SolverMapping_EquationsRowToSolverRowsMapGet(solverMapping,equationsSetIdx,equationsRowToSolverRowsMap, &
-            & err,error,*999)
-          !Calculate the contributions from any linear matrices
-          linearMapping=>vectorMapping%linearMapping
-          IF(ASSOCIATED(linearMapping)) THEN
-            NULLIFY(linearMatrices)
-            CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-            DO linearMatrixIdx=1,linearMatrices%numberOfLinearMatrices
-              NULLIFY(linearMatrix)
-              CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,linearMatrixIdx,linearMatrix,err,error,*999)
-              linearMatrix=>linearMatrices%matrices(equationsMatrixIdx)%ptr
-              linearVariableType=linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%variableType
-              linearVariable=>linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%variable
-              IF(.NOT.ASSOCIATED(linearVariable)) CALL FlagError("Linear variable is not associated.",err,error,*999)
-              linearTempVector=>linearMatrix%tempVector
-              !Initialise the linear temporary vector to zero
-              CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)
-              NULLIFY(dependentVector)
-              CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-                & linearMatrix%matrix,.FALSE.,dependentVector,linearTempVector,err,error,*999)
-            ENDDO !linearMatrixIdx
-          ENDIF
-          !Calculate the solver residual
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            NULLIFY(nonlinearMatrices)
-            CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-            NULLIFY(residualVector)
-            CALL EquationsMatricesNonlinear_ResidualDistributedVectorGet(nonlinearMatrices,residualVector,err,error,*999)
-            !Loop over the rows in the equations set
-            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-              IF(equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
-                !Get the equations residual contribution
-                CALL DistributedVector_ValuesGet(residualVector,equationsRowNumber,residualValue,err,error,*999)
-                !Get the linear matrices contribution to the RHS values if there are any
-                IF(ASSOCIATED(linearMapping)) THEN
-                  linearValueSum=0.0_DP
-                  DO equationsMatrixIdx2=1,linearMatrices%numberOfLinearMatrices
-                    NULLIFY(linearMatrix)
-                    CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,equationsMatrixIdx2,linearMatrix,err,error,*999)
-                    NULLIFY(linearTempVector)
-                    CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-                    CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
-                    linearValueSum=linearValueSum+linearValue
-                  ENDDO !equationsMatrixIdx2
-                  residualValue=residualValue+linearValueSum
-                ENDIF
-                CALL DistributedVector_VectorRowCoupleAdd(solverResidualVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                  & 1.0_DP,residualValue,err,error,*999)
-              ENDIF
-            ENDDO !equationsRowNumber
-          ELSE IF(ASSOCIATED(linearMapping)) THEN
-            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-              IF(equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
-                linearValueSum=0.0_DP
-                DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
-                  NULLIFY(linearMatrix)
-                  CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,equationsMatrixIdx2,linearMatrix,err,error,*999)
-                  NULLIFY(linearTempVector)
-                  CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-                  CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
-                  linearValueSum=linearValueSum+linearValue
-                ENDDO !equationsMatrixIdx
-                residualValue=linearValueSum
-                CALL DistributedVector_VectorRowCoupleAdd(solverResidualVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                  & 1.0_DP,residualValue,err,error,*999)
-              ENDIF
-            ENDDO !equationsRowNumber
-          ENDIF
-        ENDDO !equationsSetIdx
-        !Loop over the interface conditions
-        DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-          NULLIFY(interfaceCondition)
-          CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-          NULLIFY(lagrangeField)
-          CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
-          NULLIFY(interfaceEquations)
-          CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-          NULLIFY(interfaceMatrices)
-          CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-          NULLIFY(interfaceMapping)
-          CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
-          SELECT CASE(interfaceCondition%method)
-          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-            numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
-          CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-            numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices-1
-          ENDSELECT
-          !Calculate the contributions from any interface matrices
-          DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
-            !Calculate the interface matrix-Lagrange vector product residual contribution
-            NULLIFY(interfaceMatrix)
-            CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
-            NULLIFY(lagrangeVariable)
-            CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
-            NULLIFY(interfaceDistributedMatrix)
-            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
-            NULLIFY(interfaceTempVector)
-            CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
-            interfaceVariableType=interfaceMapping%lagrangeVariableType
-            interfaceVariable=>interfaceMapping%lagrangeVariable
-            !Initialise the linear temporary vector to zero
-            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            NULLIFY(lagrangeVector)
-            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
-            NULLIFY(interfaceRowToSolverRowsMap)
-            CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
-              & interfaceRowToSolverRowsMap,err,error,*999)
-            !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
-              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
-            !Calculate the transposed interface matrix-dependent variable product residual contribution
-            NULLIFY(dependentVariable)
-            CALL InterfaceMapping_MatrixVariableGet(interfaceMapping,interfaceMatrixIdx,dependentVariable,err,error,*999)
-            NULLIFY(interfaceDistributedMatrix)
-            CALL InterfaceMatrix_TransposeDistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
-            NULLIFY(interfaceTempVector)
-            CALL InterfaceMatrix_TempTranposeDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
-            !Initialise the linear temporary vector to zero
-            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            NULLIFY(dependentVector)
-            CALL FieldVariable_ParameterSetVectorGet(dependentVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributed,.FALSE.,dependentVector,interfaceTempVector,err,error,*999)
-            NULLIFY(interfaceColToSolverRowsMap)
-            CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
-              & err,error,*999)             
-            !Add interface matrix residual contribution to the solver residual.
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
-              & interfaceColToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
-          ENDDO !interfaceMatrixIdx
-          SELECT CASE(interfaceCondition%method)
-          CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-            interfaceMatrixIdx=interfaceMapping%numberOfInterfaceMatrices
-            !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
-            NULLIFY(interfaceMatrix)
-            CALL InterfaceMatrices_InterfaceMatrixzget(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
-            NULLIFY(lagrangeVariable)
-            CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
-            NULLIFY(interfaceDistributedMatrix)
-            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
-            NULLIFY(interfaceTempVector)
-            CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
-            !Initialise the linear temporary vector to zero
-            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            NULLIFY(lagrangeVector)
-            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
-            NULLIFY(interfaceRowToSolverRowsMap)
-            CALL SolverMapping_interfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIx,interfaceMatrixIdx, &
-              & interfaceRowToSolverRowsMap,err,error,*999)
-            !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
-              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
-          END SELECT
-        ENDDO !interfaceConditionIdx
-        !Start the update the solver residual vector values
-        CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
-      ENDIF !update residual
-      IF(ASSOCIATED(solverResidualVector)) CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
-        CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
-        CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
-        userElapsed=userTime2(1)-userTime1(1)
-        systemElapsed=systemTime2(1)-systemTime1(1)
-        IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
-          & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
-        CALL Profiling_TimingsOutput(1,"Solver residual assembly",userElapsed,systemElapsed,err,error,*999)
-      ENDIF
-    ENDIF
+        
     NULLIFY(solverRHSVector)
     IF(selectionType==SOLVER_MATRICES_ALL.OR. &
       & selectionType==SOLVER_MATRICES_LINEAR_ONLY.OR. &
@@ -11476,23 +11497,38 @@ CONTAINS
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
-      IF(solverMatrices%updateRHSVector) THEN
+      
+      CALL SolverMatrices_UpdateRHSGet(solverMatrices,updateRHS,err,error,*999)
+      IF(updateRHS) THEN
         NULLIFY(solverRHSVector)
         CALL SolverMatrices_RHSDistributedVectorGet(solverMatrices,solverRHSVector,err,error,*999)
         !Initialise the RHS to zero
         CALL DistributedVector_AllValuesSet(solverRHSVector,0.0_DP,err,error,*999)
-        NULLIFY(checkData)
-        CALL DistributedVector_DataGet(solverRHSVector,checkData,err,error,*999)
+        !Get the solver RHS check data                  
+        NULLIFY(solverRHSCheckData)
+        CALL DistributedVector_DataGet(solverRHSVector,solverRHSCheckData,err,error,*999)
+        !Get the boundary conditions
+        NULLIFY(boundaryConditions)
+        CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+        
         subtractFixedBCsFromResidual=.FALSE.
         IF(selectionType==SOLVER_MATRICES_ALL.OR. &
           & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
           & selectionType==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
           IF(solverMatrices%updateResidual) subtractFixedBCsFromResidual=.TRUE.
-        ENDIF        
+        ENDIF
+        
         !Loop over the equations sets
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+        DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(equationsSetToSolverMatricesMap)
+          CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+            & err,error,*999)
+          NULLIFY(equationsRowToSolverRowsMap)
+          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap, &
+            & equationsRowToSolverRowsMap,err,error,*999)
+          
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           NULLIFY(vectorEquations)
@@ -11501,6 +11537,381 @@ CONTAINS
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+          NULLIFY(lhsMapping)
+          CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+          NULLIFY(lhsVariable)
+          CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+          NULLIFY(equationsRowToLHSDOFMap)
+          CALL EquationsMappingLHS_EquationsRowTOLHSDOFMapGet(lhsMapping,equationsRowToLHSDOFMap,err,error,*999)
+          NULLIFY(lhsDomainMapping)
+          CALL FieldVariable_DomainMappingGet(lhsVariable,lhsDomainMapping,err,error,*999)
+          CALL DomainMapping_BoundaryFinishGet(lhsDomainMapping,lhsBoundaryFinish,err,error,*999)
+          CALL EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*999)
+          CALL EquationsMappingLHS_TotalNumberOfRowsGet(lhsMapping,totalNumberOfRows,err,error,*999)
+          
+          !Calculate the contributions from any nonlinear residuals
+          NULLIFY(nonlinearTempVector)
+          NULLIFY(nonlinearMapping)
+          NULLIFY(nonlinearMatrices)
+          NULLIFY(nonlinearMapping)
+          CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+          IF(ASSOCIATED(nonlinearMapping)) THEN
+            CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+            CALL EquationsMatricesNonlinear_DistributedTempVectorGet(nonlinearMatrices,nonlinearTempVector,err,error,*999)
+            CALL DistributedVector_AllValuesSet(nonlinearTempVector,0.0_DP,err,error,*999)
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+            DO residualIdx=1,numberOfResiduals
+              NULLIFY(residualMapping)
+              CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+              rhsResidual=.TRUE.
+              CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
+              DO solverMatrixIdx=1,numberOfSolverMatrices
+                NULLIFY(solverMatrixToEquationsMap)
+                CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
+                  & err,error,*999)
+                NULLIFY(solverVariablesList)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+                DO residualVariableIdx=1,numberOfResidualVariables
+                  CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
+                  CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,residualVariable,variablePositionIdx, &
+                    & err,error,*999)
+                  IF(variablePositionIdx/=0) rhsResidual=.FALSE.
+                ENDDO !residualVariableIdx
+              ENDDO !solverMatrixIdx
+              IF(rhsResidual) THEN
+                !The residual does not have any variables involved in the solver matrices so take it over to the RHS
+                CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
+                NULLIFY(residualVector)
+                CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+                NULLIFY(residualDistributedVector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,residualDistributedVector,err,error,*999)
+                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                  & residualCoefficient,residualDistributedVector,err,error,*999)
+              ENDIF
+            ENDDO !residualIdx
+          ENDIF !nonlinear mapping
+
+          !Calculate the contributions from any linear matrices
+          NULLIFY(linearTempVector)
+          NULLIFY(linearMapping)
+          NULLIFY(linearMatrices)
+          CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+          IF(ASSOCIATED(linearMapping)) THEN
+            CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+            CALL EquationsMatricesLinear_DistributedTempVectorGet(linearMatrices,linearTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)                  
+            CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+            DO equationsMatrixIdx=1,numberOfLinearMatrices
+              NULLIFY(linearVariable)
+              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
+              rhsLinearMatrix=.TRUE.
+              DO solverMatrixIdx=1,numberOfSolverMatrices
+                NULLIFY(solverMatrixToEquationsMap)
+                CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
+                  & err,error,*999)
+                NULLIFY(solverVariablesList)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+                CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+                  & err,error,*999)
+                IF(variablePositionIdx/=0) rhsLinearMatrix=.FALSE.
+              ENDDO !solverMatrixIdx
+              IF(rhsLinearMatrix) THEN
+                !Linear matrix variable is not on the LHS so take the matrix times vector over to the RHS.
+                NULLIFY(linearMatrix)
+                CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,linearMatrix,err,error,*999)
+                NULLIFY(linearDistributedMatrix)
+                CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
+                CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                NULLIFY(dependentDistributedVector)
+                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentDistributedVector, &
+                  & err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                  & linearDistributedMatrix,.FALSE.,dependentDistributedVector,linearTempVector,err,error,*999)
+              ENDIF !rhs linear matrix
+            ENDDO !equationsMatrixIdx
+          ENDIF !linear mapping
+
+          !Add in any source vectors
+          NULLIFY(sourcesTempVector)
+          NULLIFY(sourcesMapping)
+          NULLIFY(sourceVectors)
+          CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+          IF(ASSOCIATED(sourcesMapping)) THEN
+            CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+            CALL EquationsMatricesSources_DistributedTempVectorGet(sourceVectors,sourcesTempVector,err,error,*999)
+            CALL DistributedVector_AllValuesSet(sourcesTempVector,0.0_DP,err,error,*999)
+            CALL EquaitonsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*999)
+            DO sourceIdx=1,numberOfSources
+              NULLIFY(sourceMapping)
+              CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,sourceIdx,sourceMapping,err,error,*999)
+              CALL EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*999)
+              NULLIFY(sourceVector)
+              CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
+              NULLIFY(distributedSourceVector)
+              CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                & distributedSourceVector,err,error,*999)
+              CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                & currentSourceVector,err,error,*999)
+            ENDDO !sourceIdx
+          ENDIF !source mapping
+          
+          NULLIFY(rhsVariable)
+          NULLIFY(rhsMapping)
+          NULLIFY(rhsVector)
+          NULLIFY(currentRHSVector)
+          NULLIFY(rhsBoundaryConditionsVariable)
+          NULLIFY(rhsIntegratedParameters)
+          CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
+          IF(ASSOCIATED(rhsMapping)) THEN
+            CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
+            CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
+              & err,error,*999)
+            CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
+              & err,error,*999)
+            CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999) 
+            IF(hasIntegratedValues) THEN
+              !Update RHS field by integrating any point Neumann conditions
+              CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditionsVariable,err,error,*999)
+!!TODO: NEED TO FIX INTEGRATED FLUX MATRIX CALCULATION. THE MATRIX CURRENTLY USES THE RHS FOR THE ROWS BUT IT SHOULD USE THE
+!!      LHS. IT SHOULD BE POSSIBLE TO USE A DIFFERENT BASIS FOR THE FLUX INTERPOLATION THAN FOR THE DEPENDENT INTERPOLATION.
+              CALL BoundaryConditionsVariable_NeumannIntegrate(rhsBoundaryConditionsVariable,err,error,*999)
+              CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
+                & err,error,*999) 
+            ENDIF
+            NULLIFY(equationsRowToRHSDOFMap)
+            CALL EquationsMatricesRHS_EquationsRowToRHSDOFMapGet(rhsVector,equationsRowToRHSDOFMap,err,error,*999)
+          ENDIF
+          
+          NULLIFY(lhsBoundaryConditionsRowVariable)
+          CALL BoundaryConditions_RowVariableGet(boundaryConditions,lhsVariable,lhsBoundaryConditionsRowVariable,err,error,*999)
+          NULLIFY(lhsBoundaryConditionsVariable)
+          CALL BoundaryConditions_VariableGet(boundaryConditions,lhsVariable,lhsBoundaryConditionsVariable,err,error,*999)
+          CALL BoundaryCOnditionsVariable_NumberOfDirichletConditionsGet(lhsBoundaryConditionsVariable, &
+            & numberOfDirichletConditions,err,error,*999)
+          NULLIFY(dirichletBoundaryConditions)
+          IF(numberOfDirichletConditions>0) CALL BoundaryConditionsVariable_DirichletBoundaryConditionsExists( &
+            & lhsBoundaryConditionsVariable,dirichletBoundaryConditions,err,error,*999)
+          NULLIFY(neumannBoundaryConditions)
+          CALL BoundaryConditionsVariable_NeumannBoundaryConditionsExists(lhsBoundaryConditionsVariable, &
+            & neumannBoundaryConditions,err,error,*999)
+
+          !Loop over the rows in the equations set
+          DO equationsRowNumber=1,totalNumberOfRows
+            CALL BoundaryConditionsRowVariable_RowConditionTypeGet(lhsBoundaryConditionsRowVariable,equationsRowNumber, &
+              & rowCondition,err,error,*999)
+
+            !Get the nonlinear contribution to the RHS values               
+            IF(ASSOCIATED(nonlinearTempVector)) THEN
+              CALL DistributedVector_ValuesGet(nonlinearTempVector,equationsRowNumber,nonlinearValue,err,error,*999)
+            ELSE
+              nonlinearValue=0.0_DP
+            ENDIF
+            !Get the linear contribution to the RHS values               
+            IF(ASSOCIATED(linearTempVector)) THEN
+              CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
+            ELSE
+              linearValue=0.0_DP
+            ENDIF
+            !Get the source contribution to the RHS values               
+            IF(ASSOCIATED(sourcesTempVector)) THEN
+              CALL DistributedVector_ValuesGet(sourcesTempVector,equationsRowNumber,sourceValue,err,error,*999)                
+            ELSE
+              sourceValue=0.0_DP
+            ENDIF
+
+            solverRHSValue=nonlinearValue+linearValue+sourceValue
+
+            IF(ASSOCIATED(rhsMapping)) THEN
+              rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
+              IF(hasIntegratedValues) THEN
+                !Add any Neumann integrated values, b = f + N q
+                CALL DistributedVector_ValuesAdd(currentRHSVector,equationsRowNumber,rhsIntegratedParameters(rhsVariableDOF), &
+                  & err,error,*999)
+              ELSE
+                CALL DistributedVector_ValuesUpdate(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
+                  & err,error,*999)
+              ENDIF
+              CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,currentRHSValue,err,error,*999)
+            ELSE
+              rhsValue=0.0_DP
+            ENDIF
+
+            !Get the dynamic contribution to the the RHS values
+            lhsVariableDOF=equationsRowToLHSDOFMap(equationsRowNumber)
+            CALL DomainMapping_LocalToGlobalGet(lhsDomainMapping,lhsVariableDOF,lhsGlobalDOF,err,error,*999)
+            CALL BoundaryConditionsVariable_DOFTypeGet(lhsBoundaryConditionsVariable,lhsGlobalDOF,lhsBoundaryCondition, &
+              & err,error,*999)
+
+            !Apply boundary conditions
+            SELECT CASE(lhsBoundaryCondition)
+            CASE(BOUNDARY_CONDITION_FREE_ROW)
+              solverRHSValue=solverRHSValue+rhsValue
+              !Loop over the solver rows associated with this equations set row
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                & -1.0_DP,solverRHSValue,err,error,*999)
+            CASE(BOUNDARY_CONDITION_DIRICHLET_ROW)
+!!WHY ARE WE ADDING TO THE RHS ROW IF WE ARE GOING TO ELIMINATE IT?
+              !Get the equations RHS values
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                & -1.0_DP,rhsValue,err,error,*999)
+
+              IF(ASSOCIATED(linearMapping)) THEN
+                DO solverMatrixIdx=1,numberOfSolverMatrices
+                  NULLIFY(equationsMatricesToSolverMatrixMap)
+                  CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap, &
+                    & solverMatrixIdx,equationsMatricesToSolverMatrixMap,err,error,*999)
+                  CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap, &
+                    & numberOfLinearMatrices,err,error,*999)
+                  DO linearMatrixIdx=1,numberOfLinearMatrices
+                    NULLIFY(linearMatrixToSolverMatrixMap)
+                    CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                      & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)                    
+                    NULLIFY(linearMatrix)
+                    CALL SolverMappingEMToSMMap_EquationsMatrixGet(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
+                    CALL EquationsMatrix_MatrixNumberGet(linearMatrix,linearMatrixNumber,err,error,*999)
+                    NULLIFY(linearVariable)
+                    CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixNumber,linearVariable, &
+                      & err,error,*999)
+                    IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
+                      CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                      dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
+                      NULLIFY(linearDistributedMatrix)
+                      CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,linearDistributedMatrix,err,error,*999)
+!!WHAT IS THIS TRYING TO DO?
+                      DO dirichletIdx=1,numberOfDirichletConditions
+                        IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                      ENDDO !dirichletIdx
+                      CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                        & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+
+                    ENDIF
+                  ENDDO !linearMatrixIdx                  
+                ENDDO !solverMatrixIdx
+                CALL EquationsMappingLinear_NumberOfLinearVariablesGet(linearMapping,numberOfLinearVariables,err,error,*999)
+                DO linearVariableIdx=1,numberOfLinearVariables
+                  NULLIFY(linearVariable)
+                  CALL EquationsMappingLinear_linearVariableGet(linearMapping,linearVariableIdx,linearVariable,err,error,*999)
+                  IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
+                    NULLIFY(linearVarToEquationsMatricesMap)
+                    CALL EquationsMappingLinear_VariableToEquationsMatricesMapGet(linearMapping,linearVariableIdx, &
+                      & linearVarToEquationsMatricesMap,err,error,*999)
+                    CALL EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(linearVarToEquationsMatricesMap, &
+                      & numberOfEquationsMatrices,err,error,*999)
+                    DO equationsMatrixIdx=1,numberOfEquationsMatrices
+                      CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(linearVarToEquationsMatricesMap, &
+                        & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
+                      CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(linearVarToEquationsMatricesMap, &
+                        & equationsMatrixIdx,lhsVariableDOF,columnNumber,err,error,*999)
+                      NULLIFY(equationsMatrix)
+                      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
+                        & err,error,*999)
+                      CALL EquationsMatrix_MatrixCoefficientGet(equationsMatrix,matrixCoefficient,err,error,*999)
+                      dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
+                      NULLIFY(equationsDistributedMatrix)
+                      CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,equationsDistributedMatrix,err,error,*999)
+!!WHAT IS THIS TRYING TO DO?
+                      DO dirichletIdx=1,numberOfDirichletConditions
+                        IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                      ENDDO !dirichletIdx
+                      CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                        & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+                    ENDDO !matrixidx
+                  ENDIF
+                ENDDO !linearVariableIdx
+              ENDIF !linear mapping
+            ENDIF !LHS DOF fixed
+          
+          CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
+            !Set Neumann boundary conditions
+            solverRHSValue=solverRHSValue+rhsValue
+            !Loop over the solver rows associated with this equations set row
+            CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+              & -1.0_DP,solverRHSValue,err,error,*999)
+          CASE(BOUNDARY_CONDITION_ROBIN_ROW)
+            !Set Robin boundary conditions
+            CALL FlagError("Robin boundary conditions are not implemented.",err,error,*999)
+          CASE(BOUNDARY_CONDITION_CAUCHY_ROW)
+            !Set Cauchy boundary conditions
+            CALL FlagError("Cauchy boundary conditions are not implemented.",err,error,*999)
+          CASE(BOUNDARY_CONDITION_CONSTRAINED_ROW)
+            !Set constrained row boundary conditions
+            CALL FlagError("Constrained row boundary conditions are not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The RHS boundary condition of "// &
+              & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
+              & " for RHS variable dof number "// &
+              & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !equationsRowNumber
+        CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999
+ 
+        IF(ASSOCIATED(rhsMapping)) THEN
+          CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
+          IF(hasIntegratedValues) &
+            & CALL Field_ParameterSetDataRestore(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
+            & err,error,*999)
+        ENDIF
+      ENDDO !equationsSetIdx
+        
+      !Add in any rows from any interface conditions
+      DO interfaceConditionIdx=1,numberOfInterfaceConditions
+          NULLIFY(interfaceCondition)
+          CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+          CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+          SELECT CASE(interfaceConditionMethod)
+          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+            NULLIFY(interfaceEquations)
+            CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+            NULLIFY(interfaceMapping)
+            CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
+            NULLIFY(interfaceMatrices)
+            CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
+            NULLIFY(interfaceRHSMapping)
+            CALL InterfaceMapping_RHSMappingGet(interfaceMapping,interfaceRHSMapping,err,error,*999)
+            NULLIFY(interfaceRHSVector)
+            CALL InterfaceMatrices_RHSVectorGet(interfaceMatrices,interfaceRHSVector,err,error,*999)
+            NULLIFY(interfaceColToSolverRowsMap)
+            CALL SolverMapping_InterfaceColToSolverRowsMapGet(solverMapping,interfaceConditionIdx, &
+              & interfaceColToSolverRowsMap,err,error,*999)
+            NULLIFY(interfaceRHSDistributedVector)
+            CALL InterfaceMatricesRHS_DistributedVectorGet(interfaceRHSVector,interfaceRHSDistributedVector,err,error,*999)
+            !Worry about BCs on the Lagrange variables later.
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverRHSVector, &
+              & interfaceColToSolverRowsMap,1.0_DP,interfaceRHSDistributedVector,err,error,*999)
+          CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The interface condition method of "// &
+              & TRIM(NumberToVString(interfaceCondition%METHOD,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !interfaceConditionIdx
+        !        
+        !Start the update the solver RHS vector values
+        CALL DistributedVector_UpdateStart(solverRHSVector,err,error,*999)
+        CALL DistributedVector_UpdateFinish(solverRHSVector,err,error,*999)
+        !Restore the solver RHS check data                 
+        CALL DistributedVector_DataRestore(solverRHSVector,solverRHSCheckData,err,error,*999)            
+      ENDIF !Update RHS
+
+      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+        CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
+        CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
+        userElapsed=userTime2(1)-userTime1(1)
+        systemElapsed=systemTime2(1)-systemTime1(1)
+        IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+          & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+        CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
+      ENDIF
+
+    ENDIF !Calculate solver RHS
+          
           NULLIFY(sourceMapping)
           CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
           IF(ASSOCIATED(sourcesMapping)) THEN
@@ -11731,6 +12142,223 @@ CONTAINS
       ENDIF
     ENDIF
     IF(ASSOCIATED(solverRHSVector)) CALL DistributedVector_UpdateFinish(solverRHSVector,err,error,*999)
+
+        !The solver matrices have only one residual vector
+    NULLIFY(solverResidualVector)
+    IF(selectionType==SOLVER_MATRICES_ALL.OR. &
+      & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
+      & selectionType==SOLVER_MATRICES_RESIDUAL_ONLY.OR. &
+      & selectionType==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
+      !Assemble residual vector
+      !We assemble residual vector before RHS vector, then when assembling the RHS vector we subtract
+      !the RHS terms for fixed BCs from the residual vector as this residual evaluation uses a matrix
+      !vector product of the full equations matrix rather than the reduced solver matrix
+      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+        CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
+        CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
+      ENDIF
+      IF(solverMatrices%updateResidual) THEN
+        NULLIFY(solverResidualVector)
+        CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,solverResidualVector,err,error,*999)
+        !Initialise the residual to zero
+        CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
+        !Loop over the equations sets
+        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          NULLIFY(dependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(equations)
+          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+          NULLIFY(vectorEquations)
+          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+          NULLIFY(vectorMatrices)
+          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+          NULLIFY(vectorMapping)
+          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+          NULLIFY(lhsMapping)
+          CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+          NULLIFY(equationsRowToSolverRowsMap)
+          CALL SolverMapping_EquationsRowToSolverRowsMapGet(solverMapping,equationsSetIdx,equationsRowToSolverRowsMap, &
+            & err,error,*999)
+          !Calculate the contributions from any linear matrices
+          NULLIFY(linearMapping)
+          CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+          IF(ASSOCIATED(linearMapping)) THEN
+            NULLIFY(linearMatrices)
+            CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+            CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+            DO linearMatrixIdx=1,numberOfLinearMatrices
+              NULLIFY(linearMatrix)
+              CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,linearMatrixIdx,linearMatrix,err,error,*999)
+              NULLIFY(linearDistributedMatrix)
+              CALL EquationMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
+              NULLIFY(linearVariable)
+              CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
+              NULLIFY(linearTempVector)
+              CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
+              !Initialise the linear temporary vector to zero
+              CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)
+              NULLIFY(dependentDistributedVector)
+              CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentDistributedVector, &
+                & err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                & linearDistributedMatrix,.FALSE.,dependentDistributedVector,linearTempVector,err,error,*999)
+            ENDDO !linearMatrixIdx
+          ENDIF
+          !Calculate the solver residual
+          NULLIFY(nonlinearMapping)
+          CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+          IF(ASSOCIATED(nonlinearMapping)) THEN
+            NULLIFY(nonlinearMatrices)
+            CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+            NULLIFY(residualVector)
+            CALL EquationsMatricesNonlinear_ResidualDistributedVectorGet(nonlinearMatrices,residualVector,err,error,*999)
+            !Loop over the rows in the equations set
+            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
+              IF(equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
+                !Get the equations residual contribution
+                CALL DistributedVector_ValuesGet(residualVector,equationsRowNumber,residualValue,err,error,*999)
+                !Get the linear matrices contribution to the RHS values if there are any
+                IF(ASSOCIATED(linearMapping)) THEN
+                  linearValueSum=0.0_DP
+                  DO equationsMatrixIdx2=1,linearMatrices%numberOfLinearMatrices
+                    NULLIFY(linearMatrix)
+                    CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,equationsMatrixIdx2,linearMatrix,err,error,*999)
+                    NULLIFY(linearTempVector)
+                    CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
+                    CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
+                    linearValueSum=linearValueSum+linearValue
+                  ENDDO !equationsMatrixIdx2
+                  residualValue=residualValue+linearValueSum
+                ENDIF
+                CALL DistributedVector_VectorRowCoupleAdd(solverResidualVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                  & 1.0_DP,residualValue,err,error,*999)
+              ENDIF
+            ENDDO !equationsRowNumber
+          ELSE IF(ASSOCIATED(linearMapping)) THEN
+            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
+              IF(equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
+                linearValueSum=0.0_DP
+                DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+                  NULLIFY(linearMatrix)
+                  CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,equationsMatrixIdx2,linearMatrix,err,error,*999)
+                  NULLIFY(linearTempVector)
+                  CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
+                  CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
+                  linearValueSum=linearValueSum+linearValue
+                ENDDO !equationsMatrixIdx
+                residualValue=linearValueSum
+                CALL DistributedVector_VectorRowCoupleAdd(solverResidualVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                  & 1.0_DP,residualValue,err,error,*999)
+              ENDIF
+            ENDDO !equationsRowNumber
+          ENDIF
+        ENDDO !equationsSetIdx
+        !Loop over the interface conditions
+        DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+          NULLIFY(interfaceCondition)
+          CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+          NULLIFY(lagrangeField)
+          CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
+          NULLIFY(interfaceEquations)
+          CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+          NULLIFY(interfaceMatrices)
+          CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
+          NULLIFY(interfaceMapping)
+          CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
+          SELECT CASE(interfaceCondition%method)
+          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
+            numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
+          CASE(INTERFACE_CONDITION_PENALTY_METHOD)
+            numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices-1
+          ENDSELECT
+          !Calculate the contributions from any interface matrices
+          DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
+            !Calculate the interface matrix-Lagrange vector product residual contribution
+            NULLIFY(interfaceMatrix)
+            CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+            NULLIFY(lagrangeVariable)
+            CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
+            NULLIFY(interfaceDistributedMatrix)
+            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
+            NULLIFY(interfaceTempVector)
+            CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
+            interfaceVariableType=interfaceMapping%lagrangeVariableType
+            interfaceVariable=>interfaceMapping%lagrangeVariable
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
+            NULLIFY(lagrangeVector)
+            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+              & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
+            NULLIFY(interfaceRowToSolverRowsMap)
+            CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
+              & interfaceRowToSolverRowsMap,err,error,*999)
+            !Add interface matrix residual contribution to the solver residual
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
+            !Calculate the transposed interface matrix-dependent variable product residual contribution
+            NULLIFY(dependentVariable)
+            CALL InterfaceMapping_MatrixVariableGet(interfaceMapping,interfaceMatrixIdx,dependentVariable,err,error,*999)
+            NULLIFY(interfaceDistributedMatrix)
+            CALL InterfaceMatrix_TransposeDistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
+            NULLIFY(interfaceTempVector)
+            CALL InterfaceMatrix_TempTranposeDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
+            NULLIFY(dependentVector)
+            CALL FieldVariable_ParameterSetVectorGet(dependentVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+              & interfaceDistributed,.FALSE.,dependentVector,interfaceTempVector,err,error,*999)
+            NULLIFY(interfaceColToSolverRowsMap)
+            CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
+              & err,error,*999)             
+            !Add interface matrix residual contribution to the solver residual.
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceColToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
+          ENDDO !interfaceMatrixIdx
+          SELECT CASE(interfaceCondition%method)
+          CASE(INTERFACE_CONDITION_PENALTY_METHOD)
+            interfaceMatrixIdx=interfaceMapping%numberOfInterfaceMatrices
+            !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
+            NULLIFY(interfaceMatrix)
+            CALL InterfaceMatrices_InterfaceMatrixzget(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+            NULLIFY(lagrangeVariable)
+            CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
+            NULLIFY(interfaceDistributedMatrix)
+            CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
+            NULLIFY(interfaceTempVector)
+            CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
+            NULLIFY(lagrangeVector)
+            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+              & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
+            NULLIFY(interfaceRowToSolverRowsMap)
+            CALL SolverMapping_interfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIx,interfaceMatrixIdx, &
+              & interfaceRowToSolverRowsMap,err,error,*999)
+            !Add interface matrix residual contribution to the solver residual
+            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
+          END SELECT
+        ENDDO !interfaceConditionIdx
+        !Start the update the solver residual vector values
+        CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
+      ENDIF !update residual
+      IF(ASSOCIATED(solverResidualVector)) CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
+      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
+        CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
+        CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
+        userElapsed=userTime2(1)-userTime1(1)
+        systemElapsed=systemTime2(1)-systemTime1(1)
+        IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+          & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+        CALL Profiling_TimingsOutput(1,"Solver residual assembly",userElapsed,systemElapsed,err,error,*999)
+      ENDIF
+    ENDIF
+
     !If required output the solver matrices
     IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
       & CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)

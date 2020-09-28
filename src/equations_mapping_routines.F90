@@ -1502,13 +1502,6 @@ CONTAINS
           dynamicMapping%varToEquationsMatricesMap%dofToColumnsMaps(matrixIdx)%columnDOF(dofIdx)=columnIdx
         ENDDO !dofIdx                          
       ENDDO !matrixIdx
-      ALLOCATE(dynamicMapping%varToEquationsMatricesMap%dofToRowsMap(dependentVariable%totalNumberOfDofs),STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps DOF to rows map.",err,error,*999)
-      DO dofIdx=1,dependentVariable%totalNumberOfDofs
-        !1-1 mappings for now.
-        rowIdx=dofIdx
-        dynamicMapping%varToEquationsMatricesMap%dofToRowsMap(dofIdx)=rowIdx
-      ENDDO !dofIdx
       !Allocate and initialise the equations matrix to variable maps types
       ALLOCATE(dynamicMapping%equationsMatrixToVarMaps(dynamicMapping%numberOfDynamicMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations mapping equations matrix to variable maps.",err,error,*999)
@@ -1649,14 +1642,6 @@ CONTAINS
               ENDDO !dofIdx
             ENDIF
           ENDDO !matrixIdx
-          ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableIdx)%dofToRowsMap( &
-            & dependentVariable%totalNumberOfDofs),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
-          DO dofIdx=1,dependentVariable%totalNumberOfDofs
-            !1-1 mappings for now.
-            rowIdx=dofIdx
-            linearMapping%varToEquationsMatricesMaps(variableIdx)%dofToRowsMap(dofIdx)=rowIdx
-          ENDDO !dofIdx
         ENDIF
       ENDDO !variableIdx
       !Allocate and initialise the equations matrix to variable maps types
@@ -1807,15 +1792,6 @@ CONTAINS
               & TRIM(NumberToVString(lhsMapping%lhsVariable%totalNumberOfDOFs,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           ENDIF                    
-          !Allocate and set DOF to Jacobian matrix rows map
-          ALLOCATE(residualMapping%varToJacobianMatrixMap(variableIdx)%ptr%dofToRowsMap(lhsMapping%lhsVariable% &
-            & totalNumberOfDofs),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian matri map DOF to rows map.",err,error,*999)
-          DO dofIdx=1,lhsMapping%lhsVariable%totalNumberOfDofs
-            !1-1 mapping for now
-            rowIdx=dofIdx
-            residualMapping%varToJacobianMatrixMap(variableIdx)%ptr%dofToRowsMap(dofIdx)=rowIdx
-          ENDDO !dofIdx
           NULLIFY(residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr)
           CALL EquationsMappingJMToVMap_Initialise(residualMapping%jacobianMatrixToVarMaps(variableIdx)%ptr, &
             & err,error,*999)          
@@ -1969,8 +1945,6 @@ CONTAINS
               & varToEquationsMatricesMap%dofToColumnsMaps(matrixIdx)%columnDOF, &
               & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',err,error,*999) 
           ENDDO !matrixIdx
-          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dependentVariable%totalNumberOfDofs,5,5, &
-            & varToEquationsMatricesMap%dofToRowsMap,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',err,error,*999)
         ENDIF
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Matrix to variable mappings:",err,error,*999)
         DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
@@ -2026,9 +2000,6 @@ CONTAINS
                 & varToEquationsMatricesMap%dofToColumnsMaps(matrixIdx)%columnDOF, &
                 & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',err,error,*999) 
             ENDDO !matrixIdx
-            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearVariable%totalNumberOfDofs,5,5, &
-              & varToEquationsMatricesMap%dofToRowsMap,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))', &
-              & err,error,*999)
           ENDIF
         ENDDO !variableIdx
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Matrix to variable mappings:",err,error,*999)
@@ -2092,9 +2063,6 @@ CONTAINS
             CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,jacobianVariable%totalNumberOfDofs,5,5, &
               & varToJacobianMap%dofToColumnsMap,'("            DOF to column map :",5(X,I13))','(32X,5(X,I13))', &
               & err,error,*999) 
-            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,jacobianVariable%totalNumberOfDofs,5,5, &
-              & varToJacobianMap%dofToRowsMap,'("            DOF to row map    :",5(X,I13))','(32X,5(X,I13))', &
-              & err,error,*999)
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"          Jacobian to variable mappings:",err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"            Number of columns = ",jacobianMatrixToVarMap% &
               & numberOfColumns,err,error,*999)
@@ -4117,7 +4085,6 @@ CONTAINS
         ENDDO !matrixIdx
         DEALLOCATE(varToEquationsMatricesMap%dofToColumnsMaps)
       ENDIF
-      IF(ALLOCATED(varToEquationsMatricesMap%dofToRowsMap)) DEALLOCATE(varToEquationsMatricesMap%dofToRowsMap)
     ENDIF
     
     EXITS("EquationsMappingVToEMSMap_Finalise")
@@ -4180,7 +4147,6 @@ CONTAINS
     ENTERS("EquationsMappingVToJMMap_Finalise",err,error,*999)
     
     IF(ALLOCATED(varToEquationsJacobianMap%dofToColumnsMap)) DEALLOCATE(varToEquationsJacobianMap%dofToColumnsMap)
-    IF(ALLOCATED(varToEquationsJacobianMap%dofToRowsMap)) DEALLOCATE(varToEquationsJacobianMap%dofToRowsMap)
     
     EXITS("EquationsMappingVToJMMap_Finalise")
     RETURN

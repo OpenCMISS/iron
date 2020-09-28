@@ -2016,7 +2016,6 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfEquationsMatrices !<The number of equations matrices (linear or dynamic) this variable type is mapped to. If the number is -1 the variable is mapped to the RHS vector. If the number is zero then this variable type is not involved in the equations set and the rest of the type is not allocated.
     INTEGER(INTG), ALLOCATABLE :: equationsMatrixNumbers(:) !<equationsMatrixNumbers(i). The equations matrix number for the i'th matrix that this variable type is mapped to.
     TYPE(varToEquationsColumnMapType), ALLOCATABLE :: dofToColumnsMaps(:) !<dofToColumnsMaps(i). The variable dof to equations columns for the i'th equations matrix.
-    INTEGER(INTG), ALLOCATABLE :: dofToRowsMap(:) !<dofToRowsMap(dofIdx). The row number that the dofIdx'th variable dof is mapped to.
   END TYPE VarToEquationsMatricesMapType
 
   !>A buffer type of pointers to VarToEquationsMatricesMapType \see Types::VarToEquationsMatricesMapType
@@ -2105,7 +2104,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: massMatrixNumber !<The matrix number of the dynamic mass matrix. 0 if there is no dynamic mass matrix
     INTEGER(INTG) :: dynamicVariableType !<The variable type involved in the equations matrix mapping.
     TYPE(FieldVariableType), POINTER :: dynamicVariable !<A pointer to the variable that is mapped to the dynamic matrices.
-    TYPE(varToEquationsMatricesMapType), POINTER :: varToEquationsMatricesMap !<The equations matrices mapping for the dynamic variable.
+    TYPE(VarToEquationsMatricesMapType), POINTER :: varToEquationsMatricesMap !<The equations matrices mapping for the dynamic variable.
     TYPE(EquationsMatrixToVarMapPtrType), ALLOCATABLE :: equationsMatrixToVarMaps(:) !<equationsMatrixToVarMaps(matrixIdx). The mappings for the matrixIdx'th equations matrix.
     INTEGER(INTG), POINTER :: equationsRowToVariableDOFMaps(:) !<equationsRowToVariableDOFMaps(rowIdx). The row mappings for the rowIdx'th row of the equations matrices to the dynamic variable.
   END TYPE EquationsMappingDynamicType
@@ -2146,7 +2145,6 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: variableType !<The variable type for this variable to equations matrices map
     TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable for this variable to equations matrices map
     INTEGER(INTG), ALLOCATABLE :: dofToColumnsMap(:) !<dofToColumnsMap(dofIdx). The Jacobian column number for dofIdx'th variable dof
-    INTEGER(INTG), ALLOCATABLE :: dofToRowsMap(:) !<dofToRowsMap(dofIdx). The row number that the dofIdx'th variable dof is mapped to.
   END TYPE VarToJacobianMatrixMapType
 
   !>A buffer type of pointer to a VarToJacobianMatrixMapType \see Types::VarToJacobianMatrixMapType
@@ -2288,10 +2286,6 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices associated with this vector equations mapping.
     !Row mappings
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS i.e., vector equations rows, mapping.
-    !INTEGER(INTG) :: numberOfRows !<The number of local rows (excluding ghost rows) in the equations matrices
-    !INTEGER(INTG) :: totalNumberOfRows !<The number of local rows (including ghost rows) in the equations matrices
-    !INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the equations matrices
-    !TYPE(DomainMappingType), POINTER :: rowDofsMapping !<The domain mapping for the equations rows
     !Equations mapping components
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the equations mapping for dynamic matrices i.e., M.a + C.v + K.u
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<A pointer to the equations mapping for the linear matrices i.e., A.x
@@ -2432,10 +2426,11 @@ END TYPE GeneratedMeshEllipsoidType
   !>Contains information on the boundary conditions for the row variables
   TYPE BoundaryConditionsRowVariableType
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions for this boundary conditions variable
-    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the row field variable for this boundary condition variable
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<A pointer to the row field variable for this boundary condition variable
+    TYPE(FieldVariableType), POINTER :: rhsVariable !<A pointer to the RHS field variable for this LHS variable. Temporary for now until BC restructure.
     INTEGER(INTG) :: numberOfDOFs !<The number of DOFs in the row variable
     INTEGER(INTG) :: totalNumberOfDOFs !<The total number of DOFs in the row variable
-    INTEGER(INTG), ALLOCATABLE :: rowConditionTypes(:) !<rowConditionTypes(dofIdx). The row DOF boundary condition type. \see BoundaryConditionsRoutines_RowTypes
+    INTEGER(INTG), ALLOCATABLE :: rowConditionTypes(:) !<rowConditionTypes(dofIdx). The row DOF boundary condition type. \see BoundaryConditionsRoutines_RowConditionsTypes
   END TYPE BoundaryConditionsRowVariableType
 
   !>A buffer type to allow for an array of pointers to a BoundaryConditionsRowVariableType \see Types::BoundaryConditionsRowVariableType
@@ -2452,7 +2447,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG), ALLOCATABLE :: conditionTypes(:) !<conditionTypes(dofIdx). The specific boundary condition type (eg. incremented pressure) of the dofIdx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOFTypes array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
     INTEGER(INTG) :: numberOfDirichletConditions !<Stores the number of dirichlet conditions associated with this variable
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions !<A pointer to the dirichlet boundary condition type for this boundary condition variable
-    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
+    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions !<A pointer to the Neumann boundary condition type for this boundary condition variable
     TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions !<A pointer to the pressure incremented condition type for this boundary condition variable
     INTEGER(INTG), ALLOCATABLE :: dofCounts(:) !<dofCounts(CONDITION_TYPE): The number of DOFs that have a CONDITION_TYPE boundary condition set
     LOGICAL, ALLOCATABLE :: parameterSetRequired(:) !<parameterSetRequired(PARAMETER_SET) is true if any boundary condition has been set that requires the PARAMETER_SET field parameter set
@@ -2560,7 +2555,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   PUBLIC BoundaryConditionsPressureIncrementedType
 
-  PUBLIC BoundaryConditionsDOFConstraintType,BoundaryConditionsDoOFonstraintPtrType
+  PUBLIC BoundaryConditionsDOFConstraintType,BoundaryConditionsDOFConstraintPtrType
 
   PUBLIC BoundaryConditionsCoupledDOFsType,BoundaryConditionsCoupledDOFsPtrType
 
@@ -3990,17 +3985,25 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Contains information on a field variable in a solver matrix
   TYPE SolverMappingVariableType
+    INTEGER(INTG) :: variableIdx !<The index of this variable in the solver mapping variables
     TYPE(FieldVariableType), POINTER :: variable !<The field variable in the solver matrix
     INTEGER(INTG) :: variableType !<The field variable type in the solver matrix
     INTEGER(INTG) :: numberOfEquations !<The number of equations (set or interface) involving this field variable
-    INTEGER(INTG), ALLOCATABLE :: equationTypes(:) !<equationTypes(equationsIdx).
-    INTEGER(INTG), ALLOCATABLE :: equationIndices(:) !<equationIndices(equationsIdx).
+    INTEGER(INTG), ALLOCATABLE :: equationTypes(:) !<equationTypes(equationsIdx). The type of the equationsIdx'th equation the variable is involved in. \see SolverMappingRoutines_EquationsTypes
+    INTEGER(INTG), ALLOCATABLE :: equationIndices(:) !<equationIndices(equationsIdx). The equations set\interface condition index for the equationsIdx'th equation the variable is involved in. 
+    INTEGER(INTG), ALLOCATABLE :: numberOfMatrices(:) !<numberOfMatrices(equationsIdx). The number of equations matrices that are mapped to the equationsIdx'th equation the variable is involved in.
+    INTEGER(INTG), ALLOCATABLE :: matrixNumbers(:,:) !<matrixIndices(matrixIdx,equationsIdx). The matrix number of the matrixIdx'th matrix in the equationsIdx'th equation the variable is involved in. 
   END TYPE SolverMappingVariableType
+
+  !>A buffer type to a SolverMappingVariableType \see Types::SolverMappingVariableType  
+  TYPE SolverMappingVariablePtrType
+    TYPE(SolverMappingVariableType), POINTER :: ptr !<A pointer to SolverMappingVariableType
+  END TYPE SolverMappingVariablePtrType
 
   !>Contains information on the variables involved in a solver matrix
   TYPE SolverMappingVariablesType
     INTEGER(INTG) :: numberOfVariables !<The number of variables involved in the solver matrix.
-    TYPE(SolverMappingVariableType), ALLOCATABLE :: variables(:) !<variables(variableIdx). The variable information for the variableIdx'th variable involved in the solver matrix.
+    TYPE(SolverMappingVariablePtrType), ALLOCATABLE :: variables(:) !<variables(variableIdx)%ptr. A pointer to the variable information for the variableIdx'th variable involved in the solver matrix.
   END TYPE SolverMappingVariablesType
 
   !>Describes the coupled rows or columns in the solver mapping
@@ -4023,7 +4026,6 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(SolverMatrixToEquationsSetMapPtrType), ALLOCATABLE :: solverMatrixToEquationsSetMaps(:) !<solverMatrixToEquationsSetMaps(equationsSetIdx). The solver matrix to equations set maps for the equationsSetIdx'th equations set.
     INTEGER(INTG) :: numberOfInterfaceConditions !<The number of interface conditions mapped to this sovler matrix
     TYPE(SolverMatrixToInterfaceConditionMapPtrType), ALLOCATABLE :: solverMatrixToInterfaceConditionMaps(:) !<solverMatrixToInterfaceConditionMaps(interfaceConditionIdx). The solver matrix to interface condition maps for the interfaceConditionIdx'th interface condition.
-!!TODO: should this be index by solver dof rather than column???
     TYPE(SolverDOFToVariableDOFsMapPtrType), ALLOCATABLE :: solverDOFToVariableDOFsMaps(:) !<solverDOFToVariableDOFsMaps(dofIdx). A pointer to the mappings from the dofIdx'th solver dof to the field variables in the equations.
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
    END TYPE SolverMatrixToEquationsMapType

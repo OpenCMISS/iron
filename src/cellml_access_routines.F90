@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \addtogroup OpenCMISS_CellML OpenCMISS::Iron::CellML
 !> This module contains all CellML access method routines.
 MODULE CellMLAccessRoutines
   
@@ -58,9 +59,12 @@ MODULE CellMLAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup CellML_FieldTypes CmissCellML::FieldTypes
+  !> \addtogroup CellML_Types OpenCMISS::Iron::CellML::Constants
+  !> \brief CellML constants
+  !>@{
+  !> \addtogroup CellML_FieldTypes OpenCMISS::Iron::CellML::Constants::FieldTypes
   !> \brief CellML field parameter types
-  !> \see CmissCellML,OPENCMISS_CellMLFieldTypes
+  !> \see CmissCellML,OpenCMISS_CellMLFieldTypes
   !> CellML model variables being mapped to or from fields will have an initial type of CellML_UNKNOWN_FIELD. This will be set to
   !> the appropriate type once the model is instantiated and the type can be correctly determined.
   !> \todo Link to appropriate methods for instantiation.
@@ -71,20 +75,21 @@ MODULE CellMLAccessRoutines
   INTEGER(INTG), PARAMETER :: CELLML_PARAMETERS_FIELD = 4 !<CellML parameters field \see CellML_FieldTypes,CmissCellML
   !>@}
 
-  !> \addtogroup CellML_FieldMappingTypes CmissCellML::FieldMappingTypes
+  !> \addtogroup CellML_FieldMappingTypes OpenCMISS::Iron::CellML::Constants::FieldMappingTypes
   !> \brief CellML field parameter types
-  !> \see CmissCellML,OPENCMISS_CellMLFieldTypes
+  !> \see CmissCellML,OpenCMISS_CellMLFieldTypes
   !>@{
   INTEGER(INTG), PARAMETER :: CELLML_MAP_TO_FIELD_TYPE = 1 !<A CellML to field mapping type \see CellML_FieldMappingTypes,CmissCellML
   INTEGER(INTG), PARAMETER :: CELLML_MAP_FROM_FIELD_TYPE = 2 !<A field to CellML mapping type \see CellML_FieldMappingTypes,CmissCellML
   !>@}
 
-  !> \addtogroup CellML_ModelsFieldTypes CmissCellML::ModelsFieldTypes
+  !> \addtogroup CellML_ModelsFieldTypes OpenCMISS::Iron::CellML::Constants::ModelsFieldTypes
   !> \brief CellML field parameter types
-  !> \see CmissCellML,OPENCMISS_CellMLFieldTypes
+  !> \see CmissCellML,OpenCMISS_CellMLFieldTypes
   !>@{
   INTEGER(INTG), PARAMETER :: CELLML_MODELS_FIELD_NOT_CHECKED = -2 !<The CellML environment models field has not been checked. \see CellML_ModelsFieldTypes,CmissCellML
   INTEGER(INTG), PARAMETER :: CELLML_MODELS_FIELD_NOT_CONSTANT =-1 !<The CellML environement models field is not constant. \see CellML_ModelsFieldTypes,CmissCellML
+  !>@}
   !>@}
 
   !Module types

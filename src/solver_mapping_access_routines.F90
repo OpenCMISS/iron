@@ -316,15 +316,17 @@ MODULE SolverMappingAccessRoutines
 
   PUBLIC SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet
 
+  PUBLIC SolverMappingVariable_VariableEquationInfoGet
+
+  PUBLIC SolverMappingVariable_VariableMatrixInfoGet
+
+  PUBLIC SolverMappingVariable_NumberOfEquationsGet
+
   PUBLIC SolverMappingVariables_NumberOfVariablesGet
 
-  PUBLIC SolverMappingVariables_VariableEquationInfoGet
-
-  PUBLIC SolverMappingVariables_VariableGet
+  PUBLIC SolverMappingVariables_SolverMappingVariableGet
 
   PUBLIC SolverMappingVariables_VariableInListCheck
-
-  PUBLIC SolverMappingVariables_VariableNumberOfEquationsGet
 
   PUBLIC SolverMappingVDOFToSDOFsMap_SolverDOFCouplingGet
 
@@ -5903,11 +5905,12 @@ CONTAINS
   !
   
   !>Checks to see if a field variable is in the solver mapping variables. If the field variable is in the list then the returned variable position index will correspond to the position in the list. If the field variable is not in the list then the returned variable position index will be zero. 
-  SUBROUTINE SolverMappingVariables_VariableInListCheck(solverMappingVariables,variable,variablePositionIdx,err,error,*)
+  SUBROUTINE SolverMappingVariables_VariableInListCheck(solverMappingVariables,variable,solverMappingVariable,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the variables for
     TYPE(FieldVariableType), POINTER :: variable !<A pointer to variable to check if it is the solver variables list.
+    
     INTEGER(INTG), INTENT(OUT) :: variablePositionIdx !<On return, the position index of the variable in the solver variables if the variable is in the list. If the variable is not in the solver variables the position index will be zero.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

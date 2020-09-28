@@ -60,23 +60,19 @@ MODULE Timer
   !Module variables
   
   !CPU time parameters
-  !> \addtogroup TIMER_TimerType TIMER::TimerType
+  !> \addtogroup Timer_TimerTypes OpenCMISS::Iron:Timer::Constants::TimerTypes
   !> \brief Timer type parameter
-  !> \see TIMER
+  !> \see Timer
   !>@{  
-  INTEGER(INTG), PARAMETER :: USER_CPU=1 !<User CPU time type \see TIMER_TimerType,TIMER
-  INTEGER(INTG), PARAMETER :: SYSTEM_CPU=2 !<System CPU time type \see TIMER_TimerType,TIMER
-  INTEGER(INTG), PARAMETER :: TOTAL_CPU=3 !<Total CPU (i.e. User + System) time type \see TIMER_TimerType,TIMER
+  INTEGER(INTG), PARAMETER :: USER_CPU=1 !<User CPU time type \see Timer_TimerTypes,Timer
+  INTEGER(INTG), PARAMETER :: SYSTEM_CPU=2 !<System CPU time type \see Timer_TimerTypes,Timer
+  INTEGER(INTG), PARAMETER :: TOTAL_CPU=3 !<Total CPU (i.e. User + System) time type \see Timer_TimerTypes,Timer
   !>@}
   
   !Module variables
 
   !Interfaces
 
-  INTERFACE CPU_TIMER
-    MODULE PROCEDURE CPUTimer
-  END INTERFACE CPU_TIMER
-  
   INTERFACE
 
     SUBROUTINE CPUTimer_(returnTime, timeType, err, cError) BIND(C,NAME="CPUTimer")
@@ -90,8 +86,6 @@ MODULE Timer
   END INTERFACE
 
   PUBLIC USER_CPU,SYSTEM_CPU,TOTAL_CPU
-
-  PUBLIC CPU_TIMER
 
   PUBLIC CPUTimer
 

@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \addtogroup OpenCMISS_Computation OpenCMISS::Iron::Computation
 !> This module contains all computation access method routines.
 MODULE ComputationAccessRoutines
   

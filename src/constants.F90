@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_Constants OpenCMISS::Iron::Constants
 !> This module contains all program wide constants.
 MODULE Constants
 
@@ -50,9 +51,6 @@ MODULE Constants
 
   !Module parameters
 
-  !> \addtogroup Constants OpenCMISS::Iron::Constants
-  !> \brief Distributed matrix vector constants.
-  !>@{
   !> \addtogroup Constants_MathPhysicalConstants OpenCMISS::Iron::Constants::MathPhysicalConstants
   !> \see Constants
   !>@{ 

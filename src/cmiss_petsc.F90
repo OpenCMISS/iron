@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_PETSc OpenCMISS::Iron::PETSc
 !> This module is a CMISS buffer module to the PETSc library.
 MODULE CMISSPetsc
   
@@ -62,8 +63,13 @@ MODULE CMISSPetsc
   
   !Module parameters
 
+  !> \addtogroup PETSc_PetscMatInsertModes OpenCMISS::Iron::PETSc::Constants
+  !> \brief OpenCMISS PETSc constants
+  !> \see CMISSPetsc
+  !>@{
+  
   !Insert mode types
-  !> \addtogroup CMISSPetsc_PetscMatInsertModes CMISSPetsc::Constants::PetscMatInsertModes
+  !> \addtogroup CMISSPetsc_PetscMatInsertModes OpenCMISS::Iron::PETSc::Constants::PetscMatInsertModes
   !> \brief Types of PETSc matrix insert modes
   !> \see CMISSPetsc
   !>@{
@@ -72,7 +78,7 @@ MODULE CMISSPetsc
   !>@}
   
   !Scatter mode types
-  !> \addtogroup CMISSPetsc_PetscScatterModes CMISSPetsc::Constants::PetscScatterModes
+  !> \addtogroup CMISSPetsc_PetscScatterModes OpenCMISS::Iron::PETSc::Constants::PetscScatterModes
   !> \brief Types of PETSc matrix insert modes
   !> \see CMISSPetsc
   !>@{
@@ -81,7 +87,7 @@ MODULE CMISSPetsc
   !>@}
   
   !KSP types
-  !> \addtogroup CMISSPetsc_PetscKSPTypes CMISSPetsc::Constants::PetscKSPTypes
+  !> \addtogroup CMISSPetsc_PetscKSPTypes OpenCMISS::Iron::PETSc::Constants::PetscKSPTypes
   !> \brief Types of PETSc KSP (Krylov Subspace) solvers
   !> \see CMISSPetsc
   !>@{
@@ -118,7 +124,7 @@ MODULE CMISSPetsc
   !>@}
   
   !KSPConvergedReason types
-  !> \addtogroup CMISSPetsc_PetscKSPConvergedReasons CMISSPetsc::Constants::PetscKSPConvergedReasons
+  !> \addtogroup CMISSPetsc_PetscKSPConvergedReasons OpenCMISS::Iron::PETSc::Constants::PetscKSPConvergedReasons
   !> \brief Types of KSP converged reasons for PETSc KSP solvers
   !> \see CMISSPetsc
   !>@{
@@ -142,7 +148,7 @@ MODULE CMISSPetsc
   !>@}
 
   !KSPNorm types
-  !> \addtogroup CMISSPetsc_PetscKSPNormTypes CMISSPetsc::Constants::PetscKSPNormTypes
+  !> \addtogroup CMISSPetsc_PetscKSPNormTypes OpenCMISS::Iron::PETSc::Constants::PetscKSPNormTypes
   !> \brief Types of KSP norm parameters for PETSc KSP solvers
   !> \see CMISSPetsc
   !>@{
@@ -153,7 +159,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatAssembly types
-  !> \addtogroup CMISSPetsc_PetscMatAssemblyTypes CMISSPetsc::Constants::PetscMatAssemblyTypes
+  !> \addtogroup CMISSPetsc_PetscMatAssemblyTypes OpenCMISS::Iron::PETSc::Constants::PetscMatAssemblyTypes
   !> \brief Types of Matrix assembly parameters for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -162,7 +168,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatDuplicate types
-  !> \addtogroup CMISSPetsc_PetscMatFactorTypes CMISSPetsc::Constants::PetscMatFactorTypes
+  !> \addtogroup CMISSPetsc_PetscMatFactorTypes OpenCMISS::Iron::PETSc::Constants::PetscMatFactorTypes
   !> \brief Types of Matrix factor parameters for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -172,7 +178,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatFactor types
-  !> \addtogroup CMISSPetsc_PetscMatFactorTypes CMISSPetsc::Constants::PetscMatFactorTypes
+  !> \addtogroup CMISSPetsc_PetscMatFactorTypes OpenCMISS::Iron::PETSc::Constants::PetscMatFactorTypes
   !> \brief Types of Matrix factor parameters for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -184,7 +190,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatInfo types
-  !> \addtogroup CMISSPetsc_PetscMatInfos CMISSPetsc::Constants::PetscMatInfos
+  !> \addtogroup CMISSPetsc_PetscMatInfos OpenCMISS::Iron::PETSc::Constants::PetscMatInfos
   !> \brief Matrix info parameters for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -202,7 +208,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatInfoType types
-  !> \addtogroup CMISSPetsc_PetscMatInfoTypes CMISSPetsc::Constants::PetscMatInfoTypes
+  !> \addtogroup CMISSPetsc_PetscMatInfoTypes OpenCMISS::Iron::PETSc::Constants::PetscMatInfoTypes
   !> \brief Types of matrix info for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -212,7 +218,7 @@ MODULE CMISSPetsc
   !>@}
   
   !MatOption types
-  !> \addtogroup CMISSPetsc_PetscMatOptions CMISSPetsc::Constants::PetscMatOptions
+  !> \addtogroup CMISSPetsc_PetscMatOptions OpenCMISS::Iron::PETSc::Constants::PetscMatOptions
   !> \brief Types of matrix options for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -242,7 +248,7 @@ MODULE CMISSPetsc
   !>@}
   
   !Matrix Solver Package types
-  !> \addtogroup CMISSPetsc_PetscMatSolverPackages CMISSPetsc::Constants::PetscMatSolverPackages
+  !> \addtogroup CMISSPetsc_PetscMatSolverPackages OpenCMISS::Iron::PETSc::Constants::PetscMatSolverPackages
   !> \brief Types of matrix solver packages for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -263,7 +269,7 @@ MODULE CMISSPetsc
   !>@}
   
   !MatStructure types
-  !> \addtogroup CMISSPetsc_PetscMatStructures CMISSPetsc::Constants::PetscMatStructures
+  !> \addtogroup CMISSPetsc_PetscMatStructures OpenCMISS::Iron::PETSc::Constants::PetscMatStructures
   !> \brief The matrix structure parameters for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -273,7 +279,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatReuse types
-  !> \addtogroup CMISSPetsc_PetscMatReuses CMISSPetsc::Constants::PetscMatReuses
+  !> \addtogroup CMISSPetsc_PetscMatReuses OpenCMISS::Iron::PETSc::Constants::PetscMatReuses
   !> \brief The matrix reuse parameters for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -283,7 +289,7 @@ MODULE CMISSPetsc
   !>@}
 
   !MatColoring types
-  !> \addtogroup CMISSPetsc_PetscMatColoringTypes CMISSPetsc::Constants::PetscMatColoringTypes
+  !> \addtogroup CMISSPetsc_PetscMatColoringTypes OpenCMISS::Iron::PETSc::Constants::PetscMatColoringTypes
   !> \brief The matrix colouring types for PETSc matrices
   !> \see CMISSPetsc
   !>@{
@@ -296,7 +302,7 @@ MODULE CMISSPetsc
   !>@}
 
   !Norm types
-  !> \addtogroup CMISSPetsc_PetscNormTypes CMISSPetsc::Constants::PetscNormTypes
+  !> \addtogroup CMISSPetsc_PetscNormTypes OpenCMISS::Iron::PETSc::Constants::PetscNormTypes
   !> \brief Types of norms for PETSc
   !> \see CMISSPetsc
   !>@{
@@ -306,7 +312,7 @@ MODULE CMISSPetsc
   !>@}
   
   !PC types
-  !> \addtogroup CMISSPetsc_PetscPCypes CMISSPetsc::Constants::PetscPCTypes
+  !> \addtogroup CMISSPetsc_PetscPCypes OpenCMISS::Iron::PETSc::Constants::PetscPCTypes
   !> \brief Types of preconditioners for PETSc KSP solvers.
   !> \see CMISSPetsc
   !>@{
@@ -497,6 +503,8 @@ MODULE CMISSPetsc
   !TS Sundials Gram Schmidt Type
   TSSundialsGramSchmidtType, PARAMETER :: PETSC_SUNDIALS_MODIFIED_GS = SUNDIALS_MODIFIED_GS
   TSSundialsGramSchmidtType, PARAMETER :: PETSC_SUNDIALS_CLASSICAL_GS = SUNDIALS_CLASSICAL_GS
+
+  !>@}
   
   !Module types
 

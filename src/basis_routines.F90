@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGP  L.
 !>
 
+!> \defgroup OpenCMISS_Basis OpenCMISS::Iron::Basis
 !> This module contains all basis function routines.
 MODULE BasisRoutines
 

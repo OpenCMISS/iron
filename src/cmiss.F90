@@ -47,6 +47,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 !>
+
+!> \defgroup OpenCMISS_CMISS OpenCMISS::Iron::CMISS
 !> The top level cmiss module.
 MODULE Cmiss
 
@@ -76,19 +78,27 @@ MODULE Cmiss
 
   !Module parameters
 
+  !> \addtogroup CMISS_Constants OpenCMISS::Iron::CMISS::Constants
+  !> \brief OpenCMISS CMISS constants
+  !>@{
+  
+  !> \addtogroup CMISS_Versions OpenCMISS::Iron::CMISS::Constants::Versions
+  !> \brief CMISS version parameters
+  !>@{
   INTEGER(INTG), PARAMETER :: CMFE_MAJOR_VERSION = 0
   INTEGER(INTG), PARAMETER :: CMFE_MINOR_VERSION = 4
   INTEGER(INTG), PARAMETER :: CMFE_REVISION_VERSION = 0
 
   CHARACTER(LEN=MAXSTRLEN), PARAMETER :: CMFE_BUILD_VERSION = "$Rev"
 
-  !> \addtogroup CMFE_ErrorHandlingModes OpenCMISS::Iron::ErrorHandlingModes
+  !> \addtogroup CMFE_ErrorHandlingModes OpenCMISS::Iron::CMISS::Constants::ErrorHandlingModes
   !> \brief Error handling mode parameters
   !> \see OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_RETURN_ERROR_CODE = 0 !<Just return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see cmfe_ErrorHandlingModes,OpenCMISS
+  !>@}
   !>@}
   
   !Module types

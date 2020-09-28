@@ -41,8 +41,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_Computation OpenCMISS::Iron::Computation
 !> This module contains all computation routines.
-
 MODULE ComputationRoutines
 
   USE BaseRoutines

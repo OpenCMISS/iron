@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \addtogroup OpenCMISS_CoordinateSystem OpenCMISS::Iron::CoordinateSystem
 !> This module contains all coordinate system access method routines.
 MODULE CoordinateSystemAccessRoutines
   
@@ -58,7 +59,11 @@ MODULE CoordinateSystemAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup COORINDATE_ROUTINES_CoordinateSystemTypes CoordinateRoutines::CoordinateSystemTypes
+  !> \addtogroup OpenCMISS_CoordinateSystemConstants OpenCMISS::Iron::CoordinateSystem::Constants
+  !> \see CoordinateRoutines
+  !> Coordinate system type parameters
+  !>@{ 
+  !> \addtogroup CoordinateSystem_CoordinateSystemTypes OpenCMISS::Iron::CoordinateSystem::Constants::CoordinateSystemTypes
   !> \see CoordinateRoutines
   !> Coordinate system type parameters
   !>@{ 
@@ -69,7 +74,7 @@ MODULE CoordinateSystemAccessRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_OBLATE_SPHEROIDAL_TYPE=5 !<Oblate spheroidal coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
   !>@}
 
-  !> \addtogroup CoordinateRoutines_RadialInterpolations CoordinateRoutines::RadialInterpolations
+  !> \addtogroup CoordinateRoutines_RadialInterpolations  OpenCMISS::Iron::CoordinateSystem::Constants::RadialInterpolations
   !> \see CoordinateRoutines
   !> \brief The type of radial interpolation for polar coordinate systems
   !>@{
@@ -79,7 +84,7 @@ MODULE CoordinateSystemAccessRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE=3 !<r^3 radial interpolation \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
   !>@}
   
-  !> \addtogroup CoordinateRoutines_JacobianType CoordinateRoutines::JacobianType
+  !> \addtogroup CoordinateRoutines_JacobianType OpenCMISS::Iron::CoordinateSystem::Constants::JacobianType
   !> \see CoordinateRoutines
   !> \brief The type of Jacobian to return when coordinate metrics are calculated.
   !>@{
@@ -87,6 +92,7 @@ MODULE CoordinateSystemAccessRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_LINE_TYPE=1 !<Line type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_AREA_TYPE=2 !<Area type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_JACOBIAN_VOLUME_TYPE=3 !<Volume type Jacobian \see CoordinateRoutines_JacobianTypes,CoordinateRoutines
+  !>@}
   !>@}
   
   !Module types

@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \addtogroup OpenCMISS_ControlLoop OpenCMISS::Iron::Context
 !> This module contains all control loop access method routines.
 MODULE ControlLoopAccessRoutines
   
@@ -61,12 +62,12 @@ MODULE ControlLoopAccessRoutines
   !> \addtogroup OpenCMISS_ControlLoopConstants OpenCMISS::Iron::ControlLoop::Constants
   !> \brief Control loop constants.
   !>@{
-  !> \addtogroup ControlLoopRoutines_ControlLoopIdentifiers ControlLoopRoutines::ControlLoopIdentifiers
+  !> \addtogroup ControlLoopRoutines_ControlLoopIdentifiers OpenCMISS::Iron::ControlLoop::Constants::ControlLoopIdentifiers
   !> \brief The control loop identification parameters
   !>@{
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_NODE=0 !<The identifier for a each "leaf" node in a control loop. \see ControlLoopRoutines_ControlLoopIdentifiers,ControlLoopRoutines
   !>@}
-  !> \addtogroup ControlLoopRoutines_ControlLoopTypes ControlLoopRoutines::ControlLoopTypes
+  !> \addtogroup ControlLoopRoutines_ControlLoopTypes OpenCMISS::Iron::ControlLoop::Constants::ControlLoopTypes
   !> \brief Control loop type parameters
   !> \see ControlLoopRoutines
   !>@{
@@ -76,7 +77,7 @@ MODULE ControlLoopAccessRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_WHILE_LOOP_TYPE=4 !<While control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_LOAD_INCREMENT_LOOP_TYPE=5 !<Load increment control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
   !>@}
-  !> \addtogroup ControlLoop_OutputTypes OpenCMISS::Iron::ControlLoop::OutputTypes
+  !> \addtogroup ControlLoop_OutputTypes OpenCMISS::Iron::ControlLoop::Constants::OutputTypes
   !> \brief The types of output for a control loop.
   !> \see ControlLoop
   !>@{
@@ -85,7 +86,7 @@ MODULE ControlLoopAccessRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_TIMING_OUTPUT=2 !<Timing output from the control loop \see ControlLoop_OutputTypes,ControlLoop
   !>@}
 
-  !> \addtogroup ControlLoop_FieldVariableLinearityTypes OpenCMISS::Iron::ControlLoop::FieldVariableLinearityTypes
+  !> \addtogroup ControlLoop_FieldVariableLinearityTypes OpenCMISS::Iron::ControlLoop::Constants::FieldVariableLinearityTypes
   !> \brief The linearity type of control loop field variables
   !> \see ControlLoop
   !>@{
@@ -93,7 +94,7 @@ MODULE ControlLoopAccessRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR=2 !<The control loop field variable is nonlinear \see ControlLoop_FieldVariableLinearityTypes,ControlLoop
   !>@}
 
-  !> \addtogroup ControlLoop_FieldVariableTimeDependenceTypes OpenCMISS::Iron::ControlLoop::FieldVariableTimeDependenceTypes
+  !> \addtogroup ControlLoop_FieldVariableTimeDependenceTypes OpenCMISS::Iron::ControlLoop::Constants::FieldVariableTimeDependenceTypes
   !> \brief The time dependence type of control loop field variables
   !> \see ControlLoop
   !>@{

@@ -41,7 +41,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!>This module handles all analytic analysis routines.
+!> \defgroup OpenCMISS_AnalyticAnalysis OpenCMISS::Iron::AnalyticAnalysis
+!> This module handles all analytic analysis routines.
 MODULE AnalyticAnalysisRoutines
 
   USE BasisRoutines
@@ -77,13 +78,16 @@ MODULE AnalyticAnalysisRoutines
 
   !Module parameters
 
-  !> \addtogroup AnalyticAnalysisRoutines_ErrorTypes AnalyticAnalysisRoutines::ErrorTypes
+  !> \addtogroup AnalyticAnalysis_Constants OpenCMISS::Iron::AnalyticAnalysis::Constants
+  !>@{
+  !> \addtogroup AnalyticAnalysisRoutines_ErrorTypes OpenCMISS::Iron::AnalyticAnalysis::Constants::ErrorTypes
   !> \brief errors definition type parameters
   !> \see AnalyticAnalysisRoutines,OPENCMISS_ErrorTypes
   !>@{
   INTEGER(INTG), PARAMETER :: ABSOLUTE_ERROR_TYPE=1 !<The absolute type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
   INTEGER(INTG), PARAMETER :: PERCENTAGE_ERROR_TYPE=2 !<The percentage type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
   INTEGER(INTG), PARAMETER :: RELATIVE_ERROR_TYPE=3 !<The relative type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
+  !>@}
   !>@}
 
   !Module types

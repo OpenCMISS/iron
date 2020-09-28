@@ -215,7 +215,15 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVectorJMToVMap_JacobianMatrixGet
 
+  PUBLIC EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet
+
+  PUBLIC EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet
+
+  PUBLIC EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet
+
   PUBLIC EquationsMappingVectorVToEMSMap_VariableGet
+
+  PUBLIC EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet
 
   PUBLIC EquationsMappingVectorVToJMMap_VariableGet
 
@@ -475,7 +483,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_PRECHECKS
-    TYPE(varToEquationsMatricesMapType), POINTER :: variableToEquationsMatricesMap
+    TYPE(VarToEquationsMatricesMapType), POINTER :: variableToEquationsMatricesMap
 #endif    
  
     ENTERS("EquationsMappingDynamic_VariableNumberOfMatricesGet",err,error,*999)
@@ -3150,6 +3158,143 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the column number for a DOF in a variable to equations matrices map.
+  SUBROUTINE EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(varToEquationsMatricesMap,equationsMatrixIdx, &
+    & dofIdx,columnNumber,err,error,*)
+
+    !Argument variables
+    TYPE(VarToEquationsMatricesMapType), POINTER :: varToEquationsMatricesMap !<A pointer to the variable to equations matrices map to get the column number for
+    INTEGER(INTG), INTENT(IN) :: equationsMatrixIdx !<The equations matrix index to get the column number for
+    INTEGER(INTG), INTENT(IN) :: dofIdx !<The DOF index to get the column number for
+    INTEGER(INTG), INTENT(OUT) :: columnNumber !<On exit, the column number for the DOF index.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(varToEquationsMatricesMap)) &
+      & CALL FlagError("Variable to equations matrices map is not associated.",err,error,*999)
+    IF(equationsMatrixIdx<1.OR.equationsMatrixIdx>varToEquationsMatricesMap%numberOfEquationsMatrices) THEN
+      localError="The specified equations matrix index of "//TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
+        & " is invalid. The equations matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(varToEquationsMatricesMap%numberOfEquationsMatrices,"*",err,error))//"."
+    ENDIF
+    IF(.NOT.ALLOCATED(varToEquationsMatricesMap%dofToColumnsMaps)) &
+      & CALL FlagError("The DOF to columns maps is not allocated for the variable to equations matrices map.",err,error,*999)
+    IF(.NOT.ALLOCATED(varToEquationsMatricesMap%dofToColumnsMaps(equationsMatrixIdx)%columnDOF)) THEN
+      localError="The column DOF array is not allocated for equations matrix index "// &
+        & TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
+        & " of the DOF to columns maps of the variable to equations matrices map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(dofIdx<1.OR.dofIdx>SIZE(varToEquationsMatricesMap%dofToColumnsMaps(equationsMatrixIdx)%columnDOF,1)) THEN
+      localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
+        & " is invalid. The DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(varToEquationsMatricesMap%dofToColumnsMaps(equationsMatrixIdx)%columnDOF,1),"*",err,error))// &
+        & " for equations matrix index "//TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
+        & " in the variable to equations matrices map."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    columnNumber=varToEquationsMatricesMap%dofToColumnsMaps(equationsMatrixIdx)%columnDOF(dofIdx)
+    
+    EXITS("EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet")
+    RETURN
+999 columnNumber=0
+    ERRORS("EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet",err,error)
+    EXITS("EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equations matrix number for an equations matrix in a variable to equations matrices map.
+  SUBROUTINE EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(varToEquationsMatricesMap,equationsMatrixIdx, &
+    & equationsMatrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(VarToEquationsMatricesMapType), POINTER :: varToEquationsMatricesMap !<A pointer to the variable to equations matrices map to get the equations matrix number for
+    INTEGER(INTG), INTENT(IN) :: equationsMatrixIdx !<The equations matrix index to get the equations matrix number for
+    INTEGER(INTG), INTENT(OUT) :: equationsMatrixNumber !<On exit, the equations matrix number for the equations matrix index.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(varToEquationsMatricesMap)) &
+      & CALL FlagError("Variable to equations matrices map is not associated.",err,error,*999)
+    IF(equationsMatrixIdx<1.OR.equationsMatrixIdx>varToEquationsMatricesMap%numberOfEquationsMatrices) THEN
+      localError="The specified equations matrix index of "//TRIM(NumberToVString(equationsMatrixIdx,"*",err,error))// &
+        & " is invalid. The equations matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(varToEquationsMatricesMap%numberOfEquationsMatrices,"*",err,error))//"."
+    ENDIF
+    IF(.NOT.ALLOCATED(varToEquationsMatricesMap%equationsMatrixNumbers)) &
+      & CALL FlagError("The equation matrix numbers array is not allocated for the variable to equations matrices map.", &
+      & err,error,*999)
+#endif    
+    
+    equationsMatrixNumber=varToEquationsMatricesMap%equationsMatrixNumbers(equationsMatrixIdx)
+    
+    EXITS("EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet")
+    RETURN
+999 equationsMatrixNumber=0
+    ERRORS("EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet",err,error)
+    EXITS("EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of equations matrices in a variable to equations matrices map.
+  SUBROUTINE EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(varToEquationsMatricesMap,numberOfEquationsMatrices, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(VarToEquationsMatricesMapType), POINTER :: varToEquationsMatricesMap !<A pointer to the variable to equations matrices map to get the number of equations matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquationsMatrices !<On exit, the number of equations matrices in the variable to equations matrices map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(varToEquationsMatricesMap)) &
+      & CALL FlagError("Variable to equations matrices map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfEquationsMatrices=varToEquationsMatricesMap%numberOfEquationsMatrices
+    
+    EXITS("EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet")
+    RETURN
+999 numberOfEquationsMatrices=0
+    ERRORS("EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet",err,error)
+    EXITS("EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the field variable for a variable to equations matrices map.
   SUBROUTINE EquationsMappingVectorVToEMSMap_VariableGet(varToEquationsMatricesMap,variable,err,error,*)
 
@@ -3183,6 +3328,50 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingVectorVToEMSMap_VariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the column number for a DOF in a variable to Jacobian matrix map.
+  SUBROUTINE EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet(varToJacobianMatrixMap,dofIdx,columnNumber,err,error,*)
+
+    !Argument variables
+    TYPE(VarToJacobianMatrixMapType), POINTER :: varToJacobianMatrixMap !<A pointer to the variable to Jacobian matrix map to get the column number for
+    INTEGER(INTG), INTENT(IN) :: dofIdx !<The DOF index to get the column number for
+    INTEGER(INTG), INTENT(OUT) :: columnNumber !<On exit, the column number for the DOF index.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(varToJacobianMatrixMap)) &
+      & CALL FlagError("Variable to Jacobian matrix map is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(varToJacobianMatrixMap%dofToColumnsMap)) &
+      & CALL FlagError("The DOF to columns array is not allocated for the variable to Jacobian matrix map.",err,error,*999)
+    IF(dofIdx<1.OR.dofIdx>SIZE(varToJacobianMatrixMap%dofToColumnsMap,1)) THEN
+      localError="The specified DOF index of "//TRIM(NumberToVString(dofIdx,"*",err,error))// &
+        & " is invalid. The DOF index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(varToJacobianMatrixMap%dofToColumnsMap,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    columnNumber=varToJacobianMatrixMap%dofToColumnsMap(dofIdx)
+    
+    EXITS("EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet")
+    RETURN
+999 columnNumber=0
+    ERRORS("EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet",err,error)
+    EXITS("EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorVToJMMap_JacobianMatrixColumnNumberGet
 
   !
   !================================================================================================================================

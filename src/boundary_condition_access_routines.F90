@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \addtogroup OpenCMISS_BoundaryConditions OpenCMISS::Iron::BoundaryConditions
 !> This module contains all boundary condition access method routines.
 MODULE BoundaryConditionAccessRoutines
   
@@ -61,17 +62,17 @@ MODULE BoundaryConditionAccessRoutines
   !> \addtogroup BoundaryConditionsRoutines_Constants OpenCMISS::Iron::BoundaryConditions::Constants
   !> \brief Boundary conditions constants.
   !>@{
-  
   !> \addtogroup BoundaryConditionsRoutines_RowTypes OpenCMISS::Iron::BoundaryConditions::Constants::RowTypes
   !> \brief Boundary conditions type for rows.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FREE_ROW=0 !<The row is free. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DIRICHLET_ROW=1 !<The row has Dirichlet boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_POINT_NEUMANN_ROW=2 !<The row has point Neumann boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_INTEGRATED_NEUMANN_ROW=3 !<The row has integrated Neumann boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_ROBIN_ROW=4 !<The row has Robin boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CAUCHY_ROW=5 !<The row has Cauchy boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
-  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CONSTRAINED_ROW=6 !<The row has constraint boundary conditions. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DIRICHLET_ROW=1 !<The row has a Dirichlet boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_POINT_NEUMANN_ROW=2 !<The row has a point Neumann boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_INTEGRATED_NEUMANN_ROW=3 !<The row has an integrated Neumann boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NEUMANN_ROW=3 !<The row has a Neumann boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_ROBIN_ROW=4 !<The row has a Robin boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CAUCHY_ROW=5 !<The row has a Cauchy boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
+  INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CONSTRAINED_ROW=6 !<The row has a constraint boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
   !>@}
   
   !> \addtogroup BoundaryConditionsRoutines_DOFTypes OpenCMISS::Iron:::BoundaryConditions::Constants::DOFTypes
@@ -118,7 +119,7 @@ MODULE BoundaryConditionAccessRoutines
   INTEGER(INTG), PARAMETER :: MAX_BOUNDARY_CONDITION_NUMBER=29 !The maximum boundary condition type identifier, used for allocating an array with an entry for each type
   !>@}
   
-  !> \addtogroup BoundaryConditionsRoutines_SparsityTypes OpenCMISS::Iron::BoundaryConditions::Constants::BoundaryConditionsSparsityTypes
+  !> \addtogroup BoundaryConditionsRoutines_SparsityTypes OpenCMISS::Iron::BoundaryConditions::Constants::SparsityTypes
   !> \brief Storage type for matrices used by boundary conditions.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_SPARSE_MATRICES=1 !<The matrices are stored as sparse matrices.
@@ -134,8 +135,8 @@ MODULE BoundaryConditionAccessRoutines
   !Interfaces
 
   PUBLIC BOUNDARY_CONDITION_FREE_ROW,BOUNDARY_CONDITION_DIRICHLET_ROW,BOUNDARY_CONDITION_POINT_NEUMANN_ROW, &
-    & BOUNDARY_CONDITION_INTEGRATED_NEUMANN_ROW,BOUNDARY_CONDITION_ROBIN_ROW,BOUNDARY_CONDITION_CAUCHY_ROW, &
-    & BOUNDARY_CONDITION_CONSTRAINED_ROW
+    & BOUNDARY_CONDITION_INTEGRATED_NEUMANN_ROW,BOUNDARY_CONDITION_NEUMANN_ROW,BOUNDARY_CONDITION_ROBIN_ROW, &
+    & BOUNDARY_CONDITION_CAUCHY_ROW,BOUNDARY_CONDITION_CONSTRAINED_ROW
   
   PUBLIC BOUNDARY_CONDITION_DOF_FREE,BOUNDARY_CONDITION_DOF_FIXED,BOUNDARY_CONDITION_DOF_INCREMENTED, &
     & BOUNDARY_CONDITION_DOF_MIXED,BOUNDARY_CONDITION_DOF_CONSTRAINED
@@ -172,15 +173,19 @@ MODULE BoundaryConditionAccessRoutines
   
   PUBLIC BoundaryConditionsRowVariable_BoundaryConditionsGet
 
-  PUBLIC BoundaryConditionsRowVariable_FieldVariableGet
+  PUBLIC BoundaryConditionsRowVariable_LHSVariableGet
 
   PUBLIC BoundaryConditionsRowVariable_NumberOfDOFsGet
+
+  PUBLIC BoundaryConditionsRowVariable_RHSVariableExists
 
   PUBLIC BoundaryConditionsRowVariable_RowConditionTypeGet
 
   PUBLIC BoundaryConditionsRowVariable_TotalNumberOfDOFsGet
 
   PUBLIC BoundaryConditionsVariable_ConditionTypeGet
+
+  PUBLIC BoundaryConditionsVariable_DirichletConditionsExists
 
   PUBLIC BoundaryConditionsVariable_DirichletConditionsGet
 
@@ -192,7 +197,11 @@ MODULE BoundaryConditionAccessRoutines
 
   PUBLIC BoundaryConditionsVariable_FieldVariableGet
 
+  PUBLIC BoundaryConditionsVariable_NeumannConditionsExists
+
   PUBLIC BoundaryConditionsVariable_NeumannConditionsGet
+
+  PUBLIC BoundaryConditionsVariable_PressureIncConditionsExists
 
   PUBLIC BoundaryConditionsVariable_PressureIncConditionsGet
 
@@ -634,39 +643,39 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field variable associated with a boundary condition row variable.
-  SUBROUTINE BoundaryConditionsRowVariable_FieldVariableGet(boundaryConditionsRowVariable,fieldVariable,err,error,*)
+  !>Gets the LHS field variable associated with a boundary condition row variable.
+  SUBROUTINE BoundaryConditionsRowVariable_LHSVariableGet(boundaryConditionsRowVariable,lhsVariable,err,error,*)
 
     !Argument variables
-    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the field variable for
-    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the field variable associated with the specified boundary conditions row variable. Must not be associated on entry
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the LHS field variable for
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<On exit, a pointer to the LHS field variable associated with the specified boundary conditions row variable. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("BoundaryConditionsRowVariable_FieldVariableGet",err,error,*998)
+    ENTERS("BoundaryConditionsRowVariable_LHSVariableGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
+    IF(ASSOCIATED(lhsVariable)) CALL FlagError("LHS field variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
       & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
 #endif    
 
-    fieldVariable=>boundaryConditionsRowVariable%variable
+    lhsVariable=>boundaryConditionsRowVariable%lhsVariable
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(fieldVariable)) &
-      & CALL FlagError("The field variable is not associated for the boundary conditions row variable.",err,error,*999)
+    IF(.NOT.ASSOCIATED(lhsVariable)) &
+      & CALL FlagError("The LHS field variable is not associated for the boundary conditions row variable.",err,error,*999)
 #endif    
        
-    EXITS("BoundaryConditionsRowVariable_FieldVariableGet")
+    EXITS("BoundaryConditionsRowVariable_LHSVariableGet")
     RETURN
-999 NULLIFY(fieldVariable)
-998 ERRORS("BoundaryConditionsRowVariable_FieldVariableGet",err,error)
-    EXITS("BoundaryConditionsRowVariable_FieldVariableGet")
+999 NULLIFY(lhsVariable)
+998 ERRORS("BoundaryConditionsRowVariable_LHSVariableGet",err,error)
+    EXITS("BoundaryConditionsRowVariable_LHSVariableGet")
     RETURN 1
     
-  END SUBROUTINE BoundaryConditionsRowVariable_FieldVariableGet
+  END SUBROUTINE BoundaryConditionsRowVariable_LHSVariableGet
 
   !
   !================================================================================================================================
@@ -698,6 +707,39 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsRowVariable_NumberOfDOFsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS field variable associated with a boundary condition row variable if it exists.
+  SUBROUTINE BoundaryConditionsRowVariable_RHSVariableExists(boundaryConditionsRowVariable,rhsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable !<A pointer to the boundary conditions row variable to get the RHS field variable for
+    TYPE(FieldVariableType), POINTER :: rhsVariable !<On exit, a pointer to the rHS field variable associated with the specified boundary conditions row variable if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsRowVariable_RHSVariableExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(rhsVariable)) CALL FlagError("RHS field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsRowVariable)) &
+      & CALL FlagError("Boundary conditions row variable is not associated.",err,error,*999)
+#endif    
+
+    rhsVariable=>boundaryConditionsRowVariable%rhsVariable
+       
+    EXITS("BoundaryConditionsRowVariable_RHSVariableExists")
+    RETURN
+999 NULLIFY(rhsVariable)
+998 ERRORS("BoundaryConditionsRowVariable_RHSVariableExists",err,error)
+    EXITS("BoundaryConditionsRowVariable_RHSVariableExists")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsRowVariable_RHSVariableExists
 
   !
   !================================================================================================================================
@@ -819,6 +861,41 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsVariable_ConditionTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the dirichlet boundary conditions exist for a boundary condition variable.
+  SUBROUTINE BoundaryConditionsVariable_DirichletConditionsExists(boundaryConditionsVariable,dirichletBoundaryConditions, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to check the existance of the dirichlet boundary conditions for
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryCOnditions !<On exit, a pointer to the dirichlet boundary conditions in the specified boundary conditions variable if they exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_DirichletConditionsExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(dirichletBoundaryConditions)) &
+      & CALL FlagError("Dirichlet boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) &
+      & CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
+
+    dirichletBoundaryConditions=>boundaryConditionsVariable%dirichletBoundaryConditions
+
+    EXITS("BoundaryConditionsVariable_DirichletConditionsExists")
+    RETURN
+999 NULLIFY(dirichletBoundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_DirichletConditionsExists",err,error)
+    EXITS("BoundaryConditionsVariable_DirichletConditionsExists")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_DirichletConditionsExists
 
   !
   !================================================================================================================================
@@ -1016,6 +1093,38 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks if the neumann boundary conditions for a boundary condition variable exists.
+  SUBROUTINE BoundaryConditionsVariable_NeumannConditionsExists(boundaryConditionsVariable,neumannBoundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to check the existance of the neumann boundary conditions for
+    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryCOnditions !<On exit, a pointer to the neumann boundary conditions in the specified boundary conditions variable if they exist. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_NeumannConditionsExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(neumannBoundaryConditions)) CALL FlagError("Neumann boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
+
+    neumannBoundaryConditions=>boundaryConditionsVariable%neumannBoundaryConditions
+
+    EXITS("BoundaryConditionsVariable_NeumannConditionsExists")
+    RETURN
+999 NULLIFY(neumannBoundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_NeumannConditionsExists",err,error)
+    EXITS("BoundaryConditionsVariable_NeumannConditionsExists")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_NeumannConditionsExists
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the neumann boundary conditions for a boundary condition variable.
   SUBROUTINE BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,neumannBoundaryConditions,err,error,*)
 
@@ -1048,6 +1157,40 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsVariable_NeumannConditionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the pressure incremented boundary conditions for a boundary condition variable exist.
+  SUBROUTINE BoundaryConditionsVariable_PressureIncConditionsExists(boundaryConditionsVariable, &
+    & pressureIncrementedBoundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable !<A pointer to the boundary conditions variable to check the existance of the pressure incremented boundary conditions for
+    TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions !<On exit, a pointer to the pressure incremented boundary conditions in the specified boundary conditions variable if the exist. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditionsVariable_PressureIncConditionsExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(pressureIncrementedBoundaryConditions)) &
+      & CALL FlagError("Pressure incremented boundary conditions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditionsVariable)) CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
+#endif    
+
+    pressureIncrementedBoundaryConditions=>boundaryConditionsVariable%pressureIncrementedBoundaryConditions
+      
+    EXITS("BoundaryConditionsVariable_PressureIncConditionsExists")
+    RETURN
+999 NULLIFY(pressureIncrementedBoundaryConditions)
+998 ERRORS("BoundaryConditionsVariable_PressureIncConditionsExists",err,error)
+    EXITS("BoundaryConditionsVariable_PressureIncConditionsExists")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsVariable_PressureIncConditionsExists
 
   !
   !================================================================================================================================

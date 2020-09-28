@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_Base OpenCMISS::Iron::Base
 !> This module contains all the low-level base routines e.g., all debug, control, and low-level communication routines.
 MODULE BaseRoutines
 
@@ -56,10 +57,19 @@ MODULE BaseRoutines
 
   !Module parameters
 
+  !> \addtogroup BaseRoutines_Constants OpenCMISS::Iron::Base::Constants
+  !> \brief Base rourtines constants
+  !> \see BaseRoutines
+  !>@{  
+  !> \addtogroup BaseRoutines_OutputFormat OpenCMISS::Iron::Base::Constants::OutputFormat
+  !> \brief Output format parameters
+  !> \see BaseRoutines
+  !>@{  
   INTEGER(INTG), PARAMETER :: MAX_OUTPUT_LINES=500 !<Maximum number of lines that can be output \see BaseRoutines::WriteStr
   INTEGER(INTG), PARAMETER :: MAX_OUTPUT_WIDTH=132 !<Maximum width of output line \see BaseRoutines::WriteStr
+  !>@}
 
-  !> \addtogroup BaseRoutines_OutputType BaseRoutines::OutputType
+  !> \addtogroup BaseRoutines_OutputType OpenCMISS::Iron::Base::Constants::OutputType
   !> \brief Output type parameter
   !> \see BaseRoutines
   !>@{  
@@ -71,7 +81,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: HELP_OUTPUT_TYPE=6 !<Help output type \see BaseRoutines_OutputType,BaseRoutines
   !>@}
 
-  !> \addtogroup BaseRoutines_FileUnits BaseRoutines::FileUnits
+  !> \addtogroup BaseRoutines_FileUnits OpenCMISS::Iron::Base::Constants::FileUnits
   !> \brief File unit parameters
   !> \see BaseRoutines
   !>@{  
@@ -90,7 +100,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: STOP_READ_COMFILE_UNIT=99 !<Last file unit for read command files \see BaseRoutines_FileUnits,BaseRoutines
   !>@}
 
-  !> \addtogroup BaseRoutines_DiagnosticTypes BaseRoutines::DiagnosticTypes
+  !> \addtogroup BaseRoutines_DiagnosticTypes OpenCMISS::Iron::Base::Constants::DiagnosticTypes
   !> \brief Diganostic type parameters
   !> \see BaseRoutines,OpenCMISS_DiagnosticTypes
   !>@{  
@@ -99,7 +109,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: FROM_DIAG_TYPE=3 !<Type for setting diagnostic output from one routine downwards \see BaseRoutines_DiagnosticTypes,BaseRoutines
   !>@}
 
-  !> \addtogroup BaseRoutines_TimingTypes BaseRoutines::TimingTypes
+  !> \addtogroup BaseRoutines_TimingTypes OpenCMISS::Iron::Base::Constants::TimingTypes
   !> \brief Timing type parameters
   !> \see BaseRoutines,OpenCMISS_TimingTypes
   !>@{  
@@ -107,9 +117,14 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: IN_TIMING_TYPE=2 !<Type for setting timing output in one routine \see BaseRoutines_TimingTypes,BaseRoutines
   INTEGER(INTG), PARAMETER :: FROM_TIMING_TYPE=3 !<Type for setting timing output from one routine downwards \see BaseRoutines_TimingTypes,BaseRoutines
   !>@}
+  !>@}
 
   !Module types
 
+  !> \addtogroup BaseRoutines_Types OpenCMISS::Iron::Base::Types
+  !> \brief Base routines types
+  !> \see BaseRoutines
+  !>@{  
   !>Contains information for an item in the routine list for diagnostics or timing
   TYPE RoutineListItemType
     CHARACTER(LEN=63) :: name !<Name of the routine
@@ -143,6 +158,7 @@ MODULE BaseRoutines
   TYPE RoutineStackType
     TYPE(RoutineStackItemType), POINTER :: stackPointer !<Pointer to the top of the stack
   END TYPE RoutineStackType
+  !>@}
 
   !Module variables
 
@@ -204,23 +220,11 @@ MODULE BaseRoutines
   END INTERFACE ExtractErrorStack
 
   !>Flags an error condition 
-  INTERFACE FLAG_ERROR
-    MODULE PROCEDURE FlagErrorC
-    MODULE PROCEDURE FlagErrorVS
-  END INTERFACE FLAG_ERROR
-  
-  !>Flags an error condition 
   INTERFACE FlagError
     MODULE PROCEDURE FlagErrorC
     MODULE PROCEDURE FlagErrorVS
   END INTERFACE FlagError
   
-  !>Flags a warning to the user
-  INTERFACE FLAG_WARNING
-    MODULE PROCEDURE FlagWarningC
-    MODULE PROCEDURE FlagWarningVS
-  END INTERFACE FLAG_WARNING
-
   !>Flags a warning to the user
   INTERFACE FlagWarning
     MODULE PROCEDURE FlagWarningC
@@ -253,8 +257,6 @@ MODULE BaseRoutines
   
   PUBLIC ExtractErrorStack
   
-  PUBLIC FLAG_ERROR,FLAG_WARNING
-
   PUBLIC FlagError,FlagWarning
   
   PUBLIC OutputSetOff,OutputSetOn
@@ -273,7 +275,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the entry into the named procedure and initialises the error code \see BaseRoutines::Exits
+  !>Records the entry into the named procedure and initialises the error code \see OpenCMISS::Iron::Base::Exits
   SUBROUTINE Enters(name,err,error,*)
 
     !Argument variables
@@ -413,7 +415,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the exit out of the named procedure \see BaseRoutines::Enters
+  !>Records the exit out of the named procedure \see OpenCMISS::Base::Enters
   SUBROUTINE Exits(name)
 
     !Argument variables
@@ -589,7 +591,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Extracts the error message from a CMISS error string and returns it as a character array
+  !>Extracts the error message from an OpenCMISS  error string and returns it as a character array
   SUBROUTINE ExtractErrorMessageC(errorMessage,err,error,*)
 
     !Argument variables
@@ -610,7 +612,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Extracts the error stack from a CMISS error string and returns it as a varying string
+  !>Extracts the error stack from an OpenCMISS error string and returns it as a varying string
   SUBROUTINE ExtractErrorStackVS(errorStack,err,error,*)
 
     !Argument variables
@@ -631,7 +633,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Extracts the error stack from a CMISS error string and returns it as a character array
+  !>Extracts the error stack from an OpenCMISS error string and returns it as a character array
   SUBROUTINE ExtractErrorStackC(errorStack,err,error,*)
 
     !Argument variables
@@ -838,7 +840,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics off. \see BaseRoutines::DiagnosticsSetOn,OpenCMISS::Iron::cmfe_DiagnosticsSetOn
+  !>Sets diagnositics off. \see Base::DiagnosticsSetOn,OpenCMISS::Iron::cmfe_DiagnosticsSetOn
   SUBROUTINE DiagnosticsSetOff(err,error,*)
 
     !Argument variables
@@ -893,7 +895,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics on. \see BaseRoutines::DiagnosticsSetOff,OpenCMISS::Iron::cmfe_DiagnosticsSetOff
+  !>Sets diagnositics on. \see Base::DiagnosticsSetOff,OpenCMISS::Iron::cmfe_DiagnosticsSetOff
   SUBROUTINE DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err,error,*)
 
     !Argument variables
@@ -1006,7 +1008,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output off. \see BaseRoutines::OutputSetOn,OpenCMISS::Iron::cmfe_OutputSetOff
+  !>Sets writes file echo output off. \see Base::OutputSetOn,OpenCMISS::Iron::cmfe_OutputSetOff
   SUBROUTINE OutputSetOff(err,error,*)
 
     !Argument variables
@@ -1034,7 +1036,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output on. \see BaseRoutines::OutputSetOff,OpenCMISS::Iron::cmfe_OutputSetOn
+  !>Sets writes file echo output on. \see Base::OutputSetOff,OpenCMISS::Iron::cmfe_OutputSetOn
   SUBROUTINE OutputSetOn(echoFilename,err,error,*)
 
     !Argument variables
@@ -1070,7 +1072,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets timing off. \see BaseRoutines:TimingSetOn,OpenCMISS::Iron::cmfe_TimingSetOff
+  !>Sets timing off. \see Base:TimingSetOn,OpenCMISS::Iron::cmfe_TimingSetOff
   SUBROUTINE TimingSetOff(err,error,*)
 
    !Argument variables
@@ -1116,7 +1118,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets timing on. \see BaseRoutines:TimingSetOff,OpenCMISS::Iron::cmfe_TimingSetOn
+  !>Sets timing on. \see Base:TimingSetOff,OpenCMISS::Iron::cmfe_TimingSetOn
   SUBROUTINE TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*)
 
     !Argument variables

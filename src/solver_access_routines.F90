@@ -633,6 +633,10 @@ MODULE SolverAccessRoutines
 
   PUBLIC Solver_LinkingSolverGet
 
+  PUBLIC Solver_NewtonLinkedCellMLSolverGet
+  
+  PUBLIC Solver_NewtonLinkedLinearSolverGet
+  
   PUBLIC Solver_NonlinearSolverGet
   
   PUBLIC Solver_OptimiserSolverGet
@@ -2902,6 +2906,108 @@ CONTAINS
     
   END SUBROUTINE Solver_LinearSolverGet
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the CellML solver associated with a Newton solver  \see OpenCMISS::Iron::cmfe_Solver_NewtonCellMLSolverGetSet
+  SUBROUTINE Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer the Newton solver to get the linear solver for
+    TYPE(SolverType), POINTER :: cellMLSolver !<On exit, a pointer the linear solver linked to the Newton solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
+    TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(SolverType), POINTER :: linkedLinearSolver,linkedNonlinearSolver
+
+    ENTERS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLSolver)) CALL FlagError("CellML solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    
+    NULLIFY(nonlinearSolver)
+    IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
+      CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
+    ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
+      NULLIFY(dynamicSolver)
+      CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
+      NULLIFY(linkedNonlinearSolver)
+      CALL SolverDynamic_LinkedNonlinearSolverGet(dynamicSolver,linkedNonlinearSolver,err,error,*999)
+      CALL Solver_NonlinearSolverGet(linkedNonlinearSolver,nonlinearSolver,err,error,*999)
+    ELSE
+      CALL FlagError("The specified solver is not a nonlinear or dynamic nonlinear solver.",err,error,*999)
+    ENDIF
+    CALL SolverNonlinear_AssertIsNewton(nonlinearSolver,err,error,*999)
+    NULLIFY(newtonSolver)
+    CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
+#endif
+    
+    IF(solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
+      cellMLSolver=>solver%nonlinearSolver%newtonSolver%cellMLEvaluatorSolver
+    ELSE
+      cellMLSolver=>solver%dynamicSolver%nonlinearSolver%nonlinearSolver%newtonSolver%cellMLEvaluatorSolver
+    ENDIF
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(cellMLSolver)) CALL FlagError("Newton solver CellML solver is not associated.",err,error,*999)
+#endif    
+    
+    EXITS("Solver_NewtonLinkedCellMLSolverGet")
+    RETURN
+999 NULLIFY(cellMLSolver)
+998 ERRORSEXITS("Solver_NewtonLinkedCellMLSolverGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_NewtonLinkedCellMLSolverGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the linear solver associated with a Newton solver \see OpenCMISS::Iron::cmfe_Solver_NewtonLinearSolverGet
+  SUBROUTINE Solver_NewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer the Newton solver to get the linear solver for
+    TYPE(SolverType), POINTER :: linearSolver !<On exit, a pointer the linear solver linked to the Newton solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+
+    ENTERS("Solver_NewtonLinkedLinearSolverGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)        
+    CALL Solver_AssertIsNonlinear(solver,err,error,*999)
+    NULLIFY(nonlinearSolver)
+    CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
+    CALL SolverNonlinear_AssertIsNewton(nonlinearSolver,err,error,*999)
+    NULLIFY(newtonSolver)
+    CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
+#endif    
+    
+    linearSolver=>solver%nonlinearSolver%newtonSolver%linearSolver
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Newton solver linear solver is not associated.",err,error,*999)
+#endif    
+    
+    EXITS("Solver_NewtonLinkedLinearSolverGet")
+    RETURN
+999 NULLIFY(linearSolver)
+998 ERRORSEXITS("Solver_NewtonLinkedLinearSolverGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_NewtonLinkedLinearSolverGet
+
   !
   !================================================================================================================================
   !

@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_Context OpenCMISS::Iron::Context
 !> This module handles all contex routines.
 MODULE ContextRoutines
 

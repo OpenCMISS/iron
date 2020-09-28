@@ -41,7 +41,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module is a OpenCMISS(cmfe) buffer module to OpenCMISS(cellml).
+!> \defgroup OpenCMISS_CellML OpenCMISS::Iron::CellML
+!> This module is a OpenCMISS buffer module to CellML.
 MODULE CmissCellML
 
   !Module imports

@@ -41,6 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
+!> \defgroup OpenCMISS_CoordinateSystem OpenCMISS::Iron::CoordinateSystem
 !> This module contains all coordinate transformation and support routines.
 MODULE CoordinateSystemRoutines
 
