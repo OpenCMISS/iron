@@ -154,6 +154,8 @@ MODULE EquationsSetConstants
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE=30
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE=31
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE=32
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE=44
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE=45
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE=33
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE=34
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE=35
@@ -406,14 +408,17 @@ MODULE EquationsSetConstants
   !> \see EquationsSetConstants
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR=1 !<Deformation gradient tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR=2 !<Right Cauchy-Green deformation field \see EquationsSetConstants_TensorTypes,EquationsSetConstants
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR=3 !<Right Cauchy-Green deformation field \see EquationsSetConstants_TensorTypes,EquationsSetConstants
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR=4 !<Green-Lagrange strain tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CAUCHY_STRESS_TENSOR=5 !<Cauchy stress tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_PK_STRESS_TENSOR=6 !<First Piola Kirchhoff stress tensor \see EquationsSetConstants_TensorEvaluateTypes,EquationsSetConstants
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_PK_STRESS_TENSOR=7 !<Second Piola Kirchhoff stress tensor \see EquationsSetConstants_TensorEvaluateTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR_SPATIAL=2 !<Deformation gradient tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR_FIBRE=3 !<Deformation gradient tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR=4 !<Right Cauchy-Green deformation field \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR=5 !<Right Cauchy-Green deformation field \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR=6 !<Green-Lagrange strain tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CAUCHY_STRESS_TENSOR=7 !<Cauchy stress tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CAUCHY_STRESS_TENSOR_FIBRE=8 !<Cauchy stress tensor wrt deformed fibres \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_PK_STRESS_TENSOR=9 !<First Piola Kirchhoff stress tensor \see EquationsSetConstants_TensorEvaluateTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_PK_STRESS_TENSOR=10 !<Second Piola Kirchhoff stress tensor \see EquationsSetConstants_TensorEvaluateTypes,EquationsSetConstants
   !>@}
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES=7
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES=10
 
   !> \addtogroup EquationsSetConstants_DynamicMatrixTypes EquationsSetConstants::DynamicMatrixTypes
   !> \brief Type of matrix in a dynamic equations set
