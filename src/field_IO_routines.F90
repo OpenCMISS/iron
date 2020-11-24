@@ -1126,7 +1126,7 @@ CONTAINS
             !collect header information
             pos=INDEX(LINE,CMISS_KEYWORD_FIELDS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_FIELDS)-1)
-            idx_field=STRING_TO_INTEGER(LINE, ERR,ERROR)
+            idx_field=StringToInteger(LINE, ERR,ERROR)
             IF(idx_field/=NUMBER_OF_FIELDS) CALL FlagError("find different field number in exnode files",ERR,ERROR,*999)
             idx_comp=0
             DO idx_field=1,NUMBER_OF_FIELDS
@@ -1135,7 +1135,7 @@ CONTAINS
                 LIST_STR(idx_field)=LINE
                 pos=INDEX(LINE,CMISS_KEYWORD_COMPONENTS)
                 LINE=REMOVE(LINE, 1, pos+LEN_TRIM(CMISS_KEYWORD_COMPONENTS)-1)
-                number_of_comps=STRING_TO_INTEGER(LINE, ERR,ERROR)
+                number_of_comps=StringToInteger(LINE, ERR,ERROR)
                 total_number_of_comps=total_number_of_comps+number_of_comps
               ELSE
              IF(LIST_STR(idx_field)/=LINE) CALL FlagError("find different field information in exnode files", &
@@ -1143,7 +1143,7 @@ CONTAINS
               ENDIF
               pos=INDEX(LINE,CMISS_KEYWORD_COMPONENTS)
               LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_COMPONENTS)-1)
-              number_of_comps=STRING_TO_INTEGER(LINE, ERR,ERROR)
+              number_of_comps=StringToInteger(LINE, ERR,ERROR)
               DO idx_comp=1,number_of_comps
                 CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
               ENDDO !idx_comp1
@@ -1241,7 +1241,7 @@ CONTAINS
         IF((.NOT.FILE_END).AND.SECTION_START.AND.(.NOT.NODE_SECTION)) THEN
           pos=INDEX(LINE,CMISS_KEYWORD_FIELDS)
           LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_FIELDS)-1)
-          !number_of_fields=STRING_TO_INTEGER(LINE, ERR, ERROR)
+          !number_of_fields=StringToInteger(LINE, ERR, ERROR)
           total_number_of_devs=0
           idx_comp1=0
           idx_dev1=0
@@ -1249,7 +1249,7 @@ CONTAINS
             CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR, ERROR,*999)
             pos=INDEX(LINE,CMISS_KEYWORD_COMPONENTS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_COMPONENTS)-1)
-            number_of_comps=STRING_TO_INTEGER(LINE, ERR, ERROR)
+            number_of_comps=StringToInteger(LINE, ERR, ERROR)
             !total_number_of_comps=total_number_of_comps+number_of_comps
 
             DO idx_comp=1, number_of_comps
@@ -1261,13 +1261,13 @@ CONTAINS
               pos=INDEX(LINE,",")
               LINE1=EXTRACT(LINE,1,pos-1)
               idx_comp1=idx_comp1+1
-              LIST_DEV_POS(idx_comp1)=STRING_TO_INTEGER(LINE1, ERR, ERROR)
+              LIST_DEV_POS(idx_comp1)=StringToInteger(LINE1, ERR, ERROR)
 
               pos=INDEX(LINE,CMISS_KEYWORD_DERIVATIVE)
               LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_DERIVATIVE)-1)
               pos=INDEX(LINE,"(")
               LINE1=EXTRACT(LINE,1,pos-1)
-              number_of_devs=STRING_TO_INTEGER(LINE, ERR, ERROR)+1
+              number_of_devs=StringToInteger(LINE, ERR, ERROR)+1
               total_number_of_devs=total_number_of_devs+number_of_devs
 
               IF(ALLOCATED(LIST_DEV)) THEN
@@ -1343,7 +1343,7 @@ CONTAINS
           IF(VERIFY(CMISS_KEYWORD_NODE, LINE)==0) THEN
             pos=INDEX(LINE,CMISS_KEYWORD_NODE)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_NODE)-1)
-            NODAL_USER_NUMBER=STRING_TO_INTEGER(LINE, ERR, ERROR)
+            NODAL_USER_NUMBER=StringToInteger(LINE, ERR, ERROR)
             idx_comp1=1
             DO idx_comp=1, number_of_comps-1
               IF(LIST_DEV_POS(idx_comp+1)-LIST_DEV_POS(idx_comp)<=NUMBER_NODAL_VALUE_LINES) THEN
@@ -1763,9 +1763,9 @@ CONTAINS
             pos=INDEX(LINE,CMISS_KEYWORD_FIELDS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_FIELDS)-1)
             IF(idx_exelem==0) THEN
-              NUMBER_OF_FIELDS=STRING_TO_INTEGER(LINE, ERR,ERROR)
+              NUMBER_OF_FIELDS=StringToInteger(LINE, ERR,ERROR)
             ELSE
-              IF(NUMBER_OF_FIELDS/=STRING_TO_INTEGER(LINE, ERR,ERROR)) THEN
+              IF(NUMBER_OF_FIELDS/=StringToInteger(LINE, ERR,ERROR)) THEN
                 CALL FlagError("find different number of fields in the exelem files",ERR,ERROR,*999)
                 !GOTO 999
               ENDIF
@@ -1782,7 +1782,7 @@ CONTAINS
             idx_field=idx_field+1
             pos=INDEX(LINE,CMISS_KEYWORD_COMPONENTS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_COMPONENTS)-1)
-            idx_comp1=STRING_TO_INTEGER(LINE, ERR,ERROR)
+            idx_comp1=StringToInteger(LINE, ERR,ERROR)
             idx_comp=idx_comp+idx_comp1
             IF(idx_field>=NUMBER_OF_FIELDS) THEN
               IF(idx_exelem==0) THEN
@@ -1897,7 +1897,7 @@ CONTAINS
           IF((.NOT.FILE_END).AND.VERIFY(CMISS_KEYWORD_NODE,LINE)==0) THEN
             pos=INDEX(LINE,CMISS_KEYWORD_NODE)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_NODE)-1)
-            USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(idx_node)=STRING_TO_INTEGER(LINE, ERR, ERROR)
+            USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(idx_node)=StringToInteger(LINE, ERR, ERROR)
             idx_node=idx_node+1
           ENDIF !VERIFY(CMISS_KEYWORD,LINE)==0
         ENDDO !(FILE_END==.FALSE.)
@@ -1963,13 +1963,13 @@ CONTAINS
             !collect header information
             pos=INDEX(LINE,CMISS_KEYWORD_FIELDS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_FIELDS)-1)
-            NUMBER_OF_FIELDS=STRING_TO_INTEGER(LINE, ERR,ERROR)
+            NUMBER_OF_FIELDS=StringToInteger(LINE, ERR,ERROR)
             idx_comp=0
             DO idx_field=1,NUMBER_OF_FIELDS
               CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
               pos=INDEX(LINE,CMISS_KEYWORD_COMPONENTS)
               LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_COMPONENTS)-1)
-              number_of_comp=STRING_TO_INTEGER(LINE, ERR,ERROR)
+              number_of_comp=StringToInteger(LINE, ERR,ERROR)
               DO idx_comp1=1,number_of_comp
                 idx_comp=idx_comp+1
                 CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
@@ -1982,7 +1982,7 @@ CONTAINS
                 CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
                 pos=INDEX(LINE, CMISS_KEYWORD_NODES)
                 LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_NODES)-1)
-                number_of_node=STRING_TO_INTEGER(LINE, ERR,ERROR)
+                number_of_node=StringToInteger(LINE, ERR,ERROR)
                 DO idx_node1=1, number_of_node*NUMBER_NODAL_LINES
                   CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
                 ENDDO !idx_node1
@@ -2201,7 +2201,7 @@ CONTAINS
 
           pos=INDEX(LINE,CMISS_KEYWORD_SCALE_FACTOR_SETS)
           LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_SCALE_FACTOR_SETS)-1)
-          number_of_scalesets=STRING_TO_INTEGER(LINE, ERR,ERROR)
+          number_of_scalesets=StringToInteger(LINE, ERR,ERROR)
           idx_mesh_comp=1
           !skip factors
           NUMBER_SCALING_FACTOR_LINES=0
@@ -2209,7 +2209,7 @@ CONTAINS
             CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
             pos=INDEX(LINE,CMISS_KEYWORD_SCALE_FACTORS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_SCALE_FACTORS)-1)
-            num_scl=STRING_TO_INTEGER(LINE, ERR,ERROR)
+            num_scl=StringToInteger(LINE, ERR,ERROR)
             num_scl_line=num_scl/NUMBER_SCALING_FACTORS_IN_LINE
             IF(num_scl_line*NUMBER_SCALING_FACTORS_IN_LINE/=num_scl) num_scl_line=num_scl_line+1
             NUMBER_SCALING_FACTOR_LINES=NUMBER_SCALING_FACTOR_LINES+num_scl_line
@@ -2218,7 +2218,7 @@ CONTAINS
           CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
           pos=INDEX(LINE,CMISS_KEYWORD_NODES)
           LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_NODES)-1)
-          number_of_node=STRING_TO_INTEGER(LINE, ERR,ERROR)
+          number_of_node=StringToInteger(LINE, ERR,ERROR)
 
           CALL REALLOCATE( LIST_ELEMENTAL_NODES, number_of_node, &
             & "Could not allocate list of elemental nodes", ERR, ERROR, *999 )
@@ -2231,13 +2231,13 @@ CONTAINS
           CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
           pos=INDEX(LINE,CMISS_KEYWORD_FIELDS)
           LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_FIELDS)-1)
-          NUMBER_OF_FIELDS=STRING_TO_INTEGER(LINE, ERR,ERROR)
+          NUMBER_OF_FIELDS=StringToInteger(LINE, ERR,ERROR)
           idx_comp=0
           DO idx_field=1,NUMBER_OF_FIELDS
             CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
             pos=INDEX(LINE,CMISS_KEYWORD_COMPONENTS)
             LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_COMPONENTS)-1)
-            number_of_comp=STRING_TO_INTEGER(LINE, ERR,ERROR)
+            number_of_comp=StringToInteger(LINE, ERR,ERROR)
             DO idx_comp1=1,number_of_comp
               idx_comp=idx_comp+1
               CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
@@ -2250,13 +2250,13 @@ CONTAINS
               CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
               pos=INDEX(LINE, CMISS_KEYWORD_NODES)
               LINE=REMOVE(LINE,1, pos+LEN_TRIM(CMISS_KEYWORD_NODES)-1)
-              number_of_node=STRING_TO_INTEGER(LINE, ERR,ERROR)
+              number_of_node=StringToInteger(LINE, ERR,ERROR)
               LIST_COMP_NODES(idx_comp)=number_of_node
               DO idx_node1=1, number_of_node
                 CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
                 pos=INDEX(LINE, ".")
                 LINE=REMOVE(LINE,pos, LEN(LINE))
-                LIST_COMP_NODAL_INDEX(idx_comp,idx_node1)=STRING_TO_INTEGER(LINE, ERR,ERROR)
+                LIST_COMP_NODAL_INDEX(idx_comp,idx_node1)=StringToInteger(LINE, ERR,ERROR)
                 CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
                 CALL FIELD_IO_FORTRAN_FILE_READ_STRING(FILE_ID, LINE, FILE_END, ERR,ERROR, *999)
               ENDDO !idx_node1
@@ -5889,11 +5889,11 @@ CONTAINS
 
   SUBROUTINE STRING_TO_MUTI_INTEGERS_VS(STRING, NUMBER_OF_INTEGERS, INTG_DATA, ERR, ERROR, *)
 
-    !#### Function: STRING_TO_INTEGER_VS
+    !#### Function: StringToInteger_VS
     !###  Type: INTEGER(INTG)
     !###  Description:
     !###    Converts a varying string representation of a number to an integer.
-    !###  Parent-function: STRING_TO_INTEGER
+    !###  Parent-function: StringToInteger
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: STRING
@@ -5916,12 +5916,12 @@ CONTAINS
       LOCAL_STRING=TRIM(LOCAL_STRING)
       pos=INDEX(LOCAL_STRING, " ")
       LOCAL_STRING1=EXTRACT(LOCAL_STRING, 1, pos-1)
-      INTG_DATA(idx)=STRING_TO_INTEGER(LOCAL_STRING1, ERR, ERROR)
+      INTG_DATA(idx)=StringToInteger(LOCAL_STRING1, ERR, ERROR)
       LOCAL_STRING=REMOVE(LOCAL_STRING,1,pos)
     ENDDO
     LOCAL_STRING=ADJUSTL(LOCAL_STRING)
     LOCAL_STRING=TRIM(LOCAL_STRING)
-    INTG_DATA(idx)=STRING_TO_INTEGER(LOCAL_STRING, ERR, ERROR)
+    INTG_DATA(idx)=StringToInteger(LOCAL_STRING, ERR, ERROR)
 
     EXITS("STRING_TO_MUTI_INTEGERS_VS")
     RETURN
@@ -5931,11 +5931,11 @@ CONTAINS
 
   SUBROUTINE STRING_TO_MUTI_REALS_VS(STRING, NUMBER_OF_REALS, REAL_DATA, POSITION, ERR, ERROR, *)
 
-    !#### Function: STRING_TO_INTEGER_VS
+    !#### Function: StringToInteger_VS
     !###  Type: INTEGER(INTG)
     !###  Description:
     !###    Converts a varying string representation of a number to an integer.
-    !###  Parent-function: STRING_TO_INTEGER
+    !###  Parent-function: StringToInteger
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: STRING
@@ -5962,15 +5962,15 @@ CONTAINS
       LOCAL_STRING1=EXTRACT(LOCAL_STRING, 1, pos-1)
       !CHAR_BUFF=CHAR(LOCAL_STRING1)
       !READ(CHAR_BUFF,"(ES)",IOSTAT=ERR,ERR=999) REAL_DATA(idx+POSITION-1)
-      REAL_DATA(idx+POSITION-1)=STRING_TO_DOUBLE(LOCAL_STRING, ERR, ERROR)
+      REAL_DATA(idx+POSITION-1)=StringToDouble(LOCAL_STRING, ERR, ERROR)
       LOCAL_STRING=REMOVE(LOCAL_STRING,1,pos)
     ENDDO
     LOCAL_STRING=ADJUSTL(LOCAL_STRING)
     LOCAL_STRING=TRIM(LOCAL_STRING)
-    REAL_DATA(idx+POSITION-1)=STRING_TO_DOUBLE(LOCAL_STRING, ERR, ERROR)
+    REAL_DATA(idx+POSITION-1)=StringToDouble(LOCAL_STRING, ERR, ERROR)
     !CHAR_BUFF=CHAR(LOCAL_STRING)
     !READ(CHAR_BUFF,"(ES)",IOSTAT=ERR,ERR=999) REAL_DATA(idx+POSITION-1)
-    !REAL_DATA(idx+POSITION-1)=STRING_TO_DOUBLE(LOCAL_STRING, ERR, ERROR)
+    !REAL_DATA(idx+POSITION-1)=StringToDouble(LOCAL_STRING, ERR, ERROR)
 
     EXITS("STRING_TO_MUTI_REALS_VS")
     RETURN

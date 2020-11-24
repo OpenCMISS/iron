@@ -416,7 +416,7 @@ CONTAINS
           var_idx = 3
           FIELD_VAR_TYPE = FIELD_V_VARIABLE_TYPE
         CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-           equationsSetFieldField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
+           equationsSetFieldField=>EQUATIONS_SET%equationsField%equationsSetField
            CALL Field_ParameterSetDataGet(equationsSetFieldField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,ERR,ERROR,*999)
            icompartment=EQUATIONS_SET_FIELD_DATA(1)
@@ -1103,7 +1103,7 @@ CONTAINS
           var_idx = 3
           FIELD_VAR_TYPE = FIELD_V_VARIABLE_TYPE
         CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-           equationsSetFieldField=>EQUATIONS_SET%equationsSetField%equationsSetFieldField
+           equationsSetFieldField=>EQUATIONS_SET%equationsField%equationsSetField
            CALL Field_ParameterSetDataGet(equationsSetFieldField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,EQUATIONS_SET_FIELD_DATA,ERR,ERROR,*999)
            icompartment=EQUATIONS_SET_FIELD_DATA(1)

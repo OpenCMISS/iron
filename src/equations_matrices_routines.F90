@@ -1,4 +1,4 @@
-G!> \file
+!> \file
 !> \author Chris Bradley
 !> \brief This module handles all equations matrix and rhs routines.
 !>
@@ -75,6 +75,18 @@ MODULE EquationsMatricesRoutines
   !Module variables
 
   !Interfaces
+
+  !>Sets the storage type (sparsity) of the Linear equations matrices
+  INTERFACE EquationsMatricesVector_LinearStorageTypeSet
+    MODULE PROCEDURE EquationsMatricesVector_LinearStorageTypeSet0
+    MODULE PROCEDURE EquationsMatricesVector_LinearStorageTypeSet1
+  END INTERFACE EquationsMatricesVector_LinearStorageTypeSet
+
+  !>Sets the structure (sparsity) of the Linear equations matrices
+  INTERFACE EquationsMatricesVector_LinearStructureTypeSet
+    MODULE PROCEDURE EquationsMatricesVector_LinearStructureTypeSet0
+    MODULE PROCEDURE EquationsMatricesVector_LinearStructureTypeSet1
+  END INTERFACE EquationsMatricesVector_LinearStructureTypeSet
 
   !>Sets the storage type (sparsity) of the nonlinear (Jacobian) equations matrices
   INTERFACE EquationsMatricesVector_NonlinearStorageTypeSet
@@ -213,9 +225,11 @@ CONTAINS
     INTEGER(INTG) :: dummyErr,matrixIdx,numberOfNonZeros,residualIdx,sourceIdx
     INTEGER(INTG), POINTER :: rowIndices(:),columnIndices(:)
     TYPE(DomainMappingType), POINTER :: rowDomainMap,columnDomainMap
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
@@ -225,8 +239,9 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
     TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap
     TYPE(VARYING_STRING) :: dummyError,localError
     TYPE(LinkedList), POINTER :: list(:)
     
@@ -288,7 +303,7 @@ CONTAINS
         NULLIFY(linearMatrix)
         CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
         NULLIFY(equationsMatrixToVarMap)
-        CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(dynamicMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
+        CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
         NULLIFY(columnDomainMap)
         CALL EquationsMappingEMToVMap_ColumnDOFsMappingGet(equationsMatrixToVarMap,columnDomainMap,err,error,*999)
         !Create the distributed equations matrix
@@ -334,12 +349,12 @@ CONTAINS
           NULLIFY(jacobianMatrix)
           CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
           NULLIFY(jacobianMatrixToVarMap)
-          CALL EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,jacobianMatrixToVarMap,err,error,*999)
+          CALL EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,matrixIdx,jacobianMatrixToVarMap,err,error,*999)
           NULLIFY(columnDomainMap)
           CALL EquationsMappingJMToVMap_ColumnDOFsMapGet(jacobianMatrixToVarMap,columnDomainMap,err,error,*999)
 !!TODO: Set the distributed matrix not to allocate the data if the Jacobian is not calculated.
           !Create the distributed Jacobian matrix
-          NULLIFY(jacobainMatrix%jacobian)
+          NULLIFY(jacobianMatrix%jacobian)
           CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,jacobianMatrix%jacobian,err,error,*999)
           CALL DistributedMatrix_DataTypeSet(jacobianMatrix%jacobian,MATRIX_VECTOR_DP_TYPE,err,error,*999)
           CALL DistributedMatrix_StorageTypeSet(jacobianMatrix%jacobian,jacobianMatrix%storageType,err,error,*999)
@@ -372,7 +387,7 @@ CONTAINS
     IF(ASSOCIATED(sourceVectors)) THEN
       DO sourceIdx=1,sourceVectors%numberOfSources
         NULLIFY(sourceVector)
-        CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceId,sourceVector,err,error,*999)
+        CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
         !Set up the equations source vector
         NULLIFY(sourceVector%vector)
         CALL DistributedVector_CreateStart(rowDomainMap,sourceVector%vector,err,error,*999)
@@ -477,8 +492,7 @@ CONTAINS
     INTEGER(INTG) :: colElementNumber,colsVariableType,componentIdx,dataPointIdx,derivativeNumber,derivativeIdx, &
       & elementIdx,globalDOFIdx,interpolationType,localDataPointNumber,localDOFIdx,localNodeIdx,nodeNumber, &
       & numberOfComponents,numberOfElementDataPoints,numberOfLocalNodes,numberOfNodeDerivatives,rowElementNumber, &
-      & rowsVariableType,totalNumberOfElements,versionNumber
-    
+      & rowsVariableType,totalNumberOfElements,versionNumber    
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
@@ -501,7 +515,7 @@ CONTAINS
     IF(updateMatrix) THEN
       IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
         !Row and columns variable is the same.
-        CALL FieldVariable_NumberOfComponentsGet(rowFieldVariable,numberOfComponents,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(rowsFieldVariable,numberOfComponents,err,error,*999)
         DO componentIdx=1,numberOfComponents
           NULLIFY(domain)
           CALL FieldVariable_ComponentDomainGet(rowsFieldVariable,componentIdx,domain,err,error,*999)
@@ -636,8 +650,8 @@ CONTAINS
                     & derivativeNumber,err,error,*999)
                   CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,localNodeIdx,rowElementNumber, &
                     & versionNumber,err,error,*999)
-                  CALL FieldVariable_LocalNodeDOFGet(rowsFieldVariable,version,derivative,node,componentIdx,localDOFIdx, &
-                    & err,error,*999)
+                  CALL FieldVariable_LocalNodeDOFGet(rowsFieldVariable,versionNumber,derivativeNumber,nodeNumber, &
+                    & componentIdx,localDOFIdx,err,error,*999)
                   elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
                   elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
                 ENDDO !derivativeIdx
@@ -652,7 +666,7 @@ CONTAINS
               NULLIFY(decompositionTopology)
               CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
               NULLIFY(dataPoints)
-              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*9999)
+              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
                DO dataPointIdx=1,numberOfElementDataPoints
@@ -660,8 +674,8 @@ CONTAINS
                   & localDataPointNumber,err,error,*999)
                 CALL FieldVariable_LocalDataPointDOFGet(rowsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx, &
                   & err,error,*999)
-                elementMatrix%numberOfRowss=elementMatrix%numberOfRows+1
-                elementMatrix%rowDOFS(elementMatrix%numberOfRowss)=localDOFIdx
+                elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+                elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
               ENDDO !dataPointIdx
             CASE DEFAULT
               localError="The interpolation type of "// &
@@ -717,8 +731,8 @@ CONTAINS
                     & derivativeNumber,err,error,*999)
                   CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,localNodeIdx,rowElementNumber, &
                     & versionNumber,err,error,*999)
-                  CALL FieldVariable_LocalNodeDOFGet(colsFieldVariable,version,derivative,node,componentIdx,localDOFIdx, &
-                    & err,error,*999)
+                  CALL FieldVariable_LocalNodeDOFGet(colsFieldVariable,versionNumber,derivativeNumber,nodeNumber, &
+                    & componentIdx,localDOFIdx,err,error,*999)
                   CALL DomainMapping_LocalToGlobalGet(domainMapping,localDOFIdx,globalDOFIdx,err,error,*999)
                   elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
                   elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
@@ -734,7 +748,7 @@ CONTAINS
               NULLIFY(decompositionTopology)
               CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
               NULLIFY(dataPoints)
-              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*9999)
+              CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
               CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
                 & err,error,*999)
               DO dataPointIdx=1,numberOfElementDataPoints
@@ -830,25 +844,25 @@ CONTAINS
   !
 
   !>Sets up the element matrix for the row and column field variables.
-  SUBROUTINE EquationsMatrices_ElementMatrixSetup(elementMatrix,rowsFieldVariable,columnsFieldVariable,rowsNumberOfElements, &
+  SUBROUTINE EquationsMatrices_ElementMatrixSetup(elementMatrix,rowsFieldVariable,colsFieldVariable,rowsNumberOfElements, &
     & colsNumberOfElements,err,error,*)
 
     !Argument variables
     TYPE(ElementMatrixType) :: elementMatrix !<The element matrix to setup
     TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
-    TYPE(FieldVariableType), POINTER :: columnsFieldVariable !<A pointer to the field variable associated with the columns
+    TYPE(FieldVariableType), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
     INTEGER(INTG), INTENT(IN)  :: rowsNumberOfElements !<Number of elements in the row variables whose dofs are present in this element matrix
     INTEGER(INTG), INTENT(IN)  :: colsNumberOfElements !<Number of elements in the col variables whose dofs are present in this element matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,componentIdx,numberOfComponents
+    INTEGER(INTG) :: dummyErr,componentIdx,maxElementInterpParameters,numberOfComponents
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsMatrices_ElementMatrixSetup",err,error,*998)
 
     IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(columnsFieldVariable)) CALL FlagError("Columns field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(colsFieldVariable)) CALL FlagError("Columns field variable is not associated.",err,error,*999)
     IF(ALLOCATED(elementMatrix%rowDOFS)) CALL FlagError("Element matrix row dofs already allocated.",err,error,*999)
     IF(ALLOCATED(elementMatrix%columnDOFS)) CALL FlagError("Element matrix column dofs already allocated.",err,error,*999)
     IF(ALLOCATED(elementMatrix%matrix)) CALL FlagError("Element matrix already allocated.",err,error,*999)
@@ -915,8 +929,7 @@ CONTAINS
     
     ENTERS("EquationsMatrices_ElementVectorCalculate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
-    CALL FieldVariable_VariableTypeGet(rowFieldVariable,err,error,*999)
+    CALL FieldVariable_VariableTypeGet(rowsFieldVariable,rowsVariableType,err,error,*999)
     
     !Calculate the rows for the element vector
     elementVector%numberOfRows=0
@@ -932,7 +945,7 @@ CONTAINS
         CALL FieldVariable_ComponentInterpolationGet(rowsFieldVariable,componentIdx,interpolationType,err,error,*999)
         NULLIFY(domainMapping)
         CALL FieldVariable_DomainMappingGet(rowsFieldVariable,domainMapping,err,error,*999)
-        CALL DomianMapping_TotalNumberOfElementsGet(domain,totalNumberOfElements,err,error,*999
+        CALL DomianMapping_TotalNumberOfElementsGet(domain,totalNumberOfElements,err,error,*999)
         IF(elementNumber<1.OR.elementNumber>totalNumberOfElements) THEN
           localError="Element number "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
             & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
@@ -954,15 +967,15 @@ CONTAINS
           CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
           CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
           DO localNodeIdx=1,numberOfLocalNodes
-            CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,rowElementNumber,nodeNumber,err,error,*999)
+            CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,elementNumber,nodeNumber,err,error,*999)
             CALL Basis_NodeNumberOfDerivativesGet(basis,localNodeIdx,numberOfNodeDerivatives,err,error,*999)
             DO derivativeIdx=1,numberOfNodeDerivatives
-              CALL DomainElements_ElementDerivativeGet(domainElements,derivativeIdx,localNodeIdx,rowElementNumber, &
+              CALL DomainElements_ElementDerivativeGet(domainElements,derivativeIdx,localNodeIdx,elementNumber, &
                 & derivativeNumber,err,error,*999)
-              CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,localNodeIdx,rowElementNumber, &
+              CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,localNodeIdx,elementNumber, &
                 & versionNumber,err,error,*999)
-              CALL FieldVariable_LocalNodeDOFGet(rowsFieldVariable,version,derivative,node,componentIdx,localDOFIdx, &
-                & err,error,*999)
+              CALL FieldVariable_LocalNodeDOFGet(rowsFieldVariable,versionNumber,derivativeNumber,nodeNumber, &
+                & componentIdx,localDOFIdx,err,error,*999)
               elementVector%numberOfRows=elementVector%numberOfRows+1
               elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
             ENDDO !derivativeIdx
@@ -977,11 +990,11 @@ CONTAINS
           NULLIFY(decompositionTopology)
           CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
           NULLIFY(dataPoints)
-          CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*9999)
-          CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,rowElementNumber,numberOfElementDataPoints, &
+          CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
+          CALL DecompositionDataPoints_ElementNumberOfDataPointsGet(dataPoints,elementNumber,numberOfElementDataPoints, &
             & err,error,*999)
            DO dataPointIdx=1,numberOfElementDataPoints
-             CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,rowElementNumber, &
+             CALL DecompositionDataPoints_ElementDataLocalNumberGet(dataPoints,dataPointIdx,elementNumber, &
                & localDataPointNumber,err,error,*999)
             CALL FieldVariable_LocalDataPointDOFGet(rowsFieldVariable,localDataPointNumber,componentIdx,localDOFIdx,err,error,*999)
             elementVector%numberOfRows=elementVector%numberOfRows+1
@@ -1107,7 +1120,7 @@ CONTAINS
   SUBROUTINE EquationsMatricesResidual_DistributedVectorEnsureCreated(residualVector,temporalType,err,error,*)
 
     !Argument variables
-    TYPE(ElementMatricesResidualType) :: residualVector !<The residual vector to ensure that the distributed vector is created for.
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<The residual vector to ensure that the distributed vector is created for.
     INTEGER(INTG), INTENT(IN) :: temporalType !<The equations matrices vector temporal type to ensure that it has been created. \see EquationsMatricesRoutines_VectorTemporalTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1186,7 +1199,7 @@ CONTAINS
   SUBROUTINE EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,temporalType,err,error,*)
 
     !Argument variables
-    TYPE(ElementMatricesRHSType) :: rhsVector !<The RHS vector to ensure that the distributed vector is created for.
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<The RHS vector to ensure that the distributed vector is created for.
     INTEGER(INTG), INTENT(IN) :: temporalType !<The equations matrices vector temporal type to ensure that it has been created. \see EquationsMatricesRoutines_VectorTemporalTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1262,7 +1275,7 @@ CONTAINS
   SUBROUTINE EquationsMatricesSource_DistributedVectorEnsureCreated(sourceVector,temporalType,err,error,*)
 
     !Argument variables
-    TYPE(ElementMatricesSourceType) :: sourceVector !<The source vector to ensure that the distributed vector is created for.
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<The source vector to ensure that the distributed vector is created for.
     INTEGER(INTG), INTENT(IN) :: temporalType !<The equations matrices vector temporal type to ensure that it has been created. \see EquationsMatricesRoutines_VectorTemporalTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1279,10 +1292,10 @@ CONTAINS
     ENTERS("EquationsMatricesSource_DistributedVectorEnsureCreated",err,error,*999)
 
     NULLIFY(sourceDistributedVector)
-    CALL EquationsMatricesSource_DistributedVectorExists(sourceVector,temporalType,rhsDistributedVector,err,error,*999)
+    CALL EquationsMatricesSource_DistributedVectorExists(sourceVector,temporalType,sourceDistributedVector,err,error,*999)
     IF(.NOT.ASSOCIATED(sourceDistributedVector)) THEN
       NULLIFY(sourceVectors)
-      CALL EquationsMatricesSource_SourceVectorsGet(soureVector,sourceVectors,err,error,*999)
+      CALL EquationsMatricesSource_SourceVectorsGet(sourceVector,sourceVectors,err,error,*999)
       NULLIFY(vectorMatrices)
       CALL EquationsMatricesSources_VectorMatricesGet(sourceVectors,vectorMatrices,err,error,*999)
       NULLIFY(vectorMapping)
@@ -1523,7 +1536,7 @@ CONTAINS
       DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
         NULLIFY(dynamicMatrix)
         CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,dynamicMatrix,err,error,*999)
-        CALL EquationsMatrices_ElementMatrixCalculate(equationsMatrix%elementMatrix,equationsMatrix%updateMatrix, &
+        CALL EquationsMatrices_ElementMatrixCalculate(dynamicMatrix%elementMatrix,dynamicMatrix%updateMatrix, &
           & [elementNumber],[elementNumber],rowVariable,colVariable,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
@@ -1534,11 +1547,11 @@ CONTAINS
       NULLIFY(linearMapping)
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
-        NULLIFY(equationsMatrix)
-        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        NULLIFY(linearMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
         NULLIFY(colVariable)
-        CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMatrices,matrixIdx,colVariable,err,error,*999)
-        CALL EquationsMatrices_ElementMatrixCalculate(equationsMatrix%elementMatrix,equationsMatrix%updateMatrix, &
+        CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixIdx,colVariable,err,error,*999)
+        CALL EquationsMatrices_ElementMatrixCalculate(linearMatrix%elementMatrix,linearMatrix%updateMatrix, &
           & [elementNumber],[elementNumber],rowVariable,colVariable,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
@@ -1563,7 +1576,7 @@ CONTAINS
           NULLIFY(colVariable)
           CALL EquationsMappingResidual_JacobianMatrixVariableGet(residualMapping,matrixIdx,colVariable,err,error,*999)
           CALL EquationsMatrices_ElementMatrixCalculate(jacobianMatrix%elementJacobian,jacobianMatrix%updateJacobian, &
-            & [elementNumber],[elementNumber],rowVariable,coVariable,err,error,*999)
+            & [elementNumber],[elementNumber],rowVariable,colVariable,err,error,*999)
         ENDDO !matrixIdx
       ENDDO !residualIdx
     ENDIF
@@ -1658,7 +1671,7 @@ CONTAINS
         NULLIFY(linearMatrix)
         CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
         NULLIFY(colVariable)
-        CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMatrices,matrixIdx,colVariable,err,error,*999)
+        CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixIdx,colVariable,err,error,*999)
         CALL EquationsMatrices_NodalMatrixCalculate(linearMatrix%nodalMatrix,linearMatrix%updateMatrix, &
           & nodeNumber,nodeNumber,rowVariable,colVariable,err,error,*999)
       ENDDO !matrixIdx
@@ -1732,8 +1745,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: colsVariableType,componentIdx,derivativeIdx,globalColumn,globalRow,localColumn,localRow, &
-      & numberOfDerivatives,numberOfVersions,rowsVariableType,totalNumberOfNodes,versionIdx
+    INTEGER(INTG) :: colsVariableType,componentIdx,derivativeIdx,globalColumn,globalRow,interpolationType,localColumn,localRow, &
+      & numberOfComponents,numberOfDerivatives,numberOfVersions,rowsVariableType,totalNumberOfNodes,versionIdx
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
@@ -1778,18 +1791,18 @@ CONTAINS
           SELECT CASE(interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
             CALL FieldVariable_ConstantDOFGet(rowsFieldVariable,componentIdx,localRow,err,error,*999)
-            CALL DomainMapping_LocalToGlobalGet(domainMapping,localRow,globalCol,err,error,*999)
+            CALL DomainMapping_LocalToGlobalGet(domainMapping,localRow,globalColumn,err,error,*999)
             nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
             nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
             nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalCol
+            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
             CALL FieldVariable_LocalElementDOFGet(rowsFieldVariable,rowNodeNumber,componentIdx,localRow,err,error,*999)
-            CALL DomainMapping_LocalToGlobalGet(domainMapping,localRow,globalCol,err,error,*999)
+            CALL DomainMapping_LocalToGlobalGet(domainMapping,localRow,globalColumn,err,error,*999)
             nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
             nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
             nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalCol
+            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
           CASE(FIELD_NODE_BASED_INTERPOLATION)
             CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,rowNodeNumber,numberOfDerivatives,err,error,*999)
             DO derivativeIdx=1,numberOfDerivatives
@@ -1798,11 +1811,11 @@ CONTAINS
               DO versionIdx=1,numberOfVersions
                 CALL FieldVariable_LocalNodeDOFGet(rowsFieldVariable,versionIdx,derivativeIdx,rowNodeNumber,componentIdx, &
                   & localRow,err,error,*999)
-                CALL DomainMapping_LocalToGlobalGet(domainMapping,localRow,globalCol,err,error,*999)
+                CALL DomainMapping_LocalToGlobalGet(domainMapping,localRow,globalColumn,err,error,*999)
                 nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
                 nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
                 nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalCol
+                nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
               ENDDO !versionIdx
             ENDDO !derivativeIdx
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -1922,7 +1935,7 @@ CONTAINS
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The interpolation type of "// &
-              & TRIM(NumberToVString(nterpolationType,"*",err,error))// &
+              & TRIM(NumberToVString(interpolationType,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
               & " of column field variable type "//TRIM(NumberToVString(colsVariableType,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)          
@@ -1954,9 +1967,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,derivativeIdx,localRow,numberOfDerivatives,numberOfVersions,rowsVariableType, &
-      & totalNumberOfNodes,versionIdx
+    INTEGER(INTG) :: componentIdx,derivativeIdx,interpolationType,localRow,numberOfComponents,numberOfDerivatives, &
+      & numberOfVersions,rowsVariableType,totalNumberOfNodes,versionIdx
+    TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_NodalVectorCalculate",err,error,*999)
@@ -2180,6 +2195,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx,residualIdx,sourceIdx
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
@@ -2360,7 +2376,7 @@ CONTAINS
     nodalVector%maxNumberOfRows = 0
     CALL FieldVariable_NumberOfComponentsGet(rowsFieldVariable,numberOfComponents,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      CALL FieldVariable_ComponentMaxNodeInterpParametersGet(rowsFieldVariable,componentIdx,maxNodenterpParameters, &
+      CALL FieldVariable_ComponentMaxNodeInterpParametersGet(rowsFieldVariable,componentIdx,maxNodeInterpParameters, &
         & err,error,*999)
       nodalVector%maxNumberOfRows=nodalVector%maxNumberOfRows+maxNodeInterpParameters
     ENDDO !componentIdx
@@ -2395,10 +2411,11 @@ CONTAINS
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
     
     ENTERS("EquationsMatricesVector_NodalFinalise",err,error,*999)
 
@@ -2724,9 +2741,10 @@ CONTAINS
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingResidualType), POINTER :: rhsMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
@@ -2734,8 +2752,8 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(FieldVariableType), POINTER :: fieldVariable,colFieldVariable
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
+    TYPE(FieldVariableType), POINTER :: colsVariable,rowsVariable
     
     ENTERS("EquationsMatricesVector_ElementInitialise",err,error,*999)
 
@@ -2791,8 +2809,8 @@ CONTAINS
         NULLIFY(residualVector)
         CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
         CALL EquationsMatrices_ElementVectorSetup(residualVector%elementResidual,rowsVariable,err,error,*999)
-        nonlinearMatrices%elementResidualCalculated=0
-        DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        residualVector%elementResidualCalculated=0
+        DO matrixIdx=1,residualVector%numberOfJacobians
           !Initialise the Jacobian element matrices
           NULLIFY(jacobianMatrix)
           CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
@@ -2804,13 +2822,13 @@ CONTAINS
       ENDDO !residualIdx
     ENDIF
     NULLIFY(rhsVector)
-    CALL EquationsMatricesVector_RHSVectorExists(vectorMapping,rhsVector,err,error,*999)
+    CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
     IF(ASSOCIATED(rhsVector)) THEN
       !Initialise the RHS element vector
       CALL EquationsMatrices_ElementVectorSetup(rhsVector%elementVector,rowsVariable,err,error,*999)
     ENDIF
     NULLIFY(sourceVectors)
-    CALL EquationsMatricesVector_SourceVectorsExists(vectorMapping,sourceVectors,err,error,*999)
+    CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
     IF(ASSOCIATED(sourceVectors)) THEN
       DO sourceIdx=1,sourceVectors%numberOfSources
         NULLIFY(sourceVector)
@@ -2900,7 +2918,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate equations matrix.",err,error,*999)
     equationsMatrix=>dynamicMatrices%matrices(matrixNumber)%ptr
     equationsMatrix%matrixNumber=matrixNumber
-    equationsMatrix%matrixMatricesType=EQUATIONS_DYNAMIC_MATRIX
+    equationsMatrix%matrixMatricesType=EQUATIONS_MATRIX_DYNAMIC
     equationsMatrix%dynamicMatrices=>dynamicMatrices
     NULLIFY(equationsMatrix%linearMatrices)
     equationsMatrix%matrixCoefficient=equationsMatrixToVarMap%matrixCoefficient
@@ -2969,7 +2987,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate equations matrix.",err,error,*999)
     equationsMatrix=>linearMatrices%matrices(matrixNumber)%ptr
     equationsMatrix%matrixNumber=matrixNumber
-    equationsMatrix%matrixMatricesType=EQUATIONS_LINEAR_MATRIX
+    equationsMatrix%matrixMatricesType=EQUATIONS_MATRIX_LINEAR
     NULLIFY(equationsMatrix%dynamicMatrices)
     equationsMatrix%linearMatrices=>linearMatrices
     equationsMatrix%matrixCoefficient=1.0_DP
@@ -3154,7 +3172,7 @@ CONTAINS
     CALL WriteString(id,"Hessian matrices:",err,error,*999)
     DO hessianMatrixIdx=1,optimisationMatrices%numberOfHessians
       NULLIFY(hessianMatrix)
-      CALL EquationsMatricesOptimisation_HessianMatrixGet(optimisationMatrices,hessianMatrixId,hessianMatrix,err,error,*999)
+      CALL EquationsMatricesOptimisation_HessianMatrixGet(optimisationMatrices,hessianMatrixIdx,hessianMatrix,err,error,*999)
       CALL WriteStringValue(id,"Hessian matrix: ",hessianMatrixIdx,err,error,*999)
       CALL DistributedMatrix_Output(id,hessianMatrix%hessian,err,error,*999)
     ENDDO !hessianMatrixIdx
@@ -3282,6 +3300,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx,variableIdx
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
@@ -3350,6 +3369,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx,variableIdx
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
@@ -3443,8 +3463,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr,matrixIdx
+    REAL(DP) :: matrixCoefficient
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
     TYPE(VARYING_STRING) :: dummyError
      
     ENTERS("EquationsMatricesVector_LinearInitialise",err,error,*998)
@@ -3469,7 +3491,8 @@ CONTAINS
         CALL EquationsMatrices_EquationsMatrixLinearInitialise(vectorMatrices%linearMatrices,matrixIdx,err,error,*999)
         NULLIFY(equationsMatrixToVarMap)
         CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixIdx,equationsMatrixToVarMap,err,error,*999)
-        vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr%matrixCoefficient=equationsMatrixToVarMap%matrixCoefficient
+        CALL EquationsMappingVectorEMToVMap_MatrixCoefficientGet(equationsMatrixToVarMap,matrixCoefficient,err,error,*999)
+        vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr%matrixCoefficient=matrixCoefficient
       ENDDO !matrixIdx
       NULLIFY(vectorMatrices%linearMatrices%tempVector)
     ENDIF
@@ -3528,7 +3551,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,dummyErr
+    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfResiduals,residualIdx
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(VARYING_STRING) :: dummyError
@@ -3543,15 +3566,16 @@ CONTAINS
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
     CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
-    IF(ASSOCIATED(nonlinearMapping)) THEN      
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
       ALLOCATE(vectorMatrices%nonlinearMatrices,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations matrices nonlinear matrices.",err,error,*999)
       vectorMatrices%nonlinearMatrices%vectorMatrices=>vectorMatrices
-      ALLOCATE(vectorMatrices%nonlinearMatrices%residuals(nonlinearMapping%numberOfResiduals),STAT=err)
+      ALLOCATE(vectorMatrices%nonlinearMatrices%residuals(numberOfResiduals),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate nonlinear matrices residuals.",err,error,*999)
-      vectorMatrices%nonlinearMatrices%numberOfResiduals=nonlinearMapping%numberOfResiduals
-      DO residualIdx=1,nonlinearMapping%numberOfResiduals
-        NULLIFY(vectorMatrices%nonlinearMatrices%residuals(residualIdx)%ptr
+      vectorMatrices%nonlinearMatrices%numberOfResiduals=numberOfResiduals
+      DO residualIdx=1,numberOfResiduals
+        NULLIFY(vectorMatrices%nonlinearMatrices%residuals(residualIdx)%ptr)
         CALL EquationsMatricesNonlinear_ResidualInitialise(vectorMatrices%nonlinearMatrices,residualIdx,err,error,*999)
       ENDDO !residualIdx
       NULLIFY(vectorMatrices%nonlinearMatrices%tempVector)
@@ -3656,6 +3680,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
+    REAL(DP) :: rhsCoefficient
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(VARYING_STRING) :: dummyError
@@ -3670,9 +3695,10 @@ CONTAINS
     NULLIFY(rhsMapping)
     CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*998)
     IF(ASSOCIATED(rhsMapping)) THEN
+      CALL EquationsMappingRHS_VectorCoefficientGet(rhsMapping,rhsCoefficient,err,error,*999)
       ALLOCATE(vectorMatrices%rhsVector,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations matrices RHS vector.",err,error,*999)
-      vectorMatrices%rhsVector%rhsCoefficent=rhsMapping%rhsCoefficient
+      vectorMatrices%rhsVector%rhsCoefficient=rhsCoefficient
       vectorMatrices%rhsVector%updateVector=.TRUE.
       vectorMatrices%rhsVector%firstAssembly=.TRUE.
       NULLIFY(vectorMatrices%rhsVector%vector)
@@ -3729,6 +3755,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: sourceIdx
      
     ENTERS("EquationsMatricesVector_SourcesFinalise",err,error,*999)
 
@@ -3762,7 +3789,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,numberOfSources,sourceIdx
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(VARYING_STRING) :: dummyError
@@ -3770,20 +3797,21 @@ CONTAINS
     ENTERS("EquationsMatricesVector_SourcesInitialise",err,error,*998)
 
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
-    IF(ASSOCIATED(vectorMatrices%sourceVector)) &
-      & CALL FlagError("Vector equations matrices source vector is already associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMatrices%sourceVectors)) &
+      & CALL FlagError("Vector equations matrices source vectors is already associated.",err,error,*998)
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
-    NULLIFY(sourcseMapping)
+    NULLIFY(sourcesMapping)
     CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*998)
     IF(ASSOCIATED(sourcesMapping)) THEN
+      CALL EquationsMappingSources_NumberOfSourcesGet(sourcesMapping,numberOfSources,err,error,*999)
       ALLOCATE(vectorMatrices%sourceVectors,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations matrices source vectors.",err,error,*999)
       vectorMatrices%sourceVectors%vectorMatrices=>vectorMatrices
-      ALLOCATE(vectorMatrices%sourceVectors%sources(sourcesMapping%numberOfSources),STAT=err)
+      ALLOCATE(vectorMatrices%sourceVectors%sources(numberOfSources),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate the source vectors sources.",err,error,*999)
-      vectorMatrices%sourceVectors%numberOfSources=sourcesMapping%numberOfSources
-      DO sourceIdx=1,sourcesMapping%numberOfSources
+      vectorMatrices%sourceVectors%numberOfSources=numberOfSources
+      DO sourceIdx=1,numberOfSources
         NULLIFY(vectorMatrices%sourceVectors%sources(sourceIdx)%ptr)
         CALL EquationsMatricesSources_SourceVectorInitialise(vectorMatrices%sourceVectors,sourceIdx,err,error,*999)
       ENDDO !sourceIdx
@@ -3822,7 +3850,7 @@ CONTAINS
     NULLIFY(dynamicMatrices)
     CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
     IF(SIZE(lumpingTypes,1)<dynamicMatrices%numberOfDynamicMatrices) THEN
-      localError="The size of the lumping type array of "//TRIM(NumberToVString(SIZE(lumpingType,1),"*",err,error))// &
+      localError="The size of the lumping type array of "//TRIM(NumberToVString(SIZE(lumpingTypes,1),"*",err,error))// &
         & " is invalid. The size should be >= "//TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -3872,8 +3900,8 @@ CONTAINS
     CALL EquationsMatricesVector_AssertNotFinished(vectorMatrices,err,error,*999)
     NULLIFY(dynamicMatrices)
     CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
-    IF(SIZE(storageType,1)<dynamicMatrices%numberOfDynamicMatrices) THEN
-      localError="The size of the storage type array of "//TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))// &
+    IF(SIZE(storageTypes,1)<dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The size of the storage type array of "//TRIM(NumberToVString(SIZE(storageTypes,1),"*",err,error))// &
         & " is invalid. The size should be >= "//TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -3914,8 +3942,33 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the storage type (sparsity) of a linear equations matrix
+  SUBROUTINE EquationsMatricesVector_LinearStorageTypeSet0(vectorMatrices,storageType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: storageType !<The storage type for the linear equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+     
+    ENTERS("EquationsMatricesVector_LinearStorageTypeSet0",err,error,*999)
+
+    CALL EquationsMatricesVector_LinearStorageTypeSet1(vectorMatrices,[storageType],err,error,*999)
+    
+    EXITS("EquationsMatricesVector_LinearStorageTypeSet0")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesVector_LinearStorageTypeSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_LinearStorageTypeSet0
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets the storage type (sparsity) of the linear equations matrices
-  SUBROUTINE EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices,storageTypes,err,error,*)
+  SUBROUTINE EquationsMatricesVector_LinearStorageTypeSet1(vectorMatrices,storageTypes,err,error,*)
 
     !Argument variables
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
@@ -3928,15 +3981,15 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: linearMatrix
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EquationsMatricesVector_LinearStorageTypeSet",err,error,*999)
+    ENTERS("EquationsMatricesVector_LinearStorageTypeSet1",err,error,*999)
 
     CALL EquationsMatricesVector_AssertNotFinished(vectorMatrices,err,error,*999)
     NULLIFY(linearMatrices)
     CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
     IF(SIZE(storageTypes,1)<linearMatrices%numberOfLinearMatrices) THEN
-      localError="The size of the storage type array ("//TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))// &
-        & ") is not equal to the number of linear matrices ("// &
-        & TRIM(NumberToVString(linearMatrices%numberOfLinearMatrices,"*",err,error))//")."
+      localError="The size of the storage type array of "//TRIM(NumberToVString(SIZE(storageTypes,1),"*",err,error))// &
+        & " is not equal to the number of linear matrices of "// &
+        & TRIM(NumberToVString(linearMatrices%numberOfLinearMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
@@ -3965,12 +4018,12 @@ CONTAINS
       END SELECT
     ENDDO !matrixIdx
     
-    EXITS("EquationsMatricesVector_LinearStorageTypeSet")
+    EXITS("EquationsMatricesVector_LinearStorageTypeSet1")
     RETURN
-999 ERRORSEXITS("EquationsMatricesVector_LinearStorageTypeSet",err,error)
+999 ERRORSEXITS("EquationsMatricesVector_LinearStorageTypeSet1",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMatricesVector_LinearStorageTypeSet
+  END SUBROUTINE EquationsMatricesVector_LinearStorageTypeSet1
 
   !
   !================================================================================================================================
@@ -3988,14 +4041,17 @@ CONTAINS
     !Local Variables
     INTEGER(INTG), ALLOCATABLE :: storageTypes(:)
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
 
     ENTERS("EquationsMatricesVector_NonlinearStorageTypeSet0",err,error,*998)
 
     CALL EquationsMatricesVector_AssertNotFinished(vectorMatrices,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
+    NULLIFY(residualVector)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*998)
 
-    ALLOCATE(storageTypes(nonlinearMatrices%numberOfJacobians),STAT=err)
+    ALLOCATE(storageTypes(residualVector%numberOfJacobians),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate storage types.",err,error,*999)
     storageTypes=storageType
     CALL EquationsMatricesVector_NonlinearStorageTypeSet1(vectorMatrices,residualIdx,storageTypes,err,error,*999)
@@ -4025,7 +4081,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsMatriceResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(VARYING_STRING) :: localError
     
@@ -4136,8 +4192,33 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the structure (sparsity) of a linear equations matrix
+  SUBROUTINE EquationsMatricesVector_LinearStructureTypeSet0(vectorMatrices,structureType,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: structureType !<The storage type for the linear equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMatricesVector_LinearStructureTypeSet0",err,error,*999)
+
+    CALL EquationsMatricesVector_LinearStructureTypeSet1(vectorMatrices,[structureType],err,error,*999)
+    
+    EXITS("EquationsMatricesVector_LinearStructureTypeSet0")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesVector_LinearStructureTypeSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_LinearStructureTypeSet0
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Sets the structure (sparsity) of the linear equations matrices
-  SUBROUTINE EquationsMatricesVector_LinearStructureTypeSet(vectorMatrices,structureTypes,err,error,*)
+  SUBROUTINE EquationsMatricesVector_LinearStructureTypeSet1(vectorMatrices,structureTypes,err,error,*)
     
     !Argument variables
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
@@ -4150,7 +4231,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: linearMatrix
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMatricesVector_LinearStructureTypeSet",err,error,*999)
+    ENTERS("EquationsMatricesVector_LinearStructureTypeSet1",err,error,*999)
 
     CALL EquationsMatricesVector_AssertNotFinished(vectorMatrices,err,error,*999)
     NULLIFY(linearMatrices)
@@ -4181,12 +4262,12 @@ CONTAINS
       END SELECT
     ENDDO !matrixIdx
     
-    EXITS("EquationsMatricesVector_LinearStructureTypeSet")
+    EXITS("EquationsMatricesVector_LinearStructureTypeSet1")
     RETURN
-999 ERRORSEXITS("EquationsMatricesVector_LinearStructureTypeSet",err,error)
+999 ERRORSEXITS("EquationsMatricesVector_LinearStructureTypeSet1",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMatricesVector_LinearStructureTypeSet
+  END SUBROUTINE EquationsMatricesVector_LinearStructureTypeSet1
   
   !
   !================================================================================================================================
@@ -4338,7 +4419,7 @@ CONTAINS
       & CALL FlagError("Scalar equations matrices is already associated for this equations.",err,error,*998)
     NULLIFY(scalarMapping)
     CALL EquationsScalar_ScalarMappingGet(scalarEquations,scalarMapping,err,error,*998)
-    CALL EquationsMappingScalar_AssertIsFinished(scalarMapping,err,error,*998
+    CALL EquationsMappingScalar_AssertIsFinished(scalarMapping,err,error,*998)
     
     ALLOCATE(scalarEquations%scalarMatrices,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate scalar equations scalar equations matrices.",err,error,*999)
@@ -4401,7 +4482,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,numberOfGlobalRows,numberOfRows,totalNumberOfRows
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(VARYING_STRING) :: dummyError
     
@@ -4415,6 +4497,9 @@ CONTAINS
     CALL EquationsMappingVector_AssertIsFinished(vectorMapping,err,error,*998)
     NULLIFY(lhsMapping)
     CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*998)
+    CALL EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*998)
+    CALL EquationsMappingLHS_TotalNumberOfRowsGet(lhsMapping,totalNumberOfRows,err,error,*998)
+    CALL EquationsMappingLHS_NumberOfGlobalRowsGet(lhsMapping,numberOfGlobalRows,err,error,*998)
     
     ALLOCATE(vectorEquations%vectorMatrices,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate vector equations vector equations matrices.",err,error,*999)
@@ -4422,9 +4507,9 @@ CONTAINS
     vectorEquations%vectorMatrices%vectorMatricesFinished=.FALSE.
     vectorEquations%vectorMatrices%vectorMapping=>vectorMapping
     NULLIFY(vectorEquations%vectorMatrices%solverMapping)
-    vectorEquations%vectorMatrices%numberOfRows=lhsMapping%numberOfRows
-    vectorEquations%vectorMatrices%totalNumberOfRows=lhsMapping%totalNumberOfRows
-    vectorEquations%vectorMatrices%numberOfGlobalRows=lhsMapping%numberOfGlobalRows
+    vectorEquations%vectorMatrices%numberOfRows=numberOfRows
+    vectorEquations%vectorMatrices%totalNumberOfRows=totalNumberOfRows
+    vectorEquations%vectorMatrices%numberOfGlobalRows=numberOfGlobalRows
     NULLIFY(vectorEquations%vectorMatrices%dynamicMatrices)
     NULLIFY(vectorEquations%vectorMatrices%linearMatrices)
     NULLIFY(vectorEquations%vectorMatrices%nonlinearMatrices)
@@ -4478,7 +4563,7 @@ CONTAINS
       & selectionType==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
       & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY) THEN
       NULLIFY(dynamicMatrices)
-      CALL EquationsMatricesVector_DynamicMatricesExists(vectorMatrices,dynamicMatrix,err,error,*999)
+      CALL EquationsMatricesVector_DynamicMatricesExists(vectorMatrices,dynamicMatrices,err,error,*999)
       IF(ASSOCIATED(dynamicMatrices)) THEN
         DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
           NULLIFY(dynamicMatrix)
@@ -4527,7 +4612,7 @@ CONTAINS
       NULLIFY(nonlinearMatrices)
       CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
       IF(ASSOCIATED(nonlinearMatrices)) THEN
-        DO resdiualIdx=1,nonlinearMatrices%numberOfResiduals
+        DO residualIdx=1,nonlinearMatrices%numberOfResiduals
           NULLIFY(residualVector)
           CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
           IF(residualVector%updateResidual) CALL DistributedVector_AllValuesSet(residualVector%residual,VALUE,err,error,*999)
@@ -4588,7 +4673,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx
     
-    ENTERS("EquationsMatricesNonlinear_ResidualFinalise",err,error,*998)
+    ENTERS("EquationsMatricesNonlinear_ResidualFinalise",err,error,*999)
 
     IF(ASSOCIATED(residualVector)) THEN
       IF(ASSOCIATED(residualVector%residual)) CALL DistributedVector_Destroy(residualVector%residual,err,error,*999)
@@ -4629,9 +4714,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfJacobians
+    REAL(DP) :: residualCoefficient
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(VARYING_STRING) :: dummyError
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("EquationsMatricesNonlinear_ResidualInitialise",err,error,*998)
 
@@ -4653,13 +4742,15 @@ CONTAINS
     CALL EquationsMatricesNonlinear_NonlinearMappingGet(nonlinearMatrices,nonlinearMapping,err,error,*998)
     NULLIFY(residualMapping)
     CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*998)
+    CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*998)
     !Allocate and initialise the residual vector
     ALLOCATE(nonlinearMatrices%residuals(residualIdx)%ptr,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate nonlinear matrices residual vector.",err,error,*999)
-    residualVector=>nonlinearMatrices%residuals(residualIdx)%ptr
+    NULLIFY(residualVector)
+    CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
     residualVector%nonlinearMatrices=>nonlinearMatrices
     residualVector%residualNumber=residualIdx
-    residualVector%residualCoefficient=residualMapping%residualCoefficient
+    residualVector%residualCoefficient=residualCoefficient
     residualVector%updateResidual=.TRUE.
     residualVector%firstAssembly=.TRUE.
     NULLIFY(residualVector%residual)
@@ -4669,10 +4760,11 @@ CONTAINS
     CALL EquationsMatrices_ElementVectorInitialise(residualVector%elementResidual,err,error,*999)
     CALL EquationsMatrices_NodalVectorInitialise(residualVector%nodalResidual,err,error,*999)
     !Allocate and initialise the Jacobians
-    ALLOCATE(residuaVector%jacobians(residualMapping%numberOfJacobianMatrices),STAT=err)
+    CALL EquationsMappingResidual_NumberOfJacobianMatricesGet(residualMapping,numberOfJacobians,err,error,*999)
+    ALLOCATE(residualVector%jacobians(numberOfJacobians),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate Jacobians for the residual vector.",err,error,*999)
-    residualVector%numberOfJacobians=residualMapping%numberOfJacobianMatrices
-    DO matrixIdx=1,residualMapping%numberOfJacobianMatrices
+    residualVector%numberOfJacobians=numberOfJacobians
+    DO matrixIdx=1,numberOfJacobians
       NULLIFY(residualVector%jacobians(matrixIdx)%ptr)
       CALL EquationsMatricesResidual_JacobianInitialise(residualVector,matrixIdx,err,error,*999)
     ENDDO !matrixIdx
@@ -4727,8 +4819,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,numberOfColumns
+    REAL(DP) :: jacobianCoefficient
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -4752,17 +4846,20 @@ CONTAINS
     CALL EquationsMatricesResidual_ResidualMappingGet(residualVector,residualMapping,err,error,*998)
     NULLIFY(jacobianMatrixToVarMap)
     CALL EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,matrixIdx,jacobianMatrixToVarMap,err,error,*999)
+    CALL EquationsMappingVectorJMToVMap_MatrixCoefficientGet(jacobianMatrixToVarMap,jacobianCoefficient,err,error,*999)
+    CALL EquationsMappingVectorJMToVMap_NumberOfColumnsGet(jacobianMatrixToVarMap,numberOfColumns,err,error,*999)
 
     ALLOCATE(residualVector%jacobians(matrixIdx)%ptr,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate Jacobian matrix.",err,error,*999)
-    jacobianMatrix=>residualVector%jacobians(matrixIdx)%ptr
+    NULLIFY(jacobianMatrix)
+    CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
     jacobianMatrix%residualVector=>residualVector
     jacobianMatrix%jacobianNumber=0
-    jacobianMatrix%jacobianCoefficient=jacobianMatrixToVarMap%jacobianCoefficient
+    jacobianMatrix%jacobianCoefficient=jacobianCoefficient
     jacobianMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
     jacobianMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
     jacobianMatrix%symmetric=.FALSE.
-    jacobianMatrix%numberOfColumns=jacobianMatrixToVarMap%numberOfColumns
+    jacobianMatrix%numberOfColumns=numberOfColumns
     jacobianMatrix%updateJacobian=.TRUE.
     jacobianMatrix%firstAssembly=.TRUE.
     NULLIFY(jacobianMatrix%jacobian)
@@ -4770,7 +4867,7 @@ CONTAINS
     CALL EquationsMatrices_NodalMatrixInitialise(jacobianMatrix%nodalJacobian,err,error,*999)
     jacobianMatrix%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
     jacobianMatrix%jacobianFiniteDifferenceStepSize=1.0E-6_DP
-    jcaobianMatrixToVarMap%jacobian=>jacobianMatrix
+    jacobianMatrixToVarMap%jacobian=>jacobianMatrix
     
     EXITS("EquationsMatricesResidual_JacobianInitialise")
     RETURN
@@ -4794,7 +4891,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx
     
-    ENTERS("EquationsMatricesSources_SourceVectorFinalise",err,error,*998)
+    ENTERS("EquationsMatricesSources_SourceVectorFinalise",err,error,*999)
 
     IF(ASSOCIATED(sourceVector)) THEN
       IF(ASSOCIATED(sourceVector%vector)) CALL DistributedVector_Destroy(sourceVector%vector,err,error,*999)
@@ -4830,8 +4927,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
+    REAL(DP) :: sourceCoefficient
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(VARYING_STRING) :: dummyError
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("EquationsMatricesSources_SourceVectorInitialise",err,error,*998)
 
@@ -4853,12 +4954,15 @@ CONTAINS
     CALL EquationsMatricesSources_SourcesMappingGet(sourceVectors,sourcesMapping,err,error,*998)
     NULLIFY(sourceMapping)
     CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,sourceIdx,sourceMapping,err,error,*998)
+    CALL EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*999)
     !Allocate and initialise the residual vector
     ALLOCATE(sourceVectors%sources(sourceIdx)%ptr,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate source vectors source vector.",err,error,*999)
-    sourceVectors%sources(sourceIdx)%ptr%sourceVectors=>sourceVectors
+    NULLIFY(sourceVector)
+    CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
+    sourceVectors%sources(sourceIdx)%ptr%sources=>sourceVectors
     sourceVectors%sources(sourceIdx)%ptr%sourceNumber=sourceIdx
-    sourceVectors%sources(sourceIdx)%ptr%sourceCoefficient=sourceMapping%sourceCoefficient
+    sourceVectors%sources(sourceIdx)%ptr%sourceCoefficient=sourceCoefficient
     sourceVectors%sources(sourceIdx)%ptr%updateVector=.TRUE.
     sourceVectors%sources(sourceIdx)%ptr%firstAssembly=.TRUE.
     NULLIFY(sourceVectors%sources(sourceIdx)%ptr%vector)
@@ -4978,27 +5082,37 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,component,componentIdx,derivative,derivativeIdx,dofIdx,dummyErr,element,elementIdx, &
-      & globalColumn,localColumn,localDOF,localDOFIdx,localNodeIdx,matrixNumber,node,node2,numberOfColumns, &
-      & numberOfDerivatives,numberOfVersions,version,versionIdx
+    INTEGER(INTG) :: columnIdx,componentIdx,componentNumber,derivativeIdx,derivativeNumber,derivativeNumber2,dofIdx,dofType, &
+      & dofTypeIdx,dummyErr,elementIdx,elementNumber,globalColumn,interpolationType,localColumn,localDOF,localDOFIdx, &
+      & localNodeIdx,matrixNumber,maxElementInterpParameters,nodeNumber,nodeNumber2,numberOfColumns,numberOfColumnComponents, &
+      & numberOfDerivatives,numberOfGlobalColumns,numberOfLocalNodes,numberOfNodeDerivatives,numberOfRowComponents, &
+      & numberOfSurroundingElements,numberOfVersions,residualNumber,totalNumberOfColumns,totalNumberOfRows,versionIdx, &
+      & versionNumber,versionNumber2
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(BasisType), POINTER :: basis,basis2
-    TYPE(DomainMappingType), POINTER :: dependentDofsDomainMapping
-    TYPE(DomainElementsType), POINTER :: domainElements,domainElements2
-    TYPE(DomainNodesType), POINTER :: domainNodes
+    LOGICAL :: boundaryElement,boundaryNode
+    TYPE(BasisType), POINTER :: colsBasis,rowsBasis
+    TYPE(DomainType), POINTER :: colsDomain,rowsDomain
+    TYPE(DomainElementsType), POINTER :: colsDomainElements,rowsDomainElements
+    TYPE(DomainMappingType), POINTER :: colsDOFsDomainMapping,rowsDOFsDomainMapping
+    TYPE(DomainNodesType), POINTER :: colsDomainNodes,rowsDomainNodes
+    TYPE(DomainTopologyType), POINTER :: colsDomainTopology,rowsDomainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping
-    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,rowsVariable
     TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -5043,13 +5157,11 @@ CONTAINS
     IF(ASSOCIATED(dynamicMatrices)) THEN
       CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
       CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,colsVariable,err,error,*999)
-      CALL EquationsMappingDynamic_EquationsMatrixToVarMapGet(dynamicMapping,matrixNumber,equationsMatrixToVarMap, &
-        & err,error,*999)
+      CALL EquationsMappingDynamic_EquationsMatrixToVarMapGet(dynamicMapping,matrixNumber,equationsMatrixToVarMap, err,error,*999)
     ELSE
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixNumber,colsVariable,err,error,*999)
-      CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixNumber,equationsMatrixToVarMap, &
-        & err,error,*999)
+      CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,matrixNumber,equationsMatrixToVarMap,err,error,*999)
     ENDIF
     CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowComponents,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColumnComponents,err,error,*999)
@@ -5100,8 +5212,8 @@ CONTAINS
             NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
             CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
-            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,numberOfSurroundingElements* &
-              & maxElementInterpolationParameters,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,numberOfSurroundingElements*maxElementInterpParameters, &
+              & err,error,*999)
             CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             !Loop over all elements containing the dof
             DO elementIdx=1,numberOfSurroundingElements
@@ -5269,7 +5381,7 @@ CONTAINS
           CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
             & componentNumber,err,error,*999)
           NULLIFY(rowsDomain)
-          CALL FieldVariable_DomainGet(rowsVariable,rowsDomain,err,error,*999)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
           CALL FieldVariable_ComponentMaxElementInterpParametersGet(rowsVariable,componentNumber,maxElementInterpParameters, &
             & err,error,*999)
           NULLIFY(rowsDomainTopology)
@@ -5325,7 +5437,7 @@ CONTAINS
       !Allocate and setup the column locations
       ALLOCATE(columnIndices(numberOfNonZeros),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)        
-      ALLOCATE(list(dependentDofsDomainMapping%numberOfGlobal),STAT=err)
+      ALLOCATE(list(colsDOFsDomainMapping%numberOfGlobal),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate list.",err,error,*999)
       
       DO localDOFIdx=1,totalNumberOfRows 
@@ -5334,7 +5446,7 @@ CONTAINS
           !columns stores the list of nonzero column indices for each local row (localDOFIdx)
           columnIndices(rowIndices(localDOFIdx)+columnIdx-1)=columns(columnIdx)             
           !global to local columns
-          CALL DomainMapping_LocalNumberFromGlobalGet(columnsDOFsMapping,columns(columnIdx),1,localColumn,err,error,*999)
+          CALL DomainMapping_LocalNumberFromGlobalGet(colsDOFsDomainMapping,columns(columnIdx),1,localColumn,err,error,*999)
           localDOF=localColumn
           CALL FieldVariable_DOFTypeGet(colsVariable,localDOF,dofType,dofTypeIdx,err,error,*999)
           SELECT CASE(dofType)
@@ -5428,25 +5540,33 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,component,componentIdx,derivative,derivativeIdx,dofIdx,dummyErr,element,elementIdx,globalColumn, &
-      & localColumn,localDOFIdx,localNodeIdx,matrixNumber,numberOfColumns,node,node2,numberOfDerivatives, &
-      & numberOfVersions,version,versionIdx
+    INTEGER(INTG) :: columnIdx,componentIdx,componentNumber,derivativeIdx,derivativeNumber,derivativeNumber2,dofIdx,dofType, &
+      & dofTypeIdx,dummyErr,elementIdx,elementNumber,globalColumn,interpolationType,localColumn,localDOFIdx,localNodeIdx, &
+      & matrixNumber,maxElementInterpParameters,nodeNumber,nodeNumber2,numberOfColumns,numberOfColumnComponents, &
+      & numberOfDerivatives,numberOfGlobalColumns,numberOfLocalNodes,numberOfNodeDerivatives,numberOfRowComponents, &
+      & numberOfSurroundingElements,numberOfVersions,residualNumber,totalNumberOfColumns,totalNumberOfRows,versionIdx, &
+      & versionNumber,versionNumber2
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(BasisType), POINTER :: basis,basis2
-    TYPE(DomainMappingType), POINTER :: dependentDofsDomainMapping,rowDofsDomainMapping
-    TYPE(DomainElementsType), POINTER :: domainElements,domainElements2
-    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(BasisType), POINTER :: colsBasis,rowsBasis
+    TYPE(DomainType), POINTER :: colsDomain,rowsDomain
+    TYPE(DomainElementsType), POINTER :: colsDomainElements,rowsDomainElements
+    TYPE(DomainMappingType), POINTER :: colsDOFsDomainMapping,rowsDOFsDomainMapping
+    TYPE(DomainNodesType), POINTER :: colsDomainNodes,rowsDomainNodes
+    TYPE(DomainTopologyType), POINTER :: colsDomainTopology,rowsDomainTopology
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsMatricesNonlinearType), POINTER :: NONlinearMatrices
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping,rowDofsParamMapping
-    TYPE(FieldVariableType), POINTER :: fieldVariable,rowVariable
+    TYPE(FieldDOFToParamMapType), POINTER :: colsDOFsParamMapping,rowDOFsParamMapping
+    TYPE(FieldVariableType), POINTER :: colsVariable,rowsVariable
     TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -5461,7 +5581,7 @@ CONTAINS
     CALL JacobianMatrix_ResidualVectorGet(jacobianMatrix,residualVector,err,error,*999)
     residualNumber=residualVector%residualNumber
     NULLIFY(nonlinearMatrices)
-    CALL EquationsMatricesResidual_NonlinearMatricesGet(residualVector,nonlinerMatrices,err,error,*999)
+    CALL EquationsMatricesResidual_NonlinearMatricesGet(residualVector,nonlinearMatrices,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsMatricesNonlinear_VectorMatricesGet(nonlinearMatrices,vectorMatrices,err,error,*998)
     NULLIFY(vectorMapping)
@@ -5531,8 +5651,8 @@ CONTAINS
             NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
             CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
-            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,numberOfSurroundingElements* &
-              & maxElementInterpolationParameters,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,numberOfSurroundingElements*maxElementInterpParameters, &
+              & err,error,*999)
             CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             !Loop over all elements containing the dof
             DO elementIdx=1,numberOfSurroundingElements
@@ -5606,7 +5726,7 @@ CONTAINS
             NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
             CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
-            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,maElementInterpParameters+1,err,error,*999) ! size = all nodal dofs + itself
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,maxElementInterpParameters+1,err,error,*999) ! size = all nodal dofs + itself
             CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             DO componentIdx=1,numberOfColumnComponents
               NULLIFY(colsDomain)
@@ -5698,7 +5818,7 @@ CONTAINS
             CALL FieldVariable_DOFParameterGetNode(rowsVariable,dofTypeIdx,versionNumber,derivativeNumber,nodeNumber, &
               & componentNumber,err,error,*999)
             NULLIFY(rowsDomain)
-            CALL FieldVariable_DomainGet(rowsVariable,rowsDomain,err,error,*999)
+            CALL FieldVariable_ComponentDomainGet(rowsVariable,componentNumber,rowsDomain,err,error,*999)
             CALL FieldVariable_ComponentMaxElementInterpParametersGet(rowsVariable,componentNumber,maxElementInterpParameters, &
               & err,error,*999)
             NULLIFY(rowsDomainTopology)
@@ -5709,7 +5829,7 @@ CONTAINS
             NULLIFY(columnIndicesLists(localDofIdx)%ptr)
             CALL List_CreateStart(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
             CALL List_DataTypeSet(columnIndicesLists(localDofIdx)%ptr,LIST_INTG_TYPE,err,error,*999)            
-            CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fnumberOfRowComponents*maxElementInterpParameters, &
+            CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,numberOfRowComponents*maxElementInterpParameters, &
               & err,error,*999)
             CALL List_CreateFinish(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
             !Loop over all components,nodes,derivatives, and versions
@@ -5767,7 +5887,7 @@ CONTAINS
       !Allocate and setup the column locations
       ALLOCATE(columnIndices(numberOfNonZeros),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
-      DO localDOFIdx=1,rowDofsDomainMapping%totalNumberOfLocal
+      DO localDOFIdx=1,rowsDOFsDomainMapping%totalNumberOfLocal
         CALL List_DetachAndDestroy(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,columns,err,error,*999)
         DO columnIdx=1,numberOfColumns
           columnIndices(rowIndices(localDOFIdx)+columnIdx-1)=columns(columnIdx)
@@ -5781,8 +5901,8 @@ CONTAINS
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",totalNumberOfRows,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",numberOfGlobalColumns,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",numberOfNonZeros,err,error,*999)
-      IF(totalNumberOfRows*numberOfGlobalColums/=0) THEN
-        sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(totalNumberOfRows*numberOfGlobalColums,DP))*100.0_DP
+      IF(totalNumberOfRows*numberOfGlobalColumns/=0) THEN
+        sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(totalNumberOfRows*numberOfGlobalColumns,DP))*100.0_DP
         CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ",sparsity,"F6.2",err,error,*999)
       ENDIF
       IF(numberOfNonZeros>0) THEN
@@ -5799,7 +5919,7 @@ CONTAINS
     IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
     IF(ALLOCATED(columns)) DEALLOCATE(columns)
     IF(ALLOCATED(columnIndicesLists)) THEN
-      DO localDofIdx=1,dependentDofsDomainMapping%totalNumberOfLocal
+      DO localDofIdx=1,colsDOFsDomainMapping%totalNumberOfLocal
         IF(ASSOCIATED(columnIndicesLists(localDofIdx)%ptr)) &
           & CALL List_Destroy(columnIndicesLists(localDofIdx)%ptr,dummyErr,dummyError,*998)
       ENDDO !localDofIdx

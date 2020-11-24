@@ -149,6 +149,8 @@ MODULE SolverMappingAccessRoutines
   PUBLIC SolverMapping_NumberOfRowsGet
 
   PUBLIC SolverMapping_NumberOfGlobalRowsGet
+
+  PUBLIC SolverMapping_RHSVariablesListGet
   
   PUBLIC SolverMapping_RowDOFSMappingGet
 
@@ -316,15 +318,19 @@ MODULE SolverMappingAccessRoutines
 
   PUBLIC SolverMappingSRowToEQSMap_NumberOfEquationsSetRowsGet
 
-  PUBLIC SolverMappingVariable_VariableEquationInfoGet
+  PUBLIC SolverMappingVariable_EquationInfoGet
 
-  PUBLIC SolverMappingVariable_VariableMatrixInfoGet
+  PUBLIC SolverMappingVariable_EquationMatrixNumberGet
+
+  PUBLIC SolverMappingVariable_EquationNumberOfMatricesGet
+
+  PUBLIC SolverMappingVariable_FieldVariableGet
 
   PUBLIC SolverMappingVariable_NumberOfEquationsGet
 
   PUBLIC SolverMappingVariables_NumberOfVariablesGet
 
-  PUBLIC SolverMappingVariables_SolverMappingVariableGet
+  PUBLIC SolverMappingVariables_VariableGet
 
   PUBLIC SolverMappingVariables_VariableInListCheck
 
@@ -2047,6 +2053,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverMapping_NumberOfGlobalRowsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the RHS variables list for solver mapping.
+  SUBROUTINE SolverMapping_RHSVariablesListGet(solverMapping,rhsVariablesList,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping to get the RHS variables list for
+    TYPE(SolverMappingVariablesType), POINTER :: rhsVariablesList !<On exit, a pointer to the RHS variables list for the solver mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_RHSVariablesListGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(rhsVariablesList)) CALL FlagError("RHS variables list is already associated.",err,error,*998)    
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+#endif
+
+    rhsVariablesList=>solverMapping%rhsVariablesList
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(rhsVariablesList)) &
+      & CALL FlagError("The RHS variables list is not associated for the solver mapping.",err,error,*999)
+#endif    
+      
+    EXITS("SolverMapping_RHSVariablesListGet")
+    RETURN
+999 NULLIFY(rhsVariablesList)
+998 ERRORSEXITS("SolverMapping_RHSVariablesListGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_RHSVariablesListGet
   
   !
   !================================================================================================================================
@@ -5754,6 +5796,247 @@ CONTAINS
   !================================================================================================================================
   !
   
+  !>Returns the equation information for a variable in the solver mapping variables list.
+  SUBROUTINE SolverMappingVariable_EquationInfoGet(solverMappingVariable,equationIdx,equationType,equationIndex,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<A pointer to the solver mapping variable to get the equation information for
+    INTEGER(INTG), INTENT(IN) :: equationIdx !<The equation index of the solver mapping variable to get the equations information for.
+    INTEGER(INTG), INTENT(OUT) :: equationType !<On exit, the equation type (equations set or interface condition) that the solver mapping variable is mapped to. \see SolverMappingRoutines_EquationsTypes
+    INTEGER(INTG), INTENT(OUT) :: equationIndex !<On exit, the equation set of interface condition equation index that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariable_EquationInfoGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is not associated.",err,error,*999)
+    IF(equationIdx<1.OR.equationIdx>solverMappingVariable%numberOfEquations) THEN
+      localError="The specified equations index of "//TRIM(NumberToVString(equationIdx,"*",err,error))// &
+        & " is invalid. The equations index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariable%numberOfEquations,"*",err,error))// &
+        & " for the solver mapping variable with index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariable%equationTypes)) THEN
+      localError="The equations types array is not allocated for the solver mapping variable with index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariable%equationIndices)) THEN
+      localError="The equations indices array is not allocated for the solver mapping variable with index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    equationType=solverMappingVariable%equationTypes(equationIdx)
+    equationIndex=solverMappingVariable%equationIndices(equationIdx)
+            
+    EXITS("SolverMappingVariable_EquationInfoGet")
+    RETURN
+999 equationType=0
+    equationIndex=0
+    ERRORS("SolverMappingVariable_EquationInfoGet",err,error)
+    EXITS("SolverMappingVariable_EquationInfoGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariable_EquationInfoGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the matrix number for a matrix in an equation in a solver mapping variable.
+  SUBROUTINE SolverMappingVariable_EquationMatrixNumberGet(solverMappingVariable,equationsIdx,matrixIdx,matrixNumber,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<A pointer to the solver mapping variable to get the matrix number for
+    INTEGER(INTG), INTENT(IN) :: equationsIdx !<The equations index to get the matrix number in the equationIdx'th equation that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(IN) :: matrixIdx !<The matrix index to get the matrix number in the equationsIdx'th equation that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: matrixNumber !<On exit, the matrix number for the matrixIdx'th matrix in the equationsIdx'th equation that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariable_EquationMatrixNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is not associated.",err,error,*999)
+    IF(equationsIdx<1.OR.equationsIdx>solverMappingVariable%numberOfEquations) THEN
+      localError="The specified equations index of "//TRIM(NumberToVString(equationsIdx,"*",err,error))// &
+        & " is invalid. The equations index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariable%numberOfEquations,"*",err,error))// &
+        & " for the solver mapping variable with variable index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariable%numberOfMatrices)) THEN
+      localError="The number of matrices array is not allocated for the solver mapping variable with variable index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(matrixIdx<1.OR.matrixIdx>solverMappingVariable%numberOfMatrices(equationsIdx)) THEN
+      localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+        & " is invalid. The matrix index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariable%numberOfMatrices(equationsIdx),"*",err,error))// &
+        & " for equations index "//TRIM(NumberToVString(equationsIdx,"*",err,error))// &
+        & " of the solver mapping variable with variable index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariable%matrixNumbers)) THEN
+      localError="The matrix numbers array is not allocated for the solver matrix variable with variable index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    matrixNumber=solverMappingVariable%matrixNumbers(matrixIdx,equationsIdx)
+            
+    EXITS("SolverMappingVariable_EquationMatrixNumberGet")
+    RETURN
+999 matrixNumber=0
+    ERRORS("SolverMappingVariable_EquationMatrixNumberGet",err,error)
+    EXITS("SolverMappingVariable_EquationMatrixNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariable_EquationMatrixNumberGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of matrices for an equation in a solver mapping variable.
+  SUBROUTINE SolverMappingVariable_EquationNumberOfMatricesGet(solverMappingVariable,equationsIdx,numberOfMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<A pointer to the solver mapping variable to get the number of matrices for
+    INTEGER(INTG), INTENT(IN) :: equationsIdx !<The equations index to get the number of matrices in the equation that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On exit, the number of matrices that the equationsIdx'th equation that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariable_EquationNumberOfMatricesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is not associated.",err,error,*999)
+    IF(equationsIdx<1.OR.equationsIdx>solverMappingVariable%numberOfEquations) THEN
+      localError="The specified equations index of "//TRIM(NumberToVString(equationsIdx,"*",err,error))// &
+        & " is invalid. The equations index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMappingVariable%numberOfEquations,"*",err,error))// &
+        & " for the solver mapping variable with variable index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMappingVariable%numberOfMatrices)) THEN
+      localError="The number of matrices array is not allocated for the solver mapping variable with variable index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    numberOfMatrices=solverMappingVariable%numberOfMatrices(equationsIdx)
+            
+    EXITS("SolverMappingVariable_EquationNumberOfMatricesGet")
+    RETURN
+999 numberOfMatrices=0
+    ERRORS("SolverMappingVariable_EquationNumberOfMatricesGet",err,error)
+    EXITS("SolverMappingVariable_EquationNumberOfMatricesGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariable_EquationNumberOfMatricesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the equations field variable for a solver mapping variable.
+  SUBROUTINE SolverMappingVariable_FieldVariableGet(solverMappingVariable,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<A pointer to the solver mapping variable to get the field variables for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the field variable for the solver mapping variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("SolverMappingVariable_FieldVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("The field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is not associated.",err,error,*999)
+#endif    
+    
+    fieldVariable=>solverMappingVariable%variable
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable)) THEN
+      localError="The field variable is not associated for the solver mapping variable with index "// &
+        & TRIM(NumberToVString(solverMappingVariable%variableIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+      
+    EXITS("SolverMappingVariable_FieldVariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORS("SolverMappingVariable_FieldVariableGet",err,error)
+    EXITS("SolverMappingVariable_FieldVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariable_FieldVariableGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of equations for a solver mapping variable.
+  SUBROUTINE SolverMappingVariable_NumberOfEquationsGet(solverMappingVariable,numberOfEquations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<A pointer to the solver mapping variable to get the number of equations for
+    INTEGER(INTG), INTENT(OUT) :: numberOfEquations !<On exit, the number of equations that the solver mapping variable is mapped to.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMappingVariable_NumberOfEquationsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is not associated.",err,error,*999)
+#endif    
+    
+    numberOfEquations=solverMappingVariable%numberOfEquations
+            
+    EXITS("SolverMappingVariable_NumberOfEquationsGet")
+    RETURN
+999 numberOfEquations=0
+    ERRORS("SolverMappingVariable_NumberOfEquationsGet",err,error)
+    EXITS("SolverMappingVariable_NumberOfEquationsGet")
+    RETURN 1
+    
+  END SUBROUTINE SolverMappingVariable_NumberOfEquationsGet
+  
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns the number of variables in the solver mapping variables list.
   SUBROUTINE SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*)
 
@@ -5767,7 +6050,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("SolverMappingVariables_VariableGet",err,error,*999)
+    ENTERS("SolverMappingVariables_NumberOfVariablesGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
@@ -5787,113 +6070,48 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the equation information for a variable in the solver mapping variables list.
-  SUBROUTINE SolverMappingVariables_VariableEquationInfoGet(solverMappingVariables,variableIdx,equationIdx,equationType, &
-    & equationIndex,err,error,*)
+  !>Returns the specified solver mapping variable corresponding to the specified variable index in a list of solver mapping variables.
+  SUBROUTINE SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*)
 
     !Argument variables
-    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the equation information for
-    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the solver variables list to get the equations information for.
-    INTEGER(INTG), INTENT(IN) :: equationIdx !<The equation index of the solver variable in the solver variables list to get the equations information for.
-    INTEGER(INTG), INTENT(OUT) :: equationType !<On exit, the equation type (equations set or interface condition) that the solver variable in solver variables list is mapped to. \see SolverMappingRoutines_EquationsTypes
-    INTEGER(INTG), INTENT(OUT) :: equationIndex !<On exit, the equation set of interface condition equation index that the solver variable in solver variables list is mapped to.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-#ifdef WITH_PRECHECKS
-    TYPE(VARYING_STRING) :: localError
-#endif    
- 
-    ENTERS("SolverMappingVariables_VariableEquationInfoGet",err,error,*999)
-
-#ifdef WITH_PRECHECKS
-    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
-    IF(variableIdx<1.OR.variableIdx>solverMappingVariables%numberOfVariables) THEN
-      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-        & " is invalid. The variable index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(solverMappingVariables%numberOfVariables,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(solverMappingVariables%variables)) &
-      & CALL FlagError("The variables array is not allocated for the solver mapping variables.",err,error,*999)
-    IF(equationIdx<1.OR.equationIdx>solverMappingVariables%variables(variableIdx)%numberOfEquations) THEN
-      localError="The specified equations index of "//TRIM(NumberToVString(equationIdx,"*",err,error))// &
-        & " is invalid. The equations index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(solverMappingVariables%variables(variableIdx)%numberOfEquations,"*",err,error))// &
-        & " for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))//" of the solver variables list."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(solverMappingVariables%variables(variableIdx)%equationTypes)) THEN
-      localError="The equations types array is not allocated for variable index "// &
-        & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the solver mapping variables."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(solverMappingVariables%variables(variableIdx)%equationIndices)) THEN
-      localError="The equations indices array is not allocated for variable index "// &
-        & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the solver mapping variables."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-#endif    
-    
-    equationType=solverMappingVariables%variables(variableIdx)%equationTypes(equationIdx)
-    equationIndex=solverMappingVariables%variables(variableIdx)%equationIndices(equationIdx)
-            
-    EXITS("SolverMappingVariables_VariableEquationInfoGet")
-    RETURN
-999 equationType=0
-    equationIndex=0
-    ERRORS("SolverMappingVariables_VariableEquationInfoGet",err,error)
-    EXITS("SolverMappingVariables_VariableEquationInfoGet")
-    RETURN 1
-    
-  END SUBROUTINE SolverMappingVariables_VariableEquationInfoGet
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns a pointer to equations variable for a variableIdx'th variable in the solver mapping variables list.
-  SUBROUTINE SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,variable,err,error,*)
-
-    !Argument variables
-    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the variables for
-    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index to get.
-    TYPE(FieldVariableType), POINTER :: variable !<On exit, a pointer to variableIdx'th variable in the solver matrix to equations map. Must not be associated on entry.
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the variable for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the solver mapping variables list to get.
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<On return, the specified solver mapping variable in the solver mapping variables list. Must not be associated on entry. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 #ifdef WITH_CHECKS
     TYPE(VARYING_STRING) :: localError
 #endif    
- 
+    
     ENTERS("SolverMappingVariables_VariableGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS
-    IF(ASSOCIATED(variable)) CALL FlagError("The solver variable is already associated.",err,error,*998)
+    IF(ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
     IF(variableIdx<1.OR.variableIdx>solverMappingVariables%numberOfVariables) THEN
       localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is invalid. The variable index should be >= 1 and <= "// &
         & TRIM(NumberToVString(solverMappingVariables%numberOfVariables,"*",err,error))//"."
-      CALL FlagErro(localError,err,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(solverMappingVariables%variables)) &
-      & CALL FlagErro("The solver mapping variables list variables is not allocated.",err,error,*999)
+      & CALL FlagError("The solver mapping variables list variables is not allocated.",err,error,*999)
 #endif    
-    
-    variable=>solverMappingVariables%variables(variableIdx)%variable
 
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(variable)) THEN
-      localError="The solver mapping variable is not associated for variable index "// &
-        & TRIM(NumberToVString(variableIdx,"*",err,error))//" in the sovler variables list."
+    solverMappingVariable=>solverMappingVariables%variables(variableIdx)%ptr
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(solverMappingVariable)) THEN
+      localError="The solver mapping field variable for variable index "// &
+        & TRIM(NumberToVString(variableIdx,"*",err,error))//" is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
-      
+    
     EXITS("SolverMappingVariables_VariableGet")
     RETURN
-999 NULLIFY(variable)
+999 NULLIFY(solverMappingVariable)
 998 ERRORS("SolverMappingVariables_VariableGet",err,error)
     EXITS("SolverMappingVariables_VariableGet")
     RETURN 1
@@ -5904,87 +6122,53 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Checks to see if a field variable is in the solver mapping variables. If the field variable is in the list then the returned variable position index will correspond to the position in the list. If the field variable is not in the list then the returned variable position index will be zero. 
-  SUBROUTINE SolverMappingVariables_VariableInListCheck(solverMappingVariables,variable,solverMappingVariable,err,error,*)
+  !>Checks to see if a field variable is in the solver mapping variables. If the field variable is in the list then solver mapping variable will point to the required solver mapping variable that corresponds to the field variable. If the field variable is not in the list then the returned solver mapping variable will be null. 
+  SUBROUTINE SolverMappingVariables_VariableInListCheck(solverMappingVariables,fieldVariable,solverMappingVariable,err,error,*)
 
     !Argument variables
     TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the variables for
-    TYPE(FieldVariableType), POINTER :: variable !<A pointer to variable to check if it is the solver variables list.
-    
-    INTEGER(INTG), INTENT(OUT) :: variablePositionIdx !<On return, the position index of the variable in the solver variables if the variable is in the list. If the variable is not in the solver variables the position index will be zero.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to variable to check if it is the solver variables list.
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable !<On return, the solver mapping variable will point to the solver mapping variable in the list of solver mapping variables that corresponds to the field variable. If the field variable is not in the list then the solver mapping variable will be null. The pointer should not be associated on entry. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: variableIdx
     TYPE(FieldVariableType), POINTER :: solverVariable
- 
-    ENTERS("SolverMappingVariables_VariableInListCheck",err,error,*999)
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingTestVariable
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("SolverMappingVariables_VariableInListCheck",err,error,*998)
 
 #ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(solverMappingVariable)) CALL FlagError("Solver mapping variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(variable)) CALL FlagError("The field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("The field variable is not associated.",err,error,*999)
 #endif    
 
-    variablePositionIdx=0
+    NULLIFY(solverMappingVariable)
     DO variableIdx=1,solverMappingVariables%numberOfVariables
-      solverVariable=>solverMappingVariables%variables(variableIdx)%variable
-      IF(ASSOCIATED(variable,solverVariable)) THEN
-        variablePositionIdx=variableIdx
-        EXIT
+      solverMappingTestVariable=>solverMappingVariables%variables(variableIdx)%ptr
+      IF(ASSOCIATED(solverMappingTestVariable)) THEN
+        solverVariable=>solverMappingTestVariable%variable
+        IF(ASSOCIATED(fieldVariable,solverVariable)) THEN
+          solverMappingVariable=>solverMappingTestVariable
+          EXIT
+        ENDIF
+      ELSE
+        localError="The solver mapping variable is not associated for variable index "// &
+          & TRIM(NumberToVString(variableIdx,"*",err,error))//" is not associated."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ENDDO !variableIdx
     
     EXITS("SolverMappingVariables_VariableInListCheck")
     RETURN
-999 variablePositionIdx=0
-    ERRORS("SolverMappingVariables_VariableInListCheck",err,error)
+999 NULLIFY(solverMappingVariable)
+998 ERRORS("SolverMappingVariables_VariableInListCheck",err,error)
     EXITS("SolverMappingVariables_VariableInListCheck")
     RETURN 1
     
   END SUBROUTINE SolverMappingVariables_VariableInListCheck
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns the number of equations for a variable in the solver mapping variables list.
-  SUBROUTINE SolverMappingVariables_VariableNumberOfEquationsGet(solverMappingVariables,variableIdx,numberOfEquations,err,error,*)
-
-    !Argument variables
-    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables !<A pointer to the solver variables list to get the number of equations for
-    INTEGER(INTG), INTENT(IN) :: variableIdx !<The variable index in the solver variables list to get the number of equations for.
-    INTEGER(INTG), INTENT(OUT) :: numberOfEquations !<On exit, the number of equations that the solver variable in solver variables list is mapped to.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-#ifdef WITH_PRECHECKS
-    TYPE(VARYING_STRING) :: localError
-#endif    
- 
-    ENTERS("SolverMappingVariables_VariableNumberOfEquationsGet",err,error,*999)
-
-#ifdef WITH_PRECHECKS
-    IF(.NOT.ASSOCIATED(solverMappingVariables)) CALL FlagError("Solver mapping variables is not associated.",err,error,*999)
-    IF(variableIdx<1.OR.variableIdx>solverMappingVariables%numberOfVariables) THEN
-      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-        & " is invalid. The variable index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(solverMappingVariables%numberOfVariables,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(solverMappingVariables%variables)) &
-      & CALL FlagError("The variables array is not allocated for the solver mapping variables.",err,error,*999)
-#endif    
-    
-    numberOfEquations=solverMappingVariables%variables(variableIdx)%numberOfEquations
-            
-    EXITS("SolverMappingVariables_VariableNumberOfEquationsGet")
-    RETURN
-999 numberOfEquations=0
-    ERRORS("SolverMappingVariables_VariableNumberOfEquationsGet",err,error)
-    EXITS("SolverMappingVariables_VariableNumberOfEquationsGet")
-    RETURN 1
-    
-  END SUBROUTINE SolverMappingVariables_VariableNumberOfEquationsGet
   
   !
   !================================================================================================================================

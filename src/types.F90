@@ -2033,7 +2033,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this equations matrix.
     REAL(DP) :: matrixCoefficient !<The multiplicative coefficent for the matrix in the equation set
     INTEGER(INTG), POINTER :: columnToDOFMap(:) !<columnToDOFMap(columnIdx). The variable DOF that the columnIdx'th column of this equations matrix is mapped to.
-    TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<A pointer to the column dofs domain mapping for the matrix variable
+    TYPE(DomainMappingType), POINTER :: columnDOFsMapping !<A pointer to the column dofs domain mapping for the matrix variable
   END TYPE EquationsMatrixToVarMapType
 
   !>A buffer type of pointers to a EquationsMatrixToVarMapType \see Types::EquationsMatrixToVarMapType
@@ -2201,7 +2201,7 @@ END TYPE GeneratedMeshEllipsoidType
   !>Contains information on the equations mapping for a source vector i.e., how a field variable is mapped to the source vector for
   !>the vector equation mapping.
   TYPE EquationsMappingSourceType
-    TYPE(EquationsMappingSourceType), POINTER :: sourcesMapping !<A pointer to the sources mapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping !<A pointer to the sources mapping
     INTEGER(INTG) :: sourceNumber !<The source number for the sources mapping
     INTEGER(INTG) :: sourceVariableType !<The variable type number mapped from the source vector
     TYPE(FieldVariableType), POINTER :: sourceVariable !<A pointer to the source variable 

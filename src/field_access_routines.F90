@@ -61,7 +61,7 @@ MODULE FieldAccessRoutines
 
   !> \addtogroup FieldRoutines_DependentTypes FieldRoutines::DependentTypes
   !> \brief Depedent field parameter types
-  !> \see FieldRoutines,OPENCMISS_FieldDependentTypes
+  !> \see FieldRoutines,OpenCMISS_FieldDependentTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_INDEPENDENT_TYPE=1 !<Independent field type \see FieldRoutines_DependentTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_DEPENDENT_TYPE=2 !<Dependent field type \see FieldRoutines_DependentTypes,FieldRoutines
@@ -69,7 +69,7 @@ MODULE FieldAccessRoutines
 
   !> \addtogroup FieldRoutines_DimensionTypes FieldRoutines::DimensionTypes
   !> \brief Field dimension parameter types
-  !> \see FieldRoutines,OPENCMISS_FieldDimensionTypes
+  !> \see FieldRoutines,OpenCMISS_FieldDimensionTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_SCALAR_DIMENSION_TYPE=1 !<Scalar field \see FieldRoutines_DimensionTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_VECTOR_DIMENSION_TYPE=2 !<Vector field \see FieldRoutines_DimensionTypes,FieldRoutines
@@ -78,7 +78,7 @@ MODULE FieldAccessRoutines
 
   !> \addtogroup FieldRoutines_FieldTypes FieldRoutines::FieldTypes
   !> \brief Field type parameters
-  !> \see FieldRoutines,OPENCMISS_FieldTypes
+  !> \see FieldRoutines,OpenCMISS_FieldTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_GEOMETRIC_TYPE=1 !<Geometric field \see FieldRoutines_FieldTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_FIBRE_TYPE=2 !<Fibre field \see FieldRoutines_FieldTypes,FieldRoutines
@@ -100,7 +100,7 @@ MODULE FieldAccessRoutines
   !>@}
   !> \addtogroup FieldRoutines_DOFOrderTypes FieldRoutines::DOFOrderTypes
   !> \brief Field DOF order types
-  !> \see FieldRoutines,OPENCMISS_FieldDOFOrderTypes
+  !> \see FieldRoutines,OpenCMISS_FieldDOFOrderTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_SEPARATED_COMPONENT_DOF_ORDER=1 !<Field variable component dofs are not contiguous \see FieldRoutines_DOFOrderTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER=2 !<Field variable component dofs are contiguous \see FieldRoutines_DOFOrderTypes,FieldRoutines
@@ -108,7 +108,7 @@ MODULE FieldAccessRoutines
 
   !> \addtogroup FieldRoutines_ScalingTypes FieldRoutines::ScalingTypes
   !> \brief Field scaling type parameters
-  !> \see FieldRoutines,OPENCMISS_FieldScalingTypes
+  !> \see FieldRoutines,OpenCMISS_FieldScalingTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_NO_SCALING=0 !<The field is not scaled \see FieldRoutines_ScalingTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_UNIT_SCALING=1 !<The field has unit scaling \see FieldRoutines_ScalingTypes,FieldRoutines
@@ -129,7 +129,7 @@ MODULE FieldAccessRoutines
   
   !> \addtogroup FieldRoutines_VariableTypes FieldRoutines::VariableTypes
   !> \brief Field variable type parameters
-  !> \see FieldRoutines,OPENCMISS_FieldVariableTypes
+  !> \see FieldRoutines,OpenCMISS_FieldVariableTypes
   !> \todo sort out variable access routines so that you are always accessing by variable type rather than variable number.
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_NUMBER_OF_VARIABLE_TYPES=49 !<Number of different field variable types possible \see FieldRoutines_VariableTypes,FieldRoutines 
@@ -187,7 +187,7 @@ MODULE FieldAccessRoutines
   
   !> \addtogroup FieldRoutines_ParameterSetTypes FieldRoutines::ParameterSetTypes
   !> \brief Field parameter set type parameters \todo make program defined constants negative?
-  !> \see FieldRoutines,OPENCMISS_FieldParameterSetTypes
+  !> \see FieldRoutines,OpenCMISS_FieldParameterSetTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_NUMBER_OF_SET_TYPES=99 !<The maximum number of different parameter sets for a field \see FieldRoutines_ParameterSetTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_VALUES_SET_TYPE=1 !<The parameter set corresponding to the field values (at time T+DT for dynamic problems) \see FieldRoutines_ParameterSetTypes,FieldRoutines
@@ -238,7 +238,7 @@ MODULE FieldAccessRoutines
 
   !> \addtogroup FieldRoutines_InterpolationTypes FieldRoutines::InterpolationTypes
   !> \brief Field interpolation parameters
-  !> \see FieldRoutines,OPENCMISS_FieldInterpolationTypes
+  !> \see FieldRoutines,OpenCMISS_FieldInterpolationTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_CONSTANT_INTERPOLATION=1 !<Constant interpolation. One parameter for the field \see FieldRoutines_InterpolationTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_ELEMENT_BASED_INTERPOLATION=2 !<Element based interpolation. Parameters are different in each element \see FieldRoutines_InterpolationTypes,FieldRoutines
@@ -250,7 +250,7 @@ MODULE FieldAccessRoutines
    
   !> \addtogroup FieldRoutines_DataTypes FieldRoutines::DataTypes
   !> \brief Field data types
-  !> \see FieldRoutines,OPENCMISS_FieldDataTypes
+  !> \see FieldRoutines,OpenCMISS_FieldDataTypes
   !>@{
   INTEGER(INTG), PARAMETER :: FIELD_INTG_TYPE=1 !<Integer field data type \see FieldRoutines_DataTypes,FieldRoutines
   INTEGER(INTG), PARAMETER :: FIELD_SP_TYPE=2 !<Single precision real field data type \see FieldRoutines_DataTypes,FieldRoutines

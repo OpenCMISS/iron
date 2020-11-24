@@ -71,7 +71,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingDynamic_DynamicVariableTypeGet
 
-  PUBLIC EquationsMappingDynamic_EquationsMatrixToVariableMapGet
+  PUBLIC EquationsMappingDynamic_EquationsMatrixToVarMapGet
 
   PUBLIC EquationsMappingDynamic_MassMatrixNumberGet
 
@@ -95,7 +95,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingLHS_VectorMappingGet
 
-  PUBLIC EquationsMappingLinear_EquationsMatrixToVariableMapGet
+  PUBLIC EquationsMappingLinear_EquationsMatrixToVarMapGet
 
   PUBLIC EquationsMappingLinear_LinearMatrixVariableGet
 
@@ -119,7 +119,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingResidual_EquationsRowToResidualDOFMapGet
 
-  PUBLIC EquationsMappingResidual_JacobianMatrixToVariableMapGet
+  PUBLIC EquationsMappingResidual_JacobianMatrixToVarMapGet
 
   PUBLIC EquationsMappingResidual_JacobianMatrixVariableGet
 
@@ -133,7 +133,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingResidual_VariableIndexGet
   
-  PUBLIC EquationsMappingResidual_VariableToJacobianMatrixMapGet
+  PUBLIC EquationsMappingResidual_VarToJacobianMatrixMapGet
   
   PUBLIC EquationsMappingResidual_VariableTypeGet
 
@@ -156,6 +156,8 @@ MODULE EquationsMappingAccessRoutines
   PUBLIC EquationsMappingScalar_ScalarEquationsGet
 
   PUBLIC EquationsMappingSource_SourceVariableGet
+
+  PUBLIC EquationsMappingSource_VectorCoefficientGet
 
   PUBLIC EquationsMappingSources_SourceMappingGet
 
@@ -209,11 +211,19 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVectorEMToVMap_EquationsMatrixGet
 
+  PUBLIC EquationsMappingVectorEMToVMap_MatrixCoefficientGet
+
+  PUBLIC EquationsMappingVectorEMToVMap_NumberOfColumnsGet
+
   PUBLIC EquationsMappingVectorEMToVMap_VariableGet
 
   PUBLIC EquationsMappingVectorJMToVMap_VariableGet
-
+  
   PUBLIC EquationsMappingVectorJMToVMap_JacobianMatrixGet
+
+  PUBLIC EquationsMappingVectorJMToVMap_MatrixCoefficientGet
+
+  PUBLIC EquationsMappingVectorJMToVMap_NumberOfColumnsGet
 
   PUBLIC EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet
 
@@ -330,13 +340,13 @@ CONTAINS
   !
 
   !>Gets the equations matrix to variable mapping a dynamic mapping.
-  SUBROUTINE EquationsMappingDynamic_EquationsMatrixToVariableMapGet(dynamicMapping,dynamicMatrixIdx,equationsMatrixToVariableMap, &
+  SUBROUTINE EquationsMappingDynamic_EquationsMatrixToVarMapGet(dynamicMapping,dynamicMatrixIdx,equationsMatrixToVarMap, &
     & err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the equations matrix to variable map for
     INTEGER(INTG), INTENT(IN) :: dynamicMatrixIdx !<The dynamic matrix index to get the equations matrix to variable map for
-    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVariableMap !<On exit, a pointer to the requested equations matrix to variable map. Must not be associated on entry.
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap !<On exit, a pointer to the requested equations matrix to variable map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -344,10 +354,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("EquationsMappingDynamic_EquationsMatrixToVariableMapGet",err,error,*998)
+    ENTERS("EquationsMappingDynamic_EquationsMatrixToVarMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(equationsMatrixToVariableMap)) &
+    IF(ASSOCIATED(equationsMatrixToVarMap)) &
       & CALL FlagError("Equations matrix to variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
     IF(dynamicMatrixIdx<1.OR.dynamicMatrixIdx>dynamicMapping%numberOfDynamicMatrices) THEN
@@ -360,24 +370,24 @@ CONTAINS
       & CALL FlagError("The equations matrix to variable maps is not allocated for the dynamic mapping.",err,error,*999)
 #endif    
     
-    equationsMatrixToVariableMap=>dynamicMapping%equationsMatrixToVarMaps(dynamicMatrixIdx)%ptr
+    equationsMatrixToVarMap=>dynamicMapping%equationsMatrixToVarMaps(dynamicMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS
-    IF(.NOT.ASSOCIATED(equationsMatrixToVariableMap)) THEN
+    IF(.NOT.ASSOCIATED(equationsMatrixToVarMap)) THEN
       localError="The equations matrix to variable map is not associated for dynamic matrix index "// &
         & TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))//" of the dynamic mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
     
-    EXITS("EquationsMappingDynamic_EquationsMatrixToVariableMapGet")
+    EXITS("EquationsMappingDynamic_EquationsMatrixToVarapGet")
     RETURN
-999 NULLIFY(equationsMatrixToVariableMap)
-998 ERRORS("EquationsMappingDynamic_EquationsMatrixToVariableMapGet",err,error)
-    EXITS("EquationsMappingDynamic_EquationsMatrixToVariableMapGet")
+999 NULLIFY(equationsMatrixToVarMap)
+998 ERRORS("EquationsMappingDynamic_EquationsMatrixToVarMapGet",err,error)
+    EXITS("EquationsMappingDynamic_EquationsMatrixToVarMapGet")
     RETURN 1
     
-  END SUBROUTINE EquationsMappingDynamic_EquationsMatrixToVariableMapGet
+  END SUBROUTINE EquationsMappingDynamic_EquationsMatrixToVarMapGet
 
   !
   !================================================================================================================================
@@ -758,13 +768,13 @@ CONTAINS
   !
 
   !>Gets the equations matrix to variable mapping a linear mapping.
-  SUBROUTINE EquationsMappingLinear_EquationsMatrixToVariableMapGet(linearMapping,linearMatrixIdx,equationsMatrixToVariableMap, &
+  SUBROUTINE EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,linearMatrixIdx,equationsMatrixToVarMap, &
     & err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<A pointer to the linear mapping to get the equations matrix to variable map for
     INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The linear matrix index to get the equations matrix to variable map for
-    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVariableMap !<On exit, a pointer to the requested equations matrix to variable map. Must not be associated on entry.
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap !<On exit, a pointer to the requested equations matrix to variable map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -772,10 +782,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("EquationsMappingLinear_EquationsMatrixToVariableMap",err,error,*998)
+    ENTERS("EquationsMappingLinear_EquationsMatrixToVarMap",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(equationsMatrixToVariableMap)) &
+    IF(ASSOCIATED(equationsMatrixToVarMap)) &
       & CALL FlagError("Equations matrix to variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(linearMapping)) CALL FlagError("Linear mapping is not associated.",err,error,*999)
     IF(linearMatrixIdx<1.OR.linearMatrixIdx>linearMapping%numberOfLinearMatrices) THEN
@@ -788,24 +798,24 @@ CONTAINS
       & CALL FlagError("The equations matrix to variable maps is not allocated for the linear mapping.",err,error,*999)
 #endif    
     
-    equationsMatrixToVariableMap=>linearMapping%equationsMatrixToVarMaps(linearMatrixIdx)%ptr
+    equationsMatrixToVarMap=>linearMapping%equationsMatrixToVarMaps(linearMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(equationsMatrixToVariableMap)) THEN
+    IF(.NOT.ASSOCIATED(equationsMatrixToVarMap)) THEN
       localError="The equations matrix to variable map is not associated for linear matrix index "// &
         & TRIM(NumberToVString(linearMatrixIdx,"*",err,error))//" of the linear mapping."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
     
-    EXITS("EquationsMappingLinear_EquationsMatrixToVariableMapGet")
+    EXITS("EquationsMappingLinear_EquationsMatrixToVarMapGet")
     RETURN
-999 NULLIFY(equationsMatrixToVariableMap)
-998 ERRORS("EquationsMappingLinear_EquationsMatrixToVariableMapGet",err,error)
-    EXITS("EquationsMappingLinear_EquationsMatrixToVariableMapGet")
+999 NULLIFY(equationsMatrixToVarMap)
+998 ERRORS("EquationsMappingLinear_EquationsMatrixToVarMapGet",err,error)
+    EXITS("EquationsMappingLinear_EquationsMatrixToVarMapGet")
     RETURN 1
     
-  END SUBROUTINE EquationsMappingLinear_EquationsMatrixToVariableMapGet
+  END SUBROUTINE EquationsMappingLinear_EquationsMatrixToVarMapGet
   
   !
   !================================================================================================================================
@@ -1262,13 +1272,13 @@ CONTAINS
   !
 
   !>Gets the Jacobian matrix to variable mapping in a residual mapping.
-  SUBROUTINE EquationsMappingResidual_JacobianMatrixToVariableMapGet(residualMapping,jacobianMatrixIdx, &
-    & jacobianMatrixToVariableMap,err,error,*)
+  SUBROUTINE EquationsMappingResidual_JacobianMatrixToVarMapGet(residualMapping,jacobianMatrixIdx,jacobianMatrixToVarMap, &
+    & err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping !<A pointer to the residual mapping to get the Jacobian matrix to variable map for
     INTEGER(INTG), INTENT(IN) :: jacobianMatrixIdx !<The Jacobian matrix index of the residual to get the Jacobian matrix to variable map for
-    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVariableMap !<On exit, a pointer to the requested Jacobian matrix to variable map. Must not be associated on entry.
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap !<On exit, a pointer to the requested Jacobian matrix to variable map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1276,10 +1286,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif
     
-    ENTERS("EquationsMappingResidual_JacobianMatrixToVariableMapGet",err,error,*998)
+    ENTERS("EquationsMappingResidual_JacobianMatrixToVarMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(jacobianMatrixToVariableMap)) &
+    IF(ASSOCIATED(jacobianMatrixToVarMap)) &
       & CALL FlagError("Jacobian matrix to variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
     IF(jacobianMatrixIdx<1.OR.jacobianMatrixIdx>residualMapping%numberOfJacobianMatrices) THEN
@@ -1296,10 +1306,10 @@ CONTAINS
     ENDIF
 #endif    
     
-    jacobianMatrixToVariableMap=>residualMapping%jacobianMatrixToVarMaps(jacobianMatrixIdx)%ptr
+    jacobianMatrixToVarMap=>residualMapping%jacobianMatrixToVarMaps(jacobianMatrixIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(jacobianMatrixToVariableMap)) THEN
+    IF(.NOT.ASSOCIATED(jacobianMatrixToVarMap)) THEN
       localError="The Jacobian matrix to variable map is not associated for Jacobian matrix index "// &
         & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))//" of the mapping for residual number "// &
         & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
@@ -1307,14 +1317,14 @@ CONTAINS
     ENDIF
 #endif    
     
-    EXITS("EquationsMappingResidual_JacobianMatrixToVariableMapGet")
+    EXITS("EquationsMappingResidual_JacobianMatrixToVarMapGet")
     RETURN
-999 NULLIFY(jacobianMatrixToVariableMap)
-998 ERRORS("EquationsMappingResidual_JacobianMatrixToVariableMapGet",err,error)
-    EXITS("EquationsMappingResidual_JacobianMatrixToVariableMapGet")
+999 NULLIFY(jacobianMatrixToVarMap)
+998 ERRORS("EquationsMappingResidual_JacobianMatrixToVarMapGet",err,error)
+    EXITS("EquationsMappingResidual_JacobianMatrixToVarMapGet")
     RETURN 1
     
-  END SUBROUTINE EquationsMappingResidual_JacobianMatrixToVariableMapGet
+  END SUBROUTINE EquationsMappingResidual_JacobianMatrixToVarMapGet
   
   !
   !================================================================================================================================
@@ -1567,13 +1577,13 @@ CONTAINS
   !
 
   !>Gets the variable to Jacobian matrix map for the residual variable in a residual mapping.
-  SUBROUTINE EquationsMappingResidual_VariableToJacobianMatrixMapGet(residualMapping,variableIdx, &
-    & variableToJacobianMatrixMap,err,error,*)
+  SUBROUTINE EquationsMappingResidual_VarToJacobianMatrixMapGet(residualMapping,variableIdx, &
+    & varToJacobianMatrixMap,err,error,*)
     
     !Argument variables
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping !<A pointer to the residual mapping to get the variable to Jacobian matrix map for
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The residual variable index to get the variable to Jacobian matrices map for
-    TYPE(varToJacobianMatrixMapType), POINTER :: variableToJacobianMatrixMap !<On exit, a pointer to the requested variable to Jacobain matrix map. Must not be associated on entry.
+    TYPE(VarToJacobianMatrixMapType), POINTER :: varToJacobianMatrixMap !<On exit, a pointer to the requested variable to Jacobain matrix map. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1581,10 +1591,10 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
  
-    ENTERS("EquationsMappingResidual_VariableToJacobianMatrixMapGet",err,error,*998)
+    ENTERS("EquationsMappingResidual_VarToJacobianMatrixMapGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(variableToJacobianMatrixMap)) &
+    IF(ASSOCIATED(varToJacobianMatrixMap)) &
       & CALL FlagError("Variable to Jacobian matrix map is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
     IF(variableIdx<1.OR.variableIdx>residualMapping%numberOfVariables) THEN
@@ -1601,10 +1611,10 @@ CONTAINS
     ENDIF
 #endif    
     
-    variableToJacobianMatrixMap=>residualMapping%varToJacobianMatrixMaps(variableIdx)%ptr
+    varToJacobianMatrixMap=>residualMapping%varToJacobianMatrixMaps(variableIdx)%ptr
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(variableToJacobianMatrixMap)) THEN
+    IF(.NOT.ASSOCIATED(varToJacobianMatrixMap)) THEN
       localError="The variable to Jacobian matrix map is not associated for variable index "// &
         & TRIM(NumberToVString(variableIdx,"*",err,error))//" of the mapping for residual number "// &
         & TRIM(NumberToVString(residualMapping%residualNumber,"*",err,error))//"."
@@ -1612,14 +1622,14 @@ CONTAINS
     ENDIF
 #endif
     
-    EXITS("EquationsMappingResidual_VariableToJacobianMatrixMapGet")
+    EXITS("EquationsMappingResidual_VarToJacobianMatrixMapGet")
     RETURN
-999 NULLIFY(variableToJacobianMatrixMap)
-998 ERRORS("EquationsMappingResidual_VariableToJacobianMatrixMapGet",err,error)
-    EXITS("EquationsMappingResidual_VariableToJacobianMatrixMapGet")
+999 NULLIFY(varToJacobianMatrixMap)
+998 ERRORS("EquationsMappingResidual_VarToJacobianMatrixMapGet",err,error)
+    EXITS("EquationsMappingResidual_VarToJacobianMatrixMapGet")
     RETURN 1
     
-  END SUBROUTINE EquationsMappingResidual_VariableToJacobianMatrixMapGet
+  END SUBROUTINE EquationsMappingResidual_VarToJacobianMatrixMapGet
   
   !
   !================================================================================================================================
@@ -2030,6 +2040,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingSource_SourceVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified source coefficient for a source mapping.
+  SUBROUTINE EquationsMappingSource_VectorCoefficientGet(sourceMapping,sourceCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<A pointer to the source mapping to get the source coefficient for
+    REAL(DP), INTENT(OUT) :: sourceCoefficient !<On exit, the source coefficient for the source vector mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingSource_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceMapping)) CALL FlagError("Source mapping is not associated.",err,error,*999)
+#endif    
+    
+    sourceCoefficient=sourceMapping%sourceCoefficient
+    
+    EXITS("EquationsMappingSource_VectorCoefficientGet")
+    RETURN
+999 ERRORS("EquationsMappingSource_VectorCoefficientGet",err,error)
+    EXITS("EquationsMappingSource_VectorCoefficientGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingSource_VectorCoefficientGet
 
   !
   !================================================================================================================================
@@ -3044,6 +3084,68 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the matrix coefficient for a equations matrix to variable map.
+  SUBROUTINE EquationsMappingVectorEMToVMap_MatrixCoefficientGet(equationsMatrixToVarMap,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap !<A pointer to the equations matrix to variable map to get the equations matrix for
+    REAL(DP), INTENT(OUT) :: matrixCoefficient !<On exit, the coefficient multiplying the equations matrix in the equations set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorEMToVMap_MatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrixToVarMap)) &
+      & CALL FlagError("Equations matrix to variable map is not associated.",err,error,*999)
+#endif    
+    
+    matrixCoefficient=equationsMatrixToVarMap%matrixCoefficient
+
+    EXITS("EquationsMappingVectorEMToVMap_MatrixCoefficientGet")
+    RETURN
+999 ERRORS("EquationsMappingVectorEMToVMap_MatrixCoefficientGet",err,error)
+    EXITS("EquationsMappingVectorEMToVMap_MatrixCoefficientGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorEMToVMap_MatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of columns for a equations matrix to variable map.
+  SUBROUTINE EquationsMappingVectorEMToVMap_NumberOfColumnsGet(equationsMatrixToVarMap,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap !<A pointer to the equations matrix to variable map to get the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On exit, the number of columns in the equations matrix in the equations set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorEMToVMap_",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrixToVarMap)) &
+      & CALL FlagError("Equations matrix to variable map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfColumns=equationsMatrixToVarMap%numberOfColumns
+
+    EXITS("EquationsMappingVectorEMToVMap_NumberOfColumnsGet")
+    RETURN
+999 ERRORS("EquationsMappingVectorEMToVMap_NumberOfColumnsGet",err,error)
+    EXITS("EquationsMappingVectorEMToVMap_NumberOfColumnsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorEMToVMap_NumberOfColumnsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the field variable for a equations matrix to variable map.
   SUBROUTINE EquationsMappingVectorEMToVMap_VariableGet(equationsMatrixToVarMap,variable,err,error,*)
 
@@ -3115,6 +3217,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingVectorJMToVMap_JacobianMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the Jacobian matrix for a Jacobian matrix to variable map.
+  SUBROUTINE EquationsMappingVectorJMToVMap_MatrixCoefficientGet(jacobianMatrixToVarMap,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap !<A pointer to the Jacobian matrix to variable map to get the matrix coefficient for
+    REAL(DP), INTENT(OUT) :: matrixCoefficient !<On exit, the coefficient multiplying the Jacobian matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorJMToVMap_MatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrixToVarMap)) &
+      & CALL FlagError("Jacobian matrix to variable map is not associated.",err,error,*999)
+#endif    
+    
+    matrixCoefficient=jacobianMatrixToVarMap%jacobianCoefficient
+    
+    EXITS("EquationsMappingVectorJMToVMap_MatrixCoefficientGet")
+    RETURN
+999 ERRORS("EquationsMappingVectorJMToVMap_MatrixCoefficientGet",err,error)
+    EXITS("EquationsMappingVectorJMToVMap_MatrixCoefficientGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorJMToVMap_MatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of columns for a Jacobian matrix to variable map.
+  SUBROUTINE EquationsMappingVectorJMToVMap_NumberOfColumnsGet(jacobianMatrixToVarMap,numberOfColumns,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap !<A pointer to the Jacobian matrix to variable map to get the the number of columns for
+    INTEGER(INTG), INTENT(OUT) :: numberOfColumns !<On exit, the number of columns in  the Jacobian matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVectorJMToVMap_",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrixToVarMap)) &
+      & CALL FlagError("Jacobian matrix to variable map is not associated.",err,error,*999)
+#endif    
+    
+    numberOfColumns=jacobianMatrixToVarMap%numberOfColumns
+    
+    EXITS("EquationsMappingVectorJMToVMap_NumberOfColumnsGet")
+    RETURN
+999 ERRORS("EquationsMappingVectorJMToVMap_NumberOfColumnsGet",err,error)
+    EXITS("EquationsMappingVectorJMToVMap_NumberOfColumnsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVectorJMToVMap_NumberOfColumnsGet
 
   !
   !================================================================================================================================

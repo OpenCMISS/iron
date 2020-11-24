@@ -4279,13 +4279,14 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,lhsVariable,linearVariable, &
-      & residualVariable,rhsVariable,solverVariable
+      & residualVariable,rhsVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(SolverType), POINTER :: linearSolver,nonlinearSolver,solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariableType), POINTER :: solverVariable
     TYPE(SolverMappingVariablesType), POINTER :: solverVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
@@ -4339,8 +4340,9 @@ CONTAINS
           NULLIFY(dynamicVariable)
           CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
           !Sanity check that the dynamic variable is in the list of solver variables
-          CALL SolverMappingVariables_VariableInListCheck(solverVariables,dynamicVariable,variablePositionIdx,err,error,*999)
-          IF(variablePositionIdx==0) THEN
+          NULLIFY(solverVariable)
+          CALL SolverMappingVariables_VariableInListCheck(solverVariables,dynamicVariable,solverVariable,err,error,*999)
+          IF(.NOT.ASSOCIATED(solverVariable)) THEN
             localError="The dynamic variable for equations set number "// &
               & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))// &
               & " is not present in the list of solver matrix variables."
@@ -4417,8 +4419,9 @@ CONTAINS
               NULLIFY(residualVariable)
               CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
               !See if the residual variable is in the list of solver variables
-              CALL SolverMappingVariables_VariableInListCheck(solverVariables,residualVariable,variablePositionIdx,err,error,*999)
-              IF(variablePositionIdx/=0) THEN
+              NULLIFY(solverVariable)
+              CALL SolverMappingVariables_VariableInListCheck(solverVariables,residualVariable,solverVariable,err,error,*999)
+              IF(ASSOCIATED(solverVariable)) THEN
                 CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
                 CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
                   & err,error,*999)
@@ -4463,8 +4466,9 @@ CONTAINS
             NULLIFY(linearVariable)
             CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
             !See if the linear varible is in the list of solver variables
-            CALL SolverMappingVariables_VariableInListCheck(solverVariables,linearVariable,variablePositionIdx,err,error,*999)
-            IF(variablePositionIdx/=0) THEN
+            NULLIFY(solverVariable)
+            CALL SolverMappingVariables_VariableInListCheck(solverVariables,linearVariable,solverVariable,err,error,*999)
+            IF(ASSOCIATED(solverVariable)) THEN
               CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
               CALL FieldVariable_ParameterSetEnsureCreated(linearVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
                 & err,error,*999)
@@ -4570,8 +4574,9 @@ CONTAINS
         NULLIFY(lagrangeVariable)
         CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
         !See if the linear varible is in the list of solver variables
-        CALL SolverMappingVariables_VariableInListCheck(solverVariables,lagrangeVariable,variablePositionIdx,err,error,*999)
-        IF(variablePositionIdx/=0) THEN
+        NULLIFY(solverVariable)
+        CALL SolverMappingVariables_VariableInListCheck(solverVariables,lagrangeVariable,solverVariable,err,error,*999)
+        IF(ASSOCIATED(solverVariable)) THEN
           CALL FieldVariable_VariableTypeGet(lagrangeVariable,lagrangeVariableType,err,error,*999)
           CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
           CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
@@ -4967,11 +4972,12 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: linearMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldVariableType), POINTER :: dynamicVariable,linearVariable,residualVariable
+    TYPE(FieldVariableType), POINTER :: dynamicVariable,linearVariable,residualVariable,solverVariable
     TYPE(FieldVariablesListType), POINTER :: processedVariablesList
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolverMappingVariablesType), POINTER :: solverVariables
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: localError
    
@@ -5127,10 +5133,12 @@ CONTAINS
                 NULLIFY(residualVariable)
                 CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
                 !Check if the residual variable is in the solver variables
-                CALL SolverMappingVariables_VariableInListCheck(solverVariables,residualVariable,variablePositionIdx, &
+                NULLIFY(solverMappingVariable)
+                CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
                   & err,error,*999)
-                IF(variablePositionIdx/=0) THEN
+                IF(ASSOCIATED(solverMappingVariable)) THEN
                   !Check if the variable has already been processed
+                  NULLIFY(solverVariable)
                   CALL FieldVariablesList_VariableInListCheck(processedVariablesList,residualVariable,variablePositionIdx, &
                     & err,error,*999)
                   IF(variablePositionIdx==0) THEN
@@ -5219,9 +5227,12 @@ CONTAINS
               NULLIFY(linearVariable)
               CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
               !See if the linear varible is in the list of solver variables
-              CALL SolverMappingVariables_VariableInListCheck(solverVariables,linearVariable,variablePositionIdx,err,error,*999)
-              IF(variablePositionIdx/=0) THEN
+              NULLIFY(solverMappingVariable)
+              CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,linearVariable,solverMappingVariable, &
+                & err,error,*999)
+              IF(ASSOCIATED(solverMappingVariable)) THEN
                 !Check if the variable has already been processed
+                NULLIFY(solverVariable)
                 CALL FieldVariablesList_VariableInListCheck(processedVariablesList,residualVariable,variablePositionIdx, &
                   & err,error,*999)
                 IF(variablePositionIdx==0) THEN
@@ -8549,11 +8560,11 @@ CONTAINS
           CASE(SOLVER_NEWTON_LINESEARCH)
             NULLIFY(newtonLinesearchSolver)
             CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,newtonLinesearchSolver,err,error,*999)
-            CALL PETSc_SnesGetKSP(newtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SNESGetKSP(newtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE(SOLVER_NEWTON_TRUSTREGION)
             NULLIFY(newtonTrustregionSolver)
             CALL SolverNonlinearNewton_TrustregionSolverGet(newtonSolver,newtonTrustregionSolver,err,error,*999)
-            CALL PETSc_SnesGetKSP(newtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SNESGetKSP(newtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE DEFAULT
             localError="The Newton solve type of "// &
               & TRIM(NumberToVString(newtonSolver%newtonSolveType,"*",err,error))//"is invalid."
@@ -8566,11 +8577,11 @@ CONTAINS
           CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
             NULLIFY(quasiNewtonLinesearchSolver)
             CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
-            CALL PETSc_SnesGetKSP(quasiNewtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SNESGetKSP(quasiNewtonLinesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE(SOLVER_QUASI_NEWTON_TRUSTREGION)
             NULLIFY(quasiNewtonTrustregionSolver)
             CALL SolverNonlinearQuasiNewton_TrustregionSolverGet(quasiNewtonSolver,quasiNewtonTrustregionSolver,err,error,*999)
-            CALL PETSc_SnesGetKSP(quasiNewtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
+            CALL PETSc_SNESGetKSP(quasiNewtonTrustregionSolver%snes,iterativeSolver%ksp,err,error,*999)
           CASE DEFAULT
             localError="The Quasi-Newton solve type of "// &
               & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonSolveType,"*",err,error))//"is invalid."
@@ -9539,7 +9550,8 @@ CONTAINS
       & numberOfEquationsSets, &
       & numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices, &
       & numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables,numberOfRows, &
-      & numberOfSolverMatrices,numberOfSources,outputIteration,residualIdx,residualVariableDOF,rhsBoundaryCondition,rhsGlobalDOF, &
+      & numberOfSolverMatrices,numberOfSources,outputIteration,residualIdx,residualVariableDOF,residualVariableIdx, &
+      & rhsBoundaryCondition,rhsGlobalDOF, &
       & rhsVariableDOF,rhsVariableType,rowCondition,solverRowIdx,solverRowNumber,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
       & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableBoundaryCondition,variableDOF, &
       & variableGlobalDOF,variableIdx,variablePositionIdx,variableType
@@ -9548,8 +9560,8 @@ CONTAINS
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: alphaValue,currentFunctionFactor,currentRHSValue,currentTime,dampingMatrixCoefficient,deltaT,dofValue, &
       & dynamicAccelerationFactor,dynamicDisplacementFactor,dynamicValue,dynamicVelocityFactor,equationsDampingCoefficient, &
-      & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearValue, &
-      & linearValueSum,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
+      & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearCoefficient, &
+      & linearValue,linearValueSum,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
       & previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor,previousRHSValue,previous2RHSValue, &
       & previous3RHSValue,residualCoefficient,residualValue,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
       & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement, &
@@ -9557,7 +9569,8 @@ CONTAINS
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
       & previous3ResidualParameters(:),rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
-    LOGICAL :: hasIntegratedValues,hasTranspose,includeResidual,interfaceMatrixDynamic,updateResidual,updateRHS,updateSolverMatrix
+    LOGICAL :: hasIntegratedValues,hasTranspose,includeResidual,interfaceMatrixDynamic,rhsLinearMatrix,rhsResidual, &
+      & updateResidual,updateRHS,updateSolverMatrix
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
@@ -9566,13 +9579,15 @@ CONTAINS
     TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,equationsDistributedMatrix,interfaceDistributedMatrix, &
-      & linearDistributedMatrix,massDistributedMatrix,previousSolverDistributedMatrix,solverDistributedMatrix, &
-      & stiffnessDistributedMatrix,transposeInterfaceDistributedMatrix
-    TYPE(DistributedVectorType), POINTER :: currentResidualVector,currentRHSVector,currentSourceVector,dependentDistributedVector, &
-      & distributedResidualVector,distributedSourceVector,dynamicTempVector,equationsRHSVector,incrementalVector, &
-      & interfaceRHSDistributedVector,interfaceTempVector,lagrangeDistributedVector,linearTempVector,nonlinearTempVector, &
-      & predictedMeanAccelerationVector,predictedMeanDisplacementVector,predictedMeanVelocityVector,previousResidualVector, &
-      & previous2ResidualVector,previous3ResidualVector,previousRHSVector,previous2RHSVector,previous3RHSVector, &
+      & jacobianDistributedMatrix,linearDistributedMatrix,massDistributedMatrix,previousSolverDistributedMatrix, &
+      & solverDistributedMatrix,stiffnessDistributedMatrix,transposeDistributedMatrix,transposeInterfaceDistributedMatrix
+    TYPE(DistributedVectorType), POINTER :: currentDistributedVector,currentResidualVector,currentRHSVector,currentSourceVector, &
+      & dependentDistributedVector,distributedResidualVector,distributedSourceVector,dynamicTempVector,equationsRHSVector, &
+      & incrementalVector,interfaceRHSDistributedVector,interfaceTempVector,lagrangeDistributedVector,linearTempVector, &
+      & nonlinearTempVector,previousDistributedVector,previous2DistributedVector,previous3DistributedVector, &
+      & predictedMeanAccelerationVector, &
+      & predictedMeanDisplacementVector,predictedMeanVelocityVector,previousResidualVector,previous2ResidualVector, &
+      & previous3ResidualVector,previousRHSVector,previous2RHSVector,previous3RHSVector, &
       & previousSourceVector,previous2SourceVector,previous3SourceVector,residualDistributedVector,solverRHSVector, &
       & solverResidualVector,sourcesTempVector,transposeInterfaceTempVector
     TYPE(DomainMappingType), POINTER :: lhsDomainMapping,residualDomainMapping,rhsDomainMapping,variableDomainMapping
@@ -9597,7 +9612,8 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix,equationsMatrix
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: linearMatrixToSolverMatrixMap
+    TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: equationsMatrixToSolverMatricesMap
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap,linearMatrixToSolverMatrixMap
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -9619,12 +9635,14 @@ CONTAINS
     TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
-    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:),interfaceColToSolverRowsMap(:), &
-      & interfaceRowToSolverRowsMap(:)
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsColToSolverColsMap(:),equationsRowToSolverRowsMap(:), &
+      & interfaceColToSolverColsMap(:),interfaceColToSolverRowsMap(:),interfaceRowToSolverColsMap(:), &
+      & interfaceRowToSolverRowsMap(:),jacobianColToSolverColsMap(:)
     TYPE(SolverType), POINTER :: linkingSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolverMappingVariablesType), POINTER :: solverVariablesList
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
@@ -10228,13 +10246,14 @@ CONTAINS
                 NULLIFY(solverMatrixToEquationsMap)
                 CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
                   & err,error,*999)
-                NULLIFY(solverVariablesList)
-                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+                NULLIFY(solverMappingVariables)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
                 DO residualVariableIdx=1,numberOfResidualVariables
                   CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
-                  CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,residualVariable,variablePositionIdx, &
+                  NULLIFY(solverMappingVariable)
+                  CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
                     & err,error,*999)
-                  IF(variablePositionIdx/=0) rhsResidual=.FALSE.
+                  IF(ASSOCIATED(solverMappingVariable)) rhsResidual=.FALSE.
                 ENDDO !residualVariableIdx
               ENDDO !solverMatrixIdx
               IF(rhsResidual.OR.solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
@@ -10295,11 +10314,12 @@ CONTAINS
                 NULLIFY(solverMatrixToEquationsMap)
                 CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
                   & err,error,*999)
-                NULLIFY(solverVariablesList)
-                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
-                CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+                NULLIFY(solverMappingVariables)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+                NULLIFY(solverMappingVariable)
+                CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,linearVariable,solverMappingVariable, &
                   & err,error,*999)
-                IF(variablePositionIdx/=0) rhsLinearMatrix=.FALSE.
+                IF(ASSOCIATED(solverMappingVariable)) rhsLinearMatrix=.FALSE.
               ENDDO !solverMatrixIdx
               IF(rhsLinearMatrix) THEN
                 !Linear matrix variable is not on the LHS so take the matrix times vector over to the RHS.
@@ -10724,7 +10744,7 @@ CONTAINS
           ENDIF
           IF(ASSOCIATED(nonlinearMapping)) &
             & CALL FieldVariable_ParameterSetUpdateStart(lhsVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
-          CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999
+          CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999)
           CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,previousValuesVector, &
             & err,error,*999)
           IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
@@ -10739,7 +10759,7 @@ CONTAINS
           IF(ASSOCIATED(rhsMapping)) THEN
             CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
             IF(hasIntegratedValues) &
-              & CALL Field_ParameterSetDataRestore(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
+              & CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
               & err,error,*999)
           ENDIF
           IF(ASSOCIATED(nonlinearMapping)) &
@@ -10822,8 +10842,8 @@ CONTAINS
         !Get the list of solver variables
         NULLIFY(solverMatrixToEquationsMap)
         CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,1,solverMatrixToEquationsMap,err,error,*999)
-        NULLIFY(solverVariablesList)
-        CALL SolverMappingSMToEQSMap_VariableListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+        NULLIFY(solverMappingVariables)
+        CALL SolverMappingSMToEQSMap_VariableListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
         !Initialise the residual to zero
         CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
         !Get the solver residual check data
@@ -10920,9 +10940,9 @@ CONTAINS
               NULLIFY(linearVariable)
               CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,linearVariable,err,error,*999)
               !Check if the linear variable is on the left or right hand sides
-              CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+              CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,linearVariable,solverMappingVariable, &
                 & err,error,*999)
-              IF(variablePositionIdx/=0) THEN
+              IF(ASSOCIATED(solverMappingVariable)) THEN
                 !The linear variable is a LHS variable to add it to the residual
                 !Get the matrix coefficient
                 CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
@@ -10964,8 +10984,10 @@ CONTAINS
                 NULLIFY(residualVariable)
                 CALL EquationsMappingResidual_VariableGet(residualMapping,variableIdx,residualVariable,err,error,*999)
                 !Check if the variable is on the LHS
-                CALL SolverMappingVariables(solverVariablesList,residualVariable,variablePositionIdx,err,error,*999)
-                IF(variablePositionIdx/=0) THEN
+                NULLIFY(solverMappingVariable)
+                CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
+                  & err,error,*999)
+                IF(ASSOCIATED(solverMappingVariable)) THEN
                   includeResidual=.TRUE.
                   EXIT
                 ENDIF
@@ -11266,54 +11288,86 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dependentVariableType,dirichletIdx,equationsColumnNumber,equationsMatrixIdx,equationsMatrixIdx2, &
-      & equationsMatrixNumber,equationsRowNumber,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,interfaceVariableType, &
-      & linearVariableType,numberOfEquationsSets,numberOfInterfaceConditions,rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF, &
-      & rhsVariableType,solverMatrixIdx,solverRowNumber,variableDOF,variableGlobalDOF,variableBoundaryCondition,variableIdx, &
-      & variableType
+      & equationsMatrixNumber,equationsRowNumber,equationsSetIdx,interfaceConditionIdx,interfaceConditionMethod, &
+      & interfaceMatrixIdx,interfaceVariableType,jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF, &
+      & lhsVariableDOF,linearMatrixIdx,linearMatrixNumber,linearVariableIdx,linearVariableType,numberOfDirichletConditions, &
+      & numberOfEquationsMatrices,numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices, &
+      & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables, &
+      & numberOfRows,numberOfSolverMatrices,numberOfSources,penaltyMatrixIdx,residualIdx,residualVariableIdx, &
+      & rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,rowCondition,solverMatrixIdx,solverRowNumber, &
+      & sourceIdx,totalNumberOfRows,variableDOF,variableGlobalDOF,variableBoundaryCondition,variableIdx,variableType
+    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
-    REAL(DP) :: dependentValue,linearValue,linearValueSum,residualValue,rhsValue, &
-      & sourceValue,rhsIntegratedValue
-    REAL(DP), POINTER :: rhsParameters(:),checkData(:),checkData2(:),checkData3(:),checkData4(:)
+    REAL(DP) :: alphaValue,currentRHSValue,dependentValue,dofValue,linearValue,linearValueSum,matrixCoefficient, &
+      & matrixCoefficients(2),nonlinearValue,residualCoefficient,residualValue,rhsIntegratedValue,rhsValue,solverRHSValue, &
+      & sourceCoefficient,sourceValue
+    REAL(DP), POINTER :: checkData(:),checkData2(:),checkData3(:),checkData4(:),matrixCheckData(:),rhsIntegratedParameters(:), &
+      & rhsParameters(:),solverResidualCheckData(:),solverRHSCheckData(:)
     TYPE(RealDPPtrType), ALLOCATABLE :: dependentParameters(:)
-    LOGICAL :: subtractFixedBCsFromResidual,hasIntegratedValues
+    LOGICAL :: hasIntegratedValues,hasTranspose,rhsLinearMatrix,rhsResidual,solverResidual,subtractFixedBCsFromResidual, &
+      & updateMatrix,updateResidual,updateRHS
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,rhsBoundaryConditions
-    TYPE(DistributedMatrixType), POINTER :: previousSolverDistributedMatrix,solverDistributedMatrix
-    TYPE(DistributedVectorType), POINTER :: lagrangeVector,dependentVector,distributedSourceVector,equationsRHSVector, &
-      & linearTempVector,interfaceTempVector,residualVector,solverResidualVector,solverRHSVector
-    TYPE(DomainMappingType), POINTER :: rhsDomainMapping,variableDomainMapping
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+    TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
+    TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,lhsBoundaryConditionsVariable, &
+      & rhsBoundaryConditionsVariable
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
+    TYPE(DistributedMatrixType), POINTER :: interfaceDistributedMatrix,jacobianDistributedMatrix,linearDistributedMatrix, &
+      & previousSolverDistributedMatrix,transposeDistributedMatrix,solverDistributedMatrix
+    TYPE(DistributedVectorType), POINTER :: currentRHSVector,currentSourceVector,dependentDistributedVector,dependentVector, &
+      & distributedSourceVector,equationsRHSVector,interfaceRHSDistributedVector,interfaceTempVector,lagrangeVector, &
+      & linearTempVector,nonlinearTempVector,residualDistributedVector,solverResidualVector,solverRHSVector,sourcesTempVector
+    TYPE(DomainMappingType), POINTER :: lhsDomainMapping,rhsDomainMapping,variableDomainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix,linearMatrix
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsToSolverMap
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap,linearMatrixToSolverMatrixMap
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: rhsVariable,interfaceVariable,dependentVariable,linearVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,interfaceVariable,lagrangeVariable,lhsVariable,linearVariable, &
+      & residualVariable,rhsVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMappingRHSType), POINTER :: interfaceRHSMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
-    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceToSolverMap
+    TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap
+    TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap
     TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector
-    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianToSolverMap
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
+    TYPE(JacobianMatrixToSolverMatrixMapType), POINTER :: jacobianMatrixToSolverMatrixMap
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsColToSolverColsMap(:),equationsRowToSolverRowsMap(:), &
+      & interfaceColToSolverColsMap(:),interfaceColToSolverRowsMap(:),interfaceRowToSolverColsMap(:), &
+      & interfaceRowToSolverRowsMap(:),jacobianColToSolverColsMap(:)
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
+    TYPE(VarToEquationsMatricesMapType), POINTER :: linearVarToEquationsMatricesMap
     TYPE(VARYING_STRING) :: localError
   
     ENTERS("Solver_StaticAssemble",err,error,*999)
@@ -11421,7 +11475,7 @@ CONTAINS
             CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
               & interfaceColToSolverRowsMap,err,error,*999)
              NULLIFY(interfaceMatricesToSolverMatrixMap)
-            CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceMatricesToSolverMatricesMap, &
+            CALL SolverMappingICToSMSMap_InterfaceMatricesToSolverMatrixMapGet(interfaceConditionToSolverMatricesMap, &
               & solverMatrixIdx,interfaceMatricesToSolverMatrixMap,err,error,*999)
             NULLIFY(interfaceColToSolverColsMap)
             CALL SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap, &
@@ -11553,7 +11607,6 @@ CONTAINS
           NULLIFY(nonlinearTempVector)
           NULLIFY(nonlinearMapping)
           NULLIFY(nonlinearMatrices)
-          NULLIFY(nonlinearMapping)
           CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
           IF(ASSOCIATED(nonlinearMapping)) THEN
             CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
@@ -11569,13 +11622,14 @@ CONTAINS
                 NULLIFY(solverMatrixToEquationsMap)
                 CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
                   & err,error,*999)
-                NULLIFY(solverVariablesList)
-                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
+                NULLIFY(solverMappingVariables)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
                 DO residualVariableIdx=1,numberOfResidualVariables
                   CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
-                  CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,residualVariable,variablePositionIdx, &
+                  NULLIFY(solverMappingVariable)
+                  CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
                     & err,error,*999)
-                  IF(variablePositionIdx/=0) rhsResidual=.FALSE.
+                  IF(ASSOCIATED(solverMappingVariable)) rhsResidual=.FALSE.
                 ENDDO !residualVariableIdx
               ENDDO !solverMatrixIdx
               IF(rhsResidual) THEN
@@ -11584,7 +11638,8 @@ CONTAINS
                 NULLIFY(residualVector)
                 CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
                 NULLIFY(residualDistributedVector)
-                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,residualDistributedVector,err,error,*999)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                  & residualDistributedVector,err,error,*999)
                 CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
                   & residualCoefficient,residualDistributedVector,err,error,*999)
               ENDIF
@@ -11610,11 +11665,12 @@ CONTAINS
                 NULLIFY(solverMatrixToEquationsMap)
                 CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
                   & err,error,*999)
-                NULLIFY(solverVariablesList)
-                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
-                CALL SolverMappingVariables_VariableInListCheck(solverVariablesList,linearVariable,variablePositionIdx, &
+                NULLIFY(solverMappingVariables)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+                NULLIFY(solverMappingVariable)
+                CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,linearVariable,solverMappingVariable, &
                   & err,error,*999)
-                IF(variablePositionIdx/=0) rhsLinearMatrix=.FALSE.
+                IF(ASSOCIATED(solverMappingVariable)) rhsLinearMatrix=.FALSE.
               ENDDO !solverMatrixIdx
               IF(rhsLinearMatrix) THEN
                 !Linear matrix variable is not on the LHS so take the matrix times vector over to the RHS.
@@ -11757,107 +11813,119 @@ CONTAINS
               CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
                 & -1.0_DP,rhsValue,err,error,*999)
 
-              IF(ASSOCIATED(linearMapping)) THEN
-                DO solverMatrixIdx=1,numberOfSolverMatrices
-                  NULLIFY(equationsMatricesToSolverMatrixMap)
-                  CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap, &
-                    & solverMatrixIdx,equationsMatricesToSolverMatrixMap,err,error,*999)
-                  CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap, &
-                    & numberOfLinearMatrices,err,error,*999)
-                  DO linearMatrixIdx=1,numberOfLinearMatrices
-                    NULLIFY(linearMatrixToSolverMatrixMap)
-                    CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
-                      & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)                    
-                    NULLIFY(linearMatrix)
-                    CALL SolverMappingEMToSMMap_EquationsMatrixGet(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
-                    CALL EquationsMatrix_MatrixNumberGet(linearMatrix,linearMatrixNumber,err,error,*999)
-                    NULLIFY(linearVariable)
-                    CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixNumber,linearVariable, &
-                      & err,error,*999)
-                    IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
-                      CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
-                      dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
-                      NULLIFY(linearDistributedMatrix)
-                      CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,linearDistributedMatrix,err,error,*999)
-!!WHAT IS THIS TRYING TO DO?
-                      DO dirichletIdx=1,numberOfDirichletConditions
-                        IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
-                      ENDDO !dirichletIdx
-                      CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE.,equationsColumnNumber, &
-                        & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
-
-                    ENDIF
-                  ENDDO !linearMatrixIdx                  
-                ENDDO !solverMatrixIdx
-                CALL EquationsMappingLinear_NumberOfLinearVariablesGet(linearMapping,numberOfLinearVariables,err,error,*999)
-                DO linearVariableIdx=1,numberOfLinearVariables
-                  NULLIFY(linearVariable)
-                  CALL EquationsMappingLinear_linearVariableGet(linearMapping,linearVariableIdx,linearVariable,err,error,*999)
-                  IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
-                    NULLIFY(linearVarToEquationsMatricesMap)
-                    CALL EquationsMappingLinear_VariableToEquationsMatricesMapGet(linearMapping,linearVariableIdx, &
-                      & linearVarToEquationsMatricesMap,err,error,*999)
-                    CALL EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(linearVarToEquationsMatricesMap, &
-                      & numberOfEquationsMatrices,err,error,*999)
-                    DO equationsMatrixIdx=1,numberOfEquationsMatrices
-                      CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(linearVarToEquationsMatricesMap, &
-                        & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
-                      CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(linearVarToEquationsMatricesMap, &
-                        & equationsMatrixIdx,lhsVariableDOF,columnNumber,err,error,*999)
-                      NULLIFY(equationsMatrix)
-                      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
+              DO solverMatrixIdx=1,numberOfSolverMatrices
+                NULLIFY(solverMatrixToEquationsMap)
+                CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
+                  & err,error,*999)
+                NULLIFY(solverMappingVariables)
+                CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+                NULLIFY(solverMappingVariable)
+                CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,lhsVariable,solverMappingVariable, &
+                  & err,error,*999)
+                IF(ASSOCIATED(solverMappingVariable)) THEN
+                  IF(ASSOCIATED(linearMapping)) THEN
+                    NULLIFY(equationsMatricesToSolverMatrixMap)
+                    CALL SolverMappingESToSMSMap_EquationsMatricesToSolverMatrixMapGet(equationsSetToSolverMatricesMap, &
+                      & solverMatrixIdx,equationsMatricesToSolverMatrixMap,err,error,*999)
+                    CALL SolverMappingEMSToSMMap_NumberOfLinearMatricesGet(equationsMatricesToSolverMatrixMap, &
+                      & numberOfLinearMatrices,err,error,*999)
+                    DO linearMatrixIdx=1,numberOfLinearMatrices
+                      NULLIFY(linearMatrixToSolverMatrixMap)
+                      CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                        & linearMatrixIdx,linearMatrixToSolverMatrixMap,err,error,*999)                    
+                      NULLIFY(linearMatrix)
+                      CALL SolverMappingEMToSMMap_EquationsMatrixGet(linearMatrixToSolverMatrixMap,linearMatrix,err,error,*999)
+                      CALL EquationsMatrix_MatrixNumberGet(linearMatrix,linearMatrixNumber,err,error,*999)
+                      NULLIFY(linearVariable)
+                      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixNumber,linearVariable, &
                         & err,error,*999)
-                      CALL EquationsMatrix_MatrixCoefficientGet(equationsMatrix,matrixCoefficient,err,error,*999)
-                      dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
-                      NULLIFY(equationsDistributedMatrix)
-                      CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,equationsDistributedMatrix,err,error,*999)
+                      IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
+                        CALL FieldVariable_ParameterSetGetLocalDOF(linearVariable,FIELD_VALUES_SET_type,lhsVariableDOF, &
+                          & dofValue,err,error,*999)
+                        CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
+                        dofValue=dofValue*matrixCoefficient
+                        NULLIFY(linearDistributedMatrix)
+                        CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,linearDistributedMatrix,err,error,*999)
 !!WHAT IS THIS TRYING TO DO?
-                      DO dirichletIdx=1,numberOfDirichletConditions
-                        IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
-                      ENDDO !dirichletIdx
-                      CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE.,equationsColumnNumber, &
-                        & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
-                    ENDDO !matrixidx
-                  ENDIF
-                ENDDO !linearVariableIdx
-              ENDIF !linear mapping
-            ENDIF !LHS DOF fixed
+                        DO dirichletIdx=1,numberOfDirichletConditions
+                          IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                        ENDDO !dirichletIdx
+                        CALL DistributedMatrix_MatrixColumnAdd(linearDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                          & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+
+                      ENDIF
+                    ENDDO !linearMatrixIdx
+                    CALL EquationsMappingLinear_NumberOfLinearVariablesGet(linearMapping,numberOfLinearVariables,err,error,*999)
+                    DO linearVariableIdx=1,numberOfLinearVariables
+                      NULLIFY(linearVariable)
+                      CALL EquationsMappingLinear_linearVariableGet(linearMapping,linearVariableIdx,linearVariable,err,error,*999)
+                      IF(ASSOCIATED(linearVariable,lhsVariable)) THEN
+                        NULLIFY(linearVarToEquationsMatricesMap)
+                        CALL EquationsMappingLinear_VariableToEquationsMatricesMapGet(linearMapping,linearVariableIdx, &
+                          & linearVarToEquationsMatricesMap,err,error,*999)
+                        CALL EquationsMappingVectorVToEMSMap_NumberOfEquationsMatricesGet(linearVarToEquationsMatricesMap, &
+                          & numberOfEquationsMatrices,err,error,*999)
+                        CALL FieldVariable_ParameterSetGetLocalDOF(linearVariable,FIELD_VALUES_SET_TYPE,lhsVariableDOF, &
+                          & dofValue,err,error,*999)
+                        DO equationsMatrixIdx=1,numberOfEquationsMatrices
+                          CALL EquationsMappingVectorVToEMSMap_EquationsMatrixNumberGet(linearVarToEquationsMatricesMap, &
+                            & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
+                          CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(linearVarToEquationsMatricesMap, &
+                            & equationsMatrixIdx,lhsVariableDOF,equationsColumnNumber,err,error,*999)
+                          NULLIFY(equationsMatrix)
+                          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
+                            & err,error,*999)
+                          CALL EquationsMatrix_MatrixCoefficientGet(equationsMatrix,matrixCoefficient,err,error,*999)
+                          dofValue=dofValue*matrixCoefficient
+                          NULLIFY(linearDistributedMatrix)
+                          CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,linearDistributedMatrix,err,error,*999)
+!!WHAT IS THIS TRYING TO DO?
+                          DO dirichletIdx=1,numberOfDirichletConditions
+                            IF(dirichletBoundaryConditions%dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
+                          ENDDO !dirichletIdx
+                          CALL DistributedMatrix_MatrixColumnAdd(linearDistributedMatrix,.FALSE.,equationsColumnNumber, &
+                            & equationsRowToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
+                        ENDDO !matrixidx
+                      ENDIF !linear and lhs variable
+                    ENDDO !linearVariableIdx
+                  ENDIF !linear mapping
+                ENDIF !solver mapping variable
+              ENDDO !solverMatrixIdx
+
+            CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
+              !Set Neumann boundary conditions
+              solverRHSValue=solverRHSValue+rhsValue
+              !Loop over the solver rows associated with this equations set row
+              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
+                & -1.0_DP,solverRHSValue,err,error,*999)
+            CASE(BOUNDARY_CONDITION_ROBIN_ROW)
+              !Set Robin boundary conditions
+              CALL FlagError("Robin boundary conditions are not implemented.",err,error,*999)
+            CASE(BOUNDARY_CONDITION_CAUCHY_ROW)
+              !Set Cauchy boundary conditions
+              CALL FlagError("Cauchy boundary conditions are not implemented.",err,error,*999)
+            CASE(BOUNDARY_CONDITION_CONSTRAINED_ROW)
+              !Set constrained row boundary conditions
+              CALL FlagError("Constrained row boundary conditions are not implemented.",err,error,*999)
+            CASE DEFAULT
+              localError="The RHS boundary condition of "// &
+                & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
+                & " for RHS variable dof number "// &
+                & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDDO !equationsRowNumber
           
-          CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
-            !Set Neumann boundary conditions
-            solverRHSValue=solverRHSValue+rhsValue
-            !Loop over the solver rows associated with this equations set row
-            CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-              & -1.0_DP,solverRHSValue,err,error,*999)
-          CASE(BOUNDARY_CONDITION_ROBIN_ROW)
-            !Set Robin boundary conditions
-            CALL FlagError("Robin boundary conditions are not implemented.",err,error,*999)
-          CASE(BOUNDARY_CONDITION_CAUCHY_ROW)
-            !Set Cauchy boundary conditions
-            CALL FlagError("Cauchy boundary conditions are not implemented.",err,error,*999)
-          CASE(BOUNDARY_CONDITION_CONSTRAINED_ROW)
-            !Set constrained row boundary conditions
-            CALL FlagError("Constrained row boundary conditions are not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The RHS boundary condition of "// &
-              & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
-              & " for RHS variable dof number "// &
-              & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ENDDO !equationsRowNumber
-        CALL FieldVariable_ParameterSetDataRestore(lhsVariable,FIELD_VALUES_SET_TYPE,currentValuesVector,err,error,*999
- 
-        IF(ASSOCIATED(rhsMapping)) THEN
-          CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
-          IF(hasIntegratedValues) &
-            & CALL Field_ParameterSetDataRestore(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
-            & err,error,*999)
-        ENDIF
-      ENDDO !equationsSetIdx
-        
-      !Add in any rows from any interface conditions
-      DO interfaceConditionIdx=1,numberOfInterfaceConditions
+          IF(ASSOCIATED(rhsMapping)) THEN
+            CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
+            IF(hasIntegratedValues) &
+              & CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
+              & err,error,*999)
+          ENDIF
+        ENDDO !equationsSetIdx
+      
+        !Add in any rows from any interface conditions
+        DO interfaceConditionIdx=1,numberOfInterfaceConditions
           NULLIFY(interfaceCondition)
           CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
           CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
@@ -11912,238 +11980,7 @@ CONTAINS
 
     ENDIF !Calculate solver RHS
           
-          NULLIFY(sourceMapping)
-          CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
-          IF(ASSOCIATED(sourcesMapping)) THEN
-            NULLIFY(sourceVector)
-            CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,1,sourceVector,err,error,*999)
-            NULLIFY(distributedSourceVector)
-            CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,distributedSourceVector,err,error,*999)
-          ENDIF
-          NULLIFY(rhsMapping)
-          CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
-          NULLIFY(rhsVariable)
-          CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
-          NULLIFY(rhsParameters)
-          CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
-          NULLIFY(checkData)
-          CALL DistributedVector_DataGet(solverRHSVector,checkData,err,error,*999)
-          NULLIFY(rhsVector)
-          CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-          NULLIFY(linearMapping)
-          CALL EquationsMappingVector_LinearMappingCheckExists(vectorMapping,linearMapping,err,error,*999)
-          NULLIFY(nonlinearMapping)
-          CALL EquationsMappingVector_NonlinearMappingCheckExists(vectorMapping,nonlinearMapping,err,error,*999)
-          NULLIFY(equationsRowToSolverRowsMap)
-          CALL SolverMapping_EquationsRowToSolverRowsMapGet(solverMapping,equationsSetIdx,equationsRowToSolverRowsMap, &
-            & err,error,*999)
-          IF(ASSOCIATED(linearMapping)) THEN
-            NULLIFY(linearMatrices)
-            CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-            ALLOCATE(dependentParameters(linearMapping%numberOfLinearVariables),STAT=err)
-            IF(err/=0) CALL FlagError("Could not allocate dependent parameters.",err,error,*999)
-            DO variableIdx=1,linearMapping%numberOfLinearVariables
-              NULLIFY(linearVariable)
-              CALL EquationsMappingLinear_LinearVariableGet(linearMapping,variableIdx,linearVariable,err,error,*999)
-              NULLIFY(dependentParameters(variableIdx)%ptr)
-              CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_VALUES_SET_TYPE, &
-                & dependentParameters(variableIdx)%ptr,err,error,*999)
-            ENDDO !variableIdx
-          ENDIF
-          NULLIFY(boundaryConditions)
-          CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-!!TODO: what if the equations set doesn't have a RHS vector???
-          NULLIFY(rhsVariable)
-          CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
-          rhsVariableType=rhsVariable%variableType
-          NULLIFY(rhsDomainMapping)
-          CALL FieldMapping_DomainMappingGet(rhsVariable,rhsDomainMapping,err,error,*999)
-          ! Check if there are any integrated values to add
-          CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues,err,error,*999)
-          NULLIFY(equationsRHSVector)
-          CALL EquationsMappingRHS_DistributedVectorGet(rhsVector,equationsRHSVector,err,error,*999)
-          NULLIFY(rhsBoundaryConditions)
-          CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
-          !Update RHS field by integrating any point Neumann conditions
-          CALL BoundaryConditions_NeumannIntegrate(rhsBoundaryConditions,err,error,*999)
-          !Loop over the rows in the equations set
-          DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-            !Get the source vector contribute to the RHS values if there are any
-            IF(ASSOCIATED(sourceMapping)) THEN
-              !Add in equations source values
-              CALL DistributedVector_ValuesGet(distributedSourceVector,equationsRowNumber,sourceValue,err,error,*999)
-              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                & 1.0_DP,sourceValue,err,error,*999)
-            ENDIF
-            rhsVariableDOF=rhsMapping%equationsRowToRHSDofMap(equationsRowNumber)
-            rhsGlobalDOF=rhsDomainMapping%localToGlobalMap(rhsVariableDOF)
-            rhsBoundaryCondition=rhsBoundaryConditions%DOFTypes(rhsGlobalDOF)
-            !Apply boundary conditions
-            SELECT CASE(rhsBoundaryCondition)
-            CASE(BOUNDARY_CONDITION_DOF_FREE)
-              !Add in equations RHS values
-              CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-              IF(hasIntegratedValues) THEN
-                !Add any Neumann integrated values, b = f + N q
-                CALL FieldVariable_ParameterSetGetLocalDOF(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsVariableDOF, &
-                  & rhsIntegratedValue,err,error,*999)
-                rhsValue=rhsValue+rhsIntegratedValue
-              ENDIF
-              CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                & 1.0_DP,rhsValue,err,error,*999)
-              !Set Dirichlet boundary conditions
-              IF(ASSOCIATED(linearMapping).AND..NOT.ASSOCIATED(nonlinearMapping)) THEN
-                !Loop over the dependent variables associated with this equations set row
-                DO variableIdx=1,linearMapping%numberOfLinearVariables
-                  NULLIFY(dependentVariable)
-                  CALL EquationsMappingLinear_LinearVariableGet(linearMapping,variableIdx,dependentVariable,err,error,*999)
-                  NULLIFY(variableDomainMapping)
-                  CALL FieldVariable_DomainMappingGet(dependentVariable,variableDomainMapping,err,error,*999)
-                  NULLIFY(dependentBoundaryConditions)
-                  CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,dependentBoundaryConditions, &
-                    & err,error,*999)
-                  variableDOF=linearMapping%equationsRowToVariableDOFMaps(equationsRowNumber,variableIdx)
-                  variableGlobalDOF=variableDomainMapping%localToGlobalMap(variableDOF)
-                  variableBoundaryCondition=dependentBoundaryConditions%DOFTypes(variableGlobalDOF)
-                  IF(variableBoundaryCondition==BOUNDARY_CONDITION_DOF_FIXED) THEN
-                    dependentValue=dependentParameters(variableIdx)%ptr(variableDOF)
-                    IF(ABS(dependentValue)>=ZERO_TOLERANCE) THEN
-                      DO equationsMatrixIdx=1,linearMapping%varToEquationsMatricesMaps(variableIdx)%numberOfEquationsMatrices
-                        equationsMatrixNumber=linearMapping%varToEquationsMatricesMaps(variableIdx)% &
-                          & equationsMatrixNumbers(equationsMatrixIdx)
-                        NULLIFY(equationsMatrix)
-                        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixNumber,equationsMatrix, &
-                          & err,error,*999)
-                        NULLIFY(equationsDistributedMatrix)
-                        CALL EquationsMatrix_DistributedMatrixGet(equationsMatrix,equationsDistributedMatrix,err,error,*999)
-                        equationsColumnNumber=linearMapping%varToEquationsMatricesMaps(variableIdx)% &
-                          & dofToColumnsMaps(equationsMatrixIdx)%columnDOF(variableDOF)
-                        IF(ASSOCIATED(dependentBoundaryConditions%dirichletBoundaryConditions)) THEN
-                          IF(dependentBoundaryConditions%numberOfDirichletConditions>0) THEN
-                            DO dirichletIdx=1,dependentBoundaryConditions%numberOfDirichletConditions
-                              IF(dependentBoundaryConditions%dirichletBoundaryConditions% &
-                                & dirichletDOFIndices(dirichletIdx)==equationsColumnNumber) EXIT
-                            ENDDO
-                            CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE., &
-                              & equationsColumnNumber,equationsRowToSolverRowsMap,-1.0_DP*dependentValue, &
-                              & solverRHSVector,err,error,*999)
-                            IF(subtractFixedBCsFromResidual) THEN
-                              CALL DistributedMatrix_MatrixColumnAdd(equationsDistributedMatrix,.FALSE., &
-                                & equationsColumnNumber,equationsRowToSolverRowsMap,-1.0_DP*dependentValue, &
-                                & solverResidualVector,err,error,*999)
-                            ENDIF
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Dirichlet boundary conditions is not associated.",ERR,ERROR,*999)
-                        ENDIF
-                      ENDDO !matrix_idx
-                    ENDIF
-                  ENDIF
-                ENDDO !variableIdx
-              ENDIF
-            CASE(BOUNDARY_CONDITION_DOF_FIXED)
-              rhsValue=rhsParameters(rhsVariableDOF)
-              ! Add any integrated RHS values calculated from point Neumann conditions, b = f + N q
-              IF(hasIntegratedValues) THEN
-                CALL FieldVariable_ParameterSetGetLocalDOF(rhsVariable, FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
-                  & rhsVariableDOF,rhsIntegratedValue,err,error,*999)
-                rhsValue=rhsValue+rhsIntegratedValue
-              ENDIF
-              IF(ABS(rhsValue)>=ZERO_TOLERANCE) THEN
-                !For nonlinear problems, f(x) - b = 0, and for linear, K x = b, so we always add the
-                !right hand side field value to the solver right hand side vector
-                CALL DistributedVector_VectorRowCoupleAdd(solverRHSVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                  & 1.0_DP,rhsValue,err,error,*999)
-              ENDIF
-            CASE(BOUNDARY_CONDITION_DOF_MIXED)
-              !Set Robin or is it Cauchy??? boundary conditions
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              localError="The RHS boundary condition of "// &
-                & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
-                & " for RHS variable dof number "// &
-                & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ENDDO !equationsRowNumber
-          IF(ASSOCIATED(solverResidualVector)) THEN
-            CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
-            CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
-          ENDIF
-          NULLIFY(checkData2)
-          CALL DistributedVector_DataGet(equationsRHSVector,checkData2,err,error,*999)    
-          NULLIFY(checkData3)
-          CALL DistributedVector_DataGet(solverRHSVector,checkData3,err,error,*999)    
-          NULLIFY(checkData4)
-          CALL DistributedVector_DataGet(solverRHSVector,checkData4,err,error,*999)    
-          IF(ASSOCIATED(linearMapping)) THEN
-            DO variableIdx=1,linearMapping%numberOfLinearVariables
-              NULLIFY(dependentVariable)
-              CALL EquationsMappingLinear_LinearVariableGet(linearMapping,variableIdx,dependentVariable,err,error,*999)
-              CALL FieldVariable_ParameterSetDataRestore(dependentVariables,FIELD_VALUES_SET_TYPE, &
-                & dependentParameters(variableIdx)%ptr,err,error,*999)
-            ENDDO !variableIdx
-            IF(ALLOCATED(dependentParameters)) DEALLOCATE(dependentParameters)
-          ENDIF
-          CALL FieldVariable_ParameterSetDataRestore(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999)
-        ENDDO !equationsSetIdx
-        !Add in any rows from any interface conditions
-        DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
-          NULLIFY(interfaceCondition)
-          CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,err,error,*999)
-          SELECT CASE(interfaceCondition%method)
-          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-            NULLIFY(interfaceEquations)
-            CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-            NULLIFY(interfaceMapping)
-            CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
-            NULLIFY(interfaceMatrices)
-            CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-            NULLIFY(interfaceLagrange)
-            CALL InterfaceCondition_InterfaceLagrangeGet(interfaceCondition,interfaceLagrange,err,error,*999)
-            NULLIFY(lagrangeField)
-            CALL InterfaceConditionLagrange_LagrangeFieldGet(interfaceLagrange,lagrangeField,err,error,*999)
-            NULLIFY(interfaceRHSMapping)
-            CALL InterfaceMapping_RHSMappingGet(interfaceMapping,interfaceRHSMapping,err,error,*999)
-            NULLIFY(interfaceRHSVector)
-            CALL InterfaceMatrices_RHSVectorGet(interfaceMatrices,interfaceRHSVector,err,error,*999)
-            NULLIFY(distributedRHSVector)
-            CALL InterfaceMatricesRHS_DistributedVectorGet(interfaceRHSVector,distributedRHSVector,err,error,*999)
-            NULLIFY(interfaceColToSolverRowsMap)
-            CALL SolverMapping_InterfaceColToSolverRowsMapGet(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
-              & err,error,*999)
-            !Worry about BCs on the Lagrange variables later.
-            CALL DistributedVector_VectorCoupleAdd(solverRHSVector,interfaceColToSolverRowsMap,1.0_DP,distributedRHSVector, &
-              & err,error,*999)
-          CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The interface condition method of "// &
-              & TRIM(NumberToVString(interfaceCondition%METHOD,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ENDDO !interfaceConditionIdx
-        !Start the update the solver RHS vector values
-        CALL DistributedVector_UpdateStart(solverRHSVector,err,error,*999)
-        NULLIFY(checkData)
-        CALL DistributedVector_DataGet(solverRHSVector,checkData,err,error,*999)   
-      ENDIF
-      IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
-        CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
-        CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
-        userElapsed=userTime2(1)-userTime1(1)
-        systemElapsed=systemTime2(1)-systemTime1(1)
-        IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
-          & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
-        CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
-      ENDIF
-    ENDIF
-    IF(ASSOCIATED(solverRHSVector)) CALL DistributedVector_UpdateFinish(solverRHSVector,err,error,*999)
-
-        !The solver matrices have only one residual vector
+    !The solver matrices have only one residual vector
     NULLIFY(solverResidualVector)
     IF(selectionType==SOLVER_MATRICES_ALL.OR. &
       & selectionType==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
@@ -12157,17 +11994,28 @@ CONTAINS
         CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
       ENDIF
-      IF(solverMatrices%updateResidual) THEN
+      
+      CALL SolverMatrices_UpdateResidualGet(solverMatrices,updateResidual,err,error,*999)
+      IF(updateResidual) THEN
         NULLIFY(solverResidualVector)
         CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,solverResidualVector,err,error,*999)
         !Initialise the residual to zero
         CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
+        !Get the solver RHS check data                  
+        NULLIFY(solverResidualCheckData)
+        CALL DistributedVector_DataGet(solverResidualVector,solverResidualCheckData,err,error,*999)
+        
         !Loop over the equations sets
-        DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
+        DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(dependentField)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+          NULLIFY(equationsSetToSolverMatricesMap)
+          CALL SolverMapping_EquationsSetToSolverMatricesMapGet(solverMapping,equationsSetIdx,equationsSetToSolverMatricesMap, &
+            & err,error,*999)
+          NULLIFY(equationsRowToSolverRowsMap)
+          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap, &
+            & equationsRowToSolverRowsMap,err,error,*999)
+          
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           NULLIFY(vectorEquations)
@@ -12178,15 +12026,29 @@ CONTAINS
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
           NULLIFY(lhsMapping)
           CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
-          NULLIFY(equationsRowToSolverRowsMap)
-          CALL SolverMapping_EquationsRowToSolverRowsMapGet(solverMapping,equationsSetIdx,equationsRowToSolverRowsMap, &
-            & err,error,*999)
+          NULLIFY(equationsRowToLHSDOFMap)
+          CALL EquationsMappingLHS_EquationsRowTOLHSDOFMapGet(lhsMapping,equationsRowToLHSDOFMap,err,error,*999)
+          NULLIFY(lhsDomainMapping)
+          CALL FieldVariable_DomainMappingGet(lhsVariable,lhsDomainMapping,err,error,*999)
+          CALL DomainMapping_BoundaryFinishGet(lhsDomainMapping,lhsBoundaryFinish,err,error,*999)
+          CALL EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*999)
+          CALL EquationsMappingLHS_TotalNumberOfRowsGet(lhsMapping,totalNumberOfRows,err,error,*999)
+          
           !Calculate the contributions from any linear matrices
           NULLIFY(linearMapping)
+          NULLIFY(linearMatrices)
+          NULLIFY(linearTempVector)
           CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
           IF(ASSOCIATED(linearMapping)) THEN
             NULLIFY(linearMatrices)
             CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+            CALL EquationsMatricesLinear_DistributedTempVectorGet(linearMatrices,linearTempVector,err,error,*999)
+            !Initialise the linear temporary vector to zero
+            CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)                  
+            NULLIFY(solverMatrixToEquationsMap)
+            CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,1,solverMatrixToEquationsMap,err,error,*999)
+            NULLIFY(solverMappingVariables)
+            CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
             CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
             DO linearMatrixIdx=1,numberOfLinearMatrices
               NULLIFY(linearMatrix)
@@ -12195,68 +12057,75 @@ CONTAINS
               CALL EquationMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
               NULLIFY(linearVariable)
               CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
-              NULLIFY(linearTempVector)
-              CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-              !Initialise the linear temporary vector to zero
-              CALL DistributedVector_AllValuesSet(linearTempVector,0.0_DP,err,error,*999)
-              NULLIFY(dependentDistributedVector)
-              CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentDistributedVector, &
+              NULLIFY(solverMappingVariable)
+              CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,linearVariable,solverMappingVariable, &
                 & err,error,*999)
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-                & linearDistributedMatrix,.FALSE.,dependentDistributedVector,linearTempVector,err,error,*999)
+              IF(ASSOCIATED(solverMappingVariable)) THEN
+                CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)                
+                NULLIFY(dependentDistributedVector)
+                CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentDistributedVector, &
+                  & err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
+                  & linearDistributedMatrix,.FALSE.,dependentDistributedVector,linearTempVector,err,error,*999)
+              ENDIF
             ENDDO !linearMatrixIdx
           ENDIF
+          
           !Calculate the solver residual
           NULLIFY(nonlinearMapping)
+          NULLIFY(nonlinearMatrices)
+          NULLIFY(nonlinearTempVector)
           CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
           IF(ASSOCIATED(nonlinearMapping)) THEN
             NULLIFY(nonlinearMatrices)
             CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-            NULLIFY(residualVector)
-            CALL EquationsMatricesNonlinear_ResidualDistributedVectorGet(nonlinearMatrices,residualVector,err,error,*999)
-            !Loop over the rows in the equations set
-            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-              IF(equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
-                !Get the equations residual contribution
-                CALL DistributedVector_ValuesGet(residualVector,equationsRowNumber,residualValue,err,error,*999)
-                !Get the linear matrices contribution to the RHS values if there are any
-                IF(ASSOCIATED(linearMapping)) THEN
-                  linearValueSum=0.0_DP
-                  DO equationsMatrixIdx2=1,linearMatrices%numberOfLinearMatrices
-                    NULLIFY(linearMatrix)
-                    CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,equationsMatrixIdx2,linearMatrix,err,error,*999)
-                    NULLIFY(linearTempVector)
-                    CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-                    CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
-                    linearValueSum=linearValueSum+linearValue
-                  ENDDO !equationsMatrixIdx2
-                  residualValue=residualValue+linearValueSum
-                ENDIF
-                CALL DistributedVector_VectorRowCoupleAdd(solverResidualVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                  & 1.0_DP,residualValue,err,error,*999)
+            CALL EquationsMatricesNonlinear_DistributedTempVectorGet(nonlinearMatrices,nonlinearTempVector,err,error,*999)
+            CALL DistributedVector_AllValuesSet(nonlinearTempVector,0.0_DP,err,error,*999)
+            CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+            DO residualIdx=1,numberOfResiduals
+              NULLIFY(residualMapping)
+              CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+              !Check if any of the residual variables are part of the (1st) solver matrix (Jacobian)
+              solverResidual=.FALSE.
+              CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
+              NULLIFY(solverMatrixToEquationsMap)
+              CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,1,solverMatrixToEquationsMap,err,error,*999)
+              NULLIFY(solverMappingVariables)
+              CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+              DO residualVariableIdx=1,numberOfResidualVariables
+                CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
+                NULLIFY(solverMappingVariable)
+                CALL SolverMappingVariables_VariableInListCheck(solverMappingVariables,residualVariable,solverMappingVariable, &
+                  & err,error,*999)
+                IF(ASSOCIATED(solverMappingVariable)) THEN
+                  solverResidual=.TRUE.
+                  EXIT
+                ENDIF                
+              ENDDO !residualVariableIdx
+              IF(solverResidual) THEN
+                !The residual has variables involved in the solver matrices so add it to the solver residual
+                CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
+                NULLIFY(residualVector)
+                CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+                NULLIFY(residualDistributedVector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                  & residualDistributedVector,err,error,*999)
+                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                  & residualCoefficient,residualDistributedVector,err,error,*999)
               ENDIF
-            ENDDO !equationsRowNumber
-          ELSE IF(ASSOCIATED(linearMapping)) THEN
-            DO equationsRowNumber=1,vectorMapping%totalNumberOfRows
-              IF(equationsRowToSolverRowsMap(equationsRowNumber)%numberOfRowCols>0) THEN
-                linearValueSum=0.0_DP
-                DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
-                  NULLIFY(linearMatrix)
-                  CALL EquationsMatricesLinear_LinearMatrixGet(linearMatrices,equationsMatrixIdx2,linearMatrix,err,error,*999)
-                  NULLIFY(linearTempVector)
-                  CALL EquationsMatrix_TempDistributedVectorGet(linearMatrix,linearTempVector,err,error,*999)
-                  CALL DistributedVector_ValuesGet(linearTempVector,equationsRowNumber,linearValue,err,error,*999)
-                  linearValueSum=linearValueSum+linearValue
-                ENDDO !equationsMatrixIdx
-                residualValue=linearValueSum
-                CALL DistributedVector_VectorRowCoupleAdd(solverResidualVector,equationsRowToSolverRowsMap(equationsRowNumber), &
-                  & 1.0_DP,residualValue,err,error,*999)
-              ENDIF
-            ENDDO !equationsRowNumber
-          ENDIF
+            ENDDO !residualIdx
+          ENDIF !nonlinear mapping
+
+          !Couple the linear and nonlinear contributions to the solver residual
+          IF(ASSOCIATED(linearTempVector)) CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+            & solverResidualVector,equationsRowToSolverRowsMap,1.0_DP,linearTempVector,err,error,*999)
+          IF(ASSOCIATED(nonlinearTempVector)) CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+            & solverResidualVector,equationsRowToSolverRowsMap,1.0_DP,nonlinearTempVector,err,error,*999)
+          
         ENDDO !equationsSetIdx
+        
         !Loop over the interface conditions
-        DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+        DO interfaceConditionIdx=1,numberOfInterfaceConditions
           NULLIFY(interfaceCondition)
           CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
           NULLIFY(lagrangeField)
@@ -12267,12 +12136,23 @@ CONTAINS
           CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
           NULLIFY(interfaceMapping)
           CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
-          SELECT CASE(interfaceCondition%method)
+          CALL InterfaceMapping_NumberOfInterfaceMatricesGet(interfaceMapping,numberOfInterfaceMatrices,err,error,*999)
+          CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)         
+          SELECT CASE(interfaceConditionMethod)
           CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-            numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
+            !Do nothing
           CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-            numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices-1
+            penaltyMatrixIdx=numberOfInterfaceMatrices
+            numberOfInterfaceMatrices=numberOfInterfaceMatrices-1
+          CASE DEFAULT
+            localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
+              & " is invalid or not implemented."
+            CALL FlagError(localError,err,error,*999)
           ENDSELECT
+          NULLIFY(lagrangeVariable)
+          CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
+          NULLIFY(lagrangeVector)
+          CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
           !Calculate the contributions from any interface matrices
           DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
             !Calculate the interface matrix-Lagrange vector product residual contribution
@@ -12284,12 +12164,8 @@ CONTAINS
             CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
             NULLIFY(interfaceTempVector)
             CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
-            interfaceVariableType=interfaceMapping%lagrangeVariableType
-            interfaceVariable=>interfaceMapping%lagrangeVariable
-            !Initialise the linear temporary vector to zero
+           !Initialise the linear temporary vector to zero
             CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            NULLIFY(lagrangeVector)
-            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
             CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
               & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
             NULLIFY(interfaceRowToSolverRowsMap)
@@ -12310,7 +12186,7 @@ CONTAINS
             NULLIFY(dependentVector)
             CALL FieldVariable_ParameterSetVectorGet(dependentVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
             CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributed,.FALSE.,dependentVector,interfaceTempVector,err,error,*999)
+              & interfaceDistributedMatrix,.FALSE.,dependentVector,interfaceTempVector,err,error,*999)
             NULLIFY(interfaceColToSolverRowsMap)
             CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
               & err,error,*999)             
@@ -12318,26 +12194,22 @@ CONTAINS
             CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
               & interfaceColToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
           ENDDO !interfaceMatrixIdx
-          SELECT CASE(interfaceCondition%method)
+          SELECT CASE(interfaceConditionMethod)
           CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-            interfaceMatrixIdx=interfaceMapping%numberOfInterfaceMatrices
             !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
             NULLIFY(interfaceMatrix)
-            CALL InterfaceMatrices_InterfaceMatrixzget(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+            CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,penaltyMatrixIdx,interfaceMatrix,err,error,*999)
             NULLIFY(lagrangeVariable)
-            CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
             NULLIFY(interfaceDistributedMatrix)
             CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
             NULLIFY(interfaceTempVector)
             CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
             !Initialise the linear temporary vector to zero
             CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            NULLIFY(lagrangeVector)
-            CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)
             CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
               & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
             NULLIFY(interfaceRowToSolverRowsMap)
-            CALL SolverMapping_interfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIx,interfaceMatrixIdx, &
+            CALL SolverMapping_InterfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
               & interfaceRowToSolverRowsMap,err,error,*999)
             !Add interface matrix residual contribution to the solver residual
             CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
@@ -12348,6 +12220,7 @@ CONTAINS
         CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
       ENDIF !update residual
       IF(ASSOCIATED(solverResidualVector)) CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
+      
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -12357,11 +12230,12 @@ CONTAINS
           & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
         CALL Profiling_TimingsOutput(1,"Solver residual assembly",userElapsed,systemElapsed,err,error,*999)
       ENDIF
-    ENDIF
+      
+    ENDIF !Calculate residual
 
     !If required output the solver matrices
     IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
-      & CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)
+      & CALL SolverMatrices_Output(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)
 
     EXITS("Solver_StaticAssemble")
     RETURN
@@ -12753,27 +12627,36 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,groupCommunicator, &
+      & numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfLinearMatrices,sparsityType, &
+      & symmetryType
     EXTERNAL :: Problem_SolverJacobianEvaluatePetsc
     EXTERNAL :: Problem_SolverJacobianFDCalculatePetsc
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPETSC
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,groupCommunicator
     TYPE(DistributedMatrixType), POINTER :: jacobianMatrix
-    TYPE(DistributedVectorType), POINTER :: residualVector
+    TYPE(DistributedMatrixPETScType), POINTER :: jacobianPETScMatrix
+    TYPE(DistributedVectorType), POINTER :: matrixTempVector,residualVector
+    TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: linearVariable,interfaceVariable,lagrangeVariable
+    TYPE(FieldVariableType), POINTER :: linearVariable,interfaceVariable,lagrangeVariable,lhsVariable
+    TYPE(LinearDirectSolverType), POINTER :: directSolver
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
+    TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
-    TYPE(SolverType), POINTER :: linearSolver,SOLVER
+    TYPE(SolverType), POINTER :: linkedLinearSolver,solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
@@ -12815,7 +12698,7 @@ CONTAINS
         NULLIFY(dependentField)
         CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
         NULLIFY(equations)
-        CALL EquationsSet_EquationsGet(equationSet,equations,err,error,*999)
+        CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
         NULLIFY(vectorEquations)
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         NULLIFY(vectorMapping)
@@ -12833,12 +12716,14 @@ CONTAINS
           NULLIFY(vectorMatrices)
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(linearMatrices)
-          CALL EquationsMatricesVector_LinearMatricesGet(vectorMatricees,linearMatrices,err,error,*999)
+          CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
           CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
           DO equationsMatrixIdx=1,numberOfLinearMatrices
             NULLIFY(equationsMatrix)
             CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,equationsMatrix,err,error,*999)
-            IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
+            NULLIFY(matrixTempVector)
+            CALL EquationsMatrix_DistributedTempVectorExists(equationsMatrix,matrixTempVector,err,error,*999)
+            IF(.NOT.ASSOCIATED(matrixTempVector)) THEN
               CALL DistributedVector_CreateStart(domainMapping,equationsMatrix%tempVector,err,error,*999)
               CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
               CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,err,error,*999)
@@ -12850,7 +12735,7 @@ CONTAINS
       CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
       DO interfaceConditionIdx=1,numberOfInterfaceConditions
         NULLIFY(interfaceCondition)
-        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,err,*999)
+        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
         NULLIFY(lagrangeField)
         CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
         NULLIFY(interfaceEquations)
@@ -12886,18 +12771,18 @@ CONTAINS
         ENDDO !interfaceMatrixIdx
       ENDDO !interfaceConiditionIdx
       !Create the PETSc SNES solver
-      CALL PETSc_SnesCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SNESCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Quasi-Newton line search solver
-      CALL PETSc_SnesSetType(linesearchSolver%snes,PETSC_SNESQN,err,error,*999)
+      CALL PETSc_SNESSetType(linesearchSolver%snes,PETSC_SNESQN,err,error,*999)
       !Following routines don't work for petsc version < 3.5.
       !Set the nonlinear Quasi-Newton type
       SELECT CASE(quasiNewtonSolver%quasiNewtonType)
       CASE(SOLVER_QUASI_NEWTON_LBFGS)
-        CALL PETSc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_LBFGS,err,error,*999)
+        CALL PETSc_SNESQNSetType(linesearchSolver%snes,PETSC_SNES_QN_LBFGS,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_GOODBROYDEN)
-        CALL PETSc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BROYDEN,err,error,*999)
+        CALL PETSc_SNESQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BROYDEN,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_BADBROYDEN)
-        CALL PETSc_SnesQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BADBROYDEN,err,error,*999)
+        CALL PETSc_SNESQNSetType(linesearchSolver%snes,PETSC_SNES_QN_BADBROYDEN,err,error,*999)
       CASE DEFAULT
         localError="The specified nonlinear Quasi-Newton type of "// &
           & TRIM(NumberToVString(quasiNewtonSolver%quasiNewtonType,"*",err,error))//" is invalid."
@@ -12906,11 +12791,11 @@ CONTAINS
       !Set the nonlinear Quasi-Newton restart type
       SELECT CASE(quasiNewtonSolver%restartType)
       CASE(SOLVER_QUASI_NEWTON_RESTART_NONE)
-        CALL PETSc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_NONE,err,error,*999)
+        CALL PETSc_SNESQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_NONE,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_RESTART_POWELL)
-        CALL PETSc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_POWELL,err,error,*999)
+        CALL PETSc_SNESQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_POWELL,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_RESTART_PERIODIC)
-        CALL PETSc_SnesQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_PERIODIC,err,error,*999)
+        CALL PETSc_SNESQNSetRestartType(linesearchSolver%snes,PETSC_SNES_QN_RESTART_PERIODIC,err,error,*999)
       CASE DEFAULT
         localError="The specified nonlinear Quasi-Newton restart type of "// &
           & TRIM(NumberToVString(quasiNewtonSolver%restartType,"*",err,error))//" is invalid."
@@ -12919,13 +12804,13 @@ CONTAINS
       !Set the nonlinear Quasi-Newton scale type
       SELECT CASE(quasiNewtonSolver%scaleType)
       CASE(SOLVER_QUASI_NEWTON_SCALE_NONE)
-        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_NONE,err,error,*999)
+        CALL PETSc_SNESQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_NONE,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_SCALE_SHANNO)
-        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_SHANNO,err,error,*999)
+        CALL PETSc_SNESQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_SHANNO,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_SCALE_LINESEARCH)
-        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_LINESEARCH,err,error,*999)
+        CALL PETSc_SNESQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_LINESEARCH,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_SCALE_JACOBIAN)
-        CALL PETSc_SnesQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_JACOBIAN,err,error,*999)
+        CALL PETSc_SNESQNSetScaleType(linesearchSolver%snes,PETSC_SNES_QN_SCALE_JACOBIAN,err,error,*999)
       CASE DEFAULT
         localError="The specified nonlinear Quasi-Newton scale type of "// &
           & TRIM(NumberToVString(quasiNewtonSolver%scaleType,"*",err,error))//" is invalid."
@@ -12973,11 +12858,11 @@ CONTAINS
       CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
         NULLIFY(directSolver)
         CALL SolverLinear_DirectSolverGet(linearSolver,directSolver,err,error,*999)
-        CALL PETSc_SnesSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
+        CALL PETSc_SNESSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
       CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
         NULLIFY(iterativeSolver)
         CALL SolverLinear_IterativeSolverGet(linearSolver,iterativeSolver,err,error,*999)
-        CALL PETSc_SnesSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+        CALL PETSc_SNESSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
       CASE DEFAULT
         localError="The linear solver type of "//TRIM(NumberToVString(linearSolver%linearSolveType,"*",err,error))// &
           & " is invalid."
@@ -12989,13 +12874,13 @@ CONTAINS
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
       !Pass the linesearch solver object rather than the temporary solver
-      CALL PETSc_SnesSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
+      CALL PETSc_SNESSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
         & linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       SELECT CASE(linesearchSolver%quasiNewtonSolver%convergenceTestType)
       CASE(SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT)
         !Default convergence test, do nothing
       CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM,SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO)
-        CALL PETSc_SnesSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
+        CALL PETSc_SNESSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
           & linesearchSolver%quasiNewtonSolver%nonlinearSolver%SOLVER,err,error,*999)
       CASE DEFAULT
         localError="The specified convergence test type of "//TRIM(NumberToVString(linesearchSolver% &
@@ -13020,7 +12905,7 @@ CONTAINS
       CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
         solverJacobian%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
         !Pass the linesearch solver object rather than the temporary solver
-        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+        CALL PETSc_SNESSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianEvaluatePetsc,linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
         solverJacobian%updateMatrix=.FALSE. !Petsc will fill in the Jacobian values
@@ -13048,7 +12933,7 @@ CONTAINS
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+        CALL PETSc_SNESSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianFDCalculatePetsc,linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE DEFAULT
         localError="The Jacobian calculation type of "// &
@@ -13059,38 +12944,38 @@ CONTAINS
       IF(solver%outputType>=SOLVER_MONITOR_OUTPUT) THEN
         !Set the monitor
         !Pass the linesearch solver object rather than the temporary solver
-        CALL PETSc_SnesMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
+        CALL PETSc_SNESMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
           & linesearchSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       ENDIF
-      CALL PETSc_SnesGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SNESGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
       !Set the line search type and order where applicable
-      SELECT CASE(linesearchSolver%linesearch_type)
+      SELECT CASE(linesearchSolver%linesearchType)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH_BASIC)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH_L2)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_L2,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_L2,err,error,*999)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH_CP)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
       CASE DEFAULT
         localError="The nonlinear Quasi-Newton line search type of "// &
-          & TRIM(NumberToVString(linesearchSolver%linesearch_type,"*",err,error))//" is invalid."
+          & TRIM(NumberToVString(linesearchSolver%linesearchType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       !Set step tolerances, leave iterative line search options as defaults
-      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SNESLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       IF(linesearchSolver%linesearchMonitorOutput) THEN
-        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
+        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
       ELSE
-        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
+        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
       ENDIF
       !Set the tolerances for the SNES solver
-      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
+      CALL PETSc_SNESSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations,err,error,*999)
       !Set any further SNES options from the command line options
-      CALL PETSc_SnesSetFromOptions(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SNESSetFromOptions(linesearchSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(linesearchSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -13123,8 +13008,8 @@ CONTAINS
       CALL PETSc_ISColoringFinalise(linesearchSolver%jacobianISColoring,err,error,*999)
       CALL PETSc_MatColoringFinalise(linesearchSolver%jacobianMatColoring,err,error,*999)
       CALL PETSc_MatFDColoringFinalise(linesearchSolver%jacobianMatFDColoring,err,error,*999)
-      CALL PETSc_SnesLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
-      CALL PETSc_SnesFinalise(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SNESLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SNESFinalise(linesearchSolver%snes,err,error,*999)
       DEALLOCATE(linesearchSolver)
     ENDIF
         
@@ -13168,8 +13053,8 @@ CONTAINS
     CALL PETSc_MatColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianMatColoring,err,error,*999)
     CALL PETSc_ISColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianISColoring,err,error,*999)
     CALL PETSc_MatFDColoringInitialise(quasiNewtonSolver%linesearchSolver%jacobianMatFDColoring,err,error,*999)
-    CALL PETSc_SnesInitialise(quasiNewtonSolver%linesearchSolver%snes,err,error,*999)
-    CALL PETSc_SnesLinesearchInitialise(quasiNewtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
+    CALL PETSc_SNESInitialise(quasiNewtonSolver%linesearchSolver%snes,err,error,*999)
+    CALL PETSc_SNESLinesearchInitialise(quasiNewtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
     quasiNewtonSolver%linesearchSolver%linesearchMonitorOutput=.FALSE.
         
     EXITS("SolverNonlinearQuasiNewton_LinesearchInitialise")
@@ -13206,9 +13091,9 @@ CONTAINS
     CALL Solver_NonlinearSolver(solver,nonlinearSolver,err,error,*999)
     CALL SolverNonlinear_AssertIsQuasiStatic(nonlinearSolver,err,error,*999)
     NULLIFY(quasiNewtonSolver)
-    CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinear,quasiNewtonSolver,err,error,*999)
+    CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
     CALL SolverNonlinearQuasiNewton_AssertIsLinesearch(quasiNewtonSolver,err,error,*999)
-    NULLIFY(linearsearchSolver)
+    NULLIFY(linesearchSolver)
     CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,linesearchSolver,err,error,*999)
     IF(linesearchMaximumStep<=ZERO_TOLERANCE) THEN
       localError="The specified line search maximum step of "// &
@@ -13238,7 +13123,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     !EXTERNAL :: Problem_SolverResidualEvaluatePetsc
-    INTEGER(INTG) :: convergedReason,numberOfIterations
+    INTEGER(INTG) :: convergedReason,numberOfIterations,numberOfSolverMatrices
     REAL(DP) :: functionNorm
     TYPE(DistributedVectorType), POINTER :: rhsVector,solverVector
     TYPE(DistributedVectorPETScType), POINTER :: rhsPETScVector,solverPETScVector
@@ -13266,8 +13151,8 @@ CONTAINS
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
-    IF(numberOfMatrices/=1) THEN
-      localError="The number of solver matrices of "//TRIM(NumberToVString(numberOfMatrices,"*",err,error))// &
+    IF(numberOfSolverMatrices/=1) THEN
+      localError="The number of solver matrices of "//TRIM(NumberToVString(numberOfSolverMatrices,"*",err,error))// &
         & " is invalid. There should only be one solver matrix for a Quasi-Newton linesearch solver."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -13300,17 +13185,17 @@ CONTAINS
       NULLIFY(solverPETScVector)
       CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
       !Set step tolerances, leave iterative line search options as defaults in case the user has changed them
-      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SNESLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       !Set the tolerances for the SNES solver in case the user has changed them
-      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
+      CALL PETSc_SNESSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations,err,error,*999)
       !Solve the nonlinear equations     
-      CALL PETSc_SnesSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
+      CALL PETSc_SNESSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
       !Check for convergence
-      CALL PETSc_SnesGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
+      CALL PETSc_SNESGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
       SELECT CASE(convergedReason)
       CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
         CALL FlagWarning("Nonlinear line search solver did not converge. PETSc diverged function count.",err,error,*999)
@@ -13329,9 +13214,9 @@ CONTAINS
         !Output solution characteristics
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Quasi-Newton linesearch solver parameters:",err,error,*999)
-        CALL PETSc_SnesGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
+        CALL PETSc_SNESGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",numberOfIterations,err,error,*999)
-        CALL PETSc_SnesGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
+        CALL PETSc_SNESGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
         CALL PETSc_VecNorm(functionPETScVector,PETSC_NORM_2,functionNorm,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final function norm = ",functionNorm,err,error,*999)
         SELECT CASE(convergedReason)
@@ -13702,23 +13587,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator,numberOfEquationsSets,numberOfLinearMatrices,symmetryType
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator
     TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldVariableType), POINTER :: linearVariable
-    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+    TYPE(FieldVariableType), POINTER :: lhsVariable,linearVariable
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
@@ -13804,29 +13690,29 @@ CONTAINS
       END SELECT
       CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       !Create the PETSc SNES solver
-      CALL PETSc_SnesCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SNESCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Quasi-Newton trust region solver
-      CALL PETSc_SnesSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
+      CALL PETSc_SNESSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
-      CALL PETSc_SnesSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
+      CALL PETSc_SNESSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
         & Problem_SolverResidualEvaluatePetsc,trustregionSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the Jacobian if necessary
       !Set the trust region delta ???
                   
       !Set the trust region tolerance
-      CALL PETSc_SnesSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
+      CALL PETSc_SNESSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
         & err,error,*999)
       !Set the tolerances for the SNES solver
-      CALL PETSc_SnesSetTolerances(trustregionSolver%snes,quasiNewtonSolver%absoluteTolerance, &
+      CALL PETSc_SNESSetTolerances(trustregionSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)
       !Set any further SNES options from the command line options
-      CALL PETSc_SnesSetFromOptions(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SNESSetFromOptions(trustregionSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(trustregionSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -13899,7 +13785,7 @@ CONTAINS
     ENTERS("SolverNonlinearQuasiNewton_TrustregionFinalise",err,error,*999)
 
     IF(ASSOCIATED(trustregionSolver)) THEN      
-      CALL PETSc_SnesFinalise(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SNESFinalise(trustregionSolver%snes,err,error,*999)
       DEALLOCATE(trustregionSolver)
     ENDIF
     
@@ -13937,7 +13823,7 @@ CONTAINS
     quasiNewtonSolver%trustregionSolver%solverLibrary=SOLVER_PETSC_LIBRARY
 !!TODO: set this properly
     quasiNewtonSolver%trustregionSolver%trustregionDelta0=0.01_DP
-    CALL PETSc_SnesInitialise(quasiNewtonSolver%trustregionSolver%snes,err,error,*999)
+    CALL PETSc_SNESInitialise(quasiNewtonSolver%trustregionSolver%snes,err,error,*999)
        
     EXITS("SolverNonlinearQuasiNewton_TrustregionInitialise")
     RETURN
@@ -14707,27 +14593,36 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,groupCommunicator, &
+      & numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfLinearMatrices, &
+      & numberOfSolverMatrices,sparsityType,symmetryType
     EXTERNAL :: Problem_SolverJacobianEvaluatePetsc
     EXTERNAL :: Problem_SolverJacobianFDCalculatePetsc
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPetsc
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,groupCommunicator
     TYPE(DistributedMatrixType), POINTER :: jacobianMatrix
+    TYPE(DistributedMatrixPETScType), POINTER :: jacobianPETScMatrix
     TYPE(DistributedVectorType), POINTER :: residualVector
+    TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: linearVariable,interfaceVariable,lagrangeVariable
+    TYPE(FieldVariableType), POINTER :: linearVariable,interfaceVariable,lagrangeVariable,lhsVariable
+    TYPE(LinearDirectSolverType), POINTER :: directSolver
+    TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
+    TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
-    TYPE(SolverType), POINTER :: linearSolver,SOLVER
+    TYPE(SolverType), POINTER :: linkedLinearSolver,solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
@@ -14747,7 +14642,7 @@ CONTAINS
     NULLIFY(newtonSolver)
     CALL SolverNonlinearNewtonLinesearch_NewtonSolverGet(linesearchSolver,newtonSolver,err,error,*999)
     NULLIFY(nonlinearSolver)
-    CALL SolverNonlinearQuasiNewton_NonlinearSolverGet(quasiNewtonSolver,nonlinearSolver,err,error,*999)
+    CALL SolverNonlinearNewton_NonlinearSolverGet(newtonSolver,nonlinearSolver,err,error,*999)
     NULLIFY(solver)
     CALL SolverNonlinear_SolverGet(nonlinearSolver,solver,err,error,*999)
     NULLIFY(workGroup)
@@ -14769,7 +14664,7 @@ CONTAINS
         NULLIFY(dependentField)
         CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
         NULLIFY(equations)
-        CALL EquationsSet_EquationsGet(equationSet,equations,err,error,*999)
+        CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
         NULLIFY(vectorEquations)
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         NULLIFY(vectorMapping)
@@ -14787,7 +14682,7 @@ CONTAINS
           NULLIFY(vectorMatrices)
           CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
           NULLIFY(linearMatrices)
-          CALL EquationsMatricesVector_LinearMatricesGet(vectorMatricees,linearMatrices,err,error,*999)
+          CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
           CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
           DO equationsMatrixIdx=1,numberOfLinearMatrices
             NULLIFY(equationsMatrix)
@@ -14804,7 +14699,7 @@ CONTAINS
       CALL SolverMapping_NumberOfInterfaceConditionsGet(solverMapping,numberOfInterfaceConditions,err,error,*999)
       DO interfaceConditionIdx=1,numberOfInterfaceConditions
         NULLIFY(interfaceCondition)
-        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,err,*999)
+        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
         NULLIFY(lagrangeField)
         CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
         NULLIFY(interfaceEquations)
@@ -14840,12 +14735,12 @@ CONTAINS
         ENDDO !interfaceMatrixIdx
       ENDDO !interfaceConiditionIdx
       !Create the PETSc SNES solver
-      CALL PETSc_SnesCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SNESCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Newton line search solver
-      CALL PETSc_SnesSetType(linesearchSolver%snes,PETSC_SNESNEWTONLS,err,error,*999)
+      CALL PETSc_SNESSetType(linesearchSolver%snes,PETSC_SNESNEWTONLS,err,error,*999)
       !Create the solver matrices and vectors
       NULLIFY(linkedLinearSolver)
-      CALL SolverNonlinearQuasiNewton_LinkedLinearSolverGet(quasiNewtonSolver,linkedLinearSolver,err,error,*999)
+      CALL SolverNonlinearNewton_LinkedLinearSolverGet(newtonSolver,linkedLinearSolver,err,error,*999)
       NULLIFY(solverMatrices)
       CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
       CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
@@ -14875,19 +14770,19 @@ CONTAINS
       !Link linear solver
       linkedLinearSolver%solverEquations=>solver%solverEquations
       !Finish the creation of the linear solver
-      CALL SolverLinear_CreateFinish(linearSolver%linearSolver,err,error,*999)
-      !Associate linear solver's KSP to nonlinear solver's SNES
       NULLIFY(linearSolver)
       CALL Solver_LinearSolverGet(linkedLinearSolver,linearSolver,err,error,*999)
+      CALL SolverLinear_CreateFinish(linearSolver,err,error,*999)
+      !Associate linear solver's KSP to nonlinear solver's SNES
       SELECT CASE(linearSolver%linearSolveType)
       CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
         NULLIFY(directSolver)
         CALL SolverLinear_DirectSolverGet(linearSolver,directSolver,err,error,*999)
-        CALL PETSc_SnesSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
+        CALL PETSc_SNESSetKsp(linesearchSolver%snes,directSolver%ksp,err,error,*999)
       CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
         NULLIFY(iterativeSolver)
         CALL SolverLinear_IterativeSolverGet(linearSolver,iterativeSolver,err,error,*999)
-        CALL PETSc_SnesSetKsp(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
+        CALL PETSc_SNESSetKSP(linesearchSolver%snes,iterativeSolver%ksp,err,error,*999)
       CASE DEFAULT
         localError="The linear solver type of "//TRIM(NumberToVString(linearSolver%linearSolveType,"*",err,error))// &
           & " is invalid."
@@ -14899,27 +14794,25 @@ CONTAINS
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
       !Set the solver as a context for the SNES object
-      CALL PETSc_SnesSetApplicationContext(linesearchSolver%snes,linesearchSolver%newtonSolver%nonlinearSolver%solver, &
-        & err,error,*999)
+      CALL PETSc_SNESetApplicationContext(linesearchSolver%snes,solver, err,error,*999)
       !Pass the linesearch solver object rather than the temporary solver
-      CALL PETSc_SnesSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
-        & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
-      SELECT CASE(linesearchSolver%newtonSolver%convergenceTestType)
+      CALL PETSc_SNESSetFunction(linesearchSolver%snes,residualPETScVector%vector,Problem_SolverResidualEvaluatePetsc, &
+        & solver,err,error,*999)
+      SELECT CASE(newtonSolver%convergenceTestType)
       CASE(SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT)
         !Default convergence test, do nothing
       CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM,SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO)
-        CALL PETSc_SnesSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc, &
-          & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
+        CALL PETSc_SNESSetConvergenceTest(linesearchSolver%snes,Problem_SolverConvergenceTestPetsc,solver,err,error,*999)
       CASE DEFAULT
-        localError="The specified convergence test type of "//TRIM(NumberToVString(linesearchSolver% &
-          & newtonSolver%convergenceTestType,"*",err,error))//" is invalid."
+        localError="The specified convergence test type of "// &
+          & TRIM(NumberToVString(newtonSolver%convergenceTestType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT      
       !Set the Jacobian
-      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
-      IF(numberOfMatrices/=1) THEN
+      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+      IF(numberOfSolverMatrices/=1) THEN
         localError="Invalid number of solver matrices. The number of solver matrices is "// &
-          & TRIM(NumberToVString(numberOfMatrices,"*",err,error))//" and it should be 1."
+          & TRIM(NumberToVString(numberOfSolverMatrices,"*",err,error))//" and it should be 1."
         CALL FlagError(localError,err,error,*999)
       ENDIF
       NULLIFY(solverJacobian)
@@ -14934,7 +14827,7 @@ CONTAINS
       CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
         solverJacobian%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
         !Pass the linesearch solver object rather than the temporary solver
-        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+        CALL PETSc_SNESSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianEvaluatePetsc,linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
         solverJacobian%updateMatrix=.FALSE. !Petsc will fill in the Jacobian values
@@ -14963,8 +14856,8 @@ CONTAINS
             & TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        CALL PETSc_SnesSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrixc%matrix, &
-          & Problem_SolverJacobianFDCalculatePetsc,linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
+        CALL PETSc_SNESSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
+          & Problem_SolverJacobianFDCalculatePetsc,solver,err,error,*999)
       CASE DEFAULT
         localError="The Jacobian calculation type of "// &
           & TRIM(NumberToVString(newtonSolver%jacobianCalculationType,"*",err,error))//" is invalid."
@@ -14973,24 +14866,23 @@ CONTAINS
       IF(solver%outputType>=SOLVER_MONITOR_OUTPUT) THEN
         !Set the monitor
         !Pass the linesearch solver object rather than the temporary solver
-        CALL PETSc_SnesMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC, &
-          & linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
+        CALL PETSc_SNESMonitorSet(linesearchSolver%snes,Problem_SolverNonlinearMonitorPETSC,solver,err,error,*999)
       ENDIF
-      CALL PETSc_SnesGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SNESGetLineSearch(linesearchSolver%snes,linesearchSolver%snesLineSearch,err,error,*999)
       !Set the line search type and order where applicable
       SELECT CASE(linesearchSolver%linesearchType)
       CASE(SOLVER_NEWTON_LINESEARCH_NONORMS)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
-        CALL PETSc_SnesLineSearchSetComputeNorms(linesearchSolver%snesLineSearch,.FALSE.,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BASIC,err,error,*999)
+        CALL PETSc_SNESLineSearchSetComputeNorms(linesearchSolver%snesLineSearch,.FALSE.,err,error,*999)
       CASE(SOLVER_NEWTON_LINESEARCH_LINEAR)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
-        CALL PETSc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_LINEAR,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_CP,err,error,*999)
+        CALL PETSc_SNESLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_LINEAR,err,error,*999)
       CASE(SOLVER_NEWTON_LINESEARCH_QUADRATIC)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
-        CALL PETSc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_QUADRATIC,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
+        CALL PETSc_SNESLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_QUADRATIC,err,error,*999)
       CASE(SOLVER_NEWTON_LINESEARCH_CUBIC)
-        CALL PETSc_SnesLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
-        CALL PETSc_SnesLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_CUBIC,err,error,*999)
+        CALL PETSc_SNESLineSearchSetType(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_BT,err,error,*999)
+        CALL PETSc_SNESLineSearchSetOrder(linesearchSolver%snesLineSearch,PETSC_SNES_LINESEARCH_ORDER_CUBIC,err,error,*999)
       CASE DEFAULT
         localError="The nonlinear Newton line search type of "// &
           & TRIM(NumberToVString(linesearchSolver%linesearchType,"*",err,error))//" is invalid."
@@ -14998,25 +14890,25 @@ CONTAINS
       END SELECT
       SELECT CASE(linesearchSolver%linesearchType)
       CASE(SOLVER_NEWTON_LINESEARCH_QUADRATIC,SOLVER_NEWTON_LINESEARCH_CUBIC)
-        ! Alpha parameter only applicable for back-tracking linesearch
-        CALL PETSc_SnesLineSearchBTSetAlpha(linesearchSolver%snesLineSearch,linesearchSolver%linesearchAlpha,err,error,*999)
+        !Alpha parameter only applicable for back-tracking linesearch
+        CALL PETSc_SNESLineSearchBTSetAlpha(linesearchSolver%snesLineSearch,linesearchSolver%linesearchAlpha,err,error,*999)
       END SELECT
       !Set step tolerances, leave iterative line search options as defaults.
 !!TODO: set the rtol, atol, ltol and maxits properly.
-      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SNESLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       IF(linesearchSolver%linesearchMonitorOutput) THEN
-        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
+        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
       ELSE
-        CALL PETSc_SnesLineSearchSetMonitor(linesearchSolvery%snesLineSearch,PETSC_FALSE,err,error,*999)
+        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
       ENDIF
       !Set the tolerances for the SNES solver
-      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
+      CALL PETSc_SNESSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
         & newtonSolver%solutionTolerance,newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)            
       !Set any further SNES options from the command line options
-      CALL PETSc_SnesSetFromOptions(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SNESSetFromOptions(linesearchSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(linesearchSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -15049,8 +14941,8 @@ CONTAINS
       CALL PETSc_MatColoringFinalise(linesearchSolver%jacobianMatColoring,err,error,*999)
       CALL PETSc_ISColoringFinalise(linesearchSolver%jacobianISColoring,err,error,*999)
       CALL PETSc_MatFDColoringFinalise(linesearchSolver%jacobianMatFDColoring,err,error,*999)
-      CALL PETSc_SnesLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
-      CALL PETSc_SnesFinalise(linesearchSolver%snes,err,error,*999)
+      CALL PETSc_SNESLineSearchFinalise(linesearchSolver%snesLineSearch,err,error,*999)
+      CALL PETSc_SNESFinalise(linesearchSolver%snes,err,error,*999)
       DEALLOCATE(linesearchSolver)
     ENDIF
         
@@ -15094,8 +14986,8 @@ CONTAINS
     CALL PETSc_MatColoringInitialise(newtonSolver%linesearchSolver%jacobianMatColoring,err,error,*999)
     CALL PETSc_ISColoringInitialise(newtonSolver%linesearchSolver%jacobianISColoring,err,error,*999)
     CALL PETSc_MatFDColoringInitialise(newtonSolver%linesearchSolver%jacobianMatFDColoring,err,error,*999)
-    CALL PETSc_SnesInitialise(newtonSolver%linesearchSolver%snes,err,error,*999)
-    CALL PETSc_SnesLineSearchInitialise(newtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
+    CALL PETSc_SNESInitialise(newtonSolver%linesearchSolver%snes,err,error,*999)
+    CALL PETSc_SNESLineSearchInitialise(newtonSolver%linesearchSolver%snesLineSearch,err,error,*999)
     newtonSolver%linesearchSolver%linesearchMonitorOutput=.FALSE.
         
     EXITS("SolverNonlinearNewton_LinesearchInitialise")
@@ -15162,15 +15054,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: convergedReason,numberOfIterations
+    INTEGER(INTG) :: convergedReason,numberOfIterations,numberOfSolverMatrices
     REAL(DP) :: functionNorm
     TYPE(DistributedVectorType), POINTER :: rhsVector,solverVector
+    TYPE(DistributedVectorPETscType), POINTER :: rhsPETScVector,solverPETScVector
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(PetscVecType) :: functionPETScVector
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverNonlinearNewtonLinesearch_Solve",err,error,*999)
@@ -15187,9 +15081,10 @@ CONTAINS
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMatrices)
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-    IF(solverMatrices%numberOfMatrices/=1) THEN
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    IF(numberOfSolverMatrices/=1) THEN
       localError="The number of solver matrices of "// &
-        & TRIM(NumberToVString(solverMatrices%numberOfMatrices,"*",err,error))// &
+        & TRIM(NumberToVString(numberOfSolverMatrices,"*",err,error))// &
         & " is invalid. There should only be one solver matrix for a Newton linesearch solver."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -15222,17 +15117,17 @@ CONTAINS
       NULLIFY(solverPETScVector)
       CALL DistributedVector_PETScVectorGet(solverVector,solverPETScVector,err,error,*999)
       !Set step tolerances, leave iterative line search options as defaults in case the user has changed them
-      CALL PETSc_SnesLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
+      CALL PETSc_SNESLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
       !Set the tolerances for the SNES solver in case the user has changed them
-      CALL PETSc_SnesSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
+      CALL PETSc_SNESSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
         & newtonSolver%solutionTolerance,newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)     
       !Solve the nonlinear equations
-      CALL PETSc_SnesSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
+      CALL PETSc_SNESSolve(linesearchSolver%snes,rhsPETScVector%vector,solverPETScVector%vector,err,error,*999)
       !Check for convergence
-      CALL PETSc_SnesGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
+      CALL PETSc_SNESGetConvergedReason(linesearchSolver%snes,convergedReason,err,error,*999)
       SELECT CASE(convergedReason)
       CASE(PETSC_SNES_DIVERGED_FUNCTION_DOMAIN)
         CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged function domain.",err,error,*999)
@@ -15253,9 +15148,9 @@ CONTAINS
         !Output solution characteristics
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Newton linesearch solver parameters:",err,error,*999)
-        CALL PETSc_SnesGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
+        CALL PETSc_SNESGetIterationNumber(linesearchSolver%snes,numberOfIterations,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",numberOfIterations,err,error,*999)
-        CALL PETSc_SnesGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
+        CALL PETSc_SNESGetFunction(linesearchSolver%snes,functionPETScVector,err,error,*999)
         CALL PETSc_VecNorm(functionPETScVector,PETSC_NORM_2,functionNorm,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final function norm = ",functionNorm,err,error,*999)
         SELECT CASE(convergedReason)
@@ -15568,7 +15463,7 @@ CONTAINS
     CALL SolverNonlinear_AssertIsNewton(nonlinearSolver,err,error,*999)
     NULLIFY(newtonSolver)
     CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
-    IF(solutionToleranc<=ZERO_TOLERANCE) THEN
+    IF(solutionTolerance<=ZERO_TOLERANCE) THEN
       localError="The specified solution tolerance of "//TRIM(NumberToVString(solutionTolerance,"*",err,error))// &
         & " is invalid. The relative tolerance must be > 0.0."
       CALL FlagError(localError,err,error,*999)
@@ -15634,6 +15529,7 @@ CONTAINS
     INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator
     TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -15660,7 +15556,7 @@ CONTAINS
     NULLIFY(newtonSolver)
     CALL SolverNonlinearNewtonTrustregion_NewtonSolverGet(trustregionSolver,newtonSolver,err,error,*999)
     NULLIFY(nonlinearSolver)
-    CALL SolverNonlinearQuasiNewton_NonlinearSolverGet(quasiNewtonSolver,nonlinearSolver,err,error,*999)
+    CALL SolverNonlinearNewton_NonlinearSolverGet(newtonSolver,nonlinearSolver,err,error,*999)
     NULLIFY(solver)
     CALL SolverNonlinear_SolverGet(nonlinearSolver,solver,err,error,*999)
     NULLIFY(workGroup)
@@ -15727,32 +15623,32 @@ CONTAINS
       END SELECT
       CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
       !Create the PETSc SNES solver
-      CALL PETSc_SnesCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SNESCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
       !Set the nonlinear solver type to be a Newton trust region solver
-      CALL PETSc_SnesSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
+      CALL PETSc_SNESSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
       !Set the solver as the SNES application context
-      CALL PETSc_SnesSetApplicationContext(trustregionSolver%snes, &
+      CALL PETSc_SNESSetApplicationContext(trustregionSolver%snes, &
         & trustregionSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
-      CALL PETSc_SnesSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
+      CALL PETSc_SNESSetFunction(trustregionSolver%snes,residualPETScVector%vector, &
         & Problem_SolverResidualEvaluatePetsc,trustregionSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the Jacobian if necessary
       !Set the trust region delta ???
       
       !Set the trust region tolerance
-      CALL PETSc_SnesSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
+      CALL PETSc_SNESSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
         & err,error,*999)
       !Set the tolerances for the SNES solver
-      CALL PETSc_SnesSetTolerances(trustregionSolver%snes,newtonSolver%absoluteTolerance, &
+      CALL PETSc_SNESSetTolerances(trustregionSolver%snes,newtonSolver%absoluteTolerance, &
         & newtonSolver%relativeTolerance,newtonSolver%solutionTolerance, &
         & newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
         & err,error,*999)
       !Set any further SNES options from the command line options
-      CALL PETSc_SnesSetFromOptions(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SNESSetFromOptions(trustregionSolver%snes,err,error,*999)
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(trustregionSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -15826,7 +15722,7 @@ CONTAINS
     ENTERS("SolverNonlinearNewton_TrustregionFinalise",err,error,*999)
 
     IF(ASSOCIATED(trustregionSolver)) THEN      
-      CALL PETSc_SnesFinalise(trustregionSolver%snes,err,error,*999)
+      CALL PETSc_SNESFinalise(trustregionSolver%snes,err,error,*999)
       DEALLOCATE(trustregionSolver)
     ENDIF
     
@@ -15864,7 +15760,7 @@ CONTAINS
     newtonSolver%trustregionSolver%solverLibrary=SOLVER_PETSC_LIBRARY
 !!TODO: set this properly
     newtonSolver%trustregionSolver%trustregionDelta0=0.01_DP
-    CALL PETSc_SnesInitialise(newtonSolver%trustregionSolver%snes,err,error,*999)
+    CALL PETSc_SNESInitialise(newtonSolver%trustregionSolver%snes,err,error,*999)
         
     EXITS("SolverNonlinearNewton_TrustregionInitialise")
     RETURN
@@ -16080,16 +15976,19 @@ CONTAINS
 
   !>Instead of warning on nonlinear divergence, exit with error
   SUBROUTINE Solver_NonlinearDivergenceExit(solver,err,error,*)
-    TYPE(SolverType), INTENT(IN) :: SOLVER
+    
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local variables
-    TYPE(NonlinearSolverType),POINTER :: nonlinearSolver
-    TYPE(NewtonSolverType),POINTER :: newtonSolver
-    TYPE(NewtonLinesearchSolverType),POINTER :: newtonLinesearchSolver
-    TYPE(QuasiNewtonSolverType),POINTER :: quasiNewtonSolver
-    TYPE(QuasiNewtonLinesearchSolverType),POINTER :: quasiNewtonLinesearchSolver
     INTEGER(INTG) :: convergedReason
+    TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+    TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(NewtonLinesearchSolverType), POINTER :: newtonLinesearchSolver
+    TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+    TYPE(QuasiNewtonLinesearchSolverType), POINTER :: quasiNewtonLinesearchSolver
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Solver_NonlinearDivergenceExit",err,error,*999)
 
@@ -16104,7 +16003,7 @@ CONTAINS
       CASE(SOLVER_NEWTON_LINESEARCH)
         NULLIFY(newtonLinesearchSolver)
         CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,newtonLinesearchSolver,err,error,*999)
-        CALL PETSc_SnesGetConvergedReason(newtonLinesearchSolver%snes,convergedReason,err,error,*999)
+        CALL PETSc_SNESGetConvergedReason(newtonLinesearchSolver%snes,convergedReason,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
           CALL FlagError("Nonlinear line search solver did not converge. Exit due to PETSc diverged function count.", &
@@ -16135,11 +16034,11 @@ CONTAINS
     CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
       NULLIFY(quasiNewtonSolver)
       CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
-      SELECT CASE (quasiNewtonSolver%newtonSolveType)
+      SELECT CASE (quasiNewtonSolver%quasiNewtonSolveType)
       CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
         NULLIFY(quasiNewtonLinesearchSolver)
         CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
-        CALL PETSc_SnesGetConvergedReason(quasiNewtonLinesearchSolver%snes,convergedReason,err,error,*999)
+        CALL PETSc_SNESGetConvergedReason(quasiNewtonLinesearchSolver%snes,convergedReason,err,error,*999)
         SELECT CASE(convergedReason)
         CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
           CALL FlagError("Nonlinear line search solver did not converge. Exit due to PETSc diverged function count.", &
@@ -16246,10 +16145,6 @@ CONTAINS
     !Default to a nonlinear Newton solver
     solver%nonlinearSolver%nonlinearSolveType=SOLVER_NONLINEAR_NEWTON
     CALL SolverNonlinear_NewtonInitialise(solver%nonlinearSolver,err,error,*999)
-      ENDIF
-    ELSE
-      
-    ENDIF
         
     EXITS("Solver_NonlinearInitialise")
     RETURN
@@ -16291,7 +16186,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
       NULLIFY(quasiNewtonSolver)
-      CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinear,quasiNewtonSolver,err,error,*999)
+      CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
       CALL SolverNonlinearQuasiNewton_LibraryTypeSet(quasiNewtonSolver,solverLibraryType,err,error,*999)
     CASE DEFAULT
       localError="The nonlinear solver type of "// &
@@ -16325,6 +16220,7 @@ CONTAINS
     REAL(DP) :: ynorm !<The norm of the current update
     TYPE(NewtonLinesearchSolverType), POINTER :: newtonLinesearchSolver
     TYPE(NewtonSolverType), POINTER :: newtonSolver
+    TYPE(NewtonSolverConvergenceTestType), POINTER :: convergenceTest
     TYPE(QuasiNewtonLinesearchSolverType), POINTER :: quasiNewtonlinesearchSolver
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(VARYING_STRING) :: localError
@@ -16348,10 +16244,10 @@ CONTAINS
         SELECT CASE(newtonSolver%newtonSolveType)
         CASE(SOLVER_NEWTON_LINESEARCH)
           NULLIFY(newtonLinesearchSolver)
-          CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,linesearchSolver,err,error,*999)
+          CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,newtonLinesearchSolver,err,error,*999)
           NULLIFY(convergenceTest)
-          CALL SolverNonlinearNewtonLinesearch_ConvergenceTestGet(linesearchSolver,convergenceTest,err,error,*999)
-          CALL PETSc_SnesLineSearchGetNorms(newtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
+          CALL SolverNonlinearNewtonLinesearch_ConvergenceTestGet(newtonLinesearchSolver,convergenceTest,err,error,*999)
+          CALL PETSc_SNESLineSearchGetNorms(newtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
@@ -16393,7 +16289,7 @@ CONTAINS
           CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
           NULLIFY(convergenceTest)
           CALL SolverNonlinearQuasiNewtonLinesearch_ConvergenceTestGet(quasiNewtonLinesearchSolver,convergenceTest,err,error,*999)
-          CALL PETSc_SnesLineSearchGetNorms(quasiNewtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
+          CALL PETSc_SNESLineSearchGetNorms(quasiNewtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
@@ -16439,10 +16335,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: solverMatrixIdx
+    INTEGER(INTG) :: numberOfSolverMatrices,solverMatrixIdx
+    TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverNonlinear_Solve",err,error,*999)
@@ -16471,10 +16369,11 @@ CONTAINS
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMatrices)
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",solverMatrices%numberOfMatrices,err,error,*999)
-      DO solverMatrixIdx=1,solverMatrices%numberOfMatrices
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",numberOfSolverMatrices,err,error,*999)
+      DO solverMatrixIdx=1,numberOfSolverMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         NULLIFY(solverVector)
@@ -17049,18 +16948,25 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnNumber,equationsSetIdx,localNumber,solverMatrixIdx,variableDOFIdx,variableIdx,variableType, &
-      & interfaceConditionIdx
+    INTEGER(INTG) :: columnNumber,equationsSetIdx,interfaceConditionIdx,localDOFIdx,localNumber,numberOfDOFs, &
+      & numberOfEquationsSets,numberOfInterfaceConditions,numberOfSolverMatrices,numberOfVariables,solverDOFIdx, &
+      & solverMatrixIdx,variableDOFIdx,variableIdx,variableType
     REAL(DP) :: additiveConstant,dofValue,couplingCoefficient
     REAL(DP), POINTER :: variableData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
-    TYPE(DomainMappingType), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: columnDOFsMapping,domainMapping
+    TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
+    TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,lagrangeVariable
+    TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
+    TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
+    TYPE(VariableDOFToSolverDOFsMapType), POINTER :: varDOFToSolverDOFsMap
  
     NULLIFY(variableData)
     
@@ -17073,8 +16979,8 @@ CONTAINS
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
-    DO solverMatrixIdx=1,numberOfMatrices
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfSolverMatrices
       NULLIFY(solverMatrix)
       CALL SolverMapping_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
       NULLIFY(solverMatrixToEquationsMap)
@@ -17109,7 +17015,7 @@ CONTAINS
               & couplingCoefficient,additiveConstant,err,error,*999)
             IF(solverDOFIdx/=0) THEN
               dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
-              CALL DomainMapping_LocalNumberFromGlobalGet(domainMaping,solverDOFIdx,1,localDOFIdx,err,error,*999)
+              CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
               CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
             ENDIF
           ENDDO !variableDOFIdx
@@ -17140,7 +17046,7 @@ CONTAINS
             & couplingCoefficient,additiveConstant,err,error,*999)
           IF(solverDOFIdx/=0) THEN
             dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
-            CALL DomainMapping_LocalNumberFromGlobalGet(domainMaping,solverDOFIdx,1,localDOFIdx,err,error,*999)
+            CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
             CALL DistributedVector_ValuesSet(solverVector,localNumber,dofValue,err,error,*999)
           ENDIF
         ENDDO !variableDOFIdx
@@ -17333,7 +17239,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,dynamicVariableType,equationsDOFIdx,equationsSetIdx,solverDOFIdx,solverMatrixIdx,variableDOF
+    INTEGER(INTG) :: dummyErr,dynamicVariableType,equationsDOFIdx,equationIdx,equationsSetIdx,equationType,numberOfEquationDOFs, &
+      & numberOfSolverDOFs,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverIdx,solverMatrixIdx,variableDOF,variableIdx
     REAL(DP) :: currentAcceleration,additiveConstant,deltaT,currentDisplacement,previousAcceleration, &
       & previousDisplacement,previousVelocity,alphaValue,variableCoefficient,currentVelocity
     REAL(DP), POINTER :: solverData(:)
@@ -17347,10 +17254,14 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: dummyError,localError
 
     NULLIFY(solverData)
@@ -17368,8 +17279,8 @@ CONTAINS
     CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
     CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
-    DO solverMatrixIdx=1,numberOfMatrices
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfSolverMatrices
       NULLIFY(solverMatrix)
       CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
       NULLIFY(solverVector)
@@ -17483,18 +17394,20 @@ CONTAINS
       !Restore the solver DOF data
       CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
       !Start the transfer of the field DOFs
-      NULLIFY(solverVariablesList)
-      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
-      CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+      NULLIFY(solverMappingVariables)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+      CALL SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*999)
       DO variableIdx=1,numberOfVariables
+        NULLIFY(solverMappingVariable)
+        CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
         NULLIFY(dependentVariable)
-        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+        CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,dependentVariable,err,error,*999)
         IF(dynamicSolver%solverInitialised) THEN
           CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
             CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
             IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-              CALL Field_ParameterSetUpdateStart(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
             ENDIF
           ENDIF
         ELSE
@@ -17526,14 +17439,16 @@ CONTAINS
       ENDDO !variableIdx
       !Finish the transfer of the field DOFs
       DO variableIdx=1,numberOfVariables
+        NULLIFY(solverMappingVariable)
+        CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
         NULLIFY(dependentVariable)
-        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+        CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,dependentVariable,err,error,*999)
         IF(dynamicSolver%solverInitialised) THEN
           CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
             CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
             IF(dynamicSolver%degree>SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-              CALL Field_ParameterSetUpdateFinish(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
             ENDIF
           ENDIF
         ELSE
@@ -17585,19 +17500,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: VARIABLE_TYPE,equationsSetIdx,solverMatrixIdx, &
-      & residual_variable_idx,variable_idx
+    INTEGER(INTG) :: equationsSetIdx,linearityType,numberOfEquationsSets,numberOfResiduals,numberOfSolverMatrices, &
+      & numberOfVariables,residualIdx,residualVariableIdx,solverMatrixIdx,variableIdx
+    TYPE(DistributedVectorType), POINTER :: currentVector,previousVector,previous2Vector,previous3Vector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: FIELD
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,RESIDUAL_VARIABLE
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable,residualVariable
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Solver_VariablesDynamicFieldPreviousValuesUpdate",err,error,*999)
@@ -17609,21 +17531,21 @@ CONTAINS
     NULLIFY(solverEquations)
     CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
     NULLIFY(solverMatrices)
-    CALL SolverEquations_SolverMatricesGet(solver,solverMatrices,err,error,*999)
+    CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
     NULLIFY(solverMapping)
-    CALL SolverEquations_SolverMappingGet(solver,solverMapping,err,error,*999)
+    CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
     !Loop over the solver matrices
-    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
-    DO solverMatrixIdx=1,numberOfMatrices
+    CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+    DO solverMatrixIdx=1,numberOfSolverMatrices
       NULLIFY(solverMatrixToEquationsMap)
       CALL SolverMapping_SolverMatrixToEquationsMap(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap,err,error,*999)
       !Loop over the variables involved in the solver matrix.
-      NULLIFY(solverVariablesList)
-      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
-      CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+      NULLIFY(solverMappingVariables)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+      CALL SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*999)
       DO variableIdx=1,numberOfVariables
         NULLIFY(fieldVariable)
-        CALL SolverMappingsVariables_VariableGet(solverVariablesList,variableIdx,fieldVariable,err,error,*999)
+        CALL SolverMappingsVariables_VariableGet(solverMappingVariables,variableIdx,fieldVariable,err,error,*999)
         !Copy the displacements
         CALL FieldVariable_ParameterSetsCopy(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
           & err,error,*999)
@@ -17686,8 +17608,8 @@ CONTAINS
                 & currentVector,err,error,*999)
             ENDDO !residualIdx
           ENDIF
-        ENDIF
-      ENDDO !equationsSetIdx
+        ENDDO !equationsSetIdx
+      ENDIF
     ENDDO !solverMatrixIdx
 
     EXITS("Solver_VariablesDynamicFieldPreviousValuesUpdate")
@@ -17711,7 +17633,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local Variables
-    INTEGER(INTG) :: dummyErr,dynamicVariableType,equationsDOFIdx,equationsSetIdx,solverDOFIdx,solverMatrixIdx,variableDOF
+    INTEGER(INTG) :: dummyErr,dynamicVariableType,equationsDOFIdx,equationIdx,equationsSetIdx,equationType,numberOfDOFs, &
+      & numberOfEquationDOFs,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverMatrixIdx,variableDOF
     REAL(DP) :: additiveConstant,alphaValue,alphaDOFValue,currentDisplacement,deltaT,previousDisplacement, &
       & previousVelocity,previousAcceleration,variableCoefficient
     INTEGER(INTG) :: variableIdx,variableType,interfaceConditionIdx
@@ -17731,9 +17654,13 @@ CONTAINS
     TYPE(SolverType), POINTER :: linkingSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(VARYING_STRING) :: dummyError,localError
 
     NULLIFY(solverData)
@@ -17756,8 +17683,8 @@ CONTAINS
       CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
       NULLIFY(solverMapping)
       CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
-      DO solverMatrixIdx=1,numberOfMatrices
+      CALL SolverMatrices_NumberOfMatricesGet(solverMatrices,numberOfSolverMatrices,err,error,*999)
+      DO solverMatrixIdx=1,numberOfSolverMatrices
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
         NULLIFY(solverVector)
@@ -17827,19 +17754,23 @@ CONTAINS
         !Restore the solver dof data
         CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
         !Start the transfer of the field dofs
-        NULLIFY(solverVariablesList)
-        CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
-        CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+        NULLIFY(solverMappingVariables)
+        CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+        CALL SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*999)
         DO variableIdx=1,numberOfVariables
+          NULLIFY(solverMappingVariable)
+          CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
           NULLIFY(dependentVariable)
-          CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+          CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,dependentVariable,err,error,*999)
           CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
         ENDDO !variableIdx
         !Finish the transfer of the field DOFs
         DO variableIdx=1,numberOfVariables
+          NULLIFY(solverMappingVariable)
+          CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
           NULLIFY(dependentVariable)
-          CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,dependentVariable,err,error,*999)
+          CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,dependentVariable,err,error,*999)
           CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
         ENDDO !variableIdx
@@ -17868,8 +17799,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,equationsDOFIdx,equationsSetIdx,numberOfSolverDOFs,solverDOFIdx,solverMatrixIdx,variableDOF,variableIdx, &
-      & variableType
+    INTEGER(INTG) :: dummyErr,equationsDOFIdx,equationIdx,equationsSetIdx,equationType,numberOfEquationDOFs, &
+      & numberOfSolverDOFs,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverMatrixIdx,variableDOF, &
+      & variableIdx,variableType
     REAL(DP) :: additiveConstant,solverDOFValue,variableCoefficient
     REAL(DP), POINTER :: solverData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
@@ -17877,7 +17809,8 @@ CONTAINS
     TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolverMappingVariablesType), POINTER :: solverVariablesList
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
@@ -17960,18 +17893,22 @@ CONTAINS
       !Restore the solver DOF data
       CALL DistributedVector_DataRestore(solverVector,solverData,err,error,*999)
       !Start the transfer of the field dofs
-      NULLIFY(solverVariablesList)
-      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverVariablesList,err,error,*999)
-      CALL SolverMappingVariables_NumberOfVariablesGet(solverVariablesList,numberOfVariables,err,error,*999)
+      NULLIFY(solverMappingVariables)
+      CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
+      CALL SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*999)
       DO variableIdx=1,numberOfVariables
+        NULLIFY(solverMappingVariable)
+        CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
         NULLIFY(fieldVariable)
-        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,fieldVariable,err,error,*999)
+        CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,fieldVariable,err,error,*999)
         CALL FieldVariable_ParameterSetUpdateStart(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
       ENDDO !variableIdx
       !Finish the transfer of the field dofs
       DO variableIdx=1,numberOfVariables
+        NULLIFY(solverMappingVariable)
+        CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
         NULLIFY(fieldVariable)
-        CALL SolverMappingVariables_VariableGet(solverVariablesList,variableIdx,fieldVariable,err,error,*999)
+        CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,fieldVariable,err,error,*999)
         CALL FieldVariable_ParameterSetUpdateFinish(fieldVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
       ENDDO !variableIdx
     ENDDO !solverMatrixIdx
@@ -18300,7 +18237,7 @@ CONTAINS
     !set the solver type for the linked solver
     solver%linkedSolverTypeMap(solverTypeToLink)%ptr%solveType=solverTypeToLink
     !set the linking solver for the linked solver
-    solver%linkedSolverTypeMap(solverTypeToLink)%ptr%linkingSolver=>solve
+    solver%linkedSolverTypeMap(solverTypeToLink)%ptr%linkingSolver=>solver
 
     EXITS("Solver_LinkedSolverAdd")
     RETURN

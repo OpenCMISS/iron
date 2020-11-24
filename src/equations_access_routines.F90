@@ -82,6 +82,53 @@ MODULE EquationsAccessRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_TIME_STEPPING=5 !<The equations are for time stepping. \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
   !>@}
 
+  !> \addtogroup EquationsRoutines_EquationTypes EquationsRoutines::EquationTypes
+  !> \brief The types of equations
+  !> \see EquationsRoutines,OPENCMISS_EquationsTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SCALAR_TYPE=1 !<Single scalar equation. \see EquationsRoutines_EquationTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_VECTOR_TYPE=2 !<Vector of multiple equations. \see EquationsRoutines_EquationsTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_FUNCTIONAL_TYPE=3 !<Vector of functional equations. \see EquationsRoutines_EquationsTypes,EquationsRoutines
+  !>@}
+
+  !> \addtogroup EquationsRoutines_EquationEqualityTypes EquationsRoutines::EquationEqualityTypes
+  !> \brief The types of equality for the equations
+  !> \see EquationsRoutines,OPENCMISS_EquationsEqualityTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_EQUALS_TYPE=1 !<The equations equal zero \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LESS_THAN_TYPE=2 !<The equations are less than zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LESS_THAN_EQUALS_TYPE=3 !<The equations are less than or equal to zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GREATER_THAN_TYPE=4 !<The equations are greater than zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GREATER_THAN_EQUALS_TYPE=5 !<The equations are greater than or equal to zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  !>@}
+
+  !> \addtogroup EquationsRoutines_OutputTypes EquationsRoutines::OutputTypes
+  !> \brief The equations output types
+  !> \see EquationsRoutines,OPENCMISS_EquationsConstants
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NO_OUTPUT=0 !<No output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_TIMING_OUTPUT=1 !<Timing information output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_OUTPUT=2 !<All below and equation matrices output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_ELEMENT_MATRIX_OUTPUT=3 !<All below and element matrices output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NODAL_MATRIX_OUTPUT=4 !<All below and nodal matrices output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  !>@}
+
+  !> \addtogroup EquationsRoutines_SparsityTypes EquationsRoutines::SparsityTypes
+  !> \brief Equations matrices sparsity types
+  !> \see EquationsRoutines,OPENCMISS_EquationsSparsityTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SPARSE_MATRICES=1 !<Use sparse matrices for the equations. \see EquationsRoutines_SparsityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_FULL_MATRICES=2 !<Use fully populated matrices for the equations. \see EquationsRoutines_SparsityTypes,EquationsRoutines
+ !>@}
+ 
+  !> \addtogroup EquationsRoutines_LumpingTypes EquationsRoutines::LumpingTypes
+  !> \brief Equations matrices lumping types
+  !> \see EquationsRoutines,OPENCMISS_EquationsLumpingTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_UNLUMPED_MATRICES=1 !<The equations matrices are not lumped. \see EquationsRoutines_LumpingTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LUMPED_MATRICES=2 !<The equations matrices are "mass" lumped. \see EquationsRoutines_LumpingTypes,EquationsRoutines
+  !>@}
+  
   !Module types
 
   !Module variables
@@ -93,14 +140,30 @@ MODULE EquationsAccessRoutines
   PUBLIC NUMBER_OF_EQUATIONS_TIME_TYPES,EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC, &
     & EQUATIONS_SECOND_ORDER_DYNAMIC,EQUATIONS_TIME_STEPPING
 
+  PUBLIC EQUATIONS_SCALAR_TYPE,EQUATIONS_VECTOR_TYPE,EQUATIONS_FUNCTIONAL_TYPE
+
+  PUBLIC EQUATIONS_EQUALS_TYPE,EQUATIONS_LESS_THAN_TYPE,EQUATIONS_LESS_THAN_EQUALS_TYPE,EQUATIONS_GREATER_THAN_TYPE, &
+    & EQUATIONS_GREATER_THAN_EQUALS_TYPE
+  
+  PUBLIC EQUATIONS_NO_OUTPUT,EQUATIONS_TIMING_OUTPUT,EQUATIONS_MATRIX_OUTPUT,EQUATIONS_ELEMENT_MATRIX_OUTPUT, &
+    & EQUATIONS_NODAL_MATRIX_OUTPUT
+
+  PUBLIC EQUATIONS_SPARSE_MATRICES,EQUATIONS_FULL_MATRICES
+
+  PUBLIC EQUATIONS_UNLUMPED_MATRICES,EQUATIONS_LUMPED_MATRICES
+  
   PUBLIC Equations_AssertIsFinished,Equations_AssertNotFinished
 
   PUBLIC Equations_AssertIsDynamic,Equations_AssertIsStatic
 
   PUBLIC Equations_AssertIsLinear,Equations_AssertIsNonlinear
 
+  PUBLIC Equations_EqualityTypeGet
+
   PUBLIC Equations_EquationsSetGet
   
+  PUBLIC Equations_EquationTypeGet
+
   PUBLIC Equations_InterpolationGet
 
   PUBLIC Equations_LinearityTypeGet
@@ -389,6 +452,34 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the equality type for equations.
+  SUBROUTINE Equations_EqualityTypeGet(equations,equalityType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the equality type for
+    INTEGER(INTG), INTENT(OUT) :: equalityType !<On exit, the equality type of the equations. \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_EqualityTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Equations has not been finished.",err,error,*999)
+    
+    equalityType=equations%equalityType
+       
+    EXITS("Equations_EqualityTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_EqualityTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_EqualityTypeGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations set for an equations.
   SUBROUTINE Equations_EquationsSetGet(equations,equationsSet,err,error,*)
 
@@ -420,6 +511,34 @@ CONTAINS
     
   END SUBROUTINE Equations_EquationsSetGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the equation type for equations.
+  SUBROUTINE Equations_EquationTypeGet(equations,equationType,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the equation type for
+    INTEGER(INTG), INTENT(OUT) :: equationType !<On exit, the equation type of the equations. \see EquationsRoutines_EquationTypes,EquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_EquationTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Equations has not been finished.",err,error,*999)
+    
+    equationType=equations%equationType
+       
+    EXITS("Equations_EquationTypeGet")
+    RETURN
+999 ERRORSEXITS("Equations_EquationTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_EquationTypeGet
+  
   !
   !================================================================================================================================
   !

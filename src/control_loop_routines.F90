@@ -87,8 +87,6 @@ MODULE ControlLoopRoutines
 
   PUBLIC ControlLoop_AbsoluteToleranceSet
   
-  PUBLIC ControlLoop_ContinueLoopSet
-  
   PUBLIC ControlLoop_CreateFinish,ControlLoop_CreateStart
 
   PUBLIC ControlLoop_Destroy
@@ -126,34 +124,6 @@ MODULE ControlLoopRoutines
  PUBLIC ControlLoop_TimeOutputSet
 
 CONTAINS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the continue loop status for a while control loop
-  SUBROUTINE ControlLoop_ContinueLoopSet(controlLoop,continueLoop,err,error,*)
-
-    !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to set the continue loop status.
-    LOGICAL, INTENT(IN) :: continueLoop !<The continue loop status to set
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-   
-    ENTERS("ControlLoop_ContinueLoopSet",err,error,*999)
-
-    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
-    CALL ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*999)
-    
-    controlLoop%whileLoop%continueLoop = continueLoop
-       
-    EXITS("ControlLoop_ContinueLoopSet")
-    RETURN
-999 ERRORSEXITS("ControlLoop_ContinueLoopSet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_ContinueLoopSet
 
   !
   !================================================================================================================================
@@ -385,15 +355,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: loopIdx,matrixIdx,solverIdx,variableIdx,variableLinearity,variableTimeDependence
+    INTEGER(INTG) :: loopIdx,numberOfSolverMatrices,numberOfVariables,solverIdx,solverMatrixIdx,variableIdx,variableLinearity, &
+      & variableTimeDependence
     TYPE(ControlLoopType), POINTER :: controlLoop2
-    TYPE(DynamicSolverTypeXS), POINTER :: dynamicSolver
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(FieldType), POINTER :: field
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
+    TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
+    TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
    
@@ -481,32 +455,36 @@ CONTAINS
           CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
           NULLIFY(solverMapping)
           CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
+          CALL SolverMapping_NumberOfMatricesGet(solverMapping,numberOfSolverMatrices,err,error,*999)
           !Loop over the solver matrices
-          DO matrixIdx=1,solverMatrices%numberOfMatrices
+          DO solverMatrixIdx=1,numberOfSolverMatrices
+            NULLIFY(solverMatrixToEquationsMap)
+            CALL SolverMapping_SolverMatrixToEquationsMapGet(solverMapping,solverMatrixIdx,solverMatrixToEquationsMap, &
+              & err,error,*999)
+            NULLIFY(solverMappingVariables)
+            CALL SolverMappingSMToEQSMap_VariablesListGet(solverMatrixToEquationsMap,solverMappingVariables,err,error,*999)
             !Loop over the field variables associated with the solver mapping
-            DO variableIdx=1,solverMapping%variablesList(matrixIdx)%numberOfVariables
-              fieldVariable=>solverMapping%variablesList(matrixIdx)%variables(variableIdx)%variable
-              IF(ASSOCIATED(fieldVariable)) THEN
-                CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
-                  & fieldVariable,err,error,*999)
-              ELSE
-                localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-                  & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !variableIdx
-          ENDDO !matrixIdx
-          !Add in the RHS
-          DO variableIdx=1,solverMapping%rhsVariablesList%numberOfVariables
-            fieldVariable=>solverMapping%rhsVariablesList%variables(variableIdx)%variable
-            IF(ASSOCIATED(fieldVariable)) THEN
+            CALL SolverMappingVariables_NumberOfVariablesGet(solverMappingVariables,numberOfVariables,err,error,*999)
+            DO variableIdx=1,numberOfVariables
+              NULLIFY(solverMappingVariable)
+              CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
+              NULLIFY(fieldVariable)
+              CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,fieldVariable,err,error,*999)
               CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
                 & fieldVariable,err,error,*999)
-            ELSE
-              localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-                & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
+            ENDDO !variableIdx
+          ENDDO !solverMatrixIdx
+          !Add in the RHS
+          NULLIFY(solverMappingVariables)
+          CALL SolverMapping_RHSVariablesListGet(solverMapping,solverMappingVariables,err,error,*999)
+          CALL SolverMappingVariables_NumberOfVariablesList(solverMappingVariables,numberOfVariables,err,error,*999)
+          DO variableIdx=1,numberOfVariables
+            NULLIFY(solverMappingVariable)
+            CALL SolverMappingVariables_VariableGet(solverMappingVariables,variableIdx,solverMappingVariable,err,error,*999)
+            NULLIFY(fieldVariable)
+            CALL SolverMappingVariable_FieldVariableGet(solverMappingVariable,fieldVariable,err,error,*999)
+            CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
+              & fieldVariable,err,error,*999)
           ENDDO !equationSetIdx
         ENDIF
       ENDDO !solverIdx
