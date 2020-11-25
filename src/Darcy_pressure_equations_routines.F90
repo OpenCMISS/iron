@@ -57,6 +57,7 @@ MODULE DarcyPressureEquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -110,34 +111,49 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,esSpecification(3), &
-      & gaussPointIdx,numberOfDimensions,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx,solidComponentNumber, &
-      & solidNumberOfXi
-    REAL(DP) :: jacobianGaussWeight,rowsdPhidXi(3),colsdPhidXi(3)
+      & fluidColsVariableType,gaussPointIdx,materialsVariableType,numberOfColsElementParameters,numberOfColsXi, &
+      & numberOfDimensions,numberOfFluidColsComponents,numberOfFluidComponents,numberOfFluidXi,numberOfGauss, &
+      & numberOfRowsComponents,numberOfRowsElementParameters,numberOfRowsXi,numberOfSolidColsComponents,numberOfSolidXi, &
+      & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx,rowsVariableType,scalingType, &
+      & solidComponentNumber,solidColsVariableType,solidNumberOfXi,xiIdx   
+    REAL(DP) :: colsdPhidXi(3),density,dNudZ(3,3),dNudZT(3,3),dZdNu(3,3),gaussWeight,jacobian,jacobianGaussWeight,Jznu,K(3,3), &
+      & rowsdPhidXi(3),sigma(3,3),sum,tempMatrix(3,3)
     REAL(DP), POINTER :: elementResidualVector(:)
-    REAL(DP) :: K(3,3),density
-    REAL(DP) :: dZdNu(3,3),sigma(3,3),dNudZ(3,3),dNudZT(3,3),tempMatrix(3,3)
-    REAL(DP) :: Jznu
-    LOGICAL :: updateResidual,updateRHS
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    LOGICAL :: update,updateResidual,updateRHS
+    TYPE(BasisType), POINTER :: dependentBasis,fluidBasis,geometricBasis,rowsBasis,solidBasis
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
+    TYPE(DecompositionTopologyType), POINTER :: geometricDecompositionTopology
+    TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain   
+    TYPE(DomainElementsType), POINTER :: fluidDomainElements,geometricDomainElements,rowsDomainElements,solidDomainElements
+    TYPE(DomainTopologyType), POINTER :: colsDomainTopology,geometricDomainTopology,rowsDomainTopology
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,geometricField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
-    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,solidDependentInterpPoint, &
-      & materialsInterpPoint,fibreInterpolatedPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,solidDependentInterpPointMetrics
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField
+    TYPE(FieldVariableType), POINTER :: fieldVariable,fluidColsVariable,geometricVariable,materialsVariable,rowsVariable, &
+      & solidColsVariable
     TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,dependentInterpParameters, &
-      & fibreInterpParameters,materialsInterpParameters,solidDependentInterpParameters
+      & fibreInterpParameters,fluidDependentInterpParameters,materialsInterpParameters,rowsDependentInterpParameters, &
+      & solidDependentInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,fluidDependentInterpPoint, &
+      & materialsInterpPoint,solidDependentInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,solidDependentInterpPointMetrics
+    TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,fluidQuadratureScheme,geometricQuadratureScheme, &
+      & quadratureScheme,rowsQuadratureScheme
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DarcyPressure_FiniteElementResidualEvaluate",err,error,*999)
 
-    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
@@ -170,12 +186,12 @@ CONTAINS
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
     NULLIFY(residualVector)
     CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
-    updateResidual=residualVector%updateVector
+    CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateResidual,err,error,*999)
     NULLIFY(rhsVector)
     updateRHS=.FALSE.
     IF(ASSOCIATED(rhsMapping)) THEN
-      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,1,rhsVector,err,error,*999)
-      updateRHS=rhsVector%updateVector
+      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     ENDIF
 
     update=(updateResidual.OR.updateRHS)
@@ -257,12 +273,12 @@ CONTAINS
         & geometricInterpPointMetrics,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
       
-      NULLIFY(rowsDependentInterpParamters)
+      NULLIFY(rowsDependentInterpParameters)
       CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsDependentInterpParameters, &
         & err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,rowsDependentInterpParameters,err,error,*999)
       
-      NULLIFY(solidDependentInterpParamters)
+      NULLIFY(solidDependentInterpParameters)
       CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,solidColsVariableType, &
         & solidDependentInterpParameters,err,error,*999)
       NULLIFY(solidDependentInterpPoint)
@@ -271,7 +287,7 @@ CONTAINS
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,solidDependentInterpParameters, &
         & err,error,*999)
     
-      NULLIFY(fluidDependentInterpParamters)
+      NULLIFY(fluidDependentInterpParameters)
       CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,fluidColsVariableType, &
         & fluidDependentInterpParameters,err,error,*999)
       NULLIFY(fluidDependentInterpPoint)
@@ -280,7 +296,7 @@ CONTAINS
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,fluidDependentInterpParameters, &
         & err,error,*999)
     
-      NULLIFY(materialsInterpParamters)
+      NULLIFY(materialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,materialsVariableType,materialsInterpParameters, &
         & err,error,*999)
       NULLIFY(materialsInterpPoint)
@@ -310,7 +326,7 @@ CONTAINS
           & err,error,*999)
         CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
         IF(ASSOCIATED(fibreField)) &
-          & CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpolatedPoint, &
+          & CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
@@ -319,13 +335,13 @@ CONTAINS
          CALL Field_InterpolatedPointMetricsCalculate(numberOfSolidXi,solidDependentInterpPointMetrics,err,error,*999)
         
          !Get the permeability tensor and density
-        CALL CoordinateSystem_MaterialTransformSymTensor2(solidInterpPointMetrics,fibreInterpPoint, &
+        CALL CoordinateSystem_MaterialTransformSymTensor2(solidDependentInterpPointMetrics,fibreInterpPoint, &
           & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),sigma,err,error,*999)        
         density=materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1,NO_PART_DERIV)
         
         !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
         CALL FiniteElasticity_GaussDeformationGradientTensor(solidDependentInterpPointMetrics, &
-          & geometricInterpPointMetrics,fibreInterpolatedPoint,dZdNu,Jznu,ERR,ERROR,*999)
+          & geometricInterpPointMetrics,fibreInterpPoint,dZdNu,Jznu,ERR,ERROR,*999)
 
         sigma=density*Jznu*sigma
         
@@ -360,7 +376,7 @@ CONTAINS
           CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
           CALL Basis_NumberOfXiGet(rowsBasis,numberOfRowsXi,err,error,*999)
           CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
           !Loop over element rows
           DO rowElementParameterIdx=1,dependentBasis%numberOfElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1
@@ -409,7 +425,7 @@ CONTAINS
                   ENDIF
                 ENDDO !columnElementParameterIdx
               ENDDO !columnComponentIdx
-              residualVector%elementVector%vector(rowElementDOFIdx)=residualVector%elementVector%vector(rowElementDOFIdx)+ &
+              residualVector%elementResidual%vector(rowElementDOFIdx)=residualVector%elementResidual%vector(rowElementDOFIdx)+ &
                 & sum*jacobianGaussWeight
             ENDIF
             IF(updateRHS) THEN
@@ -446,8 +462,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: esSpecification(3),geometricMeshComponent,geometricScalingType,numberOfDimensions,componentIdx
-    INTEGER(INTG) :: numberOfDarcyComponents,numberOfComponents,numberOfSolidComponents
+    INTEGER(INTG) :: componentIdx,esSpecification(3),geometricMeshComponent,geometricScalingType,numberOfComponents, &
+      & numberOfDarcyComponents,numberOfDimensions,numberOfSolidComponents,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -568,7 +584,7 @@ CONTAINS
           
           !Elasticity: Default to the geometric interpolation setup
           DO componentIdx=1,numberOfDimensions
-            CALL Field_ComponentMeshComponentGetgeometricField,FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent, &
+            CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,componentIdx,geometricMeshComponent, &
               & err,error,*999)
             CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & componentIdx,geometricMeshComponent,err,error,*999)
@@ -849,7 +865,7 @@ CONTAINS
           CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_U_VARIABLE_TYPE,vectorMapping,err,error,*999)
           CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,0,err,error,*999)
           CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
-          CALL EquationsMappingVector_ResidualNumberOfVariablesSet(viectorMapping,2,err,error,*999)
+          CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,2,err,error,*999)
           CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_V_VARIABLE_TYPE,FIELD_U_VARIABLE_TYPE], &
             & err,error,*999)
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
@@ -860,11 +876,11 @@ CONTAINS
           CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
           SELECT CASE(sparsityType)
           CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-            CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
+            CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
           CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-            CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
+            CALL EquationsMatricesVector_NonlinearStorageTypeSet(vectorMatrices,1,MATRIX_COMPRESSED_ROW_STORAGE_TYPE, &
               & err,error,*999)
-            CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE, &
+            CALL EquationsMatricesVector_NonlinearStructureTypeSet(vectorMatrices,1,EQUATIONS_MATRIX_FEM_STRUCTURE, &
               & err,error,*999)
           CASE DEFAULT
             localError="The equations matrices sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
