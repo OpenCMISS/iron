@@ -53,7 +53,7 @@ MODULE ClassicalFieldRoutines
   USE HelmholtzEquationsRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-  USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
+  USE HamiltonJacobiRoutines
   USE LaplaceEquationsRoutines
   USE PoissonEquationsRoutines
   USE ProblemAccessRoutines
@@ -255,7 +255,7 @@ CONTAINS
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-      CALL HJEquation_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
+      CALL HamiltonJacobi_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
     CASE DEFAULT
       localError="The second equations set specification of "//TRIM(NumberToVstring(specification(2),"*",err,error))// &
         & " is not valid for a classical field equations set."
@@ -298,7 +298,7 @@ CONTAINS
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
       CALL Laplace_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-      CALL HJ_EQUATION_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
+      CALL HamiltonJacobi_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
       CALL Poisson_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
@@ -474,7 +474,7 @@ CONTAINS
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
       CALL Laplace_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-      CALL HJ_EQUATION_EQUATIONS_SET_SETUP(equationsSet,equationsSetSetup,err,error,*999)
+      CALL HamiltonJacobi_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
       CALL Poisson_EquationsSetSetup(equationsSet,equationsSetSetup,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
@@ -532,7 +532,7 @@ CONTAINS
      CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
        CALL Laplace_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
      CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-       CALL HJEquation_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
+       CALL HamiltonJacobi_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
      CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
        CALL Poisson_EquationsSetSolutionMethodSet(equationsSet,solutionMethod,err,error,*999)
      CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
@@ -591,7 +591,7 @@ CONTAINS
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
       CALL Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
-      CALL HJ_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+      CALL HamiltonJacobi_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
       CALL Poisson_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
@@ -650,7 +650,7 @@ CONTAINS
     CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
       CALL Laplace_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
     CASE(PROBLEM_HJ_EQUATION_TYPE)
-      CALL HJEquation_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
+      CALL HamiltonJacobi_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
     CASE(PROBLEM_POISSON_EQUATION_TYPE)
       CALL Poisson_ProblemSpecificationSet(problem,problemSpecification,err,error,*999)
     CASE(PROBLEM_HELMHOLTZ_EQUATION_TYPE)
@@ -723,7 +723,7 @@ CONTAINS
     CASE(PROBLEM_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(PROBLEM_HJ_EQUATION_TYPE)
-      CALL HJ_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL HamiltonJacobi_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE DEFAULT
       localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
         & " is not valid for a classical field problem class."

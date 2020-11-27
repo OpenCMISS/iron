@@ -98,7 +98,7 @@ MODULE OpenCMISS_Iron
  USE FiniteElasticityRoutines
  USE GeneratedMeshRoutines
  USE GeneratedMeshAccessRoutines
- USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
+ USE HamiltonJacobiRoutines
  USE HISTORY_ROUTINES
  USE InputOutput
  USE InterfaceRoutines
