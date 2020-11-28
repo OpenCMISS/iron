@@ -48,6 +48,7 @@ MODULE HelmholtzEquationsRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -57,6 +58,7 @@ MODULE HelmholtzEquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -122,7 +124,7 @@ CONTAINS
       & variableType
     REAL(DP) :: analyticValue,x(3),k,mu
     REAL(DP), POINTER :: geometricParameters(:),materialsParameters(:)
-    LOGICAL :: boundaryNodes
+    LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
@@ -231,7 +233,7 @@ CONTAINS
             IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
               IF(boundaryNode) THEN
                 !If we are a boundary node then set the analytic value on the boundary
-                CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDOFIdx, &
+                CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx, &
                   & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
               ENDIF
             ENDIF
@@ -265,26 +267,42 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: esSpecification(3),gaussPointIdx,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx, &
-      & columnComponentIdx,colElementDOFIdx,xiIdx,columnElementParameterIdx,variableType
-    REAL(DP) :: jacobianGaussWeight,sum,rowsdPhidXi(3),colsdPhidXi(3),rowsPhi,colsPhi,k,conductivityTensor(3,3)
-    TYPE(BasisType), POINTER :: colsBasis,geometricBasis,rowsBasis
+    INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType,columnXiIdx, &
+      & esSpecification(3),gaussPointIdx,numberOfColComponents,numberOfColElementParameters,numberOfColumnXi, &
+      & numberOfDependentXi,numberOfDimensions,numberOfGauss,numberOfGeometricXi,numberOfMaterialsComponents, &
+      & numberOfRowComponents,numberOfRowElementParameters,numberOfXi,rowComponentIdx,rowElementDOFIdx, &
+      & rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType,xiIdx,variableType
+    REAL(DP) :: columndPhidXi(3),columnPhi,conductivityTensor(3,3),gaussWeight,jacobian,jacobianGaussWeight,k,rowdPhidXi(3), &
+      & rowPhi,sum
+    LOGICAL :: update,updateMatrix,updateRHS
+    TYPE(BasisType), POINTER :: colBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
+    TYPE(DomainType), POINTER :: colDomain,dependentDomain,geometricDomain,rowDomain
+    TYPE(DomainElementsType), POINTER :: colDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
+    TYPE(DomainTopologyType), POINTER :: colDomainTopology,dependentDomainTopology,geometricDomainTopology,rowDomainTopology
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: linearMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,geometricQuadratureScheme,rowsQuadratureScheme
+    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters,geometricInterpParameters, &
+      & materialsInterpParameters,rowsInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,materialsInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,materialsVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: colQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
+      & rowQuadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Helmholtz_FiniteElementCalculate",err,error,*999)
 
-    CALL EquationsSet_SpecificationGet(esSpecification,3,esSpecification,err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
 
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
@@ -312,12 +330,12 @@ CONTAINS
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(linearMatrices)
     CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-    NULLIFY(equationsMatrix)
-    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
-    upateMatrix=equationsMatrix%updateMatrix
+    NULLIFY(linearMatrix)
+    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,linearMatrix,err,error,*999)
+    CALL EquationsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-    updateRHS=rhsVector%updateVector
+    CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
 
     update=(updateMatrix.OR.updateRHS)
 
@@ -335,35 +353,34 @@ CONTAINS
       CALL DomainTopology_DomainElementsGet(geometricDomainTopology,geometricDomainElements,err,error,*999)
       NULLIFY(geometricBasis)
       CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
-      CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
-
+      CALL Basis_NumberOfXiGet(geometricBasis,numberOfGeometricXi,err,error,*999)
  
       NULLIFY(dependentField)
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
-      NULLIFY(colsDomain)
-      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
-      NULLIFY(colsDomainTopology)
-      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-      NULLIFY(colsDomainElements)
-      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-      NULLIFY(colsBasis)
-      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
-      CALL Basis_NumberOfXiGet(colsBasis,numberOfColsXi,err,error,*999)
-
+      NULLIFY(dependentDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+      NULLIFY(dependentDomainTopology)
+      CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+      NULLIFY(dependentDomainElements)
+      CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
+      NULLIFY(dependentBasis)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+      CALL Basis_NumberOfXiGet(dependentBasis,numberOfDependentXi,err,error,*999)
+      NULLIFY(dependentQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
+      CALL BasisQuadratureScheme_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+      
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowComponents,err,error,*999)
       
       NULLIFY(colsVariable)
       CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
       CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
-      
-      NULLIFY(geometricQuadratureScheme)
-      CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColComponents,err,error,*999)    
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -388,7 +405,12 @@ CONTAINS
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,fibreInterpParameters,err,error,*999)
         ENDIF
       ENDIF
-      
+
+      NULLIFY(materialsField)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+      NULLIFY(materialsVariable)
+      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(materialsVariable,numberOfMaterialsComponents,err,error,*999)
       NULLIFY(materialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & materialsInterpParameters,err,error,*999)
@@ -402,7 +424,7 @@ CONTAINS
         
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
-        CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)        
+        CALL Field_InterpolatedPointMetricsCalculate(numberOfGeometricXi,geometricInterpPointMetrics,err,error,*999)        
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
         
@@ -411,76 +433,77 @@ CONTAINS
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
           CALL CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint, &
-            & materialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity, &
+            & materialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivityTensor, &
             & err,error,*999)
         ENDIF
         
          !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 
         CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
-        CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+        CALL BasisQuadratureScheme_GaussWeightGet(dependentQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
         jacobianGaussWeight=jacobian*gaussWeight
         
         !Loop over field components
         rowElementDOFIdx=0          
-        DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowsDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
-          NULLIFY(rowsDomainTopology)
-          CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
-          NULLIFY(rowsDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
-          NULLIFY(rowsBasis)
-          CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
-          CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+        DO rowComponentIdx=1,numberOfRowComponents
+          NULLIFY(rowDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+          NULLIFY(rowDomainTopology)
+          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+          NULLIFY(rowDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+          NULLIFY(rowBasis)
+          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
-          DO rowElementParameterIdx=1,numberOfRowsElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1
-            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & gaussPointIdx,rowsPhi,err,error,*999)
-            DO rowXiIdx=1,numberOfXi
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
-                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(rowXiIdx),gaussPointIdx,rowsdPhidXi(rowPhiIdx),err,error,*999)
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+              & gaussPointIdx,rowPhi,err,error,*999)
+            DO rowXiIdx=1,numberOfDependentXi
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx, &
+                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(rowXiIdx),gaussPointIdx,rowdPhidXi(rowXiIdx),err,error,*999)
             ENDDO !xiIdx
             IF(updateMatrix) THEN
-              colElementDOFIdx=0
+              columnElementDOFIdx=0
               !Loop over element columns
-              DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(colsDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
-                NULLIFY(colsDomainTopology)
-                CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-                NULLIFY(colsDomainElements)
-                CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-                NULLIFY(colsBasis)
-                CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
-                CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColsElementParameters
+              DO columnComponentIdx=1,numberOfColComponents
+                NULLIFY(colDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colDomain,err,error,*999)
+                NULLIFY(colDomainTopology)
+                CALL Domain_DomainTopologyGet(colDomain,colDomainTopology,err,error,*999)
+                NULLIFY(colDomainElements)
+                CALL DomainTopology_DomainElementsGet(colDomainTopology,colDomainElements,err,error,*999)
+                NULLIFY(colBasis)
+                CALL DomainElements_ElementBasisGet(colDomainElements,elementNumber,colBasis,err,error,*999)
+                CALL Basis_QuadratureSchemeGet(colBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colQuadratureScheme,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(colBasis,numberOfColElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColElementParameters
                   columnElementDOFIdx=columnElementDOFIdx+1
-                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                    & gaussPointIdx,colsPhi,err,error,*999)
-                  DO colXiIdx=1,numberOfXi
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
-                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(colXiIdx),gaussPointIdx,colsdPhidXi(colPhiIdx),err,error,*999)
-                  ENDDO !xiIdx
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(colQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                    & gaussPointIdx,columnPhi,err,error,*999)
+                  DO columnXiIdx=1,numberOfDependentXi
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(colQuadratureScheme,columnElementParameterIdx, &
+                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(columnXiIdx),gaussPointIdx,columndPhidXi(columnXiIdx), &
+                      & err,error,*999)
+                  ENDDO !columnXiIdx
                   sum=0.0_DP
-                  sum=sum-k*k*rowsPhi*colsPhi
+                  sum=sum-k*k*rowPhi*columnPhi
                   SELECT CASE(esSpecification(3))
                   CASE(EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE)
-                    DO rowXiIdx=1,numberOfXi
-                      DO columnXiIdx=1,numberOfXi
-                        sum=sum+rowsdPhidXi(rowXiIdx)*colsdPhidXi(columnXiIdx)* &
+                    DO rowXiIdx=1,numberOfDependentXi
+                      DO columnXiIdx=1,numberOfDependentXi
+                        sum=sum+rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
                           & geometricInterpPointMetrics%gu(rowXiIdx,columnXiIdx)
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
                   CASE(EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE)
-                    DO rowIdx=1,numberOfXi
-                      DO columnXiIdx=1,numberOfXi
-                        DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,xiIdx)*rowsdPhidXi(rowXiIdx)*colsdPhidXi(columnXiIdx)* &
-                            & geometricInterpPointMetrics%gu(rowIdx,xiIdx)
+                    DO rowXiIdx=1,numberOfDependentXi
+                      DO columnXiIdx=1,numberOfDependentXi
+                        DO xiIdx=1,numberOfGeometricXi
+                          sum=sum+conductivityTensor(rowXiIdx,xiIdx)*rowdPhidXi(rowXiIdx)*columndPhidXi(columnXiIdx)* &
+                            & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx                    
@@ -490,13 +513,13 @@ CONTAINS
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                  
-                  equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)= &
-                    & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)+ &
+                  linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                    & linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+ &
                     & sum*jacobianGaussWeight
                 ENDDO !columnElementParameterIdx
               ENDDO !columnComponentIdx
             ENDIF
-            IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)=0.0_DP
+            IF(updateRHS) rhsVector%elementVector%vector(rowElementDOFIdx)=0.0_DP
           ENDDO !rowElementParameterIdx
         ENDDO !rowComponentIdx
       ENDDO !gaussPointIdx
@@ -513,35 +536,35 @@ CONTAINS
         CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,rowsInterpParameters,err,error,*999)
         CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters,err,error,*999)
         rowElementDOFIdx=0          
-        DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowsDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
-          NULLIFY(rowsDomainTopology)
-          CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
-          NULLIFY(rowsDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
-          NULLIFY(rowsBasis)
-          CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
-          DO rowElementParameterIdx=1,numberOfRowsElementParameters
+        DO rowComponentIdx=1,numberOfRowComponents
+          NULLIFY(rowDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+          NULLIFY(rowDomainTopology)
+          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+          NULLIFY(rowDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+          NULLIFY(rowBasis)
+          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
+          DO rowElementParameterIdx=1,numberOfRowElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1                    
             IF(updateMatrix) THEN
               !Loop over element columns
               columnElementDOFIdx=0
-              DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(colsDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
-                NULLIFY(colsDomainTopology)
-                CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-                NULLIFY(colsDomainElements)
-                CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-                NULLIFY(colsBasis)
-                CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColsElementParameters
+              DO columnComponentIdx=1,numberOfColComponents
+                NULLIFY(colDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colDomain,err,error,*999)
+                NULLIFY(colDomainTopology)
+                CALL Domain_DomainTopologyGet(colDomain,colDomainTopology,err,error,*999)
+                NULLIFY(colDomainElements)
+                CALL DomainTopology_DomainElementsGet(colDomainTopology,colDomainElements,err,error,*999)
+                NULLIFY(colBasis)
+                CALL DomainElements_ElementBasisGet(colDomainElements,elementNumber,colBasis,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(colBasis,numberOfColElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColElementParameters
                   columnElementDOFIdx=columnElementDOFIdx+1
-                  equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)= &
-                    & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,colElementDOFIdx)* &
+                  linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                    & linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
                     & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
                     & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
                 ENDDO !columnElementParameterIdx
@@ -552,7 +575,7 @@ CONTAINS
               & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
           ENDDO !rowElementParameterIdx
         ENDDO !rowComponentIdx
-      ENDIF
+      ENDIF !scaling
 
     ENDIF !update
        
@@ -680,12 +703,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,esSpecification(3),geometricComponentNumber,geometricMeshComponent,geometricScalingType, &
-      & materialsNumberOfComponents,materialsNumberOfVariables,numberOfDimensions,solutionMethod
+      & numberOfmaterialsComponents,numberOfmaterialsVariables,numberOfDimensions,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(RegionType), POINTER :: region
@@ -850,10 +874,10 @@ CONTAINS
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-      materialsNumberOfVariables=1
-      materialsNumberOfComponents=1 ! wave number k
+      numberOfMaterialsVariables=1
+      numberOfMaterialsComponents=1 ! wave number k
       IF(esSpecification(3)==EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE) &
-        & materialsNumberOfComponents=materialsNumberOfComponents+NUMBER_OF_VOIGT(numberOfDimensions) !conductivity tensor
+        & numberOfMaterialsComponents=numberOfMaterialsComponents+NUMBER_OF_VOIGT(numberOfDimensions) !conductivity tensor
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         IF(equationsMaterials%materialsFieldAutoCreated) THEN
@@ -864,16 +888,16 @@ CONTAINS
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
-          CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField,materialsNumberOfVariables,err,error,*999)
+          CALL Field_NumberOfVariablesSet(equationsMaterials%materialsField,numberOfMaterialsVariables,err,error,*999)
           CALL Field_VariableTypesSetAndLock(equationsMaterials%materialsField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
           CALL Field_DimensionSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
             & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
           CALL Field_DataTypeSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
           CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-            & materialsNumberOfComponents,err,error,*999)
+            & numberOfMaterialsComponents,err,error,*999)
           CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricComponentNumber,err,error,*999)
           !Default to constant interpolation of material field
-          DO componentIdx=1,materialsNumberOfComponents
+          DO componentIdx=1,numberOfMaterialsComponents
             CALL Field_ComponentMeshComponentSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & componentIdx,geometricComponentNumber,err,error,*999)
             CALL Field_ComponentInterpolationSet(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
@@ -1084,7 +1108,7 @@ CONTAINS
       localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is invalid for a Helmholtz equation type."
       CALL FlagError(localError,err,error,*999)
-    ENDIF
+    END SELECT
     
     SELECT CASE(problemSetup%setupType)
     CASE(PROBLEM_SETUP_INITIAL_TYPE)
