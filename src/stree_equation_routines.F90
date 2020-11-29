@@ -51,6 +51,7 @@ MODULE StreeEquationsRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -64,6 +65,7 @@ MODULE StreeEquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -220,7 +222,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
-    TYPE(EquationsSetEquationsSetFieldType), POINTER :: equationsEquationsSetField
+    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField
     TYPE(FieldType), POINTER :: equationsSetField,geometricField
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
@@ -249,12 +251,11 @@ CONTAINS
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL Stree_EquationsSetSolutionMethodSet(equationsSet,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
-        NULLIFY(equationsEquationsSetField)
-        CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsEquationsSetField,err,error,*999)
-        IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
+        NULLIFY(equationsField)
+        CALL EquationsSet_EquationsFieldGet(equationsSet,equationsField,err,error,*999)
+        IF(equationsField%equationsSetFieldAutoCreated) THEN
           !Create the auto created equations set field field for SUPG element metrics
-          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsEquationsSetField%equationsSetFieldField, &
-            & err,error,*999)
+          CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsField%equationsSetField,err,error,*999)
           NULLIFY(equationsSetField)
           CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
           CALL Field_LabelSet(equationsSetField,"Equations Set Field",err,error,*999)
@@ -273,10 +274,10 @@ CONTAINS
           CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
         ENDIF
       CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
-        IF(equationsSet%equationsSetField%equationsSetFieldAutoCreated) THEN
-          CALL Field_CreateFinish(equationsSet%equationsSetField%equationsSetFieldField,err,error,*999)
-          CALL Field_ComponentValuesInitialise(equationsSet%equationsSetField%equationsSetFieldField, &
-            & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
+        IF(equationsField%equationsSetFieldAutoCreated) THEN
+          CALL Field_CreateFinish(equationsField%equationsSetField,err,error,*999)
+          CALL Field_ComponentValuesInitialise(equationsField%equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & 1,1.0_DP,err,error,*999)
         ENDIF
       CASE DEFAULT
         localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType, &
@@ -292,11 +293,11 @@ CONTAINS
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
-        NULLIFY(equationsEquationsSetField)
-        CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsEquationsSetField,err,error,*999)
+        NULLIFY(equationsField)
+        CALL EquationsSet_EquationsFieldGet(equationsSet,equationsField,err,error,*999)
         NULLIFY(equationsSetField)
-        CALL EquationsSet_EquationsSetFieldFieldGet(equationsSet,equationsSetField,err,error,*999)
-        IF(equationsEquationsSetField%equationsSetFieldAutoCreated) THEN
+        CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+        IF(equationsField%equationsSetFieldAutoCreated) THEN
           NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsSetField,geometricDecomposition,err,error,*999)
@@ -308,7 +309,7 @@ CONTAINS
             & err,error,*999)
           !Default the field scaling to that of the geometric field
           CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
-          CALL Field_ScalingTypeSet(equationsSet%equationsSetField%equationsSetFieldField,geometricScalingType,err,error,*999)
+          CALL Field_ScalingTypeSet(equationsField%equationsSetField,geometricScalingType,err,error,*999)
         ELSE
           !Do nothing
         ENDIF
@@ -606,14 +607,14 @@ CONTAINS
     LOGICAL :: update,updateMatrix,updateRHS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: linearMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldVariableType), POINTER :: rowsVariable
     TYPE(VARYING_STRING) :: localError
@@ -632,7 +633,7 @@ CONTAINS
     END SELECT
 
     NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(equationsInterpolation)
@@ -653,14 +654,14 @@ CONTAINS
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(linearMatrices)
     CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-    NULLIFY(equationsMatrix)
-    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
-    updateMatrix=equationsMatrix%updateMatrix
+    NULLIFY(linearMatrix)
+    CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,linearMatrix,err,error,*999)
+    CALL EquationsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
     NULLIFY(rhsVector)
     updateRHS=.FALSE.
     IF(ASSOCIATED(rhsMapping)) THEN
       CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-      updateRHS=rhsVector%updateVector
+      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     ENDIF
 
     update=(updateMatrix.OR.updateRHS)
