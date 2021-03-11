@@ -179,7 +179,7 @@ MODULE BoundaryConditionAccessRoutines
   
   PUBLIC BoundaryConditionsNeumann_PointDOFValuesGet
 
-  PUBLIC
+  PUBLIC BoundaryConditionsPressureInc_PressureIncDOFIndexGet
   
   PUBLIC BoundaryConditionsRowVariable_BoundaryConditionsGet
 
@@ -773,6 +773,50 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE BoundaryConditionsNeumann_PointDOFValuesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the incremented pressure DOF index for the pressure incremented boundary conditions.
+  SUBROUTINE BoundaryConditionsPressureInc_PressureIncDOFIndexGet(pressureIncBoundaryConditions,pressureIncIdx, &
+    & pressureIncDOFIndex,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncBoundaryConditions !<A pointer to the incremented pressure boundary conditions to get the incremented pressure DOF index for
+    INTEGER(INTG), INTENT(IN) :: pressureIncIdx !<The incremented pressure index to get the incremented pressure DOF index for
+    INTEGER(INTG), INTENT(OUT) :: pressureIncDOFIndex !<On exit, the incremented pressure DOF index.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("BoundaryConditionsPressureInc_PressureIncDOFIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(pressureIncBoundaryConditions)) &
+      & CALL FlagError("Incremented pressure boundary conditions is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(pressureIncBoundaryConditions%pressureIncrementedDOFIndices)) &
+      & CALL FlagError("The incremented pressure DOF indices are not allocated for the Neumann boundary conditions.",err,error,*999)
+    IF(pressureIncIdx<1.OR.pressureIncIdx>SIZE(pressureIncBoundaryConditions%pressureIncrementedDOFIndices,1)) THEN
+      localError="The specified incremented pressure index of "//TRIM(NumberToVString(pressureIncIdx,"*",err,error))// &
+        & " is invalid. The incremented pressure index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(pressureIncBoundaryConditions%pressureIncrementedDOFIndices,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    pressureIncDOFIndex=pressureIncBoundaryConditions%pressureIncrementedDOFIndices(pressureIncIdx)
+      
+    EXITS("BoundaryConditionsPressureInc_PressureIncDOFIndexGet")
+    RETURN
+999 ERRORS("BoundaryConditionsPressureInc_PressureIncDOFIndexGet",err,error)
+    EXITS("BoundaryConditionsPressureInc_PressureIncDOFIndexGet")
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditionsPressureInc_PressureIncDOFIndexGet
 
   !
   !================================================================================================================================

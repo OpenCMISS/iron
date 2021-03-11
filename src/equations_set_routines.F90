@@ -5411,7 +5411,7 @@ CONTAINS
               IF(dirichletDomainNumber==myGroupComputationNodeNumber) THEN
                 CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalDirichletDOFIdx,1,localDirichletDOFIdx, &
                   & err,error,*999)
-                IF(localDirichletDOFIdx>=1.AND..localDirichletDOFIdx<ghostStart) THEN
+                IF(localDirichletDOFIdx>=1.AND.localDirichletDOFIdx<ghostStart) THEN
                   fullLoad=fullLoads(localDirichletDOFIdx)
                   ! Apply full load if last step, or fixed BC
                   IF(iterationNumber==maximumNumberOfIterations) THEN
@@ -5499,69 +5499,74 @@ CONTAINS
           !Calculate the new load, update the old load
           IF(iterationNumber==1) THEN
             !On the first iteration, FIELD_PRESSURE_VALUES_SET_TYPE actually contains the full load
-            DO pressureIdx=1,pressureIncrementedCount
+            DO pressureIncIdx=1,pressureIncrementedCount
               !Global dof index
-              conditionGlobalDOF=pressureIncrementedBoundaryConditions%pressureIncrementedDOFIndices(conditionIdx)
+              CALL BoundaryConditionsPressureInc_PressureIncDOFIndexGet(pressureIncrementedBoundaryConditions,pressureIncIdx, &
+                & globalPressureIncDOFIndex,err,error,*999)
               !Must convert into local dof index
-              IF(domainMapping%globalToLocalMap(conditionGlobalDOF)%domainNumber(1)==myGroupComputationNodeNumber) THEN
-                conditionLocalDOF=domainMapping%globalToLocalMap(conditionGlobalDOF)%localNumber(1)
-                IF(0<conditionLocalDOF.AND.conditionLocalDOF<domainMapping%ghostStart) THEN
-                  newLoad=currentLoads(conditionLocalDOF)
+              CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalPressureIncDOFIdx,1,pressureIncDomainNumber, &
+                & err,error,*999)
+              IF(pressureIncDomainNumber==myGroupComputationNodeNumber) THEN
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globaPressureIncDOFIdx,1,localPressureIncDOFIdx, &
+                  & err,error,*999)
+                IF(localPressureIncDOFIdx>=1.AND.localPressureIncDOFIdx<ghostStart) THEN
+                  newLoad=currentLoads(localPressureIncDOFIdx)
                   newLoad=newLoad/maximumNumberOfIterations
                   !Update current and previous loads
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                    & FIELD_PRESSURE_VALUES_SET_TYPE,conditionLocalDOF,newLoad,err,error,*999)
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                    & FIELD_PREVIOUS_PRESSURE_SET_TYPE,conditionLocalDOF,0.0_dp,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                    & localPressureIncDOFIdx,newLoad,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                    & localPressureIncDOFIdx,0.0_dp,err,error,*999)
                   IF(diagnostics1) THEN
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  dof idx", &
-                      & conditionLocalDOF,err,error,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    current load", &
-                      & currentLoads(conditionLocalDOF),err,error,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    new load",newLoad,err,error,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DOF Idx : ",localPressureIncDOFIdx,err,error,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Current load = ",currentLoads(localPressureIncDOFIdx), &
+                      & err,error,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    New load = ",newLoad,err,error,*999)
                   ENDIF
                 ENDIF !Non-ghost dof
               ENDIF !Current domain
             ENDDO !conditionIdx
           ELSE
             !Calculate the new load, keep the current load
-            DO conditionIdx=1,boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
+            DO conditionIdx=1,pressureIncrementedCount
               !This is global dof idx
-              conditionGlobalDOF=pressureIncrementedBoundaryConditions%pressureIncrementedDOFIndices(conditionIdx)
+              CALL BoundaryConditionsPressureInc_PressureIncDOFIndexGet(pressureIncrementedBoundaryConditions,pressureIncIdx, &
+                & globalPressureIncDOFIndex,err,error,*999)
               !Must convert into local dof index
-              IF(domainMapping%globalToLocalMap(conditionGlobalDOF)%domainNumber(1)==myGroupComputationNodeNumber) THEN
-                conditionLocalDOF=domainMapping%globalToLocalMap(conditionGlobalDOF)%localNumber(1)
-                IF(0<conditionLocalDOF.AND.conditionLocalDOF<domainMapping%ghostStart) THEN
-                  prevLoad=prevLoads(conditionLocalDOF)
-                  currentLoad=currentLoads(conditionLocalDOF)
+              CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalPressureIncDOFIdx,1,pressureIncDomainNumber, &
+                & err,error,*999)
+              IF(pressureIncDomainNumber==myGroupComputationNodeNumber) THEN
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globaPressureIncDOFIdx,1,localPressureIncDOFIdx, &
+                  & err,error,*999)
+                IF(localPressureIncDOFIdx>=1.AND.localPressureIncDOFIdx<ghostStart) THEN
+                  prevLoad=prevLoads(localPressureIncDOFIdx)
+                  currentLoad=currentLoads(localPressureIncDOFIdx)
                   newLoad=currentLoad+(currentLoad-prevLoad)  !This may be subject to numerical errors...
                   !if (conditionIdx==1) write(*,*) "new load=",new_load
                   !Update current and previous loads
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                    & FIELD_PRESSURE_VALUES_SET_TYPE,conditionLocalDOF,newLoad,err,error,*999)
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType, &
-                    & FIELD_PREVIOUS_PRESSURE_SET_TYPE,conditionLocalDOF,currentLoad,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                    & localPressureIncDOFIdx,newLoad,err,error,*999)
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVarible,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                    & localPressureIncDOFIdx,currentLoad,err,error,*999)
                   IF(diagnostics1) THEN
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  dof idx", &
-                      & conditionLocalDOF,err,error,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    current load", &
-                      & currentLoads(conditionLocalDOF),err,error,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    new load",newLoad,err,error,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DOF idx : ",localPressureIncDOFIdx,err,error,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Current load = ",currentLoads(localPressureIncDOFIdx), &
+                      & err,error,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    New load = ",newLoad,err,error,*999)
                   ENDIF
                 ENDIF !Non-ghost dof
               ENDIF !Current domain
             ENDDO !conditionIdx
           ENDIF
           !Start transfer of dofs to neighbouring domains
-          CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_PREVIOUS_PRESSURE_SET_TYPE,err,error,*999)
-          CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
           !Restore the vector handles
-          CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_PREVIOUS_PRESSURE_SET_TYPE,prevLoads,err,error,*999)
-          CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_PRESSURE_VALUES_SET_TYPE,currentLoads, &
-            & err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE,prevLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,currentLoads,err,error,*999)
           !Finish transfer of dofs to neighbouring domains
-          CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_PREVIOUS_PRESSURE_SET_TYPE,err,error,*999)
-          CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
         ENDIF !Pressure incremented bc block                
       ELSE
         ! do nothing - no boundary conditions variable type associated?
@@ -5600,8 +5605,8 @@ CONTAINS
       & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
    
     !Increment boundary conditions
-    CALL EquationsSet_BoundaryConditionsIncrement(equationsSet,boundaryConditions,iterationNumber, &
-      & maximumNumberOfIterations,err,error,*999)
+    CALL EquationsSet_BoundaryConditionsIncrement(equationsSet,boundaryConditions,iterationNumber,maximumNumberOfIterations, &
+      & err,error,*999)
 
     !Apply any other equation set specific increments
     SELECT CASE(equationsSet%specification(1))
