@@ -112,9 +112,17 @@ MODULE InterfaceMatricesAccessRoutines
 
   PUBLIC InterfaceMatricesRHS_DistributedVectorGet
 
+  PUBLIC InterfaceMatricesRHS_FirstAssemblyGet
+
   PUBLIC InterfaceMatricesRHS_InterfaceMatricesGet
 
+  PUBLIC InterfaceMatricesRHS_UpdateVectorGet
+
+  PUBLIC InterfaceMatricesRHS_VectorCoefficientGet
+
   PUBLIC InterfaceMatrix_DistributedMatrixGet
+
+  PUBLIC InterfaceMatrix_FirstAssemblyGet
 
   PUBLIC InterfaceMatrix_HasTransposeGet
   
@@ -395,10 +403,10 @@ CONTAINS
   !
 
   !>Gets the RHS distributed vector for an interface matrices RHS.
-  SUBROUTINE InterfaceMatricesRHS_DistributedVectorGet(interfaceMatricesRHS,distributedVector,err,error,*)
+  SUBROUTINE InterfaceMatricesRHS_DistributedVectorGet(interfaceRHSVector,distributedVector,err,error,*)
 
     !Argument variables
-    TYPE(InterfaceRHSType), POINTER :: interfaceMatricesRHS !<A pointer to the interface matrices RHS to get the RHS distributed vector for
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface matrices RHS to get the RHS distributed vector for
     TYPE(DistributedVectorType), POINTER :: distributedVector !<On exit, a pointer to the RHS distributed vector in the specified interface matrices RHS. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -408,14 +416,14 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(distributedVector)) CALL FlagError("Distrbuted vector is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interfaceMatricesRHS)) CALL FlagError("Interface matrices RHS is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
 #endif    
 
-    distributedVector=>interfaceMatricesRHS%rhsVector
+    distributedVector=>interfaceRHSVector%rhsVector
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(distributedVector)) &
-      & CALL FlagError("Interface matrices RHS distributed vector is not associated.",err,error,*999)
+      & CALL FlagError("Interface RHS vector distributed vector is not associated.",err,error,*999)
 #endif    
        
     EXITS("InterfaceMatricesRHS_DistributedVectorGet")
@@ -430,11 +438,40 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the interface matrices for an interface matrices RHS.
-  SUBROUTINE InterfaceMatricesRHS_InterfaceMatricesGet(interfaceMatricesRHS,interfaceMatrices,err,error,*)
+  !>Returns the first assembly flag for an interface RHS vector.
+  SUBROUTINE InterfaceMatricesRHS_FirstAssemblyGet(interfaceRHSVector,firstAssembly,err,error,*)
 
     !Argument variables
-    TYPE(InterfaceRHSType), POINTER :: interfaceMatricesRHS !<A pointer to the interface matrices RHS to get the interface matrices for
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface RHS vector to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the first assembly flag for the interface RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatricesRHS_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=interfaceRHSVector%firstAssembly
+
+    EXITS("InterfaceMatricesRHS_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatricesRHS_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatricesRHS_FirstAssemblyGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface matrices for an interface matrices RHS.
+  SUBROUTINE InterfaceMatricesRHS_InterfaceMatricesGet(interfaceRHSVector,interfaceMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface RHS vector to get the interface matrices for
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<On exit, a pointer to the interface matrices in the specified interface matrices RHS. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -444,10 +481,10 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(interfaceMatricesRHS)) CALL FlagError("Interface matrices RHS is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
 #endif    
 
-    interfaceMatrices=>interfaceMatricesRHS%interfaceMatrices
+    interfaceMatrices=>interfaceRHSVector%interfaceMatrices
 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(interfaceMatrices)) &
@@ -461,6 +498,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatricesRHS_InterfaceMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the update flag for an interface RHS vector.
+  SUBROUTINE InterfaceMatricesRHS_UpdateVectorGet(interfaceRHSVector,updateVector,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface RHS vector to get the update flag for
+    LOGICAL, INTENT(OUT) :: updateVector !<On exit, the update flag for the interface RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatricesRHS_UpdateVectorGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
+#endif    
+
+    updateVector=interfaceRHSVector%updateVector
+
+    EXITS("InterfaceMatricesRHS_UpdateVectorGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatricesRHS_UpdateVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatricesRHS_UpdateVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the vector coefficient for an interface RHS vector.
+  SUBROUTINE InterfaceMatricesRHS_VectorCoefficientGet(interfaceRHSVector,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector !<A pointer to the interface RHS vector to get the vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for the interface RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatricesRHS_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceRHSVector)) CALL FlagError("Interface RHS vector is not associated.",err,error,*999)
+#endif    
+
+    vectorCoefficient=interfaceRHSVector%rhsCoefficient
+
+    EXITS("InterfaceMatricesRHS_VectorCoefficientGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatricesRHS_VectorCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatricesRHS_VectorCoefficientGet
 
   !
   !================================================================================================================================
@@ -496,6 +591,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrix_DistributedMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the first assembly flag for an interface matrix.
+  SUBROUTINE InterfaceMatrix_FirstAssemblyGet(interfaceMatrix,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the first assembly flag for the interface matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=interfaceMatrix%firstAssembly
+
+    EXITS("InterfaceMatrix_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_FirstAssemblyGet
 
   !
   !================================================================================================================================

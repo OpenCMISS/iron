@@ -163,6 +163,8 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_LoadIncrementLoopGet
 
+  PUBLIC ControlLoop_LoopLevelGet
+
   PUBLIC ControlLoop_MaximumNumberOfIterationsGet
 
   PUBLIC ControlLoop_NumberOfIterationsGet
@@ -171,7 +173,7 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_OutputTypeGet
 
-  PUBLIC ControlLoop_ParentLoopCheck
+  PUBLIC ControlLoop_ParentLoopExists
 
   PUBLIC ControlLoop_ParentLoopGet
 
@@ -823,6 +825,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the load increment loop for a control loop.
+  SUBROUTINE ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to time control loop to get the iteration number for
+    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop !<On exit, a pointer to the load increment loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_LoadIncrementLoopGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(loadIncrementLoop)) CALL FlagError("Load increment loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+#endif    
+
+    loadIncrementLoop=>controlLoop%loadIncrementLoop
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(loadIncrementLoop)) CALL FlagError("Control loop load increment loop is not associated.",err,error,*999)
+#endif
+    
+    EXITS("ControlLoop_LoadIncrementLoopGet")
+    RETURN
+999 NULLIFY(loadIncrementLoop)
+998 ERRORSEXITS("ControlLoop_LoadIncrementLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_LoadIncrementLoopGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the iteration number for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_IterationNumberGet
   SUBROUTINE ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*)
 
@@ -880,36 +917,30 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the load increment loop for a control loop.
-  SUBROUTINE ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*)
+  !>Returns the control loop level for a control loop.
+  SUBROUTINE ControlLoop_LoopLevelGet(controlLoop,controlLoopLevel,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
-    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop !<On exit, a pointer to the control loop load increment loop. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the loop level for.
+    INTEGER(INTG), INTENT(OUT) :: controlLoopLevel !<On exit, the loop level of the specified control loop
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("ControlLoop_LoadIncrementLoopGet",err,error,*998)
+    ENTERS("ControlLoop_LoopLevelGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(loadIncrementLoop)) CALL FlagError("Load increment loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
 #endif    
 
-    loadIncrementLoop=>controlLoop%loadIncrementLoop
+    controlLoopLevel=controlLoop%controlLoopLevel
 
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(loadIncrementLoop)) CALL FlagError("Control loop load increment loop is not associated.",err,error,*999)
-#endif    
-       
-    EXITS("ControlLoop_LoadIncrementLoopGet")
+    EXITS("ControlLoop_LoopLevelGet")
     RETURN
-999 NULLIFY(loadIncrementLoop)
-998 ERRORSEXITS("ControlLoop_LoadIncrementLoopGet",err,error)
+999 ERRORSEXITS("ControlLoop_LoopLevelGet",err,error)
     RETURN 1
     
-  END SUBROUTINE ControlLoop_LoadIncrementLoopGet
+  END SUBROUTINE ControlLoop_LoopLevelGet
 
   !
   !================================================================================================================================
@@ -1054,8 +1085,8 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Checks a pointer to the parent loop for a control loop.
-  SUBROUTINE ControlLoop_ParentLoopCheck(controlLoop,parentLoop,err,error,*)
+  !>Checks a pointer to the parent loop for a control loop to see if it exists.
+  SUBROUTINE ControlLoop_ParentLoopExists(controlLoop,parentLoop,err,error,*)
 
     !Argument variables
     TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to check the parent loop for.
@@ -1064,7 +1095,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("ControlLoop_ParentLoopCheck",err,error,*998)
+    ENTERS("ControlLoop_ParentLoopExists",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(parentLoop)) CALL FlagError("Parent loop is already associated.",err,error,*998)
@@ -1073,13 +1104,13 @@ CONTAINS
 
     parentLoop=>controlLoop%parentLoop
        
-    EXITS("ControlLoop_ParentLoopCheck")
+    EXITS("ControlLoop_ParentLoopExists")
     RETURN
 998 NULLIFY(parentLoop)
-999 ERRORSEXITS("ControlLoop_ParentLoopCheck",err,error)
+999 ERRORSEXITS("ControlLoop_ParentLoopExists",err,error)
     RETURN 1
     
-  END SUBROUTINE ControlLoop_ParentLoopCheck
+  END SUBROUTINE ControlLoop_ParentLoopExists
 
   !
   !================================================================================================================================

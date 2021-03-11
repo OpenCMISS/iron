@@ -127,7 +127,7 @@ CONTAINS
     IF(SIZE(specification,1)<2) THEN
       localError="The size of the specified specification array of "// &
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 2."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
     SELECT CASE(specification(2))
@@ -576,7 +576,7 @@ CONTAINS
     CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE)
       CALL FSI_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_DIFFUSION_DIFFUSION_TYPE)
-      CALL DiffusionDiffusion_PreSolve(,solver,err,error,*999)
+      CALL DiffusionDiffusion_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE)
       CALL DiffusionAdvectionDiffusion_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_MULTI_COMPARTMENT_TRANSPORT_TYPE)

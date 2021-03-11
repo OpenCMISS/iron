@@ -179,8 +179,7 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatricesVector_VectorValuesInitialise
 
-
-CONTAINS
+ CONTAINS
 
   !
   !================================================================================================================================

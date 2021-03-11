@@ -538,10 +538,9 @@ CONTAINS
   !
 
   !>Sets up the diffuion-diffusion problem post solve output data.
-  SUBROUTINE DiffusionDiffusion_PostSolveOutputData(controlLoop,solver,err,error,*)
+  SUBROUTINE DiffusionDiffusion_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

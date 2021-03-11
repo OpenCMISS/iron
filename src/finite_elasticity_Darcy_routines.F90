@@ -57,7 +57,7 @@ MODULE FiniteElasticityDarcyRoutines
   USE EquationsRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
-  USE FINITE_ELASTICITY_ROUTINES
+  USE FiniteElasticityRoutines
   USE FLUID_MECHANICS_IO_ROUTINES
   USE InputOutput
   USE ISO_VARYING_STRING
@@ -282,7 +282,6 @@ CONTAINS
     problemSubtype=problemSpecification(3)
     SELECT CASE(problemSubtype)
     CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !ok
@@ -327,21 +326,20 @@ CONTAINS
 
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
       !OK
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
       !OK
     CASE(PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !OK
     CASE DEFAULT
-      localError="The problem subtype of "//TRIM(NumberToVString(pSpecifiction(3),"*",err,error))// &
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " does not equal a standard finite elasticity Darcy equation subtype."
       CALL FlagError(localError,err,error,*999)
     END SELECT
 
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
       !--------------------------------------------------------------------
       !   s t a n d a r d   f i n i t e   e l a s t i c i t y   D a r c y
       !--------------------------------------------------------------------
@@ -760,7 +758,7 @@ CONTAINS
       !--------------------------------------------------------------------
       SELECT CASE(problemSetup%setupType)
       CASE(PROBLEM_SETUP_INITIAL_TYPE)
-        SELECT CASE(PROBLEM_SETUP%actionType)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Do nothing????
         CASE(PROBLEM_SETUP_FINISH_ACTION)
@@ -891,7 +889,7 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
-        SELECT CASE(PROBLEM_SETUP%actionType)
+        SELECT CASE(problemSetup%actionType)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the control loop and solvers
           NULLIFY(controlLoopRoot)
@@ -963,7 +961,7 @@ CONTAINS
           CALL ControlLoop_SolversGet(fluidSubLoop,fluidSolvers,err,error,*999)
           !
           !Finish the creation of the material-properties solver equations
-          NULLIFY(solverMatProperties0
+          NULLIFY(solverMatProperties)
           CALL Solvers_SolverGet(fluidSolvers,1,solverMatProperties,err,error,*999)
           NULLIFY(solverEquationsMatProperties)
           CALL Solver_SolverEquationsGet(solverMatProperties,solverEquationsMatProperties,err,error,*999)
@@ -1044,7 +1042,7 @@ CONTAINS
         ENDIF
         CALL Darcy_PreSolve(solver,err,error,*999)
       ENDIF
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       IF(loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE.AND.solverNumber==1) THEN
         CALL FiniteElasticity_PreSolve(solver,err,error,*999)
@@ -1099,7 +1097,7 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !CALL FiniteElasticityDarcy_PostSolveOutputData(solver,err,error,*999)
       CALL FiniteElasticity_PostSolve(solver,err,error,*999)
@@ -1129,11 +1127,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: iteratinNumber,loopType,outputType,pSpecification(3)
+    INTEGER(INTG) :: iterationNumber,loopType,outputType,pSpecification(3)
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoopDarcy
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solverDarcy
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticityDarcy_PreLoop",err,error,*999)
@@ -1163,8 +1162,8 @@ CONTAINS
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Time Increment        = ",timeIncrement,err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"==================================================",err,error,*999)
       ENDIF
-      CALL Darcy_PreLoop(CONTROL_LOOP,err,error,*999)
-      CALL FiniteElasticity_PreLoop(CONTROL_LOOP,err,error,*999)
+      CALL Darcy_PreLoop(controlLoop,err,error,*999)
+      CALL FiniteElasticity_PreLoop(controlLoop,err,error,*999)
       
     CASE(CONTROL_WHILE_LOOP_TYPE)
       !Subiteration loop
@@ -1345,7 +1344,7 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       IF(solverNumber==1) THEN

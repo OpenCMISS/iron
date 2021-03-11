@@ -389,6 +389,18 @@ MODULE FieldRoutines
     MODULE PROCEDURE Field_VariableLabelSetAndLockVS
   END INTERFACE Field_VariableLabelSetAndLock
 
+  !>Sets/changes the field variable types and locks so that no further changes can be made.
+  INTERFACE Field_VariableTypesSetAndLock
+    MODULE PROCEDURE Field_VariableTypesSetAndLock0
+    MODULE PROCEDURE Field_VariableTypesSetAndLock1
+  END INTERFACE Field_VariableTypesSetAndLock
+
+  !>Sets/changes the field variable types.
+  INTERFACE Field_VariableTypesSet
+    MODULE PROCEDURE Field_VariableTypesSet0
+    MODULE PROCEDURE Field_VariableTypesSet1
+  END INTERFACE Field_VariableTypesSet
+
   !>Initialises the values of parameter set of a field variable component to a constant value.
   INTERFACE FieldVariable_ComponentValuesInitialise
     MODULE PROCEDURE FieldVariable_ComponentValuesInitialiseIntg
@@ -687,6 +699,8 @@ MODULE FieldRoutines
 
   PUBLIC Field_InterpolateFieldNode
 
+  PUBLIC Field_InterpolateFieldVariableNode
+
   PUBLIC Field_InterpolateNode
 
   PUBLIC Field_InterpolateLocalFaceGauss
@@ -833,6 +847,8 @@ MODULE FieldRoutines
 
   PUBLIC FieldVariable_ComponentValuesInitialise
 
+  PUBLIC FieldVariable_InterpolationParameterFinalise,FieldVariable_InterpolationParameterInitialise
+  
   PUBLIC FieldVariable_ParameterSetAddConstant
 
   PUBLIC FieldVariable_ParameterSetAddElement
@@ -4037,6 +4053,41 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("Field_InterpolateFieldNode",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    
+    CALL Field_InterpolateFieldVariableNode(physicalDerivativeType,parameterSetType,fieldVariable,componentNumber,nodeNumber, &
+      & physicalPoint,err,error,*999)
+    
+    EXITS("Field_InterpolateFieldNode")
+    RETURN
+999 ERRORSEXITS("Field_InterpolateFieldNode",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_InterpolateFieldNode
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Interpolates a field variableto give the physical value of the field variable at a node in another field. Note that as we are at a node then we do not have any xi directions and thus we can not talk about gradients of the field wrt to xi. Because derviatives of fields can be discountinuous at a node the average derivative over all the elements surrounding the node is calculated.
+  SUBROUTINE Field_InterpolateFieldVariableNode(physicalDerivativeType,parameterSetType,fieldVariable,componentNumber, &
+    & nodeNumber,physicalPoint,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: physicalDerivativeType !<The physical derivative type of the field interpolation \see Constants_PhysicalDerivativeConstants
+    INTEGER(INTG), INTENT(IN) :: parameterSetType !<The parameter set of the field variableto interpolate.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<The field variable containing the node to interpolate at.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number to field variable that contains the node to interpolate at
+    INTEGER(INTG), INTENT(IN) :: nodeNumber !<The node number in the field variable component to interpolate the field at
+    TYPE(FieldPhysicalPointType), POINTER :: physicalPoint !<The pointer to the physical point for the field. On return it will contain the values.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
     INTEGER(INTG) :: componentIdx,element,elementIdx,localNodeNumber,localNodeIdx,numberOfSurroundingElements, &
       & partialDerivativeIdx,xiIdx
     REAL(DP) :: xi(3),dXdXi(3,3),dXidX(3,3),detdXdXi
@@ -4049,16 +4100,14 @@ CONTAINS
     TYPE(FieldType), POINTER :: interpField
     TYPE(FieldInterpolatedPointType), POINTER :: fieldInterpPoint,geometricInterpPoint
     TYPE(FieldInterpolationParametersType), POINTER :: fieldInterpParameters,geometricInterpParameters
-    TYPE(FieldVariableType), POINTER :: fieldVariable,interpVariable,geometricVariable
+    TYPE(FieldVariableType), POINTER :: interpVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Field_InterpolateFieldNode",err,error,*999)
+    ENTERS("Field_InterpolateFieldVariableNode",err,error,*999)
 
     IF(.NOT.ASSOCIATED(physicalPoint)) CALL FlagError("Physical point is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     
-    NULLIFY(fieldVariable)
-    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)    
     NULLIFY(fieldInterpPoint)
     CALL FieldPhysicalPoint_FieldInterpolatedPointGet(physicalPoint,fieldInterpPoint,err,error,*999)
     NULLIFY(geometricInterpPoint)
@@ -4231,12 +4280,12 @@ CONTAINS
       ENDDO !componentIdx
     ENDIF
 
-    EXITS("Field_InterpolateFieldNode")
+    EXITS("Field_InterpolateFieldVariableNode")
     RETURN
-999 ERRORSEXITS("Field_InterpolateFieldNode",err,error)
+999 ERRORSEXITS("Field_InterpolateFieldVariableNode",err,error)
     RETURN 1
 
-  END SUBROUTINE Field_InterpolateFieldNode
+  END SUBROUTINE Field_InterpolateFieldVariableNode
 
   !
   !================================================================================================================================
@@ -14762,7 +14811,32 @@ CONTAINS
   !
 
   !>Sets/changes the field variable types for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesSet
-  SUBROUTINE Field_VariableTypesSet(field,variableTypes,err,error,*)
+  SUBROUTINE Field_VariableTypesSet0(field,variableType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to set the type for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to set 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Field_VariableTypesSet0",err,error,*999)
+
+    CALL Field_VariableTypesSet1(field,[variableType],err,error,*999)
+
+    EXITS("Field_VariableTypesSet")
+    RETURN
+999 ERRORSEXITS("Field_VariableTypesSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_VariableTypesSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the field variable types for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesSet
+  SUBROUTINE Field_VariableTypesSet1(field,variableTypes,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to set the type for
@@ -14781,7 +14855,7 @@ CONTAINS
     TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError,oldLabels(FIELD_NUMBER_OF_VARIABLE_TYPES)
 
-    ENTERS("Field_VariableTypesSet",err,error,*999)
+    ENTERS("Field_VariableTypesSet1",err,error,*999)
 
     CALL Field_AssertNotFinished(field,err,error,*999)
     NULLIFY(createValuesCache)
@@ -14890,24 +14964,48 @@ CONTAINS
     DEALLOCATE(oldMeshComponentNumber)
     DEALLOCATE(oldMeshComponentNumberLocked)              
 
-    EXITS("Field_VariableTypesSet")
+    EXITS("Field_VariableTypesSet1")
     RETURN
 999 IF(ALLOCATED(oldVariableTypes)) DEALLOCATE(oldVariableTypes)
     IF(ALLOCATED(oldInterpolationType)) DEALLOCATE(oldInterpolationType)
     IF(ALLOCATED(oldInterpolationTypeLocked)) DEALLOCATE(oldInterpolationTypeLocked)
     IF(ALLOCATED(oldMeshComponentNumber)) DEALLOCATE(oldMeshComponentNumber)
     IF(ALLOCATED(oldMeshComponentNumberLocked)) DEALLOCATE(oldMeshComponentNumberLocked)
-    ERRORSEXITS("Field_VariableTypesSet",err,error)
+    ERRORSEXITS("Field_VariableTypesSet1",err,error)
     RETURN 1
     
-  END SUBROUTINE Field_VariableTypesSet
+  END SUBROUTINE Field_VariableTypesSet1
 
   !
   !================================================================================================================================
   !
 
+  !>Sets/changes the field variable type for a field and locks it so that no further changes can be made.
+  SUBROUTINE Field_VariableTypesSetAndLock0(field,variableType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to set the type for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to set and lock
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Field_VariableTypesSetAndLock0",err,error,*999)
+
+    CALL Field_VariableTypesSetAndLock1(field,[variableType],err,error,*999)
+
+    EXITS("Field_VariableTypesSetAndLock0")
+    RETURN
+999 ERRORSEXITS("Field_VariableTypesSetAndLock0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_VariableTypesSetAndLock0
+  !
+  !================================================================================================================================
+  !
+
   !>Sets/changes the field variable types for a field and locks it so that no further changes can be made.
-  SUBROUTINE Field_VariableTypesSetAndLock(field,variableTypes,err,error,*)
+  SUBROUTINE Field_VariableTypesSetAndLock1(field,variableTypes,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to set the type for
@@ -14917,7 +15015,7 @@ CONTAINS
     !Local Variables
     TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
-    ENTERS("Field_VariableTypesSetAndLock",err,error,*999)
+    ENTERS("Field_VariableTypesSetAndLock1",err,error,*999)
 
     CALL Field_VariableTypesSet(field,variableTypes,err,error,*999)
     NULLIFY(createValuesCache)
@@ -14925,12 +15023,12 @@ CONTAINS
     
     createValuesCache%variableTypesLocked=.TRUE.
 
-    EXITS("Field_VariableTypesSetAndLock")
+    EXITS("Field_VariableTypesSetAndLock1")
     RETURN
-999 ERRORSEXITS("Field_VariableTypesSetAndLock",err,error)
+999 ERRORSEXITS("Field_VariableTypesSetAndLock1",err,error)
     RETURN 1
     
-  END SUBROUTINE Field_VariableTypesSetAndLock
+  END SUBROUTINE Field_VariableTypesSetAndLock1
 
   !
   !================================================================================================================================

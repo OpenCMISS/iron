@@ -4823,7 +4823,7 @@ CONTAINS
     NULLIFY(sourcesMapping)
     CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
     IF(ASSOCIATED(sourcesMapping)) THEN
-      CALL EquationsMappingSources_NumberOfSourcesGet(sourceMapping,numberOfSources,err,error,*999)
+      CALL EquationsMappingSources_NumberOfSourcesGet(sourcesMapping,numberOfSources,err,error,*999)
       DO sourceIdx=1,numberOfSources
         NULLIFY(sourceMapping)
         CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,sourceIdx,sourceMapping,err,error,*999)

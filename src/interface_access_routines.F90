@@ -102,9 +102,17 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC InterfaceMeshConnectivity_CoupledElementNumberGet
 
+  PUBLIC InterfaceMeshConnectivity_CoupledNodeNumberGet
+
   PUBLIC InterfaceMeshConnectivity_InterfaceGet
 
   PUBLIC InterfaceMeshConnectivity_InterfaceMeshGet
+
+  PUBLIC InterfaceMeshConnectivity_NumberOfCoupledMeshesGet
+  
+  PUBLIC InterfaceMeshConnectivity_NumberOfInterfaceElementsGet
+
+  PUBLIC InterfaceMeshConnectivity_NumberOfInterfaceNodesGet
 
   PUBLIC InterfacePointsConnectivity_AssertIsFinished,InterfacePointsConnectivity_AssertNotFinished
 
@@ -971,6 +979,57 @@ CONTAINS
   !=================================================================================================================================
   !
 
+  !>Returns the coupled node number for an interface node number and a couple mesh index for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_CoupledNodeNumberGet(interfaceMeshConnectivity,interfaceNodeNumber, &
+    & meshIndex,coupledNodeNumber,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the coupled node for
+    INTEGER(INTG), INTENT(IN) :: interfaceNodeNumber !<The interface node number to get the coupled node number for
+    INTEGER(INTG), INTENT(IN) :: meshIndex !<The mesh index to get the coupled node number for.
+    INTEGER(INTG), INTENT(OUT) :: coupledNodeNumber !<On exit, the coupled node number in the mesh.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("InterfaceMeshConnectivity_CoupledNodeNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+    IF(interfaceNodeNumber<1.OR.interfaceNodeNumber>interfaceMeshConnectivity%numberOfInterfaceNodes) THEN
+      localError="The specified interface node number of "//TRIM(NumberToVString(interfaceNodeNumber,"*",err,error))// &
+        & " is invalid. The interface node number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfInterfaceNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(meshIndex<1.OR.meshIndex>interfaceMeshConnectivity%numberOfCoupledMeshes) THEN
+      localError="The specified mesh index of "//TRIM(NumberToVString(meshIndex,"*",err,error))// &
+        & " is invalid. The mesh index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfCoupledMeshes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(interfaceMeshConnectivity%coupledNodes)) &
+      & CALL FlagError("The coupled nodes array is not allocated for the interface mesh connectivity.",err,error,*999)
+#endif    
+
+    coupledNodeNumber=interfaceMeshConnectivity%coupledNodes(meshIndex,interfaceNodeNumber)
+    
+    EXITS("InterfaceMeshConnectivity_CoupledNodeNumberGet")
+    RETURN
+999 ERRORS("InterfaceMeshConnectivity_CoupledNodeNumberGet",err,error)
+    EXITS("InterfaceMeshConnectivity_CoupledNodeNumberGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_CoupledNodeNumberGet
+
+  !
+  !=================================================================================================================================
+  !
+
   !>Returns the interface for an interface mesh connectivity
   SUBROUTINE InterfaceMeshConnectivity_InterfaceGet(interfaceMeshConnectivity,interface,err,error,*)
 
@@ -1040,6 +1099,99 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMeshConnectivity_InterfaceMeshGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the number of coupled meshes for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_NumberOfCoupledMeshesGet(interfaceMeshConnectivity,numberOfCoupledMeshes,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the number of coupled meshes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfCoupledMeshes !<On return, the number of coupled meshes for the interface mesh connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMeshConnectivity_NumberOfCoupledMeshesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
+
+    numberOfCoupledMeshes=interfaceMeshConnectivity%numberOfCoupledMeshes
+
+    EXITS("InterfaceMeshConnectivity_NumberOfCoupledMeshesGet")
+    RETURN
+999 ERRORS("InterfaceMeshConnectivity_NumberOfCoupledMeshesGet",err,error)
+    EXITS("InterfaceMeshConnectivity_NumberOfCoupledMeshesGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_NumberOfCoupledMeshesGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the number of interface elements for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_NumberOfInterfaceElementsGet(interfaceMeshConnectivity,numberOfInterfaceElements,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the number of interface elements for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceElements !<On return, the number of interface elements for the interface mesh connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMeshConnectivity_NumberOfInterfaceElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
+
+    numberOfInterfaceElements=interfaceMeshConnectivity%numberOfInterfaceElements
+
+    EXITS("InterfaceMeshConnectivity_NumberOfInterfaceElementsGet")
+    RETURN
+999 ERRORS("InterfaceMeshConnectivity_NumberOfInterfaceElementsGet",err,error)
+    EXITS("InterfaceMeshConnectivity_NumberOfInterfaceElementsGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_NumberOfInterfaceElementsGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the number of interface nodes for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_NumberOfInterfaceNodesGet(interfaceMeshConnectivity,numberOfInterfaceNodes,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the number of interface nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfInterfaceNodes !<On return, the number of interface nodes for the interface mesh connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMeshConnectivity_NumberOfInterfaceNodesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+#endif    
+
+    numberOfInterfaceNodes=interfaceMeshConnectivity%numberOfInterfaceNodes
+
+    EXITS("InterfaceMeshConnectivity_NumberOfInterfaceNodesGet")
+    RETURN
+999 ERRORS("InterfaceMeshConnectivity_NumberOfInterfaceNodesGet",err,error)
+    EXITS("InterfaceMeshConnectivity_NumberOfInterfaceNodesGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_NumberOfInterfaceNodesGet
 
   !
   !=================================================================================================================================

@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Andreas Hessenthaler, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -79,9 +79,11 @@ MODULE FSIRoutines
   PUBLIC FSI_ProblemSpecificationSet
 
   PUBLIC FSI_PreSolve
+  
   PUBLIC FSI_PostSolve
 
   PUBLIC FSI_PreLoop
+  
   PUBLIC FSI_PostLoop
 
 CONTAINS
@@ -149,6 +151,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3)
     TYPE(CellMLEquationsType), POINTER :: cellMLEquations
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(SolverType), POINTER :: solver
@@ -158,12 +161,9 @@ CONTAINS
 
     ENTERS("FSI_ProblemSetup",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(PROBLEM)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<3) &
-      & CALL FlagError("Problem specification must have >= 3 entries for a finite elasticity-ALE NS problem.",err,error,*999)
-        
-    SELECT CASE(problem%specification(3))       
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+       
+    SELECT CASE(pSpecification(3))       
     CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
       & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
@@ -171,363 +171,379 @@ CONTAINS
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
       !Finite Elasticity with Navier Stokes ALE
-      SELECT CASE(problemSetup%setupType)
-      CASE(PROBLEM_SETUP_INITIAL_TYPE)
-        SELECT CASE(problemSetup%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Do nothing
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Do nothing
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
-            & " is invalid for an finite elasticity ALE navier stokes equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(PROBLEM_SETUP_CONTROL_TYPE)
-        SELECT CASE(problemSetup%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Set up a time control loop as parent loop
-          NULLIFY(controlLoop)
-          CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
-          CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
-          CALL ControlLoop_OutputTypeSet(controlLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)       
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Finish the control loops
-          NULLIFY(controlLoop)
-          CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-          CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
-            & " is invalid for a finite elasticity navier stokes equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(PROBLEM_SETUP_SOLVERS_TYPE)
-        !Get the control loop
+    CASE DEFAULT
+      localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+        & " does not equal a standard finite elasticity navier stokes equation subtype."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    SELECT CASE(problemSetup%setupType)
+    CASE(PROBLEM_SETUP_INITIAL_TYPE)
+      !
+      ! Initial Setup
+      !
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Do nothing
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Do nothing
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for an finite elasticity ALE navier stokes equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_CONTROL_TYPE)
+      !
+      ! Control loop setup
+      !
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Set up a time control loop as parent loop
+        NULLIFY(controlLoop)
+        CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+        CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
+        CALL ControlLoop_OutputTypeSet(controlLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)       
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Finish the control loops
         NULLIFY(controlLoop)
         CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-        SELECT CASE(problemSetup%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Start the solvers creation
-          NULLIFY(solvers)
-          CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-          SELECT CASE(problem%specification(3))       
-          CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
-            !Set the first solver to be an CellML Evaluator for time varying boundary conditions
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI boundary condition CellML evaluation solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the second solver to be a first order dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
-            CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
-            CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-            !Set solver defaults
-            CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-            CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the third solver to be a linear solver for the Laplace mesh movement problem
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            CALL Solvers_NumberOfSolversSet(solvers,5,err,error,*999)
-            !Set the first solver to be an CellML Evaluator for time varying boundary conditions
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI fluid boundary condition CellML evaluation solver",err,error,*999)
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI solid boundary condition CellML evaluation solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the third solver to be an CellML Integrator for growth rate integration
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_DAE_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI growth CellML integration solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the fourth solver to be a first order dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
-            CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
-            CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-            !Set solver defaults
-            CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-            CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the fifth solver to be a linear solver for the Laplace mesh movement problem
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,5,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
-            !Set the first solver to be an CellML Evaluator for time varying boundary conditions
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI boundary condition CellML evaluation solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the second solver to be a second order dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
-            CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
-            CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
-            CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
-            !Set solver defaults
-            CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_NEWMARK1_SCHEME,err,error,*999)
-            CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
-            !Set the third solver to be a linear solver for the Laplace mesh movement problem
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
-            CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
-            !Set solver defaults
-            CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-          CASE DEFAULT
-            localError="The problem subtype of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
-              & " does not equal a standard finite elasticity navier stokes equation subtype."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Get the solvers
-          NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          !Finish the solvers creation
-          CALL Solvers_CreateFinish(solvers,err,error,*999)
+        CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a finite elasticity navier stokes equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+      !
+      ! Solvers setup
+      !
+      !Get the control loop
+      NULLIFY(controlLoop)
+      CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Start the solvers creation
+        NULLIFY(solvers)
+        CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
+        SELECT CASE(pSpecification(3))       
+        CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
+          !Set the first solver to be an CellML Evaluator for time varying boundary conditions
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI boundary condition CellML evaluation solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the second solver to be a first order dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
+          CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the third solver to be a linear solver for the Laplace mesh movement problem
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,5,err,error,*999)
+          !Set the first solver to be an CellML Evaluator for time varying boundary conditions
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI fluid boundary condition CellML evaluation solver",err,error,*999)
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI solid boundary condition CellML evaluation solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the third solver to be an CellML Integrator for growth rate integration
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DAE_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI growth CellML integration solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the fourth solver to be a first order dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
+          CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the fifth solver to be a linear solver for the Laplace mesh movement problem
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,5,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          CALL Solvers_NumberOfSolversSet(solvers,3,err,error,*999)
+          !Set the first solver to be an CellML Evaluator for time varying boundary conditions
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI boundary condition CellML evaluation solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the second solver to be a second order dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
+          CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
+          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_SECOND_DEGREE,err,error,*999)
+          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_SECOND_ORDER,err,error,*999)
+          !Set solver defaults
+          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_NEWMARK1_SCHEME,err,error,*999)
+          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
+          !Set the third solver to be a linear solver for the Laplace mesh movement problem
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
+          !Set solver defaults
+          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
-            & " is invalid for a finite elasticity navier stokes equation."
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " does not equal a standard finite elasticity navier stokes equation subtype."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(PROBLEM_SETUP_SolverEquationsType)
-        SELECT CASE(problemSetup%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Get the control loop
-          NULLIFY(controlLoop)
-          CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-          NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          SELECT CASE(problem%specification(3))       
-          CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            !Get the dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-            !Create the solver equations
-            NULLIFY(solverEquations)
-            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
-            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-            !Get the linear moving mesh solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            !Create the solver equations
-            NULLIFY(solverEquations)
-            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            !Get the dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
-            !Create the solver equations
-            NULLIFY(solverEquations)
-            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
-            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-            !Get the linear moving mesh solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,5,solver,err,error,*999)
-            !Create the solver equations
-            NULLIFY(solverEquations)
-            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            !Get the dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-            !Create the solver equations
-            NULLIFY(solverEquations)
-            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
-            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC,err,error,*999)
-            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-            !Get the linear moving mesh solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            !Create the solver equations
-            NULLIFY(solverEquations)
-            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-          CASE DEFAULT
-            localError="The problem subtype of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
-              & " does not equal a standard finite elasticity navier stokes equation subtype."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Get the control loop
-          NULLIFY(controlLoop)
-          CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
-          NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-          SELECT CASE(problem%specification(3))       
-          CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            !Get the dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-            NULLIFY(solverEquations)
-            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-            !Finish the dynamic solver equations creation
-            CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)    
-            !Get the moving mesh solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            NULLIFY(solverEquations)
-            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-            !Finish the moving mesh solver equations creation
-            CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
-          CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-            & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-            !Get the dynamic solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
-            NULLIFY(solverEquations)
-            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-            !Finish the dynamic solver equations creation
-            CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)    
-            !Get the moving mesh solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,5,solver,err,error,*999)
-            NULLIFY(solverEquations)
-            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-            !Finish the moving mesh solver equations creation
-            CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
-          CASE DEFAULT
-            localError="The problem subtype of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
-              & " does not equal a standard finite elasticity navier stokes equation subtype."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
-            & " is invalid for a finite elasticity navier stokes equation."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the solvers
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        !Finish the solvers creation
+        CALL Solvers_CreateFinish(solvers,err,error,*999)
+      CASE DEFAULT
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a finite elasticity navier stokes equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+      !
+      ! Solver equations setup
+      !
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
         !Get the control loop
         NULLIFY(controlLoop)
         CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-        SELECT CASE(problemSetup%actionType)
-        CASE(PROBLEM_SETUP_START_ACTION)
-          !Get the fluid CellML BC evaluation solver
-          NULLIFY(solver)
-          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-          !Create the CellML equations
-          NULLIFY(cellMLEquations)
-          CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
-          !Set the time dependence
-          CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
-          !Get the solid CellML BC evaluation solver
+        SELECT CASE(pSpecification(3))       
+        CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          !Get the dynamic solver
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-          !Create the CellML equations
-          NULLIFY(cellMLEquations)
-          CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
-          !Set the time dependence
-          CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
-          IF(problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-            & problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
-            !Get the CellML growth integration solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            !Create the CellML equations
-            NULLIFY(cellMLEquations)
-            CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
-            !Set the time dependence
-            CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
-          ENDIF
-        CASE(PROBLEM_SETUP_FINISH_ACTION)
-          !Get the fluid CellML BC evaluator solver
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          !Get the linear moving mesh solver
           NULLIFY(solver)
-          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-          !Get the CellML equations for the CellML evaluator solver
-          NULLIFY(cellMLEquations)
-          CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-          !Finish the CellML equations creation
-          CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
-          !Get the solid CellML BC evaluator solver
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          !Get the dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          !Get the linear moving mesh solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,5,solver,err,error,*999)
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          !Get the dynamic solver
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-          !Get the CellML equations for the CellML evaluator solver
-          NULLIFY(cellMLEquations)
-          CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-          !Finish the CellML equations creation
-          CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
-          IF(problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-            & problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
-            !Get the CellML growth integration solver
-            NULLIFY(solver)
-            CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
-            !Get the CellML equations for the CellML integration solver
-            NULLIFY(cellMLEquations)
-            CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
-            !Finish the CellML equations creation
-            CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
-          ENDIF
-        CASE DEFAULT            
-          localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
-            & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
-            & " is invalid for a finite elasticity equation."
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          !Get the linear moving mesh solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          !Create the solver equations
+          NULLIFY(solverEquations)
+          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+        CASE DEFAULT
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " does not equal a standard finite elasticity navier stokes equation subtype."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the control loop
+        NULLIFY(controlLoop)
+        CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        NULLIFY(solvers)
+        CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+        SELECT CASE(pSpecification(3))       
+        CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          !Get the dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the dynamic solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)    
+          !Get the moving mesh solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the moving mesh solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+        CASE(PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          !Get the dynamic solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,4,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the dynamic solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)    
+          !Get the moving mesh solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,5,solver,err,error,*999)
+          NULLIFY(solverEquations)
+          CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+          !Finish the moving mesh solver equations creation
+          CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)             
+        CASE DEFAULT
+          localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+            & " does not equal a standard finite elasticity navier stokes equation subtype."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
-          & " is invalid for a finite elasticity ALE navier stokes equation."
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a finite elasticity navier stokes equation."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
+      !
+      ! CellML equations setup
+      !
+      !Get the control loop
+      NULLIFY(controlLoop)
+      CALL Problem_ControlLoopGet(problem,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      SELECT CASE(problemSetup%actionType)
+      CASE(PROBLEM_SETUP_START_ACTION)
+        !Get the fluid CellML BC evaluation solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        !Create the CellML equations
+        NULLIFY(cellMLEquations)
+        CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+        !Set the time dependence
+        CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+        !Get the solid CellML BC evaluation solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+        !Create the CellML equations
+        NULLIFY(cellMLEquations)
+        CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+        !Set the time dependence
+        CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+        IF(pSpecification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+          & pSpecification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+          !Get the CellML growth integration solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          !Create the CellML equations
+          NULLIFY(cellMLEquations)
+          CALL CellMLEquations_CreateStart(solver,cellMLEquations,err,error,*999)
+          !Set the time dependence
+          CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+        ENDIF
+      CASE(PROBLEM_SETUP_FINISH_ACTION)
+        !Get the fluid CellML BC evaluator solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+        !Get the CellML equations for the CellML evaluator solver
+        NULLIFY(cellMLEquations)
+        CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+        !Finish the CellML equations creation
+        CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+        !Get the solid CellML BC evaluator solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+        !Get the CellML equations for the CellML evaluator solver
+        NULLIFY(cellMLEquations)
+        CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+        !Finish the CellML equations creation
+        CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+        IF(pSpecification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+          & pSpecification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+          !Get the CellML growth integration solver
+          NULLIFY(solver)
+          CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+          !Get the CellML equations for the CellML integration solver
+          NULLIFY(cellMLEquations)
+          CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+          !Finish the CellML equations creation
+          CALL CellMLEquations_CreateFinish(cellMLEquations,err,error,*999)
+        ENDIF
+      CASE DEFAULT            
+        localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
+          & " for a setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+          & " is invalid for a finite elasticity equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE DEFAULT
-      localError="The problem subtype of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
-          & " does not equal a standard finite elasticity navier stokes equation subtype."
+      localError="The setup type of "//TRIM(NumberToVString(problemSetup%setupType,"*",err,error))// &
+        & " is invalid for a finite elasticity ALE navier stokes equation."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
@@ -549,31 +565,30 @@ CONTAINS
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3),solveType
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FSI_PreSolve",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<3) &
-      CALL FlagError("Problem specification must have three entries for an elasticity Navier-Stokes problem.",err,error,*999)
-    SELECT CASE(problem%specification(3))
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
     CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
       & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
       & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
-      IF(solver%solveType==SOLVER_DYNAMIC_TYPE.OR.solver%solveType==SOLVER_LINEAR_TYPE) THEN
-        IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
+      CALL Solver_TypeGet(solver,solveType,err,error,*999)
+      IF(solveType==SOLVER_DYNAMIC_TYPE.OR.solveType==SOLVER_LINEAR_TYPE) THEN
+        IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
           CALL NavierStokes_PreSolveALEUpdateMesh(solver,err,error,*999)
         ENDIF
         !Pre solve for ALE NavierStokes equations set
@@ -582,7 +597,7 @@ CONTAINS
         !Nothing to be done???
       ENDIF
     CASE DEFAULT
-      localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is not valid for a FiniteElasticity-NavierStokes type of a multi physics problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -606,7 +621,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: Error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx
+    INTEGER(INTG) :: equationsSetIdx,esSpecification(3),pSpecification(3),solveType
     LOGICAL :: fluidEquationsSetFound
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
@@ -620,40 +635,37 @@ CONTAINS
 
     ENTERS("FSI_PostSolve",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<3) &
-      CALL FlagError("Problem specification must have three entries for an elasticity Navier-Stokes problem.",err,error,*999)
-    SELECT CASE(problem%specification(3))
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
+    SELECT CASE(pSpecification(3))
     CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
       & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
       & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
       & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+      CALL Solver_TypeGet(solver,solveType,err,error,*999)
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-      IF(solver%solveType==SOLVER_LINEAR_TYPE) THEN
+      IF(solveType==SOLVER_LINEAR_TYPE) THEN
         !Post solve for the linear solver
         NULLIFY(dynamicSolver)
-        IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-          & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-          & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-          & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+        IF(pSpecification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+          & pSpecification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+          & pSpecification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+          & pSpecification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
           CALL Solvers_SolverGet(solvers,2,dynamicSolver,err,error,*999)
         ELSE
           CALL Solvers_SolverGet(solvers,4,dynamicSolver,err,error,*999)
         ENDIF
-        IF(ASSOCIATED(dynamicSolver%dynamicSolver)) THEN
-          dynamicSolver%dynamicSolver%ale=.TRUE.
-        ELSE  
-          CALL FlagError("Dynamic solver is not associated for ALE problem.",err,error,*999)
-        END IF
-      ELSE IF(solver%solveType==SOLVER_DYNAMIC_TYPE) THEN
+        IF(.NOT.ASSOCIATED(dynamicSolver%dynamicSolver)) &
+          & CALL FlagError("Dynamic solver is not associated for ALE problem.",err,error,*999)
+        dynamicSolver%dynamicSolver%ale=.TRUE.
+      ELSE IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
         !Post solve for the dynamic solver
         NULLIFY(solverEquations)
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -662,13 +674,13 @@ CONTAINS
         equationsSetIdx=1
         fluidEquationsSetFound=.FALSE.
         DO WHILE(.NOT.fluidEquationsSetFound.AND.equationsSetIdx<=solverMapping%numberOfEquationsSets)
-          equations=>solverMapping%equationsSetToSolverMatricesMap(equationsSetIdx)%equations
           NULLIFY(equationsSet)
-          CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
-          IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
-            & .AND.equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
-            & .AND.(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
-            & .OR.equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+          IF(esSpecification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
+            & .AND.esSpecification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
+            & .AND.(esSpecification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
+            & .OR.esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
             fluidEquationsSetFound=.TRUE.
           ELSE
             equationsSetIdx=equationsSetIdx+1
@@ -681,7 +693,7 @@ CONTAINS
         !CALL NavierStokes_WallShearStressCalculate(equationsSet,err,error,*999)
       END IF
     CASE DEFAULT
-      localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is not valid for a FiniteElasticity-NavierStokes type of a multi physics problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -730,14 +742,18 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,equationsSetIndex,inputIteration,nodeIdx,numberOfComponents, &
-      & outputIteration,solidNode,versionIdx
-    LOGICAL :: fluidEquationsSetFound=.FALSE.,solidEquationsSetFound=.FALSE.
+    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,equationsSetIndex,esSpecification(3),inputIteration, &
+      & interpolationType,nodeIdx,numberOfComponents,numberOfEquationsSets,numberOfInterfaceConditions,numberOfNodeDerivatives, &
+      & numberOfVersions,outputIteration,outputType,pSpecification(3),solidNode,totalNumberOfNodes,versionIdx
     REAL(DP) :: startTime,currentTime,stopTime,timeIncrement,VALUE
+    LOGICAL :: fluidEquationsSetFound=.FALSE.,solidEquationsSetFound=.FALSE.
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsSetType), POINTER :: solidEquationsSet,fluidEquationsSet,equationsSet
-    TYPE(FieldType), POINTER :: solidGeometricField,interfaceGeometricField,solidDependentField
+    TYPE(FieldType), POINTER :: solidGeometricField,interfaceGeometricField,solidDependentField    
     TYPE(FieldVariableType), POINTER :: geometricVariable
+    TYPE(FieldsType), POINTER :: fluidFields,interfaceFields,solidFields
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceType), POINTER :: fsInterface
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
@@ -746,31 +762,31 @@ CONTAINS
     TYPE(SolversType), POINTER :: solvers
     TYPE(SolverEquationsType), POINTER :: dynamicSolverEquations
     TYPE(SolverMappingType), POINTER :: dynamicSolverMapping
+    TYPE(RegionType), POINTER :: fluidRegion,solidRegion
     TYPE(VARYING_STRING) :: method,solidFileName,fluidFileName,interfaceFileName
  
     ENTERS("FSI_PostLoop",err,error,*999)
     
-    !Check pointers
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop not associated.",err,error,*999)
-
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    
     NULLIFY(solvers)
     CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
     !Get times
     CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
       & outputIteration,inputIteration,err,error,*999)    
     !Get solvers for FSI
-    IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-      & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-      & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-      & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+    IF(pSpecification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+      & pSpecification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+      & pSpecification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+      & pSpecification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
       NULLIFY(dynamicSolver)
       CALL Solvers_SolverGet(solvers,2,dynamicSolver,err,error,*999)
       NULLIFY(linearSolver)
       CALL Solvers_SolverGet(solvers,3,linearSolver,err,error,*999)
-    ELSE IF(problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-      & problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+    ELSE IF(pSpecification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+      & pSpecification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
       NULLIFY(dynamicSolver)
       CALL Solvers_SolverGet(solvers,4,dynamicSolver,err,error,*999)
       NULLIFY(linearSolver)
@@ -795,24 +811,27 @@ CONTAINS
     equationsSetIndex=1
     fluidEquationsSetFound=.FALSE.
     solidEquationsSetFound=.FALSE.
-    DO WHILE((equationsSetIndex<=dynamicSolverMapping%numberOfEquationsSets.AND..NOT.solidEquationsSetFound) &
-      & .OR.(equationsSetIndex<=dynamicSolverMapping%numberOfEquationsSets.AND..NOT.fluidEquationsSetFound))
-      equationsSet=>dynamicSolverMapping%equationsSets(equationsSetIndex)%ptr
-      IF(equationsSet%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS &
-        & .AND.equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE &
-        & .AND.((equationsSet%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE))) THEN
+    CALL SolverMapping_NumberOfEquationsSetsGet(dynamicSolverMapping,numberOfEquationsSets,err,error,*999)
+    DO WHILE((equationsSetIndex<=numberOfEquationsSets.AND..NOT.solidEquationsSetFound) &
+      & .OR.(equationsSetIndex<=numberOfEquationsSets.AND..NOT.fluidEquationsSetFound))
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(dynamicSolverMapping,equationsSetIndex,equationsSet,err,error,*999)
+      CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+      IF(esSpecification(1)==EQUATIONS_SET_ELASTICITY_CLASS &
+        & .AND.esSpecification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE &
+        & .AND.((esSpecification(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE).OR. &
+        & (esSpecification(3)==EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE))) THEN
         solidEquationsSet=>equationsSet
         solidEquationsSetFound=.TRUE.
-      ELSE IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
-        & .AND.equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
-        & .AND.(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
-        & .OR.equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
+      ELSE IF(esSpecification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
+        & .AND.esSpecification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
+        & .AND.(esSpecification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
+        & .OR.esSpecification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
         fluidEquationsSet=>equationsSet
         fluidEquationsSetFound=.TRUE.
       ELSE
@@ -825,7 +844,8 @@ CONTAINS
     NULLIFY(solidGeometricField)
     CALL EquationsSet_GeometricFieldGet(solidEquationsSet,solidGeometricField,err,error,*999)
     CALL Field_NumberOfComponentsGet(solidGeometricField,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-    IF(DynamicSolverMapping%numberOfInterfaceConditions>1) &
+    CALL SolverMapping_NumberOfInterfaceConditionsGet(dynamicSolverMapping,numberOfInterfaceConditions,err,error,*999)
+    IF(numberOfInterfaceConditions>1) &
       & CALL FlagError("Invalid number of interface conditions. Must be 1 for FSI.",err,error,*999)
     NULLIFY(solidDependentField)
     CALL EquationsSet_DependentFieldGet(solidEquationsSet,solidDependentField,err,error,*999)
@@ -845,14 +865,22 @@ CONTAINS
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(interfaceGeometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      SELECT CASE(geometricVariable%components(componentIdx)%interpolationType)
+      CALL FieldVariable_ComponentInterpolationGet(geometricVariable,componentIdx,interpolationType,err,error,*999)
+      SELECT CASE(interpolationType)
       CASE(FIELD_NODE_BASED_INTERPOLATION)
         NULLIFY(domain)
-        CALL FieldVariable_DomainGet(geometricVariable,componentIdx,domain,err,error,*999)
-        DO nodeIdx=1,domain%topology%nodes%totalNumberOfNodes
-          solidNode=meshConnectivity%coupledNodes(1,nodeIdx)
-          DO derivativeIdx=1,domain%topology%nodes%nodes(nodeIdx)%numberOfDerivatives
-            DO versionIdx=1,domain%topology%nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+        CALL FieldVariable_ComponentDomainGet(geometricVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainNodes)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        CALL DomainNodes_TotalNumberOfNodesGet(domainNodes,totalNumberOfNodes,err,error,*999)
+        DO nodeIdx=1,totalNumberOfNodes
+          CALL InterfaceMeshConnectivity_CoupledNodeNumberGet(meshConnectivity,nodeIdx,1,solidNode,err,error,*999)
+          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+          DO derivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+            DO versionIdx=1,numberOfVersions
               CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & versionIdx,derivativeIdx,solidNode,componentIdx,VALUE,err,error,*999)
               CALL Field_ParameterSetUpdateLocalNode(interfaceGeometricField,FIELD_U_VARIABLE_TYPE, &
@@ -872,36 +900,40 @@ CONTAINS
     
     IF(outputIteration/=0) THEN
       IF(MOD(currentIteration,outputIteration)==0) THEN
+        CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
         !Export fields
         solidFileName="./output/Solid/Solid"//TRIM(NumberToVString(INT(currentIteration),"*",err,error))
         fluidFileName="./output/Fluid/Fluid"//TRIM(NumberToVString(INT(currentIteration),"*",err,error))
         interfaceFileName="./output/Interface/Interface"//TRIM(NumberToVString(INT(currentIteration),"*",err,error))
         method="FORTRAN"
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
           CALL WriteString(GENERAL_OUTPUT_TYPE,"Export fields... ",err,error,*999)
         ENDIF
         !Export solid fields
-        IF(.NOT.ASSOCIATED(solidEquationsSet%region)) CALL FlagError("Solid region not associated.",err,error,*999)
-        IF(.NOT.ASSOCIATED(solidEquationsSet%region%fields)) CALL FlagError("Solid fields not associated.",err,error,*999)
-        CALL FIELD_IO_NODES_EXPORT(solidEquationsSet%region%fields,solidFileName,method,err,error,*999)
-        CALL FIELD_IO_ELEMENTS_EXPORT(solidEquationsSet%region%fields,solidFileName,method,err,error,*999)
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) &
+        NULLIFY(solidRegion)
+        CALL EquationsSet_RegionGet(solidEquationsSet,solidRegion,err,error,*999)
+        NULLIFY(solidFields)
+        CALL Region_FieldsGet(solidRegion,solidFields,err,error,*999)
+        CALL FIELD_IO_NODES_EXPORT(solidFields,solidFileName,method,err,error,*999)
+        CALL FIELD_IO_ELEMENTS_EXPORT(solidFields,solidFileName,method,err,error,*999)
+        IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) &
           & CALL WriteString(GENERAL_OUTPUT_TYPE,solidFileName,err,error,*999)
-        IF(.NOT.ASSOCIATED(fluidEquationsSet%REGION)) CALL FlagError("Fluid region not associated.", err,error,*999)
-        IF(.NOT.ASSOCIATED(fluidEquationsSet%REGION%FIELDS)) CALL FlagError("Fluid fields not associated.",err,error,*999)
+        NULLIFY(fluidRegion)
+        CALL EquationsSet_RegionGet(fluidEquationsSet,fluidRegion,err,error,*999)
+        NULLIFY(fluidFields)
+        CALL Region_FieldsGet(fluidRegion,fluidFields,err,error,*999)
         !Export fluid fields
-        IF(.NOT.ASSOCIATED(fluidEquationsSet%region)) CALL FlagError("Fluid region not associated.",err,error,*999)
-        IF(.NOT.ASSOCIATED(fluidEquationsSet%region%fields)) CALL FlagError("Fluid fields not associated.",err,error,*999)
-        CALL FIELD_IO_NODES_EXPORT(fluidEquationsSet%region%fields,fluidFileName,method,err,error,*999)
-        CALL FIELD_IO_ELEMENTS_EXPORT(fluidEquationsSet%region%fields,fluidFileName,method,err,error,*999)
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) &
+        CALL FIELD_IO_NODES_EXPORT(fluidFields,fluidFileName,method,err,error,*999)
+        CALL FIELD_IO_ELEMENTS_EXPORT(fluidFields,fluidFileName,method,err,error,*999)
+        IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) &
           & CALL WriteString(GENERAL_OUTPUT_TYPE,fluidFileName,err,error,*999)
         !Export interface fields
-        IF(.NOT.ASSOCIATED(fsInterface%fields)) CALL FlagError("Interface fields not associated.",err,error,*999)
-        CALL FIELD_IO_NODES_EXPORT(fsInterface%fields,interfaceFileName,method,err,error,*999)
-        CALL FIELD_IO_ELEMENTS_EXPORT(fsInterface%fields,interfaceFileName,method,err,error,*999)
-        IF(controlLoop%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        NULLIFY(interfaceFields)
+        CALL Interface_FieldsGet(fsInterface,interfaceFields,err,error,*999)
+        CALL FIELD_IO_NODES_EXPORT(interfaceFields,interfaceFileName,method,err,error,*999)
+        CALL FIELD_IO_ELEMENTS_EXPORT(interfaceFields,interfaceFileName,method,err,error,*999)
+        IF(outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,interfaceFileName,err,error,*999)
           CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
         ENDIF

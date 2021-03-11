@@ -15830,7 +15830,7 @@ CONTAINS
         CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
         CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)          
       ENDIF
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !Call divergence test only if finite element loop: THIS IS NOT A PROPER FIX
       CALL ControlLoop_SubLoopIndexGet(controlLoop,subLoopIndex,err,error,*999)
@@ -15975,7 +15975,7 @@ CONTAINS
           ENDIF
         ENDIF
       ENDIF
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !Get the current time information
@@ -16081,15 +16081,6 @@ CONTAINS
         CALL Solvers_SolverGet(solvers,1,solidSolver,err,error,*999)        
         !--- 3.0 For Standard Elasticity Darcy: Update the boundary conditions of the solid
         CALL FiniteElasticity_PreSolveUpdateBoundaryConditions(solidSolver,err,error,*999)
-      CASE(PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
-        NULLIFY(solidControlLoop)
-        CALL ControlLoop_Get(controlLoop,[1,CONTROL_LOOP_NODE],solidControlLoop,err,error,*999)
-        NULLIFY(solvers)
-        CALL ControlLoop_SolversGet(solidControlLoop,solvers,err,error,*999)
-        NULLIFY(solidSolver)
-        CALL Solvers_SolverGet(solvers,1,solidSolver,err,error,*999)
-        !--- For PGM: Get the displacement field
-        CALL FiniteElasticity_PreSolveGetSolidDisplacement(solidSolver,err,error,*999)
       CASE DEFAULT
         !do nothing
       END SELECT
@@ -16304,7 +16295,7 @@ CONTAINS
       CALL FiniteElasticity_EvaluateEvolutionLaw(solver,err,error,*999)
     CASE(PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)      
       !--- Set 'solverMatrix%updateMatrix=.TRUE.'
       NULLIFY(solverEquations)
@@ -16759,110 +16750,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FiniteElasticity_EvaluateEvolutionLaw
-
-  !   
-  !================================================================================================================================
-  !
-  
-  !>Read in the displacement field for a PGM elasticity problem
-  SUBROUTINE FiniteElasticity_PreSolveGetSolidDisplacement(solver,err,error,*)
-
-    !Argument variables
-    TYPE(SolverType), POINTER :: solver !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: currentIteration,inputIteration,inputOption,inputType,numberOfDimensions,numberOfDOFs,outputIteration, &
-      & pSpecification(3),solverGlobalNumber,solverOutputType
-    REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
-    REAL(DP), POINTER :: meshDisplacementValues(:)
-    REAL(DP), POINTER :: dummyValues2(:)
-    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
-    TYPE(FieldType), POINTER :: dependentField,geometricField
-    TYPE(FieldVariableType), POINTER :: dependentVariable
-    TYPE(ProblemType), POINTER :: problem
-    TYPE(SolverType), POINTER :: finiteElasticitySolver  !<A pointer to the solvers
-    TYPE(SolverEquationsType), POINTER :: solverEquations  !<A pointer to the solver equations
-    TYPE(SolverMappingType), POINTER :: solverMapping !<A pointer to the solver mapping
-    TYPE(SolversType), POINTER :: solvers
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("FiniteElasticity_PreSolveGetSolidDisplacement",err,error,*999)
-
-!--- \todo : Do we need for each case a Field_ParameterSetUpdateStart / FINISH on FIELD_MESH_DISPLACEMENT_SET_TYPE ?
-
-    NULLIFY(solvers)
-    CALL Solver_SolversGet(solver,solvers,err,error,*999)    
-    NULLIFY(controlLoop)
-    CALL Solvers_ControlLoopGet(solvers,controlLoop,err,error,*999)
-    CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,inputIteration,err,error,*999)    
-    NULLIFY(problem)
-    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
-    SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
-      & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-      ! do nothing ???
-    CASE(PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
-      !--- Motion: read in from a file
-      CALL Solver_GlobalNumberGet(solver,solverGlobalNumber,err,error,*999)
-      IF(solverGlobalNumber==1) THEN
-        NULLIFY(finiteElasticitySolver)
-        CALL Solvers_SolverGet(solvers,1,finiteElasticitySolver,err,error,*999)
-        CALL Solver_OutputTypeGet(finiteElasticitySolver,solverOutputType,err,error,*999)
-        IF(solverOutputType>=SOLVER_PROGRESS_OUTPUT) &
-          & CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite elasticity motion read from a file ... ",err,error,*999)
-        NULLIFY(solverEquations)
-        CALL Solver_SolverEquationsGet(finiteElasticitySolver,solverEquations,err,error,*999)
-        NULLIFY(solverMapping)
-        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-        NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-        NULLIFY(dependentField)
-        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-        NULLIFY(dependentVariable)
-        CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentVariable,err,error,*999)
-        CALL FieldVariable_NumberOfDOFsGet(dependentVariable,numberOfDOFs,err,error,*999)
-        NULLIFY(geometricField)
-        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-            
-        !Copy input to Finite elasticity's dependent field
-        !\todo: Still need to take into account that we are reading in displacement,
-        !       while dependent field is the absolute position of the structure
-        inputType=42
-        inputOption=2
-        NULLIFY(meshDisplacementValues)
-        CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_VALUES_SET_TYPE,meshDisplacementValues,err,error,*999)         
-        CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,meshDisplacementValues,numberOfDimensions,inputType,inputOption, &
-          & currentIteration,1.0_DP,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-       
-        IF(diagnostics1) THEN
-          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDOFs,numberOfDOFs,numberOfDOFs,meshDisplacementValues, &
-            & '(" Mesh Displacement Values :",4(X,E13.6))','(27X,4(X,E13.6))',err,error,*999)
-        ENDIF
-        CALL FieldVariable_ParameterSetRestore(dependentVariable,FIELD_VALUES_SET_TYPE,meshDisplacementValues,err,error,*999) 
-        
-      ELSE
-        ! in case of a solver number different from 3: do nothing ???
-      ENDIF
-    CASE DEFAULT
-      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
-        & " is not valid for a Finite elasticity equation fluid type of a fluid mechanics problem class."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-
-    EXITS("FiniteElasticity_PreSolveGetSolidDisplacement")
-    RETURN
-999 ERRORS("FiniteElasticity_PreSolveGetSolidDisplacement",err,error)
-    EXITS("FiniteElasticity_PreSolveGetSolidDisplacement")
-    RETURN 1
-
-  END SUBROUTINE FiniteElasticity_PreSolveGetSolidDisplacement
 
   !
   !================================================================================================================================

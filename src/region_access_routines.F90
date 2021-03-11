@@ -72,23 +72,11 @@ MODULE RegionAccessRoutines
 
   !Interfaces
 
-  INTERFACE REGION_COORDINATE_SYSTEM_GET
-    MODULE PROCEDURE Region_CoordinateSystemGet
-  END INTERFACE REGION_COORDINATE_SYSTEM_GET
-
   INTERFACE Region_LabelGet
     MODULE PROCEDURE Region_LabelGetC
     MODULE PROCEDURE Region_LabelGetVS
   END INTERFACE Region_LabelGet
   
-  INTERFACE REGION_NODES_GET
-    MODULE PROCEDURE Region_NodesGet
-  END INTERFACE REGION_NODES_GET
-
-  INTERFACE REGION_USER_NUMBER_FIND
-    MODULE PROCEDURE Region_UserNumberFind
-  END INTERFACE REGION_USER_NUMBER_FIND
-
   PUBLIC Region_AssertIsFinished,Region_AssertNotFinished
 
   PUBLIC Region_CellMLGet
@@ -99,8 +87,6 @@ MODULE RegionAccessRoutines
 
   PUBLIC Region_CoordinateSystemGet
 
-  PUBLIC REGION_COORDINATE_SYSTEM_GET
-  
   PUBLIC Region_DataPointsGet
 
   PUBLIC Region_DecomposerGet
@@ -129,13 +115,9 @@ MODULE RegionAccessRoutines
 
   PUBLIC Region_NodesGet
 
-  PUBLIC REGION_NODES_GET
-
   PUBLIC Region_RegionsGet
 
   PUBLIC Region_UserNumberFind
-
-  PUBLIC REGION_USER_NUMBER_FIND
 
   PUBLIC Region_UserNumberGet
 

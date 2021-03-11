@@ -50,7 +50,7 @@ MODULE BioelectricRoutines
   USE EquationsSetAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MONODOMAIN_EQUATIONS_ROUTINES
+  USE MonodomainEquationsRoutines
   USE ProblemAccessRoutines
   USE Strings
   USE Types
@@ -99,7 +99,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: pSpecification(2)
+    INTEGER(INTG) :: loopType,pSpecification(2)
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
@@ -115,7 +115,7 @@ CONTAINS
       CASE(PROBLEM_MONODOMAIN_EQUATION_TYPE,PROBLEM_BIDOMAIN_EQUATION_TYPE)
         CALL Biodomain_PostLoop(controlLoop,err,error,*999)
       CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
-        CALL MONODOMAIN_CONTROL_LOOP_POST_LOOP(controlLoop,err,error,*999)
+        CALL Monodomain_PostLoop(controlLoop,err,error,*999)
       CASE DEFAULT
         localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
           & " is not valid for a bioelectric problem class."
@@ -153,7 +153,7 @@ CONTAINS
     IF(SIZE(specification,1)<2) THEN
       localError="The size of the specified specification array of "// &
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 2."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     END IF
     
     SELECT CASE(specification(2))
@@ -318,7 +318,7 @@ CONTAINS
     CASE(PROBLEM_MONODOMAIN_EQUATION_TYPE,PROBLEM_BIDOMAIN_EQUATION_TYPE)
       CALL Biodomain_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
-      CALL MONODOMAIN_PRE_SOLVE(solver,err,error,*999)
+      CALL Monodomain_PreSolve(solver,err,error,*999)
     CASE DEFAULT
       localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a bioelectrics problem class."
@@ -361,6 +361,8 @@ CONTAINS
     SELECT CASE(pSpecification(2))
     CASE(PROBLEM_MONODOMAIN_EQUATION_TYPE,PROBLEM_BIDOMAIN_EQUATION_TYPE,PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
       CALL Biodomain_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
+      CALL Monodomain_PostSolve(solver,err,error,*999)
     CASE DEFAULT
       localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a bioelectrics problem class."
@@ -444,7 +446,7 @@ CONTAINS
     CASE(PROBLEM_BIDOMAIN_EQUATION_TYPE)
       CALL Biodomain_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
-      CALL MONODOMAIN_EQUATION_PROBLEM_SETUP(problem,problemSetup,err,error,*999)
+      CALL Monodomain_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE DEFAULT
       localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a bioelectric problem class."

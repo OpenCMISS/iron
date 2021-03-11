@@ -289,6 +289,18 @@ MODULE FieldAccessRoutines
     MODULE PROCEDURE Field_VariableLabelGetVS
   END INTERFACE Field_VariableLabelGet
  
+  !>Checks the variable types for a field
+  INTERFACE Field_VariableTypesCheck
+    MODULE PROCEDURE Field_VariableTypesCheck0
+    MODULE PROCEDURE Field_VariableTypesCheck1
+  END INTERFACE Field_VariableTypesCheck
+ 
+  !>Gets the variable types for a field
+  INTERFACE Field_VariableTypesGet
+    MODULE PROCEDURE Field_VariableTypesGet0
+    MODULE PROCEDURE Field_VariableTypesGet1
+  END INTERFACE Field_VariableTypesGet
+ 
   !>Gets the label for a field variable.
   INTERFACE FieldVariable_LabelGet
     MODULE PROCEDURE FieldVariable_LabelGetC
@@ -3383,7 +3395,32 @@ CONTAINS
   !
 
   !>Checks the field variable types for a field.
-  SUBROUTINE Field_VariableTypesCheck(field,variableTypes,err,error,*)
+  SUBROUTINE Field_VariableTypesCheck0(field,variableType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the variable types for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to check
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Field_VariableTypesCheck0",err,error,*999)
+
+    CALL Field_VariableTypesCheck1(field,[variableType],err,error,*999)
+
+    EXITS("Field_VariableTypesCheck0")
+    RETURN
+999 ERRORSEXITS("Field_VariableTypesCheck0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_VariableTypesCheck0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks the field variable types for a field.
+  SUBROUTINE Field_VariableTypesCheck1(field,variableTypes,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to check the variable types for
@@ -3394,7 +3431,7 @@ CONTAINS
     INTEGER(INTG) :: variableIdx
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Field_VariableTypesCheck",err,error,*999)
+    ENTERS("Field_VariableTypesCheck1",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
 #ifdef WITH_PRECHECKS    
@@ -3426,19 +3463,45 @@ CONTAINS
       ENDIF
     ENDDO !variableIdx
 
-    EXITS("Field_VariableTypesCheck")
+    EXITS("Field_VariableTypesCheck1")
     RETURN
-999 ERRORSEXITS("Field_VariableTypesCheck",err,error)
+999 ERRORSEXITS("Field_VariableTypesCheck1",err,error)
     RETURN 1
     
-  END SUBROUTINE Field_VariableTypesCheck
+  END SUBROUTINE Field_VariableTypesCheck1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the field variable type for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesGet
+  SUBROUTINE Field_VariableTypesGet0(field,variableType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the variable types for
+    INTEGER(INTG), INTENT(OUT) :: variableType !<On return, the field variable type for the field
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: variableTypes(1)
+    
+    EXITS("Field_VariableTypesGet0")
+
+    CALL Field_VariableTypesGet1(field,variableTypeS,err,error,*999)
+    variableType=variableTypes(1)
+    
+    RETURN
+999 ERRORSEXITS("Field_VariableTypesGet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_VariableTypesGet0
 
   !
   !================================================================================================================================
   !
 
   !>Gets the field variable types for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesGet
-  SUBROUTINE Field_VariableTypesGet(field,variableTypes,err,error,*)
+  SUBROUTINE Field_VariableTypesGet1(field,variableTypes,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to get the variable types for
@@ -3451,7 +3514,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 #endif    
 
-    ENTERS("Field_VariableTypesGet",err,error,*999)
+    ENTERS("Field_VariableTypesGet1",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
 #ifdef WITH_PRECHECKS    
@@ -3468,12 +3531,12 @@ CONTAINS
       variableTypes(variableIdx)=field%variables(variableIdx)%variableType
     ENDDO !variableIdx
 
-    EXITS("Field_VariableTypesGet")
+    EXITS("Field_VariableTypesGet1")
     RETURN
-999 ERRORSEXITS("Field_VariableTypesGet",err,error)
+999 ERRORSEXITS("Field_VariableTypesGet1",err,error)
     RETURN 1
     
-  END SUBROUTINE Field_VariableTypesGet
+  END SUBROUTINE Field_VariableTypesGet1
 
   !
   !================================================================================================================================

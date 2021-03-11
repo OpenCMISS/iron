@@ -228,6 +228,10 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_Get
 
+  PUBLIC Basis_InterpolationOrderGet
+  
+  PUBLIC Basis_InterpolationTypeGet
+
   PUBLIC Basis_InterpolationXiGet
 
   PUBLIC Basis_LineBasisGet
@@ -1145,12 +1149,90 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_InterpolationXiGet
+  !>Gets the interpolation order in each xic direction for a basis identified by a pointer.
+  SUBROUTINE Basis_InterpolationOrderGet(basis,interpolationOrder,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the interpolation order for
+    INTEGER(INTG), INTENT(OUT) :: interpolationOrder(:) !<interpolationOrder(xicIdx). On return, the interpolation order parameters for the xic'th direction
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("Basis_InterpolationOrderGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ALLOCATED(basis%interpolationOrder)) CALL FlagError("The basis interpolation order is not allocated.",err,error,*999)
+    IF(SIZE(interpolationOrder,1)<SIZE(basis%interpolationOrder,1)) THEN
+      localError="The size of interpolation order is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(interpolationOrder,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%interpolationOrder,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    interpolationOrder(1:SIZE(basis%interpolationOrder,1))=basis%interpolationOrder(1:SIZE(basis%interpolationOrder,1))
+    
+    EXITS("Basis_InterpolationOrderGet")
+    RETURN
+999 ERRORSEXITS("Basis_InterpolationOrderGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_InterpolationOrderGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the interpolation type in each xic direction for a basis identified by a pointer.
+  SUBROUTINE Basis_InterpolationTypeGet(basis,interpolationType,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the interpolation type for
+    INTEGER(INTG), INTENT(OUT) :: interpolationType(:) !<interpolationType(xicIdx). On return, the interpolation type parameters for the xic'th direction
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("Basis_InterpolationTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ALLOCATED(basis%interpolationType)) CALL FlagError("The basis interpolation type is not allocated.",err,error,*999)
+    IF(SIZE(interpolationType,1)<SIZE(basis%interpolationType,1)) THEN
+      localError="The size of interpolation type is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(interpolationType,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%interpolationType,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    interpolationType(1:SIZE(basis%interpolationType,1))=basis%interpolationType(1:SIZE(basis%interpolationType,1))
+    
+    EXITS("Basis_InterpolationTypeGet")
+    RETURN
+999 ERRORSEXITS("Basis_InterpolationTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_InterpolationTypeGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets/changes the interpolation type in each xi direction for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_InterpolationXiGet
   SUBROUTINE Basis_InterpolationXiGet(basis,interpolationXi,err,error,*)
 
     !Argument variables
     TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the interpolation xi
-    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<On return, the interpolation xi parameters for each Xi direction \see BasisRoutines_InterpolationSpecifications
+    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<interpolationXi(xiIdx). On return, the interpolation xi parameters for each xiIdx'th direction \see BasisRoutines_InterpolationSpecifications
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1162,6 +1244,7 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(.NOT.ALLOCATED(basis%interpolationXi)) CALL FlagError("The basis interpolation xi is not allocated.",err,error,*999)
     IF(SIZE(interpolationXi,1)<SIZE(basis%interpolationXi,1)) THEN
       localError="The size of interpolation xi is too small. The supplied size is "// &
         & TRIM(NumberToVString(SIZE(interpolationXi,1),"*",err,error))//" and it needs to be >= "// &

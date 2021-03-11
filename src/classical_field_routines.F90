@@ -232,7 +232,7 @@ CONTAINS
     IF(SIZE(specification,1)<2) THEN
       localError="The size of the specified specification array of "// &
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 2."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
       
     SELECT CASE(specification(2))

@@ -48,6 +48,7 @@ MODULE PoiseuilleEquationsRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -57,6 +58,7 @@ MODULE PoiseuilleEquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -118,17 +120,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,derivativeGlobalIndex,localDOFIdx,nodeIdx, &
-      & numberOfDimensions,numberOfComponents,numberOfNodes,numberOfNodeDerivatives,numberOfVersions,numberOfVariables, &
-      & variableIdx,variableType
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,derivativeGlobalIndex,globalDerivativeIndex, &
+      & localDOFIdx,nodeIdx,numberOfDimensions,numberOfComponents,numberOfNodes,numberOfNodeDerivatives,numberOfVersions, &
+      & numberOfVariables,variableIdx,variableType
     REAL(DP) :: dependentValue,x(3)
     REAL(DP), POINTER :: geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopoloyType), POINTER :: domainTopology
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: dependentField,geometricField
-    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError    
     
     ENTERS("Poiseuille_BoundaryConditionsAnalyticCalculate",err,error,*999)
@@ -175,7 +177,7 @@ CONTAINS
             CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1)
               !u=ln(4/(x+y+1^2))
               SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLETYPE)
+              CASE(FIELD_U_VARIABLE_TYPE)
                 SELECT CASE(globalDerivativeIndex)
                 CASE(NO_GLOBAL_DERIV)
                   dependentValue=LOG(4.0_DP/((x(1)+x(2)+1.0_DP)**2))
@@ -194,7 +196,7 @@ CONTAINS
                 SELECT CASE(globalDerivativeIndex)
                 CASE(NO_GLOBAL_DERIV)
                   !This is believed to be incorrect, should be: dependentValue=-2.0_DP/(x(1)+x(2)+1.0_DP)
-                  dependentValue=-2.0_DP*x(1)+x(2))/(x(1)+x(2)+1.0_DP)
+                  dependentValue=-2.0_DP*(x(1)+x(2))/(x(1)+x(2)+1.0_DP)
                 CASE(GLOBAL_DERIV_S1)
                   CALL FlagError("Not implemented.",err,error,*999)
                 CASE(GLOBAL_DERIV_S2)
@@ -220,8 +222,8 @@ CONTAINS
               & dependentValue,err,error,*999)
             CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
             IF(variableType==FIELD_U_VARIABLE_TYPE.AND.boundaryNode) THEN !For Dirichlet
-              CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
-                & localDOFIdx,BOUNDARY_CONDITION_FIXED,dependentValue,err,error,*999)
+              CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+                & dependentValue,err,error,*999)
             ENDIF
             IF(variableType==FIELD_DELUDELN_VARIABLE_TYPE.AND.nodeIdx/=1) THEN
               IF(boundaryNode) THEN
@@ -238,8 +240,7 @@ CONTAINS
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
-    CALL Field_ParameterSetDataRestore(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,geometricParameters, &
-      & err,error,*999)
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     
     EXITS("Poiseuille_BoundaryConditionsAnalyticCalculate")
     RETURN
@@ -363,7 +364,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,geometricComponentNumber,geometricScalingType,solutionMethod,sparsityType
+    INTEGER(INTG) :: componentIdx,esSpecification(3),geometricComponentNumber,geometricScalingType,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -456,7 +457,7 @@ CONTAINS
             CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
               & FIELD_DELUDELN_VARIABLE_TYPE,2,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
             !Default the scaling to the geometric field scaling
-            CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%geometricField,geometricScalingType,err,error,*999)
+            CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
             CALL Field_ScalingTypeSet(equationsSet%dependent%dependentField,geometricScalingType,err,error,*999)
           CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
@@ -693,18 +694,30 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: esSpecification(3),gaussPointIdx,variableType
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    INTEGER(INTG) :: colsVariableType,esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfDimensions, &
+      & numberOfGauss,numberOfRowsComponents,numberOfXi,scalingType,variableType
+    LOGICAL :: update,updateMatrix,updateRHS
+    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
+    TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain
+    TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements
+    TYPE(DomainTopologyType), POINTER :: columnDomainTopology,dependentDomainTopology,geometricDomainTopology
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,materialsInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,materialsInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: colsVariable,fieldVariable,geometricVariable,rowsVariable
     TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
 
@@ -722,7 +735,7 @@ CONTAINS
     END SELECT
     
     NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -741,10 +754,10 @@ CONTAINS
     CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
     NULLIFY(equationsMatrix)
     CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
-    updateMatrix=equationsMatrix%updateMatrix
+    CALL EquationsMatrix_UpdateMatrixGet(equationsMatrix,updateMatrix,err,error,*999)
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-    updateRHS=rhsVector%updateVector
+    CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     
     update=(updateMatrix.OR.updateRHS)
 
@@ -774,14 +787,14 @@ CONTAINS
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
-      NULLIFY(colsDomain)
-      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
-      NULLIFY(colsDomainTopology)
-      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-      NULLIFY(colsDomainElements)
-      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-      NULLIFY(colsBasis)
-      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      NULLIFY(dependentDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+      NULLIFY(dependentDomainTopology)
+      CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+      NULLIFY(dependentDomainElements)
+      CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
+      NULLIFY(dependentBasis)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
 
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
@@ -806,7 +819,7 @@ CONTAINS
         & geometricInterpPointMetrics,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
       
-      NULLIFY(materialsInterpParamters)
+      NULLIFY(materialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & materialsInterpParameters,err,error,*999)
       NULLIFY(materialsInterpPoint)
@@ -1056,6 +1069,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Poiseuille_PostSolve",err,error,*999)
@@ -1095,7 +1109,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
-    TYPE(ControlLoopType), POINTER :: controlLoop 
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Poiseuille_PreSolve",err,error,*999)

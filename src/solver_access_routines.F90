@@ -595,6 +595,8 @@ MODULE SolverAccessRoutines
   PUBLIC Solver_AssertIsDAE,Solver_AssertIsDynamic,Solver_AssertIsGeometricTransformation,Solver_AssertIsLinear, &
     & Solver_AssertIsNonlinear,Solver_AssertIsOptimiser
   
+  PUBLIC Solver_CellMLEquationsExists
+
   PUBLIC Solver_CellMLEquationsGet
 
   PUBLIC Solver_ControlLoopGet
@@ -647,6 +649,8 @@ MODULE SolverAccessRoutines
   
   PUBLIC Solver_QuasiNewtonLinkedLinearSolverGet
   
+  PUBLIC Solver_SolverEquationsExists
+
   PUBLIC Solver_SolverEquationsGet
 
   PUBLIC Solver_SolversGet
@@ -1332,6 +1336,37 @@ CONTAINS
     
   END SUBROUTINE Solver_AssertIsOptimiser
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the CellML equations for a solver exist.
+  SUBROUTINE Solver_CellMLEquationsExists(solver,cellMLEquations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver to check the CellML equations for
+    TYPE(CellMLEquationsType), POINTER :: cellMLEquations !<On exit, a pointer to the specified CellML equations if they exist, null if they don;t. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_CellMLEquationsExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif
+    
+    cellMLEquations=>solver%cellMLEquations
+      
+    EXITS("Solver_CellMLEquationsExists")
+    RETURN
+999 NULLIFY(cellMLEquations)
+998 ERRORSEXITS("Solver_CellMLEquationsExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_CellMLEquationsExists
+  
   !
   !================================================================================================================================
   !
@@ -3209,6 +3244,37 @@ CONTAINS
    
   END SUBROUTINE Solver_QuasiNewtonLinkedLinearSolverGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks if the solver equations for a solver exist. 
+  SUBROUTINE Solver_SolverEquationsExists(solver,solverEquations,err,error,*)
+
+    !Argument variables
+    TYPE(SolverType), POINTER :: solver !<A pointer to the solver check the solver equations for
+    TYPE(SolverEquationsType), POINTER :: solverEquations !<On exit, a pointer to the specified solver equations if they exists, null if not. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_SolverEquationsExists",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif    
+
+    solverEquations=>solver%solverEquations
+    
+    EXITS("Solver_SolverEquationsExists")
+    RETURN
+999 NULLIFY(solverEquations)
+998 ERRORSEXITS("Solver_SolverEquationsExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_SolverEquationsExists
+  
   !
   !================================================================================================================================
   !

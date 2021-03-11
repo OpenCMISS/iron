@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module handles all equations set routines.
+!>This module handles all equations set routines.
 MODULE EquationsSetRoutines
 
   USE BaseRoutines
@@ -77,7 +77,7 @@ MODULE EquationsSetRoutines
   USE Lists
   USE MatrixVector
   USE MeshAccessRoutines
-  USE MONODOMAIN_EQUATIONS_ROUTINES
+  USE MonodomainEquationsRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -113,7 +113,7 @@ MODULE EquationsSetRoutines
 
   PUBLIC EquationsSet_Assemble
   
-  PUBLIC EquationsSet_Backsubstitute,EquationsSet_NonlinearRHSUpdate
+  PUBLIC EquationsSet_Backsubstitute
   
   PUBLIC EquationsSet_BoundaryConditionsAnalytic
 
@@ -192,7 +192,7 @@ CONTAINS
     equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_FINISH_ACTION
     analyticField=>equationsSet%analytic%analyticField
     IF(ASSOCIATED(analyticField)) THEN
-      equationsSetSetupInfo%fieldUserNumber=analyticField%userNumber
+      CALL Field_UserNumberGet(analyticField,equationsSetSetupInfo%fieldUserNumber,err,error,*999)
       equationsSetSetupInfo%field=>analyticField
     ENDIF
     !Finish the equations set specific analytic setup
@@ -225,7 +225,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,fieldUserNumber
     TYPE(DecompositionType), POINTER :: analyticDecomposition,geometricDecomposition
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
     TYPE(FieldType), POINTER :: field,geometricField
@@ -235,55 +235,11 @@ CONTAINS
     ENTERS("EquationsSet_AnalyticCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertAnalyticNotCreated(equationsSet,err,error,*998)
-
-    NULLIFY(region)
-    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*998)
-    IF(ASSOCIATED(analyticField)) THEN
-      CALL Field_AssertIsFinished(analyticField,err,error,*998)
-      !Check the user numbers match
-      IF(analyticFieldUserNumber/=analyticField%userNumber) THEN
-        localError="The specified analytic field user number of "// &
-          & TRIM(NumberToVString(analyticFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified analytic field of "// &
-          & TRIM(NumberToVString(analyticField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*998)
-      ENDIF
-      NULLIFY(analyticFieldRegion)
-      CALL Field_RegionGet(analyticField,analyticFieldRegion,err,error,*998)
-      !Check the field is defined on the same region as the equations set
-      IF(analyticFieldRegion%userNumber/=region%userNumber) THEN
-        localError="Invalid region setup. The specified analytic field has been created on region number "// &
-          & TRIM(NumberToVString(analyticFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*998)
-      ENDIF
-      !Check the specified analytic field has the same decomposition as the geometric field
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*998)
-      NULLIFY(geometricDecomposition)
-      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*998)
-      NULLIFY(analyticDecomposition)
-      CALL Field_DecompositionGet(analyticField,analyticDecomposition,err,error,*998)
-      IF(.NOT.ASSOCIATED(geometricDecomposition,analyticDecomposition)) THEN
-        CALL FlagError("The specified analytic field does not have the same decomposition as the geometric "// &
-          & "field for the specified equations set.",err,error,*998)
-      ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(analyticFieldUserNumber,region,field,err,error,*998)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified analytic field user number of "// &
-          & TRIM(NumberToVString(analyticFieldUserNumber,"*",err,error))// &
-          & "has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*998)
-      ENDIF
-    ENDIF
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"analytic",analyticFieldUserNumber,analyticField,err,error,*998)
+    
     !Initialise the equations set analytic
     CALL EquationsSet_AnalyticInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(analyticField)) equationsSet%analytic%analyticFieldAutoCreated=.TRUE.
+    equationsSet%analytic%analyticFieldAutoCreated=(.NOT.ASSOCIATED(analyticField))
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_ANALYTIC_TYPE
@@ -349,8 +305,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,derivativeIdx,elementIdx,gaussPointIdx, &
-      & globalDerivIndex,nodeIdx,numberOfAnalyticComponents,numberOfDimensions,variableIdx,variableType,versionIdx
-    REAL(DP) :: analyticTime,normal(3),position(3),tangents(3,3),VALUE
+      & globalDerivativeIndex,nodeIdx,numberOfAnalyticComponents,numberOfComponents,numberOfDimensions,numberOfElements, &
+      & numberOfGauss,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
+    REAL(DP) :: analyticTime,normal(3),position(3),tangents(3,3),analyticValue
     REAL(DP) :: analyticDummyValues(1)=0.0_DP
     REAL(DP) :: materialsDummyValues(1)=0.0_DP
     LOGICAL :: reverseNormal=.FALSE.
@@ -360,13 +317,12 @@ CONTAINS
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
-    TYPE(FieldInterpolationParametersPtrType), POINTER :: analyticInterpParameters(:),geometricInterpParameters(:), &
-      & materialsInterpParameters(:)
-    TYPE(FieldInterpolatedPointPtrType), POINTER :: analyticInterpPoint(:),geometricInterpPoint(:), &
-      & materialsInterpPoint(:)
-    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: geometricInterpPointMetrics(:)
-    TYPE(FieldPhysicalPointPtrType), POINTER :: analyticPhysicalPoint(:),materialsPhysicalPoint(:)
-    TYPE(FieldVariableType), POINTER :: dependentVariable
+    TYPE(FieldInterpolationParametersType), POINTER :: analyticInterpParameters,geometricInterpParameters, &
+      & materialsInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: analyticInterpPoint,geometricInterpPoint,materialsInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+    TYPE(FieldPhysicalPointType), POINTER :: analyticPhysicalPoint,materialsPhysicalPoint
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable
     TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
 
@@ -378,37 +334,40 @@ CONTAINS
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(geometricField)
     CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-    CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-    CALL Field_InterpolationParametersInitialise(geometricField,geometricInterpParameters,err,error,*999)
-    CALL Field_InterpolatedPointsInitialise(geometricInterpParameters,geometricInterpPoint,err,error,*999)
-    CALL Field_InterpolatedPointsMetricsInitialise(geometricInterpPoint,geometricInterpPointMetrics, &
-      & err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldCariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,geometricInterpParameters,err,error,*999)
+    CALL Field_InterpolatedPointInitialise(geometricInterpParameters,geometricInterpPoint,err,error,*999)
+    CALL Field_InterpolatedPointMetricsInitialise(geometricInterpPoint,geometricInterpPointMetrics,err,error,*999)
     NULLIFY(analyticField)
     CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
     IF(ASSOCIATED(analyticField)) THEN
-      CALL Field_NumberOfComponentsGet(analyticField,FIELD_U_VARIABLE_TYPE,numberOfAnalyticComponents, &
-        & err,error,*999)
-      CALL Field_InterpolationParametersInitialise(analyticField,analyticInterpParameters,err,error,*999)
-      CALL Field_InterpolatedPointsInitialise(analyticInterpParameters,analyticInterpPoint,err,error,*999)
-      CALL Field_PhysicalPointsInitialise(analyticInterpPoint,geometricInterpPoint,analyticPhysicalPoint, &
-        & err,error,*999)
+      NULLIFY(analyticVariable)
+      CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(analyticVariable,numberOfAnalyticComponents,err,error,*999)
+      CALL FieldVariable_InterpolationParameterInitialise(analyticVariable,analyticInterpParameters,err,error,*999)
+      CALL Field_InterpolatedPointInitialise(analyticInterpParameters,analyticInterpPoint,err,error,*999)
+      CALL Field_PhysicalPointInitialise(analyticInterpPoint,geometricInterpPoint,analyticPhysicalPoint,err,error,*999)
     ENDIF
     NULLIFY(materialsField)
-    CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
     IF(ASSOCIATED(materialsField)) THEN
-      CALL Field_NumberOfComponentsGet(materialsField,FIELD_U_VARIABLE_TYPE,numberOfAnalyticComponents, &
-        & err,error,*999)
-      CALL Field_InterpolationParametersInitialise(materialsField,materialsInterpParameters,err,error,*999)
-      CALL Field_InterpolatedPointsInitialise(materialsInterpParameters,materialsInterpPoint,err,error,*999)
-      CALL Field_PhysicalPointsInitialise(materialsInterpPoint,geometricInterpPoint,materialsPhysicalPoint, &
-        & err,error,*999)
+      NULLIFY(materialsVariable)
+      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(materialsVariable,numberOfAnalyticComponents,err,error,*999)
+      CALL FieldVariable_InterpolationParameterInitialise(materialsVariable,materialsInterpParameters,err,error,*999)
+      CALL Field_InterpolatedPointInitialise(materialsInterpParameters,materialsInterpPoint,err,error,*999)
+      CALL Field_PhysicalPointInitialise(materialsInterpPoint,geometricInterpPoint,materialsPhysicalPoint,err,error,*999)
     ENDIF
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
     CALL EquationsSet_AnalyticTimeGet(equationsSet,analyticTime,err,error,*999)
-    DO variableIdx=1,dependentField%numberOfVariables
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-      DO componentIdx=1,dependentVariable%numberOfComponents
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+      DO componentIdx=1,numberOfComponents
         NULLIFY(domain)
         CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
         NULLIFY(domainTopology)
@@ -421,104 +380,95 @@ CONTAINS
           NULLIFY(domainElements)
           CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
           !Loop over the local elements excluding the ghosts
-          DO elementIdx=1,domainElements%numberOfElements
+          CALL DomainElements_NumberOfElementsGet(domainElements,numberOfElements,err,error,*999)
+          DO elementIdx=1,numberOfElements
             NULLIFY(basis)
             CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-              & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
             IF(ASSOCIATED(analyticField)) THEN
-              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-                & analyticInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,analyticInterpParameters, &
+                & err,error,*999)
             ENDIF
             IF(ASSOCIATED(materialsField)) THEN
-              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-                & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,materialsInterpParameters, &
+                & err,error,*999)
             ENDIF
-            CALL Field_InterpolateXi(FIRST_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP], &
-              & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE, &
-              & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL Field_PositionNormalTangentsCalculateIntPtMetric( &
-              & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,reverseNormal, &
-              & position,normal,tangents,err,error,*999)
-            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP], &
-                & analyticInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP], &
-                & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+            CALL Field_InterpolateXi(FIRST_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],geometricInterpPoint,err,error,*999)
+            CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE,geometricInterpPointMetrics,err,error,*999)
+            CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position,normal, &
+              & tangents,err,error,*999)
+            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],analyticInterpPoint, &
+              & err,error,*999)
+            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],materialsInterpPoint, &
+              & err,error,*999)
 !! \todo Maybe do this with optional arguments?
             IF(ASSOCIATED(analyticField)) THEN
               IF(ASSOCIATED(materialsField)) THEN
                 CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivIndex,componentIdx, &
-                  & analyticInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                  & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                  & VALUE,err,error,*999)
+                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
+                  & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
               ELSE
                 CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivIndex,componentIdx, &
-                  & analyticInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                  & materialsDummyValues,VALUE,err,error,*999)
+                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
+                  & materialsDummyValues,analyticValue,err,error,*999)
               ENDIF
             ELSE
               IF(ASSOCIATED(materialsField)) THEN
                 CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivIndex,componentIdx,analyticDummyValues, &
-                  & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                  & VALUE,err,error,*999)
+                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsInterpPoint% &
+                  & values(:,NO_PART_DERIV),analyticValue,err,error,*999)
               ELSE
                 CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivIndex,componentIdx,analyticDummyValues, &
-                  & materialsDummyValues,VALUE,err,error,*999)
+                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
+                  & analyticValue,err,error,*999)
               ENDIF
             ENDIF
-            CALL Field_ParameterSetUpdateLocalElement(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-              & elementIdx,componentIdx,VALUE,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateLocalElement(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,elementIdx, &
+              & componentIdx,analyticValue,err,error,*999)
           ENDDO !elementIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
           !Loop over the local nodes excluding the ghosts.
-          DO nodeIdx=1,domainNodes%numberOfNodes
-            CALL Field_PositionNormalTangentsCalculateNode(dependentField,variableType,componentIdx,nodeIdx, &
-              & position,normal,tangents,err,error,*999)
-            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateFieldNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
-                & analyticField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx,analyticPhysicalPoint(FIELD_U_VARIABLE_TYPE)%ptr, &
-                & err,error,*999)
-            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateFieldNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
-              & materialsField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx,materialsPhysicalPoint(FIELD_U_VARIABLE_TYPE)%ptr, &
-              & err,error,*999)
+          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+          DO nodeIdx=1,numberOfNodes
+            CALL FieldVariable_PositionNormalTangentsCalculateNode(dependentVariable,componentIdx,nodeIdx,position,normal, &
+              & tangents,err,error,*999)
+            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
+                & analyticVariable,componentIdx,nodeIdx,analyticPhysicalPoint,err,error,*999)
+            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
+              & materialsVariable,componentIdx,nodeIdx,materialsPhysicalPoint,err,error,*999)
             !Loop over the derivatives
-            DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives                                
-              globalDerivIndex=domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%globalDerivativeIndex
+            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives                                
+              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
 !! \todo Maybe do this with optional arguments?
               IF(ASSOCIATED(analyticField)) THEN
                 IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionTYpe,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx, &
-                    & analyticPhysicalPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES, &
-                    & materialsPhysicalPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES,VALUE,err,error,*999)
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint%values, &
+                    & materialsPhysicalPoint%values,analyticValue,err,error,*999)
                 ELSE
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx, &
-                    & analyticPhysicalPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES, &
-                    & materialsDummyValues,VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint%values, &
+                    & materialsDummyValues,analyticValue,err,error,*999)
                 ENDIF
               ELSE
                 IF(ASSOCIATED(materialsField)) THEN
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx,analyticDummyValues, &
-                    & materialsPhysicalPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES,VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
+                    & materialsPhysicalPoint%values,analyticValue,err,error,*999)
                 ELSE
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx,analyticDummyValues, &
-                    & materialsDummyValues,VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
+                    & analyticValue,err,error,*999)
                 ENDIF
               ENDIF
               !Loop over the versions
-              DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
-                CALL Field_ParameterSetUpdateLocalNode(dependentField,variableType, &
-                  & FIELD_ANALYTIC_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx, &
-                  & componentIdx,VALUE,err,error,*999)
+              CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+              DO versionIdx=1,numberOfVersions
+                CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,versionIdx, &
+                  & derivativeIdx,nodeIdx,componentIdx,analyticValue,err,error,*999)
               ENDDO !versionIdx
             ENDDO !derivativeIdx
           ENDDO !nodeIdx
@@ -528,58 +478,53 @@ CONTAINS
           NULLIFY(domainElements)
           CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
           !Loop over the local elements excluding the ghosts
-          DO elementIdx=1,domainElements%numberOfElements
+          CALL DomainElements_NumberOfElementsGet(domainElements,numberOfElements,err,error,*999)
+          DO elementIdx=1,numberOfElements
             NULLIFY(basis)
             CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-              & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
             IF(ASSOCIATED(analyticField)) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-              & analyticInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              & analyticInterpParameters,err,error,*999)
             IF(ASSOCIATED(materialsField)) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-              & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              & materialsInterpParameters,err,error,*999)
             !Loop over the Gauss points in the element
             NULLIFY(quadratureScheme)
             CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
-            DO gaussPointIdx=1,quadratureScheme%numberOfGauss
-              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
-                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE, &
-                & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr, &
-                & reverseNormal,position,normal,tangents,err,error,*999)
+            CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
+            DO gaussPointIdx=1,numberOfGauss
+              CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
+                & err,error,*999)
+              CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE,geometricInterpPointMetrics,err,error,*999)
+              CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position,normal, &
+                & tangents,err,error,*999)
               IF(ASSOCIATED(analyticField)) CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME, &
-                & gaussPointIdx,analyticInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                & gaussPointIdx,analyticInterpPoint,err,error,*999)
               IF(ASSOCIATED(materialsField)) CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME, &
-                & gaussPointIdx,materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                & gaussPointIdx,materialsInterpPoint,err,error,*999)
 !! \todo Maybe do this with optional arguments?
               IF(ASSOCIATED(analyticField)) THEN
                 IF(ASSOCIATED(materialsField)) THEN
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx, &
-                    & analyticInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                    & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                    & VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
+                    & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
                 ELSE
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx, &
-                    & analyticInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                    & materialsDummyValues,VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
+                    & materialsDummyValues,analyticValue,err,error,*999)
                 ENDIF
               ELSE
                 IF(ASSOCIATED(materialsField)) THEN
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx,analyticDummyValues, &
-                    & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(:,NO_PART_DERIV), &
-                    & VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
+                    & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
                 ELSE
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivIndex,componentIdx,analyticDummyValues, &
-                    & materialsDummyValues,VALUE,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
+                    & analyticValue,err,error,*999)
                 ENDIF
               ENDIF
-              CALL Field_ParameterSetUpdateLocalGaussPoint(dependentField,variableType, &
-                & FIELD_ANALYTIC_VALUES_SET_TYPE,gaussPointIdx,elementIdx,componentIdx, &
-                & VALUE,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE, &
+                & gaussPointIdx,elementIdx,componentIdx,analyticValue,err,error,*999)
             ENDDO !gaussPointIdx
           ENDDO !elementIdx
         CASE DEFAULT
@@ -589,22 +534,22 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDDO !componentIdx
-      CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
     IF(ASSOCIATED(materialsField)) THEN
-      CALL Field_PhysicalPointsFinalise(materialsPhysicalPoint,err,error,*999)
-      CALL Field_InterpolatedPointsFinalise(materialsInterpPoint,err,error,*999)
-      CALL Field_InterpolationParametersFinalise(materialsInterpParameters,err,error,*999)
+      CALL Field_PhysicalPointFinalise(materialsPhysicalPoint,err,error,*999)
+      CALL Field_InterpolatedPointFinalise(materialsInterpPoint,err,error,*999)
+      CALL FieldVariable_InterpolationParameterFinalise(materialsInterpParameters,err,error,*999)
     ENDIF
     IF(ASSOCIATED(analyticField)) THEN
-      CALL Field_PhysicalPointsFinalise(analyticPhysicalPoint,err,error,*999)
-      CALL Field_InterpolatedPointsFinalise(analyticInterpPoint,err,error,*999)
-      CALL Field_InterpolationParametersFinalise(analyticInterpParameters,err,error,*999)
+      CALL Field_PhysicalPointFinalise(analyticPhysicalPoint,err,error,*999)
+      CALL Field_InterpolatedPointFinalise(analyticInterpPoint,err,error,*999)
+      CALL FieldVariable_InterpolationParametersFinalise(analyticInterpParameters,err,error,*999)
     ENDIF
-    CALL Field_InterpolatedPointsMetricsFinalise(geometricInterpPointMetrics,err,error,*999)
-    CALL Field_InterpolatedPointsFinalise(geometricInterpPoint,err,error,*999)
-    CALL Field_InterpolationParametersFinalise(geometricInterpParameters,err,error,*999)
+    CALL Field_InterpolatedPointMetricsFinalise(geometricInterpPointMetrics,err,error,*999)
+    CALL Field_InterpolatedPointFinalise(geometricInterpPoint,err,error,*999)
+    CALL FieldVariable_InterpolationParameterFinalise(geometricInterpParameters,err,error,*999)
            
     EXITS("EquationsSet_AnalyticEvaluate")
     RETURN
@@ -643,7 +588,7 @@ CONTAINS
 
   !>Evaluate the analytic solution for an equations set.
   SUBROUTINE EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal,time, &
-    & variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters,value,err,error,*)
+    & variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters,analyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
@@ -657,7 +602,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
     REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
-    REAL(DP), INTENT(OUT) :: value !<On return, the analtyic function value.
+    REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analtyic function value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -671,7 +616,7 @@ CONTAINS
     IF(SIZE(equationsSet%specification,1)<1) &
       & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
     
-    SELECT CASE(equationsSet%SPECIFICATION(1))
+    SELECT CASE(equationsSet%specification(1))
     CASE(EQUATIONS_SET_ELASTICITY_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
@@ -681,9 +626,9 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       IF(SIZE(equationsSet%specification,1)<2) CALL FlagError("Equations set specification must have at least two "// &
         & "entries for a classical field equations set.",err,error,*999)
-      CALL ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsSet%specification(2), &
-        & analyticFunctionType,position,tangents,normal,time,variableType,globalDerivative, &
-        & componentNumber,analyticParameters,materialsParameters,value,err,error,*999)
+      CALL ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsSet%specification(2),analyticFunctionType,position, &
+        & tangents,normal,time,variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters, &
+        & analyticValue,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
@@ -695,7 +640,7 @@ CONTAINS
     CASE DEFAULT
       localError="The first equations set specification of "// &
         & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))//" is not valid."
-      CALL FLAG_ERROR(localError,err,error,*999)
+      CALL FlagError(localError,err,error,*999)
     END SELECT
        
     EXITS("EquationsSet_AnalyticFunctionsEvaluate")
@@ -824,12 +769,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: linearity,timeDependence
     TYPE(EquationsType), POINTER :: equations
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsSet_Assemble",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     CALL Equations_AssertIsFinished(equations,err,error,*999)
@@ -838,10 +783,12 @@ CONTAINS
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set assemble: ",equationsSet%label,err,error,*999)
     ENDIF
-    
-    SELECT CASE(equations%timeDependence)
+
+    CALL Equations_TimeDependenceTypeGet(equations,timeDependence,err,error,*999)
+    CALL Equations_LinearityTypeGet(equations,linearity,err,error,*999)
+    SELECT CASE(timeDependence)
     CASE(EQUATIONS_STATIC)
-      SELECT CASE(equations%linearity)
+      SELECT CASE(linearity)
       CASE(EQUATIONS_LINEAR)
         SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -887,11 +834,11 @@ CONTAINS
       CASE(EQUATIONS_NONLINEAR_BCS)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The equations linearity of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        localError="The equations linearity of "//TRIM(NumberToVString(linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_QUASISTATIC)
-      SELECT CASE(equations%linearity)
+      SELECT CASE(linearity)
       CASE(EQUATIONS_LINEAR)
         SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -916,11 +863,11 @@ CONTAINS
       CASE(EQUATIONS_NONLINEAR_BCS)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The equations linearity of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        localError="The equations linearity of "//TRIM(NumberToVString(linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-      SELECT CASE(equations%linearity)
+      SELECT CASE(linearity)
       CASE(EQUATIONS_LINEAR)
         SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -945,13 +892,13 @@ CONTAINS
       CASE(EQUATIONS_NONLINEAR_BCS)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The equations set linearity of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        localError="The equations set linearity of "//TRIM(NumberToVString(linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_TIME_STEPPING)
       CALL FlagError("Time stepping equations are not assembled.",err,error,*999)
     CASE DEFAULT
-      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+      localError="The equations time dependence type of "//TRIM(NumberToVString(timeDependence,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -975,7 +922,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalStart,internalFinish,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -990,12 +937,11 @@ CONTAINS
     
     ENTERS("EquationsSet_AssembleDynamicLinearFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -1008,8 +954,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
     
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -1019,7 +969,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -1031,42 +981,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -1075,7 +1025,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -1083,7 +1033,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -1106,7 +1056,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalStart,internalFinish,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -1121,12 +1071,11 @@ CONTAINS
     
     ENTERS("EquationsSet_AssembleStaticLinearFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -1139,8 +1088,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
  
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -1150,7 +1103,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -1163,8 +1116,8 @@ CONTAINS
     numberOfTimes=0
     !Loop over the internal elements
     
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1172,34 +1125,34 @@ CONTAINS
     ENDDO !elementIdx
     
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -1208,7 +1161,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -1216,7 +1169,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -1239,7 +1192,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalStart,internalFinish,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -1254,12 +1207,11 @@ CONTAINS
     
     ENTERS("EquationsSet_AssembleStaticNonlinearFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -1272,8 +1224,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
 
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -1283,7 +1239,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -1295,42 +1251,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -1339,7 +1295,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -1347,7 +1303,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -1395,7 +1351,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalStart,internalFinish,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -1410,12 +1366,11 @@ CONTAINS
     
     ENTERS("EquationsSet_AssembleQuasistaticLinearFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -1428,8 +1383,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
-    
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
+   
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -1439,7 +1398,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -1451,42 +1410,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -1495,7 +1454,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -1503,7 +1462,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -1527,218 +1486,261 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsColumnIdx,equationsColumnNumber,equationsMatrixIdx,equationsRowNumber, &
-      & equationsStorageType,rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,variableDOF,variableType
+    INTEGER(INTG) :: dampingMatrixNumber,dynamicMatrixIdx,equationsColumnIdx,equationsColumnNumber,equationsMatrixIdx, &
+      & equationsRowNumber,equationsStorageType,lhsBoundaryCondition,lhsVariableDOF,linearMatrixIdx,massMatrixNumber, &
+      & numberOfDirichletConditions,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfRows, &
+      & numberOfSources,residualIdx,rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,rowCondition, &
+      & sourceIdx,stiffnessMatrixNumber,variableDOF,variableType
+    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
-    REAL(DP) :: dependentValue,matrixValue,rhsValue,sourceValue
-    REAL(DP), POINTER :: dependentParameters(:),equationsMatrixData(:),sourceVectorData(:)
-    TYPE(BoundaryConditionsVariableType), POINTER :: rhsBoundaryConditions
+    REAL(DP) :: dampingAlpha,dependentValue,lhsSum,linearAlpha,massAlpha,matrixValue,residualAlpha,residualValue,rhsValue, &
+      & sourceAlpha,sourceValue,stiffnessAlpha
+    TYPE(BoundaryConditionsVariableType), POINTER :: lhsBoundaryConditionsVariable
+    TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
     TYPE(DomainMappingType), POINTER :: columnDomainMapping,rhsDomainMapping
-    TYPE(DistributedMatrixType), POINTER :: equationsDistributedMatrix
-    TYPE(DistributedVectorType), POINTER :: sourceDistributedVector
+    TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,linearDistributedMatrix,massDistributedMatrix, &
+      & stiffnessDistributedMatrix
+    TYPE(DistributedVectorType), POINTER :: accelerationDistributedVector,displacementDistributedVector,linearDistributedVector, &
+      & residualDistributedVector,sourceDistributedVector,velocityDistributedVector
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,rhsVariable
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameters,displacementParameters,linearParameters,velocityParameters
+    TYPE(FieldVariableType), POINTER :: dynamicVariable,lhsVariable,linearVariable,rhsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_Backsubstitute",err,error,*999)
 
     CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions are not associated.",err,error,*999)
-
+   
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-    NULLIFY(vectorMatrices)
-    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
- 
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-
-    NULLIFY(linearMapping)
-    CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
-    NULLIFY(nonlinearMapping)
-    CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
-    NULLIFY(dynamicMapping)
-    CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
     NULLIFY(rhsMapping)
     CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
-    NULLIFY(sourcesMapping)
-    CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
 
-    dynamicMatrices=>vectorMatrices%dynamicMatrices
-    IF(ASSOCIATED(dynamicMatrices)) THEN
-      !CALL FlagError("Not implemented.",err,error,*999)
-    ELSE
-      NULLIFY(linearMatrices)
-      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
-      NULLIFY(linearMapping)
-      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
-      NULLIFY(rhsMapping)
-      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
-      NULLIFY(sourcesMapping)
-      CALL EquationsMappingVector_SourcesMappingGet(vectorMapping,sourcesMapping,err,error,*999)
+    IF(ASSOCIATED(rhsMapping)) THEN
+      !Only back substitute if we have a RHS variable
+ 
+      NULLIFY(rhsVariable)
+      CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
+      NULLIFY(equationsRowToRHSDOFMap)
+      CALL EquationsMappingRHS_EquationsRowToRHSDOFMapGet(rhsMapping,equationsRowToRHSDOFMap,err,error,*999)
       
-      IF(ASSOCIATED(sourcesMapping)) THEN
-        DO sourceIdx=1,
-        NULLIFY(sourceVector)
-        CALL EquationsMatricesVector_SourceVectorGet(vectorMatrices,sourceVector,err,error,*999)
-        sourceDistributedVector=>sourceVector%vector
-        IF(.NOT.ASSOCIATED(sourceDistributedVector)) &
-          & CALL FlagError("Source distributed vector is not associated.",err,error,*999)
-        CALL DistributedVector_DataGet(sourceDistributedVector,sourceVectorData,err,error,*999)
-      ENDIF
-      IF(ASSOCIATED(rhsMapping)) THEN
-        NULLIFY(rhsVariable)
-        CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
-        rhsVariableType=rhsVariable%variableType
-        NULLIFY(rhsDomainMapping)
-        CALL FieldVariable_DomainMappingGet(rhsVariable,rhsDomainMapping,err,error,*999)
-        CALL BoundaryConditions_VariableExists(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
-        IF(ASSOCIATED(rhsBoundaryConditions)) THEN
-          !Loop over the equations matrices
-          DO equationsMatrixIdx=1,linearMatrices%numberOfLinearMatrices
-            NULLIFY(dependentVariable)
-            CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,equationsMatrixIdx,dependentVariable,err,error,*999)
-            variableType=dependentVariable%variableType
-            !Get the dependent field variable parameters
-            CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_VALUES_SET_TYPE,dependentParameters,err,error,*999)
-            NULLIFY(equationsMatrix)
-            CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equationsMatrixIdx,equationsMatrix,err,error,*999)
-            columnDomainMapping=>linearMapping%equationsMatrixToVarMaps(equationsMatrixIdx)%columnDOFSMapping
-            IF(ASSOCIATED(columnDomainMapping)) &
-              & CALL FlagError("Equations column domain mapping is not associated.",err,error,*999)
-            equationsDistributedMatrix=>equationsMatrix%matrix
-            IF(.NOT.ASSOCIATED(equationsDistributedMatrix)) &
-              & CALL FlagError("Equations matrix distributed matrix is not associated.",err,error,*999)
-            CALL DistributedMatrix_StorageTypeGet(equationsDistributedMatrix,equationsStorageType,err,error,*999)
-            CALL DistributedMatrix_DataGet(equationsDistributedMatrix,equationsMatrixData,err,error,*999)
-            SELECT CASE(equationsStorageType)
-            CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-              !Loop over the non ghosted rows in the equations set
-              DO equationsRowNumber=1,vectorMapping%numberOfRows
-                rhsValue=0.0_DP
-                rhsVariableDOF=rhsMapping%equationsRowToRHSDOFMap(equationsRowNumber)
-                rhsGlobalDOF=rhsDomainMapping%localToGlobalMap(rhsVariableDOF)
-                rhsBoundaryCondition=rhsBoundaryConditions%DOFTypes(rhsGlobalDOF)
-                !For free RHS DOFs, set the right hand side field values by multiplying the
-                !row by the dependent variable value
-                SELECT CASE(rhsBoundaryCondition)
-                CASE(BOUNDARY_CONDITION_DOF_FREE)
-                  !Back substitute
-                  !Loop over the local columns of the equations matrix
-                  DO equationsColumnIdx=1,columnDomainMapping%totalNumberOfLocal
-                    equationsColumnNumber=columnDomainMapping%localToGlobalMap(equationsColumnIdx)
-                    variableDOF=equationsColumnIdx
-                    matrixValue=equationsMatrixData(equationsRowNumber+ &
-                      & (equationsColumnNumber-1)*vectorMatrices%totalNumberOfRows)
-                    dependentValue=dependentParameters(variableDOF)
-                    rhsValue=rhsValue+matrixValue*dependentValue
-                  ENDDO !equationsColumnIdx
-                CASE(BOUNDARY_CONDITION_DOF_FIXED)
-                  !Do nothing
-                CASE(BOUNDARY_CONDITION_DOF_MIXED)
-                  !Robin or is it Cauchy??? boundary conditions
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The RHS variable boundary condition of "// &
-                    & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
-                    & " for RHS variable dof number "// &
-                    & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                IF(ASSOCIATED(sourceMapping)) THEN
-                  sourceValue=sourceVectorData(equationsRowNumber)
-                  rhsValue=rhsValue-sourceValue
-                ENDIF
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                  & FIELD_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-              ENDDO !equationsRowNumber
-            CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-              NULLIFY(rowIndices)
-              NULLIFY(columnIndices)
-              CALL DistributedMatrix_StorageLocationsGet(equationsDistributedMatrix,rowIndices,columnIndices,err,error,*999)
-              !Loop over the non-ghosted rows in the equations set
-              DO equationsRowNumber=1,vectorMapping%numberOfRows
-                rhsValue=0.0_DP
-                rhsVariableDOF=rhsMapping%equationsRowToRHSDOFMap(equationsRowNumber)
-                rhsGlobalDOF=rhsDomainMapping%localToGlobalMap(rhsVariableDOF)
-                rhsBoundaryCondition=rhsBoundaryConditions%DOFTypes(rhsGlobalDOF)
-                SELECT CASE(rhsBoundaryCondition)
-                CASE(BOUNDARY_CONDITION_DOF_FREE)
-                  !Back substitute
-                  !Loop over the local columns of the equations matrix
-                  DO equationsColumnIdx=rowIndices(equationsRowNumber),rowIndices(equationsRowNumber+1)-1
-                    equationsColumnNumber=columnIndices(equationsColumnIdx)
-                    variableDOF=columnDomainMapping%globalToLocalMap(equationsColumnNumber)%localNumber(1)
-                    matrixValue=equationsMatrixData(equationsColumnIdx)
-                    dependentValue=dependentParameters(variableDOF)
-                    rhsValue=rhsValue+matrixValue*dependentValue
-                  ENDDO !equationsColumnIdx
-                CASE(BOUNDARY_CONDITION_DOF_FIXED)
-                  !Do nothing
-                CASE(BOUNDARY_CONDITION_DOF_MIXED)
-                  !Robin or is it Cauchy??? boundary conditions
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global boundary condition of "// &
-                    & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
-                    & " for RHS variable dof number "// &
-                    & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                IF(ASSOCIATED(sourceMapping)) THEN
-                  sourceValue=sourceVectorData(equationsRowNumber)
-                  rhsValue=rhsValue-sourceValue
-                ENDIF
-                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                  & FIELD_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
-              ENDDO !equationsRowNumber
-            CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              localError="The matrix storage type of "// &
-                & TRIM(NumberToVString(equationsStorageType,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            CALL DistributedMatrix_DataRestore(equationsDistributedMatrix,equationsMatrixData,err,error,*999)
-            !Restore the dependent field variable parameters
-            CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-              & dependentParameters,err,error,*999)
-          ENDDO !equationsMatrixIdx
-          
-          !Start the update of the field parameters
-          CALL Field_ParameterSetUpdateStart(dependentField,rhsVariableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-          !Finish the update of the field parameters
-          CALL Field_ParameterSetUpdateFinish(dependentField,rhsVariableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-          IF(ASSOCIATED(sourceMapping)) &
-            & CALL DistributedVector_DataRestore(sourceDistributedVector,sourceVectorData,err,error,*999)
+      NULLIFY(lhsMapping)
+      CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+      NULLIFY(lhsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,lhsVariable,err,error,*999)
+      CALL EquationsMappingLHS_NumberOfRowsGet(lhsMapping,numberOfRows,err,error,*999)
+      NULLIFY(equationsRowToLHSDOFMap)
+      CALL EquationsMappingLHS_EquationsRowTOLHSDOFMapGet(lhsMapping,equationsRowToLHSDOFMap,err,error,*999)
+      
+      NULLIFY(lhsBoundaryConditionsRowVariable)
+      CALL BoundaryConditions_RowVariableGet(boundaryConditions,lhsVariable,lhsBoundaryConditionsRowVariable,err,error,*999)
+      NULLIFY(lhsBoundaryConditionsVariable)
+      CALL BoundaryConditions_VariableGet(boundaryConditions,lhsVariable,lhsBoundaryConditionsVariable,err,error,*999)
+      CALL BoundaryConditionsVariable_NumberOfDirichletConditionsGet(lhsBoundaryConditionsVariable,numberOfDirichletConditions, &
+        & err,error,*999)
+      
+      IF(numberOfDirichletConditions>0) THEN
+      
+        NULLIFY(vectorMatrices)
+        CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+
+        NULLIFY(dynamicMapping)
+        CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
+        IF(ASSOCIATED(dynamicMapping)) THEN
+          NULLIFY(dynamicMatrices)
+          CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+          CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+          CALL EquationsMappingDynamic_StiffnessMatrixNumberGet(dynamicMapping,stiffnessMatrixNumber,err,error,*999)
+          CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
+          CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
+          NULLIFY(dynamicVariable)
+          CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
+          IF(stiffnessMatrixNumber/=0) THEN
+            NULLIFY(displacementParameters)
+            CALL FieldVariable_ParametersSetGet(dynamicVariable,FIELD_VALUES_SET_TYPE,displacementParameters,err,error,*999)
+            NULLIFY(displacementDistributedVector)
+            CALL FieldParameterSet_ParametersGet(displacementParameters,displacementDistributedVector,err,error,*999)
+            NULLIFY(stiffnessMatrix)
+            CALL EquationsMatricesDynamic_EquatMatrixGet(dynamicMatrices,stiffnessMatrixNumber,stiffnessMatrix,err,error,*999)
+            NULLIFY(stiffnessDistributedMatrix)
+            CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
+            CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,stiffnessAlpha,err,error,*999)
+          ENDIF
+          IF(dampingMatrixNumber/=0) THEN
+            NULLIFY(velocityParameters)
+            CALL FieldVariable_ParametersSetGet(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameters,err,error,*999)
+            NULLIFY(velocityDistributedVector)
+            CALL FieldParameterSet_ParametersGet(velocityParameters,velocityDistributedVector,err,error,*999)
+            NULLIFY(dampingMatrix)
+            CALL EquationsMatricesDynamic_EquatMatrixGet(dynamicMatrices,dampingMatrixNumber,dampingMatrix,err,error,*999)
+            NULLIFY(dampingDistributedMatrix)
+            CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
+            CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,dampingAlpha,err,error,*999)
+          ENDIF
+          IF(massMatrixNumber/=0) THEN
+            NULLIFY(accelerationParameters)
+            CALL FieldVariable_ParametersSetGet(dynamicVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameters, &
+              & err,error,*999)
+            NULLIFY(accelerationDistributedVector)
+            CALL FieldParameterSet_ParametersGet(accelerationParameters,accelerationDistributedVector,err,error,*999)
+            NULLIFY(massMatrix)
+            CALL EquationsMatricesDynamic_EquatMatrixGet(dynamicMatrices,massMatrixNumber,massMatrix,err,error,*999)
+            NULLIFY(massDistributedMatrix)
+            CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
+            CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,massAlpha,err,error,*999)
+          ENDIF
         ENDIF
-      ENDIF
-    ENDIF
+        NULLIFY(linearMapping)
+        CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
+        IF(ASSOCIATED(linearMapping)) THEN
+          NULLIFY(linearMatrices)
+          CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+          CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+        ENDIF
+        NULLIFY(nonlinearMapping)
+        CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
+        IF(ASSOCIATED(nonlinearMapping)) THEN
+          NULLIFY(nonlinearMatrices)
+          CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+          CALL EquationsMatricesNonlinear_NumberOfResidualsGet(nonlinearMatrices,numberOfResiduals,err,error,*999)
+        ENDIF
+        NULLIFY(sourcesMapping)
+        CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
+        IF(ASSOCIATED(sourcesMapping)) THEN
+          NULLIFY(sourceVectors)
+          CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+          CALL EquationsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*999)
+        ENDIF
+
+        !Loop over the rows in the equations set
+        DO equationsRowNumber=1,numberOfRows
+          CALL BoundaryConditionsRowVariable_RowConditionTypeGet(lhsBoundaryConditionsRowVariable,equationsRowNumber, &
+            & rowCondition,err,error,*999)
+          lhsVariableDOF=equationsRowToLHSDOFMap(equationsRowNumber)
+          CALL BoundaryConditionsVariable_LocalDOFTypeGet(lhsBoundaryConditionsVariable,lhsVariableDOF,lhsBoundaryCondition, &
+            & err,error,*999)
+
+          rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
+
+          SELECT CASE(lhsBoundaryCondition)
+          CASE(BOUNDARY_CONDITION_FREE_ROW)
+            !OK, do nothing
+          CASE(BOUNDARY_CONDITION_DIRICHLET_ROW)
+            !Backsubtitute to find RHS value
+            lhsSum=0.0_DP
+            !Dynamic matrices
+            IF(ASSOCIATED(dynamicMapping)) THEN
+              DO dynamicMatrixIdx=1,numberOfDynamicMatrices
+                IF(dynamicMatrixIdx==stiffnessMatrixNumber) THEN
+                  CALL DistributedMatrix_MatrixRowByVectorAdd(stiffnessDistributedMatrix,.FALSE.,displacementDistributedVector, &
+                    & equationsRowNumber,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,stiffnessAlpha,lhsSum,err,error,*999)
+                ELSE IF(dynamicMatrixIdx==dampingMatrixNumber) THEN
+                  CALL DistributedMatrix_MatrixRowByVectorAdd(dampingDistributedMatrix,.FALSE.,velocityDistributedVector, &
+                    & equationsRowNumber,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,dampingAlpha,lhsSum,err,error,*999)
+                ELSE IF(dynamicMatrixIdx==massMatrixNumber) THEN
+                  CALL DistributedMatrix_MatrixRowByVectorAdd(massDistributedMatrix,.FALSE.,accelerationDistributedVector, &
+                    & equationsRowNumber,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,massAlpha,lhsSum,err,error,*999)
+                ELSE
+                  localError="The dynamic matrix number of "//TRIM(NumberToVString(dynamicMatrixIdx,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              ENDDO !dynamicMatrixIdx
+            ENDIF
+            !Linear matrices
+            IF(ASSOCIATED(linearMapping)) THEN
+              DO linearMatrixIdx=1,numberOfLinearMatrices
+                NULLIFY(linearVariable)
+                CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
+                !Get the dependent field variable parameters
+                NULLIFY(linearParameters)
+                CALL FieldVariable_ParametersSetGet(linearVariable,FIELD_VALUES_SET_TYPE,linearParameters,err,error,*999)
+                NULLIFY(linearDistributedVector)
+                CALL FieldParameterSet_ParametersGet(linearParameters,linearDistributedVector,err,error,*999)
+                NULLIFY(linearMatrix)
+                CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,linearMatrixIdx,linearMatrix,err,error,*999)
+                NULLIFY(linearDistributedMatrix)
+                CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
+                CALL EquationsMatrix_MatrixCoefficientGet(linearMatrix,linearAlpha,err,error,*999)
+                CALL DistributedMatrix_MatrixRowByVectorAdd(linearDistributedMatrix,.FALSE.,linearDistributedVector, &
+                  & equationsRowNumber,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,linearAlpha,lhsSum,err,error,*999)
+              ENDDO !linearMatrixIdx
+            ENDIF
+            !Residual vectors
+            IF(ASSOCIATED(nonlinearMapping)) THEN
+              DO residualIdx=1,numberOfResiduals
+                NULLIFY(residualVector)
+                CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+                NULLIFY(residualDistributedVector)
+                CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                  & residualDistributedVector,err,error,*999)
+                CALL EquationsMatricesResidual_VectorCoefficientGet(residualVector,residualAlpha,err,error,*999)
+                CALL DistributedVector_ValuesGet(residualDistributedVector,equationsRowNumber,residualValue,err,error,*999)
+                lhsSum=lhsSum+residualAlpha*residualValue
+              ENDDO !residualIdx
+            ENDIF
+            !Source vectors
+            IF(ASSOCIATED(sourcesMapping)) THEN
+              DO sourceIdx=1,numberOfSources
+                NULLIFY(sourceVector)
+                CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
+                NULLIFY(sourceDistributedVector)
+                CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+                  & sourceDistributedVector,err,error,*999)
+                CALL EquationsMatricesSource_VectorCoefficientGet(sourceVector,sourceAlpha,err,error,*999)
+                CALL DistributedVector_ValuesGet(sourceDistributedVector,equationsRowNumber,sourceValue,err,error,*999)
+                lhsSum=lhsSum+sourceAlpha*SourceValue              
+              ENDDO !sourceIdx
+            ENDIF
+            !Set the RHS value
+            CALL FieldVariable_PararmeterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,lhsSum,err,error,*999)
+          CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
+            !OK, do nothing
+          CASE(BOUNDARY_CONDITION_ROBIN_ROW)
+            !Robin boundary conditions
+            CALL FlagError("Robin boundary conditions are not implemented.",err,error,*999)
+          CASE(BOUNDARY_CONDITION_CAUCHY_ROW)
+            !Cauchy boundary conditions
+            CALL FlagError("Cauchy boundary conditions are not implemented.",err,error,*999)
+          CASE(BOUNDARY_CONDITION_CONSTRAINED_ROW)
+            !Constrained row boundary conditions
+            CALL FlagError("Constrained row boundary conditions are not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The LHS boundary condition of "// &
+              & TRIM(NumberToVString(lhsBoundaryCondition,"*",err,error))// &
+              & " for RHS variable dof number "// &
+              & TRIM(NumberToVString(lhsVariableDOF,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !equationsRowNumber
+        !Update RHS variable
+        CALL FieldVariable_ParameterSetUpdateStart(rhsVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(rhsVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      ENDIF !Number of Dirichlet conditions > 0
+    ENDIF !RHS mapping
           
     EXITS("EquationsSet_Backsubstitute")
     RETURN
@@ -1747,101 +1749,6 @@ CONTAINS
    
   END SUBROUTINE EquationsSet_Backsubstitute
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Updates the right hand side variable from the equations residual vector
-  SUBROUTINE EquationsSet_NonlinearRHSUpdate(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<Boundary conditions to use for the RHS update
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: variableDOF,rowIdx,variableType,rhsGlobalDOF,rhsBoundaryCondition,equationsMatrixIdx
-    REAL(DP) :: VALUE
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(DistributedVectorType), POINTER :: residualVector
-    TYPE(FieldType), POINTER :: rhsField
-    TYPE(FieldVariableType), POINTER :: rhsVariable,residualVariable
-    TYPE(BoundaryConditionsVariableType), POINTER :: rhsBoundaryConditions
-    TYPE(DomainMappingType), POINTER :: rhsDomainMapping
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("EquationsSet_NonlinearRHSUpdate",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions are not associated.",err,error,*999)
-      
-    NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    NULLIFY(vectorEquations)
-    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-    NULLIFY(vectorMapping)
-    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-    NULLIFY(nonlinearMapping)
-    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-    NULLIFY(rhsMapping)
-    CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
-    NULLIFY(rhsVariable)
-    CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
-    NULLIFY(rhsField)
-    CALL FieldVariable_FieldGet(rhsVariable,rhsField,err,error,*999)
-    variableType=rhsVariable%variableType
-    NULLIFY(rhsDomainMapping)
-    CALL FieldVariable_DomainMappingGet(rhsVariable,rhsDomainMapping,err,error,*999)
-    NULLIFY(rhsBoundaryConditions)
-    CALL BoundaryConditions_VariableGet(boundaryConditions,rhsVariable,rhsBoundaryConditions,err,error,*999)
-    !Get the equations residual vector
-    NULLIFY(vectorMatrices)
-    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    NULLIFY(nonlinearMatrices)
-    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-    residualVector=>nonlinearMatrices%residual
-    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
-    DO equationsMatrixIdx=1,nonlinearMapping%numberOfResidualVariables
-      NULLIFY(residualVariable)
-      CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,equationsMatrixIdx,residualVariable,err,error,*999)
-      DO rowIdx=1,vectorMapping%numberOfRows
-        variableDOF=rhsMapping%equationsRowToRHSDOFMap(rowIdx)
-        rhsGlobalDOF=rhsDomainMapping%localToGlobalMap(variableDOF)
-        rhsBoundaryCondition=rhsBoundaryConditions%DOFTypes(rhsGlobalDOF)
-        SELECT CASE(rhsBoundaryCondition)
-        CASE(BOUNDARY_CONDITION_DOF_FREE)
-          !Add residual to field value
-          CALL DistributedVector_ValuesGet(residualVector,rowIdx,VALUE,err,error,*999)
-          CALL Field_ParameterSetUpdateLocalDOF(rhsField,variableType,FIELD_VALUES_SET_TYPE,variableDOF,VALUE,err,error,*999)
-        CASE(BOUNDARY_CONDITION_DOF_FIXED)
-          !Do nothing
-        CASE(BOUNDARY_CONDITION_DOF_MIXED)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The RHS variable boundary condition of "// &
-            & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
-            & " for RHS variable dof number "// &
-            & TRIM(NumberToVString(variableDOF,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ENDDO !rowIdx
-    ENDDO !equationsMatrixIdx
-    CALL Field_ParameterSetUpdateStart(rhsField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-    CALL Field_ParameterSetUpdateFinish(rhsField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-
-    EXITS("EquationsSet_NonlinearRHSUpdate")
-    RETURN
-999 ERRORSEXITS("EquationsSet_NonlinearRHSUpdate",err,error)
-    RETURN 1
-
-  END SUBROUTINE EquationsSet_NonlinearRHSUpdate
-
   !
   !================================================================================================================================
   !
@@ -1894,6 +1801,92 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_BoundaryConditionsAnalytic
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that the fields and region in an equations set are compitable
+  SUBROUTINE EquationsSet_FieldRegionSetupCheck(equationsSet,checkString,fieldUserNumber,field,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to check the setup for.
+    CHARACTER(LEN=*), INTENT(IN) :: checkString !<The string on the equations set part to check.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to check
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the setup for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: actualFieldDecompositionUserNumber,actualFieldRegionUserNumber,actualFieldUserNumber, &
+      & equationsSetRegionUserNumber,geometricDecompositionUserNumber
+    TYPE(DecompositionType), POINTER :: fieldDecomposition,geometricDecomposition
+    TYPE(FieldType), POINTER :: checkField,geometricField
+    TYPE(RegionType), POINTER :: actualFieldRegion,equationsSetRegion
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_FieldRegionSetupCheck",err,error,*999)
+
+    NULLIFY(equationsSetRegion)
+    CALL EquationsSet_RegionGet(equationsSet,equationsSetRegion,err,error,*999)
+    CALL Region_UserNumberGet(equationsSetRegion,equationsSetRegionUserNumber,err,error,*999)
+    IF(ASSOCIATED(field)) THEN
+      !Check that the specified field and the specified field user number matches
+      CALL Field_AssertIsFinished(field,err,error,*999)
+      CALL Field_UserNumberGet(field,actualFieldUserNumber,err,error,*999)
+      IF(fieldUserNumber/=actualFieldUserNumber) THEN
+        localError="The specified "//TRIM(checkString)//" field user number of "// &
+          & TRIM(NumberToVString(fieldUserNumber,"*",err,error))//" does not match the user number of the specified "// &
+          & TRIM(checkString)//" field of "//TRIM(NumberToVString(actualFieldUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Check that the specified field has been created on the same region as the equations set
+      CALL Field_RegionGet(field,actualFieldRegion,err,error,*999)
+      CALL Region_UserNumberGet(actualFieldRegion,actualFieldRegionUserNumber,err,error,*999)
+      IF(equationsSetRegionUserNumber/=actualFieldRegionUserNumber) THEN
+        localError="Invalid region setup. The specified "//TRIM(checkString)//" field has been created on region number "// &
+          & TRIM(NumberToVString(actualFieldRegionUserNumber,"*",err,error))// &
+          & " and the specified equations set has been created on region number "// &
+          & TRIM(NumberToVString(equationsSetRegionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      NULLIFY(geometricField)
+      CALL EquationsSet_GeometricFieldExists(equationsSet,geometricField,err,error,*999)
+      IF(ASSOCIATED(geometricField)) THEN
+        !Check that the specified field has the same decomposition as the geometric field
+        NULLIFY(geometricDecomposition)
+        CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
+        CALL Decomposition_UserNumberGet(geometricDecomposition,geometricDecompositionUserNumber,err,error,*999)
+        NULLIFY(fieldDecomposition)
+        CALL Field_DecompositionGet(field,fieldDecomposition,err,error,*999)
+        CALL Decomposition_UserNumberGet(fieldDecomposition,actualFieldDecompositionUserNumber,err,error,*999)
+        IF(.NOT.ASSOCIATED(geometricDecomposition,fieldDecomposition)) THEN
+          localError="Invalid decomposition setup. The specified "//TRIM(checkString)// &
+            & " field has been decomposed with decomposition number "// &
+            & TRIM(NumberToVString(actualFieldDecompositionUserNumber,"*",err,error))// &
+            & " and the equation set geometric field has been decomposed with decomposition number "// &
+            & TRIM(NumberToVString(geometricDecompositionUserNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDIF
+    ELSE
+      !Check the user number has not already been used for a field in this region.
+      NULLIFY(checkField)
+      CALL Field_UserNumberFind(fieldUserNumber,equationsSetRegion,checkField,err,error,*999)
+      IF(ASSOCIATED(checkField)) THEN
+        localError="The specified "//TRIM(checkString)//" field user number of "// &
+          & TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
+          & " has already been used to create a field on region number "// &
+          & TRIM(NumberToVString(equationsSetRegionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF       
+    ENDIF
+    
+    EXITS("EquationsSet_FieldRegionSetupCheck")
+    RETURN
+999 ERRORSEXITS("EquationsSet_FieldRegionSetupCheck",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_FieldRegionSetupCheck
 
   !
   !================================================================================================================================
@@ -1963,69 +1956,45 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,equationsSetIdx
+    INTEGER(INTG) :: dummyErr,equationsSetIdx,equationsSetRegionUserNumber,geometricFibreFieldRegionUserNumber, &
+      & geometricFibreFieldType
     TYPE(DecompositionType), POINTER :: equationsSetFieldDecomposition,geometricFibreFieldDecomposition
     TYPE(EquationsSetType), POINTER :: newEquationsSet
     TYPE(EquationsSetPtrType), POINTER :: newEquationsSets(:)
+    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: geometricFibreFieldRegion,equationsSetFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
-    TYPE(EquationsSetEquationsSetFieldType), POINTER :: equationsEquationsSetField
-    TYPE(FieldType), POINTER :: FIELD
-
-    NULLIFY(newEquationsSet)
-    NULLIFY(newEquationsSets)
-    NULLIFY(equationsEquationsSetField)
 
     ENTERS("EquationsSet_CreateStart",err,error,*997)
 
-    IF(.NOT.ASSOCIATED(equationsSetRegion)) CALL FlagError("Region is not associated.",err,error,*997)
-    IF(.NOT.ASSOCIATED(equationsSetRegion%equationsSets)) THEN
-      localError="The equations sets on region number "//TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))// &
-        & " are not associated."
-      CALL FlagError(localError,err,error,*997)
-    ENDIF
+    CALL Region_UserNumberGet(equationsSetRegion,equationsSetRegionUserNumber,err,error,*999)
     CALL Field_AssertIsFinished(geometricFibreField,err,error,*999)
+    NULLIFY(newEquationsSet)
     CALL EquationsSet_UserNumberFind(userNumber,equationsSetRegion,newEquationsSet,err,error,*997)
     IF(ASSOCIATED(newEquationsSet)) THEN
       localError="Equations set user number "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " has already been created on region number "//TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))//"."
+        & " has already been created on region number "//TRIM(NumberToVString(equationsSetRegionUserNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*997)
     ENDIF
-    NULLIFY(newEquationsSet)
-    IF(geometricFibreField%TYPE/=FIELD_GEOMETRIC_TYPE.AND.geometricFibreField%TYPE/=FIELD_FIBRE_TYPE) &
+    CALL Field_TypeGet(geometricFibreField,geometricFibreFieldType,err,error,*999)
+    IF(geometricFibreFieldType/=FIELD_GEOMETRIC_TYPE.AND.geometricFibreFieldType/=FIELD_FIBRE_TYPE) &
       & CALL FlagError("The specified geometric field is not a geometric or fibre field.",err,error,*997)
     NULLIFY(geometricFibreFieldRegion)
     CALL Field_RegionGet(geometricFibreField,geometricFibreFieldRegion,err,error,*999)
-    IF(geometricFibreFieldRegion%userNumber/=equationsSetRegion%userNumber) THEN
+    CALL Region_UserNumberGet(geometricFibreFieldRegion,geometricFibreFieldRegionUserNumber,err,error,*999)
+    IF(geometricFibreFieldRegionUserNumber/=equationsSetRegionUserNumber) THEN
       localError="The geometric field region and the specified region do not match. "// &
         & "The geometric field was created on region number "// &
-        & TRIM(NumberToVString(geometricFibreFieldRegion%userNumber,"*",err,error))// &
+        & TRIM(NumberToVString(geometricFibreFieldRegionUserNumber,"*",err,error))// &
         & " and the specified equation set region number is "// &
-        & TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSetRegionUserNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"equations set",equationsSetFieldUserNumber,equationsSetField, &
+      & err,error,*999)
     IF(ASSOCIATED(equationsSetField)) THEN
-      !Check the equations set field has been finished
-      CALL Field_AssertIsFinished(equationsSetField,err,error,*999)
-      !Check the user numbers match
-      IF(equationsSetFieldUserNumber/=equationsSetField%userNumber) THEN
-        localError="The specified equations set field user number of "// &
-          & TRIM(NumberToVString(equationsSetFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified equations set field of "// &
-          & TRIM(NumberToVString(equationsSetField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      NULLIFY(equationsSetFieldRegion)
-      CALL Field_RegionGet(equationsSetField,equationsSetFieldRegion,err,error,*999)
-      !Check the field is defined on the same region as the equations set
-      IF(equationsSetFieldRegion%userNumber/=equationsSetRegion%userNumber) THEN
-        localError="Invalid region setup. The specified equations set field was created on region no. "// &
-          & TRIM(NumberToVString(equationsSetFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
       !Check the specified equations set field has the same decomposition as the geometric field
       NULLIFY(geometricFibreFieldDecomposition)
       CALL Field_DecompositionGet(geometricFibreField,geometricFibreFieldDecomposition,err,error,*999)
@@ -2035,31 +2004,22 @@ CONTAINS
         CALL FlagError("The specified equations set field does not have the same decomposition "// &
           & "as the geometric field for the specified equations set.",err,error,*999)
       ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(equationsSetFieldUserNumber,equationsSetRegion,field,err,error,*999)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified equations set field user number of "// &
-          & TRIM(NumberToVString(equationsSetFieldUserNumber,"*",err,error))// &
-          & "has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(equationsSetRegion%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
     ENDIF
     
     !Initalise equations set
+    NULLIFY(newEquationsSet)
     CALL EquationsSet_Initialise(newEquationsSet,err,error,*999)
     !Set default equations set values
     newEquationsSet%userNumber=userNumber
     newEquationsSet%globalNumber=equationsSetRegion%equationsSets%numberOfEquationsSets+1
     newEquationsSet%equationsSets=>equationsSetRegion%equationsSets
     newEquationsSet%label="Equations Set "//TRIM(NumberToVString(userNumber,"*",err,error))
-    newEquationsSet%REGION=>equationsSetRegion
+    newEquationsSet%region=>equationsSetRegion
     !Set the equations set class, type and subtype
     CALL EquationsSet_SpecificationSet(newEquationsSet,equationsSetSpecification,err,error,*999)
     newEquationsSet%equationsSetFinished=.FALSE.
     !Initialise the setup
+    newEquationsSet%equationsField%equationsSetFieldAutoCreated=(.NOT.ASSOCIATED(equationsSetField))
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_INITIAL_TYPE
     equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
@@ -2071,7 +2031,7 @@ CONTAINS
     CALL EquationsSet_SetupFinalise(equationsSetSetupInfo,err,error,*999)
     !Set up the equations set geometric fields
     CALL EquationsSet_GeometryInitialise(newEquationsSet,err,error,*999)
-    IF(geometricFibreField%type==FIELD_GEOMETRIC_TYPE) THEN
+    IF(geometricFibreFieldType==FIELD_GEOMETRIC_TYPE) THEN
       newEquationsSet%geometry%geometricField=>geometricFibreField
       NULLIFY(newEquationsSet%geometry%fibreField)
     ELSE
@@ -2097,9 +2057,8 @@ CONTAINS
     equationsSetRegion%equationsSets%equationsSets=>newEquationsSets
     equationsSetRegion%equationsSets%numberOfEquationsSets=equationsSetRegion%equationsSets%numberOfEquationsSets+1
     equationsSet=>newEquationsSet
-    equationsSetEquationsField=>equationsSet%equationsField
     !\todo check pointer setup
-    IF(equationsSetEquationsField%equationsSetFieldAutoCreated) THEN
+    IF(equationsSet%equationsField%equationsSetFieldAutoCreated) THEN
       equationsSetField=>equationsSet%equationsField%equationsSetField
     ELSE
       equationsSet%equationsField%equationsSetField=>equationsSetField
@@ -2221,7 +2180,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
+    INTEGER(INTG) :: matrixIdx,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfSources,outputType,sourceIdx
+    LOGICAL :: updateMatrix,updateVector
     TYPE(ElementMatrixType), POINTER :: elementMatrix
     TYPE(ElementVectorType), POINTER :: elementVector
     TYPE(EquationsType), POINTER :: equations
@@ -2229,15 +2189,17 @@ CONTAINS
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_FiniteElementCalculate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)    
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     IF(.NOT.ALLOCATED(equationsSet%specification)) &
       & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
     IF(SIZE(equationsSet%specification,1)<1) &
@@ -2262,105 +2224,68 @@ CONTAINS
       CALL MultiPhysics_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE DEFAULT
       localError="The first equations set specification of "// &
-        & TRIM(NumberToVString(equationsSet%SPECIFICATION(1),"*",err,error))//" is not valid."
+        & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))//" is not valid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
       NULLIFY(vectorEquations)
       CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
       NULLIFY(vectorMatrices)
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element stiffness matrices:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element number = ",elementNumber,err,error,*999)
-      dynamicMatrices=>vectorMatrices%dynamicMatrices
+      NULLIFY(dynamicMatrices)
+      CALL EquationsMatricesVector_DynamicMatricesExists(vectorMatrices,dynamicMatrices,err,error,*999)
       IF(ASSOCIATED(dynamicMatrices)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Dynamic matrices:",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",dynamicMatrices%numberOfDynamicMatrices, &
-          & err,error,*999)
-        DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",numberOfDynamicMatrices,err,error,*999)
+        DO matrixIdx=1,numberOfDynamicMatrices
+          NULLIFY(dynamicMatrix)
+          CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,dynamicMatrix,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element matrix : ",matrixIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",dynamicMatrices%matrices(matrixIdx)%ptr%updateMatrix, &
-            & err,error,*999)
-          IF(dynamicMatrices%matrices(matrixIdx)%ptr%updateMatrix) THEN
-            elementMatrix=>dynamicMatrices%matrices(matrixIdx)%ptr%elementMatrix
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix%maxNumberOfColumns, &
-              & err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
-              & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
-              & '(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
+          CALL EquationsMatrix_UpdateMatrixGet(dynamicMatrix,updateMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",updateMatrix,err,error,*999)
+          IF(updateMatrix) CALL EquationsMatrix_ElementMatrixOutput(GENERAL_OUTPUT_TYPE,dynamicMatrix,err,error,*999)
         ENDDO !matrixIdx
       ENDIF
-      linearMatrices=>vectorMatrices%linearMatrices
+      NULLIFY(linearMatrices)
+      CALL EquationsMatricesVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,error,*999)
       IF(ASSOCIATED(linearMatrices)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Linear matrices:",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",linearMatrices%numberOfLinearMatrices, &
-          & err,error,*999)
-        DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",numberOfLinearMatrices,err,error,*999)
+        DO matrixIdx=1,numberOfLinearMatrices
+          NULLIFY(linearMatrix)
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element matrix : ",matrixIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",linearMatrices%matrices(matrixIdx)%ptr%updateMatrix, &
-            & err,error,*999)
-          IF(linearMatrices%matrices(matrixIdx)%ptr%updateMatrix) THEN
-            elementMatrix=>linearMatrices%matrices(matrixIdx)%ptr%elementMatrix
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix%maxNumberOfColumns, &
-              & err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
-              & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
-              & '(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
+          CALL EquationsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",updateMatrix,err,error,*999)
+          IF(updateMatrix) CALL EquationsMatrix_ElementMatrixOutput(GENERAL_OUTPUT_TYPE,linearMatrix,err,error,*999)
         ENDDO !matrixIdx
       ENDIF
-      rhsVector=>vectorMatrices%rhsVector
-      IF(ASSOCIATED(rhsVector)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Element RHS vector :",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",rhsVector%updateVector,err,error,*999)
-        IF(rhsVector%updateVector) THEN
-          elementVector=>rhsVector%elementVector
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementVector%numberOfRows,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
-            & err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
-        ENDIF
-      ENDIF
-      sourceVectors=>vectorMatrices%sourceVectors
+      NULLIFY(sourceVectors)
+      CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
       IF(ASSOCIATED(sourceVectors)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Element source vectors:",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",sourceVectors%numberOfSources,err,error,*999)
-        DO sourceIdx=1,sourceVectors%numberOfSources
+        CALL EquationsMatricesSources_NumberOfSourceVectorsGet(sourceVectors,numberOfSources,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSources,err,error,*999)
+        DO sourceIdx=1,numberOfSources
           NULLIFY(sourceVector)
           CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Source vector : ",sourceIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",sourceVector%updateVector,err,error,*999)
-          IF(sourceVector%updateVector) THEN
-            elementVector=>sourceVector%elementVector
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementVector%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
-              & err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-              & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
+          CALL EquationsMatricesSource_UpdateVectorGet(sourceVector,updateVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+          IF(updateVector) CALL EquationsMatricesSource_ElementVectorOutput(GENERAL_OUTPUT_TYPE,sourceVector,err,error,*999)
         ENDDO !sourceIdx
+      ENDIF
+      NULLIFY(rhsVector)
+      CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
+      IF(ASSOCIATED(rhsVector)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Element RHS vector :",err,error,*999)
+        CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateVector,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+        IF(updateVector) CALL EquationsMatricesRHS_ElementVectorOutput(GENERAL_OUTPUT_TYPE,rhsVector,err,error,*999)
       ENDIF
     ENDIF
        
@@ -2384,40 +2309,48 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
-    TYPE(ElementMatrixType), POINTER :: elementMatrix
+    INTEGER(INTG) :: jacobianCalculationType,matrixIdx,numberOfJacobians,numberOfResiduals,outputType,residualIdx
+    LOGICAL :: updateJacobian
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsSet_FiniteElementJacobianEvaluate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    CALL EquationsMatricesNonlinear_NumberOfResidualsGet(nonlinearMatrices,numberOfResiduals,err,error,*999)
     
     IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
     IF(SIZE(equationsSet%specification,1)<1) &
       & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-
-    DO residualIdx=1,nonlinearMatrices%numberOfResiduals
+    
+    DO residualIdx=1,numberOfResiduals
       NULLIFY(residualVector)
       CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
-      DO matrixIdx=1,residualVector%numberOfJacobians
+      CALL EquationsMatricesResidual_NumberOfJacobiansGet(residualvector,numberOfJacobians,err,error,*999)
+      DO matrixIdx=1,numberOfJacobians
         NULLIFY(jacobianMatrix)
         CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
-        SELECT CASE(jacobianMatrix%jacobianCalculationType)
+        CALL JacobianMatrix_JacobianCalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
+        SELECT CASE(jacobianCalculationType)
         CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
           ! None of these routines currently support calculating off diagonal terms for coupled problems,
           ! but when one does we will have to pass through the matrixIdx parameter
+!!TODO: need to pass list of residuals and jacobians to calculate to the FE routines otherwise they will compute all the
+!!      jacobians multiple times inside these loops.
           IF(matrixIdx>1) CALL FlagError("Analytic off-diagonal Jacobian calculation not implemented.",err,error,*999)
           SELECT CASE(equationsSet%specification(1))
           CASE(EQUATIONS_SET_ELASTICITY_CLASS)
@@ -2436,49 +2369,40 @@ CONTAINS
             CALL MultiPhysics_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
           CASE DEFAULT
             localError="The first equations set specification of"// &
-              & TRIM(NumberToVString(equationsSet%SPECIFICATION(1),"*", &
+              & TRIM(NumberToVString(equationsSet%specification(1),"*", &
               & err,error))//" is not valid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
-          CALL EquationsSet_FiniteElementJacobianEvaluateFD(equationsSet,eresidualIdx,matrixIdx,lementNumber,err,error,*999)
+          CALL EquationsSet_FiniteElementJacobianEvaluateFD(equationsSet,residualIdx,matrixIdx,elementNumber,err,error,*999)
         CASE DEFAULT
-          localError="The Jacobian calculation type of "// &
-            & TRIM(NumberToVString(jacobianMatrix%jacobianCalculationType,"*",err,error))//" is not valid for matrix index "// &
-            & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+          localError="The Jacobian calculation type of "//TRIM(NumberToVString(jacobianCalculationType,"*",err,error))// &
+            & " is not valid for Jacobian matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " of residual index "//TRIM(NumberToVString(residualIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDDO !matrixIdx
     ENDDO !residualIdx
-    IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element Jacobian matrix:",err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element Jacobian matrices:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element number = ",elementNumber,err,error,*999)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Element Jacobian:",err,error,*999)
-      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Jacobian number = ",matrixIdx,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update Jacobian = ",nonlinearMatrices%jacobians(matrixIdx)%ptr% &
-          & updateJacobian,err,error,*999)
-        IF(nonlinearMatrices%jacobians(matrixIdx)%ptr%updateJacobian) THEN
-          elementMatrix=>nonlinearMatrices%jacobians(matrixIdx)%ptr%elementJacobian
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns, &
-            & err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows, &
-            & err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix% &
-            & maxNumberOfColumns,err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-            & columnDOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
-          CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
-            & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-            & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-            & '(16X,8(X,E13.6))',err,error,*999)
-!!TODO: Write out the element residual???
-        END IF
-      END DO !matrixIdx
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of residuals = ",numberOfResiduals,err,error,*999)
+      DO residualIdx=1,numberOfResiduals
+        NULLIFY(residualVector)
+        CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Residual number : ",residualIdx,err,error,*999)
+        CALL EquationsMatricesResidual_NumberOfJacobiansGet(residualvector,numberOfJacobians,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of Jacobians = ",numberOfJacobians,err,error,*999)             
+        DO matrixIdx=1,numberOfJacobians
+          NULLIFY(jacobianMatrix)
+          CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Jacobian matrix : ",matrixIdx,err,error,*999)
+          CALL JacobianMatrix_UpdateMatrixGet(jacobianMatrix,updateJacobian,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update Jacobian = ",updateJacobian,err,error,*999)
+          IF(updateJacobian) CALL JacobianMatrix_ElementMatrixOutput(GENERAL_OUTPUT_TYPE,jacobianMatrix,err,error,*999)
+        ENDDO !matrixIdx
+      ENDDO !residualIdx
     ENDIF
       
     EXITS("EquationsSet_FiniteElementJacobianEvaluate")
@@ -2497,36 +2421,37 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet  !<A pointer to the equations set to evaluate the element Jacobian for
-    INTEGER(INTG), INTENT(IN) :: residualNumber  !<The residual number to calculate when there are coupled problems
-    INTEGER(INTG), INTENT(IN) :: jacobianNumber  !<The Jacobian number to calculate when there are coupled problems
+    INTEGER(INTG), INTENT(IN) :: residualNumber  !<The residual number to calculate the Jacobian for
+    INTEGER(INTG), INTENT(IN) :: jacobianNumber  !<The Jacobian number to calculate the Jacobian for
     INTEGER(INTG), INTENT(IN) :: elementNumber  !<The element number to calculate the Jacobian for
     INTEGER(INTG), INTENT(OUT) :: err  !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error  !<The error string
     !Local Variables
+    INTEGER(INTG) :: column,componentIdx,componentInterpolationType,derivative,derivativeIdx,globalDerivativeIndex,localDOF, &
+      & node,nodeIdx,numberOfComponents,numberOfLocalNodes,numberOfNodeDerivatives,numberOfResiduals,numberOfRows,residualIdx, &
+      & version
+    REAL(DP) :: delta,origDepVar
+    LOGICAL :: updateMatrix,updateVector
     TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(DistributedVectorType), POINTER :: parameters
+    TYPE(ElementVectorType) :: elementVector
     TYPE(EquationsType), POINTER :: equations
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldParameterSetType), POINTER :: parameterSet
     TYPE(FieldVariableType), POINTER :: rowVariable,columnVariable
-    TYPE(ElementVectorType) :: elementVector
-    INTEGER(INTG) :: componentIdx,localDOF,version,derivativeIdx,derivative,nodeIdx,node,column
-    INTEGER(INTG) :: componentInterpolationType
-    INTEGER(INTG) :: numberOfRows
-    REAL(DP) :: delta,origDepVar
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
 
     ENTERS("EquationsSet_FiniteElementJacobianEvaluateFD",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
@@ -2542,17 +2467,14 @@ CONTAINS
     NULLIFY(lhsMapping)
     CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
-    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-    
-    ! The first residual variable is always the row variable, which is the variable the
-    ! residual is calculated for
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)    
     NULLIFY(rowVariable)
     CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowVariable,err,error,*999)
     ! For coupled problems this routine will be called multiple times if multiple Jacobians use finite
     ! differencing, so make sure we only calculate the residual vector once, to save time and because
-    ! it would otherwise add together
-    IF(nonlinearMatrices%elementResidualCalculated/=elementNumber) &
-      & CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,residualNumber,elementNumber,err,error,*999)
+    ! it would otherwise add together. TODO: sort a better way to do this.
+    IF(residualVector%elementResidualCalculated/=elementNumber) &
+      & CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     ! Make a temporary copy of the unperturbed residuals
     elementVector=residualVector%elementResidual
     ! For coupled nonlinear problems there will be multiple Jacobians
@@ -2570,7 +2492,7 @@ CONTAINS
     NULLIFY(jacobianMatrix)
     CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,jacobianNumber,jacobianMatrix,err,error,*999)
     numberOfRows=jacobianMatrix%elementJacobian%numberOfRows
-    IF(numberOfRows/=nonlinearMatrices%elementResidual%numberOfRows) &
+    IF(numberOfRows/=residualVector%elementResidual%numberOfRows) &
       & CALL FlagError("Element matrix number of rows does not match element residual vector size.",err,error,*999)
     ! determine step size
     CALL DistributedVector_L2Norm(parameters,delta,err,error,*999)
@@ -2580,7 +2502,8 @@ CONTAINS
     ! distributed out, have to use proper field accessing routines..
     ! so let's just loop over component, node/el, derivative
     column=0  ! element jacobian matrix column number
-    DO componentIdx=1,columnVariable%numberOfComponents
+    CALL FieldVariable_NumberOfComponents(columnVariable,numberOfComponents,err,error,*999)
+    DO componentIdx=1,numberOfComponents
       NULLIFY(domain)
       CALL FieldVariable_ComponentDomainGet(columnVariable,componentIdx,domain,err,error,*999)
       NULLIFY(domainTopology)
@@ -2592,22 +2515,24 @@ CONTAINS
       CASE (FIELD_NODE_BASED_INTERPOLATION)
         NULLIFY(basis)
         CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
-        DO nodeIdx=1,basis%numberOfNodes
-          node=domainElements%elements(elementNumber)%elementNodes(nodeIdx)
-          DO derivativeIdx=1,basis%numberOfDerivatives(nodeIdx)
-            derivative=domainElements%elements(elementNumber)%elementDerivatives(derivativeIdx,nodeIdx)
-            version=domainElements%elements(elementNumber)%elementVersions(derivativeIdx,nodeIdx)
-            CALL FieldVariable_LocalNodeDOFGet(columnVariable,version,derivative,node,componentIdx,localDOF, &
+        CALL Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*999)
+        DO nodeIdx=1,numberOfLocalNodes
+          CALL DomainElements_ElementNodeGet(domainElements,nodeIdx,elementNumber,node,err,error,*999)
+          CALL Basis_NodeNumberOfDerivativesGet(basis,nodeIdx,numberOfNodeDerivatives,err,error,*999)
+          DO derivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainElements_ElementDerivativeGet(domainElements,derivativeIdx,nodeIdx,elementNumber,globalDerivativeIndex, &
               & err,error,*999)
+            CALL DomainElements_ElementVersionGet(domainElements,derivativeIdx,nodeIdx,elementNumber,version,err,error,*999)
+            CALL FieldVariable_LocalNodeDOFGet(columnVariable,version,derivative,node,componentIdx,localDOF,err,error,*999)
             ! one-sided finite difference
             CALL DistributedVector_ValuesGet(parameters,localDOF,origDepVar,err,error,*999)
             CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar+delta,err,error,*999)
-            nonlinearMatrices%elementResidual%vector=0.0_DP ! must remember to flush existing results, otherwise they're added
-            CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,residualNumber,elementNumber,err,error,*999)
+            residualVector%elementResidual%vector=0.0_DP ! must remember to flush existing results, otherwise they're added
+            CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
             CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar,err,error,*999)
             column=column+1
             jacobianMatrix%elementJacobian%matrix(1:numberOfRows,column)= &
-              & (nonlinearMatrices%elementResidual%vector(1:numberOfRows)-elementVector%vector(1:numberOfRows))/delta
+              & (residualVector%elementResidual%vector(1:numberOfRows)-elementVector%vector(1:numberOfRows))/delta
           ENDDO !derivativeIdx
         ENDDO !nodeIdx
       CASE (FIELD_ELEMENT_BASED_INTERPOLATION)
@@ -2615,18 +2540,18 @@ CONTAINS
         ! one-sided finite difference
         CALL DistributedVector_ValuesGet(parameters,localDOF,origDepVar,err,error,*999)
         CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar+delta,err,error,*999)
-        nonlinearMatrices%elementResidual%vector=0.0_DP ! must remember to flush existing results, otherwise they're added
+        residualVector%elementResidual%vector=0.0_DP ! must remember to flush existing results, otherwise they're added
         CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
         CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar,err,error,*999)
         column=column+1
         jacobianMatrix%elementJacobian%matrix(1:numberOfRows,column)= &
-          & (nonlinearMatrices%elementResidual%vector(1:numberOfRows)-elementVector%vector(1:numberOfRows))/delta
+          & (residualVector%elementResidual%vector(1:numberOfRows)-elementVector%vector(1:numberOfRows))/delta
       CASE DEFAULT
         CALL FlagError("Unsupported type of interpolation.",err,error,*999)
       END SELECT
     END DO !componentIdx
     ! put the original residual back in
-    nonlinearMatrices%elementResidual=elementVector
+    residualVector%elementResidual=elementVector
 
     EXITS("EquationsSet_FiniteElementJacobianEvaluateFD")
     RETURN
@@ -2649,24 +2574,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
-    TYPE(ElementMatrixType), POINTER :: elementMatrix
-    TYPE(ElementVectorType), POINTER :: elementVector
+    INTEGER(INTG) :: matrixIdx,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfSources,outputType,residualIdx,sourceIdx
+    LOGICAL :: updateMatrix,updateVector
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsSet_FiniteElementResidualEvaluate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -2698,109 +2625,75 @@ CONTAINS
         & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))//" is not valid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element residual matrices and vectors:",err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"Finite element matrices and vectors:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element number = ",elementNumber,err,error,*999)
-      linearMatrices=>vectorMatrices%linearMatrices
+      IF(ASSOCIATED(dynamicMatrices)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Dynamic matrices:",err,error,*999)
+        CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of dynamic matrices = ",numberOfDynamicMatrices,err,error,*999)
+        DO matrixIdx=1,numberOfDynamicMatrices
+          NULLIFY(dynamicMatrix)
+          CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,dynamicMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Dynamic matrix : ",matrixIdx,err,error,*999)
+          CALL EquationsMatrix_UpdateMatrixGet(dynamicMatrix,updateMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",updateMatrix,err,error,*999)
+          IF(updateMatrix) CALL EquationsMatrix_ElementMatrixOutput(GENERAL_OUTPUT_TYPE,dynamicMatrix,err,error,*999)
+        ENDDO !matrixIdx
+      ENDIF
+      NULLIFY(linearMatrices)
+      CALL EquationsMatricesVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,error,*999)
       IF(ASSOCIATED(linearMatrices)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Linear matrices:",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",linearMatrices% &
-          & numberOfLinearMatrices,err,error,*999)
-        DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element matrix : ",matrixIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",linearMatrices%matrices(matrixIdx)%ptr% &
-            & updateMatrix,err,error,*999)
-          IF(linearMatrices%matrices(matrixIdx)%ptr%updateMatrix) THEN
-            elementMatrix=>linearMatrices%matrices(matrixIdx)%ptr%elementMatrix
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns, &
-              & err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows, &
-              & err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix% &
-              & maxNumberOfColumns,err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
-              & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
-              & '(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
+        CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of linear matrices = ",numberOfLinearMatrices,err,error,*999)
+        DO matrixIdx=1,numberOfLinearMatrices
+          NULLIFY(linearMatrix)
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Linear matrix : ",matrixIdx,err,error,*999)
+          CALL EquationsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",updateMatrix,err,error,*999)
+          IF(updateMatrix) CALL EquationsMatrix_ElementMatrixOutput(GENERAL_OUTPUT_TYPE,linearMatrix,err,error,*999)
         ENDDO !matrixIdx
       ENDIF
-      dynamicMatrices=>vectorMatrices%dynamicMatrices
-      IF(ASSOCIATED(dynamicMatrices)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Dynamnic matrices:",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",dynamicMatrices% &
-          & numberOfDynamicMatrices,err,error,*999)
-        DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Element matrix : ",matrixIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",dynamicMatrices%matrices(matrixIdx)%ptr% &
-            & updateMatrix,err,error,*999)
-          IF(dynamicMatrices%matrices(matrixIdx)%ptr%updateMatrix) THEN
-            elementMatrix=>dynamicMatrices%matrices(matrixIdx)%ptr%elementMatrix
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns, &
-              & err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows, &
-              & err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix% &
-              & maxNumberOfColumns,err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
-              & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
-              & '(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
-        ENDDO !matrixIdx
+      NULLIFY(nonlinearMatrices)
+      CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
+      IF(ASSOCIATED(nonlinearMatrices)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Residual vectors:",err,error,*999)
+        CALL EquationsMatricesNonlinear_NumberOfResidualsGet(nonlinearMatrices,numberOfResiduals,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of residuals = ",numberOfResiduals,err,error,*999)
+        DO residualIdx=1,numberOfResiduals
+          NULLIFY(residualVector)
+          CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Residual vector : ",residualIdx,err,error,*999)
+          CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+          IF(updateVector) CALL EquationsMatricesResidual_ElementVectorOutput(GENERAL_OUTPUT_TYPE,residualVector,err,error,*999)
+        ENDDO !sourceIdx
       ENDIF
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Element residual vector:",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",nonlinearMatrices%updateResidual,err,error,*999)
-      IF(nonlinearMatrices%updateResidual) THEN
-        elementVector=>nonlinearMatrices%elementResidual
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementVector%numberOfRows,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
-          & err,error,*999)
-        CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-          & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-        CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-          & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
+      NULLIFY(sourceVectors)
+      CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
+      IF(ASSOCIATED(sourceVectors)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Source vectors:",err,error,*999)
+        CALL EquationsMatricesSources_NumberOfSourceVectorsGet(sourceVectors,numberOfSources,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSources,err,error,*999)
+        DO sourceIdx=1,numberOfSources
+          NULLIFY(sourceVector)
+          CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Source vector : ",sourceIdx,err,error,*999)
+          CALL EquationsMatricesSource_UpdateVectorGet(sourceVector,updateVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+          IF(updateVector) CALL EquationsMatricesSource_ElementVectorOutput(GENERAL_OUTPUT_TYPE,sourceVector,err,error,*999)
+        ENDDO !sourceIdx
       ENDIF
-      rhsVector=>vectorMatrices%rhsVector
+      NULLIFY(rhsVector)
+      CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
       IF(ASSOCIATED(rhsVector)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Element RHS vector :",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",rhsVector%updateVector,err,error,*999)
-        IF(rhsVector%updateVector) THEN
-          elementVector=>rhsVector%elementVector
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementVector%numberOfRows,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
-            & err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
-        ENDIF
-      ENDIF
-      sourceVector=>vectorMatrices%sourceVector
-      IF(ASSOCIATED(sourceVector)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Element source vector :",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",sourceVector%updateVector,err,error,*999)
-        IF(sourceVector%updateVector) THEN
-          elementVector=>sourceVector%elementVector
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementVector%numberOfRows,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
-            & err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
-        ENDIF
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"RHS vector :",err,error,*999)
+        CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateVector,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+        IF(updateVector) CALL EquationsMatricesRHS_ElementVectorOutput(GENERAL_OUTPUT_TYPE,rhsVector,err,error,*999)
       ENDIF
     ENDIF
        
@@ -2877,55 +2770,11 @@ CONTAINS
     ENTERS("EquationSet_IndependentCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertIndependentNotCreated(equationsSet,err,error,*998)
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"independent",independentFieldUserNumber,independentField,err,error,*998)
     
-    NULLIFY(region)
-    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*998)
-    IF(ASSOCIATED(independentField)) THEN
-      CALL Field_AssertIsFinished(independentField,err,error,*999)
-      !Check the user numbers match
-      IF(independentFieldUserNumber/=independentField%userNumber) THEN
-        localError="The specified independent field user number of "// &
-          & TRIM(NumberToVString(independentFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified independent field of "// &
-          & TRIM(NumberToVString(independentField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      NULLIFY(independentFieldRegion)
-      CALL Field_RegionGet(independentField,independentFieldRegion,err,error,*999)
-      !Check the field is defined on the same region as the equations set
-      IF(independentFieldRegion%userNumber/=region%userNumber) THEN
-        localError="Invalid region setup. The specified independent field has been created on region number "// &
-          & TRIM(NumberToVString(independentFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      !Check the specified independent field has the same decomposition as the geometric field
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*998)
-      NULLIFY(geometricDecomposition)
-      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*998)
-      NULLIFY(independentDecomposition)
-      CALL Field_DecompositionGet(independentField,independentDecomposition,err,error,*998)
-      IF(.NOT.ASSOCIATED(geometricDecomposition,independentDecomposition)) THEN
-        CALL FlagError("The specified independent field does not have the same decomposition as the geometric "// &
-          & "field for the specified equations set.",err,error,*999)
-      ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(independentFieldUserNumber,region,field,err,error,*999)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified independent field user number of "// &
-          & TRIM(NumberToVString(independentFieldUserNumber,"*",err,error))// &
-          & "has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ENDIF
     !Initialise the equations set independent
     CALL EquationsSet_IndependentInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(independentField)) equationsSet%independent%independentFieldAutoCreated=.TRUE.
+    equationsSet%independent%independentFieldAutoCreated=(.NOT.ASSOCIATED(independentField))
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_INDEPENDENT_TYPE
@@ -2948,6 +2797,7 @@ CONTAINS
 999 CALL EquationsSet_IndependentFinalise(equationsSet%independent,dummyErr,dummyError,*998)
 998 ERRORSEXITS("EquationSet_IndependentCreateStart",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationSet_IndependentCreateStart
 
   !
@@ -3204,56 +3054,11 @@ CONTAINS
     ENTERS("EquationsSet_MaterialsCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertMaterialsNotCreated(equationsSet,err,error,*998)
-
-    NULLIFY(region)
-    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*998)
-    IF(ASSOCIATED(materialsField)) THEN
-      !Check the materials field has been finished
-      CALL Field_AssertIsFinished(materialsField,err,error,*999)
-      !Check the user numbers match
-      IF(materialsFieldUserNumber/=materialsField%userNumber) THEN
-        localError="The specified materials field user number of "// &
-          & TRIM(NumberToVString(materialsFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified materials field of "// &
-          & TRIM(NumberToVString(materialsField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      NULLIFY(materialsFieldRegion)
-      CALL Field_RegionGet(materialsField,materialsFieldRegion,err,error,*998)
-      !Check the field is defined on the same region as the equations set
-      IF(materialsFieldRegion%userNumber/=region%userNumber) THEN
-        localError="Invalid region setup. The specified materials field has been created on region number "// &
-          & TRIM(NumberToVString(materialsFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      !Check the specified materials field has the same decomposition as the geometric field
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*998)
-      NULLIFY(geometricDecomposition)
-      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*998)
-      NULLIFY(materialsDecomposition)
-      CALL Field_DecompositionGet(materialsField,materialsDecomposition,err,error,*998)
-      IF(.NOT.ASSOCIATED(geometricDecomposition,materialsDecomposition)) THEN
-        CALL FlagError("The specified materials field does not have the same decomposition as the geometric "// &
-          & "field for the specified equations set.",err,error,*999)
-      ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(materialsFieldUserNumber,region,field,err,error,*999)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified materials field user number of "// &
-          & TRIM(NumberToVString(materialsFieldUserNumber,"*",err,error))// &
-          & "has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ENDIF
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"materials",materialsFieldUserNumber,materialsField,err,error,*998)
+    
     !Initialise the equations set materials
     CALL EquationsSet_MaterialsInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(materialsField)) equationsSet%materials%materialsFieldAutoCreated=.TRUE.
+    equationsSet%materials%materialsFieldAutoCreated=(.NOT.ASSOCIATED(materialsField))
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_MATERIALS_TYPE
@@ -3428,55 +3233,10 @@ CONTAINS
     ENTERS("EquationsSet_DependentCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertDependentNotFinished(equationsSet,err,error,*998)
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"dependent",dependentFieldUserNumber,dependentField,err,error,*998)
     
-    NULLIFY(region)
-    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*998)
-    IF(ASSOCIATED(dependentField)) THEN
-      !Check the dependent field has been finished
-      CALL Field_AssertIsFinished(dependentField,err,error,*999)
-      !Check the user numbers match
-      IF(dependentFieldUserNumber/=dependentField%userNumber) THEN
-        localError="The specified dependent field user number of "// &
-          & TRIM(NumberToVString(dependentFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified dependent field of "// &
-          & TRIM(NumberToVString(dependentField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      NULLIFY(dependentFieldRegion)
-      CALL Field_RegionGet(dependentField,dependentFieldRegion,err,error,*999)
-      !Check the field is defined on the same region as the equations set
-      IF(dependentFieldRegion%userNumber/=region%userNumber) THEN
-        localError="Invalid region setup. The specified dependent field has been created on region number "// &
-          & TRIM(NumberToVString(dependentFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      !Check the specified dependent field has the same decomposition as the geometric field
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*998)
-      NULLIFY(geometricDecomposition)
-      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*998)
-      NULLIFY(dependentDecomposition)
-      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*998)
-      IF(.NOT.ASSOCIATED(geometricDecomposition,dependentDecomposition)) THEN
-        CALL FlagError("The specified dependent field does not have the same decomposition as the geometric "// &
-          & "field for the specified equations set.",err,error,*999)
-      ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(dependentFieldUserNumber,region,field,err,error,*999)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified dependent field user number of "// &
-          & TRIM(NumberToVString(dependentFieldUserNumber,"*",err,error))// &
-          & " has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      equationsSet%dependent%dependentFieldAutoCreated=.TRUE.
-    ENDIF
     !Initialise the setup
+    equationsSet%dependent%dependentFieldAutoCreated=(.NOT.ASSOCIATED(dependentField))
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_DEPENDENT_TYPE
     equationsSetSetupInfo%actionType=EQUATIONS_SET_SETUP_START_ACTION
@@ -3648,55 +3408,10 @@ CONTAINS
     ENTERS("EquationsSet_DerivedCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertDerivedNotCreated(equationsSet,err,error,*998)
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"derived",derivedFieldUserNumber,derivedField,err,error,*998)
 
-    NULLIFY(region)
-    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*998)
-    IF(ASSOCIATED(derivedField)) THEN
-      !Check the derived field has been finished
-      CALL Field_AssertIsFinished(derivedField,err,error,*999)
-      !Check the user numbers match
-      IF(derivedFieldUserNumber/=derivedField%userNumber) THEN
-        localError="The specified derived field user number of "// &
-          & TRIM(NumberToVString(derivedFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified derived field of "// &
-          & TRIM(NumberToVString(derivedField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END IF
-      NULLIFY(derivedFieldRegion)
-      CALL Field_RegionGet(derivedField,derivedFieldRegion,err,error,*999)
-      !Check the field is defined on the same region as the equations set
-      IF(derivedFieldRegion%userNumber/=region%userNumber) THEN
-        localError="Invalid region setup. The specified derived field has been created on region number "// &
-          & TRIM(NumberToVString(derivedFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END IF
-      !Check the specified derived field has the same decomposition as the geometric field
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*998)
-      NULLIFY(geometricDecomposition)
-      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*998)
-      NULLIFY(derivedDecomposition)
-      CALL Field_DecompositionGet(derivedField,derivedDecomposition,err,error,*998)
-      IF(.NOT.ASSOCIATED(geometricDecomposition,derivedDecomposition)) THEN
-        CALL FlagError("The specified derived field does not have the same decomposition as the geometric "// &
-          & "field for the specified equations set.",err,error,*999)
-      ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(derivedFieldUserNumber,region,field,err,error,*999)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified derived field user number of "// &
-          & TRIM(NumberToVString(derivedFieldUserNumber,"*",err,error))// &
-          & " has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      equationsSet%derived%derivedFieldAutoCreated=.TRUE.
-    ENDIF
     CALL EquationsSet_DerivedInitialise(equationsSet,err,error,*999)
+    equationsSet%derived%derivedFieldAutoCreated=(.NOT.ASSOCIATED(derivedField))
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_DERIVED_TYPE
@@ -3820,7 +3535,7 @@ CONTAINS
   SUBROUTINE EqutionsSet_EquationsFieldFinalise(equationsField,err,error,*)
 
     !Argument variables
-    TYPE(EquationsSetEquationsFieldType) :: equationsField !<The pointer to the equations set equations field
+    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField !<The pointer to the equations set equations field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3861,7 +3576,7 @@ CONTAINS
     CALL EquationsSet_AssertEquationsFieldNotCreated(equationsSet,err,error,*999)
     
     ALLOCATE(equationsSet%equationsField,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations set equations field information.",err,error,*998)
+    IF(err/=0) CALL FlagError("Could not allocate equations set equations field information.",err,error,*999)
     equationsSet%equationsField%equationsSet=>equationsSet
     equationsSet%equationsField%equationsSetFieldFinished=.FALSE.
     equationsSet%equationsField%equationsSetFieldAutoCreated=.TRUE.
@@ -4225,7 +3940,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalStart,internalFinish,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -4240,10 +3955,9 @@ CONTAINS
   
     ENTERS("EquationsSet_JacobianEvaluateStaticFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -4258,8 +3972,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(dependentDomain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
 
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -4270,7 +3988,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -4282,42 +4000,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
-      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,residualNumber,jacobianNumber,element,err,error,*999)
+      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_JacobianElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx                  
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
-      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,residualNumber,jacobianNumber,element,err,error,*999)
+      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_JacobianElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -4326,7 +4044,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -4334,7 +4052,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -4372,10 +4090,9 @@ CONTAINS
   
     ENTERS("EquationsSet_JacobianEvaluateDynamicFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -4390,8 +4107,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(dependentDomain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
-
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
+ 
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -4402,7 +4123,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -4414,42 +4135,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
-      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,residualNumber,jacobianNumber,element,err,error,*999)
+      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_JacobianElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
-      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,residualNumber,jacobianNumber,element,err,error,*999)
+      CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_JacobianElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -4458,7 +4179,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -4466,7 +4187,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
       
@@ -4489,12 +4210,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: residualIdx,residualVariableIdx
+    INTEGER(INTG) :: linearity,numberOfResiduals,numberOfResidualVariables,outputType,residualIdx,residualVariableIdx, &
+      & timeDependence
+    TYPE(DistributedVectorType), POINTER :: residualDistributedVector,residualVariableDistributedVector
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldParameterSetType), POINTER :: residualParameterSet
     TYPE(FieldVariableType), POINTER :: residualVariable
@@ -4502,9 +4227,9 @@ CONTAINS
  
     ENTERS("EquationsSet_ResidualEvaluate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMapping)
@@ -4516,16 +4241,18 @@ CONTAINS
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
         
-    IF(equationsSet%outputType>=EQUATIONS_SET_PROGRESS_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_SET_PROGRESS_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set residual evaluate: ",equationsSet%label,err,error,*999)
     ENDIF
-    
-    SELECT CASE(equations%linearity)
+
+    CALL Equations_LinearityGet(equations,linearity,err,error,*999)
+    CALL Equations_TimeDependenceGet(equations,timeDependence,err,error,*999)
+    SELECT CASE(linearity)
     CASE(EQUATIONS_LINEAR)
       CALL FlagError("Can not evaluate a residual for linear equations.",err,error,*999)
     CASE(EQUATIONS_NONLINEAR)
-      SELECT CASE(equations%timeDependence)
+      SELECT CASE(timeDependence)
       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)!Quasistatic handled like static
         SELECT CASE(equationsSet%solutionMethod)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -4567,28 +4294,40 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The equations set time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        localError="The equations set time dependence type of "//TRIM(NumberToVString(timeDependence,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_NONLINEAR_BCS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The equations linearity of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+      localError="The equations linearity of "//TRIM(NumberToVString(linearity,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
     !Update the residual parameter set if it exists
-    DO residualIdx=1,nonlinearMapping%numberOfResiduals
-      DO residualVariableIdx=1,nonlinearMapping%numberOfResidualVariables
+!!TODO: This is wrong. There should be no assumption that the residual vector (based on lhsVariable) should have any connection
+!!      to a residual variable (based on the residualVariable).
+    CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
+    DO residualIdx=1,numberOfResiduals
+      NULLIFY(residualMapping)
+      CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
+      NULLIFY(residualVector)
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+      NULLIFY(residualDistributedVector)
+      CALL EquatiosnMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
+        & residualDistributedVector,err,error,*999)
+      CALL EquationsMappingResidual_NumberOfResidualVariablesGet(residualMapping,numberOfResidualVariables,err,error,*999)
+      DO residualVariableIdx=1,numberOfResidualVariables
         NULLIFY(residualVariable)
-        CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,residualIdx,residualVariableIdx,residualVariable, &
-          & err,error,*999)
+        CALL EquationsMappingResidual_VariableGet(residualMapping,residualVariableIdx,residualVariable,err,error,*999)
         NULLIFY(residualParameterSet)
         CALL FieldVariable_ParameterSetCheck(residualVariable,FIELD_RESIDUAL_SET_TYPE,residualParameterSet,err,error,*999)
         IF(ASSOCIATED(residualParameterSet)) THEN
+          NULLIFY(residualVariableDistributedVector)
+          CALL FieldParameterSet_ParametersGet(residualParameterSet,residualVariableDistributedVector,err,error,*999)
           !Residual parameter set exists. Copy the residual vector to the residuals parameter set.
-          CALL DistributedVector_Copy(nonlinearMatrices%residual,residualParameterSet%parameters,1.0_DP,err,error,*999)
+          CALL DistributedVector_Copy(residualDistributedVector,residualVariableDistributedVector,1.0_DP,err,error,*999)
         ENDIF
       ENDDO !residualVariableIdx
     ENDDO !residualIdx
@@ -4627,10 +4366,9 @@ CONTAINS
  
     ENTERS("EquationsSet_ResidualEvaluateDynamicFEM",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -4645,8 +4383,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(dependentDomain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
-
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
+ 
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -4657,7 +4399,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -4669,42 +4411,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx                  
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -4713,7 +4455,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -4721,7 +4463,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
       
@@ -4763,6 +4505,7 @@ CONTAINS
     
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -4777,8 +4520,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(dependentDomain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
 
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -4789,7 +4536,7 @@ CONTAINS
     !Allocate the element matrices 
     CALL EquationsMatricesVector_ElementInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -4801,42 +4548,42 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
-      element=elementsMapping%domainList(elementIdx)
+    DO elementIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(elementsMapping,elementIdx,element,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
       CALL EquationsMatricesVector_ElementAdd(vectorMatrices,err,error,*999)
     ENDDO !elementIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
@@ -4845,7 +4592,7 @@ CONTAINS
     !Finalise the element matrices
     CALL EquationsMatricesVector_ElementFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -4853,7 +4600,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -5081,56 +4828,11 @@ CONTAINS
     ENTERS("EquationsSet_SourceCreateStart",err,error,*998)
 
     CALL EquationsSet_AssertSourceNotCreated(equationsSet,err,error,*998)
-
-    NULLIFY(region)
-    CALL EquationsSet_RegionGet(equationsSet,region,err,error,*998)
-    IF(ASSOCIATED(sourceField)) THEN
-      !Check the source field has been finished
-      CALL Field_AssertIsFinished(sourceField,err,error,*999)
-      !Check the user numbers match
-      IF(sourceFieldUserNumber/=sourceField%userNumber) THEN
-        localError="The specified source field user number of "// &
-          & TRIM(NumberToVString(sourceFieldUserNumber,"*",err,error))// &
-          & " does not match the user number of the specified source field of "// &
-          & TRIM(NumberToVString(sourceField%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      NULLIFY(sourceFieldRegion)
-      CALL Field_RegionGet(sourceField,sourceFieldRegion,err,error,*998)
-      !Check the field is defined on the same region as the equations set
-      IF(sourceFieldRegion%userNumber/=region%userNumber) THEN
-        localError="Invalid region setup. The specified source field has been created on region number "// &
-          & TRIM(NumberToVString(sourceFieldRegion%userNumber,"*",err,error))// &
-          & " and the specified equations set has been created on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      !Check the specified source field has the same decomposition as the geometric field
-      NULLIFY(geometricField)
-      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*998)
-      NULLIFY(geometricDecomposition)
-      CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*998)
-      NULLIFY(sourceDecomposition)
-      CALL Field_DecompositionGet(sourceField,sourceDecomposition,err,error,*998)
-      IF(.NOT.ASSOCIATED(geometricDecomposition,sourceDecomposition)) THEN
-        CALL FlagError("The specified source field does not have the same decomposition as the geometric "// &
-          & "field for the specified equations set.",err,error,*999)
-      ENDIF
-    ELSE
-      !Check the user number has not already been used for a field in this region.
-      NULLIFY(field)
-      CALL Field_UserNumberFind(sourceFieldUserNumber,region,field,err,error,*999)
-      IF(ASSOCIATED(field)) THEN
-        localError="The specified source field user number of "// &
-          & TRIM(NumberToVString(sourceFieldUserNumber,"*",err,error))// &
-          & "has already been used to create a field on region number "// &
-          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ENDIF
+    CALL EquationsSet_FieldRegionSetupCheck(equationsSet,"source",sourceFieldUserNumber,sourceField,err,error,*998)
+    
     !Initialise the equations set source
     CALL EquationsSet_SourceInitialise(equationsSet,err,error,*999)
-    IF(.NOT.ASSOCIATED(sourceField)) equationsSet%source%sourceFieldAutoCreated=.TRUE.
+    equationsSet%source%sourceFieldAutoCreated=(.NOT.ASSOCIATED(sourceField))
     !Initialise the setup
     CALL EquationsSet_SetupInitialise(equationsSetSetupInfo,err,error,*999)
     equationsSetSetupInfo%setupType=EQUATIONS_SET_SETUP_SOURCE_TYPE
@@ -5629,8 +5331,8 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: variableIdx,variableType,dirichletIdx,dirichletDOFIdx,neumannPointDOF
     INTEGER(INTG) :: conditionIdx, conditionGlobalDOF, conditionLocalDOF, myGroupComputationNodeNumber
-    REAL(DP), POINTER :: fullLoads(:),currentLoads(:), prevLoads(:)
     REAL(DP) :: fullLoad, currentLoad, newLoad, prevLoad
+    REAL(DP), POINTER :: fullLoads(:),currentLoads(:), prevLoads(:)
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
     TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions
@@ -5647,7 +5349,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions are not associated.",err,error,*999)
     
-    IF(DIAGNOSTICS1) THEN
+    IF(diagnostics1) THEN
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set BC increment: ",equationsSet%label,err,error,*999)
     ENDIF
 
@@ -5658,10 +5360,10 @@ CONTAINS
     NULLIFY(workGroup)
     CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-    IF(.NOT.ALLOCATED(dependentField%variables)) CALL FlagError("Dependent field variables are not allocated.",err,error,*999)
     !Loop over the variables associated with this equations set
     !\todo: Looping over all field variables is not safe when volume-coupled problem is solved. Look at matrix and rhs mapping instead?
-    DO variableIdx=1,dependentField%numberOfVariables
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
       NULLIFY(boundaryConditionsVariable)
@@ -5669,9 +5371,13 @@ CONTAINS
       IF(ASSOCIATED(boundaryConditionsVariable)) THEN
         NULLIFY(domainMapping)
         CALL FieldVariable_DomainMappingGet(dependentVariable,domainMapping,err,error,*999)
+        CALL DomainMapping_GhostStartGet(domainMapping,ghostStart,err,error,*999)
         ! Check if there are any incremented conditions applied for this boundary conditions variable
-        IF(boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_FIXED_INCREMENTED)>0.OR. &
-          & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)>0) THEN
+        CALL BoundaryConditionsVariable_DOFCountGet(boundaryConditionsVariable,BOUNDARY_CONDITION_FIXED_INCREMENTED, &
+          & fixedIncrementedCount,err,error,*999)
+        CALL BoundaryConditionsVariable_DOFCountGet(boundaryConditionsVariable,BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED, &
+          & movedWallIncrementedCount,err,error,*999)
+        IF(fixedIncrementedCount>0.OR.movedWallIncrementedCount>0) THEN
           NULLIFY(dirichletBoundaryConditions)
           CALL BoundaryConditionsVariable_DirichletConditionsGet(boundaryConditionsVariable,dirichletBoundaryConditions, &
             & err,error,*999)
@@ -5679,39 +5385,48 @@ CONTAINS
           !   full load: FIELD_BOUNDARY_CONDITIONS_SET_TYPE - holds the target load values
           !   current load: FIELD_VALUES_SET_TYPE - holds the current increment values
           NULLIFY(fullLoads)
-          CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
-            & fullLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,fullLoads,err,error,*999)
           !chrm 22/06/2010: 'FIELD_BOUNDARY_CONDITIONS_SET_TYPE' does not get updated with time (update_BCs)
           !\ToDo: How can this be achieved ???
           NULLIFY(currentLoads)
-          CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-            & currentLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_VALUES_SET_TYPE,currentLoads,err,error,*999)
           !Get full increment, calculate new load, then apply to dependent field
-          DO dirichletIdx=1,boundaryConditionsVariable%NUMBER_OF_DIRICHLET_CONDITIONS
-            dirichletDOFIdx=dirichletBoundaryConditions%DIRICHLET_DOF_INDICES(dirichletIdx)
+          CALL BoundaryConditionsVariable_NumberOfDirichletConditionsGet(boundaryConditionsVariable,numberOfDirichletConditions, &
+            & err,error,*999)
+          NULLIFY(dirichletBoundaryConditions)
+          IF(numberOfDirichletConditions>0) CALL BoundaryConditionsVariable_DirichletConditionsGet(boundaryConditionsVariable, &
+            & dirichletBoundaryConditions,err,error,*999)
+          DO dirichletIdx=1,numberOfDirichletConditions
+            CALL BoundaryConditionsDirichlet_DirichletDOFIndexGet(dirichletBoundaryConditions,dirichletIdx,globalDirichletDOFIdx, &
+              & err,error,*999)
             !Check whether we have an incremented boundary condition type
-            SELECT CASE(boundaryConditionsVariable%conditionTypes(dirichletDOFIdx))
+            CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,globalDirichletDOFIdx,conditionType, &
+              & err,error,*999)
+            SELECT CASE(conditionType)
             CASE(BOUNDARY_CONDITION_FIXED_INCREMENTED, &
               & BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)
               !Convert dof index to local index
-              IF(domainMapping%globalToLocalMap(dirichletDOFIdx)%domainNumber(1)==myGroupComputationNodeNumber) THEN
-                dirichletDOFIdx=domainMapping%globalToLocalMap(dirichletDOFIdx)%localNumber(1)
-                IF(0<dirichletDOFIdx.AND.dirichletDOFIdx<domainMapping%ghostStart) THEN
-                  fullLoad=fullLoads(dirichletDOFIdx)
+              CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalDirichletDOFIdx,1,dirichletDomainNumber, &
+                & err,error,*999)
+              IF(dirichletDomainNumber==myGroupComputationNodeNumber) THEN
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalDirichletDOFIdx,1,localDirichletDOFIdx, &
+                  & err,error,*999)
+                IF(localDirichletDOFIdx>=1.AND..localDirichletDOFIdx<ghostStart) THEN
+                  fullLoad=fullLoads(localDirichletDOFIdx)
                   ! Apply full load if last step, or fixed BC
                   IF(iterationNumber==maximumNumberOfIterations) THEN
-                    CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-                      & dirichletDOFIdx,fullLoad,err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDirichletDOFIdx, &
+                      & fullLoad,err,error,*999)
                   ELSE
                     !Calculate new load and apply to dependent field
-                    currentLoad=currentLoads(dirichletDOFIdx)
+                    currentLoad=currentLoads(localDirichletDOFIdx)
                     newLoad=currentLoad+(fullLoad-currentLoad)/(maximumNumberOfIterations-iterationNumber+1)
-                    CALL Field_ParameterSetUpdateLocalDOF(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-                      & dirichletDOFIdx,newLoad,err,error,*999)
+                    CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDirichletDOFIdx, &
+                      & newLoad,err,error,*999)
                     IF(diagnostics1) THEN
-                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  dof idx",dirichletDOFIdx,err,error,*999)
-                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    current load",currentLoad,err,error,*999)
-                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    new load",newLoad,err,error,*999)
+                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DOF idx : ",localDirichletDOFIdx,err,error,*999)
+                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Current load = ",currentLoad,err,error,*999)
+                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    New load = ",newLoad,err,error,*999)
                     ENDIF
                   ENDIF !Full or intermediate load
                 ENDIF !non-ghost dof
@@ -5722,43 +5437,52 @@ CONTAINS
           ENDDO !dirichletIdx
           !\ToDo: What happens if the call below is issued
           !without actually that the dependent field has been modified in above conditional ?
-          CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
-          CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           !Restore the vector handles
-          CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
-            & fullLoads,err,error,*999)
-          CALL Field_ParameterSetDataRestore(dependentField,variableType,FIELD_VALUES_SET_TYPE, &
-            & currentLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,fullLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataRestore(dependentVariable,FIELD_VALUES_SET_TYPE,currentLoads,err,error,*999)
         ENDIF
         ! Also increment any incremented Neumann point conditions
-        IF(boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)>0) THEN
+        CALL BoundaryConditionsVariable_DOFCountGet(boundaryConditionsVariable,BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED, &
+          & neumannPointIncrementedCount,err,error,*999)
+        CALL BoundaryConditionsVariable_DOFCountGet(boundaryConditionsVariable,BOUNDARY_CONDITION_NEUMANN_POINT, &
+          & neumannPointCount,err,error,*999)
+        IF(neumannPointIncrementedCount>0) THEN
           NULLIFY(neumannBoundaryConditions)
-          CALL BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,neumannBoundaryConditions, &
-            & err,error,*999)
+          CALL BoundaryConditionsVariable_NeumannConditionsGet(boundaryConditionsVariable,neumannBoundaryConditions,err,error,*999)
+          NULLIFY(neumannPointDOFMapping)
+          CALL BoundaryConditionsNeumann_PointDOFMappingGet(neumannBoundaryConditions,neumannPointDOFMapping,err,error,*999)
+          NULLIFY(neumannPointDOFValues)
+          CALL BoundaryConditionsNeumann_PointDOFValuesGet(neumannBoundaryConditions,neumannPointDOFValues,err,error,*999)
           ! The boundary conditions parameter set contains the full values and the
           ! current incremented values are transferred to the point values vector
-          DO conditionIdx=1,boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)+ &
-              & boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_NEUMANN_POINT)
-            conditionGlobalDOF=neumannBoundaryConditions%setDofs(conditionIdx)
+          DO neumannIdx=1,neumannPointIncrementedCount+neumannPointCount
+            CALL BoundaryConditionsNeumman_NeummanDOFIndexGet(neumannBoundaryConditions,neumannIdx,globalNeumannDOFIdx, &
+              & err,error,*999)
+            CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,globalNeumannDOFIdx,conditionType, &
+             & err,error,*999)
             ! conditionGlobalDOF could be for non-incremented point Neumann condition
-            IF(boundaryConditionsVariable%conditionTypes(conditionGlobalDOF)/= &
-              & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) CYCLE
-            IF(domainMapping%globalToLocalMap(conditionGlobalDOF)%domainNumber(1)== &
-              & myGroupComputationNodeNumber) THEN
-              conditionLocalDOF=domainMapping%globalToLocalMap(conditionGlobalDOF)%localNumber(1)
-              neumannPointDOF=boundaryConditionsVariable%neumannBoundaryConditions%pointDofMapping% &
-                & globalToLocalMap(conditionIdx)%localNumber(1)
-              CALL Field_ParameterSetGetLocalDOF(dependentField,variableType, &
-                & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,conditionLocalDOF,fullLoad,err,error,*999)
-              CALL DistributedVector_ValuesSet(neumannBoundaryConditions%pointValues,neumannPointDOF, &
-                & fullLoad*(REAL(iterationNumber)/REAL(maximumNumberOfIterations)), &
+            IF(conditionType/=BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) CYCLE
+            CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalDirichletDOFIdx,1,dirichletDomainNumber, &
+              & err,error,*999)
+            IF(neumannDomainNumber==myGroupComputationNodeNumber) THEN
+              CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalNeumannDOFIdx,1,localNeumannDOFIdx, &
                 & err,error,*999)
+              CALL DomainMapping_LocalNumberFromGlobalGet(neumannPointDOFMapping,neumannIdx,1,localNeumannPointDOFIdx, &
+                & err,error,*999)
+              CALL FieldVariable_ParameterSetGetLocalDOF(dependentVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                & localNeumannDOFIdx,fullLoad,err,error,*999)
+              CALL DistributedVector_ValuesSet(neumannPointDOFValues,localNeumannPointDOFIdx,fullLoad*(REAL(iterationNumber)/ &
+                & REAL(maximumNumberOfIterations)),err,error,*999)
             ENDIF
           ENDDO !conditionIdx
         ENDIF
 
         !There might also be pressure incremented conditions
-        IF (boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)>0) THEN
+        CALL BoundaryConditionsVariable_DOFCountGet(boundaryConditionsVariable,BOUNDARY_CONDITION_PRESSURE_INCREMENTED, &
+          & pressureIncrementedCount,err,error,*999)
+        IF(pressureIncrementedCount>0) THEN
           ! handle pressure incremented boundary conditions
           NULLIFY(pressureIncrementedBoundaryConditions)
           CALL BoundaryConditionsVariable_PressureIncConditionsGet(boundaryConditionsVariable, &
@@ -5769,13 +5493,13 @@ CONTAINS
           !   previous: FIELD_PREVIOUS_PRESSURE_SET_TYPE - holds the previously applied increment
           !Grab the pointers for both
           NULLIFY(prevLoads)
-          CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_PREVIOUS_PRESSURE_SET_TYPE,prevLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE,prevLoads,err,error,*999)
           NULLIFY(currentLoads)
-          CALL Field_ParameterSetDataGet(dependentField,variableType,FIELD_PRESSURE_VALUES_SET_TYPE,currentLoads,err,error,*999)
+          CALL FieldVariable_ParameterSetDataGet(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE,currentLoads,err,error,*999)
           !Calculate the new load, update the old load
           IF(iterationNumber==1) THEN
             !On the first iteration, FIELD_PRESSURE_VALUES_SET_TYPE actually contains the full load
-            DO conditionIdx=1,boundaryConditionsVariable%dofCounts(BOUNDARY_CONDITION_PRESSURE_INCREMENTED)
+            DO pressureIdx=1,pressureIncrementedCount
               !Global dof index
               conditionGlobalDOF=pressureIncrementedBoundaryConditions%pressureIncrementedDOFIndices(conditionIdx)
               !Must convert into local dof index
@@ -5922,10 +5646,9 @@ CONTAINS
     
     ENTERS("EquationsSet_AssembleStaticNonlinearNodal",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -5940,8 +5663,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(nodalMapping)
     CALL DomainMappings_NodesMappingGet(domainMappings,nodalMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(nodalMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(nodalMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(nodalMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(nodalMapping,ghostFinish,err,error,*999)
 
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -5950,7 +5677,7 @@ CONTAINS
     !Allocate the nodal matrices 
     CALL EquationsMatricesVector_NodalInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -5962,15 +5689,15 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=nodalMapping%internalStart,nodalMapping%internalFinish
-      nodeNumber=nodalMapping%domainList(nodeIdx)
+    DO nodeIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
       CALL EquationsMatricesVector_NodeAdd(vectorMatrices,err,error,*999)
     ENDDO !nodeIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
@@ -5990,14 +5717,14 @@ CONTAINS
       CALL EquationsMatricesVector_NodeAdd(vectorMatrices,err,error,*999)
     ENDDO !nodeIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
       nodeSystemElapsed=nodeSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average nodes equations assembly", &
@@ -6006,7 +5733,7 @@ CONTAINS
     !Finalise the nodal matrices
     CALL EquationsMatricesVector_NodalFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -6014,7 +5741,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
@@ -6049,27 +5776,31 @@ CONTAINS
     
     ENTERS("EquationsSet_NodalJacobianEvaluate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<1) &
-      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-    
+   
     NULLIFY(equations)    
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    CALL EquationsMatricesNonlinear_NumberOfResidualsGet(nonlinearMatrices,numberOfResiduals,err,error,*999)
 
-    DO residualIdx=1,nonlinearMatrices%numberOfResiduals
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) &
+      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+    
+     DO residualIdx=1,numberOfResiduals
       NULLIFY(residualVector)
       CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)    
+      CALL EquationsMatricesResidual_NumberOfJacobiansGet(residualvector,numberOfJacobians,err,error,*999)
       DO matrixIdx=1,residualVector%numberOfJacobians
         NULLIFY(jacobianMatrix)
         CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
-        SELECT CASE(jacobianMatrix%jacobianCalculationType)
+        CALL JacobianMatrix_JacobianCalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
+        SELECT CASE(jacobianCalculationType)
         CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
           ! None of these routines currently support calculating off diagonal terms for coupled problems,
           ! but when one does we will have to pass through the matrixIdx parameter
@@ -6078,7 +5809,7 @@ CONTAINS
           CASE(EQUATIONS_SET_ELASTICITY_CLASS)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-            CALL FluidMechanics_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
+            CALL FluidMechanics_NodalJacobianEvaluate(equationsSet,residualIdx,matrixIdx,nodeNumber,err,error,*999)
           CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
@@ -6097,45 +5828,30 @@ CONTAINS
         CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The Jacobian calculation type of "// &
-            & TRIM(NumberToVString(jacobianMatrix%jacobianCalculationType,"*",err,error))// &
+          localError="The Jacobian calculation type of "//TRIM(NumberToVString(jacobianCalculationType,"*",err,error))// &
             & " is not valid for matrix index number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       END DO !matrixIdx
     ENDDO !residualIdx
-    IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Nodal Jacobian matrix:",err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"Nodal Jacobian matrices:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Node number = ",nodeNumber,err,error,*999)      
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Nodal Jacobians:",err,error,*999)
-      DO residualIdx=1,nonlinearlinearMatrices%numberOfResiduals
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of residuals = ",numberOfResidual,err,error,*999)      
+      DO residualIdx=1,numberOfResiduals
         NULLIFY(residualVector)
         CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Residual number = ",residualIdx,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update residual = ",residualVector%updateNodalJacobain,err,error,*999)
-        DO matrixIdx=1,residualVector%numberOfJacobians
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Residual number : ",residualIdx,err,error,*999)
+        CALL EquationsMatricesResidual_NumberOfJacobiansGet(residualvector,numberOfJacobians,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of Jacobians = ",numberOfJacobians,err,error,*999)             
+        DO matrixIdx=1,numberOfJacobians
           NULLIFY(jacobianMatrix)
           CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"    Jacobian number = ",matrixIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"      Update Jacobian = ",jacobianMatrix%updateJacobian,err,error,*999)
-          IF(jacobianMatrix%updateJacobian) THEN
-            NULLIFY(nodalMatrix)
-            CALL JacobianMatrix_NodalJacobianGet(jacobianMatrix,nodalMatrix,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"      Number of rows = ",nodalMatrix%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"      Number of columns = ",nodalMatrix%numberOfColumns,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"      Maximum number of rows = ",nodalMatrix%maxNumberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"      Maximum number of columns = ",nodalMatrix%maxNumberOfColumns, &
-              & err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfRows,8,8,nodalMatrix%rowDofs, &
-              & '("      Row dofs     :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfColumns,8,8,nodalMatrix% &
-              & columnDofs,'("      Column dofs  :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfRows,1,1,nodalMatrix% &
-              & numberOfColumns,8,8,nodalMatrix%matrix(1:nodalMatrix%numberOfRows,1:nodalMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("      Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-              & '(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Jacobian matrix : ",matrixIdx,err,error,*999)
+          CALL JacobianMatrix_UpdateMatrixGet(jacobianMatrix,updateJacobian,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update Jacobian = ",updateJacobian,err,error,*999)
+          IF(updateJacobian) CALL JacobianMatrix_NodalMatrixOutput(GENERAL_OUTPUT_TYPE,jacobianMatrix,err,error,*999)
         ENDDO !matrixIdx
       ENDDO !residualIdx
     ENDIF
@@ -6174,10 +5890,9 @@ CONTAINS
     
     ENTERS("EquationsSet_NodalResidualEvaluate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -6211,74 +5926,75 @@ CONTAINS
     END SELECT
     nonlinearMatrices%nodalResidualCalculated=nodeNumber
     
-    IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Nodal residual matrices and vectors:",err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"Nodal matrices and vectors:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Node number = ",nodeNumber,err,error,*999)
-      linearMatrices=>vectorMatrices%linearMatrices
-      IF(ASSOCIATED(linearMatrices)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Linear matrices:",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of node matrices = ",linearMatrices%numberOfLinearMatrices,err,error,*999)
-        DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Node matrix : ",matrixIdx,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",linearMatrices%matrices(matrixIdx)%ptr%updateMatrix, &
-            & err,error,*999)
-          IF(linearMatrices%matrices(matrixIdx)%ptr%updateMatrix) THEN
-            nodalMatrix=>linearMatrices%matrices(matrixIdx)%ptr%nodalMatrix
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalMatrix%numberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of columns = ",nodalMatrix%numberOfColumns,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalMatrix%maxNumberOfRows,err,error,*999)
-            CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",nodalMatrix%maxNumberOfColumns, &
-              & err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfRows,8,8,nodalMatrix%rowDofs, &
-              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfColumns,8,8,nodalMatrix% &
-              & columnDofs,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-            CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfRows,1,1,nodalMatrix% &
-              & numberOfColumns,8,8,nodalMatrix%matrix(1:nodalMatrix%numberOfRows,1:nodalMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
-              & '(20X,8(X,E13.6))',err,error,*999)
-          ENDIF
+      IF(ASSOCIATED(dynamicMatrices)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Dynamic matrices:",err,error,*999)
+        CALL EquationsMatricesDynamic_NumberOfDynamicMatricesGet(dynamicMatrices,numberOfDynamicMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of dynamic matrices = ",numberOfDynamicMatrices,err,error,*999)
+        DO matrixIdx=1,numberOfDynamicMatrices
+          NULLIFY(dynamicMatrix)
+          CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,dynamicMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Dynamic matrix : ",matrixIdx,err,error,*999)
+          CALL EquationsMatrix_UpdateMatrixGet(dynamicMatrix,updateMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",updateMatrix,err,error,*999)
+          IF(updateMatrix) CALL EquationsMatrix_NodalMatrixOutput(GENERAL_OUTPUT_TYPE,dynamicMatrix,err,error,*999)
         ENDDO !matrixIdx
       ENDIF
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"Node residual vector:",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",nonlinearMatrices%updateResidual,err,error,*999)
-      IF(nonlinearMatrices%updateResidual) THEN
-        nodalVector=>nonlinearMatrices%nodalResidual
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
-        CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDofs, &
-          & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-        CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
-          & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
+      NULLIFY(linearMatrices)
+      CALL EquationsMatricesVector_LinearMatricesExists(vectorMatrices,linearMatrices,err,error,*999)
+      IF(ASSOCIATED(linearMatrices)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Linear matrices:",err,error,*999)
+        CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of linear matrices = ",numberOfLinearMatrices,err,error,*999)
+        DO matrixIdx=1,numberOfLinearMatrices
+          NULLIFY(linearMatrix)
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Linear matrix : ",matrixIdx,err,error,*999)
+          CALL EquationsMatrix_UpdateMatrixGet(linearMatrix,updateMatrix,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update matrix = ",updateMatrix,err,error,*999)
+          IF(updateMatrix) CALL EquationsMatrix_ElementMatrixOutput(GENERAL_OUTPUT_TYPE,linearMatrix,err,error,*999)
+        ENDDO !matrixIdx
       ENDIF
-      rhsVector=>vectorMatrices%rhsVector
+      NULLIFY(nonlinearMatrices)
+      CALL EquationsMatricesVector_NonlinearMatricesExists(vectorMatrices,nonlinearMatrices,err,error,*999)
+      IF(ASSOCIATED(nonlinearMatrices)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Residual vectors:",err,error,*999)
+        CALL EquationsMatricesNonlinear_NumberOfResidualsGet(nonlinearMatrices,numberOfResiduals,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of residuals = ",numberOfResiduals,err,error,*999)
+        DO residualIdx=1,numberOfResiduals
+          NULLIFY(residualVector)
+          CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Residual vector : ",residualIdx,err,error,*999)
+          CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+          IF(updateVector) CALL EquationsMatricesResidual_NodalVectorOutput(GENERAL_OUTPUT_TYPE,residualVector,err,error,*999)
+        ENDDO !residualIdx
+      ENDIF
+      NULLIFY(sourceVectors)
+      CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
+      IF(ASSOCIATED(sourceVectors)) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Source vectors:",err,error,*999)
+        CALL EquationsMatricesSources_NumberOfSourceVectorsGet(sourceVectors,numberOfSourceVectors,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSourceVectors,err,error,*999)
+        DO sourceIdx=1,numberOfSourceVectors
+          NULLIFY(sourceVector)
+          CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Source vector : ",sourceIdx,err,error,*999)
+          CALL EquationsMatricesSource_UpdateVectorGet(sourceVector,updateVector,err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+          IF(updateVector) CALL EquationsMatricesSource_NodalVectorOutput(GENERAL_OUTPUT_TYPE,sourceVector,err,error,*999)
+        ENDDO !sourceIdx
+      ENDIF
+      NULLIFY(rhsVector)
+      CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
       IF(ASSOCIATED(rhsVector)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Node RHS vector :",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",rhsVector%updateVector,err,error,*999)
-        IF(rhsVector%updateVector) THEN
-          nodalVector=>rhsVector%nodalVector
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDofs, &
-            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
-            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
-        ENDIF
-      ENDIF
-      sourceVector=>vectorMatrices%sourceVector
-      IF(ASSOCIATED(sourceVector)) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"Node source vector :",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",sourceVector%updateVector,err,error,*999)
-        IF(sourceVector%updateVector) THEN
-          nodalVector=>sourceVector%nodalVector
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDofs, &
-            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
-          CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
-            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
-        ENDIF
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"RHS vector :",err,error,*999)
+        CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateVector,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Update vector = ",updateVector,err,error,*999)
+        IF(updateVector) CALL EquationsMatricesRHS_NodalVectorOutput(GENERAL_OUTPUT_TYPE,rhsVector,err,error,*999)
       ENDIF
     ENDIF
        
@@ -6318,10 +6034,9 @@ CONTAINS
   
     ENTERS("EquationsSet_JacobianEvaluateStaticNodal",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -6336,8 +6051,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(nodalMapping)
     CALL DomainMappings_NodesMappingGet(domainMappings,nodalMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(nodalMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(nodalMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(nodalMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(nodalMapping,ghostFinish,err,error,*999)
     
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -6347,7 +6066,7 @@ CONTAINS
     !Allocate the nodal matrices 
     CALL EquationsMatricesVector_NodalInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -6357,15 +6076,15 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=nodalMapping%internalStart,nodalMapping%internalFinish
-      nodeNumber=nodalMapping%domainList(nodeIdx)
+    DO nodeIdx=internalStart,internalFinish
+      CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
       CALL EquationsMatricesVector_JacobianNodeAdd(vectorMatrices,err,error,*999)
     ENDDO !nodeIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
@@ -6377,22 +6096,22 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
-    DO nodeIdx=nodalMapping%boundaryStart,nodalMapping%ghostFinish
-      nodeNumber=nodalMapping%domainList(nodeIdx)
+    DO nodeIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
       CALL EquationsMatricesVector_JacobianNodeAdd(vectorMatrices,err,error,*999)
     ENDDO !nodeIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
       nodeSystemElapsed=nodeSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average node equations assembly", &
@@ -6401,7 +6120,7 @@ CONTAINS
     !Finalise the nodal matrices
     CALL EquationsMatricesVector_NodalFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -6409,7 +6128,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations Jacobian if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) &
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) &
       & CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
        
     EXITS("EquationsSet_JacobianEvaluateStaticNodal")
@@ -6447,10 +6166,9 @@ CONTAINS
  
     ENTERS("EquationsSet_ResidualEvaluateStaticNodal",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
@@ -6467,8 +6185,12 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(nodalMapping)
     CALL DomainMappings_NodesMappingGet(domainMappings,nodalMapping,err,error,*999)
+    CALL DomainMapping_InternalStartGet(nodalMapping,internalStart,err,error,*999)
+    CALL DomainMapping_InternalFinishGet(nodalMapping,internalFinish,err,error,*999)
+    CALL DomainMapping_BoundaryStartGet(nodalMapping,boundaryStart,err,error,*999)
+    CALL DomainMapping_GhostFinishGet(nodalMapping,ghostFinish,err,error,*999)
     
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime1,err,error,*999)
     ENDIF
@@ -6477,7 +6199,7 @@ CONTAINS
     !Allocate the nodal matrices 
     CALL EquationsMatricesVector_NodalInitialise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
@@ -6489,15 +6211,15 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=nodalMapping%internalStart,nodalMapping%internalFinish
-      nodeNumber=nodalMapping%domainList(nodeIdx)
+    DO nodeIdx=internalStart,xsinternalFinish
+      CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
       CALL EquationsMatricesVector_NodeAdd(vectorMatrices,err,error,*999)
     ENDDO !nodeIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime3,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime3,err,error,*999)
       userElapsed=userTime3(1)-userTime2(1)
@@ -6509,22 +6231,22 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
-    DO nodeIdx=nodalMapping%boundaryStart,nodalMapping%ghostFinish
-      nodeNumber=nodalMapping%domainList(nodeIdx)
+    DO nodeIdx=boundaryStart,ghostFinish
+      CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
       CALL EquationsMatricesVector_NodeAdd(vectorMatrices,err,error,*999)
     ENDDO !nodeIdx
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
       userElapsed=userTime5(1)-userTime3(1)
       systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
       nodeSystemElapsed=nodeSystemElapsed+systemElapsed
-      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+      IF(outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
         & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average node equations assembly", &
@@ -6533,7 +6255,7 @@ CONTAINS
     !Finalise the nodal matrices
     CALL EquationsMatricesVector_NodalFinalise(vectorMatrices,err,error,*999)
     !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
@@ -6541,7 +6263,7 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Output equations residual vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+    IF(outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
       CALL EquationsMatricesVector_Output(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        

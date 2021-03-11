@@ -116,7 +116,7 @@ CONTAINS
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
     
     SELECT CASE(esSpecification(3))
-    CASE(EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE(EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE)
       SELECT CASE(solutionMethod)
       CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
         equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -254,7 +254,7 @@ CONTAINS
     
     problemSubtype=problemSpecification(3)
     SELECT CASE(problemSubtype)
-    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
       !ok
     CASE DEFAULT
       localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
@@ -286,6 +286,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SolverType), POINTER :: solverDiffusion,solverAdvectionDiffusion
     TYPE(SolverEquationsType), POINTER :: solverEquationsDiffusion,solverEquationsAdvectionDiffusion
@@ -297,7 +298,7 @@ CONTAINS
     CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
 
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
     CASE DEFAULT
       localError="The problem subtype of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " does not equal a coupled source diffusion & advection-diffusion equation subtype."
@@ -448,7 +449,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: pSpecification(3),solverNuber
+    INTEGER(INTG) :: pSpecification(3),solverNumber
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
@@ -462,7 +463,7 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
       CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       IF(solverNumber==1) THEN
         !copy current value of concentration_one to another variable
@@ -516,7 +517,7 @@ CONTAINS
     CALL Problem_Specification(problem,3,pSpecification,err,error,*999)
     
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
       CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
       IF(solverNumber==1) THEN
         !CALL AdvectionDiffusion_PostSolve(solver,err,error,*999)
@@ -561,7 +562,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     SELECT CASE(pSpecification(3))
-    CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
+    CASE(PROBLEM_COUPLED_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
       !CALL AdvectionDiffusion_PostSolveOutputData(controlLoop,solver,err,error,*999)
       !CALL Diffusion_PostSolveOutputData(solver,err,error,*999)
     CASE DEFAULT

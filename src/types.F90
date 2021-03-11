@@ -591,7 +591,7 @@ MODULE Types
     INTEGER(INTG) :: NUMBER_OF_EMBEDDED_MESHES !<The number of meshes that are embedded in this mesh.
     TYPE(MeshPtrType), POINTER :: EMBEDDED_MESHES(:) !<EMBEDDED_MESHES(mesh_idx). A pointer to the mesh_idx'th mesh that is embedded in this mesh.
     INTEGER(INTG) :: numberOfElements
-    TYPE(MeshTopologyPtrType), ALLOCATABLE :: topology(:) !<TOPOLOGY(meshComponentIdx). A pointer to the topology meshComponentIdx'th mesh component. \todo Change to allocatable?
+    TYPE(MeshTopologyPtrType), ALLOCATABLE :: topology(:) !<topology(meshComponentIdx). A pointer to the topology meshComponentIdx'th mesh component.
     TYPE(DecompositionsType), POINTER :: decompositions !<A pointer to the decompositions for this mesh.
     LOGICAL :: surroundingElementsCalculate !<Boolean flag to determine whether surrounding elements should be calculated.
   END TYPE MeshType
@@ -2937,6 +2937,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(BasisType), POINTER :: basis !<A pointer to the inteface mesh basis
     LOGICAL :: meshConnectivityFinished !<Is .TRUE. if the coupled mesh connectivity has finished being created, .FALSE. if not.
     INTEGER(INTG) :: numberOfInterfaceElements !<The number of elements in the interface
+    INTEGER(INTG) :: numberOfInterfaceNodes !<The number of nodes in the interface
     INTEGER(INTG) :: numberOfCoupledMeshes !<The number of coupled meshes in the interface
     TYPE(InterfaceElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers

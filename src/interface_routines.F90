@@ -848,6 +848,7 @@ CONTAINS
     INTERFACE%meshConnectivity%interfaceMesh=>mesh
     NULLIFY(INTERFACE%meshConnectivity%basis)
     INTERFACE%meshConnectivity%numberOfInterfaceElements=mesh%numberOfElements
+    INTERFACE%meshConnectivity%numberOfInterfaceNodes=0
     INTERFACE%meshConnectivity%numberOfCoupledMeshes=INTERFACE%numberOfCoupledMeshes
     ALLOCATE(INTERFACE%meshConnectivity%elementConnectivity(mesh%numberOfElements,INTERFACE%numberOfCOupledMeshes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interface mesh connectivity element connectivity.",err,error,*999)
@@ -1487,6 +1488,7 @@ CONTAINS
       interfaceMeshConnectivity%coupledNodes(firstCoupledMeshIndex,nodeIndex)=firstCoupledMeshNodeNumbers(nodeIndex)
       interfaceMeshConnectivity%coupledNodes(secondCoupledMeshIndex,nodeIndex)=secondCoupledMeshNodeNumbers(nodeIndex)
     ENDDO !nodeIndex
+    interfaceMeshConnectivity%numberOfInterfaceNodes=SIZE(interfaceMeshNodeNumbers(:))
     
     EXITS("InterfaceMeshConnectivity_NodeNumbersSet")
     RETURN

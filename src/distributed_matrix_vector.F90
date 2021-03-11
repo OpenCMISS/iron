@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -245,10 +245,14 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedMatrix_LinkListSet,DistributedMatrix_LinkListGet
 
+  PUBLIC DistributedMatrix_MatrixByVectorAdd
+  
   PUBLIC DistributedMatrix_MatrixColumnAdd
 
   PUBLIC DistributedMatrix_MatrixCoupleAdd
 
+  PUBLIC DistributedMatrix_MatrixRowByVectorAdd
+  
   PUBLIC DistributedMatrix_MatrixStructureCoupleCalculate
 
   PUBLIC DistributedMatrix_NumberOfNonZerosSet
@@ -275,8 +279,6 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedMatrix_ValuesGet,DistributedMatrix_ValuesSet
 
-  PUBLIC DistributedMatrix_MatrixByVectorAdd
-  
   PUBLIC DistributedVector_AllValuesSet
 
   PUBLIC DistributedVector_Copy
@@ -1640,6 +1642,250 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Calculates the matrix vector product of a distrubted matrix times a distributed vector and adds it to the distributed
+  !>product vector. NOTE: This will only work for specific CMISS distributed matrices i.e., ones in which the columns of the
+  !>matrix are distributed in the same way as the rows of the multiplied vector are distributed, and the rows of the matrix
+  !>are distributed in the same way as the rows of the product vector.
+  SUBROUTINE DistributedMatrix_MatrixByVectorAdd(distributedMatrix,transposeMatrix,distributedVector,rowSelectionType,alpha, &
+    & distributedProduct,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    LOGICAL, INTENT(IN) :: transposeMatrix !<If .TRUE. then the transpose of the matrix is coupled in, if .FALSE. the matrix is used.
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the matrix-vector product \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the distributed matrix
+    TYPE(DistributedVectorType), POINTER :: distributedProduct !<On exit, the value of the matrix vector product added to the distributed product vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: columnIdx,localColumn,globalColumn,numberOfColumns,numberOfRows,row,rowIdx,transposePosition,transposeType
+    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
+    REAL(DP) :: sum
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
+    TYPE(DistributedVectorCMISSType), POINTER :: cmissVector,cmissProduct
+    TYPE(DomainMappingType), POINTER :: rowMapping,columnMapping,productMapping,vectorMapping
+    TYPE(MatrixType), POINTER :: matrix
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DistributedMatrix_MatrixByVectorAdd",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedProduct,err,error,*999)
+    
+    IF(distributedMatrix%libraryType/=distributedVector%libraryType) THEN
+      localError="The distributed vector library type of "// &
+        & TRIM(NumberToVString(distributedVector%libraryType,"*",err,error))// &
+        & " does not match the distributed matrix library type of "// &
+        &  TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(distributedMatrix%libraryType/=distributedProduct%libraryType) THEN
+      localError="The distributed product vector library type of "// &
+        & TRIM(NumberToVString(distributedProduct%libraryType,"*",err,error))// &
+        & " does not match the distributed matrix library type of "// &
+        &  TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(columnMapping)
+    CALL DistributedMatrix_ColumnMappingGet(distributedMatrix,columnMapping,err,error,*999)
+    NULLIFY(rowMapping)
+    CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowMapping,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL DistributedVector_RowMappingGet(distributedVector,vectorMapping,err,error,*999)
+    NULLIFY(productMapping)
+    CALL DistributedVector_RowMappingGet(distributedProduct,productMapping,err,error,*999)
+    IF(.NOT.ASSOCIATED(columnMapping,distributedVector%domainMapping)) &
+      & CALL FlagError("The distributed matrix and the distributed vector have different domain mappings.", &
+      & err,error,*999)
+    IF(.NOT.ASSOCIATED(rowMapping,distributedProduct%domainMapping)) &
+      & CALL FlagError("The distributed matrix and the distributed product vector have different domain mappings.", &
+      & err,error,*999)
+      
+    IF(ABS(alpha)>ZERO_TOLERANCE) THEN
+      SELECT CASE(distributedMatrix%libraryType)
+      CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+        NULLIFY(cmissMatrix)
+        CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+        NULLIFY(cmissVector)
+        CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
+        NULLIFY(cmissProduct)
+        CALL DistributedVector_CMISSVectorGet(distributedProduct,cmissProduct,err,error,*999)
+        matrix=>cmissMatrix%matrix
+        IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("CMISS matrix matrix is not associated.",err,error,*999)
+        IF(matrix%dataType/=distributedVector%dataType) THEN
+          localError="The distributed vector data type of "// &
+            & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
+            & " does not match the distributed matrix data type of "// &
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(matrix%dataType/=distributedProduct%dataType) THEN
+          localError="The distributed product vector data type of "// &
+            & TRIM(NumberToVString(distributedProduct%dataType,"*",err,error))// &
+            & " does not match the distributed matrix data type of "// &
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+          
+        SELECT CASE(rowSelectionType)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
+          numberOfRows=rowMapping%totalNumberOfLocal
+        CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
+          numberOfRows=rowMapping%numberOfLocal
+        CASE DEFAULT
+          localError="The row selection type of "// &
+            & TRIM(NumberToVString(rowSelectionType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        numberOfColumns=columnMapping%numberOfGlobal
+        SELECT CASE(matrix%dataType)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
+          SELECT CASE(matrix%storageType)
+          CASE(MATRIX_BLOCK_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
+                sum=0.0_DP
+                DO row=1,numberOfRows
+                  sum=sum++matrix%dataDP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(row)
+                ENDDO !row
+                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+              ENDDO !localColumn
+            ELSE
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+            DO row=1,numberOfRows
+              sum=matrix%dataDP(row)*cmissVector%dataDP(row)
+              cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+            ENDDO !row
+          CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
+                sum=0.0_DP
+                DO row=1,numberOfRows
+                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(row)
+                ENDDO !row
+                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+              ENDDO !localColumn
+            ELSE
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+               DO localColumn=1,columnMapping%totalNumberOfLocal
+                 globalColumn=columnMapping%localToGlobalMap(localColumn)
+                 sum=0.0_DP
+                 DO row=1,numberOfRows
+                   sum=sum+matrix%dataDP((row-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(row)
+                 ENDDO !row
+                 cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+               ENDDO !localColumn
+             ELSE
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  sum=sum+matrix%dataDP((row-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+            IF(transposeMatrix) THEN              
+              CALL DistributedMatrix_TransposeTypeGet(distributedMatrix,transposeType,err,error,*999)
+              IF(transposeType==DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED) THEN
+                CALL DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT, &
+                  & err,error,*999)
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  CALL DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,globalColumn,transposePosition, &
+                    & err,error,*999)
+                  sum=0.0_DP
+                  DO rowIdx=1,columnIndicesT(transposePosition),columnIndicesT(transposePosition+1)-1
+                    row=rowIndicesT(rowIdx)
+                    sum=sum+matrix%dataDP(dataSwivelT(row))*cmissVector%dataDP(row)
+                  ENDDO !rowIdx
+                  cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+                ENDDO !localColumn
+              ELSE
+                CALL FlagError("Not implemented.",err,error,*999)
+              ENDIF
+            ELSE              
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO columnIdx=matrix%rowIndices(row),matrix%rowIndices(row+1)-1
+                  globalColumn=matrix%columnIndices(columnIdx)
+                  !This ranks global to local mappings are stored in the first position
+                  localColumn=columnMapping%globalToLocalMap(globalColumn)%localNumber(1)
+                  sum=sum+matrix%dataDP(columnIdx)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The matrix storage type of "// &
+              & TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."            
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The distributed matrix vector data type of "// &
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+       CALL FlagError("Not implemented.",err,error,*999)
+     CASE DEFAULT
+       localError="The distributed matrix library type of "// &
+         & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid"
+       CALL FlagError(localError,err,error,*999)
+     END SELECT
+   ENDIF
+    
+    EXITS("DistributedMatrix_MatrixByVectorAdd")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_MatrixByVectorAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_MatrixByVectorAdd
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Adds a column from a distributed matrix times an alpha value to a distributed vector
   SUBROUTINE DistributedMatrix_MatrixColumnAdd(distributedMatrix,transposeMatrix,columnNumber,rowCoupling,alpha, &
     & distributedVector,err,error,*)
@@ -1804,12 +2050,12 @@ CONTAINS
   !
 
   !>Adds a coupled distributed matrix to a distributed matrix i.e., A = A + alpha.C(B)
-  SUBROUTINE DistributedMatrix_MatrixCoupleAdd(rowSelectionType,aMatrix,rowCoupling,columnCoupling,alpha,bMatrix,transposeB, &
+  SUBROUTINE DistributedMatrix_MatrixCoupleAdd(aMatrix,rowSelectionType,rowCoupling,columnCoupling,alpha,bMatrix,transposeB, &
     & err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(DistributedMatrixType), POINTER :: aMatrix !<The distributed matrix to add to
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: columnCoupling(:) !<The column coupling information
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
@@ -2002,6 +2248,210 @@ CONTAINS
     
   END SUBROUTINE DistributedMatrix_MatrixCoupleAdd
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the matrix row vector product of a distrubted matrix row times a distributed vector and adds it to the sum value.
+  !>NOTE: This will only work for specific CMISS distributed matrices i.e., ones in which the columns of the matrix are
+  !>distributed in the same way as the rows of the multiplied vector are distributed.
+  SUBROUTINE DistributedMatrix_MatrixRowByVectorAdd(distributedMatrix,transposeMatrix,distributedVector,localRowNumber, &
+    & rowSelectionType,alpha,productValue,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    LOGICAL, INTENT(IN) :: transposeMatrix !<If .TRUE. then the transpose of the matrix is used, if .FALSE. the matrix is used.
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
+    INTEGER(INTG), INTENT(IN) :: localRowNumber !<The local row number of the matrix to multiple with the vector
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the matrix-vector product \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the distributed matrix
+    REAL(DP), INTENT(INOUT) :: productValue !<On exit, the value of the matrix vector product times alpha added to the product value.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: columnIdx,localColumn,globalColumn,numberOfGlobalColumns,numberOfLocalColumns,numberOfLocalRows, &
+      & numberOfRows,row,rowIdx,totalNumberOfLocalColumns,totalNumberOfLocalRows,transposePosition,transposeType
+    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
+    REAL(DP) :: sum
+    LOGICAL :: skewSymmetric,symmetric,useTranspose
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
+    TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
+    TYPE(DomainMappingType), POINTER :: rowMapping,columnMapping,vectorMapping
+    TYPE(MatrixType), POINTER :: matrix
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DistributedMatrix_MatrixRowByVectorAdd",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    
+    IF(distributedMatrix%libraryType/=distributedVector%libraryType) THEN
+      localError="The distributed vector library type of "// &
+        & TRIM(NumberToVString(distributedVector%libraryType,"*",err,error))// &
+        & " does not match the distributed matrix library type of "// &
+        &  TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(columnMapping)
+    CALL DistributedMatrix_ColumnMappingGet(distributedMatrix,columnMapping,err,error,*999)
+    NULLIFY(rowMapping)
+    CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowMapping,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL DistributedVector_RowMappingGet(distributedVector,vectorMapping,err,error,*999)
+    IF(transposeMatrix) THEN
+      IF(.NOT.ASSOCIATED(rowMapping,vectorMapping)) &
+        & CALL FlagError("The transposed distributed matrix and the distributed vector have different domain mappings.", &
+        & err,error,*999)      
+    ELSE
+      IF(.NOT.ASSOCIATED(columnMapping,vectorMapping)) &
+        & CALL FlagError("The distributed matrix and the distributed vector have different domain mappings.", &
+        & err,error,*999)
+    ENDIF
+     
+    IF(ABS(alpha)>ZERO_TOLERANCE) THEN
+      SELECT CASE(distributedMatrix%libraryType)
+      CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+        NULLIFY(cmissMatrix)
+        CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+        NULLIFY(cmissVector)
+        CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
+        matrix=>cmissMatrix%matrix
+        IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("CMISS matrix matrix is not associated.",err,error,*999)
+        IF(matrix%dataType/=distributedVector%dataType) THEN
+          localError="The distributed vector data type of "// &
+            & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
+            & " does not match the distributed matrix data type of "// &
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+
+        symmetric=(matrix%symmetryType==MATRIX_SYMMETRIC_TYPE)
+        skewSymmetric=(matrix%symmetryType==MATRIX_SKEW_SYMMETRIC_TYPE)
+        useTranspose=(transposeMatrix.AND.(.NOT.(symmetric.OR.skewSymmetric))) !Handle transpose cases later
+ 
+        CALL DomainMapping_NumberOfLocalGet(rowMapping,numberOfLocalRows,err,error,*999)
+        CALL DomainMapping_TotalNumberOfLocalGet(rowMapping,totalNumberOfLocalRows,err,error,*999)
+        CALL DomainMapping_NumberOfLocalGet(columnMapping,numberOfLocalColumns,err,error,*999)
+        CALL DomainMapping_TotalNumberOfLocalGet(columnMapping,totalNumberOfLocalColumns,err,error,*999)
+        CALL DomainMapping_NumberOfGlobalGet(columnMapping,numberOfGlobalColumns,err,error,*999)
+        SELECT CASE(rowSelectionType)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
+          numberOfRows=totalNumberOfLocalRows
+        CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
+          numberOfRows=numberOfLocalRows
+        CASE DEFAULT
+          localError="The row selection type of "//TRIM(NumberToVString(rowSelectionType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        
+        IF(localRowNumber<1.OR.localRowNumber>numberOfRows) THEN
+          localError="The specified local row number of "//TRIM(NumberToVString(localRowNumber,"*",err,error))// &
+            & " is invalid. The local row number should be >= 1 and <= "// &
+            & TRIM(NumberToVString(numberOfRows,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+
+        SELECT CASE(matrix%dataType)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
+          SELECT CASE(matrix%storageType)
+          CASE(MATRIX_BLOCK_STORAGE_TYPE)            
+            IF(useTranspose) THEN
+              !The transposes are hard here as we would need to sum across different processors but the row would only be
+              !local to one processor and so how would the others know to sum?
+              CALL FlagError("Not implemented.",err,error,*999)
+            ELSE
+              sum=0.0_DP
+              DO localColumn=1,totalNumberOfLocalColumns
+                CALL DomainMapping_LocalToGlobalGet(columnMapping,localColumn,globalColumn,err,error,*999)
+                sum=sum+matrix%dataDP(localRowNumber+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
+              ENDDO !localColumn
+            ENDIF
+            productValue=productValue+alpha*sum
+          CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+            productValue=productValue+alpha*matrix%dataDP(localRowNumber)*cmissVector%dataDP(localRowNumber)
+          CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+              !The transposes are hard here as we would need to sum across different processors but the row would only be
+              !local to one processor and so how would the others know to sum?
+              CALL FlagError("Not implemented.",err,error,*999)
+            ELSE
+              sum=0.0_DP
+              DO localColumn=1,totalNumberOfLocalColumns
+                CALL DomainMapping_LocalToGlobalGet(columnMapping,localColumn,globalColumn,err,error,*999)
+                sum=sum+matrix%dataDP(localRowNumber+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(localColumn)
+              ENDDO !localColumn
+              productValue=productValue+alpha*sum
+            ENDIF
+          CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+              !The transposes are hard here as we would need to sum across different processors but the row would only be
+              !local to one processor and so how would the others know to sum?
+              CALL FlagError("Not implemented.",err,error,*999)
+            ELSE
+              sum=0.0_DP
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
+                sum=sum+matrix%dataDP((localRowNumber-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(localColumn)
+              ENDDO !localColumn
+              productValue=productValue+alpha*sum
+            ENDIF
+          CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+            IF(transposeMatrix) THEN              
+              !The transposes are hard here as we would need to sum across different processors but the row would only be
+              !local to one processor and so how would the others know to sum?
+              CALL FlagError("Not implemented.",err,error,*999)
+            ELSE              
+              sum=0.0_DP
+              DO columnIdx=matrix%rowIndices(row),matrix%rowIndices(row+1)-1
+                globalColumn=matrix%columnIndices(columnIdx)
+                !This ranks global to local mappings are stored in the first position
+                CALL DomainMapping_LocalNumberFromGlobalGet(columnMapping,globalColumn,1,localColumn,err,error,*999)
+                sum=sum+matrix%dataDP(columnIdx)*cmissVector%dataDP(localColumn)
+              ENDDO !localColumn
+              productValue=productValue+alpha*sum
+            ENDIF
+          CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The matrix storage type of "// &
+              & TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."            
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The distributed matrix vector data type of "// &
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+       CALL FlagError("Not implemented.",err,error,*999)
+     CASE DEFAULT
+       localError="The distributed matrix library type of "// &
+         & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid"
+       CALL FlagError(localError,err,error,*999)
+     END SELECT
+   ENDIF
+    
+    EXITS("DistributedMatrix_MatrixRowByVectorAdd")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_MatrixRowByVectorAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_MatrixRowByVectorAdd
+  
   !
   !================================================================================================================================
   !
@@ -5118,250 +5568,6 @@ CONTAINS
     
   END SUBROUTINE DistributedMatrix_ValuesSetL2
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates the matrix vector product of a distrubted matrix times a distributed vector and adds it to the distributed
-  !>product vector. NOTE: This will only work for specific CMISS distributed matrices i.e., ones in which the columns of the
-  !>matrix are distributed in the same way as the rows of the multiplied vector are distributed, and the rows of the matrix
-  !>are distributed in the same way as the rows of the product vector.
-  SUBROUTINE DistributedMatrix_MatrixByVectorAdd(rowSelectionType,alpha,distributedMatrix,transposeMatrix,distributedVector, &
-    & distributedProduct,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the matrix-vector product \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
-    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the distributed matrix
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    LOGICAL, INTENT(IN) :: transposeMatrix !<If .TRUE. then the transpose of the matrix is coupled in, if .FALSE. the matrix is used.
-    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
-    TYPE(DistributedVectorType), POINTER :: distributedProduct !<On exit, the value of the matrix vector product added to the distributed product vector.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: columnIdx,localColumn,globalColumn,numberOfColumns,numberOfRows,row,rowIdx,transposePosition,transposeType
-    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
-    REAL(DP) :: sum
-    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedVectorCMISSType), POINTER :: cmissVector,cmissProduct
-    TYPE(DomainMappingType), POINTER :: rowMapping,columnMapping,productMapping,vectorMapping
-    TYPE(MatrixType), POINTER :: matrix
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("DistributedMatrix_MatrixByVectorAdd",err,error,*999)
-
-    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
-    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
-    CALL DistributedVector_AssertIsFinished(distributedProduct,err,error,*999)
-    
-    IF(distributedMatrix%libraryType/=distributedVector%libraryType) THEN
-      localError="The distributed vector library type of "// &
-        & TRIM(NumberToVString(distributedVector%libraryType,"*",err,error))// &
-        & " does not match the distributed matrix library type of "// &
-        &  TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedMatrix%libraryType/=distributedProduct%libraryType) THEN
-      localError="The distributed product vector library type of "// &
-        & TRIM(NumberToVString(distributedProduct%libraryType,"*",err,error))// &
-        & " does not match the distributed matrix library type of "// &
-        &  TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    NULLIFY(columnMapping)
-    CALL DistributedMatrix_ColumnMappingGet(distributedMatrix,columnMapping,err,error,*999)
-    NULLIFY(rowMapping)
-    CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowMapping,err,error,*999)
-    NULLIFY(vectorMapping)
-    CALL DistributedVector_RowMappingGet(distributedVector,vectorMapping,err,error,*999)
-    NULLIFY(productMapping)
-    CALL DistributedVector_RowMappingGet(distributedProduct,productMapping,err,error,*999)
-    IF(.NOT.ASSOCIATED(columnMapping,distributedVector%domainMapping)) &
-      & CALL FlagError("The distributed matrix and the distributed vector have different domain mappings.", &
-      & err,error,*999)
-    IF(.NOT.ASSOCIATED(rowMapping,distributedProduct%domainMapping)) &
-      & CALL FlagError("The distributed matrix and the distributed product vector have different domain mappings.", &
-      & err,error,*999)
-      
-    IF(ABS(alpha)>ZERO_TOLERANCE) THEN
-      SELECT CASE(distributedMatrix%libraryType)
-      CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-        NULLIFY(cmissMatrix)
-        CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-        NULLIFY(cmissVector)
-        CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
-        NULLIFY(cmissProduct)
-        CALL DistributedVector_CMISSVectorGet(distributedProduct,cmissProduct,err,error,*999)
-        matrix=>cmissMatrix%matrix
-        IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("CMISS matrix matrix is not associated.",err,error,*999)
-        IF(matrix%dataType/=distributedVector%dataType) THEN
-          localError="The distributed vector data type of "// &
-            & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-            & " does not match the distributed matrix data type of "// &
-            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-        IF(matrix%dataType/=distributedProduct%dataType) THEN
-          localError="The distributed product vector data type of "// &
-            & TRIM(NumberToVString(distributedProduct%dataType,"*",err,error))// &
-            & " does not match the distributed matrix data type of "// &
-            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-          
-        SELECT CASE(rowSelectionType)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-          numberOfRows=rowMapping%totalNumberOfLocal
-        CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-          numberOfRows=rowMapping%numberOfLocal
-        CASE DEFAULT
-          localError="The row selection type of "// &
-            & TRIM(NumberToVString(rowSelectionType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        numberOfColumns=columnMapping%numberOfGlobal
-        SELECT CASE(matrix%dataType)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
-          SELECT CASE(matrix%storageType)
-          CASE(MATRIX_BLOCK_STORAGE_TYPE)
-            IF(transposeMatrix) THEN
-              DO localColumn=1,columnMapping%totalNumberOfLocal
-                globalColumn=columnMapping%localToGlobalMap(localColumn)
-                sum=0.0_DP
-                DO row=1,numberOfRows
-                  sum=sum++matrix%dataDP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(row)
-                ENDDO !row
-                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
-              ENDDO !localColumn
-            ELSE
-              DO row=1,numberOfRows
-                sum=0.0_DP
-                DO localColumn=1,columnMapping%totalNumberOfLocal
-                  globalColumn=columnMapping%localToGlobalMap(localColumn)
-                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
-                ENDDO !localColumn
-                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-              ENDDO !row
-            ENDIF
-          CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-            DO row=1,numberOfRows
-              sum=matrix%dataDP(row)*cmissVector%dataDP(row)
-              cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-            ENDDO !row
-          CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-            IF(transposeMatrix) THEN
-              DO localColumn=1,columnMapping%totalNumberOfLocal
-                globalColumn=columnMapping%localToGlobalMap(localColumn)
-                sum=0.0_DP
-                DO row=1,numberOfRows
-                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(row)
-                ENDDO !row
-                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
-              ENDDO !localColumn
-            ELSE
-              DO row=1,numberOfRows
-                sum=0.0_DP
-                DO localColumn=1,columnMapping%totalNumberOfLocal
-                  globalColumn=columnMapping%localToGlobalMap(localColumn)
-                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(localColumn)
-                ENDDO !localColumn
-                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-              ENDDO !row
-            ENDIF
-          CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-            IF(transposeMatrix) THEN
-               DO localColumn=1,columnMapping%totalNumberOfLocal
-                 globalColumn=columnMapping%localToGlobalMap(localColumn)
-                 sum=0.0_DP
-                 DO row=1,numberOfRows
-                   sum=sum+matrix%dataDP((row-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(row)
-                 ENDDO !row
-                 cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
-               ENDDO !localColumn
-             ELSE
-              DO row=1,numberOfRows
-                sum=0.0_DP
-                DO localColumn=1,columnMapping%totalNumberOfLocal
-                  globalColumn=columnMapping%localToGlobalMap(localColumn)
-                  sum=sum+matrix%dataDP((row-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(localColumn)
-                ENDDO !localColumn
-                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-              ENDDO !row
-            ENDIF
-          CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-            IF(transposeMatrix) THEN              
-              CALL DistributedMatrix_TransposeTypeGet(distributedMatrix,transposeType,err,error,*999)
-              IF(transposeType==DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED) THEN
-                CALL DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT, &
-                  & err,error,*999)
-                DO localColumn=1,columnMapping%totalNumberOfLocal
-                  globalColumn=columnMapping%localToGlobalMap(localColumn)
-                  CALL DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,globalColumn,transposePosition, &
-                    & err,error,*999)
-                  sum=0.0_DP
-                  DO rowIdx=1,columnIndicesT(transposePosition),columnIndicesT(transposePosition+1)-1
-                    row=rowIndicesT(rowIdx)
-                    sum=sum+matrix%dataDP(dataSwivelT(row))*cmissVector%dataDP(row)
-                  ENDDO !rowIdx
-                  cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
-                ENDDO !localColumn
-              ELSE
-                CALL FlagError("Not implemented.",err,error,*999)
-              ENDIF
-            ELSE              
-              DO row=1,numberOfRows
-                sum=0.0_DP
-                DO columnIdx=matrix%rowIndices(row),matrix%rowIndices(row+1)-1
-                  globalColumn=matrix%columnIndices(columnIdx)
-                  !This ranks global to local mappings are stored in the first position
-                  localColumn=columnMapping%globalToLocalMap(globalColumn)%localNumber(1)
-                  sum=sum+matrix%dataDP(columnIdx)*cmissVector%dataDP(localColumn)
-                ENDDO !localColumn
-                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-              ENDDO !row
-            ENDIF
-          CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The matrix storage type of "// &
-              & TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."            
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="The distributed matrix vector data type of "// &
-            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-       CALL FlagError("Not implemented.",err,error,*999)
-     CASE DEFAULT
-       localError="The distributed matrix library type of "// &
-         & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid"
-       CALL FlagError(localError,err,error,*999)
-     END SELECT
-   ENDIF
-    
-    EXITS("DistributedMatrix_MatrixByVectorAdd")
-    RETURN
-999 ERRORSEXITS("DistributedMatrix_MatrixByVectorAdd",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DistributedMatrix_MatrixByVectorAdd
-  
   !
   !================================================================================================================================
   !
@@ -9317,11 +9523,11 @@ CONTAINS
   !
 
   !>Adds a distributed vector to a distributed vector i.e., a = a + alpha.b
-  SUBROUTINE DistributedVector_VectorAdd(rowSelectionType,aVector,alpha,bVector,err,error,*)
+  SUBROUTINE DistributedVector_VectorAdd(aVector,rowSelectionType,alpha,bVector,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to add to
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
     TYPE(DistributedVectorType), POINTER :: bVector !<The distributed vector to add
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -9375,11 +9581,11 @@ CONTAINS
   !
 
   !>Copies a distributed vector to a distributed vector i.e., a = alpha.b
-  SUBROUTINE DistributedVector_VectorCopy(rowSelectionType,aVector,alpha,bVector,err,error,*)
+  SUBROUTINE DistributedVector_VectorCopy(aVector,rowSelectionType,alpha,bVector,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to copy to
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
     TYPE(DistributedVectorType), POINTER :: bVector !<The distributed vector to copy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -9433,11 +9639,11 @@ CONTAINS
   !
 
   !>Adds a coupled distributed vector to a distributed vector i.e., a = a + alpha.C(b)
-  SUBROUTINE DistributedVector_VectorCoupleAdd(rowSelectionType,aVector,rowCoupling,alpha,bVector,err,error,*)
+  SUBROUTINE DistributedVector_VectorCoupleAdd(aVector,rowSelectionType,rowCoupling,alpha,bVector,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to add to
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the vector add \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
     TYPE(DistributedVectorType), POINTER :: bVector !<The distributed vector to couple and add

@@ -45,6 +45,7 @@
 MODULE EquationsMatricesAccessRoutines
   
   USE BaseRoutines
+  USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
@@ -206,6 +207,10 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatricesResidual_DistributedVectorGet
 
+  PUBLIC EquationsMatricesResidual_ElementVectorOutput
+
+  PUBLIC EquationsMatricesResidual_FirstAssemblyGet
+
   PUBLIC EquationsMatricesResidual_CurrentDistributedVectorExists
 
   PUBLIC EquationsMatricesResidual_CurrentDistributedVectorGet
@@ -224,6 +229,8 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatricesResidual_JacobianMatrixGet
 
+  PUBLIC EquationsMatricesResidual_NodalVectorOutput
+
   PUBLIC EquationsMatricesResidual_NonlinearMatricesGet
 
   PUBLIC EquationsMatricesResidual_NumberOfJacobiansGet
@@ -239,6 +246,10 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesRHS_DistributedVectorExists
   
   PUBLIC EquationsMatricesRHS_DistributedVectorGet
+
+  PUBLIC EquationsMatricesRHS_ElementVectorOutput
+
+  PUBLIC EquationsMatricesRHS_FirstAssemblyGet
 
   PUBLIC EquationsMatricesRHS_CurrentDistributedVectorExists
   
@@ -256,6 +267,8 @@ MODULE EquationsMatricesAccessRoutines
   
   PUBLIC EquationsMatricesRHS_Previous3DistributedVectorGet
 
+  PUBLIC EquationsMatricesRHS_NodalVectorOutput
+
   PUBLIC EquationsMatricesRHS_VectorMatricesGet
 
   PUBLIC EquationsMatricesRHS_VectorCoefficientGet
@@ -267,6 +280,10 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesSource_DistributedVectorExists
 
   PUBLIC EquationsMatricesSource_DistributedVectorGet
+
+  PUBLIC EquationsMatricesSource_ElementVectorOutput
+
+  PUBLIC EquationsMatricesSource_FirstAssemblyGet
 
   PUBLIC EquationsMatricesSource_CurrentDistributedVectorExists
 
@@ -283,6 +300,8 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesSource_Previous3DistributedVectorExists
 
   PUBLIC EquationsMatricesSource_Previous3DistributedVectorGet
+
+  PUBLIC EquationsMatricesSource_NodalVectorOutput
 
   PUBLIC EquationsMatricesSource_SourceNumberGet
 
@@ -334,6 +353,10 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatrix_DynamicMatricesGet
 
+  PUBLIC EquationsMatrix_ElementMatrixOutput
+
+  PUBLIC EquationsMatrix_FirstAssemblyGet
+
   PUBLIC EquationsMatrix_LinearMatricesExists
   
   PUBLIC EquationsMatrix_LinearMatricesGet
@@ -343,6 +366,8 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatrix_MatrixCoefficientGet
 
   PUBLIC EquationsMatrix_MatrixNumberGet
+
+  PUBLIC EquationsMatrix_NodalMatrixOutput
 
   PUBLIC EquationsMatrix_NumberOfColumnsGet
   
@@ -362,11 +387,17 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC JacobianMatrix_DistributedMatrixGet
 
+  PUBLIC JacobianMatrix_ElementMatrixOutput
+
   PUBLIC JacobianMatrix_FiniteDifferenceStepSizeGet
+
+  PUBLIC JacobianMatrix_FirstAssemblyGet
 
   PUBLIC JacobianMatrix_MatrixCoefficientGet
 
   PUBLIC JacobianMatrix_MatrixNumberGet
+
+  PUBLIC JacobianMatrix_NodalMatrixOutput
 
   PUBLIC JacobianMatrix_NumberOfColumnsGet
   
@@ -382,6 +413,71 @@ MODULE EquationsMatricesAccessRoutines
 
 CONTAINS
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the element matrix information.
+  SUBROUTINE ElementMatrix_Output(id,elementMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(ElementMatrixType), INTENT(IN) :: elementMatrix !<The element matrix to output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ElementMatrix_Output",err,error,*999)
+
+    CALL WriteStringValue(id,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
+    CALL WriteStringValue(id,"  Number of columns = ",elementMatrix%numberOfColumns,err,error,*999)
+    CALL WriteStringValue(id,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows,err,error,*999)
+    CALL WriteStringValue(id,"  Maximum number of columns = ",elementMatrix%maxNumberOfColumns,err,error,*999)
+    CALL WriteStringVector(id,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
+      & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
+    CALL WriteStringVector(id,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix%columnDOFS, &
+      & '("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
+    CALL WriteStringMatrix(id,1,1,elementMatrix%numberOfRows,1,1,elementMatrix%numberOfColumns,8,8, &
+      & elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix%numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+      & '("  Matrix','(",I2,",:)','     :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
+    
+    EXITS("ElementMatrix_Output")
+    RETURN
+999 ERRORSEXITS("ElementMatrix_Output",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ElementMatrix_Output
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the element vector information .
+  SUBROUTINE ElementVector_Output(id,elementVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(ElementVectorType), INTENT(IN) :: elementVector !<The element vector to output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ElementVector_Output",err,error,*999)
+
+    CALL WriteStringValue(id,"  Number of rows = ",elementVector%numberOfRows,err,error,*999)
+    CALL WriteStringValue(id,"  Maximum number of rows = ",elementVector%maxNumberOfRows,err,error,*999)
+    CALL WriteStringVector(id,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
+      & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
+    CALL WriteStringVector(id,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
+      & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
+    
+    EXITS("ElementVector_Output")
+    RETURN
+999 ERRORSEXITS("ElementVector_Output",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ElementVector_Output
+  
   !
   !================================================================================================================================
   !
@@ -1143,6 +1239,62 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Outputs the element vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_ElementVectorOutput(id,residualVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to output the element vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_ElementVectorOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+
+    CALL ElementVector_Output(id,residualVector%elementResidual,err,error,*999)
+    
+    EXITS("EquationsMatricesResidual_ElementVectorOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_ElementVectorOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_ElementVectorOutput
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the first assembly flag for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_FirstAssemblyGet(residualVector,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the update flag for the residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=residualVector%firstAssembly
+
+    EXITS("EquationsMatricesResidual_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_FirstAssemblyGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Checks the current residual distributed vector exists for a equations matrices residual vector 
   SUBROUTINE EquationsMatricesResidual_CurrentDistributedVectorExists(residualVector,currentResidualDistributedVector,err,error,*)
 
@@ -1481,6 +1633,33 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Outputs the nodal vector for a equations matrices residual vector
+  SUBROUTINE EquationsMatricesResidual_NodalVectorOutput(id,residualVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual to output the nodal vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_NodalVectorOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+
+    CALL NodalVector_Output(id,residualVector%nodalResidual,err,error,*999)
+    
+    EXITS("EquationsMatricesResidual_NodalVectorOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_NodalVectorOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_NodalVectorOutput
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the nonlinear matrices for a residual vector.
   SUBROUTINE EquationsMatricesResidual_NonlinearMatricesGet(residualVector,nonlinearMatrices,err,error,*)
 
@@ -1626,35 +1805,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the vector coefficient for a residual vector.
-  SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet(residualVector,vectorCoefficient,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the vector coefficient for
-    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for the residual vector.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("EquationsMatricesResidual_VectorCoefficientGet",err,error,*999)
-
-#ifdef WITH_PRECHECKS    
-    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
-#endif    
-
-    vectorCoefficient=residualVector%residualCoefficient
-
-    EXITS("EquationsMatricesResidual_VectorCoefficientGet")
-    RETURN
-999 ERRORSEXITS("EquationsMatricesResidual_VectorCoefficientGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Returns the update flag for a residual vector.
   SUBROUTINE EquationsMatricesResidual_UpdateVectorGet(residualVector,updateVector,err,error,*)
 
@@ -1679,6 +1829,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesResidual_UpdateVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the vector coefficient for a residual vector.
+  SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet(residualVector,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector !<A pointer to the residual vector to get the vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for the residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesResidual_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(residualVector)) CALL FlagError("Residual vector is not associated.",err,error,*999)
+#endif    
+
+    vectorCoefficient=residualVector%residualCoefficient
+
+    EXITS("EquationsMatricesResidual_VectorCoefficientGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesResidual_VectorCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesResidual_VectorCoefficientGet
 
   !
   !================================================================================================================================
@@ -1761,6 +1940,62 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesRHS_DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the element vector for a equations matrices RHS vector
+  SUBROUTINE EquationsMatricesRHS_ElementVectorOutput(id,rhsVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS to output the element vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_ElementVectorOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is not associated.",err,error,*999)
+
+    CALL ElementVector_Output(id,rhsVector%elementVector,err,error,*999)
+    
+    EXITS("EquationsMatricesRHS_ElementVectorOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesRHS_ElementVectorOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_ElementVectorOutput
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the first assembly flag for a RHS vector.
+  SUBROUTINE EquationsMatricesRHS_FirstAssemblyGet(rhsVector,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS vector to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the update flag for the RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=rhsVector%firstAssembly
+
+    EXITS("EquationsMatricesRHS_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesRHS_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_FirstAssemblyGet
 
   !
   !================================================================================================================================
@@ -2049,6 +2284,33 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Outputs the nodal vector for a equations matrices RHS vector
+  SUBROUTINE EquationsMatricesRHS_NodalVectorOutput(id,rhsVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the RHS to output the nodal vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesRHS_NodalVectorOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is not associated.",err,error,*999)
+
+    CALL NodalVector_Output(id,rhsVector%nodalVector,err,error,*999)
+    
+    EXITS("EquationsMatricesRHS_NodalVectorOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesRHS_NodalVectorOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesRHS_NodalVectorOutput
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the vector coefficient for a RHS vector.
   SUBROUTINE EquationsMatricesRHS_VectorCoefficientGet(rhsVector,vectorCoefficient,err,error,*)
 
@@ -2256,6 +2518,62 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesSource_DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the element vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_ElementVectorOutput(id,sourceVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source to output the element vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_ElementVectorOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+
+    CALL ElementVector_Output(id,sourceVector%elementVector,err,error,*999)
+    
+    EXITS("EquationsMatricesSource_ElementVectorOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_ElementVectorOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_ElementVectorOutput
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the first assembly flag for a source vector.
+  SUBROUTINE EquationsMatricesSource_FirstAssemblyGet(sourceVector,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source vector to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the update flag for the source vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=sourceVector%firstAssembly
+
+    EXITS("EquationsMatricesSource_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_FirstAssemblyGet
 
   !
   !================================================================================================================================
@@ -2540,6 +2858,33 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatricesSource_Previous3DistributedVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the nodal vector for a equations matrices source vector
+  SUBROUTINE EquationsMatricesSource_NodalVectorOutput(id,sourceVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source to output the element vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesSource_NodalVectorOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(sourceVector)) CALL FlagError("Source vector is not associated.",err,error,*999)
+
+    CALL NodalVector_Output(id,sourceVector%nodalVector,err,error,*999)
+    
+    EXITS("EquationsMatricesSource_NodalVectorOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatricesSource_NodalVectorOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesSource_NodalVectorOutput
 
   !
   !================================================================================================================================
@@ -3420,6 +3765,62 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Outputs the element matrix information for an equations matrix.
+  SUBROUTINE EquationsMatrix_ElementMatrixOutput(id,equationsMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to output the element matrix for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("EquationsMatrix_ElementMatrixOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+
+    CALL ElementMatrix_Output(id,equationsMatrix%elementMatrix,err,error,*999)
+         
+    EXITS("EquationsMatrix_ElementMatrixOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_ElementMatrixOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_ElementMatrixOutput
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the first assembly flag for an equations matrix
+  SUBROUTINE EquationsMatrix_FirstAssemblyGet(equationsMatrix,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the first assembly flag of the equations matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatrix_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=equationsMatrix%firstAssembly
+       
+    EXITS("EquationsMatrix_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_FirstAssemblyGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Checks if the linear matrices for a equations matrix exists
   SUBROUTINE EquationsMatrix_LinearMatricesExists(equationsMatrix,linearMatrices,err,error,*)
 
@@ -3570,6 +3971,33 @@ CONTAINS
     
   END SUBROUTINE EquationsMatrix_MatrixNumberGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the nodal matrix information for an equations matrix.
+  SUBROUTINE EquationsMatrix_NodalMatrixOutput(id,equationsMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to output the nodal matrix for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("EquationsMatrix_NodalMatrixOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*999)
+
+    CALL NodalMatrix_Output(id,equationsMatrix%nodalMatrix,err,error,*999)
+         
+    EXITS("EquationsMatrix_NodalMatrixOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatrix_NodalMatrixOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrix_NodalMatrixOutput
+  
   !
   !================================================================================================================================
   !
@@ -3851,6 +4279,33 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Outputs the element matrix information for an Jacobian matrix.
+  SUBROUTINE JacobianMatrix_ElementMatrixOutput(id,jacobianMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to output the element matrix for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("JacobianMatrix_ElementMatrixOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+     
+    CALL ElementMatrix_Output(id,jacobianMatrix%elementJacobian,err,error,*999)
+    
+    EXITS("JacobianMatrix_ElementMatrixOutput")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_ElementMatrixOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_ElementMatrixOutput
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the finite difference step size for an jacobian matrix
   SUBROUTINE JacobianMatrix_FiniteDifferenceStepSizeGet(jacobianMatrix,finiteDifferenceStepSize,err,error,*)
 
@@ -3875,6 +4330,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE JacobianMatrix_FiniteDifferenceStepSizeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the first assembly flag for an Jacobian matrix
+  SUBROUTINE JacobianMatrix_FirstAssemblyGet(jacobianMatrix,firstAssembly,err,error,*)
+
+    !Argument variables
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to get the first assembly flag for
+    LOGICAL, INTENT(OUT) :: firstAssembly !<On exit, the first assembly flag of the Jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("JacobianMatrix_FirstAssemblyGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+#endif    
+
+    firstAssembly=jacobianMatrix%firstAssembly
+       
+    EXITS("JacobianMatrix_FirstAssemblyGet")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_FirstAssemblyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_FirstAssemblyGet
 
   !
   !================================================================================================================================
@@ -3934,6 +4418,33 @@ CONTAINS
     
   END SUBROUTINE JacobianMatrix_MatrixNumberGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the nodal matrix information for an Jacobian matrix.
+  SUBROUTINE JacobianMatrix_NodalMatrixOutput(id,jacobianMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to output the nodal matrix for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("JacobianMatrix_NodalMatrixOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+     
+    CALL NodalMatrix_Output(id,jacobianMatrix%nodalJacobian,err,error,*999)
+    
+    EXITS("JacobianMatrix_NodalMatrixOutput")
+    RETURN
+999 ERRORSEXITS("JacobianMatrix_NodalMatrixOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE JacobianMatrix_NodalMatrixOutput
+  
   !
   !================================================================================================================================
   !
@@ -4115,6 +4626,71 @@ CONTAINS
     
   END SUBROUTINE JacobianMatrix_UpdateMatrixGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the nodal matrix information.
+  SUBROUTINE NodalMatrix_Output(id,nodalMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(NodalMatrixType), INTENT(IN) :: nodalMatrix !<The nodal matrix to output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("NodalMatrix_Output",err,error,*999)
+
+    CALL WriteStringValue(id,"  Number of rows = ",nodalMatrix%numberOfRows,err,error,*999)
+    CALL WriteStringValue(id,"  Number of columns = ",nodalMatrix%numberOfColumns,err,error,*999)
+    CALL WriteStringValue(id,"  Maximum number of rows = ",nodalMatrix%maxNumberOfRows,err,error,*999)
+    CALL WriteStringValue(id,"  Maximum number of columns = ",nodalMatrix%maxNumberOfColumns,err,error,*999)
+    CALL WriteStringVector(id,1,1,nodalMatrix%numberOfRows,8,8,nodalMatrix%rowDOFS, &
+      & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
+    CALL WriteStringVector(id,1,1,nodalMatrix%numberOfColumns,8,8,nodalMatrix%columnDOFS, &
+      & '("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
+    CALL WriteStringMatrix(id,1,1,nodalMatrix%numberOfRows,1,1,nodalMatrix%numberOfColumns,8,8, &
+      & nodalMatrix%matrix(1:nodalMatrix%numberOfRows,1:nodalMatrix%numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+      & '("  Matrix','(",I2,",:)','     :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
+    
+    EXITS("NodalMatrix_Output")
+    RETURN
+999 ERRORSEXITS("NodalMatrix_Output",err,error)
+    RETURN 1
+    
+  END SUBROUTINE NodalMatrix_Output
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the nodal vector information .
+  SUBROUTINE NodalVector_Output(id,nodalVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(NodalVectorType), INTENT(IN) :: nodalVector !<The element vector to output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("NodalVector_Output",err,error,*999)
+
+    CALL WriteStringValue(id,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
+    CALL WriteStringValue(id,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
+    CALL WriteStringVector(id,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDOFS, &
+      & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
+    CALL WriteStringVector(id,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
+      & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
+    
+    EXITS("NodalVector_Output")
+    RETURN
+999 ERRORSEXITS("NodalVector_Output",err,error)
+    RETURN 1
+    
+  END SUBROUTINE NodalVector_Output
+  
   !
   !================================================================================================================================
   !

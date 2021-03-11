@@ -48,6 +48,7 @@ MODULE LinearElasticityRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -57,6 +58,7 @@ MODULE LinearElasticityRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
@@ -86,16 +88,16 @@ MODULE LinearElasticityRoutines
 
   !Interfaces
 
-  PUBLIC LinearElasticity_FiniteElementCalculate
-
-  PUBLIC LINEAR_ELASTICITY_EQUATIONS_SET_SETUP
+  PUBLIC LinearElasticity_BoundaryConditionsAnalyticCalculate
+  
+  PUBLIC LinearElasticity_EquationsSetSetup
   
   PUBLIC LinearElasticity_EquationsSetSolutionMethodSet
   
-  PUBLIC LinearElasticity_BoundaryConditionsAnalyticCalculate
-  
   PUBLIC LinearElasticity_EquationsSetSpecificationSet
   
+  PUBLIC LinearElasticity_FiniteElementCalculate
+
   PUBLIC LinearElasticity_ProblemSpecificationSet
   
   PUBLIC LinearElasticity_ProblemSetup
@@ -115,14 +117,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,numberOfDimensions,variableIdx,variable_type
-    INTEGER(INTG) :: bcXForceCounter,bcXCounter,bcYCounter,bcXNodes,bcZNodes
-    REAL(DP) :: analyticValue,bcValue,x(3),geometricTolerance,forceX,forceY,forceYArea,length,width,height,E,vX,forceXArea
-    REAL(DP) :: forceZ,Iyy
+    INTEGER(INTG) :: analyticFunctionType,bcXCounter,bcXForceCounter,bcXNodes,bcYCounter,bcZNodes,componentIdx,derivativeIdx, &
+      & dimensionIdx,globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes, &
+      & numberOfNodeDerivatives,numberOfVariables,variableIdx,variableType
+    REAL(DP) :: analyticValue,bcValue,E,geometricTolerance,forceX,forceXArea,forceY,forceYArea,forceZ,height,Iyy,length,width, &
+      & vX,x(3)
     REAL(DP), POINTER :: geometricParameters(:)
     LOGICAL :: setBC
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: dependentField,geometricField
     TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError    
@@ -156,7 +161,7 @@ CONTAINS
     bcXCounter = 0
     bcYCounter = 0
     bcXForceCounter = 0
-    DO variableIdx=1,%numberOfVariables
+    DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
@@ -206,7 +211,7 @@ CONTAINS
             CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1)
               SELECT CASE(componentIdx)
               CASE(1) !u component
-                SELECT CASE(varaibleType)
+                SELECT CASE(variableType)
                 CASE(FIELD_U_VARIABLE_TYPE)
                   SELECT CASE(globalDerivativeIndex)
                   CASE(NO_GLOBAL_DERIV)
@@ -219,7 +224,7 @@ CONTAINS
                   END SELECT
                 END SELECT
               CASE(2) !v component
-                SELECT CASE(varaibleType)
+                SELECT CASE(variableType)
                 CASE(FIELD_U_VARIABLE_TYPE)
                   SELECT CASE(globalDerivativeIndex)
                   CASE(NO_GLOBAL_DERIV)
@@ -813,7 +818,7 @@ CONTAINS
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                 CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                  SELECT CASE(lobalDerivativeIndex)
+                  SELECT CASE(globalDerivativeIndex)
                   CASE(NO_GLOBAL_DERIV)
                     analyticValue=0.0_DP
                   CASE(GLOBAL_DERIV_S1)
@@ -869,7 +874,7 @@ CONTAINS
                       & " is invalid."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
-                CASE(FIELD_DELUDELN_VARAIBLETYPE)
+                CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                   SELECT CASE(globalDerivativeIndex)
                   CASE(NO_GLOBAL_DERIV)
                     analyticValue=0.0_DP
@@ -1010,8 +1015,8 @@ CONTAINS
             IF(setBC) THEN
               !Default to version 1 of each node derivative
               CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx,err,error,*999)
-              CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDOFIdx, &
-                & BOUNDARY_CONDITION_FIXED,bcValue,err,error,*999)
+              CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+                & bcValue,err,error,*999)
             ENDIF
           ENDDO !derivativeIdx
         ENDDO !nodeIdx
@@ -1043,31 +1048,44 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: fieldVarType,gaussPointIdx,columnXiIdx,xiIdx,rowXiIdx,columnElementParameterIdx,columnElementDOFIdx,rowElementParameterIdx,rowElementDOFIdx,totalNumberDependentElementParameters,meshComponent
-    INTEGER(INTG) :: numberOfColumnComponents,numberOfXi !,NUMBER_OF_GEOMETRIC_COMPONENTS
-    INTEGER(INTG) :: offDiagonalComponents(3),offDiagonalDependentVariable(2,2,3),diagonalSubMatrixLocation(3),offDiagonalSubMatLocation(2,3)
-    INTEGER(INTG) :: numberDependentElementParameters(3) !,GEOMETRIC_BASES_EP(:)
-    REAL(DP) :: jacobainGaussWeight,C(6,6),jacobianGaussWeightDiagC(3,3),jacobianGaussWeightOffDiagC(2,3)
-    REAL(DP):: SF(64*3)
-
-    !LOGICAL :: SAME_BASIS
+    INTEGER(INTG) :: colsComponentIdx,colsVariableType,columnXiIdx,columnElementDOFIdx,columnElementParameterIdx, &
+      & esSpecification(3),fieldVarType,gaussPointIdx,numberOfColumnComponents,numberDependentElementParameters(3), &
+      & numberOfColsComponents,numberOfDimensions,numberOfGauss,numberOfRowsComponents,numberOfXi,rowElementParameterIdx, &
+      & rowElementDOFIdx,rowXiIdx,rowsVariableType,scalingType,totalNumberDependentElementParameters,xiIdx
+    INTEGER(INTG) :: offDiagonalComponents(3),offDiagonalDependentVariable(2,2,3),diagonalSubMatrixLocation(3), &
+      & offDiagonalSubMatLocation(2,3)
+    REAL(DP) :: colsdPhidXi,gaussWeight,jacobian,jacobianGaussWeight,C(6,6),jacobianGaussWeightDiagC(3,3), &
+      & jacobianGaussWeightOffDiagC(2,3),sf(64*3),sourceParam
+    LOGICAL :: update,updateMatrix,updateRHS,updateSource
+    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(BasisPtrType) :: dependentBases(3)
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
+    TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
+    TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
+    TYPE(DomainTopologyType), POINTER :: columnDomainTopology,dependentDomainTopology,geometricDomainTopology,rowDomainTopology
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,geometricField
-    TYPE(BasisPtrType) :: dependentBases(3) !,GEOMETRIC_BASES(:)
-    TYPE(QuadratureSchemePtrType) :: quadratureSchemes(3)
-    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters
-    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters
-    !TYPE(FieldInterpolationParametersType), POINTER :: FIBRE_INTERPOLATION_PARAMETERS
-    TYPE(FieldInterpolationParametersType), POINTER :: materialsInterpParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: materialsInterpPoint
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField,sourceField
+    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters,geometricInterpParameters, &
+      & materialsInterpParameters,sourceInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,materialsInterpPoint,sourceInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemePtrType) :: quadratureSchemes(3)
     TYPE(VARYING_STRING) :: localError
     TYPE DPHI_DX_COMP_TYPE !A type to store dPhidX for each mesh component
     REAL(DP) :: dPhidX(64,3)
@@ -1076,11 +1094,11 @@ CONTAINS
 
     ENTERS("LinearElasticity_FiniteElementCalculate",err,error,*999)
     
-    !!Have a look at XPES40.f in the old CMISS code.
-    !!Q - CPB: Need to think about anisotropic materials with fibre fields.
-    !!Q - CPB: why store this dPhidX(columnElementParameterIdx,xiIdx) as opposed to just using it directly? A - to minimize operations - Otherwise it would be calculated many more times than
-    !!         necessary within the loops below 
-    !!Q - TPBG: Need to be able to use different Quadrature schemes with different bases? A - No use highest quadrature scheme for all directions
+!!Have a look at XPES40.f in the old CMISS code.
+!!Q - CPB: Need to think about anisotropic materials with fibre fields.
+!!Q - CPB: why store this dPhidX(columnElementParameterIdx,xiIdx) as opposed to just using it directly? A - to minimize operations - Otherwise it would be calculated many more times than
+!!         necessary within the loops below 
+!!Q - TPBG: Need to be able to use different Quadrature schemes with different bases? A - No use highest quadrature scheme for all directions
 !!TODO:: Check whether quadrature scheme being used is suffient to interpolate highest order basis function    
 !!Q - TPBG: Need to be able to use different Interpolation for Geometric & Dependent field?
 
@@ -1103,7 +1121,7 @@ CONTAINS
     END SELECT
     
     NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorEquations)
@@ -1112,8 +1130,6 @@ CONTAINS
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(lhsMapping)
     CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
-    NULLIFY(rowsVariable)
-    CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
     NULLIFY(linearMapping)
     CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
     NULLIFY(sourcesMapping)
@@ -1129,25 +1145,29 @@ CONTAINS
     CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
     NULLIFY(equationsMatrix)
     CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,equationsMatrix,err,error,*999)
-    updateMatrix=equationsMatrix%updateMatrix
+    CALL EquationsMatrix_UpdateMatrixGet(equationsMatrix,updateMatrix,err,error,*999)
     NULLIFY(sourceVectors)
     NULLIFY(sourceVector)
     updateSource=.FALSE.
     IF(ASSOCIATED(sourcesMapping)) THEN
       CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
       CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,1,sourceVector,err,error,*999)
-      updateSource=sourceVector%updateVector
+      CALL EquationsMatricesSource_UpdateVectorGet(sourceVector,updateSource,err,error,*999)
     ENDIF
     NULLIFY(rhsVector)
     updateRHS=.FALSE.
     IF(ASSOCIATED(rhsMapping)) THEN
       CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-      updateRHS=rhsVector%updateVector
+      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     ENDIF
 
     update=(updateMatrix.OR.updateSource.OR.updateRHS)
 
     IF(update) THEN
+      
+      NULLIFY(equationsInterpolation)
+      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
+      
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
@@ -1163,37 +1183,8 @@ CONTAINS
       NULLIFY(geometricBasis)
       CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
-
-      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-      NULLIFY(dependentDecomposition)
-      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
-      NULLIFY(colsDomain)
-      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
-      NULLIFY(colsDomainTopology)
-      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-      NULLIFY(colsDomainElements)
-      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-      NULLIFY(colsBasis)
-      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
-     
-      NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
-      
-      NULLIFY(colsVariable)
-      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
-      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
-      
-      NULLIFY(equationsInterpolation)
-      CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
-
       NULLIFY(geometricQuadratureScheme)
       CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
-      NULLIFY(colsQuadratureScheme)
-      CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
-      
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & geometricInterpParameters,err,error,*999)
@@ -1204,27 +1195,75 @@ CONTAINS
       CALL EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & geometricInterpPointMetrics,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
+
+      NULLIFY(fibreField)
+      NULLIFY(fibreInterpParameters)
+      NULLIFY(fibreInterpPoint)
+      CALL EquationsSet_FibreFieldExists(equationsSet,fibreField,err,error,*999)
+      IF(ASSOCIATED(fibreField)) THEN
+        CALL EquationsInterpolation_FibreParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & fibreInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_FibrePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & fibreInterpPoint,err,error,*999)
+      ENDIF
       
-      NULLIFY(materialsInterpParamters)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      NULLIFY(dependentDecomposition)
+      CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
+      NULLIFY(dependentDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+      NULLIFY(dependentDomainTopology)
+      CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+      NULLIFY(dependentDomainElements)
+      CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
+      NULLIFY(dependentBasis)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+      NULLIFY(dependentQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
+      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
+
+      NULLIFY(materialsField)
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
+      NULLIFY(materialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & materialsInterpParameters,err,error,*999)
       NULLIFY(materialsInterpPoint)
       CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,materialsInterpPoint, &
         & err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsInterpParameters,err,error,*999)
+            
+      NULLIFY(sourceField)
+      NULLIFY(sourceInterpParameters)
+      NULLIFY(sourceInterpPoint)
+      CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
+      IF(ASSOCIATED(sourceField)) THEN
+        CALL EquationsInterpolation_SourceParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & sourceInterpParameters,err,error,*999)
+        CALL EquationsInterpolation_SourcePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & sourceInterpPoint,err,error,*999)
+      ENDIF
       
+      NULLIFY(rowsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
+      
+      NULLIFY(colsVariable)
+      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)      
+     
 !!TODO:: Use highest interpolation scheme's guass points. Warn if Gauss Points insufficient
       !Create an array of Bases with each component 
       DO colsComponentIdx=1,numberOfColsComponents
-        CALL FieldVariable_ComponentMeshComponentGet(colsVariable,colsComponentIdx,meshComponent,err,error,*999)
-        NULLIFY(domain)
-        CALL FieldVariable_ComponentDomainGet(colsVariable,colsComponentIdx,domain,err,error,*999)
-        NULLIFY(domainTopology)
-        CALL Domain_DomainTopology(domain,domainTopology,err,error,*999)
-        NULLIFY(domainElements)
-        CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+        NULLIFY(columnDomain)
+        CALL FieldVariable_ComponentDomainGet(colsVariable,colsComponentIdx,columnDomain,err,error,*999)
+        NULLIFY(columnDomainTopology)
+        CALL Domain_DomainTopology(columnDomain,columnDomainTopology,err,error,*999)
+        NULLIFY(columnDomainElements)
+        CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
         NULLIFY(dependentBases(colsComponentIdx)%ptr)
-        CALL DomainElements_ElementBasisGet(domainElements,elementNumber,dependentBases(colsComponentIdx)%ptr,err,error,*999)
+        CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,dependentBases(colsComponentIdx)%ptr,err,error,*999)
         CALL Basis_NumberOfElementParametersGet(dependentBases(colsComponentIdx)%ptr, &
           & numberDependentElementParameters(colsComponentIdx),err,error,*999)
         NULLIFY(quadratureSchemes(colsComponentIdx)%ptr)
@@ -1242,7 +1281,7 @@ CONTAINS
         !ONE, TWO & THREE DIMENSIONAL LINEAR ELASTICITY
         !
         !Loop over gauss points & integrate upper triangular portion of Stiffness matrix
-        DO gaussPointIdx=1,quadratureSchemes(1)%ptr%numberOfGauss !Gauss point index
+        DO gaussPointIdx=1,numberOfGauss !Gauss point index
 
           !Parameters for number of off diagonal stress/strain terms for a given number of xi directions and order of
           !calculation for shear terms
@@ -1258,17 +1297,23 @@ CONTAINS
           offDiagonalSubMatLocation(2,:) = [numberDependentElementParameters(1),diagonalSubMatrixLocation(3), &
             & diagonalSubMatrixLocation(3)]
 
-           !Interpolate geometric, fibre and material fields at gauss points & calculate geometric field metrics
+          !Interpolate geometric, fibre and material fields at gauss points & calculate geometric field metrics
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
             & err,error,*999)
 !!TODO:: Add option to only evaluate required metrics
           CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
-          !CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
-          !  & err,error,*999)
+          IF(ASSOCIATED(fibreField)) &
+            & CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
+            & err,error,*999)
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
             & err,error,*999)
+          IF(ASSOCIATED(sourceField)) THEN
+            CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
+              & err,error,*999)
+            sourceParam=sourceInterpPoint%values(1,NO_PART_DERIV)
+          ENDIF
 
-          !Calculate jacobainGaussWeight.
+          !Calculate jacobianGaussWeight.
           CALL FieldInterpolatedPointsMetrics_JacobianGet(geometricInterpPointMetrics,jacobian,err,error,*999)
           CALL BasisQuadratureScheme_GaussWeightGet(geometricQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
           jacobianGaussWeight=jacobian*gaussWeight
@@ -1289,23 +1334,25 @@ CONTAINS
               ENDDO !columnXiIdx
             ENDDO !columnElementParameterIdx
           ENDDO !xiIdx
-          !CALL COORDINATE_M7ATERIAL_COORDINATE_SYSTEM_CALCULATE(equations%interpolation%geometricInterpPoint, &
-          !  equations%interpolation%FIBRE_INTERP_POINT,DXDNU,err,error,*999)
+          !TODO:: what about fibres?
           !Create Linear Elasticity Tensor C
           CALL LinearElasticity_ElasticityTensor(esSpecification(3),materialsInterpPoint,C,err,error,*999)
           !Store Elasticity Tensor diagonal & off diagonal stress coefficients
-          jacobianGaussWeightDiagC(3,:) = [jacobainGaussWeight*C(4,4),jacobainGaussWeight*C(5,5),jacobainGaussWeight*C(3,3)]
-          jacobianGaussWeightDiagC(2,:) = [jacobainGaussWeight*C(6,6),jacobainGaussWeight*C(2,2),jacobianGaussWeightDiagC(3,2)]
-          jacobianGaussWeightDiagC(1,:) = [jacobainGaussWeight*C(1,1),jacobianGaussWeightDiagC(2,1),jacobianGaussWeightDiagC(3,1)]
-          jacobianGaussWeightOffDiagC(1,:) = [jacobainGaussWeight*C(1,2),jacobainGaussWeight*C(1,3),jacobainGaussWeight*C(2,3)]
-          jacobianGaussWeightOffDiagC(2,:) = [jacobainGaussWeight*C(6,6),jacobainGaussWeight*C(4,4),jacobainGaussWeight*C(5,5)]
+          jacobianGaussWeightDiagC(3,:) = [jacobianGaussWeight*C(4,4),jacobianGaussWeight*C(5,5),jacobianGaussWeight*C(3,3)]
+          jacobianGaussWeightDiagC(2,:) = [jacobianGaussWeight*C(6,6),jacobianGaussWeight*C(2,2),jacobianGaussWeightDiagC(3,2)]
+          jacobianGaussWeightDiagC(1,:) = [jacobianGaussWeight*C(1,1),jacobianGaussWeightDiagC(2,1),jacobianGaussWeightDiagC(3,1)]
+          jacobianGaussWeightOffDiagC(1,:) = [jacobianGaussWeight*C(1,2),jacobianGaussWeight*C(1,3),jacobianGaussWeight*C(2,3)]
+          jacobianGaussWeightOffDiagC(2,:) = [jacobianGaussWeight*C(6,6),jacobianGaussWeight*C(4,4),jacobianGaussWeight*C(5,5)]
           !Construct Element Matrix Diagonal Terms
           DO xiIdx=1,numberOfXi
             DO columnElementParameterIdx=1,numberDependentElementParameters(xiIdx)
               DO rowElementParameterIdx=columnElementParameterIdx,numberDependentElementParameters(xiIdx)
-                equationsMatrix%elementMatrix%matrix(diagonalSubMatrixLocation(xiIdx)+columnElementParameterIdx,diagonalSubMatrixLocation(xiIdx)+rowElementParameterIdx) = &
-                  & equationsMatrix%elementMatrix%matrix(diagonalSubMatrixLocation(xiIdx)+columnElementParameterIdx,diagonalSubMatrixLocation(xiIdx)+rowElementParameterIdx) + &
-                  & DOT_PRODUCT(dPhidXComponent(xiIdx)%dPhidX(columnElementParameterIdx,1:numberOfXi)*dPhidXComponent(xiIdx)%dPhidX(rowElementParameterIdx,1:numberOfXi), &
+                equationsMatrix%elementMatrix%matrix(diagonalSubMatrixLocation(xiIdx)+ &
+                  & columnElementParameterIdx,diagonalSubMatrixLocation(xiIdx)+rowElementParameterIdx) = &
+                  & equationsMatrix%elementMatrix%matrix(diagonalSubMatrixLocation(xiIdx)+ &
+                  & columnElementParameterIdx,diagonalSubMatrixLocation(xiIdx)+rowElementParameterIdx) + &
+                  & DOT_PRODUCT(dPhidXComponent(xiIdx)%dPhidX(columnElementParameterIdx,1:numberOfXi)* &
+                  & dPhidXComponent(xiIdx)%dPhidX(rowElementParameterIdx,1:numberOfXi), &
                   & jacobianGaussWeightDiagC(xiIdx,1:numberOfXi))
               ENDDO !rowElementParameterIdx
             ENDDO !columnElementParameterIdx
@@ -1314,120 +1361,162 @@ CONTAINS
           DO xiIdx=1,offDiagonalComponents(numberOfXi)
             DO columnElementParameterIdx=1,numberDependentElementParameters(offDiagonalDependentVariable(1,1,xiIdx))
               DO rowElementParameterIdx=1,numberDependentElementParameters(offDiagonalDependentVariable(1,2,xiIdx))
-                equationsMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx) = &
-                  & equationsMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx)+ &
-                  & DOT_PRODUCT(dPhidXComponent(offDiagonalDependentVariable(1,1,xiIdx))%dPhidX(columnElementParameterIdx,offDiagonalDependentVariable(1,:,xiIdx))* &
-                  &  dPhidXComponent(offDiagonalDependentVariable(1,2,xiIdx))%dPhidX(rowElementParameterIdx,offDiagonalDependentVariable(2,:,xiIdx)),jacobianGaussWeightOffDiagC(:,xiIdx))
+                equationsMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+ &
+                  & columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx) = &
+                  & equationsMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+ &
+                  & columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx)+ &
+                  & DOT_PRODUCT(dPhidXComponent(offDiagonalDependentVariable(1,1,xiIdx))% &
+                  & dPhidX(columnElementParameterIdx,offDiagonalDependentVariable(1,:,xiIdx))* &
+                  & dPhidXComponent(offDiagonalDependentVariable(1,2,xiIdx))% &
+                  & dPhidX(rowElementParameterIdx,offDiagonalDependentVariable(2,:,xiIdx)), &
+                  & jacobianGaussWeightOffDiagC(:,xiIdx))
               ENDDO !rowElementParameterIdx
             ENDDO !columnElementParameterIdx
           ENDDO !xiIdx
           
-          !Below is the full form of constructing the off-Diagonal terms. This will be documented in the linear elasticity equation set page on doxygen for clarity
-              
-
+          !Below is the full form of constructing the off-Diagonal terms. This will be documented in the linear elasticity
+          !equation set page on doxygen for clarity
+                        
           !Expanding the DOT_PRODUCT terms
           
-          !offDiagonalDependentVariable(1,:) = [1,1,2]
-          !offDiagonalDependentVariable(2,:) = [2,3,3]
+          ! offDiagonalDependentVariable(1,:) = [1,1,2]
+          ! offDiagonalDependentVariable(2,:) = [2,3,3]
           ! DO xiIdx=1,offDiagonalComponents(numberOfXi)
           !   DO columnElementParameterIdx=1,numberDependentElementParameters(offDiagonalDependentVariable(1,1,xiIdx))
           !     DO rowElementParameterIdx=1,numberDependentElementParameters(offDiagonalDependentVariable(1,2,xiIdx))
-          !       equatiocolumnElementParameterIdxMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx) = &
-          !         & equationsMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx)+ &
-          !         & jacobianGaussWeightOffDiagC(1,xiIdx)*dPhidXComponent(offDiagonalDependentVariable(1,xiIdx))%dPhidX(columnElementParameterIdx,offDiagonalDependentVariable(1,xiIdx))* &
-          !         & dPhidXComponent(offDiagonalDependentVariable(2,xiIdx))%dPhidX(rowElementParameterIdx,offDiagonalDependentVariable(2,xiIdx)) + &
-          !         & jacobianGaussWeightOffDiagC(2,xiIdx)*dPhidXComponent(offDiagonalDependentVariable(1,xiIdx))%dPhidX(columnElementParameterIdx,offDiagonalDependentVariable(2,xiIdx))* &
-          !         & dPhidXComponent(offDiagonalDependentVariable(2,xiIdx))%dPhidX(rowElementParameterIdx,offDiagonalDependentVariable(1,xiIdx))
+          !       equatiocolumnElementParameterIdxMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+ &
+          !         & columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx) = &
+          !         & equationsMatrix%elementMatrix%matrix(offDiagonalSubMatLocation(1,xiIdx)+ &
+          !         & columnElementParameterIdx,offDiagonalSubMatLocation(2,xiIdx)+rowElementParameterIdx)+ &
+          !         & jacobianGaussWeightOffDiagC(1,xiIdx)*dPhidXComponent(offDiagonalDependentVariable(1,xiIdx))% &
+          !         & dPhidX(columnElementParameterIdx,offDiagonalDependentVariable(1,xiIdx))* &
+          !         & dPhidXComponent(offDiagonalDependentVariable(2,xiIdx))% &
+          !         & dPhidX(rowElementParameterIdx,offDiagonalDependentVariable(2,xiIdx))+ &
+          !         & jacobianGaussWeightOffDiagC(2,xiIdx)*dPhidXComponent(offDiagonalDependentVariable(1,xiIdx))% &
+          !         & dPhidX(columnElementParameterIdx,offDiagonalDependentVariable(2,xiIdx))* &
+          !         & dPhidXComponent(offDiagonalDependentVariable(2,xiIdx))% &
+          !         & dPhidX(rowElementParameterIdx,offDiagonalDependentVariable(1,xiIdx))
           !     ENDDO !rowElementParameterIdx
           !   ENDDO !columnElementParameterIdx
           ! ENDDO !xiIdx
           
-          ! Expanding the xiIdx loop above
+          ! !Expanding the xiIdx loop above
           
-          !             DO columnElementParameterIdx=1,numberDependentElementParameters(1)
-          !               DO rowElementParameterIdx=1,numberDependentElementParameters(2)
-          !                 equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+numberDependentElementParameters(1)) = &
-          !                   & equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+numberDependentElementParameters(1)) + &
-          !                   & jacobainGaussWeight*C(1,2)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,1)*dPhidXComponent(2)%dPhidX(rowElementParameterIdx,2) + &
-          !                   & jacobainGaussWeight*C(6,6)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,2)*dPhidXComponent(2)%dPhidX(rowElementParameterIdx,1)
-          !               ENDDO !columnElementParameterIdx
-          !             ENDDO !rowElementParameterIdx
-          !             DO columnElementParameterIdx=1,numberDependentElementParameters(1)
-          !               DO rowElementParameterIdx=1,numberDependentElementParameters(3)
-          !                 equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+numberDependentElementParameters(1)+numberDependentElementParameters(2)) = &
-          !                   & equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+numberDependentElementParameters(1)+numberDependentElementParameters(2)) + &
-          !                   & jacobainGaussWeight*C(1,3)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,1)*dPhidXComponent(3)%dPhidX(rowElementParameterIdx,3) + &
-          !                   & jacobainGaussWeight*C(4,4)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,3)*dPhidXComponent(3)%dPhidX(rowElementParameterIdx,1)
-          !               ENDDO !columnElementParameterIdx
-          !             ENDDO !rowElementParameterIdx
-          !             DO columnElementParameterIdx=1,numberDependentElementParameters(2)
-          !               DO rowElementParameterIdx=1,numberDependentElementParameters(3)
-          !                 equationsMatrix%elementMatrix%matrix(columnElementParameterIdx+numberDependentElementParameters(1),rowElementParameterIdx+numberDependentElementParameters(1)+numberDependentElementParameters(2)) = &
-          !                   & equationsMatrix%elementMatrix%matrix(columnElementParameterIdx+numberDependentElementParameters(1),rowElementParameterIdx+numberDependentElementParameters(1)+numberDependentElementParameters(2)) + &
-          !                   & jacobainGaussWeight*C(2,3)*dPhidXComponent(2)%dPhidX(columnElementParameterIdx,2)*dPhidXComponent(3)%dPhidX(rowElementParameterIdx,3) + &
-          !                   & jacobainGaussWeight*C(5,5)*dPhidXComponent(2)%dPhidX(columnElementParameterIdx,3)*dPhidXComponent(3)%dPhidX(rowElementParameterIdx,2)
-          !               ENDDO !columnElementParameterIdx
-          !             ENDDO !rowElementParameterIdx
+          ! DO columnElementParameterIdx=1,numberDependentElementParameters(1)
+          !   DO rowElementParameterIdx=1,numberDependentElementParameters(2)
+          !     equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+ &
+          !       & numberDependentElementParameters(1))= &
+          !       & equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+ &
+          !       & numberDependentElementParameters(1))+ &
+          !       & jacobianGaussWeight*C(1,2)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,1)* &
+          !       & dPhidXComponent(2)%dPhidX(rowElementParameterIdx,2)+ &
+          !       & jacobianGaussWeight*C(6,6)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,2)* &
+          !       & dPhidXComponent(2)%dPhidX(rowElementParameterIdx,1)
+          !   ENDDO !columnElementParameterIdx
+          ! ENDDO !rowElementParameterIdx
+          ! DO columnElementParameterIdx=1,numberDependentElementParameters(1)
+          !   DO rowElementParameterIdx=1,numberDependentElementParameters(3)
+          !     equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+ &
+          !       & numberDependentElementParameters(1)+numberDependentElementParameters(2))  &
+          !       & equationsMatrix%elementMatrix%matrix(columnElementParameterIdx,rowElementParameterIdx+ &
+          !       & numberDependentElementParameters(1)+numberDependentElementParameters(2)) + &
+          !       & jacobianGaussWeight*C(1,3)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,1)* &
+          !       & dPhidXComponent(3)%dPhidX(rowElementParameterIdx,3)+ &
+          !       & jacobianGaussWeight*C(4,4)*dPhidXComponent(1)%dPhidX(columnElementParameterIdx,3)* &
+          !       & dPhidXComponent(3)%dPhidX(rowElementParameterIdx,1)
+          !   ENDDO !columnElementParameterIdx
+          ! ENDDO !rowElementParameterIdx
+          ! DO columnElementParameterIdx=1,numberDependentElementParameters(2)
+          !   DO rowElementParameterIdx=1,numberDependentElementParameters(3)
+          !     equationsMatrix%elementMatrix%matrix(columnElementParameterIdx+ &
+          !       & numberDependentElementParameters(1),rowElementParameterIdx+numberDependentElementParameters(1)+ &
+          !       & numberDependentElementParameters(2))= &
+          !       & equationsMatrix%elementMatrix%matrix(columnElementParameterIdx+ &
+          !       & numberDependentElementParameters(1),rowElementParameterIdx+numberDependentElementParameters(1)+ &
+          !       & numberDependentElementParameters(2))+ &
+          !       & jacobianGaussWeight*C(2,3)*dPhidXComponent(2)%dPhidX(columnElementParameterIdx,2)* &
+          !       & dPhidXComponent(3)%dPhidX(rowElementParameterIdx,3)+ &
+          !       & jacobianGaussWeight*C(5,5)*dPhidXComponent(2)%dPhidX(columnElementParameterIdx,3)* &
+          !       & dPhidXComponent(3)%dPhidX(rowElementParameterIdx,2)
+          !   ENDDO !columnElementParameterIdx
+          ! ENDDO !rowElementParameterIdx
+          
         ENDDO !gaussPointIdx
+        
         !If Plane Stress/Strain problem multiply equation matrix by thickness
-        IF(equationsSet%SPECIFICATION(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE .OR. &
-          & equationsSet%SPECIFICATION(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE .OR. & 
-          & equationsSet%SPECIFICATION(3) == EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE) THEN
+        IF(esSpecification(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE .OR. &
+          & esSpecification(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE .OR. & 
+          & esSpecification(3) == EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE) THEN
           DO rowElementDOFIdx=1,totalNumberDependentElementParameters
             DO columnElementDOFIdx=rowElementDOFIdx,totalNumberDependentElementParameters
-!!TODO::Bring 2D plane stress/strain element thickness in through a field - element constant when it can be exported by field i/o. Currently brought in through material field (Temporary)
-              equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)=equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
-                & materialsInterpPoint%values(1,1)
+!!TODO::Bring 2D plane stress/strain element thickness in through a field - element constant when it can be exported by field i/o.
+!!      Currently brought in through material field (Temporary)
+              
+              equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                & materialsInterpPoint%values(1,NO_PART_DERIV)
             ENDDO !columnElementDOFIdx
           ENDDO !rowElementDOFIdx
         ENDIF
-      ENDIF
       
-!!TODO:: Is this RHS Vector update required? find out/check - RHS not used - BC are prescribed during assembling eg update RHS only when BC change - stiffness matrix should be the same
-      IF(rhsVector%updateVector) THEN
-        rhsVector%elementVector%vector=0.0_DP
-      ENDIF
-      
-      !Scale factor adjustment, Application of Scale factors is symmetric
-      IF(dependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
-        colsInterpParameters=>equations%interpolation%dependentInterpParameters(fieldVarType)%ptr
-        CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters, &
-          & err,error,*999)
-        DO xiIdx=1,numberOfXi
-          SF(diagonalSubMatrixLocation(xiIdx)+1:SUM(numberDependentElementParameters(1:xiIdx)))=colsInterpParameters%scaleFactors(:,xiIdx)
-        ENDDO !xiIdx
-        DO rowElementDOFIdx=1,totalNumberDependentElementParameters
-          IF(equationsMatrix%updateMatrix) THEN
-            DO columnElementDOFIdx=rowElementDOFIdx,totalNumberDependentElementParameters
-              equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)=equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)*SF(rowElementDOFIdx)*SF(columnElementDOFIdx)
-            ENDDO !columnElementDOFIdx
-          ENDIF
+!!TODO:: Is this RHS Vector update required? find out/check - RHS not used - BC are prescribed during assembling
+!!       eg update RHS only when BC change - stiffness matrix should be the same
+        IF(updateRHS) THEN
+          rhsVector%elementVector%vector=0.0_DP
+        ENDIF
+        
+        !Scale factor adjustment, Application of scale factors is symmetric
+        CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
+        IF(scalingType/=FIELD_NO_SCALING) THEN
+          NULLIFY(colsInterpParameters)
+          CALL EquationsInterpolation_DependentInterpParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
+            & err,error,*999)
+          DO xiIdx=1,numberOfXi
+            sf(diagonalSubMatrixLocation(xiIdx)+1:SUM(numberDependentElementParameters(1:xiIdx)))= &
+              & colsInterpParameters%scaleFactors(:,xiIdx)
+          ENDDO !xiIdx
+          DO rowElementDOFIdx=1,totalNumberDependentElementParameters
+            IF(updateMatrix) THEN
+              DO columnElementDOFIdx=rowElementDOFIdx,totalNumberDependentElementParameters
+                equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                & SF(rowElementDOFIdx)*SF(columnElementDOFIdx)
+              ENDDO !columnElementDOFIdx
+            ENDIF
 !!TODO:: Check if RHS update required for Linear Elasticity ie is the RHS the force terms but they are set during assembling and not here?
-          IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)=rhsVector%elementVector%vector(rowElementDOFIdx)*SF(rowElementDOFIdx)
-            ENDDO !rowElementDOFIdx
-          ENDIF
+            IF(updateRHS) THEN
+              rhsVector%elementVector%vector(rowElementDOFIdx)= &
+                & rhsVector%elementVector%vector(rowElementDOFIdx)*SF(rowElementDOFIdx)
+            ENDIF
+          ENDDO !rowElementDOFIdx
           
-          IF(equationsMatrix%updateMatrix) THEN
-            !Transpose upper triangular portion of Stiffness matrix to give lower triangular portion. Has to be done after scale factors are applied
-            !!TODO:: Use symmetric linear equation solver or alternatively traspose to give full matrix when asemmbling or when creating solver matrices
-!!TODO:: Better to use SIZE(equationsMatrix%elementMatrix%matrix,1) as apposed to totalNumberDependentElementParameters? Is the size re-calculated at end of every loop?
+          IF(updateMatrix) THEN
+            !Transpose upper triangular portion of Stiffness matrix to give lower triangular portion.
+            !Has to be done after scale factors are applied
+!!TODO:: Use symmetric linear equation solver or alternatively traspose to give full matrix when asemmbling or when
+!!       creating solver matrices        
+!!TODO:: Better to use SIZE(equationsMatrix%elementMatrix%matrix,1) as apposed to totalNumberDependentElementParameters?
+!!       Is the size re-calculated at end of every loop?
             DO rowElementDOFIdx=2,totalNumberDependentElementParameters
               DO columnElementDOFIdx=1,rowElementDOFIdx-1
-                equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx) = equationsMatrix%elementMatrix%matrix(columnElementDOFIdx,rowElementDOFIdx)
+                equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                  &  equationsMatrix%elementMatrix%matrix(columnElementDOFIdx,rowElementDOFIdx)
               ENDDO !columnElementDOFIdx
             ENDDO !rowElementDOFIdx
           ENDIF
-          
-        CASE(EQUATIONS_SET_PLATE_SUBTYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_SHELL_SUBTYPE)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
-            & " is not valid for a Linear Elasticity equation type of a Elasticty equations set class."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ENDIF
+        ENDIF !scaling
+        
+      CASE(EQUATIONS_SET_PLATE_SUBTYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(EQUATIONS_SET_SHELL_SUBTYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
+          & " is not valid for a Linear Elasticity equation type of a Elasticty equations set class."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      
+    ENDIF !update
 
     EXITS("LinearElasticity_FiniteElementCalculate")
     RETURN
@@ -1541,7 +1630,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("LinearElasticity_ElasticityTensor",err,error)
     RETURN 1
-    7
+    
   END SUBROUTINE LinearElasticity_ElasticityTensor
 
   !
@@ -1557,15 +1646,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,geometricComponentNumber,geometricMeshComponent,geometricScalingType, &
-      & numberOfComponents,numberOfDimensions
+    INTEGER(INTG) :: componentIdx,esSpecification(3),geometricComponentNumber,geometricMeshComponent, &
+      & geometricScalingType,numberOfComponents,numberOfDimensions,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("LinearElasticity_EquationsSetSetup",err,error,*999)
@@ -2136,6 +2227,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations

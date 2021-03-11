@@ -125,7 +125,7 @@ CONTAINS
     IF(SIZE(specification,1)<2) THEN
       localError="The size of the specified specification array of "// &
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 2."
-      CALL FlagError(localError,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
     SELECT CASE(specification(2))
@@ -519,7 +519,7 @@ CONTAINS
     CALL EquationsSet_AssertIsFinished(equationsSet,err,error,*999)
     CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
 
-    SELECT CASE(eSpecification(2))
+    SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
@@ -556,7 +556,7 @@ CONTAINS
 
     CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
      
-    SELECT CASE(eSpecification(2))
+    SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
       CALL LinearElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)

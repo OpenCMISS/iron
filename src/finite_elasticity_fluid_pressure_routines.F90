@@ -51,7 +51,7 @@ MODULE FiniteElasticityFluidPressureRoutines
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsSetAccessRoutines
-  USE FINITE_ELASTICITY_ROUTINES
+  USE FiniteElasticityRoutines
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
@@ -288,6 +288,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations

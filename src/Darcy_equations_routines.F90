@@ -689,11 +689,6 @@ CONTAINS
             CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_INITIAL_VALUES_SET_TYPE,err,error,*999)
           ENDIF
-          IF(esSpecification(3)/=EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)THEN
-            !Actually, only needed for PGM (for elasticity_Darcy defined in elasticity V var):
-            CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_RELATIVE_VELOCITY_SET_TYPE,err,error,*999)
-          ENDIF
         CASE DEFAULT
           localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%actionType,"*",err,error))// &
             & " for a setup type of "//TRIM(NumberToVString(equationsSetSetup%setupType,"*",err,error))// &
@@ -3233,9 +3228,7 @@ CONTAINS
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_DARCY_SUBTYPE, &
       & PROBLEM_ALE_DARCY_SUBTYPE, &
-      & PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      & PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       !All ok
     CASE DEFAULT
       localError="The third problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
@@ -3284,9 +3277,7 @@ CONTAINS
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_DARCY_SUBTYPE, &
       & PROBLEM_ALE_DARCY_SUBTYPE, &
-      & PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      & PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       !All ok
     CASE DEFAULT
       localError="The third problem subtype of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
@@ -3353,8 +3344,7 @@ CONTAINS
           CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
           !Set solver defaults
           CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-        CASE(PROBLEM_ALE_DARCY_SUBTYPE, &
-          & PROBLEM_PGM_DARCY_SUBTYPE)
+        CASE(PROBLEM_ALE_DARCY_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
           !Set the first solver to be a linear solver for the material update
           NULLIFY(solver)
@@ -3366,22 +3356,6 @@ CONTAINS
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
           CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-        CASE(PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
-          CALL Solvers_NumberOfSolversSet(solvers,2,err,error,*999)
-          !Set the first solver to be a linear solver for the material update
-          NULLIFY(solver)
-          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-          CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
-          CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-          !Set the second solver to be a first order dynamic solver for the ALE Darcy
-          NULLIFY(solver)
-          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-          CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
-          CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
-          !Set solver defaults
-          CALL Solver_DynamicDegreeSet(solver,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
-          CALL Solver_DynamicSchemeSet(solver,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
-          CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
         CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a first order dynamic solver
@@ -3437,8 +3411,7 @@ CONTAINS
             CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
           ENDIF
           CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-        CASE(PROBLEM_ALE_DARCY_SUBTYPE, &
-          & PROBLEM_PGM_DARCY_SUBTYPE)
+        CASE(PROBLEM_ALE_DARCY_SUBTYPE)
           DO solverIdx=1,2
             !solverIdx=1 is material-properties solver and solverIdx=2 is the Darcy-ALE solver equations
             NULLIFY(solver)
@@ -3449,23 +3422,6 @@ CONTAINS
             CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
             CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
           ENDDO !solverIdx
-        CASE(PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
-          !Get the material-properties solver and create the material-properties solver equations
-          NULLIFY(solver)
-          CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
-          NULLIFY(solverEquations)
-          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
-          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-          !Get the Darcy-ALE solver and create the Darcy-ALE solver equations
-          NULLIFY(solver)
-          CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
-          NULLIFY(solverEquations)
-          CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
-          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
-          CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
         CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -3556,13 +3512,13 @@ CONTAINS
     SELECT CASE(problemSubType)
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       solverNumberDarcy=1
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE)
       solverNumberMatProperties=1
       solverNumberDarcy=2
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
       solverNumberSolid=1
       solverNumberDarcy=1
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       solverNumberSolid=1
       solverNumberMatProperties=1
@@ -3623,7 +3579,6 @@ CONTAINS
         ELSE
           !default
           !--- 1.1 Transfer solid displacement to Darcy geometric field
-          CALL Darcy_PreSolveGetSolidDisplacement(solverALEDarcy,err,error,*999)
           
           !--- 1.2 Update the mesh (and calculate boundary velocities) PRIOR to solving for new material properties
           IF(solverNumber==solverNumberDarcy) CALL Darcy_PreSolveALEUpdateMesh(solverALEDarcy,err,error,*999)
@@ -3635,8 +3590,7 @@ CONTAINS
           ! ! ! CALL Darcy_PreSolveUpdateBoundaryConditions(solverALEDarcy,err,error,*999)
         ENDIF
       ENDIF
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
       CALL SolverMatrix_NumberGet(solverMatrix,matrixNumber,err,error,*999)
@@ -3729,7 +3683,7 @@ CONTAINS
       CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
       NULLIFY(solverDarcy)
       CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE)
       solverNumberMatProperties=1
       solverNumberDarcy=2
       NULLIFY(controlLoopDarcy)
@@ -3738,7 +3692,7 @@ CONTAINS
       CALL ControlLoop_SolversGet(controlLoopDarcy,solvers,err,error,*999)
       NULLIFY(solverDarcy)
       CALL Solvers_SolverGet(solvers,solverNumberDarcy,solverDarcy,err,error,*999)
-    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
       solverNumberSolid=1
       solverNumberMatProperties=1
       solverNumberDarcy=2
@@ -3837,8 +3791,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -3961,8 +3914,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -4054,8 +4006,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -4182,8 +4133,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -4366,8 +4316,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       IF(controlLoop%loopType==CONTROL_SIMPLE_TYPE.OR.controlLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
         !--- Get the dependent field of the Material-Properties Galerkin-Projection equations
@@ -4471,9 +4420,9 @@ CONTAINS
       CALL Darcy_PostSolveOutputData(solver,err,error,*999)
     CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
       CALL Darcy_PostSolveOutputData(solver,err,error,*999)
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
       IF(solverNumber==2) CALL Darcy_PostSolveOutputData(solver,err,error,*999)
-    CASE(PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       IF(solverNumber==2) THEN
         CALL Darcy_PostSolveOutputData(solver,err,error,*999)
@@ -4559,9 +4508,8 @@ CONTAINS
         CALL FIELD_IO_NODES_EXPORT(Fields,filename,method,err,error,*999)
         CALL FIELD_IO_ELEMENTS_EXPORT(Fields,filename,method,err,error,*999)
       ENDDO !equationsSetIdx
-    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE, PROBLEM_ALE_DARCY_SUBTYPE, PROBLEM_PGM_DARCY_SUBTYPE, &
+    CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE, PROBLEM_ALE_DARCY_SUBTYPE, &
       & PROBLEM_TRANSIENT_DARCY_SUBTYPE, PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
         & outputIteration,inputIteration,err,error,*999)
@@ -5636,37 +5584,6 @@ CONTAINS
           & " is not valid for a Darcy equation fluid type of a fluid mechanics problem class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    CASE(PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE)
-      !--- Motion: read in from a file
-      NULLIFY(solverEquationsDarcy)
-      CALL Solver_SolverEquationsGet(solver,solverEquationsDarcy,err,error,*999)
-      NULLIFY(solverMappingDarcy)
-      CALL SolverEquations_SolverMappingGet(solverEquationsDarcy,solverMappingDarcy,err,error,*999)
-      NULLIFY(equationsSetDarcy)
-      CALL SolverMapping_EquationsSetGet(solverMappingDarcy,1,equationsSetDarcy,err,error,*999)
-      CALL EquationsSet_SpecificationGet(equationsSetDarcy,3,esSpecification,err,error,*999)
-      NULLIFY(geometricFieldDarcy)
-      CALL EquationsSet_GeometricFieldGet(equationsSetDarcy,geometricFieldDarcy,err,error,*999)
-      IF(solverOutputType>=SOLVER_PROGRESS_OUTPUT) &
-        & CALL WriteString(GENERAL_OUTPUT_TYPE,"Darcy motion read from a file ... ",err,error,*999)
-      CALL Field_NumberOfComponentsGet(geometricFieldDarcy,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-      !Copy input to Darcy' geometric field
-      inputType=42
-      inputOption=2
-      CALL Field_ParameterSetDataGet(geometricFieldDarcy,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
-        & meshDisplacementValues,err,error,*999)
-      CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,meshDisplacementValues, &
-        & numberOfDimensions,inputType,inputOption,controlLoop%timeLoop%iterationNumber,1.0_DP, &
-        & err,error,*999)
-      CALL Field_ParameterSetUpdateStart(geometricFieldDarcy,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
-      CALL Field_ParameterSetUpdateFinish(geometricFieldDarcy,FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
-      
-      IF(diagnostics1) THEN
-        numberDOFsToPrint = SIZE(meshDisplacementValues,1)
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberDOFsToPrint,numberDOFsToPrint,numberDOFsToPrint,&
-          & meshDisplacementValues,'(" meshDisplacementValues = ",4(X,E13.6))','4(4(X,E13.6))', &
-          & err,error,*999)
-      ENDIF
     CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !--- Motion: defined by fluid-solid interaction (thus read from solid's dependent field)
@@ -5834,8 +5751,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_QUASISTATIC_DARCY_SUBTYPE)
       ! do nothing
-    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
+    CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -6110,8 +6026,7 @@ CONTAINS
 
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
-      & PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      & PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
       ! do nothing
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)
@@ -6294,8 +6209,7 @@ CONTAINS
     
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE, &
-      & PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
-      & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE)
+      & PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE)
       ! do nothing
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       NULLIFY(solverEquations)

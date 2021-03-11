@@ -335,7 +335,7 @@ CONTAINS
         
         !Set up the control sub loop for finite elasicity
         IF(pSpecification(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE) THEN
-          NULLIFY(elasticitySubLoop
+          NULLIFY(elasticitySubLoop)
           CALL ControlLoop_SubLoopGet(controlLoop,2,elasticitySubLoop,err,error,*999)
           CALL ControlLoop_LabelSet(elasticitySubLoop,'Elasticity While Loop',err,error,*999)
           CALL ControlLoop_TypeSet(elasticitySubLoop,CONTROL_WHILE_LOOP_TYPE,err,error,*999)
@@ -429,7 +429,7 @@ CONTAINS
           & " is invalid for a bioelectrics finite elasticity equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    CASE(PROBLEM_SETUP_SolverEquationsType)
+    CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Get the control loop and solvers
@@ -765,23 +765,28 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfGauss
-    INTEGER(INTG) :: meshComponentNumber,numberOfElements,variableType
-    INTEGER(INTG) :: equationsSetIdx,gaussPointIdx,dofIdx,elementIdx,idx
+    INTEGER(INTG) :: dofIdx,elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType,meshComponentNumber, &
+      & numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfIterations,numberOfSubLoops,numberOfXi,variableType
     REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),Jznu
-    TYPE(BasisType), POINTER :: geometricBasis
-    TYPE(BasisType), POINTER :: dependentBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
     TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,fibreInterpParameters,dependentInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,dependentInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,dependentInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: fieldVariableU1
+    TYPE(FieldVariableType), POINTER :: fieldVariableU1,residualVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
@@ -869,7 +874,7 @@ CONTAINS
         NULLIFY(fibreInterpParameters)
         CALL EquationsInterpolation_FibreParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & fibreInterpParameters,err,error,*999)
-        NULLIFY(fiberInterpPoint)
+        NULLIFY(fibreInterpPoint)
         CALL EquationsInterpolation_FibrePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,fibreInterpPoint,err,error,*999)
         NULLIFY(dependentInterpParameters)
         CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,variableType, &
@@ -964,24 +969,28 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfGauss
-    INTEGER(INTG) :: meshComponentNumber,numberOfElements
-    INTEGER(INTG) :: equationsSetIdx,gaussPointIdx,dofIdx,elementIdx
-    INTEGER(INTG) :: counter
-    INTEGER(INTG) :: iterationNumber,maximumNumberOfIterations
-    REAL(DP) :: averageVelocity,averageStretch,oldAverageStretch
-    REAL(DP) :: lengthHS,lengthHS0,activeStress,fibreStretch,oldFibreStretch
-    REAL(DP) :: lengthFactor,velocityFactor,sarcomereLength,velocity,maxVelocity,timeStep,kappa,A,S,d,c
+    INTEGER(INTG) :: counter,currentIteration,dofIdx,elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType, &
+      & maximumIterations,meshComponentNumber,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfSubLoops, &
+      & numberOfXi
+    REAL(DP) :: absoluteTolerance,averageVelocity,averageStretch,currentTime,oldAverageStretch,lengthHS,lengthHS0,activeStress, &
+      & fibreStretch,oldFibreStretch,lengthFactor,velocityFactor,relativeTolerance,sarcomereLength,timeIncrement,velocity, &
+      & maxVelocity,timeStep,kappa,A,S,d,c
+    LOGICAL :: continueLoop
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(ControlLoopType), POINTER :: controlLoopParent
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
     TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,fibreInterpParameters,dependentInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,dependentInterpPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,ependentInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: fieldVariableU,fieldVariableU1
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,dependentInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: uIndependentVariable,u1IndependentVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
@@ -1001,7 +1010,7 @@ CONTAINS
         !do nothing
       CASE(CONTROL_WHILE_LOOP_TYPE)
         CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumIterations,absoluteTolerance, &
-          & relativeTolerance,continueLoop,err,error,*)
+          & relativeTolerance,continueLoop,err,error,*999)
         CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
         NULLIFY(solvers)        
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
@@ -1016,25 +1025,25 @@ CONTAINS
         !!TODO: WHY ARE WE LOOPING OVER EQUATIONS SETS THUS T0 GET POINTERS TO FIELDS IF THEY ARE NOT USED???
         DO equationsSetIdx=1,numberOfEquationsSets
           NULLIFY(equationsSet)
-          CALL SolverMapping_EquationsSetGet(solverMpping,equationsSetIdx,equationsSet,err,error,*999)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           NULLIFY(dependentField)
           CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
           NULLIFY(independentField)
           CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
         ENDDO !equationsSetIdx
  
-        CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,fieldVariableU,err,error,*999)
-        CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,fieldVariableU1,err,error,*999)
+        CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,uIndependentVariable,err,error,*999)
+        CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,u1IndependentVariable,err,error,*999)
 
         !get the inital half-sarcomere length
-        CALL FieldVariable_ParameterSetGetConstant(fieldVariableU1,FIELD_VALUES_SET_TYPE,2,lengthHS0,err,error,*999)
+        CALL FieldVariable_ParameterSetGetConstant(u1IndependentVariable,FIELD_VALUES_SET_TYPE,2,lengthHS0,err,error,*999)
 
         !get the maximum contraction velocity
-        CALL FieldVariable_ParameterSetGetConstant(fieldVariableU1,FIELD_VALUES_SET_TYPE,3,maxVelocity,err,error,*999)
+        CALL FieldVariable_ParameterSetGetConstant(u1IndependentVariable,FIELD_VALUES_SET_TYPE,3,maxVelocity,err,error,*999)
         
         !in the first iteration store the unaltered homogenized active stress field 
         IF(iterationNumber==1) THEN
-          CALL FieldVariable_ParameterSetsCopy(fieldVariableU,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
+          CALL FieldVariable_ParameterSetsCopy(uIndependentVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
             & err,error,*999)
         ELSE
           !restore the solution of the previous time step
@@ -1077,13 +1086,13 @@ CONTAINS
           DO gaussPointIdx=1,numberOfGauss
 
             !get the unaltered activeStress at the GP
-            CALL FieldVariable_ParameterSetGetGaussPoint(fieldVariableU,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
+            CALL FieldVariable_ParameterSetGetGaussPoint(uIndependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
               & elementIdx,1,activeStress,err,error,*999)
  
             ! FORCE-LENGTH RELATION -------------------------------------------------------------------------------
               
             !get the current fibre stretch at the GP
-            CALL FieldVariable_ParameterSetGetGaussPoint(fieldVariableU1,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
+            CALL FieldVariable_ParameterSetGetGaussPoint(u1IndependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
               & elementIdx,1,fibreStretch,err,error,*999)
             
             !compute the current half-sarcomere length at the GP: l_hs = lambda_f * l_hs_0
@@ -1111,13 +1120,13 @@ CONTAINS
             activeStress=activeStress*lengthFactor
             
             !update the activeStress at GP
-            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariableU,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(uIndependentVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
               & elementIdx,1,activeStress,err,error,*999)
             
             ! FORCE-VELOCITY RELATION -------------------------------------------------------------------------------
               
             !get fibre stretch at the GP of the previous time step
-            CALL FieldVariable_ParameterSetGetLocalGaussPoint(fieldVariableU1,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
+            CALL FieldVariable_ParameterSetGetLocalGaussPoint(u1IndependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,gaussPointIdx, &
               & elementIdx,1,oldFibreStretch,err,error,*999)
 
             !compute the contraction velocity
@@ -1126,8 +1135,8 @@ CONTAINS
             !NOTE: maxVelocity is the max shortening velocity, and hence negative
             IF(velocity<maxVelocity) THEN
               CALL FlagWarning('Exceeded maximum contraction velocity (shortening).',err,error,*999)
-              IF(iterationNumber<(maximumNumberOfIterations/2)) THEN
-                velocity=velocity*1.0_DP/DBLE((maximumNumberOfIterations/2)-iterationNumber)
+              IF(iterationNumber<(maximumIterations/2)) THEN
+                velocity=velocity*1.0_DP/DBLE((maximumIterations/2)-iterationNumber)
               ENDIF
             ELSE IF(velocity>(ABS(maxVelocity))) THEN
               CALL FlagWarning('Exceeded maximum contraction velocity (lengthening).',err,error,*999)
@@ -1142,7 +1151,7 @@ CONTAINS
               velocityFactor=(1.0_DP-velocity/maxVelocity)/(1.0_DP+velocity/maxVelocity/kappa)
             ELSE
               !lengthening contraction
-              d=kappa*(1.O_DP-A)
+              d=kappa*(1.0_DP-A)
               c=velocity/maxVelocity*S*(kappa+1)
               velocityFactor=1.0_DP+c*(A-1.0_DP)/(d+c)
             ENDIF
@@ -1151,7 +1160,7 @@ CONTAINS
             activeStress=activeStress*velocityFactor
 
             !update the activeStress at GP
-            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(fieldVariableU,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
+            CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(uIndependentVariable,FIELD_VALUES_SET_TYPE,gaussPointIdx, &
               & elementIdx,1,activeStress,err,error,*999)
 
           ENDDO !gaussPointIdx
@@ -1176,8 +1185,8 @@ CONTAINS
 !!!!          velocity=0.0_DP
 
 !!!!          !damping
-!!!!          IF(iterationNumber<(maximumNumberOfIterations/2)) THEN
-!!!!            velocity=velocity*1.0_DP/DBLE((maximumNumberOfIterations/2)-iterationNumber)
+!!!!          IF(iterationNumber<(maximumIterations/2)) THEN
+!!!!            velocity=velocity*1.0_DP/DBLE((maximumIterations/2)-iterationNumber)
 !!!!          ENDIF
 
 !!!          localError="######### velocity: "//TRIM(NumberToVString(velocity,"*",err,error))//" #########"
@@ -1227,7 +1236,7 @@ CONTAINS
 !!!            DO gaussPointIdx=1,numberOfGauss
 
 !!!              !get the activeStress at the GP
-!!!              dofIdx=fieldVariableU%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointIdx,elementIdx)
+!!!              dofIdx=uIndependentVariable%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointIdx,elementIdx)
 !!!              CALL Field_ParameterSetGetLocalDOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
 !!!                & dofIdx,activeStress,err,error,*999)
 
@@ -1235,7 +1244,7 @@ CONTAINS
 !!!              activeStress=activeStress*velocityFactor
 
 !!!              !update the activeStress at GP
-!!!              dofIdx=fieldVariableU%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointIdx,elementIdx)
+!!!              dofIdx=uIndependentVariable%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointIdx,elementIdx)
 !!!              CALL Field_ParameterSetUpdateLocalDOF(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
 !!!                & dofIdx,activeStress,err,error,*999)
 !!!              
@@ -1244,8 +1253,8 @@ CONTAINS
 !tomo end
 
         !now the ghost elements -- get the relevant info from the other computational nodes
-        CALL FieldVariable_ParameterSetUpdateStart(fieldVariableU,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(fieldVaraibleU,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(uIndependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(uIndependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
         
       CASE DEFAULT
         localError="Control loop type "//TRIM(NumberToVString(loopType,"*",err,error))// &
@@ -1276,14 +1285,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIteration,outputIteration
+    INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIteration,loopType,numberOfEquationsSets,numberOfSubLoops, &
+      & outputIteration,pSpecification(3),regionUserNumber
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: elasticitySubLoop,bioelectricSubLoop
     TYPE(ControlLoopTimeType), POINTER :: timeLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldsType), POINTER :: fields
     TYPE(ProblemType), POINTER :: problem
-    TYPE(RegionType), POINTER :: dependentRegion   
+    TYPE(RegionType), POINTER :: region   
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
@@ -1319,9 +1330,9 @@ CONTAINS
     ELSE
       !the main time loop - output the finite elasticity fields
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-        & outputIteration,inputIteration,err,error,*)
+        & outputIteration,inputIteration,err,error,*999)
       IF(outputIteration/=0) THEN
-        IF(MOD(currentItertion,outputIteration)==0) THEN
+        IF(MOD(currentIteration,outputIteration)==0) THEN
           NULLIFY(problem)
           CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
           CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
@@ -1343,13 +1354,13 @@ CONTAINS
             CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
             NULLIFY(dependentField)
             CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-            NULLIFY(dependentRegion)
-            CALL Field_RegionGet(dependentField,dependentRegion,err,error,*999)
-            CALL Region_UserNumberGet(dependentRegion,regionUserNumber,err,error,*999)
+            NULLIFY(region)
+            CALL Field_RegionGet(dependentField,region,err,error,*999)
+            CALL Region_UserNumberGet(region,regionUserNumber,err,error,*999)
             NULLIFY(fields)
             CALL Region_FieldsGet(region,fields,err,error,*999)
             filename="MainTime_"//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
-              & "_"//TRIM(NumberToVString(iterationNumber,"*",err,error))
+              & "_"//TRIM(NumberToVString(currentIteration,"*",err,error))
             method="FORTRAN"
             CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
           ENDDO !equationsSetIdx
@@ -1375,13 +1386,13 @@ CONTAINS
               CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
               NULLIFY(dependentField)
               CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-              NULLIFY(dependentRegion)
-              CALL Field_RegionGet(dependentField,dependentRegion,err,error,*999)
-              CALL Region_UserNumberGet(dependentRegion,regionUserNumber,err,error,*999)
+              NULLIFY(region)
+              CALL Field_RegionGet(dependentField,region,err,error,*999)
+              CALL Region_UserNumberGet(region,regionUserNumber,err,error,*999)
               NULLIFY(fields)
               CALL Region_FieldsGet(region,fields,err,error,*999)
-              filename="MainTime_M_"//TRIM(NumberToVString(reionUserNumber,"*",err,error))// &
-                & "_"//TRIM(NumberToVString(iterationNumber,"*",err,error))
+              filename="MainTime_M_"//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+                & "_"//TRIM(NumberToVString(currentIteration,"*",err,error))
               method="FORTRAN"
               CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
             ENDDO !equationsSetIdx
@@ -1411,8 +1422,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,numberOfNodes,dofIdx,nodeIdx
-    REAL(DP) :: x1,x2,x3,y1,y2,y3,mySum
+    INTEGER(INTG) :: currentIteration,dofIdx,equationsSetIdx,loopType,maximumIterations,nodeIdx,numberOfEquationsSets, &
+      & numberOfNodes,numberOfSubLoops
+    REAL(DP) :: absoluteTolerance,relativeTolerance,x1,x2,x3,y1,y2,y3,mySum
+    LOGICAL :: continueLoop
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: fieldVariable
@@ -1435,7 +1452,7 @@ CONTAINS
       CASE(CONTROL_WHILE_LOOP_TYPE)
         CALL ControlLoop_CurrentWhileInformationGet(controlLoop,currentIteration,maximumIterations,absoluteTolerance, &
           & relativeTolerance,continueLoop,err,error,*999)
-        CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
+        CALL ControlLoop_IterationNumberGet(controlLoop,currentIteration,err,error,*999)
         NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
         NULLIFY(solver)
@@ -1529,30 +1546,40 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,elementIdx,elementNumber,startElem,startElement,startElementIdx
-    INTEGER(INTG) :: dependentFieldInterpolation,geometricFieldInterpolation
-    INTEGER(INTG) :: nodeIdx,nodeIdx2,gaussPoint,gaussPointIdx,fibreIdx
-    INTEGER(INTG) :: nodesInXi1,nodesInXi2,nodesInXi3,n3,n2,n1,dofIdx,dofIdx2,idx,myElementIdx
-    INTEGER(INTG) :: offset,n4
-    REAL(DP) :: monodomainXValue,elasticityXValue,distanceLeft,distanceRight,value,valueLeft,valueRight,distance,velocity,maxVelocity,oldDistance
-    REAL(DP) :: oldDistance2,oldDistance3,oldDistance4
-    REAL(DP) :: xi(3),previousNode(3),initialDistance,initialSarcomereLength,timeStep,distance,gaussPosition(3)
+    INTEGER(INTG) :: componentIdx,dependentFieldInterpolation,dependentUserNumber,dependentVariableType,dofIdx,dofIdx2, &
+      & elementIdx,elementIdx2,elementNumber,elementNumber2,fibreIdx,gaussPoint,gaussPointIdx,geometricFieldInterpolation, &
+      & geometricUserNumber,geometricVariableType,myElementIdx,n1,n2,n3,n4,nodeIdx,nodeIdx2,nodesInXi1,nodesInXi2,nodesInXi3, &
+      & numberOfAdjacentElements,numberOfComponents,numberOfElements,numberOfGauss,numberOfSubLoops,offset,pSpecification(3), &
+      & startElem,startElement,startElementIdx
+    REAL(DP) :: currentTime,distance,distanceLeft,distanceRight,elasticityXValue,gaussPosition(3),h,initialDistance, &
+      & initialSarcomereLength,maxVelocity,monodomainXValue,oldDistance,oldDistance2,oldDistance3,oldDistance4,previousNode(3), &
+      & timeIncrement,timeStep,VALUE,valueLeft,valueRight,velocity,xi(3)
     LOGICAL :: outsideNode
-    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,controlLoopElasticity,controlLoopMonodomain
+    TYPE(BasisType), POINTER :: basis
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,elasticityControlLoop,monodomainControlLoop
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainMappingType), POINTER :: nodesMapping
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(FieldType), POINTER :: elasticityDependentField,elasticityGeometricField,elasticityIndependentField, &
+      & monodomainDependentField,monodomainGeometricField,monodomainIndependentField
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldVariableType), POINTER :: elasticityDependentVariable,elasticityIndependentVariable,monodomainDependentVariable, &
+      & monodomainGeometricVariable,monodomainIndependentVariable,monodomainIndependentVariable2
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SolversType), POINTER :: solvers
     TYPE(SolverType), POINTER :: solver
-    TYPE(FieldType), POINTER :: independentFieldElasticity,geometricFieldMonodomain,geometricFieldElasticity
-    TYPE(FieldType), POINTER :: dependentFieldMonodomain,independentFieldMonodomain,dependentFieldElasticity
+    TYPE(SolversType), POINTER :: solvers
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
-    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
-    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
-    TYPE(DomainMappingType), POINTER :: nodesMapping
-    TYPE(DecompositionElementsType), POINTER :: decompositionElements
-    TYPE(FieldVariableType), POINTER :: monodomainDependentVariable,monodomainGeometricVariable,elasticityIndependentVariable,monodomainIndependentVariable,monodomainIndependentVariable2
 
     ENTERS("BioelectricFiniteElasticity_UpdateGeometricField",err,error,*999)
 
@@ -1571,10 +1598,10 @@ CONTAINS
         CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
 
           !get the monodomain sub loop, solvers, solver, and finally geometric and field
-          NULLIFY(controlLoopMonodomain)
-          CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+          NULLIFY(monodomainControlLoop)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,1,monodomainControlLoop,err,error,*999)
           NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+          CALL ControlLoop_SolversGet(monodomainControlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           NULLIFY(solverEquations)
@@ -1583,13 +1610,13 @@ CONTAINS
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-          NULLIFY(geometricFieldMonodomain)
-          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldMonodomain,err,error,*999)
+          NULLIFY(monodomainGeometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,monodomainGeometricField,err,error,*999)
           !get the finite elasticity sub loop, solvers, solver, and finally the dependent field
-          NULLIFY(controlLoopElasticity)
-          CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+          NULLIFY(elasticityControlLoop)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,2,elasticityControlLoop,err,error,*999)
           NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+          CALL ControlLoop_SolversGet(elasticityControlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           NULLIFY(solverEquations)
@@ -1598,27 +1625,27 @@ CONTAINS
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-          NULLIFY(dependentFieldElasticity)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-          NULLIFY(geometricVariableMonodomain)
-          CALL Field_VariableIndexGet(geometricFieldMonodomain,1,geometricVariableMonodomain,geometricVariableType,err,error,*999)
-          CALL FieldVariable_NumberOfComponentsGet(geometricVariableMonodomain,numberOfComponents,err,error,*999)
-          NULLIFY(dependentVariableElasticity)
-          CALL Field_VariableIndexGet(dependentFieldElasticity,1,dependentVariableElasticity,dependentVariableType,err,error,*999)
+          NULLIFY(elasticityDependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,elasticityDependentField,err,error,*999)
+          NULLIFY(monodomainGeometricVariable)
+          CALL Field_VariableIndexGet(monodomainGeometricField,1,monodomainGeometricVariable,geometricVariableType,err,error,*999)
+          CALL FieldVariable_NumberOfComponentsGet(monodomainGeometricVariable,numberOfComponents,err,error,*999)
+          NULLIFY(elasticityDependentVariable)
+          CALL Field_VariableIndexGet(elasticityDependentField,1,elasticityDependentVariable,dependentVariableType,err,error,*999)
           DO componentIdx=1,numberOfComponents
             !check for identical interpolation of the fields
-            CALL FieldVariable_ComponentInterpolationGet(geometricVariableMonodomain,componentIdx,geometricFieldInterpolation, &
+            CALL FieldVariable_ComponentInterpolationGet(monodomainGeometricVariable,componentIdx,geometricFieldInterpolation, &
               & err,error,*999)
-            CALL FieldVariable_ComponentInterpolationGet(dependentVariableElasticity,componentIdx,dependentFieldInterpolation, &
+            CALL FieldVariable_ComponentInterpolationGet(elasticityDependentVariable,componentIdx,dependentFieldInterpolation, &
               & err,error,*999)
             IF(geometricFieldInterpolation==dependentFieldInterpolation) THEN
               !copy the dependent field components to the geometric field
-              CALL Field_ParametersToFieldParametersCopy(dependentFieldElasticity,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,componentIdx,geometricFieldMonodomain,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              CALL Field_ParametersToFieldParametersCopy(elasticityDependentField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,componentIdx,monodomainGeometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & componentIdx,err,error,*999)
             ELSE
-              CALL Field_UserNumberGet(geometricFieldMonodomain,geometricUserNumber,err,error,*999)
-              CALL Field_UserNumberGet(dependentFieldElasticity,dependentUserNumber,err,error,*999)
+              CALL Field_UserNumberGet(monodomainGeometricField,geometricUserNumber,err,error,*999)
+              CALL Field_UserNumberGet(elasticityDependentField,dependentUserNumber,err,error,*999)
               localError="The interpolation type of component number "// &
                 & TRIM(NumberToVString(componentIdx,"*",err,error))//" of field number "// &
                 & TRIM(NumberToVString(geometricUserNumber,"*",err,error))// &
@@ -1633,10 +1660,10 @@ CONTAINS
 
           CALL ControlLoop_CurrentTimesGet(controlLoopParent,currentTime,timeIncrement,err,error,*999)
           !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
-          NULLIFY(controlLoopMonodomain)
-          CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+          NULLIFY(monodomainControlLoop)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,1,monodomainControlLoop,err,error,*999)
           NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+          CALL ControlLoop_SolversGet(monodomainControlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           NULLIFY(solverEquations)
@@ -1645,18 +1672,18 @@ CONTAINS
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-          NULLIFY(geometricFieldMonodomain)
-          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldMonodomain,err,error,*999)
+          NULLIFY(monodomainGeometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,monodomainGeometricField,err,error,*999)
           ! the Field_V_Variable_Type contains the 3D nodal positions
-          NULLIFY(dependentFieldMonodomain)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-          NULLIFY(independentFieldMonodomain)
-          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
+          NULLIFY(monodomainDependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,monodomainDependentField,err,error,*999)
+          NULLIFY(monodomainIndependentField)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,monodomainIndependentField,err,error,*999)
           !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
-          NULLIFY(controlLoopElasticity)
-          CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+          NULLIFY(elasticityControlLoop)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,2,elasticityControlLoop,err,error,*999)
           NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+          CALL ControlLoop_SolversGet(elasticityControlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           NULLIFY(solverEquations)
@@ -1665,21 +1692,21 @@ CONTAINS
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-          NULLIFY(geometricFieldElasticity)
-          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldElasticity,err,error,*999)
-          NULLIFY(dependentFieldElasticity)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentFieldElasticity,err,error,*999)
-          NULLIFY(independentFieldElasticity)
-          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldElasticity,err,error,*999)
+          NULLIFY(elasticityGeometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,elasticityGeometricField,err,error,*999)
+          NULLIFY(elasticityDependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,elasticityDependentField,err,error,*999)
+          NULLIFY(elasticityIndependentField)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,elasticityIndependentField,err,error,*999)
           !get the finite elasticity dependent field interpolation parameters of this element
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-          NULLIFY(equaationsInterpolation)
+          NULLIFY(equationsInterpolation)
           CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
           NULLIFY(interpolationParameters)
           CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
             & interpolationParameters,err,error,*999)
-          NULLIFY(interpolationPoint)
+          NULLIFY(interpolatedPoint)
           CALL EquationInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
             & err,error,*999)
 
@@ -1687,18 +1714,18 @@ CONTAINS
           nodeIdx2=0
           fibreIdx=0
           NULLIFY(monodomainDependentVariable)
-          CALL Field_VariableGet(dependentFieldMonodomain,FIELD_V_VARIABLE_TYPE,monodomainDependentVariable,err,error,*999)
+          CALL Field_VariableGet(monodomainDependentField,FIELD_V_VARIABLE_TYPE,monodomainDependentVariable,err,error,*999)
           NULLIFY(monodomainGeometricVariable)
-          CALL Field_VariableGet(geometricFieldMonodomain,FIELD_U_VARIABLE_TYPE,monodomainGeometricVariable,err,error,*999)
+          CALL Field_VariableGet(monodomainGeometricField,FIELD_U_VARIABLE_TYPE,monodomainGeometricVariable,err,error,*999)
           NULLIFY(elasticityIndependentVariable)
-          CALL Field_VariableGet(independentFieldElasticity,FIELD_V_VARIABLE_TYPE,elasticityIndependentVariable,err,error,*999)
+          CALL Field_VariableGet(elasticityIndependentField,FIELD_V_VARIABLE_TYPE,elasticityIndependentVariable,err,error,*999)
           NULLIFY(monodomainIndependentVariable)
-          CALL Field_VariableGet(independentFieldMonodomain,FIELD_U1_VARIABLE_TYPE,monodomainIndependentVariable,err,error,*999)
-          NULLIFY(monodomainIndependentVaraible2)
-          CALL Field_VariableGet(independentFieldMonodomain,FIELD_U2_VARIABLE_TYPE,monodomainIndependentVariable2,err,error,*999)
+          CALL Field_VariableGet(monodomainIndependentField,FIELD_U1_VARIABLE_TYPE,monodomainIndependentVariable,err,error,*999)
+          NULLIFY(monodomainIndependentVariable2)
+          CALL Field_VariableGet(monodomainIndependentField,FIELD_U2_VARIABLE_TYPE,monodomainIndependentVariable2,err,error,*999)
 
           NULLIFY(decomposition)
-          CALL Field_DecompositionGet(geometricFieldEleasticity,decomposition,err,error,*999)
+          CALL Field_DecompositionGet(elasticityGeometricField,decomposition,err,error,*999)
           NULLIFY(decompositionTopology)
           CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
           NULLIFY(decompositionElements)
@@ -1747,7 +1774,8 @@ CONTAINS
             NULLIFY(basis)
             CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
             NULLIFY(quadratureScheme)
-            CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRTURE_SCHEME,quadratureScheme,err,error,*999)
+            CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
+            CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
 
             startElement=elementNumber
             startElementIdx=myElementIdx
@@ -1883,7 +1911,7 @@ CONTAINS
                       !calculate the closest finite elasticity Gauss point of each bioelectrics node
                       distance=1000000.0_DP
                       gaussPoint=0
-                      DO gaussPointIdx=1,SIZE(gaussPositions,2)
+                      DO gaussPointIdx=1,numberOfGauss
                         !compute the distance between the bioelectrics node and the Gauss point
                         CALL BasisQuadratureScheme_GaussPositionGet(quadratureScheme,gaussPointIdx,gaussPosition,err,error,*999)
                         VALUE=SQRT((Xi(1)-gaussPosition(1))*(xi(1)-gaussPosition(1))+ &
@@ -1896,9 +1924,9 @@ CONTAINS
                       ENDDO !gaussPointIdx
                       IF(gaussPoint==0) CALL FlagWarning("Closest Gauss Point not found",err,error,*999)
                       !store the nearest Gauss Point info and the inElement info (local element number!!!)
-                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                      CALL Field_ParameterSetUpdateLocalNode(monodomainIndependentField,FIELD_V_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4,gaussPoint,err,error,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                      CALL Field_ParameterSetUpdateLocalNode(monodomainIndependentField,FIELD_V_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5,elementNumber,err,error,*999)
                     ENDIF !calcClosestGaussPoint
 
@@ -2066,10 +2094,10 @@ CONTAINS
         CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
 
           !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
-          NULLIFY(controlLoopMonodomain)
-          CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+          NULLIFY(monodomainControlLoop)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,1,monodomainControlLoop,err,error,*999)
           NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+          CALL ControlLoop_SolversGet(monodomainControlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           NULLIFY(solverEquations)
@@ -2078,18 +2106,18 @@ CONTAINS
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-          NULLIFY(geometricFieldMonodomain)
-          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldMonodomain,err,error,*999)
+          NULLIFY(monodomainGeometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,monodomainGeometricField,err,error,*999)
           ! the Field_V_Variable_Type contains the 3D nodal positions
-          NULLIFY(dependentFieldMonodomain)
-          CALL EquationsSet_DependentFieldGet(equationsSet,dependentFieldMonodomain,err,error,*999)
-          NULLIFY(independentFieldMonodomain)
-          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
+          NULLIFY(monodomainDependentField)
+          CALL EquationsSet_DependentFieldGet(equationsSet,monodomainDependentField,err,error,*999)
+          NULLIFY(monodomainIndependentField)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,monodomainIndependentField,err,error,*999)
           !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
-          NULLIFY(controlLoopElasticity)
-          CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+          NULLIFY(elasticityControlLoop)
+          CALL ControlLoop_SubLoopGet(controlLoopParent,2,elasticityControlLoop,err,error,*999)
           NULLIFY(solvers)
-          CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+          CALL ControlLoop_SolversGet(elasticityControlLoop,solvers,err,error,*999)
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           NULLIFY(solverEquations)
@@ -2098,31 +2126,31 @@ CONTAINS
           CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-          NULLIFY(geometricFieldElasticity)
-          CALL EquationsSet_GeometricFieldGet(equationsSet,geometricFieldElasticity,err,error,*999)
-          NULLIFY(independentFieldElasticity)
-          CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldElasticity,err,error,*999)
+          NULLIFY(elasticityGeometricField)
+          CALL EquationsSet_GeometricFieldGet(equationsSet,elasticityGeometricField,err,error,*999)
+          NULLIFY(elasticityIndependentField)
+          CALL EquationsSet_IndependentFieldGet(equationsSet,elasticityIndependentField,err,error,*999)
           !get the finite elasticity dependent field interpolation parameters of this element
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-          NULLIFY(equaationsInterpolation)
+          NULLIFY(equationsInterpolation)
           CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
           NULLIFY(interpolationParameters)
           CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
             & interpolationParameters,err,error,*999)
-          NULLIFY(interpolationPoint)
+          NULLIFY(interpolatedPoint)
           CALL EquationInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,interpolatedPoint, &
             & err,error,*999)
 
           nodeIdx=0
           nodeIdx2=0
           fibreIdx=0
-          CALL Field_VariableGet(dependentFieldMonodomain,FIELD_V_VARIABLE_TYPE,monodomainDependentVariable,err,error,*999)
-          CALL Field_VariableGet(geometricFieldMonodomain,FIELD_U_VARIABLE_TYPE,monodomainGeometricVariable,err,error,*999)
-          CALL Field_VariableGet(independentFieldElasticity,FIELD_V_VARIABLE_TYPE,elasticityIndependentVariable,err,error,*999)
+          CALL Field_VariableGet(monodomainDependentField,FIELD_V_VARIABLE_TYPE,monodomainDependentVariable,err,error,*999)
+          CALL Field_VariableGet(monodomainGeometricField,FIELD_U_VARIABLE_TYPE,monodomainGeometricVariable,err,error,*999)
+          CALL Field_VariableGet(elasticityIndependentField,FIELD_V_VARIABLE_TYPE,elasticityIndependentVariable,err,error,*999)
 
           NULLIFY(decomposition)
-          CALL Field_DecompositionGet(geometricFieldEleasticity,decomposition,err,error,*999)
+          CALL Field_DecompositionGet(elasticityGeometricField,decomposition,err,error,*999)
           NULLIFY(decompositionTopology)
           CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
           NULLIFY(decompositionElements)
@@ -2165,7 +2193,7 @@ CONTAINS
             NULLIFY(basis)
             CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
             NULLIFY(quadratureScheme)
-            CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRTURE_SCHEME,quadratureScheme,err,error,*999)
+            CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
             CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
 
             startElement=elementNumber
@@ -2246,9 +2274,9 @@ CONTAINS
                       ENDDO !gaussPointIdx
                       IF(gaussPoint==0) CALL FlagWarning("Closest Gauss Point not found",err,error,*999)
                       !store the nearest Gauss Point info and the inElement info (local element number!!!)
-                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                      CALL Field_ParameterSetUpdateLocalNode(monodomainIndependentField,FIELD_V_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,4,gaussPoint,err,error,*999)
-                      CALL Field_ParameterSetUpdateLocalNode(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE, &
+                      CALL Field_ParameterSetUpdateLocalNode(monodomainIndependentField,FIELD_V_VARIABLE_TYPE, &
                         & FIELD_VALUES_SET_TYPE,1,1,nodeIdx,5,elementNumber,err,error,*999)
                     ENDIF !calcClosestGaussPoint
 
@@ -2297,7 +2325,7 @@ CONTAINS
                   ENDDO
                   IF(myElementIdx==0) CALL FlagError("myElementIdx not found.",err,error,*999)                      
 
-                  CALL Field_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
+                  CALL FieldVariable_ParameterSetGetLocalElement(elasticityIndependentVariable,FIELD_VALUES_SET_TYPE, &
                     & elementNumber,1,nodesInXi1,err,error,*999)
 
                   startElem=0 !fibres don't start in this element
@@ -2358,31 +2386,34 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: nodeIdx,elementIdx,gaussPointIdx,elementNumber
-    INTEGER(INTG) :: nearestGP,inElement,dofIdx
-    INTEGER(INTG) :: numberOfGaussPoints
+    INTEGER(INTG) :: boundaryFinish,dofIdx,elementIdx,elementNumber,gaussPointIdx,inElement,internalStart,nearestGP,nodeIdx, &
+      & numberOfGauss,numberOfLocal,numberOfSubLoops,pSpecification(3)
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_GAUSS_POINTS=64
     INTEGER(INTG) :: numberOfNodes(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: activeStress
-    REAL(DP) :: titinStressUnbound,titinStressBound,titinStressCrossFibreUnbound,titinStressCrossFibreBound,activation
-    REAL(DP) :: activeStressValues(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: titinStressValuesUnbound(MAX_NUMBER_OF_GAUSS_POINTS),titinStressValuesBound(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: titinStressValuesCrossFibreUnbound(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: titinStressValuesCrossFibreBound(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: activationValues(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP) :: a1,a2,x1,x2
-    REAL(DP) :: a1Values(MAX_NUMBER_OF_GAUSS_POINTS),a2Values(MAX_NUMBER_OF_GAUSS_POINTS), &
-      & x1Values(MAX_NUMBER_OF_GAUSS_POINTS),x2Values(MAX_NUMBER_OF_GAUSS_POINTS)
-    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,controlLoopElasticity,controlLoopMonodomain
+    REAL(DP) :: a1,a1Values(MAX_NUMBER_OF_GAUSS_POINTS),a2,a2Values(MAX_NUMBER_OF_GAUSS_POINTS),activation, &
+      & activationValues(MAX_NUMBER_OF_GAUSS_POINTS),activeStress,activeStressValues(MAX_NUMBER_OF_GAUSS_POINTS), &
+      & titinStressBound,titinStressCrossFibreBound,titinStressCrossFibreUnbound,titinStressUnbound, &
+      & titinStressValuesBound(MAX_NUMBER_OF_GAUSS_POINTS),titinStressValuesUnbound(MAX_NUMBER_OF_GAUSS_POINTS), &
+      & titinStressValuesCrossFibreBound(MAX_NUMBER_OF_GAUSS_POINTS), &
+      & titinStressValuesCrossFibreUnbound(MAX_NUMBER_OF_GAUSS_POINTS),x1,x1Values(MAX_NUMBER_OF_GAUSS_POINTS),x2, &
+      & x2Values(MAX_NUMBER_OF_GAUSS_POINTS)
+    TYPE(BasisType), POINTER :: basis
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,elasticityControlLoop,monodomainControlLoop
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainMappingType), POINTER :: elementsMapping,nodesMapping
+    TYPE(DomainMappingsType), POINTER :: domainMappings
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: independentFieldMonodomain,independentFieldElasticity
+    TYPE(FieldType), POINTER :: monodomainIndependentField,elasticityIndependentField
     TYPE(FieldVariableType), POINTER :: fieldUVariable,fieldVVariable,fieldFEVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolversType), POINTER :: solvers
+    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("BioelectricFiniteElasticity_IndependentFieldInterpolate",err,error,*999)
@@ -2400,10 +2431,10 @@ CONTAINS
         NULLIFY(controlLoopParent)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoopParent,err,error,*999)
         !--- MONODOMAIN ---
-        NULLIFY(controlLoopMonodomain)
-        CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+        NULLIFY(monodomainControlLoop)
+        CALL ControlLoop_SubLoopGet(controlLoopParent,1,monodomainControlLoop,err,error,*999)
         NULLIFY(solvers)
-        CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+        CALL ControlLoop_SolversGet(monodomainControlLoop,solvers,err,error,*999)
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
         NULLIFY(solverEquations)
@@ -2412,14 +2443,14 @@ CONTAINS
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-        NULLIFY(independentFieldMonodomain)
-        CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
+        NULLIFY(monodomainIndependentField)
+        CALL EquationsSet_IndependentFieldGet(equationsSet,monodomainIndependentField,err,error,*999)
 
         !--- FINITE ELASTICITY ---
-        NULLIFY(controlLoopElasticity)
-        CALL ControlLoop_SubLoopGet(controlLoopParent,2,controlLoopElasticity,err,error,*999)
+        NULLIFY(elasticityControlLoop)
+        CALL ControlLoop_SubLoopGet(controlLoopParent,2,elasticityControlLoop,err,error,*999)
         NULLIFY(solvers)
-        CALL ControlLoop_SolversGet(controlLoopElasticity,solvers,err,error,*999)
+        CALL ControlLoop_SolversGet(elasticityControlLoop,solvers,err,error,*999)
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
         NULLIFY(solverEquations)
@@ -2428,12 +2459,12 @@ CONTAINS
         CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
-        NULLIFY(independentFieldElasticity)
-        CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldElasticity,err,error,*999)
+        NULLIFY(elasticityIndependentField)
+        CALL EquationsSet_IndependentFieldGet(equationsSet,elasticityIndependentField,err,error,*999)
 
         !--- NOW INTERPOLATE ---
         NULLIFY(decomposition)
-        CALL Field_DecompositionGet(independentFieldElasticity,decomposition,err,error,*999)
+        CALL Field_DecompositionGet(elasticityIndependentField,decomposition,err,error,*999)
         NULLIFY(domain)
         CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
         NULLIFY(domainMappings)
@@ -2445,7 +2476,7 @@ CONTAINS
         NULLIFY(domainElements)
         CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
         NULLIFY(decomposition)
-        CALL Field_DecompositionGet(independentFieldMonodomain,decomposition,err,error,*999)
+        CALL Field_DecompositionGet(monodomainIndependentField,decomposition,err,error,*999)
         NULLIFY(domain)
         CALL Decomposition_DomainGet(decomposition,domain,err,error,*999)
         NULLIFY(domainMappings)
@@ -2453,9 +2484,9 @@ CONTAINS
         NULLIFY(nodesMapping)
         CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
         
-        CALL Field_VariableGet(independentFieldMonodomain,FIELD_U_VARIABLE_TYPE,fieldUVariable,err,error,*999)
-        CALL Field_VariableGet(independentFieldMonodomain,FIELD_V_VARIABLE_TYPE,fieldVVariable,err,error,*999)
-        CALL Field_VariableGet(independentFieldElasticity,FIELD_U_VARIABLE_TYPE,fieldFEVariable,err,error,*999)
+        CALL Field_VariableGet(monodomainIndependentField,FIELD_U_VARIABLE_TYPE,fieldUVariable,err,error,*999)
+        CALL Field_VariableGet(monodomainIndependentField,FIELD_V_VARIABLE_TYPE,fieldVVariable,err,error,*999)
+        CALL Field_VariableGet(elasticityIndependentField,FIELD_U_VARIABLE_TYPE,fieldFEVariable,err,error,*999)
         
         !loop over the finite elasticity elements
         !first process the internal and boundary elements
@@ -2466,11 +2497,11 @@ CONTAINS
           NULLIFY(basis)
           CALL DomainElements_ElementBasisGet(domainElements,elementNumber,basis,err,error,*999)
           NULLIFY(quadratureScheme)
-          CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCEME,quadratureScheme,err,error,*999)
+          CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
           CALL BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*999)
               
-          IF(numberOfGaussPoints>MAX_NUMBER_OF_GAUSS_POINTS) THEN
-            localError="The number of Gauss points of "//TRIM(NumberToVString(numberOfGuassPoint,"*",err,error))// &
+          IF(numberOfGauss>MAX_NUMBER_OF_GAUSS_POINTS) THEN
+            localError="The number of Gauss points of "//TRIM(NumberToVString(numberOfGauss,"*",err,error))// &
               & " is greater than the allowed maximum number of Gauss points of "// &
               & TRIM(NumberToVString(MAX_NUMBER_OF_GAUSS_POINTS,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
@@ -2577,7 +2608,7 @@ CONTAINS
           ENDDO !nodeIdx
 
           !loop over the finite elasticity Gauss points
-          DO gaussPointIdx=1,numberOfGaussPoints
+          DO gaussPointIdx=1,numberOfGauss
             !make sure we don't divide by zero
             IF(numberOfNodes(gaussPointIdx)<=0) THEN
               activeStress=0.0_DP
@@ -2672,34 +2703,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !The error string
     !Local Variables
-    INTEGER(INTG) :: nodeIdx,dofIdx
-    INTEGER(INTG) :: indexRef,indexPseudo,indexI
+    INTEGER(INTG) :: dofIdx,indexI,indexPseudo,indexRef,nodeIdx,numberOfLocal,numberOfSubLoops,pSpecification(3),switchModel
     INTEGER(INTG), PARAMETER :: DIM_DATA=250
-    INTEGER(INTG) :: switchModel
+    REAL(DP) :: actinMyosinDistance,d10,deltaF,diffQuot,elongation,elongationDistIG,elongationNew,elongationPEVK,f0,force, &
+      & forceDistalIG,forcesDistIG(250),lengthDistIGF0,lengthDistIG,lengthsDistIG(250),lengthInitTitin,lengthTitin,sarcoLength, &
+      & sarcoLengthAtActivation,slope,stiffnessDist,stiffnessPEVK,titinBound,titinUnbound,titinXFBound,titinXFUnbound
     REAL(DP), PARAMETER :: LENGTH_ACTIN=1.04_DP,LENGTH_MBAND=0.0625_DP,LENGTH_MYOSIN=0.7375_DP
     REAL(DP), PARAMETER :: LENGTH_ZERO=0.635_DP,LENGTH_ZDISC=0.05_DP
-    REAL(DP) :: f0,force,titinBound,titinXFBound,titinUnbound,titinXFUnbound
-    REAL(DP) :: elongation,elongationNew
-    REAL(DP) :: elongationDistIG,elongationPEVK
-    REAL(DP) :: lengthTitin,lengthInitTitin,lengthDistIGF0,lengthDistIG
-    REAL(DP) :: stiffnessPEVK
-    REAL(DP) :: sarcoLengthAtActivation,sarcoLength
-    REAL(DP) :: actinMyosinDistance,d10
-    REAL(DP) :: slope,stiffnessDist,forceDistalIG,deltaF,diffQuot
-    REAL(DP :: lengthsDistIG(250),forcesDistIG(2500
-    REAL(DP), PARAMETER, DIMENSION(5) :: COEFF_MATRIX=[5.0239_DP,-0.6717_DP,-2.5841_DP,-5.0128_DP,-5.0239_DP]
     REAL(DP), PARAMETER :: DX=0.001_DP
     REAL(DP), PARAMETER :: FORCE_INCREMENT=1.e-5_DP,TOL=1.e-5_DP
-    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,controlLoopMonodomain
+    REAL(DP), PARAMETER, DIMENSION(5) :: COEFF_MATRIX=[5.0239_DP,-0.6717_DP,-2.5841_DP,-5.0128_DP,-5.0239_DP]
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,monodomainControlLoop
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainMappingType), POINTER :: nodesMapping
+    TYPE(DomainMappingsType), POINTER :: domainMappings
+    TYPE(FieldType), POINTER :: monodomainIndependentField
+    TYPE(FieldVariableType), POINTER :: monodomainIndependentUVariable,monodomainIndependentU1Variable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolversType), POINTER :: solvers
     TYPE(SolverType), POINTER :: solver
-    TYPE(FieldType), POINTER :: independentFieldMonodomain
-    TYPE(FieldVariableType), POINTER :: monodomainIndependentVariable
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(DomainMappingType), POINTER :: nodesMapping
     
     ENTERS("BioelectricFiniteElasticity_ComputeTitin",err,error,*999)
 
@@ -2782,29 +2808,29 @@ CONTAINS
         NULLIFY(controlLoopParent)
         CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoopParent,err,error,*999)
         !The first control_loop is the one for monodomain
-        NULLIFY(controlLoopMonodomain)
-        CALL ControlLoop_SubLoopGet(controlLoopParent,1,controlLoopMonodomain,err,error,*999)
+        NULLIFY(monodomainControlLoop)
+        CALL ControlLoop_SubLoopGet(controlLoopParent,1,monodomainControlLoop,err,error,*999)
         NULLIFY(solvers)
-        CALL ControlLoop_SolversGet(controlLoopMonodomain,solvers,err,error,*999)
+        CALL ControlLoop_SolversGet(monodomainControlLoop,solvers,err,error,*999)
         !The second solver is associated with the diffusion part of the monodomain equation
         NULLIFY(solver)
         CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
         NULLIFY(solverEquations)
-        CALL Solver_SolverEquationsGet(solver,solverEquations,err,eror,*999)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         NULLIFY(solverMapping)
         CALL SolverEquations_SolverMappingGt(solverEquations,solverMapping,err,error,*999)
         NULLIFY(equationsSet)
         CALL SolverMapping_EquationsetGet(solverMapping,1,equationsSet,err,error,*999)
-        NULLIFY(independentFieldMonodomain)
-        CALL EquationsSet_IndependentFieldGet(equationsSet,independentFieldMonodomain,err,error,*999)
+        NULLIFY(monodomainIndependentField)
+        CALL EquationsSet_IndependentFieldGet(equationsSet,monodomainIndependentField,err,error,*999)
 
         NULLIFY(monodomainIndependentUVariable)
-        CALL Field_VariableGet(independentFieldMonodomain,FIELD_U_VARIABLE_TYPE,monodomainIndependentUVariable,err,error,*999)
+        CALL Field_VariableGet(monodomainIndependentField,FIELD_U_VARIABLE_TYPE,monodomainIndependentUVariable,err,error,*999)
         NULLIFY(monodomainIndependentU1Variable)
-        CALL Field_VariableGet(independentFieldMonodomain,FIELD_U1_VARIABLE_TYPE,monodomainIndependentU1Variable,err,error,*999)
+        CALL Field_VariableGet(monodomainIndependentField,FIELD_U1_VARIABLE_TYPE,monodomainIndependentU1Variable,err,error,*999)
 
         NULLIFY(decomposition)
-        CALL Field_DecompositionGet(independentFieldMonodomain,decomposition,err,error,*999)
+        CALL Field_DecompositionGet(monodomainIndependentField,decomposition,err,error,*999)
         NULLIFY(domain)
         CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
         NULLIFY(domainMappings)

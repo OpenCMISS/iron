@@ -2080,9 +2080,8 @@ MODULE BoundaryConditionsRoutines
       CALL FieldVariable_ParameterSetVectorGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,integratedValues,err,error,*999)
       CALL DistributedVector_AllValuesSet(integratedValues,0.0_DP,err,error,*999)
       ! Perform matrix multiplication, f = N q, to calculate force vector from integration matrix and point values
-      CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-        & neumannConditions%integrationMatrix,.FALSE.,neumannConditions%pointValues,integratedValues, &
-        & err,error,*999)
+      CALL DistributedMatrix_MatrixByVectorAdd(neumannConditions%integrationMatrix,.FALSE.,neumannConditions%pointValues, &
+        & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,integratedValues,err,error,*999)
 
 
       CALL FieldVariable_ParameterSetUpdateStart(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,err,error,*999)

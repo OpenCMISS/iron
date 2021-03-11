@@ -49,6 +49,7 @@ MODULE StokesEquationsRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -58,6 +59,7 @@ MODULE StokesEquationsRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsSetAccessRoutines
   USE FieldRoutines
@@ -127,8 +129,7 @@ CONTAINS
     CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE, &
       & EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE, &
       & EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+      & EQUATIONS_SET_ALE_STOKES_SUBTYPE)
       SELECT CASE(solutionMethod)
       CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
         equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -190,8 +191,7 @@ CONTAINS
     CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE, &
       & EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE, &
       & EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+      & EQUATIONS_SET_ALE_STOKES_SUBTYPE)
       !ok
     CASE(EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE)
       CALL FlagError("Not implemented yet.",err,error,*999)
@@ -226,17 +226,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG):: dependentNumberOfVariables,dependentNumberOfComponents
-    INTEGER(INTG):: independentFieldNumberOfVariables,independentNumberOfComponents
-    INTEGER(INTG):: numberOfDimensions,geometricComponentNumber
-    INTEGER(INTG):: materialsNumberOfVariables,materialsNumberOfComponents,componentIdx
-    INTEGER(INTG) :: geometricScalingType,geometricMeshComponent
+    INTEGER(INTG):: componentIdx,dependentNumberOfVariables,dependentNumberOfComponents,esSpecification(3), &
+      & geometricComponentNumber,geometricMeshComponent,geometricScalingType,independentNumberOfVariables, &
+      & independentNumberOfComponents,lumpingType,materialsNumberOfComponents,materialsNumberOfVariables,numberOfDimensions, &
+      & solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
+    TYPE(EquationsSetIndependentType), POINTER :: equationsIndependent
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(FieldType), POINTER :: dependentField,geometricField
+    TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Stokes_EquationsSetSetup",err,error,*999)
@@ -247,8 +250,7 @@ CONTAINS
     CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE, &
       & EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE, &
       & EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+      & EQUATIONS_SET_ALE_STOKES_SUBTYPE)
       !OK
     CASE DEFAULT
       localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -286,7 +288,7 @@ CONTAINS
       !-----------------------------------------------------------------
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-      CALL Field_NumberOfComponentsGetgeometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+      CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
       dependentNumberOfVariables=2 ! U and dUdN
       dependentNumberOfComponents=numberOfDimensions+1 !number of dimensions for u plus one for pressure
       SELECT CASE(equationsSetSetup%actionType)
@@ -323,7 +325,7 @@ CONTAINS
             & dependentNumberOfComponents,err,error,*999)
           CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
             & dependentNumberOfComponents,err,error,*999)
-          CALL Field_ComponentMeshComponentGetgeometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
+          CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
           !Default to the geometric interpolation setup
           DO componentIdx=1,dependentNumberOfComponents
             CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,componentIdx, &
@@ -466,13 +468,13 @@ CONTAINS
       !-----------------------------------------------------------------
       !define an independent field for ALE information
       SELECT CASE(esSpecification(3))
-      CASE(EQUATIONS_SET_ALE_STOKES_SUBTYPE,EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+      CASE(EQUATIONS_SET_ALE_STOKES_SUBTYPE)
         NULLIFY(equationsIndependent)
         CALL EquationsSet_IndependentGet(equationsSet,equationsIndependent,err,error,*999)
         NULLIFY(geometricField)
         CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-        CALL Field_NumberOfComponentsGetgeometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-        independentFieldNumberOfVariables=1
+        CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+        independentNumberOfVariables=1
         independentNumberOfComponents=numberOfDimensions
         SELECT CASE(equationsSetSetup%actionType)
         CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -493,7 +495,7 @@ CONTAINS
             !point new field to geometric field
             CALL Field_GeometricFieldSetAndLock(equationsIndependent%independentField,geometricField,err,error,*999)
             !set number of variables to 1 (1 for U)
-            CALL Field_NumberOfVariablesSetAndLock(equationsIndependent%independentField,independentFieldNumberOfVariables, &
+            CALL Field_NumberOfVariablesSetAndLock(equationsIndependent%independentField,independentNumberOfVariables, &
               & err,error,*999)
             CALL Field_VariableTypesSetAndLock(equationsIndependent%independentField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
             CALL Field_DimensionSetAndLock(equationsIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
@@ -600,7 +602,7 @@ CONTAINS
           CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
           NULLIFY(geometricField)
           CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-          CALL Field_NumberOfComponentsGetgeometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+          CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
           NULLIFY(dependentField)
           CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
           SELECT CASE(numberOfDimensions)
@@ -667,8 +669,6 @@ CONTAINS
             & " is invalid for an analytic Stokes problem."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-      CASE(EQUATIONS_SET_ALE_STOKES_SUBTYPE,EQUATIONS_SET_PGM_STOKES_SUBTYPE)
-        !Do nothing
       CASE DEFAULT
         localError="The third equations set specification of "// &
           & TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
@@ -686,7 +686,7 @@ CONTAINS
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE)
           CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
-        CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,EQUATIONS_SET_ALE_STOKES_SUBTYPE,EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+        CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,EQUATIONS_SET_ALE_STOKES_SUBTYPE)
           CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
         CASE DEFAULT
           localError="The third equations set specification of "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -710,7 +710,7 @@ CONTAINS
           CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE)
             CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,1,err,error,*999)
             CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-          CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,EQUATIONS_SET_ALE_STOKES_SUBTYPE,EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+          CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,EQUATIONS_SET_ALE_STOKES_SUBTYPE)
             CALL EquationsMappingVector_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
             CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           CASE DEFAULT
@@ -739,7 +739,7 @@ CONTAINS
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-          CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,EQUATIONS_SET_ALE_STOKES_SUBTYPE,EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+          CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,EQUATIONS_SET_ALE_STOKES_SUBTYPE)
             CALL Equations_LumpingTypeGet(equations,lumpingType,err,error,*999)
             IF(lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
               !Set up lumping
@@ -828,8 +828,7 @@ CONTAINS
     CASE(PROBLEM_STATIC_STOKES_SUBTYPE, &
       & PROBLEM_LAPLACE_STOKES_SUBTYPE, &
       & PROBLEM_TRANSIENT_STOKES_SUBTYPE, &
-      & PROBLEM_ALE_STOKES_SUBTYPE, &
-      & PROBLEM_PGM_STOKES_SUBTYPE)
+      & PROBLEM_ALE_STOKES_SUBTYPE)
       !All ok
     CASE(PROBLEM_OPTIMISED_STOKES_SUBTYPE)
       CALL FlagError("Not implemented yet.",err,error,*999)
@@ -863,7 +862,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
-    TYPE(ControlLoopType), POINTER :: controlLoop,controLoopRoot
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SolverType), POINTER :: solver, meshSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations,meshSolverEquations
     TYPE(SolversType), POINTER :: solvers
@@ -877,7 +876,6 @@ CONTAINS
     CASE(PROBLEM_STATIC_STOKES_SUBTYPE, &
       & PROBLEM_LAPLACE_STOKES_SUBTYPE, &
       & PROBLEM_TRANSIENT_STOKES_SUBTYPE, &
-      & PROBLEM_PGM_STOKES_SUBTYPE, &
       & PROBLEM_ALE_STOKES_SUBTYPE)
       !ok
     CASE DEFAULT
@@ -905,8 +903,8 @@ CONTAINS
         !Set up a simple control loop
         NULLIFY(controlLoop)
         CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
-        IF(esSpecification(3)/=PROBLEM_STATIC_STOKES_SUBTYPE.AND. &
-          & esSpecification(3)/=PROBLEM_LAPLACE_STOKES_SUBTYPE) THEN
+        IF(pSpecification(3)/=PROBLEM_STATIC_STOKES_SUBTYPE.AND. &
+          & pSpecification(3)/=PROBLEM_LAPLACE_STOKES_SUBTYPE) THEN
           CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
         ENDIF
       CASE(PROBLEM_SETUP_FINISH_ACTION)
@@ -914,7 +912,7 @@ CONTAINS
         NULLIFY(controlLoopRoot)
         CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
         NULLIFY(controlLoop)
-        CALL ControlLoop_Get(controLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+        CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
         CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
       CASE DEFAULT
         localError="The action type of "//TRIM(NumberToVString(problemSetup%actionType,"*",err,error))// &
@@ -927,13 +925,13 @@ CONTAINS
       NULLIFY(controlLoopRoot)
       CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop)
-      CALL ControlLoop_Get(controLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
         !Start the solvers creation
         NULLIFY(solvers)
         CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
-        SELECT CASE(esSpecification(3))
+        SELECT CASE(pSpecification(3))
         CASE(PROBLEM_STATIC_STOKES_SUBTYPE, &
           & PROBLEM_LAPLACE_STOKES_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
@@ -942,8 +940,7 @@ CONTAINS
           CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
           !Set solver defaults
           CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
-        CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE, &
-          & PROBLEM_PGM_STOKES_SUBTYPE)
+        CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
           CALL Solvers_NumberOfSolversSet(solvers,1,err,error,*999)
           !Set the solver to be a first order dynamic solver
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
@@ -991,12 +988,12 @@ CONTAINS
       NULLIFY(controlLoopRoot)
       CALL Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*999)
       NULLIFY(controlLoop)
-      CALL ControlLoop_Get(controLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+      CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
       SELECT CASE(problemSetup%actionType)
       CASE(PROBLEM_SETUP_START_ACTION)
-        SELECT CASE(esSpecification(3))
+        SELECT CASE(pSpecification(3))
         CASE(PROBLEM_STATIC_STOKES_SUBTYPE, &
           & PROBLEM_LAPLACE_STOKES_SUBTYPE)
           !Get the solver
@@ -1008,8 +1005,7 @@ CONTAINS
           CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
           CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
           CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
-        CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE, &
-          & PROBLEM_PGM_STOKES_SUBTYPE)
+        CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
           !Get the solver
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           !Create the solver equations
@@ -1025,8 +1021,8 @@ CONTAINS
           !Create the solver equations
           NULLIFY(solverEquations)
           CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
-          CALL SolverEquations_LinearityTypeSet(solverEquations,solverEquations_LINEAR,err,error,*999)
-          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,solverEquations_STATIC,err,error,*999)
+          CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+          CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
           CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
           !Get the solver
           NULLIFY(solver)
@@ -1048,7 +1044,7 @@ CONTAINS
         CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
         !Finish the solver equations creation
         CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
-        IF(esSpecification(3)==PROBLEM_ALE_STOKES_SUBTYPE) THEN
+        IF(pSpecification(3)==PROBLEM_ALE_STOKES_SUBTYPE) THEN
           !Get the solver equations
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
@@ -1087,34 +1083,47 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) variableType,gaussPointIdx,rowComponentIdx,rowElelemntDOFIdx,rowXiIdx,rowElementParameterIdx,columnComponentIdx,columnElementDOFIdx,columnXiIdx,columnElementParameterIdx,meshComponent1,meshComponent2, columnElementDOFIdx_max, rowElelemntDOFIdx_max, columnElementDOFIdx_min, rowElelemntDOFIdx_min
-    REAL(DP) :: JGW,SUM,dXidX(3,3),rowsPhi,colsPhi,muParam,rhoParam,rowsdPhidXi(3),colsdPhidXi(3)
-    REAL(DP) :: AG_MATRIX(256,256) ! "A" Matrix ("G"radient part) - maximum size allocated
-    REAL(DP) :: AL_MATRIX(256,256) ! "A" Matrix ("L"aplace part) - maximum size allocated
-    REAL(DP) :: BT_MATRIX(256,256) ! "B" "T"ranspose Matrix - maximum size allocated
-    REAL(DP) :: MT_MATRIX(256,256) ! "M"ass "T"ime Matrix - maximum size allocated
-    REAL(DP) :: CT_MATRIX(256,256) ! "C"onvective "T"erm Matrix - maximum size allocated
-    REAL(DP) :: ALE_MATRIX(256,256) ! "A"rbitrary "L"agrangian "E"ulerian Matrix - maximum size allocated
-    REAL(DP) :: RH_VECTOR(256) ! "R"ight "H"and vector - maximum size allocated
-    REAL(DP) :: wValue(3)
-    REAL(DP)::  X(3)
-    LOGICAL :: updateStiffnessMatrix, updateDampingMatrix,updateRHSVector
-    TYPE(BasisType), POINTER :: dependentBasis,dependentBasis1,dependentBasis2,geometricBasis,independentBasis
+    INTEGER(INTG) analyticFunctionType,colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx, &
+      & columnXiIdx,componentIdx,esSpecification(3),gaussPointIdx,maxColumnElementDOFIdx,maxRowElementDOFIdx, &
+      & minColumnElementDOFIdx,minRowElementDOFIdx,numberOfColsComponents,numberOfColumnElementParameters,numberOfDimensions, &
+      & numberOfGauss,numberOfRowsComponents,numberOfRowElementParameters,numberOfXi,out,rowComponentIdx,rowElementDOFIdx, &
+      & rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,variableType,xv
+    REAL(DP) :: columnPhi,columndPhidXi(3),gaussWeight,jacobian,jacobianGaussWeight,dXidX(3,3),muParam,rhoParam,rowPhi, &
+      & rowdPhidXi(3),sum,wValue(3),x(3)
+    REAL(DP) :: aMatrix(256,256),dMatrix(256,256),aleMatrix(256,256),bTMatrix(256,256)
+    LOGICAL :: update,updateDamping,updateMatrices,updateStiffness,updateRHS,updateSource
+    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,independentBasis,rowBasis
+    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
+    TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
+    TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
+    TYPE(DomainTopologyType), POINTER :: columnDomainTopology,dependentDomainTopology,geometricDomainTopology,rowDomainTopology
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix, dampingMatrix
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix,dampingMatrix
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField,independentField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme,quadratureScheme1,quadratureScheme2
+    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,geometricInterpParameters,independentInterpParameters, &
+      & materialsInterpParameters,rowsInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,independentInterpPoint,materialsInterpPoint
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
+      & rowQuadratureScheme
     TYPE(VARYING_STRING) :: localError
-    INTEGER:: xv,out
 
 !\todo: Reduce number of variables and parameters
 
@@ -1126,27 +1135,16 @@ CONTAINS
     CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE, &
       & EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE, &
       & EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+      & EQUATIONS_SET_ALE_STOKES_SUBTYPE)
+      !OK
     CASE DEFAULT
       localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
         & " is not valid for a Stokes fluid type of a fluid mechanics equations set class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
       
-    out=0
-    AG_MATRIX=0.0_DP
-    AL_MATRIX=0.0_DP
-    BT_MATRIX=0.0_DP
-    MT_MATRIX=0.0_DP
-    CT_MATRIX=0.0_DP
-    ALE_MATRIX=0.0_DP
-    RH_VECTOR=0.0_DP
-    X=0.0_DP
-!     L=10.0_DP
-
     NULLIFY(equations)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*9999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     NULLIFY(vectorEquations)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(equationsInterpolation)
@@ -1161,11 +1159,28 @@ CONTAINS
     CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
     NULLIFY(rhsMapping)
     CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
+    NULLIFY(sourcesMapping)
+    CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(rhsVector)
-    CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-    updateRHS=rhsVector%updateVector
+    updateRHS=.FALSE.
+    IF(ASSOCIATED(rhsMapping)) THEN
+      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
+    ENDIF
+    NULLIFY(sourceMapping)
+    NULLIFY(sourceVectors)
+    NULLIFY(sourceVector)
+    updateSource=.FALSE.
+    IF(ASSOCIATED(sourcesMapping)) THEN
+      CALL EquationsMappingSources_SourceMappingGet(sourcesMapping,1,sourceMapping,err,error,*999)
+      CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
+      CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,1,sourceVector,err,error,*999)
+      CALL EquationsMatricesSource_UpdateVectorGet(sourceVector,updateSource,err,error,*999)
+    ENDIF
+    updateStiffness=.FALSE.
+    updateDamping=.FALSE.
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STATIC_STOKES_SUBTYPE, &
       & EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE)
@@ -1176,15 +1191,13 @@ CONTAINS
       NULLIFY(linearMatrices)
       CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
       NULLIFY(stiffnessMatrix)
-      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffessMatrix,err,error,*999)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
       NULLIFY(dynamicMapping)
       NULLIFY(dynamicMatrices)
       NULLIFY(dampingMatrix)
-      updateStiffnes=stiffnessMatrix%updateMatrix
-      updateDamping=.FALSE.
+      CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
     CASE(EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_PGM_STOKES_SUBTYPE)
+      & EQUATIONS_SET_ALE_STOKES_SUBTYPE)
       NULLIFY(linearMapping)
       NULLIFY(linearMatrices)
       NULLIFY(dynamicMapping)
@@ -1194,11 +1207,11 @@ CONTAINS
       NULLIFY(dynamicMatrices)
       CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
       NULLIFY(stiffnessMatrix)
-      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffessMatrix,err,error,*999)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,1,stiffnessMatrix,err,error,*999)
       NULLIFY(dampingMatrix)
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,2,dampingMatrix,err,error,*999)
-      updateStiffnes=stiffnessMatrix%updateMatrix
-      updateDamping=dampingMatrix%updateMatrix
+      CALL EquationsMatrix_UpdateMatrixGet(stiffnessMatrix,updateStiffness,err,error,*999)
+      CALL EquationsMatrix_UpdateMatrixGet(dampingMatrix,updateDamping,err,error,*999)
     CASE DEFAULT
       localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
         & " is not valid for a Stokes fluid type of a fluid mechanics equations set class."
@@ -1206,9 +1219,19 @@ CONTAINS
     END SELECT
 
     updateMatrices=(updateStiffness.OR.updateDamping)
-    update=(updateMatrices.OR.updateRHS)
+    update=(updateMatrices.OR.updateRHS.OR.updateSource)
 
     IF(update) THEN
+
+      out=0
+      wValue=0.0_DP
+      dXidX=0.0_DP
+      x=0.0_DP
+      aMatrix=0.0_DP
+      dMatrix=0.0_DP
+      aleMatrix=0.0_DP
+      bTMatrix=0.0_DP
+
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(dependentField)
@@ -1216,8 +1239,7 @@ CONTAINS
       NULLIFY(materialsField)
       CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
       NULLIFY(independentField)
-      IF(esSpecification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-        & esSpecification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
+      IF(esSpecification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE) THEN
         CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
       ENDIF
 
@@ -1235,30 +1257,29 @@ CONTAINS
       NULLIFY(geometricBasis)
       CALL DomainElements_ElementBasisGet(geometricDomainElements,elementNumber,geometricBasis,err,error,*999)
       CALL Basis_NumberOfXiGet(geometricBasis,numberOfXi,err,error,*999)
+      NULLIFY(geometricQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
       
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
-      NULLIFY(colsDomain)
-      CALL Decomposition_DomainGet(dependentDecomposition,0,colsDomain,err,error,*999)
-      NULLIFY(colsDomainTopology)
-      CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-      NULLIFY(colsDomainElements)
-      CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-      NULLIFY(colsBasis)
-      CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
+      NULLIFY(dependentDomain)
+      CALL Decomposition_DomainGet(dependentDecomposition,0,dependentDomain,err,error,*999)
+      NULLIFY(dependentDomainTopology)
+      CALL Domain_DomainTopologyGet(dependentDomain,dependentDomainTopology,err,error,*999)
+      NULLIFY(dependentDomainElements)
+      CALL DomainTopology_DomainElementsGet(dependentDomainTopology,dependentDomainElements,err,error,*999)
+      NULLIFY(dependentBasis)
+      CALL DomainElements_ElementBasisGet(dependentDomainElements,elementNumber,dependentBasis,err,error,*999)
+      NULLIFY(dependentQuadratureScheme)
+      CALL Basis_QuadratureSchemeGet(dependentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,dependentQuadratureScheme,err,error,*999)
+      CALL BasisQuadrature_NumberOfGaussGet(dependentQuadratureScheme,numberOfGauss,err,error,*999)
       
       NULLIFY(rowsVariable)
       CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
       
       CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
-      
-      NULLIFY(geometricQuadratureScheme)
-      CALL Basis_QuadratureSchemeGet(geometricBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,geometricQuadratureScheme,err,error,*999)
-      NULLIFY(colsQuadratureScheme)
-      CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-      CALL BasisQuadrature_NumberOfGaussGet(colsQuadratureScheme,numberOfGauss,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)     
       
       NULLIFY(geometricInterpParameters)
       CALL EquationsInterpolation_GeometricParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -1271,7 +1292,7 @@ CONTAINS
         & geometricInterpPointMetrics,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,geometricInterpParameters,err,error,*999)
       
-      NULLIFY(materialsInterpParamters)
+      NULLIFY(materialsInterpParameters)
       CALL EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
         & materialsInterpParameters,err,error,*999)
       NULLIFY(materialsInterpPoint)
@@ -1281,8 +1302,7 @@ CONTAINS
       
       NULLIFY(independentInterpParameters)
       NULLIFY(independentInterpPoint)
-      IF(esSpecification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-        & esSpecification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
+      IF(esSpecification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE) THEN
         CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & independentInterpParameters,err,error,*999)
         CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
@@ -1291,30 +1311,29 @@ CONTAINS
           & err,error,*999)
       ENDIF
       
-
+      NULLIFY(equationsAnalytic)
+      CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
+      IF(ASSOCIATED(equationsAnalytic)) THEN
+        CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+      ENDIF
+      
       !Start looping over Gauss points
       DO gaussPointIdx=1,numberOfGauss
+        
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
-        IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-          & equationsSet%specification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
+        IF(esSpecification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE) THEN
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,independentInterpPoint, &
             & err,error,*999)
-          wValue(1)=independentInterpPoint%values(1,NO_PART_DERIV)
-          wValue(2)=independentInterpPoint%values(2,NO_PART_DERIV)
-          IF(numberOfDimensions==3) THEN
-            wValue(3)=independentInterpPoint%values(3,NO_PART_DERIV)
-          END IF
-        ELSE
-          wValue=0.0_DP
+          wValue(1:numberOfDimensions)=independentInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
         END IF
         !Define muParam, viscosity=1
         muParam=materialsInterpPoint%values(1,NO_PART_DERIV)
         !Define rhoParam, density=2
-        rhoParam=materialsInterpPointr%values(2,NO_PART_DERIV)
+        rhoParam=materialsInterpPoint%values(2,NO_PART_DERIV)
         !Calculate partial matrices
         !\todo: Check time spent here
 
@@ -1330,445 +1349,336 @@ CONTAINS
           ENDDO !rowXiIdx
         ENDDO !columnXiIdx
  
-        !Loop over field components
+        !Loop over row components
         rowElementDOFIdx=0          
         DO rowComponentIdx=1,numberOfRowsComponents
-          NULLIFY(rowsDomain)
-          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowsDomain,err,error,*999)
-          NULLIFY(rowsDomainTopology)
-          CALL Domain_DomainTopologyGet(rowsDomain,rowsDomainTopology,err,error,*999)
-          NULLIFY(rowsDomainElements)
-          CALL DomainTopology_DomainElementsGet(rowsDomainTopology,rowsDomainElements,err,error,*999)
-          NULLIFY(rowsBasis)
-          CALL DomainElements_ElementBasisGet(rowsDomainElements,elementNumber,rowsBasis,err,error,*999)
-          CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
-          CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,erorr,*999)
+          NULLIFY(rowDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+          NULLIFY(rowDomainTopology)
+          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+          NULLIFY(rowDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+          NULLIFY(rowBasis)
+          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
+          CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+          jacobianGaussWeight=jacobian*gaussWeight
+          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
           !Loop over element rows
-          DO rowElementParameterIdx=1,numberOfRowsElementParameters
+          DO rowElementParameterIdx=1,numberOfRowElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1
-            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-              & rowsPhi,err,error,*999)
+            CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+              & gaussPointIdx,rowPhi,err,error,*999)
             DO rowXiIdx=1,numberOfXi
-              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &
-                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(rowXiIdx1),gaussPointIdx,rowsdPhidXi(rowsXiIdx),err,error,*999)
+              CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx, &
+                & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(rowXiIdx),gaussPointIdx,rowdPhidXi(rowXiIdx),err,error,*999)
             ENDDO !rowXiiIdx
             IF(updateMatrices) THEN
               !Loop over element columns
               columnElementDOFIdx=0
               DO columnComponentIdx=1,numberOfColsComponents
-                NULLIFY(colsDomain)
-                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,colsDomain,err,error,*999)
-                NULLIFY(colsDomainTopology)
-                CALL Domain_DomainTopologyGet(colsDomain,colsDomainTopology,err,error,*999)
-                NULLIFY(colsDomainElements)
-                CALL DomainTopology_DomainElementsGet(colsDomainTopology,colsDomainElements,err,error,*999)
-                NULLIFY(colsBasis)
-                CALL DomainElements_ElementBasisGet(colsDomainElements,elementNumber,colsBasis,err,error,*999)
-                CALL Basis_QuadratureSchemeGet(colsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,colsQuadratureScheme,err,error,*999)
-                CALL Basis_NumberOfElementParametersGet(colsBasis,numberOfColsElementParameters,err,error,*999)
-                DO columnElementParameterIdx=1,numberOfColsElementParameters
+                NULLIFY(columnDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
+                NULLIFY(columnDomainTopology)
+                CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+                NULLIFY(columnDomainElements)
+                CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+                NULLIFY(columnBasis)
+                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColumnElementParameters
                   columnElementDOFIdx=columnElementDOFIdx+1
-                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                    & colsPhi,err,error,*999)
-                  DO columnXiIdx1=1,numberOfXi
-                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(colsQuadratureScheme,columnElementParameterIdx, &
-                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(columnXiIdx),gaussPointIdx,colsdPhidXi(columnXiIdx), &
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
+                    & gaussPointIdx,columnPhi,err,error,*999)
+                  DO columnXiIdx=1,numberOfXi
+                    CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme,columnElementParameterIdx, &
+                      & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(columnXiIdx),gaussPointIdx,columndPhidXi(columnXiIdx), &
                       & err,error,*999)
                   ENDDO !columnXiIdx
+                  
                   IF(updateStiffness) THEN
-                    !LAPLACE TYPE
+                    !Laplace type
                     IF(columnComponentIdx==rowComponentIdx) THEN
                       sum=0.0_DP
-                      !Calculate SUM
+                      !Calculate sum
                       DO componentIdx=1,numberOfColsComponents
                         DO rowXiIdx=1,numberOfXi
                           DO columnXiIdx=1,numberOfXi
-                            sum=sum+muParam*rowsdPhidXi(rowXiIdx)*dXidX(rowXiIdx,componentIdx)* &
-                              & colsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,componentIdx)
+                            sum=sum+muParam*rowdPhidXi(rowXiIdx)*dXidX(rowXiIdx,componentIdx)* &
+                              & columndPhidXi(columnXiIdx)*dXidX(columnXiIdx,columnComponentIdx)
                           ENDDO !columnXiIdx
                         ENDDO !rowXiIdx
-                      ENDDO !x
-                      !Calculate MATRIX
-                      AL_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)=AL_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+ &
+                      ENDDO !componentIdx
+                      !Calculate matrix
+                      aMatrix(rowElementDOFIdx,columnElementDOFIdx)=aMatrix(rowElementDOFIdx,columnElementDOFIdx)+ &
                         & sum*jacobianGaussWeight
-                    ENDIF
-                    IF(equationsSet%specification(3)/=EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE) THEN
+                    ENDIF !column=row
+                    IF(esSpecification(3)/=EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE) THEN
                       IF(columnComponentIdx<numberOfColsComponents) THEN
                         sum=0.0_DP
                         !Calculate sum
                         DO rowXiIdx=1,numberOfXi
-                          DO columnXiIdx=1,dependentBasis2%numberOfXi
+                          DO columnXiIdx=1,numberOfXi
                             !note rowComponentIdx/columnComponentIdx derivative in dXidX
-                            sum=sum+muParam*rowsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,columnComponentIdx)* &
-                              & colsdPhidXi(rowXiIdx)*dXidX(rowXiIdx,rowComponentIdx)
+                            sum=sum+muParam*rowdPhidXi(columnXiIdx)*dXidX(columnXiIdx,columnComponentIdx)* &
+                              & columndPhidXi(rowXiIdx)*dXidX(rowXiIdx,rowComponentIdx)
                           ENDDO !columnXiIdx
                         ENDDO !rowXiIdx
-                        !Calculate MATRIX
-                        AG_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)= &
-                          & AG_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+ &
+                        !Calculate matrix
+                        dMatrix(rowElementDOFIdx,columnElementDOFIdx)=dMatrix(rowElementDOFIdx,columnElementDOFIdx)+ &
                           & sum*jacobianGaussWeight
                       ENDIF
-                    ENDIF
-                    IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-                      & equationsSet%specification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
+                    ENDIF !Not Laplacce
+                    IF(esSpecification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE) THEN
                       IF(columnComponentIdx==rowComponentIdx) THEN
                         sum=0.0_DP
-                        !Calculate SUM
+                        !Calculate sum
                         DO componentIdx=1,numberOfColsComponents
                           DO columnXiIdx=1,numberOfXi
-                            sum=sum-rhoParam*wValue(componentIdx)*rowsPhi*colsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,componentIdx)
+                            sum=sum-rhoParam*wValue(componentIdx)*rowPhi*columndPhidXi(columnXiIdx)*dXidX(columnXiIdx,componentIdx)
                           ENDDO !columnXiIdx
-                        ENDDO !rowXiIdx
+                        ENDDO !columnComponentIdx
                         !Calculate MATRIX
-                        ALE_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)= &
-                          & ALE_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+ &
+                        aleMatrix(rowElementDOFIdx,columnElementDOFIdx)=aleMatrix(rowElementDOFIdx,columnElementDOFIdx)+ &
                           & sum*jacobianGaussWeight
                       ENDIF
-                    ENDIF
+                    ENDIF !ALE
                     !Calculate pressure contribution (B transpose type)
-                    !LAPLACE TYPE
+                    !Laplae type
                     IF(columnComponentIdx==numberOfColsComponents) THEN
                       sum=0.0_DP
-                      !Calculate SUM
-                      DO columnXiIdx=1,dependentBasis1%numberOfXi
-                        sum=sum-rowsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,rowComponentIdx)*colsPhi
+                      !Calculate sum
+                      DO columnXiIdx=1,numberOfXi
+                        sum=sum-rowdPhidXi(columnXiIdx)*dXidX(columnXiIdx,rowComponentIdx)*columnPhi
                       ENDDO !columnXiIdx
-                      !Calculate MATRIX
-                      BT_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)= &
-                        & BT_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+ &
+                      !Calculate matrix
+                      bTMatrix(rowElementDOFIdx,columnElementDOFIdx)=bTMatrix(rowElementDOFIdx,columnElementDOFIdx)+ &
                         & sum*jacobianGaussWeight
                     ENDIF
-                  ENDIF
+                  ENDIF !updateStiffness
                   IF(updateDamping) THEN
                     IF(columnComponentIdx==rowComponentIdx) THEN
-                      dampingMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)= &
-                        & dampingMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)+ &
-                        & rowParam*rowsPhi*colsPhi*jacobianGaussWeight
+                      dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                        & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+ &
+                        & rhoParam*rowPhi*columnPhi*jacobianGaussWeight
                     ENDIF
+                  ENDIF !updateDamping
+                ENDDO !columnElementParameterIdx
+              ENDDO !columnComponentIdx
+            ENDIF !update matrices
+          ENDDO !rowElementParameterIdx
+        ENDDO !rowComponentIdx
+        
+        !Calculate analytic RHS
+        IF(ASSOCIATED(equationsAnalytic)) THEN
+          IF(updateRHS) THEN
+            IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4.OR. &
+              & analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
+              
+              !Loop over element rows
+              rowElementDOFIdx=0
+              DO rowComponentIdx=1,numberOfRowsComponents
+                NULLIFY(rowDomain)
+                CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+                NULLIFY(rowDomainTopology)
+                CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+                NULLIFY(rowDomainElements)
+                CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+                NULLIFY(rowBasis)
+                CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+                CALL Basis_QuadratureSchemeGet(rowBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowQuadratureScheme,err,error,*999)
+                CALL BasisQuadratureScheme_GaussWeightGet(rowQuadratureScheme,gaussPointIdx,gaussWeight,err,error,*999)
+                jacobianGaussWeight=jacobian*gaussWeight
+                CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
+                DO rowElementParameterIdx=1,numberOfRowElementParameters
+                  rowElementDOFIdx=rowElementDOFIdx+1
+                  CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowQuadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
+                    & gaussPointIdx,rowPhi,err,error,*999)
+                  !note rowComponentIdx value derivative
+                  sum=0.0_DP
+                  x(1:numberOfDimensions)=geometricInterpPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+                  IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1) THEN
+                    IF(rowComponentIdx==1) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ELSE IF(rowComponentIdx==2) THEN
+                      !Calculate sum
+                      sum=rowPhi*(-2.0_DP*muParam/10.0_DP**2)
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2) THEN
+                    IF(rowComponentIdx==1) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ELSE IF(rowComponentIdx==2) THEN
+                      !Calculate sum
+                      sum=rowPhi*(-4.0_DP*muParam/100.0_DP*EXP((x(1)-x(2))/10.0_DP))
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3) THEN
+                    IF(rowComponentIdx==1) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ELSE IF(rowComponentIdx==2) THEN
+                      !Calculate sum
+                      sum=rowPhi*(16.0_DP*muParam*PI*PI/100.0_DP*COS(2.0_DP*PI*x(2)/10.0_DP)*COS(2.0_DP*PI*x(1)/10.0_DP))
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4) THEN
+                    !Do nothing!
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5) THEN
+                    !Do nothing!
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4) THEN
+                    !Do nothing!
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
+                    !Do nothing!
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1) THEN
+                    IF(rowComponentIdx==1) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ELSE IF(rowComponentIdx==2) THEN
+                      !Calculate sum
+                      sum=rowPhi*(-4.0_DP*muParam/100.0_DP)
+                    ELSE IF(rowComponentIdx==3) THEN
+                      !Calculate sum
+                      sum=rowPhi*(-4.0_DP*muParam/100.0_DP)
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2) THEN
+                    IF(rowComponentIdx==1) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ELSE IF(rowComponentIdx==2) THEN
+                      !Calculate sum
+                      sum=rowPhi*(-2.0_DP*muParam/100.0_DP*(2.0_DP*EXP((x(1)-x(2))/10.0_DP)+EXP((x(2)-x(3))/10.0_DP)))
+                    ELSE IF(rowComponentIdx==3) THEN
+                      !Calculate sum
+                      sum=rowPhi*(-2.0_DP*muParam/100.0_DP*(2.0_DP*EXP((x(3)-x(1))/10.0_DP)+EXP((x(2)-x(3))/10.0_DP)))
+                    ENDIF
+                  ELSE IF(analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3) THEN
+                    IF(rowComponentIdx==1) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ELSE IF(rowComponentIdx==2) THEN
+                      !Calculate sum
+                      sum=rowPhi*(36*muParam*PI**2/100.0_DP*COS(2.0_DP*PI*x(2)/10.0_DP)*SIN(2.0_DP*PI*x(3)/10.0_DP)* &
+                        & COS(2.0_DP*PI*x(1)/10.0_DP))
+                    ELSE IF(rowComponentIdx==3) THEN
+                      !Calculate sum
+                      sum=0.0_DP
+                    ENDIF
+                  ENDIF
+                  !Calculate rhs vector
+                  rhsVector%elementVector%vector(rowElementDOFIdx)=rhsVector%elementVector%vector(rowElementDOFIdx)+ &
+                    & sum*jacobianGaussWeight
+                ENDDO !rowElementParameterIdx
+              ENDDO !rowComponentIdx
+            ELSE
+              rhsVector%elementVector%vector(rowElementDOFIdx)=0.0_DP
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO !gaussPointIdx
+    
+      !Assemble matrices calculated above
+      minRowElementDOFIdx=rowElementDOFIdx
+      maxRowElementDOFIdx=columnElementDOFIdx
+      minColumnElementDOFIdx=rowElementDOFIdx
+      maxColumnElementDOFIdx=columnElementDOFIdx
+      IF(updateStiffness) THEN
+        stiffnessMatrix%elementMatrix%matrix(1:minRowElementDOFIdx,1:minColumnElementDOFIdx)= &
+          & aMatrix(1:minRowElementDOFIdx,1:minColumnElementDOFIdx)+ &
+          & dMatrix(1:minRowElementDOFIdx,1:minColumnElementDOFIdx)+ &
+          & aleMatrix(1:minRowElementDOFIdx,1:minColumnElementDOFIdx)
+        stiffnessMatrix%elementMatrix%matrix(1:minRowElementDOFIdx,minColumnElementDOFIdx+1:maxColumnElementDOFIdx)= &
+          & bTmatrix(1:minRowElementDOFIdx,minColumnElementDOFIdx+1:maxColumnElementDOFIdx)
+        DO rowElementDOFIdx=minRowElementDOFIdx+1,maxRowElementDOFIdx
+          DO columnElementDOFIdx=1,minColumnElementDOFIdx
+            !Transpose pressure type entries for mass equation
+            stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+              & stiffnessMatrix%elementMatrix%matrix(columnElementDOFIdx,rowElementDOFIdx)
+          ENDDO !columnElementDOFIdx
+        ENDDO !rowElementDOFIdx
+      ENDIF !updateStiffness
+      
+      !Scale factor adjustment
+      CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
+      IF(scalingType/=FIELD_NO_SCALING) THEN
+        NULLIFY(rowsInterpParameters)
+        CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsInterpParameters, &
+          & err,error,*999)
+        NULLIFY(colsInterpParameters)
+        CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
+          & err,error,*999)
+        CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,rowsInterpParameters,err,error,*999)
+        CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters,err,error,*999)
+        !Loop over element rows
+        rowElementDOFIdx=0          
+        DO rowComponentIdx=1,numberOfRowsComponents
+          NULLIFY(rowDomain)
+          CALL FieldVariable_ComponentDomainGet(rowsVariable,rowComponentIdx,rowDomain,err,error,*999)
+          NULLIFY(rowDomainTopology)
+          CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+          NULLIFY(rowDomainElements)
+          CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+          NULLIFY(rowBasis)
+          CALL DomainElements_ElementBasisGet(rowDomainElements,elementNumber,rowBasis,err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(rowBasis,numberOfRowElementParameters,err,error,*999)
+          DO rowElementParameterIdx=1,numberOfRowElementParameters
+            rowElementDOFIdx=rowElementDOFIdx+1                    
+            IF(updateMatrices) THEN
+              !Loop over element columns
+              columnElementDOFIdx=0
+              DO columnComponentIdx=1,numberOfColsComponents
+                NULLIFY(columnDomain)
+                CALL FieldVariable_ComponentDomainGet(colsVariable,columnComponentIdx,columnDomain,err,error,*999)
+                NULLIFY(columnDomainTopology)
+                CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+                NULLIFY(columnDomainElements)
+                CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+                NULLIFY(columnBasis)
+                CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
+                DO columnElementParameterIdx=1,numberOfColumnElementParameters
+                  columnElementDOFIdx=columnElementDOFIdx+1
+                  IF(updateStiffness) THEN
+                    stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                      & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                      & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
+                      & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
+                  ENDIF
+                  IF(updateDamping) THEN
+                    dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                      & dampingMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                      & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
+                      & colsInterpParameters%scaleFactors(columnElementParameterIdx,columnComponentIdx)
                   ENDIF
                 ENDDO !columnElementParameterIdx
               ENDDO !columnComponentIdx
-            ENDDO !rowElementParameterIdx
-          ENDDO !rowComponentIdx
-          
-                    IF(updateStiffnessMatrix.OR.updateDampigaussPointIdxMatrix) THEN
-                      !Loop over element columns
-                      DO columnComponentIdx=1,(fieldVariable%numberOfComponents)
-
-                        meshComponent2=fieldVariable%COMPONENTS(columnComponentIdx)%meshComponentNumber
-                        dependentBasis2=>dependentField%DECOMPOSITION%DOMAIN(meshComponent2)%ptr% &
-                          & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                        quadratureScheme2=>dependentBasis2%QUADRATURE%quadratureSchemeMap &
-                          & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                        ! JGW=equations%interpolation%geometricInterpPointMetrics%jacobian*quadratureScheme2%&
-                        ! &gaussWeights(gaussPointIdx)
-                        DO columnElementParameterIdx=1,dependentBasis2%numberOfElementParameters
-                          columnElementDOFIdx=columnElementDOFIdx+1
-                        !Calculate some variables used later on
-                          DO columnXiIdx=1,dependentBasis2%numberOfXi
-                            DO rowXiIdx=1,dependentBasis1%numberOfXi
-                              dXidX(rowXiIdx,columnXiIdx)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
-                                & dXidX(rowXiIdx,columnXiIdx)
-                            END DO
-                            rowsdPhidXi(columnXiIdx)=quadratureScheme1%gaussBasisFunctiocolumnElementParameterIdx(rowElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(columnXiIdx),gaussPointIdx)
-                            colsdPhidXi(columnXiIdx)=quadratureScheme2%gaussBasisFunctions(columnElementParameterIdx,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(columnXiIdx),gaussPointIdx)
-                          END DO !columnXiIdx
-                          rowsPhi=quadratureScheme1%gaussBasisFunctions(rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
-                          colsPhi=quadratureScheme2%gaussBasisFunctions(columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
-                        !                         DO rowXiIdx=1,dependentBasis1%numberOfXi
-                        !                           DO columnXiIdx=1,dependentBasis2%numberOfXi
-                        !                             SUM=SUM-muParam*DrowsPhiS_DXI(rowXiIdx)*DPHINSS_DXI(columnXiIdx)*equations%interpolation%geometricInterpPointMetrics%GU(rowXiIdx,columnXiIdx)
-                        !                           ENDDO !columnXiIdx
-                        !                         ENDDO !rowXiIdx
-                          IF(updateStiffnessMatrix) THEN
-
-                            !LAPLACE TYPE
-                            IF(columnComponentIdx==rowComponentIdx) THEN
-                              SUM=0.0_DP
-                              !Calculate SUM
-                              DO xv=1,dependentBasis1%numberOfXi
-                                DO rowXiIdx=1,dependentBasis1%numberOfXi
-                                  DO columnXiIdx=1,dependentBasis2%numberOfXi
-                                    SUM=SUM+muParam*colsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,xv)*rowsdPhidXi(rowXiIdx)*dXidX(rowXiIdx,xv)
-                                  ENDDO !columnXiIdx
-                                ENDDO !rowXiIdx
-                              ENDDO !x
-                              !Calculate MATRIX
-                              AL_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)=AL_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+SUM*JGW
-                            END IF
-
-                          END IF
-                          !Calculate standard matrix (gradient transpose type)
-                          IF(updateStiffnessMatrix) THEN
-
-                            IF(equationsSet%specification(3)/=EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE) THEN
-                              IF(columnComponentIdx<fieldVariable%numberOfComponents) THEN
-                                SUM=0.0_DP
-                                !Calculate SUM
-                                DO rowXiIdx=1,dependentBasis1%numberOfXi
-                                  DO columnXiIdx=1,dependentBasis2%numberOfXi
-                                    !note rowComponentIdx/columnComponentIdx derivative in dXidX
-                                    SUM=SUM+muParam*colsdPhidXi(rowXiIdx)*dXidX(rowXiIdx,rowComponentIdx)*rowsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,columnComponentIdx)
-                                  ENDDO !columnXiIdx
-                                ENDDO !rowXiIdx
-                                !Calculate MATRIX
-                                AG_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)=AG_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+SUM*JGW
-                              END IF
-                            END IF
-
-                          END IF
-                          !Calculate ALE matric contribution
-                          IF(updateStiffnessMatrix) THEN
-
-                            IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-                              & equationsSet%specification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
-                              IF(columnComponentIdx==rowComponentIdx) THEN
-                                SUM=0.0_DP
-                                !Calculate SUM
-                                DO rowXiIdx=1,dependentBasis1%numberOfXi
-                                  DO columnXiIdx=1,dependentBasis1%numberOfXi
-                                    SUM=SUM-rhoParam*wValue(rowXiIdx)*colsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,rowXiIdx)*rowsPhi
-                                  ENDDO !columnXiIdx
-                                ENDDO !rowXiIdx
-                                !Calculate MATRIX
-                                ALE_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)=ALE_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+SUM*JGW
-                              END IF
-                            END IF
-
-                          END IF
-                          !Calculate pressure contribution (B transpose type)
-                          IF(updateStiffnessMatrix) THEN
-
-                            !LAPLACE TYPE
-                            IF(columnComponentIdx==fieldVariable%numberOfComponents) THEN
-                              SUM=0.0_DP
-                              !Calculate SUM
-                              DO columnXiIdx=1,dependentBasis1%numberOfXi
-                                SUM=SUM-colsPhi*rowsdPhidXi(columnXiIdx)*dXidX(columnXiIdx,rowComponentIdx)
-                              ENDDO !columnXiIdx
-                              !Calculate MATRIX
-                              BT_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)=BT_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+SUM*JGW
-                            END IF
-
-                          END IF
-                          !Calculate mass matrix if needed
-                          IF(equationsSet%specification(3)==EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE.OR. &
-                            & equationsSet%specification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-                            & equationsSet%specification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
-                            IF(updateDampingMatrix) THEN
-                              IF(columnComponentIdx==rowComponentIdx) THEN
-                                SUM=0.0_DP
-                                !Calculate SUM
-                                SUM=rhoParam*rowsPhi*colsPhi
-                                !Calculate MATRIX
-                                MT_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)=MT_MATRIX(rowElelemntDOFIdx,columnElementDOFIdx)+SUM*JGW
-                              END IF
-                            END IF
-                          END IF
-                        ENDDO !columnElementParameterIdx
-                      ENDDO !columnComponentIdx
-                    ENDIF
-                  ENDDO !rowElementParameterIdx
-                ENDDO !rowComponentIdx
-
-                !Calculate analytic RHS
-                IF(ASSOCIATED(equationsSet%ANALYTIC)) THEN
-                  IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4.OR. &
-                    & equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
-
-                    rowElelemntDOFIdx=0
-                    DO rowComponentIdx=1,(fieldVariable%numberOfComponents-1)
-                      meshComponent1=fieldVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
-                      dependentBasis1=>dependentField%DECOMPOSITION%DOMAIN(meshComponent1)%ptr% &
-                        & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                      quadratureScheme1=>dependentBasis1%QUADRATURE%quadratureSchemeMap(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
-                        & quadratureScheme1%gaussWeights(gaussPointIdx)
-                      DO rowElementParameterIdx=1,dependentBasis1%numberOfElementParameters
-                        rowElelemntDOFIdx=rowElelemntDOFIdx+1
-                        rowsPhi=quadratureScheme1%gaussBasisFunctions(rowElementParameterIdx,NO_PART_DERIV,gaussPointIdx)
-                        !note rowComponentIdx value derivative
-                        SUM=0.0_DP
-                        X(1) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,1)
-                        X(2) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,1)
-                        IF(dependentBasis1%numberOfXi==3) THEN
-                          X(3) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
-                        END IF
-                        IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1) THEN
-                          IF(rowComponentIdx==1) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ELSE IF(rowComponentIdx==2) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(-2.0_DP*muParam/10.0_DP**2)
-                          ENDIF
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2) THEN
-                          IF(rowComponentIdx==1) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ELSE IF(rowComponentIdx==2) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(-4.0_DP*muParam/100.0_DP*EXP((X(1)-X(2))/10.0_DP))
-                          ENDIF
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3) THEN
-                          IF(rowComponentIdx==1) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ELSE IF(rowComponentIdx==2) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(16.0_DP*muParam*PI*PI/100.0_DP*COS(2.0_DP*PI*X(2)/10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP))
-                          ENDIF
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4) THEN
-!                           do nothing!
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5) THEN
-!                           do nothing!
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4) THEN
-!                           do nothing!
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
-!                           do nothing!
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1) THEN
-                          IF(rowComponentIdx==1) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ELSE IF(rowComponentIdx==2) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(-4.0_DP*muParam/100.0_DP)
-                          ELSE IF(rowComponentIdx==3) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(-4.0_DP*muParam/100.0_DP)
-                          ENDIF
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2) THEN
-                          IF(rowComponentIdx==1) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ELSE IF(rowComponentIdx==2) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(-2.0_DP*muParam/100.0_DP*(2.0_DP*EXP((X(1)-X(2))/10.0_DP)+EXP((X(2)-X(3))/10.0_DP)))
-                          ELSE IF(rowComponentIdx==3) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(-2.0_DP*muParam/100.0_DP*(2.0_DP*EXP((X(3)-X(1))/10.0_DP)+EXP((X(2)-X(3))/10.0_DP)))
-                          ENDIF
-                        ELSE IF(equationsAnalytic%analyticFunctionType==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3) THEN
-                          IF(rowComponentIdx==1) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ELSE IF(rowComponentIdx==2) THEN
-                            !Calculate SUM
-                            SUM=rowsPhi*(36*muParam*PI**2/100.0_DP*COS(2.0_DP*PI*X(2)/10.0_DP)*SIN(2.0_DP*PI*X(3)/10.0_DP)* &
-                              & COS(2.0_DP*PI*X(1)/10.0_DP))
-                          ELSE IF(rowComponentIdx==3) THEN
-                            !Calculate SUM
-                            SUM=0.0_DP
-                          ENDIF
-                        ENDIF
-                        !Calculate RH VECTOR
-                        RH_VECTOR(rowElelemntDOFIdx)=RH_VECTOR(rowElelemntDOFIdx)+SUM*JGW
-                      ENDDO !rowElementParameterIdx
-                    ENDDO !rowComponentIdx
-                  ELSE
-                    RH_VECTOR(rowElelemntDOFIdx)=0.0_DP
-                  ENDIF
-                ENDIF
-              END IF
-            ENDDO !gaussPointIdx
-            !Assemble matrices calculated above
-            rowElelemntDOFIdx_min=rowElelemntDOFIdx
-            rowElelemntDOFIdx_max=columnElementDOFIdx
-            columnElementDOFIdx_min=rowElelemntDOFIdx
-            columnElementDOFIdx_max=columnElementDOFIdx
-            IF(equationsSet%specification(3)==EQUATIONS_SET_STATIC_STOKES_SUBTYPE.OR.  &
-              & equationsSet%specification(3)==EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE.OR. &
-              & equationsSet%specification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-              & equationsSet%specification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE.OR. &
-              & equationsSet%specification(3)==EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE) THEN
-              IF(updateStiffnessMatrix) THEN
-                stiffnessMatrix%elementMatrix%matrix(1:rowElelemntDOFIdx_min,1:columnElementDOFIdx_min)=AL_MATRIX(1:rowElelemntDOFIdx_min,1:columnElementDOFIdx_min)+AG_MATRIX(1:rowElelemntDOFIdx_min, &
-                  & 1:columnElementDOFIdx_min)+ALE_MATRIX(1:rowElelemntDOFIdx_min,1:columnElementDOFIdx_min)
-                stiffnessMatrix%elementMatrix%matrix(1:rowElelemntDOFIdx_min,columnElementDOFIdx_min+1:columnElementDOFIdx_max)=BT_MATRIX(1:rowElelemntDOFIdx_min,columnElementDOFIdx_min+1:columnElementDOFIdx_max)
-                DO rowElelemntDOFIdx=rowElelemntDOFIdx_min+1,rowElelemntDOFIdx_max
-                  DO columnElementDOFIdx=1,columnElementDOFIdx_min
-                    !Transpose pressure type entries for mass equation
-                    stiffnessMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)=stiffnessMatrix%elementMatrix%matrix(columnElementDOFIdx,rowElelemntDOFIdx)
-                  END DO
-                END DO
-              END IF
-            END IF
-            IF(equationsSet%specification(3)==EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE.OR. &
-              & equationsSet%specification(3)==EQUATIONS_SET_ALE_STOKES_SUBTYPE.OR. &
-              & equationsSet%specification(3)==EQUATIONS_SET_PGM_STOKES_SUBTYPE) THEN
-              IF(updateDampingMatrix) THEN
-                dampingMatrix%elementMatrix%matrix(1:rowElelemntDOFIdx_min,1:columnElementDOFIdx_min)=MT_MATRIX(1:rowElelemntDOFIdx_min,1:columnElementDOFIdx_min)
-              END IF
-            END IF
-          !Assemble RHS vector
-          IF(rhsVector%firstAssembly) THEN
-            IF(updateRHSVector) THEN
-              rhsVector%elementVector%vector(1:rowElelemntDOFIdx_max)=RH_VECTOR(1:rowElelemntDOFIdx_max)
+            ENDIF !update matrices
+            IF(updateSource) THEN
+              sourceVector%elementVector%vector(rowElementDOFIdx)=sourceVector%elementVector%vector(rowElementDOFIdx)* &
+                & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
             ENDIF
-          ENDIF
-          !Scale factor adjustment
-            IF(dependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
-              CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
-                & dependentInterpParameters(variableType)%ptr,err,error,*999)
-              rowElelemntDOFIdx=0
-              DO rowComponentIdx=1,fieldVariable%numberOfComponents
-                !Loop over element rows
-                meshComponent1=fieldVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
-                dependentBasis1=>dependentField%DECOMPOSITION%DOMAIN(meshComponent1)%ptr% &
-                  & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                DO rowElementParameterIdx=1,dependentBasis1%numberOfElementParameters
-                  rowElelemntDOFIdx=rowElelemntDOFIdx+1
-                  columnElementDOFIdx=0
-                   IF(updateStiffnessMatrix.OR.updateDampingMatrix) THEN
-                    !Loop over element columns
-                    DO columnComponentIdx=1,fieldVariable%numberOfComponents
-                      meshComponent2=fieldVariable%COMPONENTS(columnComponentIdx)%meshComponentNumber
-                      dependentBasis2=>dependentField%DECOMPOSITION%DOMAIN(meshComponent2)%ptr% &
-                        & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                      DO columnElementParameterIdx=1,dependentBasis2%numberOfElementParameters
-                        columnElementDOFIdx=columnElementDOFIdx+1
-                        IF(updateStiffnessMatrix)THEN
-                          stiffnessMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)=stiffnessMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)* &
-                            & equations%interpolation%dependentInterpParameters(variableType)%ptr%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
-                            & equations%interpolation%dependentInterpParameters(variableType)%ptr%scaleFactors(columnElementParameterIdx,columnComponentIdx)
-                        END IF
-                        IF(updateDampingMatrix)THEN
-                          dampingMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)=dampingMatrix%elementMatrix%matrix(rowElelemntDOFIdx,columnElementDOFIdx)* &
-                            & equations%interpolation%dependentInterpParameters(variableType)%ptr%scaleFactors(rowElementParameterIdx,rowComponentIdx)* &
-                            & equations%interpolation%dependentInterpParameters(variableType)%ptr%scaleFactors(columnElementParameterIdx,columnComponentIdx)
-                        END IF
-                      ENDDO !columnElementParameterIdx
-                    ENDDO !columnComponentIdx
-                  ENDIF
-                  IF(updateRHSVector) rhsVector%elementVector%vector(rowElelemntDOFIdx)=rhsVector%elementVector%vector(rowElelemntDOFIdx)* &
-                    & equations%interpolation%dependentInterpParameters(variableType)%ptr%scaleFactors(rowElementParameterIdx,rowComponentIdx)
-                ENDDO !rowElementParameterIdx
-              ENDDO !rowComponentIdx
+            IF(updateRHS) THEN
+              rhsVector%elementVector%vector(rowElementDOFIdx)=rhsVector%elementVector%vector(rowElementDOFIdx)* &
+                & rowsInterpParameters%scaleFactors(rowElementParameterIdx,rowComponentIdx)
             ENDIF
-          CASE DEFAULT
-            localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-              & " is not valid for a Stokes fluid type of a fluid mechanics equations set class."
-            CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+          ENDDO !rowElementParameterIdx
+        ENDDO !rowComponentIdx
+      ENDIF !scaling
+    ENDIF !update
 
     EXITS("Stokes_FiniteElementCalculate")
     RETURN
 999 ERRORSEXITS("Stokes_FiniteElementCalculate",err,error)
     RETURN 1
+    
   END SUBROUTINE Stokes_FiniteElementCalculate
 
   !
@@ -1785,8 +1695,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: outputType,pSpecification(3),solveType
     TYPE(ControlLoopType), POINTER :: controlLoop 
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solver2
-    TYPE(SolverDynamicType), POINTER :: dynamicSolver
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
@@ -1803,15 +1714,13 @@ CONTAINS
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_STOKES_SUBTYPE,PROBLEM_LAPLACE_STOKES_SUBTYPE)
       CALL Stokes_PostSolveOutputData(solver,err,error,*999)
-    CASE(PROBLEM_PGM_STOKES_SUBTYPE)
-      CALL Stokes_PostSolveOutputData(solver,err,error,*999)
     CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
       CALL Stokes_PostSolveOutputData(solver,err,error,*999)
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
       CALL Solver_TypeGet(solver,solveType,err,error,*999)
       IF(solveType==SOLVER_LINEAR_TYPE) THEN
         !Post solve for the linear solver
-        IF(outputType>=SOLVER_PROGRESS_OUTPUT_TYPE) &
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
           & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement post solve... ",err,error,*999)
         NULLIFY(solvers)
         CALL Solver_SolversGet(solver,solvers,err,error,*999)
@@ -1822,7 +1731,7 @@ CONTAINS
         dynamicSolver%ale=.TRUE.
       ELSE IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
         !Post solve for the dynamic solver
-        IF(outputType>=SOLVER_PROGRESS_OUTPUT_TYPE) &
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
           & CALL WriteString(GENERAL_OUTPUT_TYPE,"ALE Stokes post solve... ",err,error,*999)
         CALL Stokes_PostSolveOutputData(solver,err,error,*999)
       END IF
@@ -1851,10 +1760,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: pSpecification(3)
+    INTEGER(INTG) :: outputType,pSpecification(3),solveType
     TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solver2 
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Stokes_PreSolve",err,error,*999)
@@ -1872,16 +1783,11 @@ CONTAINS
       ! do nothing ???
     CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
       CALL Stokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
-    CASE(PROBLEM_PGM_STOKES_SUBTYPE)
-      !First update mesh and calculates boundary velocity values
-      CALL Stokes_PreSolveALEUpdateMesh(solver,err,error,*999)
-      !Then apply both normal and moving mesh boundary conditions
-      CALL Stokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
       CALL Solver_TypeGet(solver,solveType,err,error,*999)
       !Pre solve for the linear solver
       IF(solveType==SOLVER_LINEAR_TYPE) THEN
-        IF(outputType>=SOLVER_PROGRESS_OUTPUT_TYPE) &
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
           & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement pre solve... ",err,error,*999)
         !Update boundary conditions for mesh-movement
         CALL Stokes_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
@@ -1897,7 +1803,7 @@ CONTAINS
         CALL Stokes_PreSolveALEUpdateParameters(solver,err,error,*999)
       ELSE IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
         !Pre solve for the dynamic solver
-        IF(outputType>=SOLVER_PROGRESS_OUTPUT_TYPE) &
+        IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
           & CALL WriteString(GENERAL_OUTPUT_TYPE,"ALE Stokes pre solve... ",err,error,*999)
         NULLIFY(dynamicSolver)
         CALL Solver_DynamicSolverGet(solver2,dynamicSolver,err,error,*999)
@@ -1936,24 +1842,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,derivativeIdx,dimensionIdx, &
-      & elementIdx,globalDerivativeIndex,I,J,K,localDOFIdx,localNodeIdx,maximumNumberOfElementParameters,nodeIdx, &
-      & numberOfDimensions,numberOfNodesXic(3),pSpecification(3),variableIdx,variableType
+    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,currentIteration,derivativeIdx,dimensionIdx, &
+      & elementIdx,globalDerivativeIndex,i,inputIteration,j,k,localDOFIdx,localNodeIdx,localNodeNumber, &
+      & maximumNumberOfElementParameters,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
+      & numberOfNodesXic(3),numberOfVariables,outputIteration,outputType,pSpecification(3),solveType,variableIdx,variableType
     REAL(DP) :: analyticValue,currentTime,displacementValue,muParam,rhoParam,startTime,stopTime,tCoordinates(20,3), &
       & timeIncrement,x(3),xiCoordinates(4)
-    REAL(DP), POINTER :: boundaryValues(:),geometricParameters(:),meshVelocityValues(:)
+    REAL(DP), POINTER :: boundaryValues(:),geometricParameters(:),materialsParameters(:),meshVelocityValues(:)
+    TYPE(BasisType), POINTER :: basis
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
-    TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable,independentVariable,materialsVariable
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
+    TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+    TYPE(FieldVariableType), POINTER :: dependentVariable,uDependentVariable,geometricVariable,independentVariable, &
+      & materialsVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
@@ -2003,10 +1914,10 @@ CONTAINS
           NULLIFY(interpolationParameters)
           CALL FieldVariable_InterpolationParametersInitialise(geometricVariable,interpolationParameters,err,error,*999)
           NULLIFY(interpolatedPoint)
-          CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+          CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
           NULLIFY(materialsField)
           CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
-          NULLIFY(materiaslVariable)
+          NULLIFY(materialsVariable)
           CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
           NULLIFY(materialsParameters)
           CALL FieldVariable_ParameterSetDataGet(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
@@ -2023,11 +1934,11 @@ CONTAINS
           ENDIF
           NULLIFY(dependentField)
           CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-          NULLIFY(dependentUVariable)
-          CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentUVariable,err,error,*999)
+          NULLIFY(uDependentVariable)
+          CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,uDependentVariable,err,error,*999)
           CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
           DO variableIdx=1,numberOfVariables
-            NULLIFY(dependentVarible)
+            NULLIFY(dependentVariable)
             CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
             CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
             DO componentIdx=1,numberOfComponents
@@ -2061,23 +1972,23 @@ CONTAINS
                   & maximumNumberOfElementParameters==8.OR. &
                   & maximumNumberOfElementParameters==27.OR. &
                   & maximumNumberOfElementParameters==64) THEN
-                  DO K=1,numberOfNodesXic(3)
-                    DO J=1,numberOfNodesXic(2)
-                      DO I=1,numberOfNodesXic(1)
+                  DO k=1,numberOfNodesXic(3)
+                    DO j=1,numberOfNodesXic(2)
+                      DO i=1,numberOfNodesXic(1)
                         localNodeIdx=localNodeIdx+1
                         CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,elementIdx,localNodeNumber,err,error,*999)
                         IF(localNodeNumber==nodeIdx) EXIT
                         xiCoordinates(1)=xiCoordinates(1)+(1.0_DP/(numberOfNodesXic(1)-1))
-                      ENDDO !I
+                      ENDDO !i
                       IF(localNodeNumber==nodeIdx) EXIT
                       xiCoordinates(1)=0.0_DP
                       xiCoordinates(2)=xiCoordinates(2)+(1.0_DP/(numberOfNodesXic(2)-1))
-                    ENDDO !J
+                    ENDDO !j
                     IF(localNodeNumber==nodeIdx) EXIT
                     xiCoordinates(1)=0.0_DP
                     xiCoordinates(2)=0.0_DP
                     IF(numberOfNodesXic(3)/=1) xiCoordinates(3)=xiCoordinates(3)+(1.0_DP/(numberOfNodesXic(3)-1))
-                  ENDDO !K
+                  ENDDO !k
                   CALL Field_InterpolateXi(NO_PART_DERIV,xiCoordinates,interpolatedPoint,err,error,*999)
                 ELSE
                   !\todo: Use boundary flag
@@ -2141,15 +2052,15 @@ CONTAINS
                     tCoordinates(19,1:3)=[2.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
                     tCoordinates(20,1:3)=[1.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
                   ENDIF
-                  DO K=1,maximumNumberOfElementParameters
-                    CALL DomainElements_ElementNodeGet(domainElements,K,elementIdx,localNodeNumber,err,error,*999)
+                  DO k=1,maximumNumberOfElementParameters
+                    CALL DomainElements_ElementNodeGet(domainElements,k,elementIdx,localNodeNumber,err,error,*999)
                     IF(localNodeNumber==nodeIdx) EXIT
-                  ENDDO
+                  ENDDO !k
                   CALL Field_InterpolateXi(NO_PART_DERIV,tCoordinates(K,1:numberOfDimensions),interpolatedPoint,err,error,*999)
                 ENDIF
                 x=0.0_DP
                 DO dimensionIdx=1,numberOfDimensions
-                  X(dimensionIdx)=interpolatedPoint%values(dimensionIdx,NO_PART_DERIV)
+                  x(dimensionIdx)=interpolatedPoint%values(dimensionIdx,NO_PART_DERIV)
                 ENDDO !dimensionIdx
                 NULLIFY(boundaryConditionsVariable)
                 CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
@@ -2157,15 +2068,16 @@ CONTAINS
                 CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
                 DO derivativeIdx=1,numberOfNodeDerivatives
                   CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-                  CALL Stokes_AnalyticFunctions(analyticValue,X,muParam,rhoParam,currentTime,variableType, &
+                  CALL Stokes_AnalyticFunctions(analyticValue,x,muParam,rhoParam,currentTime,variableType, &
                     & globalDerivativeIndex,analyticFunctionType,numberOfDimensions,numberOfComponents,componentIdx, &
                     & err,error,*999)
                   !Default to version 1 of each node derivative
                   CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
                     & err,error,*999)
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
                     & analyticValue,err,error,*999)
-                  boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOFIdx)
+                  CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,localDOFIdx, &
+                    & boundaryConditionCheckVariable,err,error,*999)
                   IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED) THEN
                     CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
                       & analyticValue,err,error,*999)
@@ -2174,86 +2086,16 @@ CONTAINS
               ENDDO !nodeIdx
             ENDDO !componentIdx
             CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-            CALL Field_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
             CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-            CALL Field_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
           ENDDO !variableIdx
           CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
           CALL FieldVariable_ParameterSetDataRestore(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
         ENDIF
       ENDIF
-      CALL FieldVariable_ParameterSetUpdateStart(dependentUVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(dependentUVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-    CASE(PROBLEM_PGM_STOKES_SUBTYPE)
-      !Pre solve for the dynamic solver
-      IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
-        IF(outputType>=SOLVER_PROGRESS_OUTPUT) &
-          & CALL WriteString(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
-        NULLIFY(solverEquations)
-        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
-        NULLIFY(solverMapping)
-        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
-        NULLIFY(boundaryConditions)
-        CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
-        NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverEquations,1,equationsSet,err,error,*999)
-        NULLIFY(geometricField)
-        CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-        NULLIFY(geometricVariable)
-        CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-        NULLIFY(dependentField)
-        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-        NULLIFY(dependentVariable)
-        CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,dependentVariable,err,error,*999)
-        NULLIFY(boundaryConditionsVariable)
-        CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
-        NULLIFY(independentField)
-        CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
-        NULLIFY(independentVariable)
-        CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,independentVariable,err,error,*999)
-        NULLIFY(meshVelocityValues)
-        CALL FieldVariable_ParameterSetDataGet(independentVariable,FIELD_MESH_VELOCITY_SET_TYPE,meshVelocityValues,err,error,*999)
-        NULLIFY(boundaryValues)
-        CALL FieldVariable_ParameterSetDataGet(independentVariable,FIELD_BOUNDARY_SET_TYPE,boundaryValues,err,error,*999)
-        CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,boundaryValues,numberOfDimensions, &
-          & BOUNDARY_CONDITION_FIXED_INLET,inputIteration,currentIteration,currentTime,1.0_DP,err,error,*999)
-        CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-        DO variableIdx=1,numberOfVariables
-          NULLIFY(dependentVariable)
-          CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-          CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-          DO componentIdx=1,numberOfComponents
-            NULLIFY(domain)
-            CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-            NULLIFY(domainTopology)
-            CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-            NULLIFY(domainNodes)
-            CALL DomainTopology_DomainNodesget(domainTopology,domainNodes,err,error,*999)
-            !Loop over the local nodes excluding the ghosts.
-            CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-            DO nodeIdx=1,numberOfNodes
-              CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-              DO derivativeIdx=1,numberOfNodeDerivatives
-                !Default to version 1 of each node derivative
-                CALL FieldVariable_LocalNodeDOFGet(dependentariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                  & err,error,*999)
-                displacementValue=0.0_DP
-                boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOFIdx)
-                IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE &
-                    & ,localDOFIdx,meshVelocityValues(localDOFIdx),err,error,*999)
-                ELSE IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED_INLET) THEN
-                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                    & localDOFIdx,boundaryValues(localDOFIdx),err,error,*999)
-                ENDIF
-              ENDDO !derivativeIdx
-            ENDDO !nodeIdx
-          ENDDO !componentIdx
-        ENDDO !variableIdx
-        CALL Field_ParameterSetUpdateStart(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
-      ENDIF
+      CALL FieldVariable_ParameterSetUpdateStart(uDependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(uDependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
       !Pre solve for the linear solver
       IF(solveType==SOLVER_LINEAR_TYPE) THEN
@@ -2306,7 +2148,8 @@ CONTAINS
                 !Default to version 1 of each node derivative
                 CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
                   & err,error,*999)
-                boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOFIdx)
+                CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,localDOFIdx, &
+                  & boundaryConditionCheckVariable,err,error,*999)
                 IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
                   CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                     & localDOFIdx,boundaryValues(localDOFIdx),err,error,*999)
@@ -2372,7 +2215,8 @@ CONTAINS
                 CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
                   & err,error,*999)
                 displacementValue=0.0_DP
-                boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOFIdx)
+                CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,localDOFIdx, &
+                  & boundaryConditionCheckVariable,err,error,*999)
                 IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_MOVED_WALL) THEN
                   CALL Field_ParameterSetUpdateLocalDOF(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,localDOFIdx, &
                     & meshVelocityValues(localDOFIdx),err,error,*999)
@@ -2391,7 +2235,7 @@ CONTAINS
         CALL Field_ParameterSetUpdateFinish(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
       END IF
     CASE DEFAULT
-      localError="Problem subtype "//TRIM(NumberToVString(controlLoop%PROBLEM%specification(3),"*",err,error))// &
+      localError="Problem subtype "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
         & " is not valid for a Stokes equation fluid type of a fluid mechanics problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -2415,23 +2259,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,numberOfDimensionsLaplace,numberOfDimensionsALEStokes,geometricMeshComponent
-    INTEGER(INTG) :: inputType,inputOption,componentIdx,derivativeIdx,localDOFIdx,nodeIdx,variableIdx,variableType
-    REAL(DP) :: currentTime,timeIncrement,alpha
+    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,geometricMeshComponent,inputIteration,inputOption,inputType, &
+      & localDOFIdx,numberOfComponents,numberOfDimensionsLaplace,numberOfDimensionsALEStokes,numberOfNodes, &
+      & numberOfNodeDerivatives,numberOfVariables,nodeIdx,outputIteration,pSpecification(3),solveType,variableIdx,variableType
+    REAL(DP) :: alpha,currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: meshDisplacementValues(:)
     TYPE(ControlLoopType), POINTER :: controlLoop 
-    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSetLaplace,equationsSetALEStokes 
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentFieldLaplace,independentFieldALEStokes
+    TYPE(FieldType), POINTER :: dependentFieldALEStokes,dependentFieldLaplace,geometricFieldALEStokes,geometricFieldLaplace, &
+      & independentFieldALEStokes
     TYPE(FieldVariableType), POINTER :: dependentVariableALEStokes,dependentVariableLaplace,geometricVariableALEStokes, &
       & geometricVariableLaplace,independentVariableALEStokes,independentVariableLaplace
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solverALEStokes,solverLaplace
     TYPE(SolverEquationsType), POINTER :: solverEquationsLaplace,solverEquationsALEStokes 
     TYPE(SolverMappingType), POINTER :: solverMappingLaplace,solverMappingALEStokes
+    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Stokes_PreSolveALEUpdateMesh",err,error,*999)
@@ -2451,86 +2301,6 @@ CONTAINS
       ! do nothing ???
     CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE)
       ! do nothing ???
-    CASE(PROBLEM_PGM_STOKES_SUBTYPE)
-      !Update mesh within the dynamic solver
-      IF(solveType==SOLVER_DYNAMIC_TYPE) THEN
-        !Get the independent field for the ALE Stokes problem
-        NULLIFY(solvers)
-        CALL Solver_SolversGet(solver,solvers,err,error,*999)
-        NULLIFY(solverALEStokes)
-        CALL Solvers_SolverGet(solvers,1,solverALEStokes,err,error,*999)
-        NULLIFY(solverEquationsALEStokes)
-        CALL Solver_SolverEquationsGet(solverALEStokes,solverEquationsALEStokes,err,error,*999)
-        NULLIFY(solverMappingALEStokes)
-        CALL SolverEquations_SolverMappingGet(solverEquationsALEStokes,solverMappingALEStokes,err,error,*999)
-        NULLIFY(equationsSetALEStokes)
-        CALL SolverMapping_EquationsSetGet(solverMappingALEStokes,1,equationsSetALEStokes,err,error,*999)
-        NULLIFY(geometricFieldALEStokes)
-        CALL EquationsSet_GeometricFieldGet(equationsSetALEStokes,geometricFieldALEStokes,err,error,*999)
-        NULLIFY(geometricVariableALEStokes)
-        CALL Field_VariableGet(geometricFieldALEStokes,FIELD_U_VARIABLE_TYPE,geometricVariableALEStokes,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(geometricVariableALEStokes,numberOfDimensionsALEStokes,err,error,*999)
-        NULLIFY(dependentFieldALEStokes)
-        CALL EquationsSet_DependentFieldGet(equationsSetALEStokes,dependentFieldALEStokes,err,error,*999)
-        CALL Field_NumberOfVariablesGet(dependentFieldALEStokes,numberOfVariables,err,error,*999)
-        NULLIFY(independentFieldALEStokes)
-        CALL EquationsSet_IndependentFieldGet(equationsSetALEStokes,independentFieldALEStokes,err,error,*999)
-        NULLIFY(independentVariableALEStokes)
-        CALL Field_VariableGet(independentFieldALEStokes,FIELD_U_VARIABLE_TYPE,independentVariableALEStokes,err,error,*999)
-        !Get the data
-        !\todo: Introduce flags set by the user (42/1 only for testings purpose)
-        !Copy input to Stokes' independent field
-        inputType=42
-        inputOption=1        
-        NULLIFY(meshDisplacementValues)
-        CALL FieldVariable_ParameterSetDataGet(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
-          & meshDisplacementValues,err,error,*999)
-        CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,meshDisplacementValues,numberOfDimensionsALEStokes, &
-          & inputType,inputOption,currentIteration,1.0_DP,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateStart(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
-        !Use calculated values to update mesh
-        CALL FieldVariable_ComponentMeshComponentGet(geometricVariableALEStokes,1,geometricMeshComponent,err,error,*999)
-        !CALL FieldVariable_ParameterSetDataGet(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
-        !  & meshDisplacementValues,err,error,*999)
-        NULLIFY(equations)
-        CALL EquationsSet_EquationsGet(equationsSetALEStokes,equations,err,error,*999)
-        NULLIFY(vectorEquations)
-        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-        NULLIFY(vectorMapping)
-        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-        DO variableIdx=1,numberOfVariables
-          NULLIFY(dependentVariable)
-          CALL Field_VariableIndexGet(dependentFieldALEStokes,variableIdx,dependentVariableALEStokes,variableType,err,error,*999)
-          CALL FieldVariable_NumberOfComponentsGet(dependentVariableALEStokes,numberOfComponents,err,error,*999)
-          DO componentIdx=1,numberOfComponents
-            NULLIFY(domain)
-            CALL FieldVariable_ComponentDomainGet(dependentVariableALEStokes,componentIdx,domain,err,error,*999)
-            NULLIFY(domainTopology)
-            CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-            NULLIFY(domainNodes)
-            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-            !Loop over the local nodes excluding the ghosts.
-            CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-            DO nodeIdx=1,numberOfNodes
-              CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-              DO derivativeIdx=1,numberOfNodeDerivatives
-                !Default to version 1 of each node derivative
-                CALL FieldVariable_LocalNodeDOFGet(dependentVariableALEStokes,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                  & err,error,*999)
-                CALL Field_ParameterSetAddLocalDOF(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,localDOFIdx, &
-                  & meshDisplacementValues(localDOFIdx),err,error,*999)
-              ENDDO !derivativeIdx
-            ENDDO !nodeIdx
-          ENDDO !componentIdx
-        ENDDO !variableIdx
-        CALL FieldVariable_ParameterSetUpdateStart(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,err,error,*999)
-        !Now use displacement values to calculate velocity values
-        alpha=1.0_DP/timeIncrement
-        CALL FieldVariable_ParameterSetsCopy(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
-          & FIELD_MESH_VELOCITY_SET_TYPE,alpha,err,error,*999)
-      ENDIF
     CASE(PROBLEM_ALE_STOKES_SUBTYPE)
       !Update mesh within the dynamic solver
       IF(solveType/=SOLVER_DYNAMIC_TYPE) CALL FlagError("Mesh update is not defined for non-dynamic problems.",err,error,*999)
@@ -2563,9 +2333,9 @@ CONTAINS
       NULLIFY(solverEquationsALEStokes)
       CALL Solver_SolverEquationsGet(solverALEStokes,solverEquationsALEStokes,err,error,*999)
       NULLIFY(solverMappingALEStokes)
-      CALL SolverEquations_SolverMappingGet(solverEquationsALEStoke,solverMappingALEStokes,err,error,*999)
+      CALL SolverEquations_SolverMappingGet(solverEquationsALEStokes,solverMappingALEStokes,err,error,*999)
       NULLIFY(equationsSetALEStokes)
-      CALL SolverMapping_EquationsSetGet(solverMappingALEStokes,1,equationSetALEStokes,err,error,*999)
+      CALL SolverMapping_EquationsSetGet(solverMappingALEStokes,1,equationsSetALEStokes,err,error,*999)
       NULLIFY(geometricFieldALEStokes)
       CALL EquationsSet_GeometricFieldGet(equationsSetALEStokes,geometricFieldALEStokes,err,error,*999)
       NULLIFY(geometricVariableALEStokes)
@@ -2605,7 +2375,7 @@ CONTAINS
         CALL FieldVariable_NumberOfComponents(dependentVariableALEStokes,numberOfComponents,err,error,*999)
         DO componentIdx=1,numberOfComponents
           NULLIFY(domain)
-          CALL FieldVariable_ComponentDomainGet(dependentVariableALEStokes,domain,err,error,*999)
+          CALL FieldVariable_ComponentDomainGet(dependentVariableALEStokes,componentIdx,domain,err,error,*999)
           NULLIFY(domainTopology)
           CALL Domain_DomainTopology(domain,domainTopology,err,error,*999)
           NULLIFY(domainNodes)
@@ -2618,7 +2388,7 @@ CONTAINS
               !Default to version 1 of each node derivative
               CALL FieldVariable_LocalNodeDOFGet(dependentVariableALEStokes,1,derivativeIdx,nodeIdx,componentIdx, &
                 & localDOFIdx,err,error,*999)
-              CALL FieldVariable_ParameterSetAddLocalDOF(geometricVariableALEStokes,,FIELD_VALUES_SET_TYPE,localDOFIdx, &
+              CALL FieldVariable_ParameterSetAddLocalDOF(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,localDOFIdx, &
                 & meshDisplacementValues(localDOFIdx),err,error,*999)
             ENDDO !derivativeIdx
           ENDDO !nodeIdx
@@ -2626,8 +2396,8 @@ CONTAINS
       ENDDO !variableIdx
       CALL FieldVariable_ParameterSetDataRestore(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
         & meshDisplacementValues,err,error,*999)
-      CALL Field_ParameterSetUpdateStart(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,err,error,*999)
-      CALL Field_ParameterSetUpdateFinish(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateStart(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(geometricVariableALEStokes,FIELD_VALUES_SET_TYPE,err,error,*999)
       !Now use displacement values to calculate velocity values
       alpha=1.0_DP/timeIncrement
       CALL FieldVariable_ParameterSetsCopy(independentVariableALEStokes,FIELD_MESH_DISPLACEMENT_SET_TYPE, &
@@ -2648,6 +2418,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
   !>Update mesh parameters for three component Laplace problem
   SUBROUTINE Stokes_PreSolveALEUpdateParameters(solver,err,error,*)
 
@@ -2656,7 +2427,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,nodeIdx,derivativeIdx,localDOFIdx,pSpecification(3),variableIdx,variableType
+    INTEGER(INTG) :: componentIdx,nodeIdx,derivativeIdx,localDOFIdx,numberOfComponents,numberOfNodes,numberOfNodeDerivatives, &
+      & numberOfVariables,pSpecification(3),solveType,variableIdx,variableType
     REAL(DP) :: currentTime,timeIncrement
     REAL(DP), POINTER :: meshStiffValues(:)
     TYPE(ControlLoopType), POINTER :: controlLoop
@@ -2665,8 +2437,8 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: independentField
-    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: dependentField,independentField
+    TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping 
@@ -2761,12 +2533,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIterationnumberOfDimensions,outputIteration
+    INTEGER(INTG) :: analyticFunctionType,currentIteration,equationsSetIdx,inputIteration,numberOfDimensions, &
+      & numberOfEquationsSets,outputIteration,pSpecification(3),outputType
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     LOGICAL :: exportField
     CHARACTER(14) :: outputFile
     TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(EquationsSetType), POINTER :: equationsSet 
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldsType), POINTER :: fields
     TYPE(ProblemType), POINTER :: problem
     TYPE(RegionType), POINTER :: region
@@ -2783,7 +2558,7 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
     CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
-   CALL System('mkdir -p ./output')
+    CALL System('mkdir -p ./output')
     
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_STOKES_SUBTYPE,PROBLEM_LAPLACE_STOKES_SUBTYPE)
@@ -2809,7 +2584,7 @@ CONTAINS
         CALL FIELD_IO_NODES_EXPORT(fields,filename,method,err,error,*999)
         CALL FIELD_IO_ELEMENTS_EXPORT(fields,filename,method,err,error,*999)
       ENDDO !equationsSetIdx
-    CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE,PROBLEM_ALE_STOKES_SUBTYPE,PROBLEM_PGM_STOKES_SUBTYPE)
+    CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE,PROBLEM_ALE_STOKES_SUBTYPE)
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
         & outputIteration,inputIteration,err,error,*999)
       NULLIFY(solverEquations)
@@ -2894,16 +2669,21 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 !\todo: Reduce number of variables used
-    INTEGER(INTG) :: componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,numberOfDimensions,variableIdx,variableType,I,J,K
-    INTEGER(INTG) :: numberOfNodesXic(3),elementIdx,localNodeIdx,boundCount,analyticFunctionType,globalDerivativeIndex
-    REAL(DP) :: analyticValue,X(3),xiCoordinates(3)
+    INTEGER(INTG) :: analyticFunctionType,boundCount,componentIdx,derivativeIdx,dimensionIdx,elementIdx,globalDerivativeIndex, &
+      & i,j,k,localDOFIdx,localNodeIdx,localNodeNumber,maximumNumberOfElementParameters,nodeIdx,numberOfComponents, &
+      & numberOfDimensions,numberOfNodes,numberOfNodeDerivatives,numberOfNodesXiC(4),numberOfVariables,variableIdx,variableType
+    REAL(DP) :: analyticValue,currentTime,muParam,rhoParam,tCoordinates(20,3),x(3),xiCoordinates(3)
     !REAL(DP) :: boundaryTolerance, boundaryX(3,2),muParam,L
-    REAL(DP) :: tCoordinates(20,3),currentTime,muParam,rhoParam
-    REAL(DP), POINTER :: geometricParameters(:)
+    REAL(DP), POINTER :: geometricParameters(:),materialsParameters(:)
+    LOGICAL :: boundaryNode
+    TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable,materialsVariable
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
     !TYPE(VARYING_STRING) :: localError
@@ -2930,7 +2710,7 @@ CONTAINS
     NULLIFY(interpolationParameters)
     CALL FieldVariable_InterpolationParametersInitialise(geometricVariable,interpolationParameters,err,error,*999)
     NULLIFY(interpolatedPoint)
-    CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+    CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     NULLIFY(materialsField)
@@ -2971,7 +2751,7 @@ CONTAINS
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
       CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfCOmponents,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
       DO componentIdx=1,numberOfComponents
         boundCount=0
         CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
@@ -2995,7 +2775,7 @@ CONTAINS
           CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,interpolationParameters,err,error,*999)
           localNodeIdx=0
           xiCoordinates=0.0_DP
-          numberOfNodesXi=1
+          numberOfNodesXiC=1
           CALL Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*999)
           !\todo: Use boundary flag
           IF(maximumNumberOfElementParameters==4.AND.numberOfDimensions==2 .OR. &
@@ -3004,25 +2784,25 @@ CONTAINS
             & maximumNumberOfElementParameters==8.OR. &
             & maximumNumberOfElementParameters==27.OR. &
             & maximumNumberOfElementParameters==64) THEN
-            DO K=1,numberOfNodesXic(3)
-              DO J=1,numberOfNodesXic(2)
-                DO I=1,numberOfNodesXic(1)
+            DO k=1,numberOfNodesXic(3)
+              DO j=1,numberOfNodesXic(2)
+                DO i=1,numberOfNodesXic(1)
                   localNodeIdx=localNodeIdx+1
                   CALL DomainElements_ElementNodeGet(domainElements,localNodeIdx,elementIdx,localNodeNumber,err,error,*999)
                   IF(localNodeNumber==nodeIdx) EXIT
                   xiCoordinates(1)=xiCoordinates(1)+(1.0_DP/(numberOfNodesXic(1)-1))
-                ENDDO !I
+                ENDDO !i
                 IF(localNodeNumber==nodeIdx) EXIT
                 xiCoordinates(1)=0.0_DP
                 xiCoordinates(2)=xiCoordinates(2)+(1.0_DP/(numberOfNodesXic(2)-1))
-              ENDDO !J
+              ENDDO !j
               IF(localNodeNumber==nodeIdx) EXIT
               xiCoordinates(1)=0.0_DP
               xiCoordinates(2)=0.0_DP
               IF(numberOfNodesXic(3)/=1) THEN
                 xiCoordinates(3)=xiCoordinates(3)+(1.0_DP/(numberOfNodesXic(3)-1))
               ENDIF
-            ENDDO !K
+            ENDDO !k
             CALL Field_InterpolateXi(NO_PART_DERIV,xiCoordinates,interpolatedPoint,err,error,*999)
           ELSE
             !\todo: Use boundary flag
@@ -3086,11 +2866,11 @@ CONTAINS
               tCoordinates(19,1:3)=[2.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
               tCoordinates(20,1:3)=[1.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
             ENDIF
-            DO K=1,maximumNumberOfElementParameters
-              CALL DomainElements_ElementNodeGet(domainElements,K,elementIdx,localNodeNumber,err,error,*999)
+            DO k=1,maximumNumberOfElementParameters
+              CALL DomainElements_ElementNodeGet(domainElements,k,elementIdx,localNodeNumber,err,error,*999)
               IF(localNodeNumber==nodeIdx) EXIT
             ENDDO
-            CALL Field_InterpolateXi(NO_PART_DERIV,tCoordinates(K,1:numberOfDimensions),interpolatedPoint,err,error,*999)
+            CALL Field_InterpolateXi(NO_PART_DERIV,tCoordinates(k,1:numberOfDimensions),interpolatedPoint,err,error,*999)
           ENDIF
           x=0.0_DP
           DO dimensionIdx=1,numberOfDimensions
@@ -3112,8 +2892,8 @@ CONTAINS
               IF(boundaryNode) THEN
                 !If we are a boundary node then set the analytic value on the boundary
                 IF(componentIdx<=numberOfDimensions) THEN
-                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDOFIdx, &
-                    & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
+                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+                    & analyticValue,err,error,*999)
                   boundCount=boundCount+1
                 ELSE
                   ! \todo: This is just a workaround for linear pressure fields in simplex element components
@@ -3130,7 +2910,7 @@ CONTAINS
                         & X(2)<10.0_DP+0.001_DP.OR. &
                         & -0.001_DP<X(1).AND.X(1)<0.001_DP.AND.10.0_DP-0.001_DP<X(2).AND. &
                         & X(2)<10.0_DP+0.001_DP) THEN
-                        CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDOFIdx, &
+                        CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx, &
                           & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
                         boundCount=boundCount+1
                       ENDIF
@@ -3157,15 +2937,15 @@ CONTAINS
                         & X(2)<5.0_DP+0.001_DP.AND.5.0_DP-0.001_DP<X(3).AND.X(3)<5.0_DP+0.001_DP.OR. &
                         & 5.0_DP-0.001_DP<X(1).AND.X(1)<5.0_DP+0.001_DP.AND.-5.0_DP-0.001_DP<X(2).AND. &
                         & X(2)<-5.0_DP+ 0.001_DP.AND.5.0_DP-0.001_DP<X(3).AND.X(3)<5.0_DP+0.001_DP) THEN
-                        CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType,localDOFIdx, &
+                        CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx, &
                           & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
                         boundCount=boundCount+1
                       ENDIF
                     ENDIF
                     ! \todo: This is how it should be if adjacent elements would be working
                   ELSE IF(boundCount==0) THEN
-                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentField,variableType, &
-                      & localDOFIdx,BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
+                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx, &
+                      & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
                     boundCount=boundCount+1
                   ENDIF
                 ENDIF
@@ -3186,7 +2966,7 @@ CONTAINS
     ENDDO !variableIdx
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     CALL FieldVariable_ParameterSetDataRestore(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
-    CALL Field_InterpolatedPointsFinalise(interpolatedPoint,err,error,*999)
+    CALL Field_InterpolatedPointFinalise(interpolatedPoint,err,error,*999)
     CALL FieldVariable_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
 
     EXITS("Stokes_BoundaryConditionsAnalyticCalculate")
@@ -3232,13 +3012,13 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=X(2)**2/10.0_DP**2
+              analyticValue=x(2)**2/10.0_DP**2
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=X(1)**2/10.0_DP**2
+              analyticValue=x(1)**2/10.0_DP**2
             ELSE IF(componentIdx==3) THEN
               !calculate p
-              analyticValue=2.0_DP*muParam/10.0_DP**2*X(1)
+              analyticValue=2.0_DP*muParam/10.0_DP**2*x(1)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3285,13 +3065,13 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue= EXP((X(1)-X(2))/10.0_DP)
+              analyticValue= EXP((x(1)-x(2))/10.0_DP)
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue= EXP((X(1)-X(2))/10.0_DP)
+              analyticValue= EXP((x(1)-x(2))/10.0_DP)
             ELSE IF(componentIdx==3) THEN
               !calculate p
-              analyticValue= 2.0_DP*muParam/10.0_DP*EXP((X(1)-X(2))/10.0_DP)
+              analyticValue= 2.0_DP*muParam/10.0_DP*EXP((x(1)-x(2))/10.0_DP)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3349,13 +3129,13 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=SIN(2.0_DP*PI*X(1)/10.0_DP)*SIN(2.0_DP*PI*X(2)/10.0_DP)
+              analyticValue=SIN(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*x(2)/10.0_DP)
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=COS(2.0_DP*PI*X(1)/10.0_DP)*COS(2.0_DP*PI*X(2)/10.0_DP)
+              analyticValue=COS(2.0_DP*PI*x(1)/10.0_DP)*COS(2.0_DP*PI*x(2)/10.0_DP)
             ELSE IF(componentIdx==3) THEN
               !calculate p
-              analyticValue=4.0_DP*muParam*PI/10.0_DP*SIN(2.0_DP*PI*X(2)/10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP)
+              analyticValue=4.0_DP*muParam*PI/10.0_DP*SIN(2.0_DP*PI*x(2)/10.0_DP)*COS(2.0_DP*PI*x(1)/10.0_DP)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3378,7 +3158,7 @@ CONTAINS
               analyticValue=0.0_DP
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=16.0_DP*muParam*PI**2/10.0_DP**2*cos(2.0_DP*PI*X(2)/10.0_DP)*cos(2.0_DP*PI*X(1)/10.0_DP)
+              analyticValue=16.0_DP*muParam*PI**2/10.0_DP**2*cos(2.0_DP*PI*x(2)/10.0_DP)*cos(2.0_DP*PI*x(1)/10.0_DP)
             ELSE IF(componentIdx==3) THEN
               !calculate p
               analyticValue=0.0_DP
@@ -3420,13 +3200,13 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=X(2)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
+              analyticValue=x(2)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=X(1)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
+              analyticValue=x(1)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
             ELSE IF(componentIdx==3) THEN
               !calculate p
-              analyticValue=2.0_DP*X(2)*muParam*exp(-(2.0_DP*muParam/rhoParam*currentTime))*X(1)
+              analyticValue=2.0_DP*x(2)*muParam*exp(-(2.0_DP*muParam/rhoParam*currentTime))*x(1)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3486,16 +3266,16 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=X(2)**2/10.0_DP**2+X(3)**2/10.0_DP**2
+              analyticValue=x(2)**2/10.0_DP**2+x(3)**2/10.0_DP**2
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=X(1)**2/10.0_DP**2+X(3)**2/10.0_DP**2
+              analyticValue=x(1)**2/10.0_DP**2+x(3)**2/10.0_DP**2
             ELSE IF(componentIdx==3) THEN
               !calculate w
-              analyticValue=X(1)**2/10.0_DP**2+X(2)**2/10.0_DP**2
+              analyticValue=x(1)**2/10.0_DP**2+x(2)**2/10.0_DP**2
             ELSE IF(componentIdx==4) THEN
               !calculate p
-              analyticValue=4.0_DP*muParam/10.0_DP**2*X(1)
+              analyticValue=4.0_DP*muParam/10.0_DP**2*x(1)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3543,16 +3323,16 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=EXP((X(1)-X(2))/10.0_DP)+EXP((X(3)-X(1))/10.0_DP)
+              analyticValue=EXP((x(1)-x(2))/10.0_DP)+EXP((x(3)-x(1))/10.0_DP)
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=EXP((X(1)-X(2))/10.0_DP)+EXP((X(2)-X(3))/10.0_DP)
+              analyticValue=EXP((x(1)-x(2))/10.0_DP)+EXP((x(2)-x(3))/10.0_DP)
             ELSE IF(componentIdx==3) THEN
               !calculate w
-              analyticValue=EXP((X(3)-X(1))/10.0_DP)+EXP((X(2)-X(3))/10.0_DP)
+              analyticValue=EXP((x(3)-x(1))/10.0_DP)+EXP((x(2)-x(3))/10.0_DP)
             ELSE IF(componentIdx==4) THEN
               !calculate p
-              analyticValue=2.0_DP*muParam/10.0_DP*(EXP((X(1)-X(2))/10.0_DP)-EXP((X(3)-X(1))/10.0_DP))
+              analyticValue=2.0_DP*muParam/10.0_DP*(EXP((x(1)-x(2))/10.0_DP)-EXP((x(3)-x(1))/10.0_DP))
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3575,10 +3355,10 @@ CONTAINS
               analyticValue=0.0_DP
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=-2.0_DP*muParam*(2.0_DP*EXP(X(1)-X(2))+EXP(X(2)-X(3)))
+              analyticValue=-2.0_DP*muParam*(2.0_DP*EXP(x(1)-x(2))+EXP(x(2)-x(3)))
             ELSE IF(componentIdx==3) THEN
               !calculate w
-              analyticValue=-2.0_DP*muParam*(2.0_DP*EXP(X(3)-X(1))+EXP(X(2)-X(3)))
+              analyticValue=-2.0_DP*muParam*(2.0_DP*EXP(x(3)-x(1))+EXP(x(2)-x(3)))
             ELSE IF(componentIdx==4) THEN
               !calculate p
               analyticValue=0.0_DP
@@ -3613,17 +3393,17 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=sin(2.0_DP*PI*X(1)/10.0_DP)*sin(2.0_DP*PI*X(2)/10.0_DP)*sin(2.0_DP*PI*X(3)/10.0_DP)
+              analyticValue=sin(2.0_DP*PI*x(1)/10.0_DP)*sin(2.0_DP*PI*x(2)/10.0_DP)*sin(2.0_DP*PI*x(3)/10.0_DP)
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=2.0_DP*cos(2.0_DP*PI*x(1)/10.0_DP)*sin(2.0_DP*PI*X(3)/10.0_DP)*cos(2.0_DP*PI*X(2)/10.0_DP)
+              analyticValue=2.0_DP*cos(2.0_DP*PI*x(1)/10.0_DP)*sin(2.0_DP*PI*x(3)/10.0_DP)*cos(2.0_DP*PI*x(2)/10.0_DP)
             ELSE IF(componentIdx==3) THEN
               !calculate w
-              analyticValue=-cos(2.0_DP*PI*X(1)/10.0_DP)*sin(2.0_DP*PI*X(2)/10.0_DP)*cos(2.0_DP*PI*X(3)/10.0_DP)
+              analyticValue=-cos(2.0_DP*PI*x(1)/10.0_DP)*sin(2.0_DP*PI*x(2)/10.0_DP)*cos(2.0_DP*PI*x(3)/10.0_DP)
             ELSE IF(componentIdx==4) THEN
               !calculate p
-              analyticValue=6.0_DP*muParam*PI/10.0_DP*sin(2.0_DP*PI*X(2)/10.0_DP)*sin(2.0_DP*PI*X(3)/10.0_DP)* &
-                & cos(2.0_DP*PI*X(1)/10.0_DP)
+              analyticValue=6.0_DP*muParam*PI/10.0_DP*sin(2.0_DP*PI*x(2)/10.0_DP)*sin(2.0_DP*PI*x(3)/10.0_DP)* &
+                & cos(2.0_DP*PI*x(1)/10.0_DP)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
@@ -3646,8 +3426,8 @@ CONTAINS
               analyticValue=0.0_DP
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=36*muParam*PI**2/10.0_DP**2*cos(2.0_DP*PI*X(2)/10.0_DP)*sin(2.0_DP*PI*X(3)/10.0_DP)* &
-                & cos(2.0_DP*PI*X(1)/10.0_DP)
+              analyticValue=36*muParam*PI**2/10.0_DP**2*cos(2.0_DP*PI*x(2)/10.0_DP)*sin(2.0_DP*PI*x(3)/10.0_DP)* &
+                & cos(2.0_DP*PI*x(1)/10.0_DP)
             ELSE IF(componentIdx==3) THEN
               !calculate w
               analyticValue=0.0_DP
@@ -3690,16 +3470,16 @@ CONTAINS
           CASE(NO_GLOBAL_DERIV)
             IF(componentIdx==1) THEN
               !calculate u
-              analyticValue=X(2)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
+              analyticValue=x(2)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
             ELSE IF(componentIdx==2) THEN
               !calculate v
-              analyticValue=X(1)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
+              analyticValue=x(1)*exp(-(2.0_DP*muParam/rhoParam*currentTime))
             ELSE IF(componentIdx==3) THEN
               !calculate v
               analyticValue=0.0_DP
             ELSE IF(componentIdx==4) THEN
               !calculate p
-              analyticValue=2.0_DP*X(2)*muParam*exp(-(2.0_DP*muParam/rhoParam*currentTime))*X(1)
+              analyticValue=2.0_DP*x(2)*muParam*exp(-(2.0_DP*muParam/rhoParam*currentTime))*x(1)
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF

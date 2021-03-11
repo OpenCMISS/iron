@@ -646,7 +646,7 @@ CONTAINS
                 NULLIFY(columnBasis)
                 CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis,err,error,*999)
                 CALL Basis_QuadratureSchemeGet(columnBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,columnQuadratureScheme,err,error,*999)
-                CALL Basis_NumbexfrOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
+                CALL Basis_NumberOfElementParametersGet(columnBasis,numberOfColumnElementParameters,err,error,*999)
                 DO columnElementParameterIdx=1,numberOfColumnElementParameters
                   columnElementDOFIdx=columnElementDOFIdx+1
                   DO columnXiIdx=1,numberOfDependentXi
@@ -793,7 +793,7 @@ CONTAINS
     ENTERS("Laplace_EquationsSetSetup",err,error,*999)
 
     CALL EquationSet_SpecificationGet(equationsSet,3,esSpecification,err,error,999)
-
+    
     SELECT CASE(esSpecification(3))
     CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE, &
       & EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE, &

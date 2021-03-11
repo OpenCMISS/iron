@@ -159,7 +159,11 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingSource_VectorCoefficientGet
 
+  PUBLIC EquationsMappingSources_NumberOfSourcesGet
+
   PUBLIC EquationsMappingSources_SourceMappingGet
+
+  PUBLIC EquationsMappingSources_VectorMappingGet
 
   PUBLIC EquationsMappingVector_AssertIsFinished,EquationsMappingVector_AssertNotFinished
   
@@ -2075,12 +2079,45 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the number of sources for a sources mapping.
+  SUBROUTINE EquationsMappingSources_NumberOfSourcesGet(sourcesMapping,numberOfSources,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping !<A pointer to the sources mapping to get the number of sources for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSources !<One exit, the number of sources in the sources mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif 
+ 
+    ENTERS("EquationsMappingSources_NumberOfSourcesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(sourcesMapping)) CALL FlagError("Sources mapping is not associated.",err,error,*999)
+#endif    
+    
+    numberOfSources=sourcesMapping%numberOfSources
+    
+    EXITS("EquationsMappingSources_NumberOfSourcesGet")
+    RETURN
+999 ERRORS("EquationsMappingSources_NumberOfSourcesGet",err,error)
+    EXITS("EquationsMappingSources_NumberOfSourcesGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingSources_NumberOfSourcesGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the specified source mapping for a sources mapping.
   SUBROUTINE EquationsMappingSources_SourceMappingGet(sourcesMapping,sourceIdx,sourceMapping,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping !<A pointer to the sources mapping to get the source mapping for
-    INTEGER(INTG) :: sourceIdx !<The source index to get the source mapping for
+    INTEGER(INTG), INTENT(IN) :: sourceIdx !<The source index to get the source mapping for
     TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<On exit, a pointer to the requested source mapping. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2123,7 +2160,44 @@ CONTAINS
   END SUBROUTINE EquationsMappingSources_SourceMappingGet
 
   !
-  !=================================================================================================================================
+  !================================================================================================================================
+  !
+
+  !>Gets the vector mapping for a sources mapping.
+  SUBROUTINE EquationsMappingSources_VectorMappingGet(sourcesMapping,vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping !<A pointer to the sources mapping to get the vector mapping for
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<On exit, a pointer to the vector mapping for the sources mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMappingSources_VectorMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourcesMapping)) CALL FlagError("Sources mapping is not associated.",err,error,*999)
+#endif    
+    
+    vectorMapping=>sourcesMapping%vectorMapping
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(vectorMapping)) &
+      & CALL FlagError("The vector mapping is not associated for the sources mapping",err,error,*999)
+#endif    
+    
+    EXITS("EquationsMappingSources_VectorMappingGet")
+    RETURN
+999 NULLIFY(vectorMapping)
+998 ERRORS("EquationsMappingSources_VectorMappingGet",err,error)
+    EXITS("EquationsMappingSources_VectorMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingSources_VectorMappingGet
+
+  !
+  !================================================================================================================================
   !
 
   !>Assert that a vector equations mapping has been finished

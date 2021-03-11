@@ -16,7 +16,7 @@
 !> License for the specific language governing rights and limitations
 !> under the License.
 !>
-!> The Original Code is openCMISS
+!> The Original Code is OpenCMISS
 !>
 !> The Initial Developer of the Original Code is University of Auckland,
 !> Auckland, New Zealand, the University of Oxford, Oxford, United
@@ -50,6 +50,7 @@ MODULE MultiCompartmentTransportRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE BoundaryConditionsRoutines
+  USE BoundaryConditionAccessRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -391,6 +392,7 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations 
     TYPE(SolverMappingType), POINTER :: solverMapping 
@@ -450,31 +452,32 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: boundaryConditionCheckVariable,componentIdx,derivativeIdx,dimensionIdx,localDOFIdx,nodeIdx,equationsSetIdx
-    INTEGER(INTG) :: variableType !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
-    INTEGER(INTG) :: analyticFunctionType
-    INTEGER(INTG) :: globalDerivativeIndex
-    REAL(DP) :: currentTime,timeIncrement
-    REAL(DP) :: normal(3),tangents(3,3),analyticValue,X(3),valueSource
+    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,derivativeIdx,dimensionIdx, &
+      & equationsSetIdx,globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfEquationsSets, &
+      & numberOfNodes,numberOfNodeDerivatives,pSpecification(3),variableIndex,variableType
+    REAL(DP) :: analyticValue,currentTime,normal(3),tangents(3,3),timeIncrement,X(3),valueSource
 !     REAL(DP) :: k_xx, k_yy, k_zz
     REAL(DP) :: A1,A2,A3,A4,D1,D2,D3,D4,lambda12,lambda13,lambda23
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
+    LOGICAL :: boundaryNode
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet 
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField,sourceField
-    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentField,geometricVariable,materialsVariable
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable,sourceVariable
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
-!    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
 !    REAL(DP), POINTER :: boundaryValues(:)
 
     ENTERS("MultiCompartmentTransport_PreSolveUpdateAnalyticValues",err,error,*999)
-
 
     A1=0.4_DP
     A2=0.3_DP
@@ -507,7 +510,7 @@ CONTAINS
       CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
       DO equationsSetIdx=1,numberOfEquationsSets
         NULLIFY(equationsSet)
-        CALL SolverMapping_EquationsSetGet(solverMapping,equationSetIdx,equationsSet,err,error,*999)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
         NULLIFY(equationsAnalytic)
         CALL EquationsSet_AnalyticExists(equationsSet,equationsAnalytic,err,error,*999)
         IF(ASSOCIATED(equationsAnalytic)) THEN
@@ -582,7 +585,8 @@ CONTAINS
                   & err,error,*999)
                 CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
                   & analyticValue,err,error,*999)
-                boundaryConditionCheckVariable=boundaryConditionsVariable%conditionTypes(localDOFIdx)
+                CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,localDOFIdx, &
+                  & boundaryConditionCheckVariable,err,error,*999)
                 IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED) THEN
                   CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
                     & analyticValue,err,error,*999)
@@ -773,6 +777,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("MultiCompartmentTransport_PostSolveOutputData",err,error,*999)

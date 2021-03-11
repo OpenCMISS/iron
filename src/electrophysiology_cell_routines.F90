@@ -71,7 +71,7 @@ MODULE ElectrophysiologyCellRoutines
 
   PUBLIC Electrophysiology_BuenoOrovioIntegrate
   
-  PUBLIC Electrophysiology_TenTusscher06Integrate
+  PUBLIC Electrophysiology_TenTusscher06Initialise
 
   PUBLIC Electrophysiology_TenTusscher06Integrate
 
@@ -200,7 +200,7 @@ CONTAINS
   SUBROUTINE Electrophysiology_BuenoOrovioIntegrate(cellsField,materialsField,t0,t1,err,error,*)
     
     !Argument variables    
-    TYPE(FieldType), INTENT(INOUT), POINTER :: cellsField!<Independent field storing the cell data
+    TYPE(FieldType), INTENT(INOUT), POINTER :: cellsField !<Independent field storing the cell data
     TYPE(FieldType), INTENT(INOUT), POINTER :: materialsField !<Material field component 1 the activation flags
     REAL(DP), INTENT(IN)    :: t0, t1 !<Integrate from time t0 to t1 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -208,14 +208,14 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: cellIdx,componentIdx,localDOFIdx,numberOfCells
     INTEGER(INTG), PARAMETER :: cellDimension = 4
-    REAL(DP) :: y(1:cellDimension), dydt(1:cellDimension)
-    REAL(DP) :: t, dt, activationFactor
+    REAL(DP) :: activationFactor,dt,dydt(1:cellDimension),t,y(1:cellDimension) 
     REAL(DP), POINTER :: cellData(:), activationData(:)
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldVariableType), POINTER :: cellsVariable, activationVariable
+    TYPE(FieldType), POINTER :: activationField
+    TYPE(FieldVariableType), POINTER :: activationVariable,cellsVariable
 
     ENTERS('Electrophysiology_BuenoOrovioIntegrate',err,error,*999)
 
@@ -223,7 +223,7 @@ CONTAINS
     CALL Field_DecompositionGet(cellsField,decomposition,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,1,domain,err,error,*999)
-    NULLY(domainTopology)
+    NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainNodes)
     CALL DomainTopoloy_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
@@ -232,7 +232,7 @@ CONTAINS
     NULLIFY(cellsVariable)
     CALL Field_VariableGet(cellsField,FIELD_U_VARIABLE_TYPE,cellsVariable,err,error,*999)
     NULLIFY(activationVariable)
-    CALL Field_VariableGet(activationField,FIELD_U_VARIABLE_TYPE,err,error,*999)
+    CALL Field_VariableGet(activationField,FIELD_U_VARIABLE_TYPE,activationVariable,err,error,*999)
  
     CALL FieldVariable_ParameterSetDataGet(cellsVariable,FIELD_VALUES_SET_TYPE,cellData,err,error,*999)
     CALL FieldVariable_ParameterSetDataGet(activationVariable,FIELD_VALUES_SET_TYPE,activationData,err,error,*999)
@@ -461,7 +461,8 @@ CONTAINS
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldVariableType), POINTER :: cellsVariable, activationVariable
+    TYPE(FieldType), POINTER :: activationField
+    TYPE(FieldVariableType), POINTER :: activationVariable,cellsVariable
     
     ENTERS('Electrophysiology_TenTusscher06Integrate',err,error,*999)
     
@@ -469,7 +470,7 @@ CONTAINS
     CALL Field_DecompositionGet(cellsField,decomposition,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,1,domain,err,error,*999)
-    NULLY(domainTopology)
+    NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainNodes)
     CALL DomainTopoloy_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
@@ -478,7 +479,8 @@ CONTAINS
     NULLIFY(cellsVariable)
     CALL Field_VariableGet(cellsField,FIELD_U_VARIABLE_TYPE,cellsVariable,err,error,*999)
     NULLIFY(activationVariable)
-    CALL Field_VariableGet(activationField,FIELD_U_VARIABLE_TYPE,err,error,*999)
+    CALL Field_VariableGet(activationField,FIELD_U_VARIABLE_TYPE,activationVariable,err,error,*999)
+    
 
     CALL FieldVariable_ParameterSetDataGet(cellsVariable,FIELD_VALUES_SET_TYPE,cellData,err,error,*999)
     CALL FieldVariable_ParameterSetDataGet(activationVariable,FIELD_VALUES_SET_TYPE,activationData,err,error,*999)

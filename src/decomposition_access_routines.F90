@@ -115,6 +115,14 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Decomposition_AssertIsFinished,Decomposition_AssertNotFinished
 
+  PUBLIC Decomposition_AssertCalculateFaces,Decomposition_AssertNotCalculateFaces
+
+  PUBLIC Decomposition_AssertCalculateLines,Decomposition_AssertNotCalculateLines
+
+  PUBLIC Decomposition_CalculateFacesGet
+
+  PUBLIC Decomposition_CalculateLinesGet
+
   PUBLIC Decomposition_CoordinateSystemGet
 
   PUBLIC Decomposition_DecompositionsGet
@@ -142,6 +150,8 @@ MODULE DecompositionAccessRoutines
   PUBLIC DecompositionDataPoints_ElementDataGlobalNumberGet
   
   PUBLIC DecompositionDataPoints_ElementDataLocalNumberGet
+
+  PUBLIC DecompositionDataPoints_ElementDataNumbersGet
 
   PUBLIC DecompositionDataPoints_ElementDataUserNumberGet
 
@@ -180,6 +190,14 @@ MODULE DecompositionAccessRoutines
   PUBLIC DecompositionFaces_FaceXiNormalDirectionGet
 
   PUBLIC DecompositionFaces_NumberOfFacesGet
+
+  PUBLIC DecompositionLines_LineGet
+
+  PUBLIC DecompositionLines_LineBoundaryLineGet
+
+  PUBLIC DecompositionLines_LineXiDirectionGet
+
+  PUBLIC DecompositionLines_NumberOfLinesGet
 
   PUBLIC DecompositionTopology_DecompositionGet
 
@@ -1121,6 +1139,196 @@ CONTAINS
   END SUBROUTINE Decomposition_AssertNotFinished
 
   !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a decomposition has the calculate faces flag set
+  SUBROUTINE Decomposition_AssertCalculateFaces(decomposition,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to assert the calculate faces status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Decomposition_AssertCalculateFaces",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
+
+    IF(.NOT.decomposition%calculateFaces) THEN
+      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+        & " does not have the calculate faces flag set."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Decomposition_AssertCalculateFaces")
+    RETURN
+999 ERRORSEXITS("Decomposition_AssertCalculateFaces",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_AssertCalculateFaces
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a decomposition does not have the calculate faces flag set
+  SUBROUTINE Decomposition_AssertNotCalculateFaces(decomposition,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to assert the calculate faces status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Decomposition_AssertNotCalculateFaces",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
+
+    IF(decomposition%calculateFaces) THEN
+      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+        & " has the calculate faces flag set."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Decomposition_AssertNotCalculateFaces")
+    RETURN
+999 ERRORSEXITS("Decomposition_AssertNotCalculateFaces",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_AssertNotCalculateFaces
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a decomposition has the calculate lines flag set
+  SUBROUTINE Decomposition_AssertCalculateLines(decomposition,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to assert the calculate lines status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Decomposition_AssertCalculateLines",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
+
+    IF(.NOT.decomposition%calculateLines) THEN
+      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+        & " does not have the calculate lines flag set."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Decomposition_AssertCalculateLines")
+    RETURN
+999 ERRORSEXITS("Decomposition_AssertCalculateLines",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_AssertCalculateLines
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a decomposition does not have the calculate lines flag set
+  SUBROUTINE Decomposition_AssertNotCalculateLines(decomposition,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to assert the calculate lines status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Decomposition_AssertNotCalculateLines",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif    
+
+    IF(decomposition%calculateLines) THEN
+      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+        & " has the calculate lines flag set."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Decomposition_AssertNotCalculateLines")
+    RETURN
+999 ERRORSEXITS("Decomposition_AssertNotCalculateLines",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_AssertNotCalculateLines
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Return the calculate faces flag for a decomposition
+  SUBROUTINE Decomposition_CalculateFacesGet(decomposition,calculateFaces,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to get the calculate faces flag for
+    LOGICAL, INTENT(OUT) :: calculateFaces !<On return, the calculate faces flag for the decompsotion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_CalculateFacesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif
+
+    calculateFaces=decomposition%calculateFaces
+
+    EXITS("Decomposition_CalculateFacesGet")
+    RETURN
+999 ERRORSEXITS("Decomposition_CalculateFacesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_CalculateFacesGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Return the calculate lines flag for a decomposition
+  SUBROUTINE Decomposition_CalculateLinesGet(decomposition,calculateLines,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to get the calculate lines flag for
+    LOGICAL, INTENT(OUT) :: calculateLines !<On return, the calculate lines flag for the decompsotion
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_CalculateLinesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+#endif
+
+    calculateLines=decomposition%calculateLines
+
+    EXITS("Decomposition_CalculateLinesGet")
+    RETURN
+999 ERRORSEXITS("Decomposition_CalculateLinesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_CalculateLinesGet
+
+  !
   !================================================================================================================================
   !
 
@@ -1740,6 +1948,71 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DecompositionDataPoints_ElementDataLocalNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the data point numbers (local, global and user) corresponding to an element data point index for decomposition data points. 
+  SUBROUTINE DecompositionDataPoints_ElementDataNumbersGet(decompositionDataPoints,elementDataPointIdx,localElementNumber, &
+    localDataPointNumber,globalDataPointNumber,userDataPointNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<A pointer to the decomposition data points to get the data point numbers for
+    INTEGER(INTG), INTENT(IN) :: elementDataPointIdx !<The element data point index to get the data point numbers for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element data point number containing the element data point to get the data point numbers for
+    INTEGER(INTG), INTENT(OUT) :: localDataPointNumber !<On exit the local data point number corresponding to the element data point
+    INTEGER(INTG), INTENT(OUT) :: globalDataPointNumber !<On exit the global data point number corresponding to the element data point
+    INTEGER(INTG), INTENT(OUT) :: userDataPointNumber !<On exit the user data point number corresponding to the element data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+
+    ENTERS("DecompositionDataPoints_ElementDataNumbersGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(decompositionDataPoints%elementDataPoints)) &
+      & CALL FlagError("The element data points array is not allocated for the decomposition data points.",err,error,*999)
+    IF(localElementNumber<1.OR.localElementNumber>SIZE(decompositionDataPoints%elementDataPoints,1)) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " is invalid for the decomposition data points. The local element number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(decompositionDataPoints%elementDataPoints,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(elementDataPointIdx<1.OR.elementDataPointIdx>decompositionDataPoints%elementDataPoints(localElementNumber)% &
+      & numberOfProjectedData) THEN
+      localError="The specified element data point index of "//TRIM(NumberToVString(elementDataPointIdx,"*",err,error))// &
+        & " is invalid for local element number "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " for the decomposition data points. The element data point index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionDataPoints%elementDataPoints(localElementNumber)%numberOfProjectedData, &
+        & "*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(ALLOCATED(decompositionDataPoints%elementDataPoints(localElementNumber)%dataIndices)) THEN
+      localError="The data indices array is not allocated for local element number "// &
+        & TRIM(NumberToVString(localElementNumber,"*",err,error))//" of the decomposition data points."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    localDataPointNumber=decompositionDataPoints%elementDataPoints(localElementNumber)% &
+      & dataIndices(elementDataPointIdx)%localNumber
+    globalDataPointNumber=decompositionDataPoints%elementDataPoints(localElementNumber)% &
+      & dataIndices(elementDataPointIdx)%globalNumber
+    userDataPointNumber=decompositionDataPoints%elementDataPoints(localElementNumber)% &
+      & dataIndices(elementDataPointIdx)%userNumber
+    
+    EXITS("DecompositionDataPoints_ElementDataNumbersGet")
+    RETURN
+999 ERRORS("DecompositionDataPoints_ElementDataNumbersGet",err,error)
+    EXITS("DecompositionDataPoints_ElementDataNumbersGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionDataPoints_ElementDataNumbersGet
 
   !
   !================================================================================================================================
@@ -2584,6 +2857,157 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DecompositionFaces_NumberOfFacesGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a line for a local line number in decomposition lines 
+  SUBROUTINE DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the decomposition line for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the decomposition line for
+    TYPE(DecompositionLineType), POINTER, INTENT(OUT) :: decompositionLine !<On exit, a pointer to the specified decomposition line. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DecompositionLines_LineGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS
+    IF(ASSOCIATED(decompositionLine)) CALL FlagError("Decomposition line is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decompositionLines)) CALL FlagError("Decomposition lines is not associated.",err,error,*999)
+    IF(localLineNumber<1.OR.localLineNumber>decompositionLines%numberOfLines) THEN
+      localError="The specified local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decompositionLines%numberOfLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decompositionLines%lines)) &
+      & CALL FlagError("The lines array is not allocated for the decomposition lines.",err,error,*999)
+#endif
+
+    decompositionLine=>decompositionLines%lines(localLineNumber)
+
+#ifdef WITH_POSTCHECKS
+    IF(.NOT.ASSOCIATED(decompositionLine)) THEN
+      localError="Decomposition line is not associated for local line number "// &
+        & TRIM(NumberToVString(localLineNumber,"*",err,error))//" of the decomposition lines."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    EXITS("DecompositionLines_LineGet")
+    RETURN
+999 NULLIFY(decompositionLine)
+998 ERRORSEXITS("DecompositionLines_LineGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionLines_LineGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary line status for a local line number from a decomposition. 
+  SUBROUTINE DecompositionLines_LineBoundaryLineGet(decompositionLines,localLineNumber,boundaryLine,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the boundary line status for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the boundary line status for
+    LOGICAL, INTENT(OUT) :: boundaryLine !<On exit, the boundary line flag for the local line number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+#endif    
+
+    ENTERS("DecompositionLines_LineBoundaryLineGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionLine)
+    CALL DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*999)
+#endif
+
+    boundaryLine=decompositionLines%lines(localLineNumber)%boundaryLine
+
+    EXITS("DecompositionLines_LineBoundaryLineGet")
+    RETURN
+999 ERRORS("DecompositionLines_LineBoundaryLineGet",err,error)
+    EXITS("DecompositionLines_LineBoundaryLineGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_LineBoundaryLineGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the xi direction for a local line number from a decomposition. 
+  SUBROUTINE DecompositionLines_LineXiDirectionGet(decompositionLines,localLineNumber,lineXiDirection,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the xi direction for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The local line number to get the xi direction for
+    INTEGER(INTG), INTENT(OUT) :: lineXiDirection !<On exit, the line xi direction for the local line number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+#endif    
+
+    ENTERS("DecompositionLines_LineXiDirectionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    NULLIFY(decompositionLine)
+    CALL DecompositionLines_LineGet(decompositionLines,localLineNumber,decompositionLine,err,error,*999)
+#endif
+
+    lineXiDirection=decompositionLines%lines(localLineNumber)%xiDirection
+
+    EXITS("DecompositionLines_LineXiDirectionGet")
+    RETURN
+999 ERRORS("DecompositionLines_LineXiDirectionGet",err,error)
+    EXITS("DecompositionLines_LineXiDirectionGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_LineXiDirectionGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of lines from a decomposition. 
+  SUBROUTINE DecompositionLines_NumberOfLinesGet(decompositionLines,numberOfLines,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<A pointer to the decomposition lines to get the number of lines for
+    INTEGER(INTG), INTENT(OUT) :: numberOfLines !<On exit, the number of lines in the decomposition lines.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionLines_NumberOfLinesGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(decompositionLines)) CALL FlagError("Decomposition lines is not associated.",err,error,*999)
+#endif
+
+    numberOfLines=decompositionLines%numberOfLines
+
+    EXITS("DecompositionLines_NumberOfLinesGet")
+    RETURN
+999 ERRORS("DecompositionLines_NumberOfLinesGet",err,error)
+    EXITS("DecompositionLines_NumberOfLinesGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionLines_NumberOfLinesGet
   
   !
   !================================================================================================================================

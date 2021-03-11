@@ -9799,7 +9799,7 @@ CONTAINS
                   CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
-                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,stiffnessDistributedMatrix, &
                     & .FALSE.,err,error,*999)
                 ENDIF
@@ -9821,7 +9821,7 @@ CONTAINS
                   CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*dampingMatrixCoefficient
-                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,dampingDistributedMatrix, &
                     & .FALSE.,err,error,*999)
                 ENDIF
@@ -9842,7 +9842,7 @@ CONTAINS
                   CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*massMatrixCoefficient
-                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,massDistributedMatrix, &
                     & .FALSE.,err,error,*999)
                 ENDIF
@@ -9866,7 +9866,7 @@ CONTAINS
                   CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=-1.0_DP*matrixCoefficient
-                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,massDistributedMatrix, &
                     & .FALSE.,err,error,*999)
                 ELSE
@@ -9887,7 +9887,7 @@ CONTAINS
                   CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
                   CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=-1.0_DP*matrixCoefficient
-                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,dampingDistributedMatrix, &
                     & .FALSE.,err,error,*999)
                 ENDIF
@@ -9915,7 +9915,7 @@ CONTAINS
                   CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,jacobianDistributedMatrix,err,error,*999)
                   CALL JacobianMatrix_MatrixCoefficientGet(jacobianMatrix,matrixCoefficient,err,error,*999)
                   matrixCoefficient=matrixCoefficient*jacobianMatrixCoefficient
-                  CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                  CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & equationsRowToSolverRowsMap,jacobianColToSolverColsMap,matrixCoefficient,jacobianDistributedMatrix, &
                     & .FALSE.,err,error,*999)
                 ENDDO !jacobianMatrixIdx
@@ -9939,7 +9939,7 @@ CONTAINS
                 CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
                 CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
                 matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
-                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,linearDistributedMatrix, &
                   & .FALSE.,err,error,*999)
               ENDDO !equationsMatrixIdx
@@ -9992,7 +9992,7 @@ CONTAINS
                   & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               END SELECT              
-              CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+              CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                 & interfaceRowToSolverRowsMap,interfaceColToSolverColsMap,matrixCoefficients(1),interfaceDistributedMatrix, &
                 & .FALSE.,err,error,*999)
               CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
@@ -10018,7 +10018,7 @@ CONTAINS
                     & " of interface condition index "//TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,matrixCoefficients(2),transposeDistributedMatrix, &
                   & .FALSE.,err,error,*999)
               ENDIF
@@ -10154,8 +10154,8 @@ CONTAINS
               NULLIFY(predictedMeanDisplacementVector)
               CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
                 & predictedMeanDisplacementVector,err,error,*999)              
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsStiffnessCoefficient, &
-                & stiffnessDistributedMatrix,.FALSE.,predictedMeanDisplacementVector,dynamicTempVector,err,error,*999)         
+              CALL DistributedMatrix_MatrixByVectorAdd(stiffnessDistributedMatrix,.FALSE.,predictedMeanDisplacementVector, &
+                & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsStiffnessCoefficient,dynamicTempVector,err,error,*999)         
             ENDIF
             CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
             IF(dampingMatrixNumber/=0) THEN
@@ -10168,8 +10168,8 @@ CONTAINS
                 NULLIFY(predictedMeanVelocityVector)
                 CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
                   & predictedMeanVelocityVector,err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsDampingCoefficient, &
-                  & dampingDistributedMatrix,.FALSE.,predictedMeanVelocityVector,dynamicTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(dampingDistributedMatrix,.FALSE.,predictedMeanVelocityVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsDampingCoefficient,dynamicTempVector,err,error,*999)
               ENDIF
             ENDIF
             CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
@@ -10183,8 +10183,8 @@ CONTAINS
                 NULLIFY(predictedMeanAccelerationVector)
                 CALL FieldVariable_ParameterSetVectorGet(dynamicVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
                   & predictedMeanAccelerationVector,err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsMassCoefficient, &
-                  & massDistributedMatrix,.FALSE.,predictedMeanAccelerationVector,dynamicTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(massDistributedMatrix,.FALSE.,predictedMeanAccelerationVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsMassCoefficient,dynamicTempVector,err,error,*999)
               ENDIF
             ENDIF
             !Work out if there are any interface matrices mapped to the dynamic variable.
@@ -10266,28 +10266,28 @@ CONTAINS
                   CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
                     & currentResidualVector,err,error,*999)
                   vectorCoefficient=residualCoefficient*currentFunctionFactor
-                  CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                  CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & vectorCoefficient,currentResidualVector,err,error,*999)
                 ENDIF
                 NULLIFY(previousResidualVector)
                 CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
                   & previousResidualVector,err,error,*999)
                 vectorCoefficient=residualCoefficient*previousFunctionFactor
-                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & vectorCoefficient,previousResidualVector,err,error,*999)
                 IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                   NULLIFY(previous2ResidualVector)
                   CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                     & previous2ResidualVector,err,error,*999)
                   vectorCoefficient=residualCoefficient*previous2FunctionFactor
-                  CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                  CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                     & vectorCoefficient,previous2ResidualVector,err,error,*999)
                   IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
                     NULLIFY(previous3ResidualVector)
                     CALL EquationsMatricesResdidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
                       & previous3ResidualVector,err,error,*999)
                     vectorCoefficient=residualCoefficient*previous3FunctionFactor
-                    CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                    CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                       & vectorCoefficient,previous3ResidualVector,err,error,*999)
                   ENDIF
                 ENDIF
@@ -10333,28 +10333,28 @@ CONTAINS
                 CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,currentDistributedVector, &
                   & err,error,*999)
                 matrixCoefficient=linearCoefficient*currentFunctionFactor
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                  & linearDistributedMatrix,.FALSE.,currentDistributedVector,linearTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,currentDistributedVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
                 NULLIFY(previousDistributedVector)
                 CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
                   & previousDistributedVector,err,error,*999)
                 matrixCoefficient=linearCoefficient*previousFunctionFactor
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                  & linearDistributedMatrix,.FALSE.,previousDistributedVector,linearTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,previousDistributedVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
                 IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                   NULLIFY(previous2DistributedVector)
                   CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE, &
                     & previous2DistributedVector,err,error,*999)
                   matrixCoefficient=linearCoefficient*previous2FunctionFactor
-                  CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                    & linearDistributedMatrix,.FALSE.,previous2DistributedVector,linearTempVector,err,error,*999)
+                  CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,previous2DistributedVector, &
+                    & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
                   IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
                     NULLIFY(previous3DistributedVector)
                     CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_PREVIOUS3_VALUES_SET_TYPE, &
                       & previous3DistributedVector,err,error,*999)
                     matrixCoefficient=linearCoefficient*previous3FunctionFactor
-                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                      & linearDistributedMatrix,.FALSE.,previous3DistributedVector,linearTempVector,err,error,*999)
+                    CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,previous3DistributedVector, &
+                      & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
                   ENDIF
                 ENDIF
               ENDIF !rhs linear matrix
@@ -10381,27 +10381,27 @@ CONTAINS
               CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
                 & distributedSourceVector,err,error,*999)
               sourceCoefficient=sourceCoefficient*currentFunctionFactor
-              CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+              CALL DistributedVector_VectorAdd(sourcesTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourceCoefficient, &
                 & currentSourceVector,err,error,*999)
               NULLIFY(previousSourceVector)
               CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
                 & previousSourceVector,err,error,*999)
               sourceCoefficient=sourceCoefficient*previousFunctionFactor
-              CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+              CALL DistributedVector_VectorAdd(sourcesTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourceCoefficient, &
                 & previousSourceVector,err,error,*999)
               IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                 NULLIFY(previous2SourceVector)
                 CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                   & previous2SourceVector,err,error,*999)
                 sourceCoefficient=sourceCoefficient*previous2FunctionFactor
-                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                CALL DistributedVector_VectorAdd(sourcesTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourceCoefficient, &
                   & previous2SourceVector,err,error,*999)     
                 IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
                   NULLIFY(previous3SourceVector)
                   CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
                     & previous3SourceVector,err,error,*999)
                   sourceCoefficient=sourceCoefficient*previous3FunctionFactor
-                  CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+                  CALL DistributedVector_VectorAdd(sourcesTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourceCoefficient, &
                     & previous3SourceVector,err,error,*999) 
                 ENDIF
               ENDIF
@@ -10446,7 +10446,7 @@ CONTAINS
                 & err,error,*999) 
             ENDIF
             NULLIFY(equationsRowToRHSDOFMap)
-            CALL EquationsMatricesRHS_EquationsRowToRHSDOFMapGet(rhsVector,equationsRowToRHSDOFMap,err,error,*999)
+            CALL EquationsMappingRHS_EquationsRowToRHSDOFMapGet(rhsMapping,equationsRowToRHSDOFMap,err,error,*999)
           ENDIF
 
           NULLIFY(lhsBoundaryConditionsRowVariable)
@@ -10722,22 +10722,22 @@ CONTAINS
               CALL FlagError("Constrained row boundary conditions are not implemented.",err,error,*999)
             CASE DEFAULT
               localError="The RHS boundary condition of "// &
-                & TRIM(NumberToVString(rhsBoundaryCondition,"*",err,error))// &
+                & TRIM(NumberToVString(lhsBoundaryCondition,"*",err,error))// &
                 & " for RHS variable dof number "// &
-                & TRIM(NumberToVString(rhsVariableDOF,"*",err,error))//" is invalid."
+                & TRIM(NumberToVString(lhsVariableDOF,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ENDDO !equationsRowNumber
           IF(.NOT.dynamicSolver%solverInitialised) THEN
             !Copy current RHS i.e., RHS at time zero, to previous RHSs to initialise
             !Only do this for non Ghost rows
-            CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previousRHSVector,1.0_DP, &
+            CALL DistributedVector_VectorCopy(previousRHSVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
               & currentRHSVector,err,error,*999)
             IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-              CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous2RHSVector,1.0_DP, &
+              CALL DistributedVector_VectorCopy(previous2RHSVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                 & currentRHSVector,err,error,*999)
               IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous3RHSVector,1.0_DP, &
+                CALL DistributedVector_VectorCopy(previous3RHSVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                   & currentRHSVector,err,error,*999)
               ENDIF
             ENDIF
@@ -10789,7 +10789,7 @@ CONTAINS
             NULLIFY(interfaceRHSDistributedVector)
             CALL InterfaceMatricesRHS_DistributedVectorGet(interfaceRHSVector,interfaceRHSDistributedVector,err,error,*999)
             !Worry about BCs on the Lagrange variables later.
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverRHSVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverRHSVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE, &
               & interfaceColToSolverRowsMap,1.0_DP,interfaceRHSDistributedVector,err,error,*999)
           CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
@@ -10895,8 +10895,8 @@ CONTAINS
               CALL EquationsMatrix_DistributedMatrixGet(stiffnessMatrix,stiffnessDistributedMatrix,err,error,*999)
               CALL EquationsMatrix_MatrixCoefficientGet(stiffnessMatrix,matrixCoefficient,err,error,*999)
               matrixCoefficient=matrixCoefficient*stiffnessMatrixCoefficient
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                & stiffnessDistributedMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(stiffnessDistributedMatrix,.FALSE.,incrementalVector, &
+                & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,dynamicTempVector,err,error,*999)
             ENDIF
             CALL EquationsMappingDynamic_DampingMatrixNumberGet(dynamicMapping,dampingMatrixNumber,err,error,*999)
             IF(dampingMatrixNumber/=0.AND.dynamicSolver%degree>=SOLVER_DYNAMIC_FIRST_DEGREE) THEN
@@ -10906,8 +10906,8 @@ CONTAINS
               CALL EquationsMatrix_DistributedMatrixGet(dampingMatrix,dampingDistributedMatrix,err,error,*999)
               CALL EquationsMatrix_MatrixCoefficientGet(dampingMatrix,matrixCoefficient,err,error,*999)
               matrixCoefficient=matrixCoefficient*dampingMatrixCoefficient
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                & matrixCoefficient,dampingDistributedMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(dampingDistributedMatrix,.FALSE.,incrementalVector, &
+                & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,dynamicTempVector,err,error,*999)
             ENDIF
             CALL EquationsMappingDynamic_MassMatrixNumberGet(dynamicMapping,massMatrixNumber,err,error,*999)
             IF(massMatrixNumber/=0.AND.dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
@@ -10917,8 +10917,8 @@ CONTAINS
               CALL EquationsMatrix_DistributedMatrixGet(massMatrix,massDistributedMatrix,err,error,*999)
               CALL EquationsMatrix_MatrixCoefficientGet(massMatrix,matrixCoefficient,err,error,*999)
               matrixCoefficient=matrixCoefficient*massMatrixCoefficient
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                & matrixCoefficient,massDistributedMatrix,.FALSE.,incrementalVector,dynamicTempVector,err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(massDistributedMatrix,.FALSE.,incrementalVector, &
+                & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,dynamicTempVector,err,error,*999)
             ENDIF
           ENDIF
 
@@ -10955,8 +10955,8 @@ CONTAINS
                 NULLIFY(linearDistributedMatrix)
                 CALL EquationMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
                 !Add the linear matrix times the incremental vector
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                  & matrixCoefficient,linearDistributedMatrix,.FALSE.,incrementalVector,linearTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,incrementalVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
               ENDIF
             ENDDO !equationsMatrixIdx
           ENDIF
@@ -11000,7 +11000,7 @@ CONTAINS
                 NULLIFY(residualDistributedVector)
                 CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
                   & residualDistributedVector,err,error,*999)
-                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,nonlinearTempVector, &
+                CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE, &
                   & vectorCoefficient,residualDistributedVector,err,error,*999)
               ENDIF
             ENDDO !residualIdx
@@ -11008,18 +11008,18 @@ CONTAINS
 
           !Calculate the solver residual
           NULLIFY(equationsRowToSolverRowsMap)
-          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap,equationsRowToSolverRowsMap, &
-            & err,error,*999)
+          CALL SolverMappingESToSMSMap_EquationsRowToSolverRowsMapGet(equationsSetToSolverMatricesMap, &
+            & equationsRowToSolverRowsMap,err,error,*999)
 
           !Couple the equations set vectors to the solver residual vector
           IF(ASSOCIATED(dynamicMapping)) &
-            & CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverResidualVector, &
+            & CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE, &
             & equationsRowToSolverRowsMap,1.0_DP,dynamicTempVector,err,error,*999)
           IF(ASSOCIATED(linearMapping)) &
-            & CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverResidualVector, &
+            & CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE, &
             & equationsRowToSolverRowsMap,1.0_DP,linearTempVector,err,error,*999)
           IF(ASSOCIATED(nonlinearMapping)) &
-            & CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverResidualVector, &
+            & CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE, &
             & equationsRowToSolverRowsMap,1.0_DP,nonlinearTempVector,err,error,*999)
 
           IF(.NOT.dynamicSolver%solverInitialised) THEN
@@ -11034,19 +11034,19 @@ CONTAINS
                 NULLIFY(previousResidualVector)
                 CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
                   & previousResidualVector,err,error,*999)
-                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previousResidualVector,1.0_DP, &
+                CALL DistributedVector_VectorCopy(previousResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                   & currentResidualVector,err,error,*999)
                 IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
                   NULLIFY(previous2ResidualVector)
                   CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                     & previous2ResidualVector,err,error,*999)
-                  CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous2ResidualVector,1.0_DP, &
+                  CALL DistributedVector_VectorCopy(previous2ResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                     & currentResidualVector,err,error,*999)
                   IF(dynamicSolver%degree>SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                     NULLIFY(previous3ResidualVector)
                     CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR, &
                       & previous3ResidualVector,err,error,*999)
-                    CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,previous3ResidualVector,1.0_DP, &
+                    CALL DistributedVector_VectorCopy(previous3ResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                       & currentResidualVector,err,error,*999)
                   ENDIF
                 ENDIF
@@ -11115,11 +11115,11 @@ CONTAINS
             NULLIFY(interfaceDistributedMatrix)
             CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
             
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficients(1), &
-              & interfaceDistributedMatrix,.FALSE.,lagrangeDistributedVector,interfaceTempVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(interfaceDistributedMatrix,.FALSE.,lagrangeDistributedVector, &
+              & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficients(1),interfaceTempVector,err,error,*999)
             
             !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
               & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
             
             CALL InterfaceMatrix_HasTranspose(interfaceMatrix,hasTranspose,err,error,*999)
@@ -11159,9 +11159,8 @@ CONTAINS
               CALL InterfaceMatrix_TransposeDistributedMatrixGet(interfaceMatrix,transposeInterfaceDistributedMatrix, &
                 & err,error,*999)
             
-              CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficients(2), &
-                & transposeInterfaceDistributedMatrix,.FALSE.,dependentDistributedVector,transposeInterfaceTempVector, &
-                & err,error,*999)
+              CALL DistributedMatrix_MatrixByVectorAdd(transposeInterfaceDistributedMatrix,.FALSE.,dependentDistributedVector, &
+                & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficients(2),transposeInterfaceTempVector,err,error,*999)
               
               !Add interface matrix residual contribution to the solver residual.
               !The number of columns in the interface matrix is equivalent to the
@@ -11170,7 +11169,7 @@ CONTAINS
               CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
                 & interfaceColToSolverRowsMap,err,error,*999)
               
-              CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+              CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                 & interfaceColToSolverRowsMap,1.0_DP,transposeInterfaceTempVector,err,error,*999)
             ENDIF !has transpose
           ENDDO !interfaceMatrixIdx
@@ -11190,15 +11189,15 @@ CONTAINS
             CALL FieldVariable_ParameterSetVectorGet(lagrangeVariable,FIELD_VALUES_SET_TYPE,lagrangeDistributedVector, &
               & err,error,*999)
             
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-            & interfaceDistributedMatrix,.FALSE.,lagrangeDistributedVector,interfaceTempVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(interfaceDistributedMatrix,.FALSE.,lagrangeDistributedVector, &
+              & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,interfaceTempVector,err,error,*999)
 
             !Add interface matrix residual contribution to the solver residual
             NULLIFY(interfaceRowToSolverRowsMap)
             CALL SolverMappingICToSMSMap_InterfaceRowToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
               & interfaceRowToSolverRowsMap,err,error,*999)
             
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
               & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
           ENDIF
         ENDDO !interfaceConditionIdx
@@ -11435,7 +11434,7 @@ CONTAINS
                 NULLIFY(linearDistributedMatrix)
                 CALL EquationsMatrix_DistributedMatrixGet(linearMatrix,linearDistributedMatrix,err,error,*999)
                 CALL EquationMatrix_MatriCoefficientGet(linearMatrix,matrixCoefficient,err,error,*999)
-                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & equationsRowToSolverRowsMap,equationsColToSolverColsMap,matrixCoefficient,linearDistributedMatrix, &
                   & .FALSE.,err,error,*999)
               ENDDO !equationsMatrixIdx
@@ -11458,7 +11457,7 @@ CONTAINS
                 NULLIFY(jacobianDistributedMatrix)
                 CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,jacobianDistributedMatrix,err,error,*999)
                 CALL JacobianMatrix_MatrixCoefficientGet(jacobianMatrix,matrixCoefficient,err,error,*999)
-                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & equationsRowToSolverRowsMap,jacobianColToSolverColsMap,matrixCoefficient,jacobianDistributedMatrix, &
                   & .FALSE.,err,error,*999)
               ENDDO !jacobianMatrixIdx
@@ -11498,7 +11497,7 @@ CONTAINS
               NULLIFY(interfaceDistributedMatrix)
               CALL InterfaceMatrix_DistributedMatrixGet(interfaceMatrix,interfaceDistributedMatrix,err,error,*999)
               CALL InterfaceMatrix_MatrixCoefficientGet(interfaceMatrix,matrixCoefficients(1),err,error,*999)
-              CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+              CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                 & interfaceRowToSolverRowsMap,interfaceColToSolverColsMap,matrixCoefficients(1),interfaceDistributedMatrix, &
                 & .FALSE.,err,error,*999)
               CALL InterfaceMatrix_HasTranspose(interfaceMatrix,hasTranspose,err,error,*999)
@@ -11509,7 +11508,7 @@ CONTAINS
                 NULLIFY(transposeDistributedMatrix)
                 CALL InterfaceMatrix_TransposeDistributeMatrixGet(interfaceMatrix,transposeDistributedMatrix,err,error,*999)
                 CALL InterfaceMatrix_TransposeMatrixCoefficientGet(interfaceMatrix,matrixCoefficients(2),err,error,*999)
-                CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+                CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,matrixCoefficients(2),transposeDistributedMatrix, &
                   & .FALSE.,err,error,*999)
               ENDIF
@@ -11640,7 +11639,7 @@ CONTAINS
                 NULLIFY(residualDistributedVector)
                 CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
                   & residualDistributedVector,err,error,*999)
-                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & residualCoefficient,residualDistributedVector,err,error,*999)
               ENDIF
             ENDDO !residualIdx
@@ -11682,8 +11681,8 @@ CONTAINS
                 NULLIFY(dependentDistributedVector)
                 CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentDistributedVector, &
                   & err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                  & linearDistributedMatrix,.FALSE.,dependentDistributedVector,linearTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,dependentDistributedVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
               ENDIF !rhs linear matrix
             ENDDO !equationsMatrixIdx
           ENDIF !linear mapping
@@ -11707,7 +11706,7 @@ CONTAINS
               NULLIFY(distributedSourceVector)
               CALL EquationsMatricesSource_DistributedVectorGet(sourceVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
                 & distributedSourceVector,err,error,*999)
-              CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourcesTempVector,sourceCoefficient, &
+              CALL DistributedVector_VectorAdd(sourcesTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,sourceCoefficient, &
                 & currentSourceVector,err,error,*999)
             ENDDO !sourceIdx
           ENDIF !source mapping
@@ -11947,7 +11946,7 @@ CONTAINS
             NULLIFY(interfaceRHSDistributedVector)
             CALL InterfaceMatricesRHS_DistributedVectorGet(interfaceRHSVector,interfaceRHSDistributedVector,err,error,*999)
             !Worry about BCs on the Lagrange variables later.
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,solverRHSVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverRHSVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE, &
               & interfaceColToSolverRowsMap,1.0_DP,interfaceRHSDistributedVector,err,error,*999)
           CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
@@ -12065,8 +12064,8 @@ CONTAINS
                 NULLIFY(dependentDistributedVector)
                 CALL FieldVariable_ParameterSetVectorGet(linearVariable,FIELD_VALUES_SET_TYPE,dependentDistributedVector, &
                   & err,error,*999)
-                CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient, &
-                  & linearDistributedMatrix,.FALSE.,dependentDistributedVector,linearTempVector,err,error,*999)
+                CALL DistributedMatrix_MatrixByVectorAdd(linearDistributedMatrix,.FALSE.,dependentDistributedVector, &
+                  & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,matrixCoefficient,linearTempVector,err,error,*999)
               ENDIF
             ENDDO !linearMatrixIdx
           ENDIF
@@ -12110,17 +12109,17 @@ CONTAINS
                 NULLIFY(residualDistributedVector)
                 CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
                   & residualDistributedVector,err,error,*999)
-                CALL DistributedVector_VectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,nonlinearTempVector, &
+                CALL DistributedVector_VectorAdd(nonlinearTempVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                   & residualCoefficient,residualDistributedVector,err,error,*999)
               ENDIF
             ENDDO !residualIdx
           ENDIF !nonlinear mapping
 
           !Couple the linear and nonlinear contributions to the solver residual
-          IF(ASSOCIATED(linearTempVector)) CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-            & solverResidualVector,equationsRowToSolverRowsMap,1.0_DP,linearTempVector,err,error,*999)
-          IF(ASSOCIATED(nonlinearTempVector)) CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-            & solverResidualVector,equationsRowToSolverRowsMap,1.0_DP,nonlinearTempVector,err,error,*999)
+          IF(ASSOCIATED(linearTempVector)) CALL DistributedVector_VectorCoupleAdd(solverResidualVector, &
+            & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsRowToSolverRowsMap,1.0_DP,linearTempVector,err,error,*999)
+          IF(ASSOCIATED(nonlinearTempVector)) CALL DistributedVector_VectorCoupleAdd(solverResidualVector, &
+            & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,equationsRowToSolverRowsMap,1.0_DP,nonlinearTempVector,err,error,*999)
           
         ENDDO !equationsSetIdx
         
@@ -12166,13 +12165,13 @@ CONTAINS
             CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
            !Initialise the linear temporary vector to zero
             CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(interfaceDistributedMatrix,.FALSE.,lagrangeVector, &
+              & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,interfaceTempVector,err,error,*999)
             NULLIFY(interfaceRowToSolverRowsMap)
             CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
               & interfaceRowToSolverRowsMap,err,error,*999)
             !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
               & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
             !Calculate the transposed interface matrix-dependent variable product residual contribution
             NULLIFY(dependentVariable)
@@ -12185,13 +12184,13 @@ CONTAINS
             CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
             NULLIFY(dependentVector)
             CALL FieldVariable_ParameterSetVectorGet(dependentVariable,FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributedMatrix,.FALSE.,dependentVector,interfaceTempVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(interfaceDistributedMatrix,.FALSE.,dependentVector, &
+              & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,interfaceTempVector,err,error,*999)
             NULLIFY(interfaceColToSolverRowsMap)
             CALL SolverMapping_interfaceRowToSolverRowsMap(solverMapping,interfaceConditionIdx,interfaceColToSolverRowsMap, &
               & err,error,*999)             
             !Add interface matrix residual contribution to the solver residual.
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
               & interfaceColToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
           ENDDO !interfaceMatrixIdx
           SELECT CASE(interfaceConditionMethod)
@@ -12206,13 +12205,13 @@ CONTAINS
             CALL InterfaceMatrix_TempDistributedVectorGet(interfaceMatrix,interfaceTempVector,err,error,*999)
             !Initialise the linear temporary vector to zero
             CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
-            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-              & interfaceDistributedMatrix,.FALSE.,lagrangeVector,interfaceTempVector,err,error,*999)
+            CALL DistributedMatrix_MatrixByVectorAdd(interfaceDistributedMatrix,.FALSE.,lagrangeVector, &
+              & DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP,interfaceTempVector,err,error,*999)
             NULLIFY(interfaceRowToSolverRowsMap)
             CALL SolverMapping_InterfaceRowToSolverRowsMapGet(solverMapping,interfaceConditionIdx,interfaceMatrixIdx, &
               & interfaceRowToSolverRowsMap,err,error,*999)
             !Add interface matrix residual contribution to the solver residual
-            CALL DistributedVector_VectorCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverResidualVector, &
+            CALL DistributedVector_VectorCoupleAdd(solverResidualVector,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
               & interfaceRowToSolverRowsMap,1.0_DP,interfaceTempVector,err,error,*999)
           END SELECT
         ENDDO !interfaceConditionIdx
@@ -17598,13 +17597,13 @@ CONTAINS
                   NULLIFY(previous3Vector)
                   CALL EquationsMatricesResidual_DistributedVectorGet(residualVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR, &
                     & previous3Vector,err,error,*999)
-                  CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,previous3Vector,1.0_DP, &
+                  CALL DistributedVector_VectorCopy(previous3Vector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,1.0_DP, &
                     & previous2Vector,err,error,*999)
                 ENDIF
-                CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,previous2Vector,1.0_DP, &
+                CALL DistributedVector_VectorCopy(previous2Vector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,1.0_DP, &
                   & previousVector,err,error,*999)                
               ENDIF
-              CALL DistributedVector_VectorCopy(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,previousVector,1.0_DP, &
+              CALL DistributedVector_VectorCopy(previousVector,DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,1.0_DP, &
                 & currentVector,err,error,*999)
             ENDDO !residualIdx
           ENDIF

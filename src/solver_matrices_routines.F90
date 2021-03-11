@@ -669,7 +669,7 @@ CONTAINS
       NULLIFY(equationsColToSolverColsMap)
       CALL SolverMappingEMToSMMap_EquationsColToSolverColsMapGet(equationsMatrixToSolverMatrixMap,equationsColToSolverColsMap, &
         & err,error,*999)
-      CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+      CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
         & equationsRowToSolverRowsMap,equationsColToSolverColsMap,alpha,equationsDistributedMatrix,.FALSE.,err,error,*999)
     ENDIF
    
@@ -743,7 +743,7 @@ CONTAINS
       NULLIFY(interfaceColToSolverColsMap)
       CALL SolverMappingIMSToSMMap_InterfaceColToSolverColsMapGet(interfaceMatricesToSolverMatrixMap,interfaceColToSolverColsMap, &
         & err,error,*999)
-      CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+      CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
         & interfaceRowToSolverRowsMap,interfaceColToSolverColsMap,alpha(1),interfaceDistributedMatrix,.FALSE.,err,error,*999)
       CALL InterfaceMatrix_HasTransposeGet(interfaceMatrix,hasTranspose,err,error,*999)
       IF(hasTranspose) THEN
@@ -759,7 +759,7 @@ CONTAINS
           NULLIFY(interfaceColToSolverRowsMap)
           CALL SolverMappingICToSMSMap_InterfaceColToSolverRowsMapGet(interfaceConditionToSolverMatricesMap, &
             & interfaceColToSolverRowsMap,err,error,*999)
-          CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+          CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
             & interfaceColToSolverRowsMap,interfaceRowToSolverColsMap,alpha(2),transposeDistributedMatrix,.FALSE., &
             & err,error,*999)
         ENDIF
@@ -836,7 +836,7 @@ CONTAINS
       CALL SolverMatrix_SolverDistributedMatrixGet(solverMatrix,solverDistributedMatrix,err,error,*999)
       NULLIFY(jacobianDistributedMatrix)
       CALL JacobianMatrix_DistributedMatrixGet(jacobianMatrix,jacobianDistributedMatrix,err,error,*999)
-      CALL DistributedMatrix_MatrixCoupleAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,solverDistributedMatrix, &
+      CALL DistributedMatrix_MatrixCoupleAdd(solverDistributedMatrix,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
         & equationsRowToSolverRowsMap,jacobianColToSolverColsMap,alpha,jacobianDistributedMatrix,.FALSE.,err,error,*999)
     ENDIF
     
