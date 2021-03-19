@@ -45,6 +45,7 @@
 MODULE InterfaceMatricesAccessRoutines
   
   USE BaseRoutines
+  USE EquationsMatricesAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
@@ -121,6 +122,8 @@ MODULE InterfaceMatricesAccessRoutines
   PUBLIC InterfaceMatricesRHS_VectorCoefficientGet
 
   PUBLIC InterfaceMatrix_DistributedMatrixGet
+
+  PUBLIC InterfaceMatrix_ElementMatrixOutput
 
   PUBLIC InterfaceMatrix_FirstAssemblyGet
 
@@ -592,6 +595,33 @@ CONTAINS
     
   END SUBROUTINE InterfaceMatrix_DistributedMatrixGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the element matrix information for an interface matrix.
+  SUBROUTINE InterfaceMatrix_ElementMatrixOutput(id,interfaceMatrix,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to output the element matrix for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("InterfaceMatrix_ElementMatrixOutput",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+
+    CALL ElementMatrix_Output(id,interfaceMatrix%elementMatrix,err,error,*999)
+         
+    EXITS("InterfaceMatrix_ElementMatrixOutput")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrix_ElementMatrixOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_ElementMatrixOutput
+  
   !
   !================================================================================================================================
   !

@@ -122,6 +122,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC InterfacePointsConnectivity_InterfaceMeshGet
 
+  PUBLIC InterfacePointsConnectivity_MaximumCoupledElementsGet
+
 CONTAINS
 
   !
@@ -1386,6 +1388,51 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfacePointsConnectivity_InterfaceMeshGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the maximum number of coupled elements for an interface points connectivity
+  SUBROUTINE InterfacePointsConnectivity_MaximumCoupledElementsGet(interfacePointsConnectivity,coupledMeshIdx, &
+    & maximumCoupledElements,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the maximum number of coupled elements for
+    INTEGER(INTG), INTENT(IN) :: coupledMeshIdx !<The coupled mesh index to get the maximum number of coupled elements for
+    INTEGER(INTG), INTENT(OUT) :: maximumCoupledElements !<On return, the maximum number of coupled elements for the specified coupled mesh index in the interface points connectivity.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif
+ 
+    ENTERS("InterfacePointsConnectivity_MaximumCoupledElementsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(interfacePointsConnectivity%maxNumberOfCoupledElements)) &
+      & CALL FlagError("The maximum number of coupled elements is not allocated for the interface points connectivity", &
+      & err,error,*999)
+    IF(coupledMeshIdx<1.OR.coupledMeshIdx>SIZE(interfacePointsConnectivity%maxNumberOfCoupledElements,1)) THEN
+      localError="The specified coupled mesh index of "//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
+        & " is invalid. The coupled mesh index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(interfacePointsConnectivity%maxNumberOfCoupledElements,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    maximumCoupledElements=interfacePointsConnectivity%maxNumberOfCoupledElements(coupledMeshIdx)
+    
+    EXITS("InterfacePointsConnectivity_MaximumCoupledElementsGet")
+    RETURN
+999 ERRORS("InterfacePointsConnectivity_MaximumCoupledElementsGet",err,error)
+    EXITS("InterfacePointsConnectivity_MaximumCoupledElementsGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_MaximumCoupledElementsGet
 
   !
   !================================================================================================================================

@@ -436,6 +436,8 @@ MODULE ProblemAccessRoutines
 
   PUBLIC Problem_SpecificationGet
 
+  PUBLIC Problem_SpecificationSizeGet
+
   PUBLIC Problem_UserNumberFind
 
   PUBLIC Problems_ContextGet
@@ -1002,6 +1004,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problem_SpecificationGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the size of the problem specification array for a problem identified by a pointer. \see OpenCMISS::Iron::cmfe_Problem_SpecificationSizeGet
+  SUBROUTINE Problem_SpecificationSizeGet(problem,specificationSize,err,error,*)
+
+    !Argument variables
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the specification for.
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specifcation array.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Problem_SpecificationSizeGet",err,error,*999)
+
+    specificationSize=0
+#ifdef WITH_PRECHECKS
+    CALL Problem_AssertIsFinished(problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+#endif    
+    
+    specificationSize=SIZE(problem%specification,1)
+
+    EXITS("Problem_SpecificationSizeGet")
+    RETURN
+999 ERRORSEXITS("Problem_SpecificationSizeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_SpecificationSizeGet
 
   !
   !================================================================================================================================

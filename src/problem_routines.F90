@@ -99,8 +99,6 @@ MODULE ProblemRoutines
   
   PUBLIC Problem_CreateStart,Problem_CreateFinish,Problem_Destroy
   
-  PUBLIC Problem_SpecificationGet,Problem_SpecificationSizeGet
-  
   PUBLIC Problem_ControlLoopCreateStart,Problem_ControlLoopCreateFinish
   
   PUBLIC Problem_ControlLoopDestroy
@@ -1177,7 +1175,7 @@ CONTAINS
       !  interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
       !  !Assemble the interface condition for the Jacobian LHS
       !  CALL WriteString(GENERAL_OUTPUT_TYPE,"********************Jacobian evaluation******************",err,error,*999)
-      !  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
+      !  CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
       !ENDDO
       !Assemble the static nonlinear solver matrices
       CALL Solver_StaticAssemble(solver,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
@@ -1335,7 +1333,7 @@ CONTAINS
       !  interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
       !  !Assemble the interface condition for the Jacobian LHS
       !  CALL WriteString(GENERAL_OUTPUT_TYPE,"********************Residual evaluation******************",err,error,*999)
-      !  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
+      !  CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
       !ENDDO
       !Assemble the solver matrices
       CALL Solver_StaticAssemble(solver,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
@@ -2159,7 +2157,7 @@ CONTAINS
     DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
       NULLIFY(interfaceCondition)
       CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-      CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
     ENDDO !interfaceConditionIdx
     !Set the solver time
     CALL SOLVER_DYNAMIC_TIMES_SET(solver,currentTime,timeIncrement,err,error,*999)
@@ -2362,7 +2360,7 @@ CONTAINS
 #endif
       NULLIFY(interfaceCondition)
       CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-      CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
 #ifdef TAUPROF
       CALL TAU_PHASE_STOP(PHASE)
 #endif
@@ -2440,7 +2438,7 @@ CONTAINS
 #endif
       NULLIFY(interfaceCondition)
       CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
-      CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
+      CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
 #ifdef TAUPROF
       CALL TAU_PHASE_STOP(PHASE)
 #endif
@@ -2959,7 +2957,7 @@ CONTAINS
                 NULLIFY(INTERFACE)
                 CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
                 CALL InterfacePointsConnectivity_DataReprojection(INTERFACE,interfaceCondition,err,error,*999)
-                CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
+                CALL InterfaceCondition_Assemble(interfaceCondition,err,error,*999)
               ENDIF
             ENDIF
           ENDDO !interfaceConditionIdx
@@ -3018,8 +3016,7 @@ CONTAINS
     INTEGER(INTG) :: load_step
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(SolverMappingType), POINTER :: solverMapping 
-    TYPE(VARYING_STRING) :: directory
-    
+    TYPE(VARYING_STRING) :: directory    
     INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledElementNumber, &
       & coupledMeshFaceLineNumber, coupledMeshIdx,component
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface 
@@ -3032,13 +3029,10 @@ CONTAINS
     TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData !<A pointer to the decomposition data point topology
     TYPE(DataPointsType), POINTER :: interfaceDatapoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
-
     INTEGER(INTG) :: IUNIT
     CHARACTER(LEN=100) :: filenameOutput,groupname
-
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: solve_call
 
@@ -3059,7 +3053,7 @@ CONTAINS
     CASE(PROBLEM_ELASTICITY_CLASS)
       IF(SIZE(problem%specification,1)/=3) &
         & CALL FlagError("Problem specification must have three entries for an elasticity problem.",err,error,*999)
-      SELECT CASE(problem%SPECIFICATION(2))
+      SELECT CASE(problem%specification(2))
       CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_TYPE,PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE, &
         & PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
 
@@ -3289,42 +3283,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the problem specification array for a problem identified by a pointer. \see OpenCMISS::Iron::cmfe_Problem_SpecificationGet
-  SUBROUTINE Problem_SpecificationGet(problem,problemSpecification,err,error,*)
-
-    !Argument variables
-    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the specification for.
-    INTEGER(INTG), INTENT(INOUT) :: problemSpecification(:) !<On return, The problem specifcation array. Must be allocated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: specificationLength
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("Problem_SpecificationGet",err,error,*999)
-
-    CALL Problem_AssertIsFinished(problem,err,error,*999)
-
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    specificationLength=SIZE(problem%specification,1)
-    IF(SIZE(problemSpecification,1)<specificationLength) THEN
-      localError="The problem specification size is "//TRIM(NumberToVstring(specificationLength,"*",err,error))// &
-        & " but the input array only has size "//TRIM(NumberToVstring(SIZE(problemSpecification,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    problemSpecification(1:specificationLength)=problem%specification(1:specificationLength)
-
-    EXITS("Problem_SpecificationGet")
-    RETURN
-999 ERRORSEXITS("Problem_SpecificationGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Problem_SpecificationGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets the problem specification
   SUBROUTINE Problem_SpecificationSet(problem,problemSpecification,err,error,*)
 
@@ -3385,36 +3343,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the size of the problem specification array for a problem identified by a pointer. \see OpenCMISS::Iron::cmfe_Problem_SpecificationSizeGet
-  SUBROUTINE Problem_SpecificationSizeGet(problem,specificationSize,err,error,*)
-
-    !Argument variables
-    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the specification for.
-    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specifcation array.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("Problem_SpecificationSizeGet",err,error,*999)
-
-    specificationSize=0
-    CALL Problem_AssertIsFinished(problem,err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    
-    specificationSize=SIZE(problem%specification,1)
-
-    EXITS("Problem_SpecificationSizeGet")
-    RETURN
-999 ERRORSEXITS("Problem_SpecificationSizeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Problem_SpecificationSizeGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the work group for a problem. \see OpenCMISS::Iron::cmfe_Problem_WorkGroupGet
+  !>Sets the work group for a problem. \see OpenCMISS::Iron::cmfe_Problem_WorkGroupSet
   SUBROUTINE Problem_WorkGroupSet(problem,workGroup,err,error,*)
 
     !Argument variables

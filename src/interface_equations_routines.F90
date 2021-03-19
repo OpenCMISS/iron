@@ -93,13 +93,13 @@ MODULE InterfaceEquationsRoutines
 
   PUBLIC InterfaceEquations_MatrixTimeDependenceTypeSet,InterfaceEquations_MatrixTimeDependenceTypeGet
   
-  PUBLIC InterfaceEquations_OutputTypeGet,InterfaceEquations_OutputTypeSet
+  PUBLIC InterfaceEquations_OutputTypeSet
   
-  PUBLIC InterfaceEquations_SparsityTypeGet,InterfaceEquations_SparsityTypeSet
+  PUBLIC InterfaceEquations_SparsityTypeSet
 
-  PUBLIC InterfaceEquations_LinearityTypeGet,InterfaceEquations_LinearityTypeSet
+  PUBLIC InterfaceEquations_LinearityTypeSet
 
-  PUBLIC InterfaceEquations_TimeDependenceTypeGet,InterfaceEquations_TimeDependenceTypeSet
+  PUBLIC InterfaceEquations_TimeDependenceTypeSet
 
 CONTAINS
 
@@ -643,33 +643,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the output type for interface equations.
-  SUBROUTINE InterfaceEquations_OutputTypeGet(interfaceEquations,outputType,err,error,*)
-
-    !Argument variables
-    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the interface equations \see InterfaceEquationsRoutines_OutputTypes,InterfaceEquationsRoutines
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("InterfaceEquations_OutputTypeGet",err,error,*999)
-
-    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
-    
-    outputType=interfaceEquations%outputType
-       
-    EXITS("InterfaceEquations_OutputTypeGet")
-    RETURN
-999 ERRORSEXITS("InterfaceEquations_OutputTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceEquations_OutputTypeGet
-  
-  !
-  !================================================================================================================================
-  !
-
   !>Gets the time dependence type for an interface matrix
   SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet0(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
     & timeDependenceType,err,error,*)
@@ -910,33 +883,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the sparsity type for interface equations.
-  SUBROUTINE InterfaceEquations_SparsityTypeGet(interfaceEquations,sparsityType,err,error,*)
-
-    !Argument variables
-    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the sparsity type for
-    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On exit, the sparsity type of the interface equations. \see InterfaceEquationsRoutines_SparsityTypes,InterfaceEquationsRoutines
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("InterfaceEquations_SparsityTypeGet",err,error,*999)
-
-    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
-    
-    sparsityType=interfaceEquations%sparsityType
-       
-    EXITS("InterfaceEquations_SparsityTypeGet")
-    RETURN
-999 ERRORSEXITS("InterfaceEquations_SparsityTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceEquations_SparsityTypeGet
-  
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the sparsity type for the interface equations.
   SUBROUTINE InterfaceEquations_SparsityTypeSet(interfaceEquations,sparsityType,err,error,*)
 
@@ -969,33 +915,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_SparsityTypeSet
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the linearity type for interface equations.
-  SUBROUTINE InterfaceEquations_LinearityTypeGet(interfaceEquations,linearityType,err,error,*)
-
-    !Argument variables
-    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the linearity for
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the interface equations. \see InterfaceEquations_LinearityTypes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("InterfaceEquations_LinearityTypeGet",err,error,*999)
-
-    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
-    
-    linearityType=interfaceEquations%linearity
-       
-    EXITS("InterfaceEquations_LinearityTypeGet")
-    RETURN
-999 ERRORSEXITS("InterfaceEquations_LinearityTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceEquations_LinearityTypeGet
   
   !
   !================================================================================================================================
@@ -1035,33 +954,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_LinearityTypeSet
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the time dependence type for interface equations.
-  SUBROUTINE InterfaceEquations_TimeDependenceTypeGet(interfaceEquations,timeDependenceType,err,error,*)
-
-    !Argument variables
-    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the interface equations \see InterfaceEquations_TimeDependenceTypes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("InterfaceEquations_TimeDependenceTypeGet",err,error,*999)
-
-    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
-
-    timeDependenceType=interfaceEquations%timeDependence
-       
-    EXITS("InterfaceEquations_TimeDependenceTypeGet")
-    RETURN
-999 ERRORSEXITS("InterfaceEquations_TimeDependenceTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceEquations_TimeDependenceTypeGet
   
   !
   !================================================================================================================================

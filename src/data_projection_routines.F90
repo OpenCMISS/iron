@@ -117,7 +117,7 @@ MODULE DataProjectionRoutines
 
   PUBLIC DataProjection_DataPointsPositionEvaluate
   
-  PUBLIC DataProjection_ElementSet
+  PUBLIC DataProjection_ElementUserSet
   
   PUBLIC DataProjection_LabelSet
 
@@ -4305,7 +4305,7 @@ CONTAINS
 999 ERRORSEXITS("DataProjection_ElementUserSet",err,error)
     RETURN 1
 
-  END SUBROUTINE DataProjection_ElementSet
+  END SUBROUTINE DataProjection_ElementUserSet
 
   !
   !================================================================================================================================
@@ -4582,7 +4582,7 @@ CONTAINS
 999 ERRORSEXITS("DataProjection_ResultXiUserSet",err,error)
     RETURN 1
 
-  END SUBROUTINE DataProjection_ResultXiSet
+  END SUBROUTINE DataProjection_ResultXiUserSet
 
   !
   !================================================================================================================================

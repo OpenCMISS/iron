@@ -103,11 +103,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,dofIdx,matrixIdx,meshIdx,variableIdx,numberOfDOFs,numberOfGlobalDOFs,numberOfInterfaceMatrices, &
-      & totalNumberOfDOFs,variableType
+    INTEGER(INTG) :: columnIdx,dofIdx,interfaceConditionMethod,matrixIdx,meshIdx,variableIdx,numberOfDOFs,numberOfGlobalDOFs, &
+      & numberOfInterfaceMatrices,totalNumberOfDOFs,variableType
     REAL(DP) :: matrixCoefficient,transposeMatrixCoefficient
     LOGICAL :: hasTranspose
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: lagrangeField
     TYPE(FieldVariableType), POINTER :: fieldVariable,lagrangeVariable
@@ -130,7 +131,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       NULLIFY(interfaceLagrange)
       CALL InterfaceCondition_InterfaceLagrangeGet(interfaceCondition,interfaceLagrange,err,error,*999)
@@ -146,14 +148,14 @@ CONTAINS
       !Set the number of columns in the interface matrices
       CALL FieldVariable_NumberOfDOFsGet(lagrangeVariable,interfaceMapping%numberOfColumns,err,error,*999)
       CALL FieldVariable_TotalNumberOfDOFsGet(lagrangeVariable,interfaceMapping%totalNumberOfColumns,err,error,*999)
-      CALL FieldVariable_NumberOfGlobalDOFsGet(langrrangeVariable,interfaceMapping%numberOfGlobalColumns,err,error,*999)
+      CALL FieldVariable_NumberOfGlobalDOFsGet(lagrangeVariable,interfaceMapping%numberOfGlobalColumns,err,error,*999)
       !Set the column dofs mapping
       CALL FieldVariable_DomainMappingGet(lagrangeVariable,interfaceMapping%columnDOFsMapping,err,error,*999)
-      ALLOCATE(interfaceMapping%lagrangeDOFToColumnMap(interfaceMapping%totalNumberOfDofs),STAT=err)
+      ALLOCATE(interfaceMapping%lagrangeDOFToColumnMap(interfaceMapping%totalNumberOfColumns),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate Lagrange DOF to column map.",err,error,*999)
       !1-1 mapping for now
-      DO dofIdx=1,interfaceMapping%totalNumberOfDofs
-        CALL DomainMapping_LocalToGlobalGet(interfaceMapping%columnsDOFsMapping,dofIdx,columnIdx,err,error,*999)
+      DO dofIdx=1,interfaceMapping%totalNumberOfColumns
+        CALL DomainMapping_LocalToGlobalGet(interfaceMapping%columnDOFsMapping,dofIdx,columnIdx,err,error,*999)
         interfaceMapping%lagrangeDOFToColumnMap(dofIdx)=columnIdx
       ENDDO !dofIdx
       !Set the number of interface matrices
@@ -161,7 +163,7 @@ CONTAINS
       ALLOCATE(interfaceMapping%interfaceMatrixToVarMaps(interfaceMapping%numberOfInterfaceMatrices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interface matrix rows to variable maps.",err,error,*999)
       !Loop over the interface matrices and calculate the row mappings
-      SELECT CASE(interfaceCondition%method)
+      SELECT CASE(interfaceConditionMethod)
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
         numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
       CASE(INTERFACE_CONDITION_PENALTY_METHOD)
@@ -209,8 +211,7 @@ CONTAINS
         interfaceMatrixToVarMap%meshIndex=meshIdx
         interfaceMatrixToVarMap%matrixCoefficient=matrixCoefficient
         interfaceMatrixToVarMap%hasTranspose=hasTranspose
-        IF(hasTranspose) &
-          & interfaceMatrixToVarMap%transposeMatrixCoefficient=transposeMatrixCoefficient
+        IF(hasTranspose) interfaceMatrixToVarMap%transposeMatrixCoefficient=transposeMatrixCoefficient
         !Set the number of rows
         interfaceMatrixToVarMap%numberOfRows=numberOfDOFs
         interfaceMatrixToVarMap%totalNumberOfRows=totalNumberOfDOFs
@@ -220,11 +221,11 @@ CONTAINS
         ALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap(totalNumberOfDOFs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable DOF to row map.",err,error,*999)
         !1-1 mapping for now
-        DO dofIdx=1,fieldVariable%totalNumberOfDofs
+        DO dofIdx=1,totalNumberOfDOFs
           interfaceMatrixToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
         ENDDO !dofIdx
       ENDDO !matrixIdx
-      IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD) THEN
+      IF(interfaceConditionMethod==INTERFACE_CONDITION_PENALTY_METHOD) THEN
         !Sets up the Lagrange-(Penalty) interface matrix mapping and calculate the row mappings
         matrixIdx = interfaceMapping%numberOfInterfaceMatrices !last of the interface matrices
         !Initialise and setup the interface matrix
@@ -255,10 +256,10 @@ CONTAINS
         interfaceMatrixToVarMap%numberOfGlobalRows=numberOfGlobalDOFs
         !Set the row mapping
         interfaceMatrixToVarMap%rowDOFsMapping=>domainMapping
-        ALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap(totalNumberOfDofs),STAT=err)
+        ALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap(totalNumberOfDOFs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable DOF to row map.",err,error,*999)
         !1-1 mapping for now
-        DO dofIdx=1,totalNumberOfDofs
+        DO dofIdx=1,totalNumberOfDOFs
           interfaceMatrixToVarMap%variableDOFToRowMap(dofIdx)=dofIdx
         ENDDO !dofIdx
       ENDIF
@@ -279,11 +280,11 @@ CONTAINS
         rhsMapping%rhsVariableMapping=>domainMapping
         rhsMapping%rhsCoefficient=createValuesCache%rhsCoefficient
         !Allocate and set up the row mappings
-        ALLOCATE(rhsMapping%rhsDOFToInterfaceRowMap(totalNumberOfDofs),STAT=err)
+        ALLOCATE(rhsMapping%rhsDOFToInterfaceRowMap(totalNumberOfDOFs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate RHS DOF to interface row map.",err,error,*999)
         ALLOCATE(rhsMapping%interfaceRowToRHSDOFMap(interfaceMapping%totalNumberOfColumns),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate interface row to RHS DOF map.",err,error,*999)
-        DO dofIdx=1,totalNumberOfDofs
+        DO dofIdx=1,totalNumberOfDOFs
           !1-1 mapping for now
           columnIdx=dofIdx
           rhsMapping%rhsDOFToInterfaceRowMap(dofIdx)=columnIdx
@@ -299,7 +300,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -413,7 +414,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,variableIdx,variableTypeIdx,variableTypeIdx2
+    INTEGER(INTG) :: dummyErr,interfaceConditionMethod,variableIdx,variableTypeIdx,variableTypeIdx2
     TYPE(FieldType), POINTER :: lagrangeField
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
@@ -430,6 +431,7 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
     !Allocate and initialise the create values cache
     ALLOCATE(interfaceMapping%createValuesCache,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interface mapping create values cache.",err,error,*999)
@@ -439,13 +441,13 @@ CONTAINS
     interfaceMapping%createValuesCache%rhsCoefficient=0.0_DP
     !Set the default interface mapping in the create values cache
     !First calculate how many interface matrices we have and set the variable types
-    SELECT CASE(interfaceCondition%method)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       NULLIFY(lagrangeField)
       CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
       NULLIFY(interfaceDependent)
       CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
-      SELECT CASE(interfaceCondition%method)
+      SELECT CASE(interfaceConditionMethod)
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
         !Default the number of interface matrices to the number of added dependent variables
         interfaceMapping%createValuesCache%numberOfInterfaceMatrices=interfaceDependent%numberOfDependentVariables
@@ -475,7 +477,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate create values cache transpose matrix coefficients.",err,error,*999)
        !Default the interface matrices coefficients to add.
       interfaceMapping%createValuesCache%matrixCoefficients=1.0_DP
-      interfaceMapping%createValuesCache%tranposeMatrixCoefficients=1.0_DP
+      interfaceMapping%createValuesCache%transposeMatrixCoefficients=1.0_DP
       interfaceMapping%createValuesCache%rhsCoefficient=1.0_DP
       ALLOCATE(interfaceMapping%createValuesCache%hasTranspose(interfaceMapping%createValuesCache% &
         & numberOfInterfaceMatrices),STAT=err)
@@ -490,7 +492,7 @@ CONTAINS
         interfaceMapping%createValuesCache%matrixRowFieldVariableIndices(variableIdx)=variableIdx
       ENDDO !variableIdx
       !The pointers below have been checked for association above.
-      IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD) THEN
+      IF(interfaceConditionMethod==INTERFACE_CONDITION_PENALTY_METHOD) THEN
         !Default the interface matrix (Penalty) to have no transpose
         interfaceMapping%createValuesCache%hasTranspose(interfaceMapping% &
           & createValuesCache%numberOfInterfaceMatrices)=.FALSE.
@@ -560,7 +562,7 @@ CONTAINS
     ENTERS("InterfaceMapping_Finalise",err,error,*999)
 
     IF(ASSOCIATED(interfaceMapping)) THEN
-      IF(ALLOCATED(interfaceMapping%lagrangeDOFToColumnMap)) DEALLOCATE(interfaceMapping%lagrangeDOFToColumnMap)
+      IF(ASSOCIATED(interfaceMapping%lagrangeDOFToColumnMap)) DEALLOCATE(interfaceMapping%lagrangeDOFToColumnMap)
       IF(ALLOCATED(interfaceMapping%interfaceMatrixToVarMaps)) THEN
         DO matrixIdx=1,SIZE(interfaceMapping%interfaceMatrixToVarMaps,1)
           CALL InterfaceMapping_MatrixToVarMapFinalise(interfaceMapping%interfaceMatrixToVarMaps(matrixIdx)%ptr, &
@@ -637,6 +639,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceConditionMethod
     TYPE(FieldType), POINTER :: lagrangeField
     TYPE(FieldVariableType), POINTER :: lagrangeVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
@@ -655,7 +658,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       NULLIFY(interfaceLagrange)
       CALL InterfaceCondition_InterfaceLagrangeGet(interfaceCondition,interfaceLagrange,err,error,*999)
@@ -670,7 +674,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -698,7 +702,7 @@ CONTAINS
     ENTERS("InterfaceMapping_MatrixToVarMapFinalise",err,error,*999)
 
     IF(ASSOCIATED(interfaceMatrixToVarMap)) THEN
-      IF(ALLOCATED(interfaceMatrixToVarMap%variableDOFToRowMap)) DEALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap)
+      IF(ASSOCIATED(interfaceMatrixToVarMap%variableDOFToRowMap)) DEALLOCATE(interfaceMatrixToVarMap%variableDOFToRowMap)
       DEALLOCATE(interfaceMatrixToVarMap)
     ENDIF
       
@@ -777,6 +781,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceConditionMethod
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
@@ -792,7 +797,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check that the number of supplied coefficients matches the number of interface matrices
       IF(SIZE(matrixCoefficients,1)<createValuesCache%numberOfInterfaceMatrices) THEN
@@ -809,7 +815,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -834,6 +840,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceConditionMethod
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
@@ -849,7 +856,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check that the number of supplied coefficients matches the number of interface matrices
       IF(SIZE(transposeMatrixCoefficients,1)<createValuesCache%numberOfInterfaceMatrices) THEN
@@ -866,7 +874,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -891,6 +899,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceConditionMethod
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
@@ -906,7 +915,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
       CALL FlagError("Can not set the column mesh indices when using the Lagrange multipliers interface condition method.", &
         & err,error,*999)
@@ -917,7 +927,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -943,8 +953,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshIdx,meshIdx2,meshIdx3
-    LOGICAL :: FOUND
+    INTEGER(INTG) :: interfaceConditionMethod,meshIdx,meshIdx2,meshIdx3
+    LOGICAL :: found
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
@@ -961,7 +971,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check the size of the mesh indicies array
       IF(SIZE(rowMeshIndices,1)/=createValuesCache%numberOfInterfaceMatrices) THEN
@@ -1006,7 +1017,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1031,12 +1042,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,matrixIdx2,meshIdx,numberOfDependentVariables,variableIdx
+    INTEGER(INTG) :: interfaceConditionMethod,matrixIdx,matrixIdx2,meshIdx,numberOfDependentVariables,variableIdx
     INTEGER(INTG), ALLOCATABLE :: newMatrixRowFieldVariableIndices(:)
-    REAL(DP), ALLOCATABLE :: newMatrixCoefficients(:)
-    REAL(DP), ALLOCATABLE :: newTransposeMatrixCoefficients(:)
+    REAL(DP), ALLOCATABLE :: newMatrixCoefficients(:),newTransposeMatrixCoefficients(:)
     LOGICAL :: found
-    LOGICAL, ALLOCATABLE :: newMatrixTranspose(:)
+    LOGICAL, ALLOCATABLE :: newHasTranspose(:)
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
@@ -1053,7 +1063,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check the number of interface matrices
       IF(numberOfInterfaceMatrices<=0) THEN
@@ -1063,7 +1074,7 @@ CONTAINS
       ENDIF
       NULLIFY(interfaceDependent)
       CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
-      SELECT CASE(interfaceCondition%method)
+      SELECT CASE(interfaceConditionMethod)
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
         numberOfDependentVariables=interfaceDependent%numberOfDependentVariables
       CASE(INTERFACE_CONDITION_PENALTY_METHOD)
@@ -1082,7 +1093,7 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate new matrix coefficients.",err,error,*999)
         ALLOCATE(newTransposeMatrixCoefficients(createValuesCache%numberOfInterfaceMatrices),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new transpose matrix coefficients.",err,error,*999)
-        ALLOCATE(newMatrixTranspose(createValuesCache%numberOfInterfaceMatrices),STAT=err)
+        ALLOCATE(newHasTranspose(createValuesCache%numberOfInterfaceMatrices),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new matrix transpose.",err,error,*999)
         ALLOCATE(newMatrixRowFieldVariableIndices(createValuesCache%numberOfInterfaceMatrices),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new matrix row field indexes.",err,error,*999)
@@ -1090,7 +1101,7 @@ CONTAINS
           createValuesCache%matrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)
         newTransposeMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)= &
           createValuesCache%transposeMatrixCoefficients(1:createValuesCache%numberOfInterfaceMatrices)
-        newMatrixTranspose(1:createValuesCache%numberOfInterfaceMatrices)= &
+        newHasTranspose(1:createValuesCache%numberOfInterfaceMatrices)= &
           & createValuesCache%hasTranspose(1:createValuesCache%numberOfInterfaceMatrices)
         newMatrixRowFieldVariableIndices(1:createValuesCache%numberOfInterfaceMatrices)= &
           & createValuesCache%matrixRowFieldVariableIndices(1:createValuesCache%numberOfInterfaceMatrices)
@@ -1118,7 +1129,7 @@ CONTAINS
         ENDIF
         CALL MOVE_ALLOC(newMatrixCoefficients,createValuesCache%matrixCoefficients)
         CALL MOVE_ALLOC(newTransposeMatrixCoefficients,createValuesCache%transposeMatrixCoefficients)
-        CALL MOVE_ALLOC(newMatrixTranspose,createValuesCache%matrixTranspose)
+        CALL MOVE_ALLOC(newHasTranspose,createValuesCache%hasTranspose)
         CALL MOVE_ALLOC(newMatrixRowFieldVariableIndices,createValuesCache%matrixRowFieldVariableIndices)
         createValuesCache%numberOfInterfaceMatrices=numberOfInterfaceMatrices
       ENDIF
@@ -1128,7 +1139,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The interface condition method of "// &
-        & TRIM(NumberToVString(interfaceCondition%method,"*",err,error))//" is invalid."
+        & TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
        
@@ -1136,7 +1147,7 @@ CONTAINS
     RETURN
 999 IF(ALLOCATED(newMatrixCoefficients)) DEALLOCATE(newMatrixCoefficients)
     IF(ALLOCATED(newTransposeMatrixCoefficients)) DEALLOCATE(newTransposeMatrixCoefficients)
-    IF(ALLOCATED(newMatrixTranspose)) DEALLOCATE(newMatrixTranspose)
+    IF(ALLOCATED(newHastranspose)) DEALLOCATE(newHastranspose)
     IF(ALLOCATED(newMatrixRowFieldVariableIndices)) DEALLOCATE(newMatrixRowFieldVariableIndices)
     ERRORSEXITS("InterfaceMapping_NumberOfMatricesSet",err,error)
     RETURN 1
@@ -1156,6 +1167,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceConditionMethod
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
@@ -1171,7 +1183,8 @@ CONTAINS
     CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
     NULLIFY(interfaceCondition)
     CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-    SELECT CASE(interfaceCondition%method)
+    CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+    SELECT CASE(interfaceConditionMethod)
     CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
       !Check that the number of supplied coefficients matches the number of interface matrices
       IF(SIZE(matrixTranspose,1)<createValuesCache%numberOfInterfaceMatrices) THEN
@@ -1188,7 +1201,7 @@ CONTAINS
     CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -1290,7 +1303,7 @@ CONTAINS
     NULLIFY(interfaceMapping%rhsMapping%rhsVariableMapping)
     interfaceMapping%rhsMapping%rhsCoefficient=1.0_DP
     NULLIFY(interfaceMapping%rhsMapping%rhsDOFToInterfaceRowMap)
-    NULLIFY(interfaceMapping%interfaceRowToRHSDOFMap)
+    NULLIFY(interfaceMapping%rhsMapping%interfaceRowToRHSDOFMap)
        
     EXITS("InterfaceMapping_RHSMappingInitialise")
     RETURN
@@ -1313,11 +1326,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: interfaceConditionMethod
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(FieldType), POINTER :: lagrangeField
-    TYPE(FieldVariableType), POINTER :: lagrangeVariable
+    TYPE(FieldVariableType), POINTER :: lagrangeVariable,rhsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceMapping_RHSVariableTypeSet",err,error,*999)
@@ -1333,7 +1347,8 @@ CONTAINS
       CALL InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*999)
       NULLIFY(interfaceCondition)
       CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
-      SELECT CASE(interfaceCondition%method)
+      CALL InterfaceCondition_MethodGet(interfaceCondition,interfaceConditionMethod,err,error,*999)
+      SELECT CASE(interfaceConditionMethod)
       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
         NULLIFY(lagrangeField)
         CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
@@ -1352,7 +1367,7 @@ CONTAINS
       CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+        localError="The interface condition method of "//TRIM(NumberToVString(interfaceConditionMethod,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT

@@ -415,6 +415,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC Field_GeometricParametersGet
 
+  PUBLIC Field_InterfaceCheck
+
   PUBLIC Field_InterfaceGet
 
   PUBLIC Field_IsInterfaceField
@@ -1638,6 +1640,83 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Field_GeometricParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that the field is defined in the specified interface.
+  SUBROUTINE Field_InterfaceCheck(field,INTERFACE,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the interface for
+    TYPE(InterfaceType), POINTER :: interface !<The interface to check that the field is in.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(InterfaceType), POINTER :: fieldInterface
+    TYPE(RegionType), POINTER :: fieldInterfaceParentRegion,fieldRegion,interfaceParentRegion
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_InterfaceCheck",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+#endif    
+
+    fieldInterface=>field%interface
+    IF(ASSOCIATED(fieldInterface)) THEN
+      IF(ASSOCIATED(fieldInterface,INTERFACE)) THEN
+        !OK, field is defined on the interface
+      ELSE
+        !Check parent regions
+        interfaceParentRegion=>interface%parentRegion
+        IF(ASSOCIATED(interfaceParentRegion)) THEN
+          fieldInterfaceParentRegion=>fieldInterface%parentRegion
+          IF(ASSOCIATED(fieldInterfaceParentRegion)) THEN
+            localError="The field interface does not match specified interface. The field was created on interface number "// &
+              & TRIM(NumberToVString(fieldInterface%userNumber,"*",err,error))//" of parent region number "// &
+              & TRIM(NumberToVString(fieldInterfaceParentRegion%userNumber,"*",err,error))// &
+              & " and the specified interface was created as number "// &
+              & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//" on parent region number "// &
+              & TRIM(NumberToVString(interfaceParentRegion%userNumber,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)                  
+          ELSE
+            localError="The parent region for interface number "// &
+              & TRIM(NumberToVString(fieldInterface%userNumber,"*",err,error))//" of field number "// &
+              & TRIM(NumberToVString(field%userNumber,"*",err,error))//" is not associated."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          localError="The interface for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+            & " does not have a parent region associated."
+          CALL FlagError(localError,err,error,*999)       
+        ENDIF
+      ENDIF
+    ELSE
+      !Check region
+      fieldRegion=>field%region
+      IF(ASSOCIATED(fieldRegion)) THEN
+        localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+          & " is defined on region number "//TRIM(NumberToVString(fieldRegion%userNumber,"*",err,error))// &
+          & " which does not correspond to the interface number of "// &
+          & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+          & " does not have a region or interface associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+        
+    EXITS("Field_InterfaceCheck")
+    RETURN
+999 ERRORSEXITS("Field_InterfaceCheck",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_InterfaceCheck
 
   !
   !================================================================================================================================

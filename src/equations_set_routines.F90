@@ -4075,7 +4075,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalFinish,internalStart,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -4351,7 +4351,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalFinish,internalStart,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -4486,7 +4486,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: elementIdx,element,numberOfTimes
+    INTEGER(INTG) :: boundaryStart,elementIdx,element,ghostFinish,internalFinish,internalStart,numberOfTimes,outputType
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -5329,8 +5329,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: variableIdx,variableType,dirichletIdx,dirichletDOFIdx,neumannPointDOF
-    INTEGER(INTG) :: conditionIdx, conditionGlobalDOF, conditionLocalDOF, myGroupComputationNodeNumber
+    INTEGER(INTG) :: conditionGlobalDOF,conditionIdx,conditionLocalDOF,conditionType,dirichletIdx,dirichletDOFIdx, &
+      & dirichletDomainNumber,fixedIncrementedCount,ghostStart,globalDirichletDOFIdx,globalNeumannDOFIdx,globalPressureIncDOFIdx, &
+      & localDirichletDOFIdx,localNeumannDOFIdx,localNeumannPointDOFIdx,localPressureIncDOFIdx,movedWallIncrementedCount, &
+      & myGroupComputationNodeNumber,neumannDomainNumber,neumannIdx,neumannPointCount,neumannPointIncrementedCount, &
+      & numberOfDirichletConditions,numberOfVariables,pressureIncDomainNumber,pressureIncIdx,pressureIncrementedCount, &
+      & variableIdx,variableType
     REAL(DP) :: fullLoad, currentLoad, newLoad, prevLoad
     REAL(DP), POINTER :: fullLoads(:),currentLoads(:), prevLoads(:)
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
@@ -5338,7 +5342,8 @@ CONTAINS
     TYPE(BoundaryConditionsPressureIncrementedType), POINTER :: pressureIncrementedBoundaryConditions
     TYPE(BoundaryConditionsVariableType),   POINTER :: boundaryConditionsVariable
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DomainMappingType), POINTER :: domainMapping
+    TYPE(DistributedVectorType), POINTER :: neumannPointDOFValues
+    TYPE(DomainMappingType), POINTER :: domainMapping,neumannPointDOFMapping
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(WorkGroupType), POINTER :: workGroup
@@ -5502,12 +5507,12 @@ CONTAINS
             DO pressureIncIdx=1,pressureIncrementedCount
               !Global dof index
               CALL BoundaryConditionsPressureInc_PressureIncDOFIndexGet(pressureIncrementedBoundaryConditions,pressureIncIdx, &
-                & globalPressureIncDOFIndex,err,error,*999)
+                & globalPressureIncDOFIdx,err,error,*999)
               !Must convert into local dof index
               CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalPressureIncDOFIdx,1,pressureIncDomainNumber, &
                 & err,error,*999)
               IF(pressureIncDomainNumber==myGroupComputationNodeNumber) THEN
-                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globaPressureIncDOFIdx,1,localPressureIncDOFIdx, &
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalPressureIncDOFIdx,1,localPressureIncDOFIdx, &
                   & err,error,*999)
                 IF(localPressureIncDOFIdx>=1.AND.localPressureIncDOFIdx<ghostStart) THEN
                   newLoad=currentLoads(localPressureIncDOFIdx)
@@ -5531,12 +5536,12 @@ CONTAINS
             DO conditionIdx=1,pressureIncrementedCount
               !This is global dof idx
               CALL BoundaryConditionsPressureInc_PressureIncDOFIndexGet(pressureIncrementedBoundaryConditions,pressureIncIdx, &
-                & globalPressureIncDOFIndex,err,error,*999)
+                & globalPressureIncDOFIdx,err,error,*999)
               !Must convert into local dof index
               CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalPressureIncDOFIdx,1,pressureIncDomainNumber, &
                 & err,error,*999)
               IF(pressureIncDomainNumber==myGroupComputationNodeNumber) THEN
-                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globaPressureIncDOFIdx,1,localPressureIncDOFIdx, &
+                CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalPressureIncDOFIdx,1,localPressureIncDOFIdx, &
                   & err,error,*999)
                 IF(localPressureIncDOFIdx>=1.AND.localPressureIncDOFIdx<ghostStart) THEN
                   prevLoad=prevLoads(localPressureIncDOFIdx)
@@ -5546,7 +5551,7 @@ CONTAINS
                   !Update current and previous loads
                   CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE, &
                     & localPressureIncDOFIdx,newLoad,err,error,*999)
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVarible,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
                     & localPressureIncDOFIdx,currentLoad,err,error,*999)
                   IF(diagnostics1) THEN
                     CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DOF idx : ",localPressureIncDOFIdx,err,error,*999)
@@ -5635,8 +5640,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfTimes
-    INTEGER(INTG) :: nodeIdx,nodeNumber
+    INTEGER(INTG) :: boundaryStart,ghostFinish,internalFinish,internalStart,nodeIdx,nodeNumber,numberOfTimes,outputType
     REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -5770,12 +5774,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
+    INTEGER(INTG) :: jacobianCalculationType,matrixIdx,numberOfJacobians,numberOfResiduals,outputType,residualIdx
+    LOGICAL :: updateJacobian
     TYPE(EquationsType), POINTER :: equations
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(NodalMatrixType), POINTER :: nodalMatrix
     TYPE(VARYING_STRING) :: localError
     
@@ -5801,7 +5807,7 @@ CONTAINS
       NULLIFY(residualVector)
       CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)    
       CALL EquationsMatricesResidual_NumberOfJacobiansGet(residualvector,numberOfJacobians,err,error,*999)
-      DO matrixIdx=1,residualVector%numberOfJacobians
+      DO matrixIdx=1,numberOfJacobians
         NULLIFY(jacobianMatrix)
         CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
         CALL JacobianMatrix_JacobianCalculationTypeGet(jacobianMatrix,jacobianCalculationType,err,error,*999)
@@ -5814,7 +5820,7 @@ CONTAINS
           CASE(EQUATIONS_SET_ELASTICITY_CLASS)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-            CALL FluidMechanics_NodalJacobianEvaluate(equationsSet,residualIdx,matrixIdx,nodeNumber,err,error,*999)
+            CALL FluidMechanics_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
           CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
@@ -5843,7 +5849,7 @@ CONTAINS
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(GENERAL_OUTPUT_TYPE,"Nodal Jacobian matrices:",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Node number = ",nodeNumber,err,error,*999)      
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of residuals = ",numberOfResidual,err,error,*999)      
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of residuals = ",numberOfResiduals,err,error,*999)      
       DO residualIdx=1,numberOfResiduals
         NULLIFY(residualVector)
         CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
@@ -5881,13 +5887,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
+    INTEGER(INTG) :: matrixIdx,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfSources,outputType, &
+      & residualIdx,sourceIdx
+    LOGICAL :: updateMatrix,updateVector
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(NodalMatrixType), POINTER :: nodalMatrix
     TYPE(NodalVectorType), POINTER :: nodalVector
@@ -5902,8 +5917,13 @@ CONTAINS
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    CALL EquationsMappingNonlinear_NumberOfResidualsGet(nonlinearMapping,numberOfResiduals,err,error,*999)
 
     IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
     IF(SIZE(equationsSet%specification,1)<1) &
@@ -5929,7 +5949,11 @@ CONTAINS
         & " is not valid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    nonlinearMatrices%nodalResidualCalculated=nodeNumber
+    DO residualIdx=1,numberOfResiduals
+      NULLIFY(residualVector)
+      CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
+      residualVector%nodalResidualCalculated=nodeNumber
+    ENDDO !residualIdx
     
     IF(outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
@@ -5982,9 +6006,9 @@ CONTAINS
       CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
       IF(ASSOCIATED(sourceVectors)) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Source vectors:",err,error,*999)
-        CALL EquationsMatricesSources_NumberOfSourceVectorsGet(sourceVectors,numberOfSourceVectors,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSourceVectors,err,error,*999)
-        DO sourceIdx=1,numberOfSourceVectors
+        CALL EquationsMatricesSources_NumberOfSourcesGet(sourceVectors,numberOfSources,err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of source vectors = ",numberOfSources,err,error,*999)
+        DO sourceIdx=1,numberOfSources
           NULLIFY(sourceVector)
           CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Source vector : ",sourceIdx,err,error,*999)
@@ -6023,8 +6047,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfTimes
-    INTEGER(INTG) :: nodeIdx,nodeNumber
+    INTEGER(INTG) :: boundaryStart,ghostFinish,internalFinish,internalStart,nodeIdx,nodeNumber,numberOfTimes,outputType
     REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -6155,8 +6178,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfTimes
-    INTEGER(INTG) :: nodeIdx,nodeNumber
+    INTEGER(INTG) :: boundaryStart,ghostFinish,internalFinish,internalStart,nodeIdx,nodeNumber,numberOfTimes,outputType
     REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
@@ -6216,7 +6238,7 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=internalStart,xsinternalFinish
+    DO nodeIdx=internalStart,internalFinish
       CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatricesVector_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)

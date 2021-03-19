@@ -2820,9 +2820,9 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Contains information about the interpolation for a parameter set in interface equations
   TYPE InterfaceEquationsInterpolationSetType
-    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:) !<interpolationParameters(field_variable_type). A pointer to the field_variable_type'th field interpolation parameters.
-    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:) !<interpolatedPoint(field_variable_type). A pointer to the field_variable_type'th field interpolated point. 
-    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: interpolatedPointMetrics(:) !<interpolatedPointMetrics(field_variable_type). A pointer to the field_variable_type'th field interpolated point metrics.
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:) !<interpolationParameters(fieldVariableType). A pointer to the field_variable_type'th field interpolation parameters.
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:) !<interpolatedPoint(fieldVariableType). A pointer to the field_variable_type'th field interpolated point. 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: interpolatedPointMetrics(:) !<interpolatedPointMetrics(fieldVariableType). A pointer to the field_variable_type'th field interpolated point metrics.
   END TYPE InterfaceEquationsInterpolationSetType
 
   !>Contains information about the interpolation for a domain (interface or coupled mesh) in the interface equations

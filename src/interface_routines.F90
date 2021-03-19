@@ -411,7 +411,7 @@ CONTAINS
       CALL GeneratedMeshes_Finalise(INTERFACE%generatedMeshes,err,error,*999)
       CALL Meshes_Finalise(INTERFACE%MESHES,err,error,*999)
       CALL Fields_Finalise(INTERFACE%FIELDS,err,error,*999)
-      CALL INTERFACE_CONDITIONS_FINALISE(INTERFACE%interfaceConditions,err,error,*999)
+      CALL InterfaceConditions_Finalise(INTERFACE%interfaceConditions,err,error,*999)
       CALL DataPointSets_Finalise(interface%dataPointSets,err,error,*999)
       DEALLOCATE(INTERFACE)
     ENDIF
@@ -465,7 +465,7 @@ CONTAINS
     CALL Meshes_Initialise(INTERFACE,err,error,*999)
     CALL GeneratedMeshes_Initialise(INTERFACE,err,error,*999)
     CALL Fields_Initialise(INTERFACE,err,error,*999)
-    CALL INTERFACE_CONDITIONS_INITIALISE(INTERFACE,err,error,*999)
+    CALL InterfaceConditions_Initialise(INTERFACE,err,error,*999)
     
     EXITS("Interface_Initialise")
     RETURN

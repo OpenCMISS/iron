@@ -133,19 +133,31 @@ MODULE InterfaceConditionAccessRoutines
 
   PUBLIC InterfaceCondition_GeometricFieldGet
 
+  PUBLIC InterfaceCondition_GlobalNumberGet
+
   PUBLIC InterfaceCondition_InterfaceGet
 
   PUBLIC InterfaceCondition_LabelGet,InterfaceCondition_LabelSet
 
+  PUBLIC InterfaceCondition_IntegrationTypeGet
+
   PUBLIC InterfaceCondition_InterfaceLagrangeGet
   
   PUBLIC InterfaceCondition_LagrangeFieldGet
+
+  PUBLIC InterfaceCondition_MethodGet
+
+  PUBLIC InterfaceCondition_OperatorGet
+
+  PUBLIC InterfaceCondition_OutputTypeGet
 
   PUBLIC InterfaceCondition_PenaltyFieldExists
 
   PUBLIC InterfaceCondition_PenaltyFieldGet
 
   PUBLIC InterfaceCondition_UserNumberFind
+
+  PUBLIC InterfaceCondition_UserNumberGet
 
   PUBLIC InterfaceDependent_DependentVariableGet
   
@@ -336,6 +348,64 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_GeometricFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the global number for an interface condition.
+  SUBROUTINE InterfaceCondition_GlobalNumberGet(interfaceCondition,globalNumber,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the global number for
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, the global number for the interface condition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_GlobalNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
+
+    globalNumber=interfaceCondition%globalNumber
+
+    EXITS("InterfaceCondition_GlobalNumberGet")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_GlobalNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_GlobalNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the integration type for an interface condition.
+  SUBROUTINE InterfaceCondition_IntegrationTypeGet(interfaceCondition,integrationType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the integration type for
+    INTEGER(INTG), INTENT(OUT) :: integrationType !<On exit, the intergration type for the interface condition \see InterfaceConditions_IntegrationType
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_IntegrationTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
+
+    integrationType=interfaceCondition%integrationType
+
+    EXITS("InterfaceCondition_IntegrationTypeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_IntegrationTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_IntegrationTypeGet
 
   !
   !================================================================================================================================
@@ -582,6 +652,93 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the method for an interface condition.
+  SUBROUTINE InterfaceCondition_MethodGet(interfaceCondition,method,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the method for
+    INTEGER(INTG), INTENT(OUT) :: method !<On exit, the method for the interface condition \see InterfaceConditions_Methods
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_MethodGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
+
+    method=interfaceCondition%method
+
+    EXITS("InterfaceCondition_MethodGet")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_MethodGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_MethodGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the operator for an interface condition.
+  SUBROUTINE InterfaceCondition_OperatorGet(interfaceCondition,operator,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the operator for
+    INTEGER(INTG), INTENT(OUT) :: operator !<On exit, the operator for the interface condition \see InterfaceConditions_Operators
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_OperatorGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
+
+    operator=interfaceCondition%operator
+
+    EXITS("InterfaceCondition_OperatorGet")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_OperatorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_OperatorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type for an interface condition.
+  SUBROUTINE InterfaceCondition_OutputTypeGet(interfaceCondition,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type for the interface condition \see InterfaceConditions_OutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_OutputTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
+
+    outputType=interfaceCondition%outputType
+
+    EXITS("InterfaceCondition_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_OutputTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Checks the penalty field exists for an interface condition.
   SUBROUTINE InterfaceCondition_PenaltyFieldExists(interfaceCondition,penaltyField,err,error,*)
 
@@ -717,6 +874,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_UserNumberFind
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the user number for an interface condition.
+  SUBROUTINE InterfaceCondition_UserNumberGet(interfaceCondition,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number for the interface condition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_UserNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+#endif    
+
+    userNumber=interfaceCondition%userNumber
+
+    EXITS("InterfaceCondition_UserNumberGet")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_UserNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_UserNumberGet
 
   !
   !================================================================================================================================

@@ -102,7 +102,11 @@ MODULE InterfaceMappingAccessRoutines
 
   PUBLIC InterfaceMappingCVC_TransposeMatrixCoefficientGet
 
+  PUBLIC InterfaceMappingIMToVMap_HasTransposeGet
+
   PUBLIC InterfaceMappingIMToVMap_InterfaceMatrixGet
+
+  PUBLIC InterfaceMappingIMToVMap_MatrixCoefficientGet
 
   PUBLIC InterfaceMappingIMToVMap_MeshIndexGet
 
@@ -114,10 +118,24 @@ MODULE InterfaceMappingAccessRoutines
 
   PUBLIC InterfaceMappingIMToVMap_TotalNumberOfRowsGet
 
+  PUBLIC InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet
+
   PUBLIC InterfaceMappingIMToVMap_VariableGet
 
   PUBLIC InterfaceMappingIMToVMap_VariableDOFToRowMapGet
 
+  PUBLIC InterfaceMappingRHS_InterfaceMappingGet
+
+  PUBLIC InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet
+
+  PUBLIC InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet
+
+  PUBLIC InterfaceMappingRHS_RHSVariableGet
+  
+  PUBLIC InterfaceMappingRHS_RHSVariableTypeGet
+
+  PUBLIC InterfaceMappingRHS_VectorCoefficientGet
+  
   CONTAINS
 
   !
@@ -913,6 +931,36 @@ MODULE InterfaceMappingAccessRoutines
   !================================================================================================================================
   !
 
+  !>Gets the has transpose flag for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_HasTransposeGet(interfaceMatrixToVarMap,hasTranspose,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the has transpose flag for
+    LOGICAL, INTENT(OUT) :: hasTranspose !<On exit, the has transpose flag for the interface matrix to variable map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_HasTransposeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    hasTranspose=interfaceMatrixToVarMap%hasTranspose
+       
+    EXITS("InterfaceMappingIMToVMap_HasTransposeGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMappingIMToVMap_HasTransposeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_HasTransposeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the interface matrix for an interface matrix to variable map.
   SUBROUTINE InterfaceMappingIMToVMap_InterfaceMatrixGet(interfaceMatrixToVarMap,interfaceMatrix,err,error,*)
 
@@ -945,6 +993,36 @@ MODULE InterfaceMappingAccessRoutines
     RETURN 1
     
   END SUBROUTINE InterfaceMappingIMToVMap_InterfaceMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix coefficient for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_MatrixCoefficientGet(interfaceMatrixToVarMap,matrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the matrix coefficient for
+    REAL(DP), INTENT(OUT) :: matrixCoefficient !<On exit, the matrix coefficient for the interface matrix to variable map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_MatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    matrixCoefficient=interfaceMatrixToVarMap%matrixCoefficient
+       
+    EXITS("InterfaceMappingIMToVMap_MatrixCoefficientGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMappingIMToVMap_MatrixCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_MatrixCoefficientGet
 
   !
   !================================================================================================================================
@@ -1107,6 +1185,40 @@ MODULE InterfaceMappingAccessRoutines
   !================================================================================================================================
   !
 
+  !>Gets the transpose matrix coefficient for an interface matrix to variable map.
+  SUBROUTINE InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet(interfaceMatrixToVarMap,transposeMatrixCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap !<A pointer to the interface matrix to variable map to get the transpose matrix coefficient for
+    REAL(DP), INTENT(OUT) :: transposeMatrixCoefficient !<On exit, the transpose matrix coefficient for the interface matrix to variable map.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(interfaceMatrixToVarMap)) &
+      & CALL FlagError("Interface matrix to variable map is not associated.",err,error,*999)
+#endif    
+
+    IF(interfaceMatrixToVarMap%hasTranspose) THEN
+      transposeMatrixCoefficient=interfaceMatrixToVarMap%transposeMatrixCoefficient
+    ELSE
+      transposeMatrixCoefficient=0.0_DP
+    ENDIF
+       
+    EXITS("InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet")
+    RETURN
+999 ERRORSEXITS("InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingIMToVMap_TransposeMatrixCoefficientGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the dependent variable for an interface matrix to variable map.
   SUBROUTINE InterfaceMappingIMToVMap_VariableGet(interfaceMatrixToVarMap,fieldVariable,err,error,*)
 
@@ -1176,6 +1288,213 @@ MODULE InterfaceMappingAccessRoutines
     RETURN 1
     
   END SUBROUTINE InterfaceMappingIMToVMap_VariableDOFToRowMapGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface mapping for a RHS mapping.
+  SUBROUTINE InterfaceMappingRHS_InterfaceMappingGet(rhsMapping,interfaceMapping,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the rhs mapping to get the interface mapping for
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<On exit, a pointer to the interface mapping for the RHS mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingRHS_InterfaceMappingGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("Interface RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    interfaceMapping=>rhsMapping%interfaceMapping
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(interfaceMapping)) &
+      & CALL FlagError("The interface mapping is not associated for the interface RHS mapping.",err,error,*999)
+#endif    
+    
+    EXITS("InterfaceMappingRHS_InterfaceMappingGet")
+    RETURN
+999 NULLIFY(interfaceMapping)
+998 ERRORS("InterfaceMappingRHS_InterfaceMappingGet",err,error)
+    EXITS("InterfaceMappingRHS_InterfaceMappingGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingRHS_InterfaceMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface row to RHS DOF map for a RHS mapping.
+  SUBROUTINE InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet(rhsMapping,interfaceRowToRHSDOFMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the rhs mapping to get the interface row to RHS DOF map for
+    INTEGER(INTG), POINTER :: interfaceRowToRHSDOFMap(:) !<On exit, a pointer to the interface row to RHS DOF map for the RHS mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(interfaceRowToRHSDOFMap)) CALL FlagError("Interface row to RHS DOF map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    interfaceRowToRHSDOFMap=>rhsMapping%interfaceRowToRHSDOFMap
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(interfaceRowToRHSDOFMap)) &
+      & CALL FlagError("The interface row to RHS DOF map is not associated for the RHS mapping.",err,error,*999)
+#endif    
+    
+    EXITS("InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet")
+    RETURN
+999 NULLIFY(interfaceRowToRHSDOFMap)
+998 ERRORS("InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet",err,error)
+    EXITS("InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingRHS_InterfaceRowToRHSDOFMapGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS DOF to interface row  map for a RHS mapping.
+  SUBROUTINE InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet(rhsMapping,rhsDOFToInterfaceRowMap,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the rhs mapping to get the RHS DOF to interface row map for
+    INTEGER(INTG), POINTER :: rhsDOFToInterfaceRowMap(:) !<On exit, a pointer to the RHS DOF to interface row map for the RHS mapping. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(rhsDOFToInterfaceRowMap)) CALL FlagError("RHS DOF to interface row map is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    rhsDOFToInterfaceRowMap=>rhsMapping%rhsDOFToInterfaceRowMap
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(rhsDOFToInterfaceRowMap)) &
+      & CALL FlagError("The RHS DOF to interface row map is not associated for the RHS mapping.",err,error,*999)
+#endif    
+    
+    EXITS("InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet")
+    RETURN
+999 NULLIFY(rhsDOFToInterfaceRowMap)
+998 ERRORS("InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet",err,error)
+    EXITS("InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingRHS_RHSDOFToInterfaceRowMapGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified RHS variable for a rhs mapping.
+  SUBROUTINE InterfaceMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get the RHS variable for
+    TYPE(FieldVariableType), POINTER :: rhsVariable !<On exit, a pointer to the requested RHS field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingRHS_RHSVariableGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(rhsVariable)) CALL FlagError("RHS Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    rhsVariable=>rhsMapping%rhsVariable
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(rhsVariable)) CALL FlagError("The RHS field variable is not associated in the RHS mapping.",err,error,*999)
+#endif    
+    
+    EXITS("InterfaceMappingRHS_RHSVariableGet")
+    RETURN
+999 NULLIFY(rhsVariable)
+998 ERRORS("InterfaceMappingRHS_RHSVariableGet",err,error)
+    EXITS("InterfaceMappingRHS_RHSVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingRHS_RHSVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified RHS variable type for a rhs mapping.
+  SUBROUTINE InterfaceMappingRHS_RHSVariableTypeGet(rhsMapping,rhsVariableType,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get the RHS variable for
+    INTEGER(INTG), INTENT(OUT) :: rhsVariableType !<On exit, the requested RHS variable type.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMappingRHS_RHSVariableTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+    
+    rhsVariableType=rhsMapping%rhsVariableType
+    
+    EXITS("InterfaceMappingRHS_RHSVariableTypeGet")
+    RETURN
+999 ERRORS("InterfaceMappingRHS_RHSVariableTypeGet",err,error)
+    EXITS("InterfaceMappingRHS_RHSVariableTypeGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingRHS_RHSVariableTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS vector coefficient for a RHS mapping.
+  SUBROUTINE InterfaceMappingRHS_VectorCoefficientGet(rhsMapping,vectorCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get RHS vector coefficient for
+    REAL(DP), INTENT(OUT) :: vectorCoefficient !<On exit, the vector coefficient for a RHS vector of the RHS mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("InterfaceMappingRHS_VectorCoefficientGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+#endif    
+      
+    vectorCoefficient=rhsMapping%rhsCoefficient
+   
+    EXITS("InterfaceMappingRHS_VectorCoefficientGet")
+    RETURN
+999 ERRORS("InterfaceMappingRHS_VectorCoefficientGet",err,error)
+    EXITS("InterfaceMappingRHS_VectorCoefficientGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMappingRHS_VectorCoefficientGet
 
   !
   !================================================================================================================================
